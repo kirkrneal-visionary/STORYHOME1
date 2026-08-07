@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
-import { PagePlaceholder } from "@/components/layout/PagePlaceholder";
+import ProfessionalView from "@/components/ProfessionalView";
 
 export const metadata: Metadata = {
   title: "Referrals",
 };
 
 export default function ReferralsPage() {
-  return (
-    <PagePlaceholder
-      title="Referrals"
-      description="Track referral handoffs and reciprocity across your network. Visible in Pro role."
-    />
-  );
+  return <ProfessionalView />;
 }

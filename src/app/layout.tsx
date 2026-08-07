@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
-import { AppShell } from "@/components/layout/AppShell";
+import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
+import { AppProvider } from "@/components/AppContext";
+import GlobalNav from "@/components/GlobalNav";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -15,13 +16,20 @@ const inter = Inter({
   display: "swap",
 });
 
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: "--font-ibm-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     default: "Story Home",
     template: "%s · Story Home",
   },
   description:
-    "Premium two-sided real estate marketplace and professional network.",
+    "Every home has a story. Premium two-sided real estate marketplace and professional network.",
 };
 
 export default function RootLayout({
@@ -38,8 +46,13 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${fraunces.variable} ${inter.variable} antialiased`}>
-        <AppShell>{children}</AppShell>
+      <body
+        className={`${fraunces.variable} ${inter.variable} ${ibmPlexMono.variable} antialiased`}
+      >
+        <AppProvider>
+          <GlobalNav />
+          {children}
+        </AppProvider>
       </body>
     </html>
   );

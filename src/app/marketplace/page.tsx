@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MarketplaceView } from "@/components/marketplace/MarketplaceView";
+import MarketplaceView from "@/components/MarketplaceView";
 
 export const metadata: Metadata = {
   title: "Marketplace",

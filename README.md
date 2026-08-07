@@ -1,13 +1,13 @@
 # Story Home
 
-Premium two-sided real estate marketplace and professional network.
+Every home has a story. Premium two-sided real estate marketplace and professional network.
 
 ## Stack
 
 - Next.js (App Router)
 - Tailwind CSS
-- Lucide React
-- Supabase (client stub ready)
+- Lucide React + Framer Motion
+- Supabase
 
 ## Getting started
 
@@ -16,13 +16,33 @@ npm install
 npm run dev
 ```
 
-Copy `.env.example` to `.env.local` and add Supabase keys when wiring data.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Foundation
+## Design system (master file)
 
-- **Role context** (`src/components/providers/RoleProvider.tsx`) — `consumer` | `professional`, persisted in `localStorage`
-- **Themes** — consumer: Paper + Gold; professional: Navy + Teal (`src/app/globals.css`)
-- **Desktop nav** — Logo, Marketplace, Network, Referrals, Messages, Role switcher, Avatar
-- **Mobile** — slim top bar (Logo + Role switcher) + bottom tab bar (max 5)
+- Navy `#142C54`
+- Gold `#FFD000`
+- Slate text `#1A2233`
+- Teal accent `#114743`
+- Fonts: Fraunces · Inter · IBM Plex Mono
 
-Consumer role hides Network and Referrals.
+## App surfaces
+
+- `/marketplace` — Consumer marketplace + filters + listing cards
+- `/referrals` — Professional referral distribution board
+- `/messages` — Secure communications inbox/thread
+- `/network` — Pro network (next)
+- `/profile` — Profile shell
+
+Toggle **Consumer / Pro** in the top bar. Network + Referrals show for Pro.
+
+## Supabase
+
+1. Create a Supabase project
+2. Run `supabase/schema.sql` in the SQL Editor
+3. Copy `.env.example` → `.env.local` and add:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
