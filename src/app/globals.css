@@ -100,6 +100,25 @@ html[data-role="professional"] {
   }
 }
 
+@keyframes image-rise {
+  from {
+    opacity: 0.55;
+    transform: scale(1.04);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-fade-up {
   animation: fade-up 0.45s ease-out both;
+}
+
+.animate-fade-up-delay {
+  animation: fade-up 0.55s ease-out 0.12s both;
+}
+
+.animate-image-rise {
+  animation: image-rise 0.9s ease-out both;
 }
