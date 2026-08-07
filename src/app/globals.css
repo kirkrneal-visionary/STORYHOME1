@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  /* Design tokens */
+  --navy: #0e1e38;
+  --gold: #f0b93b;
+  --teal: #123f38;
+  --paper: #f7f4ec;
+  --ink: #20242c;
+  --hairline: rgba(21, 42, 78, 0.14);
+
+  /* Consumer (warm) defaults */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --surface-elevated: #fffdf8;
+  --nav-surface: color-mix(in srgb, var(--paper) 88%, white);
+  --nav-hover-bg: rgba(14, 30, 56, 0.04);
+  --nav-active-bg: rgba(240, 185, 59, 0.18);
+  --nav-active-fg: var(--navy);
+  --accent: var(--gold);
+  --accent-contrast: var(--navy);
+  --muted: color-mix(in srgb, var(--ink) 62%, transparent);
+  --brand-mark-bg: var(--navy);
+  --brand-mark-fg: var(--gold);
+  --brand-wordmark: var(--navy);
+  --avatar-bg: color-mix(in srgb, var(--gold) 28%, var(--paper));
+  --avatar-fg: var(--navy);
+}
+
+html[data-role="professional"] {
+  /* Cool professional theme — Navy / Teal highlights */
+  --background: color-mix(in srgb, var(--navy) 96%, black);
+  --foreground: #f4f1e8;
+  --ink: #f4f1e8;
+  --surface-elevated: color-mix(in srgb, var(--navy) 82%, var(--teal));
+  --nav-surface: color-mix(in srgb, var(--navy) 92%, black);
+  --nav-hover-bg: rgba(247, 244, 236, 0.06);
+  --nav-active-bg: rgba(18, 63, 56, 0.72);
+  --nav-active-fg: #f7f4ec;
+  --accent: var(--teal);
+  --accent-contrast: #f7f4ec;
+  --muted: color-mix(in srgb, #f7f4ec 68%, transparent);
+  --hairline: rgba(247, 244, 236, 0.12);
+  --brand-mark-bg: var(--teal);
+  --brand-mark-fg: var(--gold);
+  --brand-wordmark: #f7f4ec;
+  --avatar-bg: color-mix(in srgb, var(--teal) 70%, var(--navy));
+  --avatar-fg: #f7f4ec;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy: var(--navy);
+  --color-gold: var(--gold);
+  --color-teal: var(--teal);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-hairline: var(--hairline);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
+  --font-ui: var(--font-inter);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html[data-role="professional"] {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  }
+
+  .font-ui {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.45s ease-out both;
+}
