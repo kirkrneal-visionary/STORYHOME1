@@ -65,7 +65,7 @@ export default function ProfilePage() {
                 href="/portal"
                 className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
               >
-                Broker portal
+                Story Pro
               </Link>
               <Link
                 href={`/agents/${DEMO_AGENT.id}`}

@@ -9,6 +9,7 @@ import {
   type Buyer,
   type BuyerStage,
 } from "@/lib/broker-clients";
+import { IncomingLeads } from "@/components/broker/IncomingLeads";
 import { formatUsd } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
 
@@ -33,10 +34,12 @@ export function MyBuyersView() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <IncomingLeads />
+
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-ink">My Buyers</h2>
+          <h2 className="font-serif text-2xl font-bold text-ink">My pipeline</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             {DEMO_BUYERS.length} active buyers across your East Texas pipeline.
           </p>
