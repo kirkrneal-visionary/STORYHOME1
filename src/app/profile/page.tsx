@@ -62,8 +62,14 @@ export default function ProfilePage() {
           {user.kind === "pro" && (
             <>
               <Link
-                href={`/agents/${DEMO_AGENT.id}`}
+                href="/portal"
                 className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+              >
+                Broker portal
+              </Link>
+              <Link
+                href={`/agents/${DEMO_AGENT.id}`}
+                className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-ink"
               >
                 Public profile
               </Link>
