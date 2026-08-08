@@ -54,12 +54,17 @@ export default async function ListingDetailPage({ params }: PageProps) {
           <p className="font-mono text-sm font-semibold text-gold">
             {formatUsd(listing.price)}
           </p>
+          <p className="mt-2 font-mono text-[11px] font-bold tracking-wider text-[var(--muted)] uppercase">
+            {listing.status} · {listing.propertyType}
+            {listing.hasHoa ? " · HOA" : " · No HOA"}
+          </p>
           <h1 className="mt-2 font-serif text-3xl font-bold tracking-[-0.02em] text-ink md:text-4xl">
             {listing.addressSerif}
           </h1>
           <p className="mt-2 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
-            {listing.city} · {listing.beds} beds · {listing.baths} baths ·{" "}
-            {listing.sqft.toLocaleString()} sqft · Built {listing.yearBuilt}
+            {listing.city}, {listing.countyName} · {listing.beds} beds ·{" "}
+            {listing.baths} baths · {listing.sqft.toLocaleString()} sqft · Built{" "}
+            {listing.yearBuilt}
           </p>
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted)]">
             {listing.description}
@@ -70,6 +75,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
             <Spec label="Baths" value={String(listing.baths)} />
             <Spec label="Sqft" value={listing.sqft.toLocaleString()} />
             <Spec label="Lot" value={listing.lotSize} />
+            <Spec label="Office" value={listing.hasOffice ? "Yes" : "No"} />
+            <Spec label="Garage" value={listing.hasGarage ? "Yes" : "No"} />
+            <Spec label="Pool" value={listing.hasPool ? "Yes" : "No"} />
+            <Spec label="HOA" value={listing.hasHoa ? "Yes" : "No"} />
           </div>
         </div>
 

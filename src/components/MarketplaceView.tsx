@@ -2,57 +2,41 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { SlidersHorizontal, X } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
+import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
+import {
+  DEFAULT_SEARCH_FILTERS,
+  applySearchFilters,
+  countActiveFilters,
+  type SearchFilters,
+} from "@/lib/listing-filters";
 import { DEFAULT_MARKET } from "@/lib/markets";
-import { cn } from "@/lib/utils";
-
-const CHIPS = [
-  "All",
-  "Following",
-  "Saved",
-  "Price",
-  "Beds",
-  "Baths",
-  "New this week",
-] as const;
 
 export default function MarketplaceView() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || DEFAULT_MARKET.label;
   const intent = searchParams.get("intent") || "sale";
 
-  const [chip, setChip] = useState<(typeof CHIPS)[number]>("All");
-  const [bedsFilter, setBedsFilter] = useState("Any");
-  const [query, setQuery] = useState(initialQuery);
+  const [filters, setFilters] = useState<SearchFilters>(() => ({
+    ...DEFAULT_SEARCH_FILTERS,
+    query: initialQuery,
+    statuses:
+      intent === "sold"
+        ? ["Sold"]
+        : intent === "rent"
+          ? ["Active"]
+          : ["Active", "Option Pending Continue to Show"],
+  }));
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const listings = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let next = DEMO_LISTINGS;
+  const listings = useMemo(
+    () => applySearchFilters(DEMO_LISTINGS, filters),
+    [filters],
+  );
 
-    if (q) {
-      next = next.filter(
-        (l) =>
-          l.city.toLowerCase().includes(q.replace(", tx", "").trim()) ||
-          l.addressSerif.toLowerCase().includes(q) ||
-          "houston".includes(q) ||
-          q.includes("houston") ||
-          q.includes(l.city.toLowerCase()),
-      );
-      // Keep results visible for East Texas market browsing even when area names differ
-      if (next.length === 0 && (q.includes("houston") || q.includes("tx"))) {
-        next = DEMO_LISTINGS;
-      }
-    }
-
-    if (bedsFilter === "4+") {
-      next = next.filter((l) => l.beds >= 4);
-    } else if (bedsFilter !== "Any") {
-      next = next.filter((l) => l.beds === Number(bedsFilter));
-    }
-
-    return next;
-  }, [bedsFilter, query]);
+  const activeFilterCount = countActiveFilters(filters);
 
   const intentLabel =
     intent === "rent" ? "For Rent" : intent === "sold" ? "Sold" : "For Sale";
@@ -60,111 +44,135 @@ export default function MarketplaceView() {
   return (
     <div className="flex min-h-dvh pb-16 pt-[72px] md:pb-0">
       <aside className="fixed top-[72px] bottom-0 left-0 hidden w-[340px] overflow-y-auto border-r border-hairline bg-[var(--surface)] p-6 xl:block">
-        <h2 className="mb-6 font-serif text-2xl font-semibold text-ink">
-          Find Your Story
-        </h2>
-
-        <div className="space-y-6">
-          <div>
-            <label className="mb-2 block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
-              Location
-            </label>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="City, neighborhood, or zip"
-              className="h-11 w-full rounded-lg border border-hairline bg-[var(--background)] px-4 text-sm font-medium text-ink outline-none focus:border-gold"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
-              Price Range
-            </label>
-            <div className="grid grid-cols-2 gap-3 font-mono">
-              <input
-                type="text"
-                defaultValue="$500,000"
-                className="h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
-              />
-              <input
-                type="text"
-                defaultValue="$1,500,000"
-                className="h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
-              Bedrooms
-            </label>
-            <div className="grid grid-cols-5 gap-1 text-xs font-medium">
-              {["Any", "1", "2", "3", "4+"].map((b) => (
-                <button
-                  key={b}
-                  type="button"
-                  onClick={() => setBedsFilter(b)}
-                  className={cn(
-                    "h-9 rounded-md border transition-colors",
-                    bedsFilter === b
-                      ? "border-gold bg-gold text-navy"
-                      : "border-hairline text-ink hover:border-gold/40",
-                  )}
-                >
-                  {b}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SearchFiltersPanel
+          filters={filters}
+          onChange={setFilters}
+          resultCount={listings.length}
+        />
       </aside>
 
       <main className="flex-1 px-4 py-6 md:px-6 xl:ml-[340px]">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-4">
+          <div className="mb-4 flex gap-2 xl:hidden">
             <input
               type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search city, neighborhood, or address"
-              className="h-12 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold xl:hidden"
+              value={filters.query}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, query: e.target.value }))
+              }
+              placeholder="Search city, county, or address"
+              className="h-12 flex-1 rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold"
             />
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="inline-flex h-12 items-center gap-2 rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm font-semibold text-ink"
+            >
+              <SlidersHorizontal className="h-4 w-4 text-gold" />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-gold px-1.5 py-0.5 font-mono text-[10px] font-bold text-navy">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
 
-          <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
-            {CHIPS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setChip(item)}
-                className={cn(
-                  "h-8 shrink-0 rounded-full px-3 font-mono text-[11px] font-semibold tracking-wide uppercase transition-colors",
-                  chip === item
-                    ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                    : "border border-hairline text-[var(--muted)] hover:text-ink",
-                )}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-5 flex items-center justify-between gap-3">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-xs tracking-widest text-[var(--muted)] uppercase">
-              {intentLabel} · {query} · {listings.length}{" "}
-              {listings.length === 1 ? "home" : "homes"}
+              {intentLabel} · {filters.query || "East Texas"} ·{" "}
+              {listings.length} {listings.length === 1 ? "home" : "homes"}
             </span>
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setFilters({
+                    ...DEFAULT_SEARCH_FILTERS,
+                    query: filters.query,
+                  })
+                }
+                className="text-xs font-semibold text-gold hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          {listings.length === 0 ? (
+            <div className="rounded-xl border border-hairline bg-[var(--surface)] px-6 py-16 text-center">
+              <p className="font-serif text-2xl font-bold text-ink">
+                No homes match these filters
+              </p>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Widen price, status, or property type — or clear filters to see
+                the East Texas demo inventory.
+              </p>
+              <button
+                type="button"
+                onClick={() =>
+                  setFilters({
+                    ...DEFAULT_SEARCH_FILTERS,
+                    query: filters.query,
+                    statuses: [
+                      "Active",
+                      "Option Pending Continue to Show",
+                      "Option Pending",
+                      "Under Contract",
+                      "Sold",
+                    ],
+                  })
+                }
+                className="mt-6 rounded-lg bg-gold px-5 py-2.5 text-sm font-bold text-navy"
+              >
+                Show more statuses
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+              {listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[70] xl:hidden">
+          <button
+            type="button"
+            aria-label="Close filters"
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl border border-hairline bg-[var(--surface)] p-5 pb-10 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="font-serif text-xl font-bold text-ink">Filters</p>
+              <button
+                type="button"
+                onClick={() => setMobileOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ink"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <SearchFiltersPanel
+              filters={filters}
+              onChange={setFilters}
+              resultCount={listings.length}
+            />
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="mt-4 h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
+            >
+              Show {listings.length}{" "}
+              {listings.length === 1 ? "home" : "homes"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

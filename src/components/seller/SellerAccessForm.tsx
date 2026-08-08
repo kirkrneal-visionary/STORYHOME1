@@ -21,7 +21,12 @@ export function SellerAccessForm() {
       );
       return null;
     }
-    if (listing.status === "sold" || listing.status === "withdrawn") {
+    if (
+      listing.status === "Sold" ||
+      listing.status === "Withdrawn" ||
+      listing.status === "Terminated" ||
+      listing.status === "Expired"
+    ) {
       setError("This listing is sold or withdrawn — seller access has expired.");
       return null;
     }

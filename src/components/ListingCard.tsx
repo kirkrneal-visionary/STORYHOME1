@@ -34,6 +34,9 @@ export function ListingCard({ listing }: ListingCardProps) {
           <span className="absolute bottom-3 left-3 rounded bg-navy px-2.5 py-1 font-mono text-sm font-semibold text-paper shadow-md">
             {formatUsd(listing.price)}
           </span>
+          <span className="absolute top-3 left-3 max-w-[70%] truncate rounded bg-gold px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-navy uppercase shadow-md">
+            {listing.status}
+          </span>
           <button
             type="button"
             onClick={(e) => {
@@ -55,8 +58,12 @@ export function ListingCard({ listing }: ListingCardProps) {
             {listing.addressSerif}
           </h3>
           <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
-            {listing.city} · {listing.beds} Beds · {listing.baths} Baths ·{" "}
-            {listing.sqft.toLocaleString()} Sqft
+            {listing.city} · {listing.countyName.replace(" County", "")} ·{" "}
+            {listing.propertyType}
+          </p>
+          <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
+            {listing.beds} Beds · {listing.baths} Baths ·{" "}
+            {listing.sqft.toLocaleString()} Sqft · {listing.lotSize}
           </p>
         </div>
       </Link>

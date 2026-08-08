@@ -20,7 +20,7 @@ export async function generateMetadata({
 export default async function SellerPortalPage({ params }: PageProps) {
   const { code } = await params;
   const listing = findSellerListingByCode(code);
-  if (!listing || listing.status === "sold") notFound();
+  if (!listing || listing.status === "Sold") notFound();
 
   return <SellerPortalView listing={listing} />;
 }
