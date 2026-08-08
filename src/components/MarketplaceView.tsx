@@ -39,7 +39,7 @@ export default function MarketplaceView() {
           q.includes("houston") ||
           q.includes(l.city.toLowerCase()),
       );
-      // Keep results visible for Houston market browsing even when area names differ
+      // Keep results visible for East Texas market browsing even when area names differ
       if (next.length === 0 && (q.includes("houston") || q.includes("tx"))) {
         next = DEMO_LISTINGS;
       }

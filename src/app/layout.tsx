@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s · Story Home",
   },
   description:
-    "Every home has a story. Premium two-sided real estate marketplace and professional network.",
+    "Every home has a story. East Texas real estate marketplace and professional network — built by a realtor, for realtors. Launching across Polk, Trinity, Angelina, Tyler, San Jacinto, Liberty, and Walker counties.",
 };
 
 export default function RootLayout({

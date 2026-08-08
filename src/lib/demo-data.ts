@@ -43,7 +43,7 @@ export const DEMO_AGENT: DemoAgent = {
   reputationScore: 94,
   primaryMarketCity: DEFAULT_MARKET.label,
   professionalRole: "agent",
-  bio: "Houston agent helping families find homes with character — from the Heights to the Energy Corridor.",
+  bio: "East Texas REALTOR serving Polk, Trinity, Angelina, Tyler, San Jacinto, Liberty, and Walker counties — built by a realtor, for realtors.",
   avatarTone: "bg-[color-mix(in_srgb,var(--gold)_35%,var(--navy))]",
 };
 
@@ -59,14 +59,14 @@ export const DEMO_LISTINGS: DemoListing[] = [
     agentId: DEMO_AGENT.id,
     price: 875000,
     addressSerif: "1402 Willow Street",
-    city: "Houston",
+    city: "Livingston",
     beds: 3,
     baths: 2.5,
     sqft: 2150,
     lotSize: "0.25 Acres",
     yearBuilt: 1936,
     description:
-      "An immaculately restored craftsman in the Houston Heights. Original details, modern systems, and a storied past.",
+      "A restored craftsman in Livingston (Polk County) with original details, modern systems, and pines just beyond the porch.",
     status: "active",
     photoUrl:
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
@@ -79,14 +79,14 @@ export const DEMO_LISTINGS: DemoListing[] = [
     agentId: DEMO_AGENT.id,
     price: 1245000,
     addressSerif: "88 Overlook Ridge",
-    city: "The Woodlands",
+    city: "Huntsville",
     beds: 4,
     baths: 3.5,
     sqft: 3120,
     lotSize: "0.4 Acres",
     yearBuilt: 2018,
     description:
-      "Woodlands modern with wraparound glass and a private courtyard for evening entertaining.",
+      "Walker County modern near Huntsville with wraparound glass and a private courtyard for evening entertaining.",
     status: "active",
     photoUrl:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80",
@@ -99,14 +99,14 @@ export const DEMO_LISTINGS: DemoListing[] = [
     agentId: DEMO_AGENT.id,
     price: 695000,
     addressSerif: "411 Garden Court",
-    city: "Sugar Land",
+    city: "Lufkin",
     beds: 3,
     baths: 2,
     sqft: 1840,
     lotSize: "0.18 Acres",
     yearBuilt: 1952,
     description:
-      "A quiet mid-century story with restored beams, a studio loft, and mature oaks in Sugar Land.",
+      "Angelina County mid-century in Lufkin with restored beams, a studio loft, and mature oaks.",
     status: "active",
     photoUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
@@ -123,9 +123,9 @@ export const DEMO_REFERRAL = {
   posterName: DEMO_AGENT.fullName,
   status: "Open" as const,
   clientDescription:
-    "Tech executive relocating for a clean-energy VP role. Demanding architectural taste.",
-  targetMarket: "Houston, TX",
-  budgetRange: "$1.5M - $2.0M",
+    "Family relocating for work in the Lufkin–Huntsville corridor. Wants acreage and a strong local agent.",
+  targetMarket: "East Texas (Angelina / Walker)",
+  budgetRange: "$350K - $550K",
   terms: "25% Co-Broker Fee upon closing",
 };
 
@@ -133,7 +133,7 @@ export const DEMO_MESSAGE = {
   senderId: DEMO_BUYER.id,
   receiverId: DEMO_AGENT.id,
   messageText:
-    "Hi Sarah, I love the history of 1402 Willow St. Can we schedule a private walkthrough this Saturday?",
+    "Hi Sarah, I love the history of 1402 Willow St in Livingston. Can we schedule a private walkthrough this Saturday?",
   attachedListingId: DEMO_LISTING.id,
   isRead: false,
   createdLabel: "10:42 AM",

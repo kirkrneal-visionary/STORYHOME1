@@ -49,13 +49,13 @@ export default function GlobalNav() {
           {isHome ? (
             <>
               <NavLink
-                href="/marketplace?q=Houston%2C%20TX&intent=sale"
+                href="/marketplace?q=Lufkin%2C%20TX&intent=sale"
                 active={false}
               >
                 Buy
               </NavLink>
               <NavLink
-                href="/marketplace?q=Houston%2C%20TX&intent=rent"
+                href="/marketplace?q=Lufkin%2C%20TX&intent=rent"
                 active={false}
               >
                 Rent
