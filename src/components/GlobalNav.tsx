@@ -83,6 +83,12 @@ export default function GlobalNav() {
               {isPro && isLoggedIn ? (
                 <>
                   <NavLink
+                    href="/portal"
+                    active={pathname.startsWith("/portal")}
+                  >
+                    Portal
+                  </NavLink>
+                  <NavLink
                     href="/network"
                     active={pathname.startsWith("/network")}
                   >

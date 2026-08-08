@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Briefcase,
   Building2,
   GitBranch,
   MessageSquare,
@@ -24,6 +25,12 @@ export const PRIMARY_NAV: NavItem[] = [
     href: "/marketplace",
     label: "Marketplace",
     icon: Store,
+  },
+  {
+    href: "/portal",
+    label: "Portal",
+    icon: Briefcase,
+    roles: ["professional"],
   },
   {
     href: "/network",
