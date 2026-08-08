@@ -1,5 +1,5 @@
 import { DEMO_LISTINGS, type DemoListing } from "@/lib/demo-data";
-import { DEFAULT_MARKET } from "@/lib/markets";
+import { SERVICE_COUNTIES } from "@/lib/markets";
 
 export type SellerListing = DemoListing & {
   countyFips: string;
@@ -19,21 +19,24 @@ export type ListingAnalytics = {
   savesThisWeek: number;
 };
 
+const POLK = SERVICE_COUNTIES.find((c) => c.fips === "48373")!;
+const WALKER = SERVICE_COUNTIES.find((c) => c.fips === "48471")!;
+
 /** Auto-generated client codes — created when an agent publishes a listing */
 export const SELLER_LISTINGS: SellerListing[] = [
   {
     ...DEMO_LISTINGS[0],
-    countyFips: DEFAULT_MARKET.countyFips,
-    countyName: DEFAULT_MARKET.countyName,
-    state: DEFAULT_MARKET.state,
+    countyFips: POLK.fips,
+    countyName: POLK.name,
+    state: "TX",
     accessCode: "WILLOW-875",
     daysOnMarket: 18,
   },
   {
     ...DEMO_LISTINGS[1],
-    countyFips: DEFAULT_MARKET.countyFips,
-    countyName: DEFAULT_MARKET.countyName,
-    state: DEFAULT_MARKET.state,
+    countyFips: WALKER.fips,
+    countyName: WALKER.name,
+    state: "TX",
     accessCode: "RIDGE-1245",
     daysOnMarket: 9,
   },

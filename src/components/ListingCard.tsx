@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Heart, MessageSquare, Star } from "lucide-react";
+import { SaveToSuiteModal } from "@/components/suites/SaveToSuiteModal";
+import { useSuites } from "@/components/SuitesContext";
 import {
   type DemoListing,
   formatUsd,
@@ -13,15 +15,33 @@ import { cn } from "@/lib/utils";
 
 type ListingCardProps = {
   listing: DemoListing;
+  dense?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
 };
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({
+  listing,
+  dense = false,
+  selected = false,
+  onSelect,
+}: ListingCardProps) {
   const agent = getAgent(listing.agentId);
-  const [saved, setSaved] = useState(false);
+  const { isListingInAnySuite } = useSuites();
+  const saved = isListingInAnySuite(listing.id);
+  const [suiteOpen, setSuiteOpen] = useState(false);
   const [following, setFollowing] = useState(false);
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-hairline bg-[var(--surface)] p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]">
+    <article
+      id={`listing-card-${listing.id}`}
+      onMouseEnter={onSelect}
+      className={cn(
+        "group overflow-hidden rounded-xl border bg-[var(--surface)] transition-all duration-300",
+        dense ? "p-3" : "p-4 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]",
+        selected ? "border-gold shadow-[0_0_0_1px_var(--gold)]" : "border-hairline",
+      )}
+    >
       <Link href={`/marketplace/${listing.id}`} className="block">
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]">
           <Image
@@ -34,15 +54,18 @@ export function ListingCard({ listing }: ListingCardProps) {
           <span className="absolute bottom-3 left-3 rounded bg-navy px-2.5 py-1 font-mono text-sm font-semibold text-paper shadow-md">
             {formatUsd(listing.price)}
           </span>
+          <span className="absolute top-3 left-3 max-w-[70%] truncate rounded bg-gold px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-navy uppercase shadow-md">
+            {listing.status}
+          </span>
           <button
             type="button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setSaved((v) => !v);
+              setSuiteOpen(true);
             }}
             className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-paper text-ink/50 shadow-md transition-colors hover:text-gold"
-            aria-label={saved ? "Unsave home" : "Save home"}
+            aria-label={saved ? "Manage suites" : "Save to suite"}
           >
             <Heart
               className={cn("h-4 w-4", saved && "fill-gold text-gold")}
@@ -55,8 +78,12 @@ export function ListingCard({ listing }: ListingCardProps) {
             {listing.addressSerif}
           </h3>
           <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
-            {listing.city} · {listing.beds} Beds · {listing.baths} Baths ·{" "}
-            {listing.sqft.toLocaleString()} Sqft
+            {listing.city} · {listing.countyName.replace(" County", "")} ·{" "}
+            {listing.propertyType}
+          </p>
+          <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
+            {listing.beds} Beds · {listing.baths} Baths ·{" "}
+            {listing.sqft.toLocaleString()} Sqft · {listing.lotSize}
           </p>
         </div>
       </Link>
@@ -105,6 +132,14 @@ export function ListingCard({ listing }: ListingCardProps) {
           <MessageSquare className="h-3 w-3" /> {listing.commentCount} Comments
         </span>
       </div>
+
+      {suiteOpen && (
+        <SaveToSuiteModal
+          listingId={listing.id}
+          listingTitle={listing.addressSerif}
+          onClose={() => setSuiteOpen(false)}
+        />
+      )}
     </article>
   );
 }

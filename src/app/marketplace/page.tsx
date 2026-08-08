@@ -11,7 +11,7 @@ export default function MarketplacePage() {
     <Suspense
       fallback={
         <div className="flex min-h-dvh items-center justify-center pt-[72px] text-sm text-[var(--muted)]">
-          Loading Houston listings…
+          Loading East Texas listings…
         </div>
       }
     >

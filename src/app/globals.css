@@ -48,6 +48,12 @@ html[data-role="professional"] {
   --font-mono: var(--font-ibm-plex-mono);
 }
 
+@layer components {
+  .field-input {
+    @apply h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;

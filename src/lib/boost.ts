@@ -53,28 +53,27 @@ export type ActiveBoost = {
 };
 
 /** Demo inventory — replaced by Supabase aggregate when MLS is live.
- * Leave at least one open spot per tier in Harris County so the seller
- * portal demo can select and activate every boost option.
+ * Leave open spots in Polk County so the seller portal demo can activate boosts.
  */
 export const DEMO_ACTIVE_BOOSTS: ActiveBoost[] = [
   {
     listingId: "other-1",
-    countyFips: "48201",
-    countyName: "Harris County",
+    countyFips: "48373",
+    countyName: "Polk County",
     tierId: "starter",
     status: "active",
   },
   {
     listingId: "other-2",
-    countyFips: "48201",
-    countyName: "Harris County",
+    countyFips: "48373",
+    countyName: "Polk County",
     tierId: "starter",
     status: "active",
   },
   {
     listingId: "other-3",
-    countyFips: "48201",
-    countyName: "Harris County",
+    countyFips: "48373",
+    countyName: "Polk County",
     tierId: "growth",
     status: "active",
   },

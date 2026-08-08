@@ -7,7 +7,12 @@ import { useState, type FormEvent } from "react";
 import { MapPin, Search } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
-import { DEFAULT_MARKET, HOUSTON_AREAS } from "@/lib/markets";
+import {
+  DEFAULT_MARKET,
+  REGION,
+  REGION_CITIES,
+  SERVICE_COUNTIES,
+} from "@/lib/markets";
 import { cn } from "@/lib/utils";
 
 type Intent = "sale" | "rent" | "sold";
@@ -36,11 +41,10 @@ export function HomeSearchHero() {
 
   return (
     <div className="bg-navy-deep text-ink">
-      {/* HAR-style search hero */}
       <section className="relative min-h-[78vh] overflow-hidden md:min-h-[85vh]">
         <Image
           src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80"
-          alt="Houston-area home at dusk"
+          alt="East Texas home at dusk"
           fill
           priority
           className="object-cover"
@@ -50,14 +54,14 @@ export function HomeSearchHero() {
 
         <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-28 md:min-h-[85vh] md:px-6 md:pt-32">
           <p className="font-mono text-xs font-semibold tracking-[0.18em] text-gold uppercase">
-            Houston, Texas · Real estate search
+            {REGION.label} · Built by a realtor, for realtors
           </p>
           <h1 className="mt-3 max-w-3xl font-serif text-4xl font-semibold tracking-[-0.03em] text-paper md:text-6xl">
-            Find your next home in Houston.
+            Find your next home in East Texas.
           </h1>
-          <p className="mt-3 max-w-xl text-base text-paper/80 md:text-lg">
-            Search homes for sale, rent, and sold — Story Home’s Houston market
-            engine.
+          <p className="mt-3 max-w-2xl text-base text-paper/80 md:text-lg">
+            Search homes across Polk, Trinity, Angelina, Tyler, San Jacinto,
+            Liberty, and Walker counties — then grow with Story Home.
           </p>
 
           <div className="mt-8 overflow-hidden rounded-2xl border border-white/15 bg-navy/80 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
@@ -94,7 +98,7 @@ export function HomeSearchHero() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="City, ZIP, neighborhood, or address"
+                  placeholder="City, ZIP, county, or address"
                   className="w-full bg-transparent text-base text-paper outline-none placeholder:text-paper/40"
                   aria-label="Search location"
                 />
@@ -110,7 +114,7 @@ export function HomeSearchHero() {
           </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {HOUSTON_AREAS.slice(0, 6).map((area) => (
+            {REGION_CITIES.slice(0, 6).map((area) => (
               <button
                 key={area}
                 type="button"
@@ -124,15 +128,14 @@ export function HomeSearchHero() {
         </div>
       </section>
 
-      {/* Popular areas + featured */}
       <section className="mx-auto max-w-6xl px-4 py-14 md:px-6">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="font-serif text-2xl font-bold text-paper md:text-3xl">
-              Browse Houston areas
+              Launch counties
             </h2>
             <p className="mt-1 text-sm text-paper/65">
-              Popular cities and neighborhoods in the greater Houston market.
+              Beginning rollout across seven East Texas counties.
             </p>
           </div>
           <Link
@@ -143,17 +146,19 @@ export function HomeSearchHero() {
           </Link>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-5">
-          {HOUSTON_AREAS.map((area) => (
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+          {SERVICE_COUNTIES.map((county) => (
             <button
-              key={area}
+              key={county.fips}
               type="button"
-              onClick={() => searchArea(area)}
-              className="rounded-xl border border-hairline bg-navy-soft px-4 py-4 text-left transition-colors hover:border-gold/40"
+              onClick={() => searchArea(county.hubCity)}
+              className="rounded-xl border border-hairline bg-navy-soft px-3 py-4 text-left transition-colors hover:border-gold/40"
             >
-              <p className="font-semibold text-paper">{area}</p>
+              <p className="font-semibold text-paper">
+                {county.name.replace(" County", "")}
+              </p>
               <p className="mt-1 font-mono text-[11px] text-paper/50 uppercase">
-                TX · Homes
+                {county.hubCity}
               </p>
             </button>
           ))}
@@ -165,14 +170,14 @@ export function HomeSearchHero() {
           <div className="mb-6 flex items-end justify-between">
             <div>
               <h2 className="font-serif text-2xl font-bold text-paper md:text-3xl">
-                Homes in Houston right now
+                Homes in East Texas right now
               </h2>
               <p className="mt-1 text-sm text-paper/65">
                 Featured listings — every card shows the agent behind it.
               </p>
             </div>
             <Link
-              href="/marketplace?q=Houston%2C%20TX"
+              href={`/marketplace?q=${encodeURIComponent(REGION.label)}`}
               className="text-sm font-semibold text-gold hover:underline"
             >
               See marketplace
@@ -189,8 +194,8 @@ export function HomeSearchHero() {
       <section className="mx-auto grid max-w-6xl gap-4 px-4 py-14 md:grid-cols-3 md:px-6">
         <ToolCard
           title="Buy a home"
-          body="Search Houston listings with filters, saves, and agent profiles on every card."
-          href="/marketplace?q=Houston%2C%20TX"
+          body="Search East Texas listings with filters, saves, and agent profiles on every card."
+          href={`/marketplace?q=${encodeURIComponent(DEFAULT_MARKET.label)}`}
           cta="Start searching"
         />
         <ToolCard
@@ -201,7 +206,7 @@ export function HomeSearchHero() {
         />
         <ToolCard
           title="For professionals"
-          body="Network, referral board, and reputation tools for Houston agents and partners."
+          body="Network, referral board, and tools built by a realtor for East Texas agents."
           href="/network"
           cta="Enter pro network"
         />

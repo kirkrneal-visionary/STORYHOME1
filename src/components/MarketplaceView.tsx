@@ -1,170 +1,211 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
+import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
+import { SearchToolbar } from "@/components/marketplace/SearchToolbar";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
+import {
+  DEFAULT_SEARCH_FILTERS,
+  applySearchFilters,
+  countActiveFilters,
+  type SearchFilters,
+} from "@/lib/listing-filters";
+import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
 import { DEFAULT_MARKET } from "@/lib/markets";
-import { cn } from "@/lib/utils";
 
-const CHIPS = [
-  "All",
-  "Following",
-  "Saved",
-  "Price",
-  "Beds",
-  "Baths",
-  "New this week",
-] as const;
+const MarketplaceMap = dynamic(
+  () =>
+    import("@/components/marketplace/MarketplaceMap").then(
+      (m) => m.MarketplaceMap,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center bg-navy-deep text-sm text-paper/60">
+        Loading map…
+      </div>
+    ),
+  },
+);
 
 export default function MarketplaceView() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || DEFAULT_MARKET.label;
   const intent = searchParams.get("intent") || "sale";
 
-  const [chip, setChip] = useState<(typeof CHIPS)[number]>("All");
-  const [bedsFilter, setBedsFilter] = useState("Any");
-  const [query, setQuery] = useState(initialQuery);
+  const [filters, setFilters] = useState<SearchFilters>(() => ({
+    ...DEFAULT_SEARCH_FILTERS,
+    query: initialQuery,
+    statuses:
+      intent === "sold"
+        ? ["Sold"]
+        : intent === "rent"
+          ? ["Active"]
+          : ["Active", "Option Pending Continue to Show"],
+  }));
+  const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
 
   const listings = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    let next = DEMO_LISTINGS;
+    const filtered = applySearchFilters(DEMO_LISTINGS, filters);
+    if (!boundary) return filtered;
+    return filtered.filter((listing) =>
+      listingInBoundary({ lat: listing.lat, lng: listing.lng }, boundary),
+    );
+  }, [filters, boundary]);
 
-    if (q) {
-      next = next.filter(
-        (l) =>
-          l.city.toLowerCase().includes(q.replace(", tx", "").trim()) ||
-          l.addressSerif.toLowerCase().includes(q) ||
-          "houston".includes(q) ||
-          q.includes("houston") ||
-          q.includes(l.city.toLowerCase()),
-      );
-      // Keep results visible for Houston market browsing even when area names differ
-      if (next.length === 0 && (q.includes("houston") || q.includes("tx"))) {
-        next = DEMO_LISTINGS;
-      }
+  useEffect(() => {
+    if (listings.length === 0) {
+      setSelectedId(null);
+      return;
     }
-
-    if (bedsFilter === "4+") {
-      next = next.filter((l) => l.beds >= 4);
-    } else if (bedsFilter !== "Any") {
-      next = next.filter((l) => l.beds === Number(bedsFilter));
+    if (!selectedId || !listings.some((l) => l.id === selectedId)) {
+      setSelectedId(listings[0].id);
     }
+  }, [listings, selectedId]);
 
-    return next;
-  }, [bedsFilter, query]);
+  useEffect(() => {
+    if (!selectedId) return;
+    const el = document.getElementById(`listing-card-${selectedId}`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedId]);
 
-  const intentLabel =
-    intent === "rent" ? "For Rent" : intent === "sold" ? "Sold" : "For Sale";
+  const activeFilterCount = countActiveFilters(filters);
 
   return (
-    <div className="flex min-h-dvh pb-16 pt-[72px] md:pb-0">
-      <aside className="fixed top-[72px] bottom-0 left-0 hidden w-[340px] overflow-y-auto border-r border-hairline bg-[var(--surface)] p-6 xl:block">
-        <h2 className="mb-6 font-serif text-2xl font-semibold text-ink">
-          Find Your Story
-        </h2>
+    <div className="flex h-dvh flex-col pt-[72px]">
+      <SearchToolbar
+        filters={filters}
+        onChange={setFilters}
+        activeFilterCount={activeFilterCount}
+        onOpenMore={() => setMoreOpen(true)}
+        mobileView={mobileView}
+        onMobileView={setMobileView}
+        resultCount={listings.length}
+      />
 
-        <div className="space-y-6">
-          <div>
-            <label className="mb-2 block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
-              Location
-            </label>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="City, neighborhood, or zip"
-              className="h-11 w-full rounded-lg border border-hairline bg-[var(--background)] px-4 text-sm font-medium text-ink outline-none focus:border-gold"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
-              Price Range
-            </label>
-            <div className="grid grid-cols-2 gap-3 font-mono">
-              <input
-                type="text"
-                defaultValue="$500,000"
-                className="h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
-              />
-              <input
-                type="text"
-                defaultValue="$1,500,000"
-                className="h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
-              Bedrooms
-            </label>
-            <div className="grid grid-cols-5 gap-1 text-xs font-medium">
-              {["Any", "1", "2", "3", "4+"].map((b) => (
+      <div className="relative flex min-h-0 flex-1">
+        {/* List pane */}
+        <section
+          className={
+            mobileView === "map"
+              ? "hidden"
+              : "flex w-full min-h-0 flex-col border-r border-hairline md:flex md:w-[44%] lg:w-[40%]"
+          }
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-20 md:pb-3">
+            {listings.length === 0 ? (
+              <div className="rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center">
+                <p className="font-serif text-xl font-bold text-ink">
+                  No homes in this map area
+                </p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  Clear the drawn boundary or widen filters to see more East
+                  Texas listings.
+                </p>
                 <button
-                  key={b}
                   type="button"
-                  onClick={() => setBedsFilter(b)}
-                  className={cn(
-                    "h-9 rounded-md border transition-colors",
-                    bedsFilter === b
-                      ? "border-gold bg-gold text-navy"
-                      : "border-hairline text-ink hover:border-gold/40",
-                  )}
+                  onClick={() => {
+                    setBoundary(null);
+                    setFilters({
+                      ...DEFAULT_SEARCH_FILTERS,
+                      query: filters.query,
+                      statuses: [
+                        "Active",
+                        "Option Pending Continue to Show",
+                        "Option Pending",
+                        "Under Contract",
+                        "Sold",
+                      ],
+                    });
+                  }}
+                  className="mt-5 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-navy"
                 >
-                  {b}
+                  Reset map & filters
                 </button>
-              ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {listings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    dense
+                    selected={listing.id === selectedId}
+                    onSelect={() => setSelectedId(listing.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Map pane */}
+        <section
+          className={
+            mobileView === "list"
+              ? "hidden md:block md:min-h-0 md:flex-1"
+              : "min-h-0 w-full flex-1 md:block"
+          }
+        >
+          <MarketplaceMap
+            listings={listings}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            boundary={boundary}
+            onBoundaryChange={setBoundary}
+            className="h-full"
+          />
+        </section>
+      </div>
+
+      {/* More filters drawer */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-[80]">
+          <button
+            type="button"
+            aria-label="Close filters"
+            className="absolute inset-0 bg-black/70"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div className="absolute top-0 right-0 flex h-full w-full max-w-md flex-col border-l border-hairline bg-[var(--surface)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+              <p className="font-serif text-xl font-bold text-ink">
+                More filters
+              </p>
+              <button
+                type="button"
+                onClick={() => setMoreOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+              <SearchFiltersPanel
+                filters={filters}
+                onChange={setFilters}
+                resultCount={listings.length}
+              />
+            </div>
+            <div className="border-t border-hairline p-4">
+              <button
+                type="button"
+                onClick={() => setMoreOpen(false)}
+                className="h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
+              >
+                See {listings.length} homes
+              </button>
             </div>
           </div>
         </div>
-      </aside>
-
-      <main className="flex-1 px-4 py-6 md:px-6 xl:ml-[340px]">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-4">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search city, neighborhood, or address"
-              className="h-12 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold xl:hidden"
-            />
-          </div>
-
-          <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
-            {CHIPS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setChip(item)}
-                className={cn(
-                  "h-8 shrink-0 rounded-full px-3 font-mono text-[11px] font-semibold tracking-wide uppercase transition-colors",
-                  chip === item
-                    ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                    : "border border-hairline text-[var(--muted)] hover:text-ink",
-                )}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <span className="font-mono text-xs tracking-widest text-[var(--muted)] uppercase">
-              {intentLabel} · {query} · {listings.length}{" "}
-              {listings.length === 1 ? "home" : "homes"}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-            {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
-        </div>
-      </main>
+      )}
     </div>
   );
 }
