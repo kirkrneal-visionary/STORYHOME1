@@ -2,17 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Calculator, Home, Users } from "lucide-react";
+import { Building2, Calculator, Home, Users } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { MyToolsView } from "@/components/broker/MyToolsView";
+import { MyListingsView } from "@/components/broker/MyListingsView";
 import { MyBuyersView } from "@/components/broker/MyBuyersView";
 import { MySellersView } from "@/components/broker/MySellersView";
 import { cn } from "@/lib/utils";
 
-type PortalTab = "tools" | "buyers" | "sellers";
+type PortalTab = "tools" | "listings" | "buyers" | "sellers";
 
 const TABS: { id: PortalTab; label: string; icon: typeof Calculator }[] = [
   { id: "tools", label: "My Tools", icon: Calculator },
+  { id: "listings", label: "My Listings", icon: Building2 },
   { id: "buyers", label: "My Buyers", icon: Users },
   { id: "sellers", label: "My Sellers", icon: Home },
 ];
@@ -24,8 +26,8 @@ export function BrokerPortal() {
   if (!isLoggedIn) {
     return (
       <Gate
-        title="Broker portal"
-        description="Log in with a professional account to access your tools, buyers, and sellers."
+        title="Story Pro"
+        description="Log in with a professional account to access your tools, listings, buyers, and sellers."
         cta={{ href: "/login?next=/portal", label: "Log in to continue" }}
       />
     );
@@ -35,7 +37,7 @@ export function BrokerPortal() {
     return (
       <Gate
         title="For professionals"
-        description="The broker portal is available to realtor, broker, and other pro accounts. Switch to a professional account to continue."
+        description="Story Pro is available to realtor, broker, and other pro accounts. Switch to a professional account to continue."
         cta={{ href: "/login?next=/portal", label: "Use a pro account" }}
       />
     );
@@ -46,13 +48,14 @@ export function BrokerPortal() {
       <div className="mx-auto max-w-6xl">
         <header className="flex flex-col gap-1">
           <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-            Realtor / Broker workspace
+            Story Pro · {user.name}
           </p>
           <h1 className="font-serif text-3xl font-bold text-ink md:text-4xl">
-            {user.name.split(" ")[0]}&rsquo;s portal
+            Story Pro
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Client-ready calculators and your live buyer &amp; seller pipeline.
+            List properties, manage clients, capture leads, and run the numbers —
+            your agent workspace.
           </p>
         </header>
 
@@ -86,6 +89,7 @@ export function BrokerPortal() {
 
         <div className="mt-8">
           {tab === "tools" && <MyToolsView />}
+          {tab === "listings" && <MyListingsView />}
           {tab === "buyers" && <MyBuyersView />}
           {tab === "sellers" && <MySellersView />}
         </div>

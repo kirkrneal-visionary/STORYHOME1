@@ -86,7 +86,7 @@ export default function GlobalNav() {
                     href="/portal"
                     active={pathname.startsWith("/portal")}
                   >
-                    Portal
+                    Story Pro
                   </NavLink>
                   <NavLink
                     href="/network"

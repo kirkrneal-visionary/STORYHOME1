@@ -74,6 +74,135 @@ export function NumberField({
   );
 }
 
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  id,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  id: string;
+  hint?: string;
+}) {
+  return (
+    <label htmlFor={id} className="block">
+      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+        {label}
+      </span>
+      <input
+        id={id}
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+      />
+      {hint && (
+        <span className="mt-1 block text-[11px] text-[var(--muted)]">{hint}</span>
+      )}
+    </label>
+  );
+}
+
+export function TextAreaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  id,
+  rows = 4,
+}: {
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  id: string;
+  rows?: number;
+}) {
+  return (
+    <label htmlFor={id} className="block">
+      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+        {label}
+      </span>
+      <textarea
+        id={id}
+        value={value}
+        rows={rows}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 w-full rounded-md border border-hairline bg-[var(--background)] px-3 py-2 text-sm text-ink outline-none focus:border-gold"
+      />
+    </label>
+  );
+}
+
+export function SelectField({
+  label,
+  value,
+  onChange,
+  options,
+  id,
+}: {
+  label: string;
+  value: string;
+  onChange: (next: string) => void;
+  options: readonly { value: string; label: string }[];
+  id: string;
+}) {
+  return (
+    <label htmlFor={id} className="block">
+      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+        {label}
+      </span>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function CheckboxField({
+  label,
+  checked,
+  onChange,
+  id,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  id: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-start gap-3 rounded-md border border-hairline bg-[var(--background)] p-3"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
+      />
+      <span className="text-sm text-ink">{label}</span>
+    </label>
+  );
+}
+
 export function ResultRow({
   label,
   value,

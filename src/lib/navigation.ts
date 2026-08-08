@@ -28,7 +28,7 @@ export const PRIMARY_NAV: NavItem[] = [
   },
   {
     href: "/portal",
-    label: "Portal",
+    label: "Story Pro",
     icon: Briefcase,
     roles: ["professional"],
   },
