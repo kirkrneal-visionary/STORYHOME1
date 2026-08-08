@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import { X } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
+import { SearchToolbar } from "@/components/marketplace/SearchToolbar";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
 import {
   DEFAULT_SEARCH_FILTERS,
@@ -12,7 +14,23 @@ import {
   countActiveFilters,
   type SearchFilters,
 } from "@/lib/listing-filters";
+import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
 import { DEFAULT_MARKET } from "@/lib/markets";
+
+const MarketplaceMap = dynamic(
+  () =>
+    import("@/components/marketplace/MarketplaceMap").then(
+      (m) => m.MarketplaceMap,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center bg-navy-deep text-sm text-paper/60">
+        Loading map…
+      </div>
+    ),
+  },
+);
 
 export default function MarketplaceView() {
   const searchParams = useSearchParams();
@@ -29,147 +47,162 @@ export default function MarketplaceView() {
           ? ["Active"]
           : ["Active", "Option Pending Continue to Show"],
   }));
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileView, setMobileView] = useState<"list" | "map">("list");
 
-  const listings = useMemo(
-    () => applySearchFilters(DEMO_LISTINGS, filters),
-    [filters],
-  );
+  const listings = useMemo(() => {
+    const filtered = applySearchFilters(DEMO_LISTINGS, filters);
+    if (!boundary) return filtered;
+    return filtered.filter((listing) =>
+      listingInBoundary({ lat: listing.lat, lng: listing.lng }, boundary),
+    );
+  }, [filters, boundary]);
+
+  useEffect(() => {
+    if (listings.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+    if (!selectedId || !listings.some((l) => l.id === selectedId)) {
+      setSelectedId(listings[0].id);
+    }
+  }, [listings, selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const el = document.getElementById(`listing-card-${selectedId}`);
+    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedId]);
 
   const activeFilterCount = countActiveFilters(filters);
 
-  const intentLabel =
-    intent === "rent" ? "For Rent" : intent === "sold" ? "Sold" : "For Sale";
-
   return (
-    <div className="flex min-h-dvh pb-16 pt-[72px] md:pb-0">
-      <aside className="fixed top-[72px] bottom-0 left-0 hidden w-[340px] overflow-y-auto border-r border-hairline bg-[var(--surface)] p-6 xl:block">
-        <SearchFiltersPanel
-          filters={filters}
-          onChange={setFilters}
-          resultCount={listings.length}
-        />
-      </aside>
+    <div className="flex h-dvh flex-col pt-[72px]">
+      <SearchToolbar
+        filters={filters}
+        onChange={setFilters}
+        activeFilterCount={activeFilterCount}
+        onOpenMore={() => setMoreOpen(true)}
+        mobileView={mobileView}
+        onMobileView={setMobileView}
+        resultCount={listings.length}
+      />
 
-      <main className="flex-1 px-4 py-6 md:px-6 xl:ml-[340px]">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-4 flex gap-2 xl:hidden">
-            <input
-              type="search"
-              value={filters.query}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, query: e.target.value }))
-              }
-              placeholder="Search city, county, or address"
-              className="h-12 flex-1 rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold"
-            />
-            <button
-              type="button"
-              onClick={() => setMobileOpen(true)}
-              className="inline-flex h-12 items-center gap-2 rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm font-semibold text-ink"
-            >
-              <SlidersHorizontal className="h-4 w-4 text-gold" />
-              Filters
-              {activeFilterCount > 0 && (
-                <span className="rounded-full bg-gold px-1.5 py-0.5 font-mono text-[10px] font-bold text-navy">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-          </div>
-
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <span className="font-mono text-xs tracking-widest text-[var(--muted)] uppercase">
-              {intentLabel} · {filters.query || "East Texas"} ·{" "}
-              {listings.length} {listings.length === 1 ? "home" : "homes"}
-            </span>
-            {activeFilterCount > 0 && (
-              <button
-                type="button"
-                onClick={() =>
-                  setFilters({
-                    ...DEFAULT_SEARCH_FILTERS,
-                    query: filters.query,
-                  })
-                }
-                className="text-xs font-semibold text-gold hover:underline"
-              >
-                Clear filters
-              </button>
+      <div className="relative flex min-h-0 flex-1">
+        {/* List pane */}
+        <section
+          className={
+            mobileView === "map"
+              ? "hidden"
+              : "flex w-full min-h-0 flex-col border-r border-hairline md:flex md:w-[44%] lg:w-[40%]"
+          }
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-20 md:pb-3">
+            {listings.length === 0 ? (
+              <div className="rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center">
+                <p className="font-serif text-xl font-bold text-ink">
+                  No homes in this map area
+                </p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  Clear the drawn boundary or widen filters to see more East
+                  Texas listings.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBoundary(null);
+                    setFilters({
+                      ...DEFAULT_SEARCH_FILTERS,
+                      query: filters.query,
+                      statuses: [
+                        "Active",
+                        "Option Pending Continue to Show",
+                        "Option Pending",
+                        "Under Contract",
+                        "Sold",
+                      ],
+                    });
+                  }}
+                  className="mt-5 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-navy"
+                >
+                  Reset map & filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {listings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    dense
+                    selected={listing.id === selectedId}
+                    onSelect={() => setSelectedId(listing.id)}
+                  />
+                ))}
+              </div>
             )}
           </div>
+        </section>
 
-          {listings.length === 0 ? (
-            <div className="rounded-xl border border-hairline bg-[var(--surface)] px-6 py-16 text-center">
-              <p className="font-serif text-2xl font-bold text-ink">
-                No homes match these filters
-              </p>
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                Widen price, status, or property type — or clear filters to see
-                the East Texas demo inventory.
-              </p>
-              <button
-                type="button"
-                onClick={() =>
-                  setFilters({
-                    ...DEFAULT_SEARCH_FILTERS,
-                    query: filters.query,
-                    statuses: [
-                      "Active",
-                      "Option Pending Continue to Show",
-                      "Option Pending",
-                      "Under Contract",
-                      "Sold",
-                    ],
-                  })
-                }
-                className="mt-6 rounded-lg bg-gold px-5 py-2.5 text-sm font-bold text-navy"
-              >
-                Show more statuses
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+        {/* Map pane */}
+        <section
+          className={
+            mobileView === "list"
+              ? "hidden md:block md:min-h-0 md:flex-1"
+              : "min-h-0 w-full flex-1 md:block"
+          }
+        >
+          <MarketplaceMap
+            listings={listings}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            boundary={boundary}
+            onBoundaryChange={setBoundary}
+            className="h-full"
+          />
+        </section>
+      </div>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-[70] xl:hidden">
+      {/* More filters drawer */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-[80]">
           <button
             type="button"
             aria-label="Close filters"
             className="absolute inset-0 bg-black/70"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl border border-hairline bg-[var(--surface)] p-5 pb-10 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <p className="font-serif text-xl font-bold text-ink">Filters</p>
+          <div className="absolute top-0 right-0 flex h-full w-full max-w-md flex-col border-l border-hairline bg-[var(--surface)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+              <p className="font-serif text-xl font-bold text-ink">
+                More filters
+              </p>
               <button
                 type="button"
-                onClick={() => setMobileOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ink"
+                onClick={() => setMoreOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <SearchFiltersPanel
-              filters={filters}
-              onChange={setFilters}
-              resultCount={listings.length}
-            />
-            <button
-              type="button"
-              onClick={() => setMobileOpen(false)}
-              className="mt-4 h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
-            >
-              Show {listings.length}{" "}
-              {listings.length === 1 ? "home" : "homes"}
-            </button>
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+              <SearchFiltersPanel
+                filters={filters}
+                onChange={setFilters}
+                resultCount={listings.length}
+              />
+            </div>
+            <div className="border-t border-hairline p-4">
+              <button
+                type="button"
+                onClick={() => setMoreOpen(false)}
+                className="h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
+              >
+                See {listings.length} homes
+              </button>
+            </div>
           </div>
         </div>
       )}

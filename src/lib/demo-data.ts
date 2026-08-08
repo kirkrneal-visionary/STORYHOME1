@@ -40,6 +40,8 @@ export type DemoListing = {
   likeCount: number;
   saveCount: number;
   commentCount: number;
+  lat: number;
+  lng: number;
 };
 
 export const DEMO_AGENT: DemoAgent = {
@@ -88,6 +90,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: false,
     hasHoa: false,
+    lat: 30.7132,
+    lng: -94.9411,
     photoUrl:
       "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
     likeCount: 14,
@@ -115,6 +119,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: true,
     hasHoa: true,
+    lat: 30.7318,
+    lng: -95.5624,
     photoUrl:
       "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80",
     likeCount: 22,
@@ -142,6 +148,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: false,
     hasHoa: false,
+    lat: 31.3415,
+    lng: -94.7358,
     photoUrl:
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
     likeCount: 9,
@@ -169,6 +177,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: false,
     hasHoa: false,
+    lat: 30.7811,
+    lng: -94.4288,
     photoUrl:
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80",
     likeCount: 31,
@@ -196,6 +206,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: false,
     hasHoa: false,
+    lat: 31.0612,
+    lng: -95.1382,
     photoUrl:
       "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1600&q=80",
     likeCount: 12,
@@ -223,6 +235,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: true,
     hasHoa: true,
+    lat: 30.0624,
+    lng: -94.7881,
     photoUrl:
       "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?auto=format&fit=crop&w=1600&q=80",
     likeCount: 8,
@@ -250,6 +264,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: false,
     hasPool: true,
     hasHoa: true,
+    lat: 30.5988,
+    lng: -95.1355,
     photoUrl:
       "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80",
     likeCount: 6,
@@ -277,6 +293,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: true,
     hasPool: false,
     hasHoa: false,
+    lat: 30.3489,
+    lng: -95.0922,
     photoUrl:
       "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1600&q=80",
     likeCount: 4,
@@ -304,6 +322,8 @@ export const DEMO_LISTINGS: DemoListing[] = [
     hasGarage: false,
     hasPool: false,
     hasHoa: false,
+    lat: 31.1912,
+    lng: -94.7864,
     photoUrl:
       "https://images.unsplash.com/photo-1600047509807-ba8f99d2cd00?auto=format&fit=crop&w=1600&q=80",
     likeCount: 2,

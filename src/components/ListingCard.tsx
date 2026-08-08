@@ -13,15 +13,31 @@ import { cn } from "@/lib/utils";
 
 type ListingCardProps = {
   listing: DemoListing;
+  dense?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
 };
 
-export function ListingCard({ listing }: ListingCardProps) {
+export function ListingCard({
+  listing,
+  dense = false,
+  selected = false,
+  onSelect,
+}: ListingCardProps) {
   const agent = getAgent(listing.agentId);
   const [saved, setSaved] = useState(false);
   const [following, setFollowing] = useState(false);
 
   return (
-    <article className="group overflow-hidden rounded-xl border border-hairline bg-[var(--surface)] p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]">
+    <article
+      id={`listing-card-${listing.id}`}
+      onMouseEnter={onSelect}
+      className={cn(
+        "group overflow-hidden rounded-xl border bg-[var(--surface)] transition-all duration-300",
+        dense ? "p-3" : "p-4 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]",
+        selected ? "border-gold shadow-[0_0_0_1px_var(--gold)]" : "border-hairline",
+      )}
+    >
       <Link href={`/marketplace/${listing.id}`} className="block">
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]">
           <Image

@@ -26,8 +26,17 @@ export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 export type HoaFilter = "any" | "hoa" | "no_hoa";
 
+export type SortOption =
+  | "recommended"
+  | "price_asc"
+  | "price_desc"
+  | "sqft_desc"
+  | "acres_desc"
+  | "newest";
+
 export type SearchFilters = {
   query: string;
+  keyword: string;
   priceMin: string;
   priceMax: string;
   sqftMin: string;
@@ -42,10 +51,12 @@ export type SearchFilters = {
   hoa: HoaFilter;
   propertyTypes: PropertyType[];
   statuses: ListingStatus[];
+  sort: SortOption;
 };
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   query: "",
+  keyword: "",
   priceMin: "",
   priceMax: "",
   sqftMin: "",
@@ -60,6 +71,7 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   hoa: "any",
   propertyTypes: [],
   statuses: ["Active"],
+  sort: "recommended",
 };
 
 function parseNum(raw: string): number | null {
@@ -71,6 +83,7 @@ function parseNum(raw: string): number | null {
 
 export function countActiveFilters(filters: SearchFilters): number {
   let n = 0;
+  if (filters.keyword.trim()) n += 1;
   if (filters.priceMin || filters.priceMax) n += 1;
   if (filters.sqftMin || filters.sqftMax) n += 1;
   if (filters.acresMin || filters.acresMax) n += 1;
@@ -124,9 +137,15 @@ export function applySearchFilters(
   const sqftMax = parseNum(filters.sqftMax);
   const acresMin = parseNum(filters.acresMin);
   const acresMax = parseNum(filters.acresMax);
+  const keyword = filters.keyword.trim().toLowerCase();
 
-  return listings.filter((listing) => {
+  const filtered = listings.filter((listing) => {
     if (!matchesLocationQuery(listing, filters.query)) return false;
+
+    if (keyword) {
+      const hay = `${listing.description} ${listing.addressSerif} ${listing.city} ${listing.propertyType}`.toLowerCase();
+      if (!hay.includes(keyword)) return false;
+    }
 
     if (priceMin != null && listing.price < priceMin) return false;
     if (priceMax != null && listing.price > priceMax) return false;
@@ -135,10 +154,11 @@ export function applySearchFilters(
     if (acresMin != null && listing.acres < acresMin) return false;
     if (acresMax != null && listing.acres > acresMax) return false;
 
+    // Beds/baths use Zillow-style minimums (2 = 2+)
     if (filters.beds === "5+") {
       if (listing.beds < 5) return false;
     } else if (filters.beds !== "Any") {
-      if (listing.beds !== Number(filters.beds)) return false;
+      if (listing.beds < Number(filters.beds)) return false;
     }
 
     if (filters.baths === "4+") {
@@ -170,6 +190,28 @@ export function applySearchFilters(
 
     return true;
   });
+
+  const sorted = [...filtered];
+  switch (filters.sort) {
+    case "price_asc":
+      sorted.sort((a, b) => a.price - b.price);
+      break;
+    case "price_desc":
+      sorted.sort((a, b) => b.price - a.price);
+      break;
+    case "sqft_desc":
+      sorted.sort((a, b) => b.sqft - a.sqft);
+      break;
+    case "acres_desc":
+      sorted.sort((a, b) => b.acres - a.acres);
+      break;
+    case "newest":
+      sorted.sort((a, b) => b.yearBuilt - a.yearBuilt);
+      break;
+    default:
+      break;
+  }
+  return sorted;
 }
 
 export function toggleInList<T>(list: T[], value: T): T[] {

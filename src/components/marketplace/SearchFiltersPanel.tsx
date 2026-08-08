@@ -17,8 +17,23 @@ type SearchFiltersPanelProps = {
   className?: string;
 };
 
-const BED_OPTIONS = ["Any", "1", "2", "3", "4", "5+"] as const;
-const BATH_OPTIONS = ["Any", "1", "1.5", "2", "2.5", "3", "4+"] as const;
+const BED_OPTIONS = [
+  ["Any", "Any"],
+  ["1", "1+"],
+  ["2", "2+"],
+  ["3", "3+"],
+  ["4", "4+"],
+  ["5+", "5+"],
+] as const;
+const BATH_OPTIONS = [
+  ["Any", "Any"],
+  ["1", "1+"],
+  ["1.5", "1.5+"],
+  ["2", "2+"],
+  ["2.5", "2.5+"],
+  ["3", "3+"],
+  ["4+", "4+"],
+] as const;
 
 export function SearchFiltersPanel({
   filters,
@@ -61,6 +76,16 @@ export function SearchFiltersPanel({
           value={filters.query}
           onChange={(e) => patch({ query: e.target.value })}
           placeholder="City, county, ZIP, or address"
+          className="field-input"
+        />
+      </Field>
+
+      <Field label="Keyword">
+        <input
+          type="text"
+          value={filters.keyword}
+          onChange={(e) => patch({ keyword: e.target.value })}
+          placeholder="Pool, acreage, craftsman…"
           className="field-input"
         />
       </Field>
@@ -112,12 +137,12 @@ export function SearchFiltersPanel({
 
       <Field label="Bedrooms">
         <div className="grid grid-cols-6 gap-1">
-          {BED_OPTIONS.map((beds) => (
+          {BED_OPTIONS.map(([beds, label]) => (
             <Chip
               key={beds}
               active={filters.beds === beds}
               onClick={() => patch({ beds })}
-              label={beds}
+              label={label}
             />
           ))}
         </div>
@@ -125,12 +150,12 @@ export function SearchFiltersPanel({
 
       <Field label="Bathrooms">
         <div className="grid grid-cols-4 gap-1 sm:grid-cols-7">
-          {BATH_OPTIONS.map((baths) => (
+          {BATH_OPTIONS.map(([baths, label]) => (
             <Chip
               key={baths}
               active={filters.baths === baths}
               onClick={() => patch({ baths })}
-              label={baths}
+              label={label}
             />
           ))}
         </div>
