@@ -29,6 +29,18 @@ Premium two-sided real estate marketplace and professional network.
 - `/referrals` — referral board
 - `/messages` — shared inbox
 - `/profile` — account shell
+- `/seller` — seller client portal access (code entry)
+- `/seller/portal/[code]` — listing analytics + boost purchase UI
+
+### Seller boost inventory (per county)
+
+| Tier | Price | Slots / county |
+|---|---|---|
+| Starter | $25/mo | 3 |
+| Growth | $50/mo | 3 |
+| Max | $100/mo | 1 |
+
+County capacity is enforced in SQL via `assert_boost_slot_available()` once MLS county mapping is live. Demo codes: `WILLOW-875`, `RIDGE-1245`.
 
 ## Getting started
 

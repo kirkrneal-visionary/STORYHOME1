@@ -37,6 +37,12 @@ export default function ProfilePage() {
           >
             Referral board
           </Link>
+          <Link
+            href="/seller"
+            className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-ink"
+          >
+            Seller client portal
+          </Link>
         </div>
       </div>
     </div>

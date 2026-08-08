@@ -18,6 +18,11 @@ export default function GlobalNav() {
   const pathname = usePathname();
   const isPro = role === "professional";
 
+  // Seller portal is a standalone experience (no main app chrome)
+  if (pathname.startsWith("/seller")) {
+    return null;
+  }
+
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-hairline bg-[var(--nav-surface)]/95 px-4 backdrop-blur-md md:px-6">
