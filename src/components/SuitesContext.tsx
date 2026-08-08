@@ -4,10 +4,12 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
 } from "react";
 import {
+  EMPTY_SUITES,
   SUITES_STORAGE_KEY,
   type StorySuite,
   createSuiteId,
@@ -27,32 +29,6 @@ type SuitesContextType = {
 };
 
 const SuitesContext = createContext<SuitesContextType | undefined>(undefined);
-const SUITES_EVENT = "story-home-suites-change";
-
-function readSuites(): StorySuite[] {
-  const parsed = parseStoredSuites(
-    window.localStorage.getItem(SUITES_STORAGE_KEY),
-  );
-  if (parsed) return parsed;
-  const seeded = defaultSuites();
-  window.localStorage.setItem(SUITES_STORAGE_KEY, JSON.stringify(seeded));
-  return seeded;
-}
-
-function subscribe(onChange: () => void) {
-  const handler = () => onChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener(SUITES_EVENT, handler);
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(SUITES_EVENT, handler);
-  };
-}
-
-function writeSuites(suites: StorySuite[]) {
-  window.localStorage.setItem(SUITES_STORAGE_KEY, JSON.stringify(suites));
-  window.dispatchEvent(new Event(SUITES_EVENT));
-}
 
 const COVER_TONES = [
   "from-[#1b5a50] to-[#0E1E38]",
@@ -62,10 +38,36 @@ const COVER_TONES = [
   "from-[#123F38] to-[#F0B93B]",
 ];
 
+function persist(suites: StorySuite[]) {
+  try {
+    window.localStorage.setItem(SUITES_STORAGE_KEY, JSON.stringify(suites));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
 export function SuitesProvider({ children }: { children: React.ReactNode }) {
-  const suites = useSyncExternalStore(subscribe, readSuites, () =>
-    defaultSuites(),
-  );
+  const [suites, setSuites] = useState<StorySuite[]>(EMPTY_SUITES);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const parsed = parseStoredSuites(
+        window.localStorage.getItem(SUITES_STORAGE_KEY),
+      );
+      const next = parsed ?? defaultSuites();
+      if (!parsed) persist(next);
+      setSuites(next);
+    } catch {
+      setSuites(defaultSuites());
+    }
+    setReady(true);
+  }, []);
+
+  const update = useCallback((next: StorySuite[]) => {
+    setSuites(next);
+    persist(next);
+  }, []);
 
   const createSuite = useCallback(
     (name: string, description = "") => {
@@ -78,35 +80,39 @@ export function SuitesProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      writeSuites([suite, ...suites]);
+      update([suite, ...suites]);
       return suite;
     },
-    [suites],
+    [suites, update],
   );
 
   const renameSuite = useCallback(
     (id: string, name: string) => {
-      writeSuites(
+      update(
         suites.map((s) =>
           s.id === id
-            ? { ...s, name: name.trim() || s.name, updatedAt: new Date().toISOString() }
+            ? {
+                ...s,
+                name: name.trim() || s.name,
+                updatedAt: new Date().toISOString(),
+              }
             : s,
         ),
       );
     },
-    [suites],
+    [suites, update],
   );
 
   const deleteSuite = useCallback(
     (id: string) => {
-      writeSuites(suites.filter((s) => s.id !== id));
+      update(suites.filter((s) => s.id !== id));
     },
-    [suites],
+    [suites, update],
   );
 
   const addListingToSuite = useCallback(
     (suiteId: string, listingId: string) => {
-      writeSuites(
+      update(
         suites.map((s) => {
           if (s.id !== suiteId) return s;
           if (s.listingIds.includes(listingId)) return s;
@@ -118,12 +124,12 @@ export function SuitesProvider({ children }: { children: React.ReactNode }) {
         }),
       );
     },
-    [suites],
+    [suites, update],
   );
 
   const removeListingFromSuite = useCallback(
     (suiteId: string, listingId: string) => {
-      writeSuites(
+      update(
         suites.map((s) =>
           s.id === suiteId
             ? {
@@ -135,7 +141,7 @@ export function SuitesProvider({ children }: { children: React.ReactNode }) {
         ),
       );
     },
-    [suites],
+    [suites, update],
   );
 
   const isListingInAnySuite = useCallback(
@@ -151,7 +157,7 @@ export function SuitesProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
-      suites,
+      suites: ready ? suites : EMPTY_SUITES,
       createSuite,
       renameSuite,
       deleteSuite,
@@ -161,6 +167,7 @@ export function SuitesProvider({ children }: { children: React.ReactNode }) {
       suitesForListing,
     }),
     [
+      ready,
       suites,
       createSuite,
       renameSuite,
