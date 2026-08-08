@@ -2,21 +2,31 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Building2, Calculator, Home, Users } from "lucide-react";
+import {
+  Building2,
+  Calculator,
+  Home,
+  MessagesSquare,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { DEMO_AGENT } from "@/lib/demo-data";
 import { MyToolsView } from "@/components/broker/MyToolsView";
 import { MyListingsView } from "@/components/broker/MyListingsView";
 import { MyBuyersView } from "@/components/broker/MyBuyersView";
 import { MySellersView } from "@/components/broker/MySellersView";
+import { CommunityView } from "@/components/broker/CommunityView";
 import { cn } from "@/lib/utils";
 
-type PortalTab = "tools" | "listings" | "buyers" | "sellers";
+type PortalTab = "tools" | "listings" | "buyers" | "sellers" | "community";
 
 const TABS: { id: PortalTab; label: string; icon: typeof Calculator }[] = [
   { id: "tools", label: "My Tools", icon: Calculator },
   { id: "listings", label: "My Listings", icon: Building2 },
   { id: "buyers", label: "My Buyers", icon: Users },
   { id: "sellers", label: "My Sellers", icon: Home },
+  { id: "community", label: "Community", icon: MessagesSquare },
 ];
 
 export function BrokerPortal() {
@@ -33,7 +43,7 @@ export function BrokerPortal() {
     );
   }
 
-  if (user?.kind !== "pro") {
+  if (user?.kind !== "pro" && user?.kind !== "broker") {
     return (
       <Gate
         title="For professionals"
@@ -85,6 +95,13 @@ export function BrokerPortal() {
               </button>
             );
           })}
+          <Link
+            href={`/agents/${DEMO_AGENT.id}`}
+            className="-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-ink"
+          >
+            <UserRound className="h-4 w-4" />
+            Public Profile
+          </Link>
         </div>
 
         <div className="mt-8">
@@ -92,6 +109,7 @@ export function BrokerPortal() {
           {tab === "listings" && <MyListingsView />}
           {tab === "buyers" && <MyBuyersView />}
           {tab === "sellers" && <MySellersView />}
+          {tab === "community" && <CommunityView />}
         </div>
       </div>
     </div>

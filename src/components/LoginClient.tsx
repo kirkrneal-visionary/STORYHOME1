@@ -4,7 +4,12 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
-import { DEMO_ACCOUNTS, PRO_ROLE_LABELS, type ProRole } from "@/lib/auth";
+import {
+  DEMO_ACCOUNTS,
+  DEMO_BROKER,
+  PRO_ROLE_LABELS,
+  type ProRole,
+} from "@/lib/auth";
 
 export function LoginClient() {
   const router = useRouter();
@@ -111,6 +116,31 @@ export function LoginClient() {
             );
           })}
         </div>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="font-serif text-xl font-bold text-ink">
+          The Brokerage (Broker of Record)
+        </h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          Org admin — manages the roster, authorizes teams, and curates the
+          brokerage community &amp; knowledge library.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            loginAs(DEMO_BROKER);
+            goNext();
+          }}
+          className="mt-3 rounded-xl border border-gold bg-[var(--surface)] px-4 py-3 text-left hover:border-gold/60"
+        >
+          <p className="text-sm font-semibold text-ink">
+            Continue as Brokerage — {DEMO_BROKER.name}
+          </p>
+          <p className="font-mono text-[10px] text-[var(--muted)] uppercase">
+            Broker of Record · Story Home Realty
+          </p>
+        </button>
       </section>
 
       <section className="mt-8">

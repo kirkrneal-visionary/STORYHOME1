@@ -59,7 +59,7 @@ export default function ProfilePage() {
               My Suites
             </Link>
           )}
-          {user.kind === "pro" && (
+          {(user.kind === "pro" || user.kind === "broker") && (
             <>
               <Link
                 href="/portal"
