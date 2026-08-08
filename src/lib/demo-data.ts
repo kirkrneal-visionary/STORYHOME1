@@ -325,7 +325,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     lat: 31.1912,
     lng: -94.7864,
     photoUrl:
-      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cd00?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
     likeCount: 2,
     saveCount: 1,
     commentCount: 0,

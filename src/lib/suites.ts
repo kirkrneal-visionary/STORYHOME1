@@ -12,12 +12,15 @@ export type StorySuite = {
 
 export const SUITES_STORAGE_KEY = "story-home-suites";
 
+/** Stable empty snapshot for SSR — never recreate per render */
+export const EMPTY_SUITES: StorySuite[] = [];
+
 export function createSuiteId() {
   return `suite-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export function defaultSuites(): StorySuite[] {
-  const now = new Date().toISOString();
+  const now = "2026-01-01T00:00:00.000Z";
   return [
     {
       id: "suite-lake",

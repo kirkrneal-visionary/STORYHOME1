@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Briefcase,
-  Disc3,
+  Bookmark,
   Home,
   LogIn,
   MessageSquare,
+  Search,
   User,
   Users,
 } from "lucide-react";
@@ -221,13 +222,13 @@ export default function GlobalNav() {
             <MobileTab
               href="/saved"
               label="Suites"
-              icon={Disc3}
+              icon={Bookmark}
               active={pathname.startsWith("/saved")}
             />
             <MobileTab
               href="/marketplace"
               label="Search"
-              icon={Users}
+              icon={Search}
               active={pathname.startsWith("/marketplace")}
             />
           </>

@@ -4,8 +4,9 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
 } from "react";
 import {
   AUTH_STORAGE_KEY,
@@ -20,45 +21,46 @@ type AuthContextType = {
   user: AuthUser | null;
   isLoggedIn: boolean;
   loginAs: (user: AuthUser) => void;
-  loginSellerWithCode: (code: string) => { ok: true } | { ok: false; error: string };
+  loginSellerWithCode: (
+    code: string,
+  ) => { ok: true } | { ok: false; error: string };
   loginPro: (proRole: ProRole, name?: string) => void;
   loginConsumer: (name?: string) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const AUTH_EVENT = "story-home-auth-change";
 
-function readUser(): AuthUser | null {
-  return parseStoredUser(window.localStorage.getItem(AUTH_STORAGE_KEY));
-}
-
-function subscribe(onChange: () => void) {
-  const handler = () => onChange();
-  window.addEventListener("storage", handler);
-  window.addEventListener(AUTH_EVENT, handler);
-  return () => {
-    window.removeEventListener("storage", handler);
-    window.removeEventListener(AUTH_EVENT, handler);
-  };
-}
-
-function writeUser(user: AuthUser | null) {
-  if (user) {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-  } else {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+function persistUser(user: AuthUser | null) {
+  try {
+    if (user) {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+  } catch {
+    // ignore
   }
-  window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setRole } = useApp();
-  const user = useSyncExternalStore(subscribe, readUser, () => null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      setUser(parseStoredUser(window.localStorage.getItem(AUTH_STORAGE_KEY)));
+    } catch {
+      setUser(null);
+    }
+    setReady(true);
+  }, []);
 
   const loginAs = useCallback(
     (next: AuthUser) => {
-      writeUser(next);
+      setUser(next);
+      persistUser(next);
       setRole(next.kind === "pro" ? "professional" : "consumer");
     },
     [setRole],
@@ -132,21 +134,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
-    writeUser(null);
+    setUser(null);
+    persistUser(null);
     setRole("consumer");
   }, [setRole]);
 
   const value = useMemo(
     () => ({
-      user,
-      isLoggedIn: Boolean(user),
+      user: ready ? user : null,
+      isLoggedIn: ready && Boolean(user),
       loginAs,
       loginSellerWithCode,
       loginPro,
       loginConsumer,
       logout,
     }),
-    [user, loginAs, loginSellerWithCode, loginPro, loginConsumer, logout],
+    [
+      ready,
+      user,
+      loginAs,
+      loginSellerWithCode,
+      loginPro,
+      loginConsumer,
+      logout,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
