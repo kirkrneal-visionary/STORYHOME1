@@ -147,13 +147,13 @@ export function IncomingLeads() {
                   {!routing.resolved && win && iCanClaim && contact && (
                     <div className="flex flex-col items-end gap-1">
                       <Countdown ms={win.msRemaining} />
-                      <a
-                        href={`tel:${contact.phone.replace(/[^\d]/g, "")}`}
+                      <button
+                        type="button"
                         onClick={() => claim(routing.consumerId, win.listingId)}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-navy hover:opacity-90"
                       >
                         <Phone className="h-4 w-4" /> Call &amp; claim
-                      </a>
+                      </button>
                       <span className="font-mono text-[11px] text-[var(--muted)]">
                         {contact.phone}
                       </span>
