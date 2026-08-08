@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --navy: #0e1e38;
+  --navy-soft: #152a4e;
+  --navy-deep: #091525;
+  --gold: #f0b93b;
+  --teal: #123f38;
+  --teal-soft: #1b5a50;
+  --paper: #f7f4ec;
+  --ink: #f4f1e8;
+  --hairline: rgba(247, 244, 236, 0.12);
+
+  /* Site-wide dark navy (HAR/Zillow competitor mode) */
+  --background: var(--navy-deep);
+  --foreground: #f4f1e8;
+  --surface: var(--navy-soft);
+  --nav-surface: color-mix(in srgb, var(--navy) 92%, black);
+  --muted: color-mix(in srgb, #f7f4ec 64%, transparent);
+  --accent: var(--gold);
+  --accent-contrast: var(--navy);
+  --brand-mark: var(--teal);
+  --brand-home: var(--gold);
+  --brand-word: #f7f4ec;
+}
+
+html[data-role="professional"] {
+  --accent: var(--teal-soft);
+  --accent-contrast: #f7f4ec;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-navy-deep: var(--navy-deep);
+  --color-gold: var(--gold);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-hairline: var(--hairline);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-fraunces);
+  --font-mono: var(--font-ibm-plex-mono);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-serif {
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+  }
+
+  .font-mono {
+    font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  }
+}

@@ -1,0 +1,110 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { Heart, MessageSquare, Star } from "lucide-react";
+import {
+  type DemoListing,
+  formatUsd,
+  getAgent,
+} from "@/lib/demo-data";
+import { cn } from "@/lib/utils";
+
+type ListingCardProps = {
+  listing: DemoListing;
+};
+
+export function ListingCard({ listing }: ListingCardProps) {
+  const agent = getAgent(listing.agentId);
+  const [saved, setSaved] = useState(false);
+  const [following, setFollowing] = useState(false);
+
+  return (
+    <article className="group overflow-hidden rounded-xl border border-hairline bg-[var(--surface)] p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]">
+      <Link href={`/marketplace/${listing.id}`} className="block">
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]">
+          <Image
+            src={listing.photoUrl}
+            alt={listing.addressSerif}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            sizes="(max-width: 768px) 100vw, 480px"
+          />
+          <span className="absolute bottom-3 left-3 rounded bg-navy px-2.5 py-1 font-mono text-sm font-semibold text-paper shadow-md">
+            {formatUsd(listing.price)}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSaved((v) => !v);
+            }}
+            className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-paper text-ink/50 shadow-md transition-colors hover:text-gold"
+            aria-label={saved ? "Unsave home" : "Save home"}
+          >
+            <Heart
+              className={cn("h-4 w-4", saved && "fill-gold text-gold")}
+            />
+          </button>
+        </div>
+
+        <div className="mt-4">
+          <h3 className="font-serif text-xl font-bold text-ink">
+            {listing.addressSerif}
+          </h3>
+          <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
+            {listing.city} · {listing.beds} Beds · {listing.baths} Baths ·{" "}
+            {listing.sqft.toLocaleString()} Sqft
+          </p>
+        </div>
+      </Link>
+
+      <div className="my-4 flex items-center justify-between border-t border-hairline pt-3">
+        <Link
+          href={`/agents/${agent.id}`}
+          className="flex min-w-0 items-center gap-3"
+        >
+          <div
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-navy",
+              agent.avatarTone,
+            )}
+          >
+            {agent.initials}
+          </div>
+          <div className="min-w-0">
+            <h4 className="truncate text-sm font-semibold text-ink">
+              {agent.fullName}
+            </h4>
+            <div className="-mt-0.5 flex items-center gap-1 text-xs font-medium text-[var(--muted)]">
+              <Star className="h-3 w-3 fill-gold text-gold" />
+              <span className="font-mono">{agent.starRating.toFixed(2)}</span>
+            </div>
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setFollowing((v) => !v)}
+          className={cn(
+            "h-7 rounded-md border px-3 text-xs font-semibold transition-colors",
+            following
+              ? "border-teal bg-teal text-paper"
+              : "border-gold/50 text-gold hover:bg-gold hover:text-navy",
+          )}
+        >
+          {following ? "Following" : "Follow"}
+        </button>
+      </div>
+
+      <div className="flex items-center gap-4 font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase">
+        <span>♡ {listing.likeCount} Likes</span>
+        <span>❑ {listing.saveCount + (saved ? 1 : 0)} Saves</span>
+        <span className="inline-flex items-center gap-1">
+          <MessageSquare className="h-3 w-3" /> {listing.commentCount} Comments
+        </span>
+      </div>
+    </article>
+  );
+}
