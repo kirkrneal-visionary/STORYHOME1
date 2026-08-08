@@ -10,12 +10,22 @@ import {
   PRO_ROLE_LABELS,
   type ProRole,
 } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 
 export function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
-  const { loginAs, loginSellerWithCode, isLoggedIn, user, logout } = useAuth();
+  const {
+    loginAs,
+    loginSellerWithCode,
+    isLoggedIn,
+    user,
+    logout,
+    supabaseConfigured,
+    signInWithPassword,
+    signUp,
+  } = useAuth();
   const [sellerCode, setSellerCode] = useState("");
   const [error, setError] = useState("");
 
@@ -71,10 +81,21 @@ export function LoginClient() {
         Log in to continue
       </h1>
       <p className="mt-3 text-sm text-[var(--muted)]">
-        Demo mode — pick an account type. Messages unlock after login. Buyers
-        get Story Home Suites.
+        {supabaseConfigured
+          ? "Sign in or create your account. Your data syncs across devices."
+          : "Demo mode — pick an account type. Messages unlock after login. Buyers get Story Home Suites."}
       </p>
 
+      {supabaseConfigured && (
+        <RealAuthForm
+          signInWithPassword={signInWithPassword}
+          signUp={signUp}
+          onDone={goNext}
+        />
+      )}
+
+      {!supabaseConfigured && (
+        <>
       <section className="mt-10">
         <h2 className="font-serif text-xl font-bold text-ink">
           Consumer (Buyer)
@@ -142,6 +163,8 @@ export function LoginClient() {
           </p>
         </button>
       </section>
+        </>
+      )}
 
       <section className="mt-8">
         <h2 className="font-serif text-xl font-bold text-ink">
@@ -179,5 +202,172 @@ export function LoginClient() {
         </Link>
       </p>
     </div>
+  );
+}
+
+type AuthResult = { ok: true } | { ok: false; error: string };
+
+function RealAuthForm({
+  signInWithPassword,
+  signUp,
+  onDone,
+}: {
+  signInWithPassword: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (
+    email: string,
+    password: string,
+    opts: {
+      fullName: string;
+      accountKind: "consumer" | "pro" | "broker";
+      professionalRole?: ProRole;
+    },
+  ) => Promise<AuthResult>;
+  onDone: () => void;
+}) {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [accountKind, setAccountKind] = useState<"consumer" | "pro" | "broker">(
+    "consumer",
+  );
+  const [proRole, setProRole] = useState<ProRole>("realtor_broker");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setNotice("");
+    setBusy(true);
+    const result =
+      mode === "signin"
+        ? await signInWithPassword(email, password)
+        : await signUp(email, password, {
+            fullName,
+            accountKind,
+            professionalRole: accountKind === "pro" ? proRole : undefined,
+          });
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    if (mode === "signup") {
+      setNotice(
+        "Account created. If email confirmation is enabled, confirm via email, then sign in.",
+      );
+      setMode("signin");
+      return;
+    }
+    onDone();
+  }
+
+  const inputCls =
+    "h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold";
+
+  return (
+    <form onSubmit={submit} className="mt-8 space-y-3 rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+      <div className="flex gap-2">
+        {(["signin", "signup"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => {
+              setMode(m);
+              setError("");
+              setNotice("");
+            }}
+            className={cn(
+              "h-9 flex-1 rounded-lg text-sm font-semibold",
+              mode === m
+                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                : "border border-hairline text-ink",
+            )}
+          >
+            {m === "signin" ? "Sign in" : "Create account"}
+          </button>
+        ))}
+      </div>
+
+      {mode === "signup" && (
+        <>
+          <input
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Full name"
+            className={inputCls}
+            required
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              value={accountKind}
+              onChange={(e) =>
+                setAccountKind(e.target.value as "consumer" | "pro" | "broker")
+              }
+              className={inputCls}
+            >
+              <option value="consumer">Buyer / Consumer</option>
+              <option value="pro">Agent / Pro</option>
+              <option value="broker">Broker of Record</option>
+            </select>
+            {accountKind === "pro" && (
+              <select
+                value={proRole}
+                onChange={(e) => setProRole(e.target.value as ProRole)}
+                className={inputCls}
+              >
+                {(
+                  [
+                    "realtor_broker",
+                    "inspector",
+                    "appraiser",
+                    "lender",
+                  ] as ProRole[]
+                ).map((r) => (
+                  <option key={r} value={r}>
+                    {PRO_ROLE_LABELS[r]}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        </>
+      )}
+
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        className={inputCls}
+        required
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        className={inputCls}
+        required
+        minLength={6}
+      />
+
+      {error && <p className="text-sm text-red-300">{error}</p>}
+      {notice && <p className="text-sm text-teal-soft">{notice}</p>}
+
+      <button
+        type="submit"
+        disabled={busy}
+        className="h-11 w-full rounded-xl bg-gold text-sm font-bold text-navy disabled:opacity-60"
+      >
+        {busy
+          ? "Working…"
+          : mode === "signin"
+            ? "Sign in"
+            : "Create account"}
+      </button>
+    </form>
   );
 }
