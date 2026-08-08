@@ -1,4 +1,4 @@
-export type AccountKind = "consumer" | "pro" | "seller";
+export type AccountKind = "consumer" | "pro" | "seller" | "broker";
 
 export type ProRole =
   | "realtor_broker"
@@ -70,8 +70,18 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
 export function accountLabel(user: AuthUser) {
   if (user.kind === "consumer") return "Buyer / Consumer";
   if (user.kind === "seller") return "Seller (listing access)";
+  if (user.kind === "broker") return "Broker of Record";
   return PRO_ROLE_LABELS[user.proRole ?? "realtor_broker"];
 }
+
+/** Demo Broker-of-Record account for "The Brokerage" org admin experience. */
+export const DEMO_BROKER: AuthUser = {
+  id: "user-broker",
+  name: "Dana Brooks",
+  email: "dana@storyhome.demo",
+  initials: "DB",
+  kind: "broker",
+};
 
 export function parseStoredUser(raw: string | null): AuthUser | null {
   if (!raw) return null;

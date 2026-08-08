@@ -61,7 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (next: AuthUser) => {
       setUser(next);
       persistUser(next);
-      setRole(next.kind === "pro" ? "professional" : "consumer");
+      setRole(
+        next.kind === "pro" || next.kind === "broker"
+          ? "professional"
+          : "consumer",
+      );
     },
     [setRole],
   );
