@@ -1,138 +1,127 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowUpRight, Award, Layers, Plus } from "lucide-react";
 import { DEMO_AGENT, DEMO_REFERRAL } from "@/lib/demo-data";
+import { cn } from "@/lib/utils";
+
+const FILTERS = [
+  "Open in my market",
+  "All open",
+  "My posted",
+  "My claimed",
+  "Closed",
+] as const;
 
 export default function ProfessionalView() {
+  const [filter, setFilter] =
+    useState<(typeof FILTERS)[number]>("Open in my market");
+
   return (
-    <div className="min-h-screen bg-white pb-16 pt-[72px] md:pb-0">
-      {/* PERFORMANCE METRICS TOP STRIP */}
-      <section className="border-b border-hairline bg-slate-50/50 px-6 py-6">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
+    <div className="min-h-dvh pb-16 pt-[72px] md:pb-0">
+      <section className="border-b border-hairline bg-[var(--surface)] px-4 py-6 md:px-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
           <MetricCard
             icon={<Award className="h-6 w-6" />}
-            iconWrap="bg-teal-50 text-teal-accent"
             label="Reputation Score"
             value={String(DEMO_AGENT.reputationScore)}
             trend="+2%"
           />
           <MetricCard
             icon={<Layers className="h-6 w-6" />}
-            iconWrap="bg-amber-50 text-gold"
             label="Open Network Leads"
             value="12"
           />
           <MetricCard
             icon={<Plus className="h-6 w-6" />}
-            iconWrap="bg-blue-50 text-navy"
             label="Active Listings"
             value="4"
           />
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl p-6">
-        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h2 className="font-serif text-3xl font-bold text-navy">
-              Referral Distribution Board
-            </h2>
-            <p className="mt-0.5 font-sans text-sm text-slate-500">
-              B2B client distribution marketplace tracking network contracts
+            <h1 className="font-serif text-3xl font-bold text-ink">
+              Referral Board
+            </h1>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              B2B client distribution — claim, close, and rate collaborations.
             </p>
           </div>
           <button
             type="button"
-            className="flex h-11 items-center gap-2 self-start rounded-lg bg-teal-accent px-5 font-sans text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#0c3330] md:self-auto"
+            className="inline-flex h-11 items-center gap-2 self-start rounded-lg bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] transition-opacity hover:opacity-90 md:self-auto"
           >
-            <Plus className="h-4 w-4" /> Post New Referral Opportunity
+            <Plus className="h-4 w-4" /> Post a referral
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 font-sans lg:grid-cols-3">
-          {/* OPEN PIPELINE */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="rounded border border-amber-200 bg-amber-100 px-2 py-1 text-xs font-bold tracking-wider text-navy uppercase">
-                Open Lead Pipeline
-              </span>
-              <span className="font-mono text-xs font-bold text-slate-400">
-                1
-              </span>
-            </div>
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
+          {FILTERS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setFilter(item)}
+              className={cn(
+                "h-8 shrink-0 rounded-full px-3 font-mono text-[11px] font-semibold tracking-wide uppercase",
+                filter === item
+                  ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                  : "border border-hairline text-[var(--muted)]",
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
 
-            <div className="space-y-4 rounded-lg border border-hairline bg-white p-5 shadow-sm">
-              <div className="flex items-start justify-between">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <BoardColumn title="Open" count={1} tone="gold">
+            <div className="space-y-4 rounded-xl border border-hairline bg-[var(--surface)] p-5">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="block font-mono text-[11px] font-bold text-slate-400 uppercase">
-                    Target Destination
+                  <span className="block font-mono text-[11px] font-bold text-[var(--muted)] uppercase">
+                    Target market
                   </span>
-                  <span className="font-serif text-lg font-bold text-navy">
+                  <span className="font-serif text-lg font-bold text-ink">
                     {DEMO_REFERRAL.targetMarket}
                   </span>
                 </div>
-                <span className="rounded bg-navy px-2 py-0.5 font-mono text-xs font-bold text-white">
-                  {DEMO_REFERRAL.budgetRange}
-                </span>
+                <StatusBadge status="Open" />
               </div>
-
-              <div>
-                <span className="block font-mono text-[11px] font-bold text-slate-400 uppercase">
-                  Lead Criteria Context
-                </span>
-                <p className="mt-0.5 text-sm leading-relaxed text-slate-text">
-                  {DEMO_REFERRAL.clientDescription}
-                </p>
-              </div>
-
+              <p className="text-sm leading-relaxed text-[var(--muted)]">
+                {DEMO_REFERRAL.clientDescription}
+              </p>
               <div className="flex items-center justify-between border-t border-hairline pt-3">
                 <div>
-                  <span className="block font-mono text-[10px] text-slate-400 uppercase">
-                    Contract Terms
+                  <span className="block font-mono text-[10px] text-[var(--muted)] uppercase">
+                    Budget · Terms
                   </span>
-                  <span className="text-xs font-bold text-teal-accent">
-                    25% Co-Broker Split
+                  <span className="text-xs font-semibold text-ink">
+                    {DEMO_REFERRAL.budgetRange} · 25% split
                   </span>
                 </div>
                 <button
                   type="button"
-                  className="h-8 rounded bg-gold px-4 text-xs font-semibold text-navy transition-colors hover:bg-amber-400"
+                  className="h-8 rounded-md bg-gold px-4 text-xs font-semibold text-navy"
                 >
-                  Claim Lead
+                  Claim
                 </button>
               </div>
+              <p className="font-mono text-[11px] text-[var(--muted)]">
+                Posted by {DEMO_REFERRAL.posterName}
+              </p>
             </div>
-          </div>
+          </BoardColumn>
 
-          {/* CLAIMED */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 opacity-60">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="rounded bg-teal-accent px-2 py-1 text-xs font-bold tracking-wider text-white uppercase">
-                Claimed / Escrow
-              </span>
-              <span className="font-mono text-xs font-bold text-slate-400">
-                0
-              </span>
-            </div>
-            <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-xs font-medium text-slate-400">
-              No leads currently tracking in escrow
-            </div>
-          </div>
+          <BoardColumn title="Claimed" count={0} tone="teal">
+            <EmptyState text="No leads currently in escrow" />
+          </BoardColumn>
 
-          {/* ARCHIVE */}
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 opacity-60">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="rounded bg-slate-200 px-2 py-1 text-xs font-bold tracking-wider text-slate-500 uppercase">
-                Closed Archive
-              </span>
-              <span className="font-mono text-xs font-bold text-slate-400">
-                0
-              </span>
-            </div>
-            <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-xs font-medium text-slate-400">
-              Archive records are empty
-            </div>
-          </div>
+          <BoardColumn title="Closed" count={0} tone="slate">
+            <EmptyState text="Archive is empty" />
+          </BoardColumn>
         </div>
       </main>
     </div>
@@ -141,37 +130,81 @@ export default function ProfessionalView() {
 
 function MetricCard({
   icon,
-  iconWrap,
   label,
   value,
   trend,
 }: {
   icon: React.ReactNode;
-  iconWrap: string;
   label: string;
   value: string;
   trend?: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-hairline bg-white p-4">
-      <div
-        className={`flex h-12 w-12 items-center justify-center rounded-lg ${iconWrap}`}
-      >
+    <div className="flex items-center gap-4 rounded-xl border border-hairline bg-[var(--background)] p-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)]">
         {icon}
       </div>
       <div>
-        <span className="block text-xs font-medium tracking-wider text-slate-400 uppercase">
+        <span className="block font-mono text-[11px] font-medium tracking-wider text-[var(--muted)] uppercase">
           {label}
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="font-serif text-3xl font-bold text-navy">{value}</span>
+          <span className="font-serif text-3xl font-bold text-ink">{value}</span>
           {trend && (
-            <span className="flex items-center font-mono text-xs font-bold text-emerald-600">
+            <span className="inline-flex items-center font-mono text-xs font-bold text-teal-soft">
               <ArrowUpRight className="h-3 w-3" /> {trend}
             </span>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function BoardColumn({
+  title,
+  count,
+  tone,
+  children,
+}: {
+  title: string;
+  count: number;
+  tone: "gold" | "teal" | "slate";
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-hairline bg-[var(--surface)]/60 p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <StatusBadge status={title as "Open" | "Claimed" | "Closed"} />
+        <span className="font-mono text-xs font-bold text-[var(--muted)]">
+          {count}
+        </span>
+      </div>
+      {children}
+      <span className="sr-only">{tone}</span>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: "Open" | "Claimed" | "Closed" }) {
+  return (
+    <span
+      className={cn(
+        "rounded px-2 py-1 font-mono text-[11px] font-bold tracking-wider uppercase",
+        status === "Open" && "bg-gold text-navy",
+        status === "Claimed" && "bg-teal text-paper",
+        status === "Closed" && "bg-[var(--muted)]/20 text-[var(--muted)]",
+      )}
+    >
+      {status}
+    </span>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-hairline bg-[var(--background)] p-8 text-center text-xs font-medium text-[var(--muted)]">
+      {text}
     </div>
   );
 }

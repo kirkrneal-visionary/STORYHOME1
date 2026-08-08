@@ -14,35 +14,38 @@ import { useApp } from "@/components/AppContext";
 import { cn } from "@/lib/utils";
 
 export default function GlobalNav() {
-  const { role, toggleRole, unreadMessages } = useApp();
+  const { role, toggleRole, unreadMessages, openReferralCount } = useApp();
   const pathname = usePathname();
+  const isPro = role === "professional";
 
   return (
     <>
-      {/* DESKTOP TOP BAR */}
-      <nav className="fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-hairline bg-white px-6">
+      <nav className="fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-hairline bg-[var(--nav-surface)]/95 px-4 backdrop-blur-md md:px-6">
         <Link href="/marketplace" className="flex select-none flex-col">
           <div className="flex items-center gap-0.5 tracking-tighter">
-            <span className="font-sans text-2xl font-extrabold text-navy">
+            <span className="font-sans text-2xl font-extrabold text-[var(--brand-word)]">
               STORY
             </span>
-            <span className="font-sans text-2xl font-extrabold text-gold">
+            <span className="font-sans text-2xl font-extrabold text-[var(--brand-home)]">
               HOME
             </span>
-            <span className="mt-1 self-start text-[8px] font-bold text-gold">
+            <span className="mt-1 self-start text-[8px] font-bold text-[var(--brand-home)]">
               TM
             </span>
           </div>
-          <span className="-mt-1 font-mono text-[9px] font-bold tracking-[0.12em] text-navy">
+          <span className="-mt-1 font-mono text-[9px] font-bold tracking-[0.12em] text-[var(--brand-word)]">
             EVERY HOME HAS A STORY
           </span>
         </Link>
 
-        <div className="hidden items-center gap-8 font-sans text-sm font-medium text-slate-text md:flex">
-          <NavLink href="/marketplace" active={pathname.startsWith("/marketplace")}>
+        <div className="hidden items-center gap-7 font-sans text-sm font-medium md:flex">
+          <NavLink
+            href="/marketplace"
+            active={pathname.startsWith("/marketplace")}
+          >
             Marketplace
           </NavLink>
-          {role === "professional" && (
+          {isPro ? (
             <>
               <NavLink href="/network" active={pathname.startsWith("/network")}>
                 Network
@@ -50,8 +53,24 @@ export default function GlobalNav() {
               <NavLink
                 href="/referrals"
                 active={pathname.startsWith("/referrals")}
+                className="relative"
               >
                 Referrals
+                {openReferralCount > 0 && (
+                  <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
+                )}
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink href="/saved" active={pathname.startsWith("/saved")}>
+                Saved
+              </NavLink>
+              <NavLink
+                href="/following"
+                active={pathname.startsWith("/following")}
+              >
+                Following
               </NavLink>
             </>
           )}
@@ -67,23 +86,23 @@ export default function GlobalNav() {
           </NavLink>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 md:gap-4">
           <button
             type="button"
             onClick={toggleRole}
-            className="relative flex h-9 w-[160px] cursor-pointer select-none items-center rounded-full bg-slate-100 p-1"
+            className="relative flex h-9 w-[150px] cursor-pointer select-none items-center rounded-full border border-hairline bg-[var(--surface)] p-1 md:w-[160px]"
             aria-label="Switch Consumer / Pro role"
           >
             <span
               className={cn(
-                "absolute top-1 bottom-1 w-[74px] rounded-full bg-white shadow-sm transition-all duration-300",
-                role === "professional" ? "left-[81px]" : "left-1",
+                "absolute top-1 bottom-1 w-[70px] rounded-full bg-[var(--accent)] shadow-sm transition-all duration-300 md:w-[74px]",
+                isPro ? "left-[76px] md:left-[81px]" : "left-1",
               )}
             />
             <span
               className={cn(
                 "z-10 w-1/2 text-center text-xs font-semibold transition-colors",
-                role === "consumer" ? "text-navy" : "text-slate-400",
+                !isPro ? "text-[var(--accent-contrast)]" : "text-[var(--muted)]",
               )}
             >
               Consumer
@@ -91,7 +110,7 @@ export default function GlobalNav() {
             <span
               className={cn(
                 "z-10 w-1/2 text-center text-xs font-semibold transition-colors",
-                role === "professional" ? "text-teal-accent" : "text-slate-400",
+                isPro ? "text-[var(--accent-contrast)]" : "text-[var(--muted)]",
               )}
             >
               Pro
@@ -99,7 +118,7 @@ export default function GlobalNav() {
           </button>
           <Link
             href="/profile"
-            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-hairline bg-slate-200 font-bold text-navy"
+            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-hairline bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] font-bold text-navy"
             aria-label="Profile"
           >
             SJ
@@ -107,15 +126,14 @@ export default function GlobalNav() {
         </div>
       </nav>
 
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <div className="fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-5 items-center justify-items-center border-t border-hairline bg-white px-2 md:hidden">
+      <div className="fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-5 items-center justify-items-center border-t border-hairline bg-[var(--nav-surface)]/96 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         <MobileTab
           href="/marketplace"
           label="Home"
           icon={Home}
           active={pathname.startsWith("/marketplace")}
         />
-        {role === "professional" ? (
+        {isPro ? (
           <>
             <MobileTab
               href="/network"
@@ -128,22 +146,28 @@ export default function GlobalNav() {
               label="Referrals"
               icon={Briefcase}
               active={pathname.startsWith("/referrals")}
+              unread={openReferralCount > 0}
             />
           </>
         ) : (
           <>
             <MobileTab
-              href="/marketplace#saved"
+              href="/saved"
               label="Saved"
               icon={Bookmark}
-              active={false}
+              active={pathname.startsWith("/saved")}
             />
-            <div className="w-1" />
+            <MobileTab
+              href="/following"
+              label="Following"
+              icon={Users}
+              active={pathname.startsWith("/following")}
+            />
           </>
         )}
         <MobileTab
           href="/messages"
-          label="Inbox"
+          label="Messages"
           icon={MessageSquare}
           active={pathname.startsWith("/messages")}
           unread={unreadMessages}
@@ -174,8 +198,8 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "transition-colors hover:text-navy",
-        active ? "text-navy" : "text-slate-text",
+        "transition-colors",
+        active ? "text-ink" : "text-[var(--muted)] hover:text-ink",
         className,
       )}
     >
@@ -202,7 +226,7 @@ function MobileTab({
       href={href}
       className={cn(
         "relative flex flex-col items-center gap-0.5",
-        active ? "text-navy" : "text-slate-400 hover:text-navy",
+        active ? "text-ink" : "text-[var(--muted)]",
       )}
     >
       <Icon className="h-5 w-5" />

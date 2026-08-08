@@ -1,11 +1,48 @@
-export const DEMO_AGENT = {
+export type ListingStatus = "active" | "pending" | "sold";
+
+export type DemoAgent = {
+  id: string;
+  fullName: string;
+  initials: string;
+  starRating: number;
+  reviewCount: number;
+  reputationScore: number;
+  primaryMarketCity: string;
+  professionalRole: string;
+  bio: string;
+  avatarTone: string;
+};
+
+export type DemoListing = {
+  id: string;
+  agentId: string;
+  price: number;
+  addressSerif: string;
+  city: string;
+  beds: number;
+  baths: number;
+  sqft: number;
+  lotSize: string;
+  yearBuilt: number;
+  description: string;
+  status: ListingStatus;
+  photoUrl: string;
+  likeCount: number;
+  saveCount: number;
+  commentCount: number;
+};
+
+export const DEMO_AGENT: DemoAgent = {
   id: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
   fullName: "Sarah Jenkins",
   initials: "SJ",
   starRating: 4.9,
+  reviewCount: 42,
   reputationScore: 94,
   primaryMarketCity: "Austin, TX",
+  professionalRole: "agent",
   bio: "Austin native helping families discover homes with historical character and unique stories.",
+  avatarTone: "bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))]",
 };
 
 export const DEMO_BUYER = {
@@ -14,29 +51,74 @@ export const DEMO_BUYER = {
   initials: "MC",
 };
 
-export const DEMO_LISTING = {
-  id: "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44",
-  agentId: DEMO_AGENT.id,
-  price: 875000,
-  addressSerif: "1402 Willow Street",
-  city: "Austin",
-  beds: 3,
-  baths: 2.5,
-  sqft: 2150,
-  lotSize: "0.25 Acres",
-  yearBuilt: 1936,
-  description:
-    "An immaculately restored craftsman bungalow in the heart of East Austin. Features original longleaf pine floors and a storied past.",
-  status: "active" as const,
-  photoUrl:
-    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
-  likeCount: 14,
-  saveCount: 8,
-  commentCount: 3,
-};
+export const DEMO_LISTINGS: DemoListing[] = [
+  {
+    id: "d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44",
+    agentId: DEMO_AGENT.id,
+    price: 875000,
+    addressSerif: "1402 Willow Street",
+    city: "Austin",
+    beds: 3,
+    baths: 2.5,
+    sqft: 2150,
+    lotSize: "0.25 Acres",
+    yearBuilt: 1936,
+    description:
+      "An immaculately restored craftsman bungalow in the heart of East Austin. Features original longleaf pine floors and a storied past.",
+    status: "active",
+    photoUrl:
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1600&q=80",
+    likeCount: 14,
+    saveCount: 8,
+    commentCount: 3,
+  },
+  {
+    id: "listing-cliffside",
+    agentId: DEMO_AGENT.id,
+    price: 1245000,
+    addressSerif: "88 Overlook Ridge",
+    city: "Austin",
+    beds: 4,
+    baths: 3.5,
+    sqft: 3120,
+    lotSize: "0.4 Acres",
+    yearBuilt: 2018,
+    description:
+      "Hill-country modern with wraparound glass and a private courtyard for evening entertaining.",
+    status: "active",
+    photoUrl:
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1600&q=80",
+    likeCount: 22,
+    saveCount: 11,
+    commentCount: 5,
+  },
+  {
+    id: "listing-garden",
+    agentId: DEMO_AGENT.id,
+    price: 695000,
+    addressSerif: "411 Garden Court",
+    city: "Austin",
+    beds: 3,
+    baths: 2,
+    sqft: 1840,
+    lotSize: "0.18 Acres",
+    yearBuilt: 1952,
+    description:
+      "A quiet mid-century story with restored beams, a studio loft, and mature oaks.",
+    status: "active",
+    photoUrl:
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80",
+    likeCount: 9,
+    saveCount: 6,
+    commentCount: 2,
+  },
+];
+
+export const DEMO_LISTING = DEMO_LISTINGS[0];
 
 export const DEMO_REFERRAL = {
   posterId: DEMO_AGENT.id,
+  posterName: DEMO_AGENT.fullName,
   status: "Open" as const,
   clientDescription:
     "Tech executive relocating for a clean-energy VP role. Demanding architectural taste.",
@@ -61,4 +143,8 @@ export function formatUsd(amount: number) {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+export function getAgent(agentId: string) {
+  return agentId === DEMO_AGENT.id ? DEMO_AGENT : DEMO_AGENT;
 }

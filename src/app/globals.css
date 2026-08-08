@@ -1,33 +1,76 @@
 @import "tailwindcss";
 
 :root {
-  --navy: #142c54;
-  --gold: #ffd000;
-  --slate-text: #1a2233;
-  --teal-accent: #114743;
-  --hairline: rgba(20, 44, 84, 0.08);
-  --background: #ffffff;
-  --foreground: #1a2233;
+  --navy: #0e1e38;
+  --navy-soft: #152a4e;
+  --gold: #f0b93b;
+  --teal: #123f38;
+  --teal-soft: #1b5a50;
+  --paper: #f7f4ec;
+  --ink: #20242c;
+  --hairline: rgba(21, 42, 78, 0.14);
+
+  /* Consumer — warm */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --surface: #fffdf8;
+  --nav-surface: color-mix(in srgb, var(--paper) 90%, white);
+  --muted: color-mix(in srgb, var(--ink) 58%, transparent);
+  --accent: var(--gold);
+  --accent-contrast: var(--navy);
+  --brand-mark: var(--navy);
+  --brand-home: var(--gold);
+  --brand-word: var(--navy);
+}
+
+html[data-role="professional"] {
+  /* Professional — cool */
+  --background: color-mix(in srgb, var(--navy) 94%, black);
+  --foreground: #f4f1e8;
+  --ink: #f4f1e8;
+  --surface: color-mix(in srgb, var(--navy) 80%, var(--teal));
+  --nav-surface: color-mix(in srgb, var(--navy) 92%, black);
+  --hairline: rgba(247, 244, 236, 0.12);
+  --muted: color-mix(in srgb, #f7f4ec 64%, transparent);
+  --accent: var(--teal-soft);
+  --accent-contrast: #f7f4ec;
+  --brand-mark: var(--teal);
+  --brand-home: var(--gold);
+  --brand-word: #f7f4ec;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
   --color-gold: var(--gold);
-  --color-slate-text: var(--slate-text);
-  --color-teal-accent: var(--teal-accent);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
   --color-hairline: var(--hairline);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-fraunces);
   --font-mono: var(--font-ibm-plex-mono);
 }
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html[data-role="professional"] {
+    color-scheme: dark;
+  }
+
   body {
-    background: #ffffff;
-    color: var(--slate-text);
+    background: var(--background);
+    color: var(--foreground);
     font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    transition: background-color 0.35s ease, color 0.35s ease;
   }
 
   h1,

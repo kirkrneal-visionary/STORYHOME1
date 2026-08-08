@@ -1,13 +1,34 @@
 # Story Home
 
-Every home has a story. Premium two-sided real estate marketplace and professional network.
+*Every home has a story.*
 
-## Stack
+Premium two-sided real estate marketplace and professional network.
 
-- Next.js (App Router)
-- Tailwind CSS
-- Lucide React + Framer Motion
-- Supabase
+## Brand system
+
+| Token | Value | Use |
+|---|---|---|
+| Navy | `#0E1E38` | Headers, nav, professional cool base |
+| Gold | `#F0B93B` | Consumer accent, CTAs, unread dots |
+| Teal | `#123F38` | Professional accent, Following/Claimed |
+| Paper | `#F7F4EC` | Consumer page background |
+| Ink | `#20242C` | Body text |
+| Hairline | `rgba(21,42,78,0.14)` | Borders |
+
+**Typography:** Fraunces (display) · Inter (UI) · IBM Plex Mono (data/labels)
+
+**Wayfinding:** Consumer = warm Paper + Gold · Professional = cool Navy + Teal
+
+## App routes
+
+- `/marketplace` — browse + filters + listing cards
+- `/marketplace/[id]` — listing detail
+- `/agents/[id]` — public agent profile
+- `/saved` · `/following` — consumer collections
+- `/network` — professional directory
+- `/referrals` — referral board
+- `/messages` — shared inbox
+- `/profile` — account shell
 
 ## Getting started
 
@@ -16,33 +37,4 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-## Design system (master file)
-
-- Navy `#142C54`
-- Gold `#FFD000`
-- Slate text `#1A2233`
-- Teal accent `#114743`
-- Fonts: Fraunces · Inter · IBM Plex Mono
-
-## App surfaces
-
-- `/marketplace` — Consumer marketplace + filters + listing cards
-- `/referrals` — Professional referral distribution board
-- `/messages` — Secure communications inbox/thread
-- `/network` — Pro network (next)
-- `/profile` — Profile shell
-
-Toggle **Consumer / Pro** in the top bar. Network + Referrals show for Pro.
-
-## Supabase
-
-1. Create a Supabase project
-2. Run `supabase/schema.sql` in the SQL Editor
-3. Copy `.env.example` → `.env.local` and add:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-```
+Supabase schema: `supabase/schema.sql`

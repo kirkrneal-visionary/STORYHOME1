@@ -21,6 +21,7 @@ interface AppContextType {
   setRole: (role: Role) => void;
   unreadMessages: boolean;
   setUnreadMessages: (val: boolean) => void;
+  openReferralCount: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -45,6 +46,7 @@ function subscribeToRole(onStoreChange: () => void) {
 
 function writeRole(role: Role) {
   window.localStorage.setItem(ROLE_STORAGE_KEY, role);
+  document.documentElement.dataset.role = role;
   window.dispatchEvent(new Event(ROLE_EVENT));
 }
 
@@ -75,13 +77,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setRole,
       unreadMessages,
       setUnreadMessages,
+      openReferralCount: 1,
     }),
     [role, toggleRole, setRole, unreadMessages],
   );
 
   return (
     <AppContext.Provider value={value}>
-      <div className="min-h-screen bg-white font-sans text-slate-text transition-colors duration-300">
+      <div className="min-h-dvh bg-[var(--background)] font-sans text-ink transition-colors duration-300">
         {children}
       </div>
     </AppContext.Provider>
