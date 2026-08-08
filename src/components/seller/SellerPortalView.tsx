@@ -259,10 +259,22 @@ export function SellerPortalView({ listing }: SellerPortalViewProps) {
             <button
               type="button"
               disabled={!selected || Boolean(activeBoost)}
-              onClick={() => setConfirmOpen(true)}
-              className="h-11 shrink-0 rounded-lg bg-gold px-5 text-sm font-bold text-navy disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={() => {
+                if (!selected || activeBoost) return;
+                setConfirmOpen(true);
+              }}
+              className={cn(
+                "h-11 shrink-0 rounded-lg px-5 text-sm font-bold transition-opacity",
+                selected && !activeBoost
+                  ? "bg-gold text-navy hover:opacity-90"
+                  : "cursor-not-allowed bg-gold/30 text-navy/50",
+              )}
             >
-              {activeBoost ? "Boost already active" : "Activate boost"}
+              {activeBoost
+                ? "Boost already active"
+                : selected
+                  ? `Activate ${selected.name}`
+                  : "Select a tier first"}
             </button>
           </div>
         </section>

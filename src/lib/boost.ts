@@ -52,7 +52,10 @@ export type ActiveBoost = {
   status: "active" | "canceled" | "expired";
 };
 
-/** Demo inventory — replaced by Supabase aggregate when MLS is live */
+/** Demo inventory — replaced by Supabase aggregate when MLS is live.
+ * Leave at least one open spot per tier in Harris County so the seller
+ * portal demo can select and activate every boost option.
+ */
 export const DEMO_ACTIVE_BOOSTS: ActiveBoost[] = [
   {
     listingId: "other-1",
@@ -73,13 +76,6 @@ export const DEMO_ACTIVE_BOOSTS: ActiveBoost[] = [
     countyFips: "48201",
     countyName: "Harris County",
     tierId: "growth",
-    status: "active",
-  },
-  {
-    listingId: "other-4",
-    countyFips: "48201",
-    countyName: "Harris County",
-    tierId: "max",
     status: "active",
   },
 ];
