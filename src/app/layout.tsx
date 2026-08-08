@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
-import { AppProvider } from "@/components/AppContext";
 import GlobalNav from "@/components/GlobalNav";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -49,10 +49,10 @@ export default function RootLayout({
       <body
         className={`${fraunces.variable} ${inter.variable} ${ibmPlexMono.variable} antialiased`}
       >
-        <AppProvider>
+        <Providers>
           <GlobalNav />
           {children}
-        </AppProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Heart, MessageSquare, Star } from "lucide-react";
+import { SaveToSuiteModal } from "@/components/suites/SaveToSuiteModal";
+import { useSuites } from "@/components/SuitesContext";
 import {
   type DemoListing,
   formatUsd,
@@ -25,7 +27,9 @@ export function ListingCard({
   onSelect,
 }: ListingCardProps) {
   const agent = getAgent(listing.agentId);
-  const [saved, setSaved] = useState(false);
+  const { isListingInAnySuite } = useSuites();
+  const saved = isListingInAnySuite(listing.id);
+  const [suiteOpen, setSuiteOpen] = useState(false);
   const [following, setFollowing] = useState(false);
 
   return (
@@ -58,10 +62,10 @@ export function ListingCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setSaved((v) => !v);
+              setSuiteOpen(true);
             }}
             className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-paper text-ink/50 shadow-md transition-colors hover:text-gold"
-            aria-label={saved ? "Unsave home" : "Save home"}
+            aria-label={saved ? "Manage suites" : "Save to suite"}
           >
             <Heart
               className={cn("h-4 w-4", saved && "fill-gold text-gold")}
@@ -128,6 +132,14 @@ export function ListingCard({
           <MessageSquare className="h-3 w-3" /> {listing.commentCount} Comments
         </span>
       </div>
+
+      {suiteOpen && (
+        <SaveToSuiteModal
+          listingId={listing.id}
+          listingTitle={listing.addressSerif}
+          onClose={() => setSuiteOpen(false)}
+        />
+      )}
     </article>
   );
 }
