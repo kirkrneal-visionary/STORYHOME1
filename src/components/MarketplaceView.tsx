@@ -1,8 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ListingCard } from "@/components/ListingCard";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
+import { DEFAULT_MARKET } from "@/lib/markets";
 import { cn } from "@/lib/utils";
 
 const CHIPS = [
@@ -16,17 +18,44 @@ const CHIPS = [
 ] as const;
 
 export default function MarketplaceView() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || DEFAULT_MARKET.label;
+  const intent = searchParams.get("intent") || "sale";
+
   const [chip, setChip] = useState<(typeof CHIPS)[number]>("All");
   const [bedsFilter, setBedsFilter] = useState("Any");
-  const [query, setQuery] = useState("Austin, TX");
+  const [query, setQuery] = useState(initialQuery);
 
   const listings = useMemo(() => {
-    if (bedsFilter === "Any") return DEMO_LISTINGS;
-    if (bedsFilter === "4+") {
-      return DEMO_LISTINGS.filter((l) => l.beds >= 4);
+    const q = query.trim().toLowerCase();
+    let next = DEMO_LISTINGS;
+
+    if (q) {
+      next = next.filter(
+        (l) =>
+          l.city.toLowerCase().includes(q.replace(", tx", "").trim()) ||
+          l.addressSerif.toLowerCase().includes(q) ||
+          "houston".includes(q) ||
+          q.includes("houston") ||
+          q.includes(l.city.toLowerCase()),
+      );
+      // Keep results visible for Houston market browsing even when area names differ
+      if (next.length === 0 && (q.includes("houston") || q.includes("tx"))) {
+        next = DEMO_LISTINGS;
+      }
     }
-    return DEMO_LISTINGS.filter((l) => l.beds === Number(bedsFilter));
-  }, [bedsFilter]);
+
+    if (bedsFilter === "4+") {
+      next = next.filter((l) => l.beds >= 4);
+    } else if (bedsFilter !== "Any") {
+      next = next.filter((l) => l.beds === Number(bedsFilter));
+    }
+
+    return next;
+  }, [bedsFilter, query]);
+
+  const intentLabel =
+    intent === "rent" ? "For Rent" : intent === "sold" ? "Sold" : "For Sale";
 
   return (
     <div className="flex min-h-dvh pb-16 pt-[72px] md:pb-0">
@@ -45,7 +74,7 @@ export default function MarketplaceView() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="City, neighborhood, or zip"
-              className="h-11 w-full rounded-lg border border-hairline bg-[var(--background)] px-4 text-sm font-medium text-ink outline-none focus:border-navy"
+              className="h-11 w-full rounded-lg border border-hairline bg-[var(--background)] px-4 text-sm font-medium text-ink outline-none focus:border-gold"
             />
           </div>
 
@@ -80,8 +109,8 @@ export default function MarketplaceView() {
                   className={cn(
                     "h-9 rounded-md border transition-colors",
                     bedsFilter === b
-                      ? "border-navy bg-navy text-paper"
-                      : "border-hairline text-ink hover:border-navy/40",
+                      ? "border-gold bg-gold text-navy"
+                      : "border-hairline text-ink hover:border-gold/40",
                   )}
                 >
                   {b}
@@ -100,7 +129,7 @@ export default function MarketplaceView() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search city, neighborhood, or address"
-              className="h-12 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-navy xl:hidden"
+              className="h-12 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold xl:hidden"
             />
           </div>
 
@@ -122,9 +151,9 @@ export default function MarketplaceView() {
             ))}
           </div>
 
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between gap-3">
             <span className="font-mono text-xs tracking-widest text-[var(--muted)] uppercase">
-              Showing {listings.length}{" "}
+              {intentLabel} · {query} · {listings.length}{" "}
               {listings.length === 1 ? "home" : "homes"}
             </span>
           </div>

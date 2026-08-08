@@ -23,10 +23,12 @@ export default function GlobalNav() {
     return null;
   }
 
+  const isHome = pathname === "/";
+
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-hairline bg-[var(--nav-surface)]/95 px-4 backdrop-blur-md md:px-6">
-        <Link href="/marketplace" className="flex select-none flex-col">
+        <Link href="/" className="flex select-none flex-col">
           <div className="flex items-center gap-0.5 tracking-tighter">
             <span className="font-sans text-2xl font-extrabold text-[var(--brand-word)]">
               STORY
@@ -44,51 +46,79 @@ export default function GlobalNav() {
         </Link>
 
         <div className="hidden items-center gap-7 font-sans text-sm font-medium md:flex">
-          <NavLink
-            href="/marketplace"
-            active={pathname.startsWith("/marketplace")}
-          >
-            Marketplace
-          </NavLink>
-          {isPro ? (
+          {isHome ? (
             <>
-              <NavLink href="/network" active={pathname.startsWith("/network")}>
-                Network
+              <NavLink
+                href="/marketplace?q=Houston%2C%20TX&intent=sale"
+                active={false}
+              >
+                Buy
               </NavLink>
               <NavLink
-                href="/referrals"
-                active={pathname.startsWith("/referrals")}
-                className="relative"
+                href="/marketplace?q=Houston%2C%20TX&intent=rent"
+                active={false}
               >
-                Referrals
-                {openReferralCount > 0 && (
-                  <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
-                )}
+                Rent
+              </NavLink>
+              <NavLink href="/seller" active={false}>
+                Sell
+              </NavLink>
+              <NavLink href="/network" active={false}>
+                Agents
               </NavLink>
             </>
           ) : (
             <>
-              <NavLink href="/saved" active={pathname.startsWith("/saved")}>
-                Saved
-              </NavLink>
               <NavLink
-                href="/following"
-                active={pathname.startsWith("/following")}
+                href="/marketplace"
+                active={pathname.startsWith("/marketplace")}
               >
-                Following
+                Marketplace
+              </NavLink>
+              {isPro ? (
+                <>
+                  <NavLink
+                    href="/network"
+                    active={pathname.startsWith("/network")}
+                  >
+                    Network
+                  </NavLink>
+                  <NavLink
+                    href="/referrals"
+                    active={pathname.startsWith("/referrals")}
+                    className="relative"
+                  >
+                    Referrals
+                    {openReferralCount > 0 && (
+                      <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
+                    )}
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  <NavLink href="/saved" active={pathname.startsWith("/saved")}>
+                    Saved
+                  </NavLink>
+                  <NavLink
+                    href="/following"
+                    active={pathname.startsWith("/following")}
+                  >
+                    Following
+                  </NavLink>
+                </>
+              )}
+              <NavLink
+                href="/messages"
+                active={pathname.startsWith("/messages")}
+                className="relative"
+              >
+                Messages
+                {unreadMessages && (
+                  <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
+                )}
               </NavLink>
             </>
           )}
-          <NavLink
-            href="/messages"
-            active={pathname.startsWith("/messages")}
-            className="relative"
-          >
-            Messages
-            {unreadMessages && (
-              <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
-            )}
-          </NavLink>
         </div>
 
         <div className="flex items-center gap-3 md:gap-4">
@@ -133,10 +163,10 @@ export default function GlobalNav() {
 
       <div className="fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-5 items-center justify-items-center border-t border-hairline bg-[var(--nav-surface)]/96 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         <MobileTab
-          href="/marketplace"
+          href="/"
           label="Home"
           icon={Home}
-          active={pathname.startsWith("/marketplace")}
+          active={isHome}
         />
         {isPro ? (
           <>

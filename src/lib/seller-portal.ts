@@ -1,4 +1,5 @@
 import { DEMO_LISTINGS, type DemoListing } from "@/lib/demo-data";
+import { DEFAULT_MARKET } from "@/lib/markets";
 
 export type SellerListing = DemoListing & {
   countyFips: string;
@@ -22,17 +23,17 @@ export type ListingAnalytics = {
 export const SELLER_LISTINGS: SellerListing[] = [
   {
     ...DEMO_LISTINGS[0],
-    countyFips: "48453",
-    countyName: "Travis County",
-    state: "TX",
+    countyFips: DEFAULT_MARKET.countyFips,
+    countyName: DEFAULT_MARKET.countyName,
+    state: DEFAULT_MARKET.state,
     accessCode: "WILLOW-875",
     daysOnMarket: 18,
   },
   {
     ...DEMO_LISTINGS[1],
-    countyFips: "48453",
-    countyName: "Travis County",
-    state: "TX",
+    countyFips: DEFAULT_MARKET.countyFips,
+    countyName: DEFAULT_MARKET.countyName,
+    state: DEFAULT_MARKET.state,
     accessCode: "RIDGE-1245",
     daysOnMarket: 9,
   },

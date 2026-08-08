@@ -91,7 +91,7 @@ export function ListingCard({ listing }: ListingCardProps) {
             "h-7 rounded-md border px-3 text-xs font-semibold transition-colors",
             following
               ? "border-teal bg-teal text-paper"
-              : "border-navy text-navy hover:bg-navy hover:text-paper",
+              : "border-gold/50 text-gold hover:bg-gold hover:text-navy",
           )}
         >
           {following ? "Following" : "Follow"}
