@@ -1,6 +1,6 @@
 import { DEFAULT_MARKET } from "@/lib/markets";
 
-export type ListingStatus = "active" | "pending" | "sold";
+export type ListingStatus = "active" | "pending" | "sold" | "withdrawn";
 
 export type DemoAgent = {
   id: string;

@@ -240,7 +240,7 @@ export function SellerPortalView({ listing }: SellerPortalViewProps) {
                         County full
                       </span>
                     ) : (
-                      <span className="text-xs font-semibold text-navy">
+                      <span className="text-xs font-semibold text-gold">
                         Select
                       </span>
                     )}
@@ -260,7 +260,7 @@ export function SellerPortalView({ listing }: SellerPortalViewProps) {
               type="button"
               disabled={!selected || Boolean(activeBoost)}
               onClick={() => setConfirmOpen(true)}
-              className="h-11 shrink-0 rounded-lg bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="h-11 shrink-0 rounded-lg bg-gold px-5 text-sm font-bold text-navy disabled:cursor-not-allowed disabled:opacity-40"
             >
               {activeBoost ? "Boost already active" : "Activate boost"}
             </button>
@@ -269,29 +269,31 @@ export function SellerPortalView({ listing }: SellerPortalViewProps) {
       </main>
 
       {confirmOpen && selected && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-navy/45 p-4 sm:items-center">
-          <div className="w-full max-w-md rounded-2xl bg-paper p-6 text-ink shadow-xl">
-            <h3 className="font-serif text-2xl font-bold">Confirm boost</h3>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Activate <strong>{selected.name}</strong> for{" "}
-              {listing.addressSerif} in {listing.countyName} at{" "}
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-4 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl border border-hairline bg-navy-soft p-6 text-paper shadow-xl">
+            <h3 className="font-serif text-2xl font-bold text-paper">
+              Confirm boost
+            </h3>
+            <p className="mt-2 text-sm text-paper/70">
+              Activate <strong className="text-paper">{selected.name}</strong>{" "}
+              for {listing.addressSerif} in {listing.countyName} at{" "}
               {formatUsdMonthly(selected.priceMonthly)}.
             </p>
-            <p className="mt-3 font-mono text-[11px] text-[var(--muted)] uppercase">
+            <p className="mt-3 font-mono text-[11px] text-paper/50 uppercase">
               Prototype mode — no card charged. Slot reserved in demo inventory.
             </p>
             <div className="mt-6 flex gap-2">
               <button
                 type="button"
                 onClick={() => setConfirmOpen(false)}
-                className="h-11 flex-1 rounded-lg border border-hairline text-sm font-semibold"
+                className="h-11 flex-1 rounded-lg border border-hairline text-sm font-semibold text-paper"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleActivate}
-                className="h-11 flex-1 rounded-lg bg-navy text-sm font-semibold text-paper"
+                className="h-11 flex-1 rounded-lg bg-gold text-sm font-bold text-navy"
               >
                 Confirm
               </button>
