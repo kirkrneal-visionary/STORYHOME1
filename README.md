@@ -49,4 +49,13 @@ npm install
 npm run dev
 ```
 
-Supabase schema: `supabase/schema.sql`
+## Backend (Supabase)
+
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`) to switch from demo mode to real Supabase Auth + Postgres. With those unset, the app runs fully in local demo mode.
+
+Apply the database in a Supabase project (SQL editor or `supabase db push`):
+
+1. `supabase/migrations/0001_init.sql` — schema, helper functions, and the auth trigger that creates a `profiles` row for each new user.
+2. `supabase/migrations/0002_rls.sql` — Row Level Security policies.
+
+RLS is verified against plain Postgres via `supabase/test/` (shim + scenario + assertions).
