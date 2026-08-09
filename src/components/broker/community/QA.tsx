@@ -51,9 +51,9 @@ export function CommunityQA({ member }: { member: Member }) {
     );
   }
 
-  function ask(body: string) {
+  async function ask(body: string) {
     if (!title.trim()) return;
-    const id = addQuestion({
+    const id = await addQuestion({
       category: askCat,
       title: title.trim(),
       body,

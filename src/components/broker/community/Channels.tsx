@@ -130,9 +130,9 @@ function ChannelThreadList({
     );
   }, [state.threads, channel.id]);
 
-  function createThread(body: string) {
+  async function createThread(body: string) {
     if (!title.trim()) return;
-    const id = addThread({
+    const id = await addThread({
       channelId: channel.id,
       category,
       title: title.trim(),
