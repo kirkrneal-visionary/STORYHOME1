@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
@@ -11,6 +11,13 @@ import {
   type ProRole,
 } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+
+/** Where a user lands after login, based on their account type. */
+function destForKind(kind: string): string {
+  if (kind === "pro" || kind === "broker") return "/portal";
+  if (kind === "seller") return "/";
+  return "/home";
+}
 
 export function LoginClient() {
   const router = useRouter();
@@ -29,8 +36,18 @@ export function LoginClient() {
   const [sellerCode, setSellerCode] = useState("");
   const [error, setError] = useState("");
 
+  // Route to the correct home once signed in (fresh login or visiting /login
+  // while already authenticated). Respects an explicit ?next= destination.
+  useEffect(() => {
+    // Sellers navigate via their own passcode flow — don't hijack them here.
+    if (isLoggedIn && user && user.kind !== "seller") {
+      router.replace(next !== "/" ? next : destForKind(user.kind));
+    }
+  }, [isLoggedIn, user, next, router]);
+
   function goNext() {
-    router.push(next);
+    if (!user) return; // the effect above redirects once the session resolves
+    router.push(next !== "/" ? next : destForKind(user.kind));
   }
 
   function onSellerSubmit(e: FormEvent) {
