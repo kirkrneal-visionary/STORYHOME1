@@ -9,6 +9,7 @@ import {
   LogIn,
   MessageSquare,
   Search,
+  Settings,
   User,
   Users,
 } from "lucide-react";
@@ -16,6 +17,13 @@ import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
 import { accountLabel } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+
+function shortKind(kind?: string): string {
+  if (kind === "broker") return "Broker";
+  if (kind === "pro") return "Pro";
+  if (kind === "seller") return "Seller";
+  return "Consumer";
+}
 
 export default function GlobalNav() {
   const { role, toggleRole, unreadMessages, openReferralCount } = useApp();
@@ -181,19 +189,37 @@ export default function GlobalNav() {
           )}
 
           {isLoggedIn && user ? (
-            <Link
-              href="/profile"
-              className="flex h-10 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] pl-1 pr-3 font-bold text-navy"
-              aria-label="Profile"
-              title={accountLabel(user)}
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs text-paper">
-                {user.initials}
-              </span>
-              <span className="hidden max-w-[100px] truncate text-xs sm:inline">
-                {user.name.split(" ")[0]}
-              </span>
-            </Link>
+            <>
+              <Link
+                href="/settings"
+                aria-label="Settings"
+                title="Settings"
+                className={cn(
+                  "hidden h-10 w-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:text-gold sm:flex",
+                  pathname.startsWith("/settings") && "text-gold",
+                )}
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+              <Link
+                href="/profile"
+                className="flex h-10 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] pl-1 pr-3 font-bold text-navy"
+                aria-label="Profile"
+                title={accountLabel(user)}
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs text-paper">
+                  {user.initials}
+                </span>
+                <span className="hidden flex-col leading-tight sm:flex">
+                  <span className="max-w-[110px] truncate text-xs">
+                    {user.name.split(" ")[0]}
+                  </span>
+                  <span className="font-mono text-[9px] font-bold uppercase tracking-wide text-navy/70">
+                    {shortKind(user.kind)}
+                  </span>
+                </span>
+              </Link>
+            </>
           ) : (
             <Link
               href="/login"

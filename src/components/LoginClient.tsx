@@ -249,6 +249,19 @@ export function LoginClient() {
 
 type AuthResult = { ok: true } | { ok: false; error: string };
 
+type TrecResult = {
+  found: boolean;
+  approved: boolean;
+  licenseNumber: string | null;
+  licenseType: string | null;
+  accountKind: "broker" | "agent" | null;
+  fullName: string | null;
+  status: string | null;
+  sponsorLicenseNumber: string | null;
+  sponsorName: string | null;
+  reason: string | null;
+};
+
 function RealAuthForm({
   signInWithPassword,
   signUp,
@@ -262,6 +275,10 @@ function RealAuthForm({
       fullName: string;
       accountKind: "consumer" | "pro" | "broker";
       professionalRole?: ProRole;
+      trecLicense?: string;
+      trecStatus?: string;
+      sponsorLicenseNumber?: string;
+      sponsorName?: string;
     },
   ) => Promise<AuthResult>;
   onDone: () => void;
@@ -278,18 +295,75 @@ function RealAuthForm({
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // TREC license verification (realtors + brokers)
+  const [license, setLicense] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState<TrecResult | null>(null);
+
+  // Realtors and brokers must verify an active TREC license to be approved.
+  const requiresLicense =
+    accountKind === "broker" ||
+    (accountKind === "pro" && proRole === "realtor_broker");
+
+  async function verifyLicense() {
+    setVerified(null);
+    setError("");
+    if (!license.trim()) {
+      setError("Enter your TREC license number to verify.");
+      return;
+    }
+    setVerifying(true);
+    try {
+      const lastName = fullName.trim().split(/\s+/).slice(-1)[0] ?? "";
+      const res = await fetch(
+        `/api/verify-trec?license=${encodeURIComponent(license.trim())}` +
+          (lastName ? `&lastName=${encodeURIComponent(lastName)}` : ""),
+      );
+      const data = (await res.json()) as TrecResult & { error?: string };
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+      setVerified(data);
+    } catch {
+      setError("Couldn't reach the TREC verification service. Try again.");
+    } finally {
+      setVerifying(false);
+    }
+  }
+
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
     setNotice("");
+
+    if (mode === "signup" && requiresLicense && !verified?.approved) {
+      setError(
+        "Please verify an ACTIVE TREC license before creating a pro account.",
+      );
+      return;
+    }
+
     setBusy(true);
+    // TREC is the source of truth for realtor/broker classification.
+    const resolvedKind =
+      mode === "signup" && requiresLicense && verified?.accountKind
+        ? verified.accountKind === "broker"
+          ? "broker"
+          : "pro"
+        : accountKind;
     const result =
       mode === "signin"
         ? await signInWithPassword(email, password)
         : await signUp(email, password, {
             fullName,
-            accountKind,
-            professionalRole: accountKind === "pro" ? proRole : undefined,
+            accountKind: resolvedKind,
+            professionalRole:
+              resolvedKind === "pro" ? proRole : undefined,
+            trecLicense: verified?.licenseNumber ?? undefined,
+            trecStatus: verified?.status ?? undefined,
+            sponsorLicenseNumber: verified?.sponsorLicenseNumber ?? undefined,
+            sponsorName: verified?.sponsorName ?? undefined,
           });
     setBusy(false);
     if (!result.ok) {
@@ -375,6 +449,63 @@ function RealAuthForm({
               </select>
             )}
           </div>
+
+          {requiresLicense && (
+            <div className="rounded-xl border border-gold/40 bg-gold/5 p-3">
+              <label className="block text-xs font-semibold text-ink">
+                TREC license #{" "}
+                <span className="font-normal text-[var(--muted)]">
+                  (required for realtors &amp; brokers)
+                </span>
+              </label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  value={license}
+                  onChange={(e) => {
+                    setLicense(e.target.value);
+                    setVerified(null);
+                  }}
+                  placeholder="e.g. 724479"
+                  className={inputCls}
+                  inputMode="numeric"
+                />
+                <button
+                  type="button"
+                  onClick={verifyLicense}
+                  disabled={verifying}
+                  className="h-11 shrink-0 rounded-xl border border-gold px-4 text-sm font-bold text-gold disabled:opacity-60"
+                >
+                  {verifying ? "Verifying…" : "Verify"}
+                </button>
+              </div>
+              {verified &&
+                (verified.approved ? (
+                  <div className="mt-2 rounded-lg border border-teal-soft/40 bg-teal-soft/10 p-2.5 text-xs text-ink">
+                    <p className="font-semibold text-teal-soft">
+                      ✓ Verified — Active
+                    </p>
+                    <p className="mt-0.5">
+                      {verified.fullName} · {verified.licenseType}
+                    </p>
+                    {verified.sponsorName && (
+                      <p className="text-[var(--muted)]">
+                        Sponsoring broker: {verified.sponsorName}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-2 rounded-lg border border-red-400/40 bg-red-400/10 p-2.5 text-xs text-ink">
+                    <p className="font-semibold text-red-300">✗ Not approved</p>
+                    <p className="mt-0.5">
+                      {verified.reason ??
+                        (verified.found
+                          ? "License is not Active."
+                          : "No TREC license found.")}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          )}
         </>
       )}
 
@@ -401,14 +532,19 @@ function RealAuthForm({
 
       <button
         type="submit"
-        disabled={busy}
+        disabled={
+          busy ||
+          (mode === "signup" && requiresLicense && !verified?.approved)
+        }
         className="h-11 w-full rounded-xl bg-gold text-sm font-bold text-navy disabled:opacity-60"
       >
         {busy
           ? "Working…"
           : mode === "signin"
             ? "Sign in"
-            : "Create account"}
+            : requiresLicense && !verified?.approved
+              ? "Verify license to continue"
+              : "Create account"}
       </button>
     </form>
   );
