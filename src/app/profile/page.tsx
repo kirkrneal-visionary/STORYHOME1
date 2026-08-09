@@ -52,12 +52,20 @@ export default function ProfilePage() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           {user.kind === "consumer" && (
-            <Link
-              href="/saved"
-              className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
-            >
-              My Suites
-            </Link>
+            <>
+              <Link
+                href="/home"
+                className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+              >
+                My Home
+              </Link>
+              <Link
+                href="/saved"
+                className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-ink"
+              >
+                My Suites
+              </Link>
+            </>
           )}
           {(user.kind === "pro" || user.kind === "broker") && (
             <>

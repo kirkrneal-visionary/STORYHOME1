@@ -86,6 +86,48 @@ export function LoginClient() {
           : "Demo mode — pick an account type. Messages unlock after login. Buyers get Story Home Suites."}
       </p>
 
+      {supabaseConfigured &&
+        process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true" && (
+          <div className="mt-6 rounded-2xl border border-gold/40 bg-gold/10 p-4">
+            <p className="font-mono text-[11px] font-bold tracking-wider text-gold uppercase">
+              Quick test login
+            </p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              One click, no typing — for testing only.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const r = await signInWithPassword(
+                    "storyhome.test.owner@gmail.com",
+                    "DevPass123!",
+                  );
+                  if (r.ok) goNext();
+                  else setError(r.error);
+                }}
+                className="h-10 rounded-lg bg-gold px-4 text-sm font-bold text-navy"
+              >
+                Test Homeowner (consumer)
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const r = await signInWithPassword(
+                    "storyhome.test.agent@gmail.com",
+                    "DevPass123!",
+                  );
+                  if (r.ok) goNext();
+                  else setError(r.error);
+                }}
+                className="h-10 rounded-lg border border-gold px-4 text-sm font-bold text-gold"
+              >
+                Test Agent (pro)
+              </button>
+            </div>
+          </div>
+        )}
+
       {supabaseConfigured && (
         <RealAuthForm
           signInWithPassword={signInWithPassword}

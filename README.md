@@ -57,5 +57,7 @@ Apply the database in a Supabase project (SQL editor or `supabase db push`):
 
 1. `supabase/migrations/0001_init.sql` — schema, helper functions, and the auth trigger that creates a `profiles` row for each new user.
 2. `supabase/migrations/0002_rls.sql` — Row Level Security policies.
+3. `supabase/migrations/0003_homes.sql` — consumer "My Home" vault (homes, records, expenses, documents, access grants) + consent RLS.
+4. `supabase/migrations/0004_storage.sql` — private Storage bucket for home documents.
 
 RLS is verified against plain Postgres via `supabase/test/` (shim + scenario + assertions).

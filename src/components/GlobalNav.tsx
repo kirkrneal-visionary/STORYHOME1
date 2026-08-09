@@ -108,6 +108,12 @@ export default function GlobalNav() {
               ) : (
                 <>
                   <NavLink
+                    href="/home"
+                    active={pathname.startsWith("/home")}
+                  >
+                    My Home
+                  </NavLink>
+                  <NavLink
                     href="/saved"
                     active={pathname.startsWith("/saved")}
                   >
