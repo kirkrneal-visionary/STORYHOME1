@@ -3,15 +3,6 @@
 import { useSyncExternalStore } from "react";
 import {
   resolveMember,
-  seedChannels,
-  seedLibraryFolders,
-  seedPosts,
-  seedQuestions,
-  seedAnswers,
-  seedThreads,
-  seedTeams,
-  SEED_MEMBERS,
-  DEMO_BROKERAGE,
   type Answer,
   type Channel,
   type LibraryFolder,
@@ -21,10 +12,13 @@ import {
   type Team,
   type Thread,
 } from "@/lib/community";
+import { getBrokerageById } from "@/lib/supabase/brokerage";
+import * as api from "@/lib/supabase/community";
 
-const STORAGE_KEY = "story-home-community";
-
-export type CommunityState = {
+export interface CommunityState {
+  loaded: boolean;
+  me: Member | null;
+  brokerageName: string;
   members: Member[];
   teams: Team[];
   channels: Channel[];
@@ -33,342 +27,172 @@ export type CommunityState = {
   libraryFolders: LibraryFolder[];
   questions: Question[];
   answers: Answer[];
+}
+
+const EMPTY: CommunityState = {
+  loaded: false,
+  me: null,
+  brokerageName: "",
+  members: [],
+  teams: [],
+  channels: [],
+  threads: [],
+  posts: [],
+  libraryFolders: [],
+  questions: [],
+  answers: [],
 };
 
-function buildSeed(): CommunityState {
-  const now = Date.now();
-  return {
-    members: SEED_MEMBERS.map((m) => ({ ...m })),
-    teams: seedTeams(now),
-    channels: seedChannels(),
-    threads: seedThreads(now),
-    posts: seedPosts(now),
-    libraryFolders: seedLibraryFolders(),
-    questions: seedQuestions(now),
-    answers: seedAnswers(now),
-  };
-}
+type ActiveUser = { id: string; name: string; initials: string; kind: string };
 
-const SEED: CommunityState = buildSeed();
-
-let store: CommunityState | null = null;
+let store: CommunityState = EMPTY;
+let activeUser: ActiveUser | null = null;
 const listeners = new Set<() => void>();
 
-function load(): CommunityState {
-  if (typeof window === "undefined") return SEED;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as CommunityState;
-      if (parsed && Array.isArray(parsed.channels)) return parsed;
-    }
-  } catch {
-    // ignore
-  }
-  return SEED;
-}
-
-function persist(next: CommunityState) {
+function set(next: CommunityState) {
   store = next;
-  if (typeof window !== "undefined") {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // ignore
-    }
-  }
   listeners.forEach((l) => l());
 }
 
-function getSnapshot(): CommunityState {
-  if (store === null) store = load();
-  return store;
-}
-
-function getServerSnapshot(): CommunityState {
-  return SEED;
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+function subscribe(onChange: () => void) {
+  listeners.add(onChange);
+  return () => listeners.delete(onChange);
 }
 
 export function useCommunity(): CommunityState {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribe, () => store, () => EMPTY);
 }
 
-function uid(prefix: string): string {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+export function getEffectiveMember(user: ActiveUser): Member {
+  return store.me ?? resolveMember(user);
 }
 
-function update(mutator: (s: CommunityState) => CommunityState) {
-  persist(mutator(getSnapshot()));
+async function reload() {
+  const user = activeUser;
+  if (!user) return;
+  const me = (await api.fetchMyMember(user.id)) ?? resolveMember(user);
+
+  // Q&A is a global forum (any authenticated pro).
+  const questions = await api.fetchQuestions();
+  const answers = await api.fetchAnswersForQuestions(questions.map((q) => q.id));
+
+  if (!me.brokerageId) {
+    set({ ...EMPTY, loaded: true, me, questions, answers });
+    return;
+  }
+
+  if (me.role === "broker") {
+    try { await api.ensureDefaults(me.brokerageId); } catch { /* non-fatal */ }
+  }
+
+  const [brokerage, channels, members, libraryFolders, teams] = await Promise.all([
+    getBrokerageById(me.brokerageId),
+    api.fetchChannels(me.brokerageId),
+    api.fetchRoster(me.brokerageId),
+    api.fetchFolders(me.brokerageId),
+    api.fetchTeams(me.brokerageId),
+  ]);
+  const threads = await api.fetchThreadsForChannels(channels.map((c) => c.id));
+  const posts = await api.fetchPostsForThreads(threads.map((t) => t.id));
+
+  set({
+    loaded: true,
+    me,
+    brokerageName: brokerage?.name ?? "",
+    members,
+    teams,
+    channels,
+    threads,
+    posts,
+    libraryFolders,
+    questions,
+    answers,
+  });
 }
 
-/** Resolve a logged-in user to the effective member (store roster first). */
-export function getEffectiveMember(user: {
-  id: string;
-  name: string;
-  initials: string;
-  kind: string;
-}): Member {
-  const fromStore = getSnapshot().members.find((m) => m.id === user.id);
-  return fromStore ?? resolveMember(user);
+export async function loadCommunity(user: ActiveUser) {
+  activeUser = user;
+  await reload();
 }
 
-/* ---- Threads & posts ---- */
+/* -------------------------------- mutations ------------------------------- */
 
-export function addThread(input: {
-  channelId: string;
-  category: string;
-  title: string;
-  tags: string[];
-  authorId: string;
-  authorName: string;
-  body: string;
-}): string {
-  const now = Date.now();
-  const threadId = uid("th");
-  update((s) => ({
-    ...s,
-    threads: [
-      {
-        id: threadId,
-        channelId: input.channelId,
-        category: input.category,
-        title: input.title,
-        authorId: input.authorId,
-        authorName: input.authorName,
-        createdAt: now,
-        tags: input.tags,
-        pinned: false,
-        locked: false,
-        libraryFolderId: null,
-        reviewedAsOf: null,
-        reviewedBy: null,
-      },
-      ...s.threads,
-    ],
-    posts: [
-      ...s.posts,
-      {
-        id: uid("p"),
-        threadId,
-        authorId: input.authorId,
-        authorName: input.authorName,
-        body: input.body,
-        createdAt: now,
-        kind: "post",
-      },
-    ],
-  }));
-  return threadId;
-}
-
-export function addPost(input: {
-  threadId: string;
-  authorId: string;
-  authorName: string;
-  body: string;
-  kind: "post" | "update";
-}) {
-  update((s) => ({
-    ...s,
-    posts: [
-      ...s.posts,
-      {
-        id: uid("p"),
-        threadId: input.threadId,
-        authorId: input.authorId,
-        authorName: input.authorName,
-        body: input.body,
-        createdAt: Date.now(),
-        kind: input.kind,
-      },
-    ],
-  }));
-}
-
-export function toggleThreadPinned(threadId: string) {
-  update((s) => ({
-    ...s,
-    threads: s.threads.map((t) =>
-      t.id === threadId ? { ...t, pinned: !t.pinned } : t,
-    ),
-  }));
-}
-
-export function toggleThreadLocked(threadId: string) {
-  update((s) => ({
-    ...s,
-    threads: s.threads.map((t) =>
-      t.id === threadId ? { ...t, locked: !t.locked } : t,
-    ),
-  }));
-}
-
-/* ---- Library ---- */
-
-export function publishToLibrary(
-  threadId: string,
-  folderId: string,
-  reviewedBy: string,
-) {
-  update((s) => ({
-    ...s,
-    threads: s.threads.map((t) =>
-      t.id === threadId
-        ? {
-            ...t,
-            libraryFolderId: folderId,
-            reviewedAsOf: Date.now(),
-            reviewedBy,
-          }
-        : t,
-    ),
-  }));
-}
-
-export function removeFromLibrary(threadId: string) {
-  update((s) => ({
-    ...s,
-    threads: s.threads.map((t) =>
-      t.id === threadId
-        ? { ...t, libraryFolderId: null, reviewedAsOf: null, reviewedBy: null }
-        : t,
-    ),
-  }));
-}
-
-export function markReviewed(threadId: string, reviewedBy: string) {
-  update((s) => ({
-    ...s,
-    threads: s.threads.map((t) =>
-      t.id === threadId ? { ...t, reviewedAsOf: Date.now(), reviewedBy } : t,
-    ),
-  }));
-}
-
-export function createFolder(name: string, category: string) {
-  update((s) => ({
-    ...s,
-    libraryFolders: [
-      ...s.libraryFolders,
-      { id: uid("fold"), brokerageId: DEMO_BROKERAGE.id, name, category },
-    ],
-  }));
-}
-
-/* ---- Teams & roster ---- */
-
-export function createTeam(input: {
-  name: string;
-  leaderId: string;
-  memberIds: string[];
-  authorized: boolean;
-}): string {
-  const teamId = uid("team");
-  update((s) => ({
-    ...s,
-    teams: [
-      ...s.teams,
-      {
-        id: teamId,
-        brokerageId: DEMO_BROKERAGE.id,
-        name: input.name,
-        leaderId: input.leaderId,
-        memberIds: Array.from(new Set([input.leaderId, ...input.memberIds])),
-        authorized: input.authorized,
-        createdAt: Date.now(),
-      },
-    ],
-    channels: [
-      ...s.channels,
-      {
-        id: uid("ch"),
-        brokerageId: DEMO_BROKERAGE.id,
-        scope: "team",
-        teamId,
-        name: input.name,
-        description: `Private channel for ${input.name}.`,
-      },
-    ],
-  }));
-  return teamId;
-}
-
-export function setTeamLeaderAuthorized(memberId: string, authorized: boolean) {
-  update((s) => ({
-    ...s,
-    members: s.members.map((m) =>
-      m.id === memberId ? { ...m, teamLeaderAuthorized: authorized } : m,
-    ),
-  }));
-}
-
-/* ---- Q&A ---- */
-
-export function addQuestion(input: {
-  category: string;
-  title: string;
-  body: string;
-  tags: string[];
-  author: Member;
-}): string {
-  const id = uid("q");
-  update((s) => ({
-    ...s,
-    questions: [
-      {
-        id,
-        category: input.category,
-        title: input.title,
-        body: input.body,
-        authorId: input.author.id,
-        authorName: input.author.name,
-        authorCredential: input.author.credential,
-        createdAt: Date.now(),
-        tags: input.tags,
-        acceptedAnswerId: null,
-      },
-      ...s.questions,
-    ],
-  }));
+export async function addThread(input: {
+  channelId: string; category: string; title: string; tags: string[]; authorId: string; authorName: string; body: string;
+}): Promise<string> {
+  const id = await api.addThread(input);
+  await reload();
   return id;
 }
 
-export function addAnswer(input: {
-  questionId: string;
-  body: string;
-  author: Member;
-}) {
-  update((s) => ({
-    ...s,
-    answers: [
-      ...s.answers,
-      {
-        id: uid("a"),
-        questionId: input.questionId,
-        authorId: input.author.id,
-        authorName: input.author.name,
-        authorCredential: input.author.credential,
-        body: input.body,
-        createdAt: Date.now(),
-      },
-    ],
-  }));
+export async function addPost(input: {
+  threadId: string; authorId: string; authorName: string; body: string; kind: "post" | "update";
+}): Promise<void> {
+  await api.addPost({ threadId: input.threadId, authorId: input.authorId, body: input.body, kind: input.kind });
+  await reload();
 }
 
-export function acceptAnswer(questionId: string, answerId: string) {
-  update((s) => ({
-    ...s,
-    questions: s.questions.map((q) =>
-      q.id === questionId ? { ...q, acceptedAnswerId: answerId } : q,
-    ),
-  }));
+export async function toggleThreadPinned(threadId: string): Promise<void> {
+  const t = store.threads.find((x) => x.id === threadId);
+  await api.setThreadFlags(threadId, { pinned: !t?.pinned });
+  await reload();
 }
 
-export function resetCommunity() {
-  persist(buildSeed());
+export async function toggleThreadLocked(threadId: string): Promise<void> {
+  const t = store.threads.find((x) => x.id === threadId);
+  await api.setThreadFlags(threadId, { locked: !t?.locked });
+  await reload();
+}
+
+export async function publishToLibrary(threadId: string, folderId: string, reviewedBy: string): Promise<void> {
+  await api.publishToLibrary(threadId, folderId, reviewedBy);
+  await reload();
+}
+
+export async function removeFromLibrary(threadId: string): Promise<void> {
+  await api.removeFromLibrary(threadId);
+  await reload();
+}
+
+export async function markReviewed(threadId: string, reviewedBy: string): Promise<void> {
+  await api.markReviewed(threadId, reviewedBy);
+  await reload();
+}
+
+export async function createFolder(name: string, category: string): Promise<void> {
+  if (!store.me?.brokerageId) return;
+  await api.createFolder(store.me.brokerageId, name, category);
+  await reload();
+}
+
+export async function createTeam(input: {
+  name: string; leaderId: string; memberIds: string[]; authorized: boolean;
+}): Promise<string> {
+  if (!store.me?.brokerageId) throw new Error("No brokerage");
+  const id = await api.createTeam({ brokerageId: store.me.brokerageId, ...input });
+  await reload();
+  return id;
+}
+
+export async function setTeamLeaderAuthorized(memberId: string, authorized: boolean): Promise<void> {
+  await api.setTeamLeaderAuthorized(memberId, authorized);
+  await reload();
+}
+
+export async function addQuestion(input: {
+  category: string; title: string; body: string; tags: string[]; author: Member;
+}): Promise<string> {
+  const id = await api.addQuestion({ category: input.category, title: input.title, body: input.body, tags: input.tags, authorId: input.author.id });
+  await reload();
+  return id;
+}
+
+export async function addAnswer(input: { questionId: string; body: string; author: Member }): Promise<void> {
+  await api.addAnswer({ questionId: input.questionId, authorId: input.author.id, body: input.body });
+  await reload();
+}
+
+export async function acceptAnswer(questionId: string, answerId: string): Promise<void> {
+  await api.acceptAnswer(questionId, answerId);
+  await reload();
 }

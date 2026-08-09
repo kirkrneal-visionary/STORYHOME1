@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Building2, LibraryBig, MessagesSquare, Settings, Globe } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
-import { getEffectiveMember } from "@/components/broker/communityStore";
-import { DEMO_BROKERAGE, isBroker } from "@/lib/community";
+import {
+  getEffectiveMember,
+  loadCommunity,
+  useCommunity,
+} from "@/components/broker/communityStore";
+import { isBroker } from "@/lib/community";
 import { CommunityChannels } from "@/components/broker/community/Channels";
 import { CommunityLibrary } from "@/components/broker/community/Library";
 import { CommunityQA } from "@/components/broker/community/QA";
@@ -15,11 +19,17 @@ type Section = "channels" | "library" | "qa" | "admin";
 
 export function CommunityView() {
   const { user } = useAuth();
+  const state = useCommunity();
   const [section, setSection] = useState<Section>("channels");
 
+  useEffect(() => {
+    if (user) void loadCommunity(user);
+  }, [user]);
+
   if (!user) return null;
-  const member = getEffectiveMember(user);
+  const member = state.me ?? getEffectiveMember(user);
   const broker = isBroker(member);
+  const brokerageLabel = state.brokerageName || "Your brokerage";
 
   const sections: { id: Section; label: string; icon: typeof Building2 }[] = [
     { id: "channels", label: "Brokerage", icon: MessagesSquare },
@@ -36,7 +46,7 @@ export function CommunityView() {
         <div>
           <h2 className="font-serif text-2xl font-bold text-ink">Community</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            {DEMO_BROKERAGE.name} · signed in as {member.name}
+            {brokerageLabel} · signed in as {member.name}
           </p>
         </div>
         <span
@@ -71,10 +81,21 @@ export function CommunityView() {
       </div>
 
       <div>
-        {section === "channels" && <CommunityChannels member={member} />}
-        {section === "library" && <CommunityLibrary member={member} />}
-        {section === "qa" && <CommunityQA member={member} />}
-        {section === "admin" && broker && <CommunityAdmin member={member} />}
+        {!state.loaded ? (
+          <p className="text-sm text-[var(--muted)]">Loading community…</p>
+        ) : !member.brokerageId && section !== "qa" ? (
+          <div className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
+            Join a brokerage to access channels and the knowledge library. (Pro
+            Q&amp;A is open to everyone.)
+          </div>
+        ) : (
+          <>
+            {section === "channels" && <CommunityChannels member={member} />}
+            {section === "library" && <CommunityLibrary member={member} />}
+            {section === "qa" && <CommunityQA member={member} />}
+            {section === "admin" && broker && <CommunityAdmin member={member} />}
+          </>
+        )}
       </div>
     </div>
   );
