@@ -26,10 +26,11 @@ function shortKind(kind?: string): string {
 }
 
 export default function GlobalNav() {
-  const { role, toggleRole, unreadMessages, openReferralCount } = useApp();
+  const { role, setRole, unreadMessages, openReferralCount } = useApp();
   const { user, isLoggedIn } = useAuth();
   const pathname = usePathname();
-  const isPro = role === "professional" || user?.kind === "pro";
+  const isProAccount = user?.kind === "pro" || user?.kind === "broker";
+  const isPro = isProAccount && role === "professional";
 
   if (pathname.startsWith("/seller")) {
     return null;
@@ -152,41 +153,27 @@ export default function GlobalNav() {
         </div>
 
         <div className="flex items-center gap-3 md:gap-4">
-          {isLoggedIn && user?.kind === "pro" && (
-            <button
-              type="button"
-              onClick={toggleRole}
-              className="relative hidden h-9 w-[150px] cursor-pointer select-none items-center rounded-full border border-hairline bg-[var(--surface)] p-1 md:flex md:w-[160px]"
-              aria-label="Switch Consumer / Pro role"
-            >
-              <span
-                className={cn(
-                  "absolute top-1 bottom-1 w-[70px] rounded-full bg-[var(--accent)] shadow-sm transition-all duration-300 md:w-[74px]",
-                  isPro ? "left-[76px] md:left-[81px]" : "left-1",
-                )}
-              />
-              <span
-                className={cn(
-                  "z-10 w-1/2 text-center text-xs font-semibold transition-colors",
-                  !isPro
-                    ? "text-[var(--accent-contrast)]"
-                    : "text-[var(--muted)]",
-                )}
+          {isLoggedIn &&
+            isProAccount &&
+            (role === "professional" ? (
+              <button
+                type="button"
+                onClick={() => setRole("consumer")}
+                className="hidden h-9 items-center rounded-full border border-hairline bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-ink md:inline-flex"
+                title="Preview the site the way a buyer sees it"
               >
-                Consumer
-              </span>
-              <span
-                className={cn(
-                  "z-10 w-1/2 text-center text-xs font-semibold transition-colors",
-                  isPro
-                    ? "text-[var(--accent-contrast)]"
-                    : "text-[var(--muted)]",
-                )}
+                View as buyer
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setRole("professional")}
+                className="hidden h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 text-xs font-bold text-[var(--accent-contrast)] md:inline-flex"
+                title="Return to your Pro workspace"
               >
-                Pro
-              </span>
-            </button>
-          )}
+                ← Back to Pro
+              </button>
+            ))}
 
           {isLoggedIn && user ? (
             <>
