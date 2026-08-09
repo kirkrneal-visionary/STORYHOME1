@@ -20,6 +20,7 @@ import {
   addDocument,
   addExpense,
   addRecord,
+  compressImageIfNeeded,
   createHome,
   deleteDocument,
   deleteExpense,
@@ -274,7 +275,8 @@ export function MyHomeView() {
               docs={docs}
               onUpload={async (file, docType, title) => {
                 if (!user) return;
-                const path = await uploadHomeFile(user.id, activeHome.id, file);
+                const optimized = await compressImageIfNeeded(file);
+                const path = await uploadHomeFile(user.id, activeHome.id, optimized);
                 await addDocument(user.id, activeHome.id, { docType, title, filePath: path });
                 await loadHomeData();
               }}
@@ -564,9 +566,16 @@ function DocumentsTab({ docs, onUpload, onDelete }: {
           />
         </label>
         <p className="self-end text-xs text-[var(--muted)]">
-          Private to you. Receipt auto‑analysis (OCR) is coming next.
+          Private to you. Large photos are auto‑compressed for fast upload.
+          Receipt auto‑analysis (OCR) isn&rsquo;t on yet — files are just stored
+          securely for now.
         </p>
       </div>
+      {busy && (
+        <p className="mb-3 text-sm text-[var(--muted)]">
+          Uploading &amp; optimizing… this should take just a moment.
+        </p>
+      )}
       {err && <p className="mb-3 text-sm text-red-300">{err}</p>}
       {docs.length === 0 ? (
         <Empty text="No documents uploaded yet." />

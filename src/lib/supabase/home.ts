@@ -265,6 +265,40 @@ export async function fetchDocuments(homeId: string): Promise<HomeDocument[]> {
   return (data ?? []).map(toDoc);
 }
 
+/**
+ * Downscale/compress large images in the browser before upload so phone photos
+ * (often 3–10 MB) upload quickly. Non-images or already-small files pass through
+ * unchanged; any failure falls back to the original file.
+ */
+export async function compressImageIfNeeded(
+  file: File,
+  maxDim = 1600,
+  quality = 0.82,
+): Promise<File> {
+  if (typeof document === "undefined") return file;
+  if (!file.type.startsWith("image/") || file.size < 800 * 1024) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, "image/jpeg", quality),
+    );
+    if (!blob || blob.size >= file.size) return file;
+    const base = file.name.replace(/\.[^.]+$/, "");
+    return new File([blob], `${base}.jpg`, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 export async function uploadHomeFile(
   ownerId: string,
   homeId: string,
