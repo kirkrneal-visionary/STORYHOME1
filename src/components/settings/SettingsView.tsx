@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, Building2, Save, UserRound } from "lucide-react";
+import { BadgeCheck, Building2, Save, Trash2, UserPlus, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
-import { TextAreaField, TextField } from "@/components/broker/ui";
+import { TextField, TextAreaField } from "@/components/broker/ui";
 import {
   getMyProfile,
   updateMyProfile,
@@ -13,9 +13,22 @@ import {
 import {
   createBrokerage,
   getBrokerageById,
+  listBrokerageAgents,
   updateBrokerage,
   type Brokerage,
+  type BrokerageAgent,
 } from "@/lib/supabase/brokerage";
+import {
+  acceptInvite,
+  addInvite,
+  cancelInvite,
+  listInvites,
+  myPendingInvite,
+  removeAgent,
+  verifyAgentForBroker,
+  type BrokerageInvite,
+  type PendingInvite,
+} from "@/lib/supabase/roster";
 import { accountLabel } from "@/lib/auth";
 
 const toList = (s: string) =>
@@ -26,6 +39,7 @@ export function SettingsView() {
   const { user, isLoggedIn } = useAuth();
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [brokerage, setBrokerage] = useState<Brokerage | null>(null);
+  const [pending, setPending] = useState<PendingInvite | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -34,6 +48,9 @@ export function SettingsView() {
       const p = await getMyProfile(user.id);
       setProfile(p);
       if (p?.brokerageId) setBrokerage(await getBrokerageById(p.brokerageId));
+      else setBrokerage(null);
+      if (p?.accountKind === "agent") setPending(await myPendingInvite());
+      else setPending(null);
     } finally {
       setLoading(false);
     }
@@ -73,12 +90,16 @@ export function SettingsView() {
         <p className="mt-8 text-sm text-[var(--muted)]">Loading your settings…</p>
       ) : (
         <div className="mt-8 space-y-6">
+          {pending && (
+            <AgentJoinBanner pending={pending} onJoined={load} />
+          )}
           {profile && <AccountSection profile={profile} onSaved={load} />}
           {isPro && profile && <ProSection profile={profile} onSaved={load} />}
           {isPro && profile && <LicenseSection profile={profile} />}
-          {isBroker && user && (
+          {isBroker && user && profile && (
             <BrokerageSection
               brokerId={user.id}
+              brokerTrecLicense={profile.trecLicense}
               brokerage={brokerage}
               onSaved={load}
             />
@@ -188,8 +209,8 @@ function LicenseSection({ profile }: { profile: MyProfile }) {
   );
 }
 
-function BrokerageSection({ brokerId, brokerage, onSaved }: {
-  brokerId: string; brokerage: Brokerage | null; onSaved: () => void;
+function BrokerageSection({ brokerId, brokerTrecLicense, brokerage, onSaved }: {
+  brokerId: string; brokerTrecLicense: string | null; brokerage: Brokerage | null; onSaved: () => void;
 }) {
   const [name, setName] = useState(brokerage?.name ?? "");
   const [f, setF] = useState({
@@ -240,7 +261,172 @@ function BrokerageSection({ brokerId, brokerage, onSaved }: {
         )}
         <SaveButton busy={busy} note={note} />
       </form>
+
+      {brokerage ? (
+        <div className="mt-6 border-t border-hairline pt-5">
+          <RosterManager
+            brokerageId={brokerage.id}
+            brokerId={brokerId}
+            brokerTrecLicense={brokerTrecLicense}
+          />
+        </div>
+      ) : (
+        <p className="mt-4 text-xs text-[var(--muted)]">
+          Save your brokerage first to start managing your agent roster.
+        </p>
+      )}
     </Card>
+  );
+}
+
+function AgentJoinBanner({ pending, onJoined }: { pending: PendingInvite; onJoined: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <div className="rounded-2xl border border-gold/50 bg-gold/10 p-4">
+      <p className="text-sm text-ink">
+        <span className="font-semibold">{pending.brokerageName}</span> invited you to join their brokerage on Story Home.
+      </p>
+      {err && <p className="mt-1 text-xs text-red-300">{err}</p>}
+      <button
+        type="button"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setErr("");
+          try {
+            const ok = await acceptInvite(pending.brokerageId);
+            if (ok) onJoined();
+            else setErr("Could not join — the invite may have been removed.");
+          } catch {
+            setErr("Something went wrong joining the brokerage.");
+          } finally {
+            setBusy(false);
+          }
+        }}
+        className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60"
+      >
+        {busy ? "Joining…" : `Join ${pending.brokerageName}`}
+      </button>
+    </div>
+  );
+}
+
+function RosterManager({ brokerageId, brokerId, brokerTrecLicense }: {
+  brokerageId: string; brokerId: string; brokerTrecLicense: string | null;
+}) {
+  const [agents, setAgents] = useState<BrokerageAgent[]>([]);
+  const [invites, setInvites] = useState<BrokerageInvite[]>([]);
+  const [license, setLicense] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  const refresh = useCallback(async () => {
+    setAgents(await listBrokerageAgents(brokerageId));
+    setInvites(await listInvites(brokerageId));
+  }, [brokerageId]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  async function inviteByLicense() {
+    setMsg(null);
+    if (!brokerTrecLicense) {
+      setMsg({ kind: "err", text: "Your broker license isn't on file, so sponsorship can't be verified." });
+      return;
+    }
+    if (!license.trim()) return;
+    setChecking(true);
+    try {
+      const v = await verifyAgentForBroker(license, brokerTrecLicense);
+      if (!v.ok || !v.approved) {
+        setMsg({ kind: "err", text: v.reason ?? "That license is not an active TREC license." });
+        return;
+      }
+      if (!v.sponsorMatch) {
+        setMsg({
+          kind: "err",
+          text: `TREC shows ${v.fullName ?? "this agent"} is sponsored by ${v.sponsorName ?? "another broker"} — not you. You can only add agents you sponsor.`,
+        });
+        return;
+      }
+      await addInvite(brokerageId, v.licenseNumber ?? license.trim(), v.fullName, brokerId);
+      setLicense("");
+      setMsg({ kind: "ok", text: `Invited ${v.fullName}. They'll see a "Join" button in their Settings.` });
+      await refresh();
+    } catch {
+      setMsg({ kind: "err", text: "Couldn't create the invite. Try again." });
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  return (
+    <div>
+      <h3 className="font-serif text-lg font-bold text-ink">Agent roster</h3>
+      <p className="mt-1 text-xs text-[var(--muted)]">
+        Add agents by TREC license #. Story Home confirms with TREC that the agent is actually sponsored by you before inviting them.
+      </p>
+
+      <div className="mt-3 flex gap-2">
+        <input
+          value={license}
+          onChange={(e) => setLicense(e.target.value)}
+          placeholder="Agent TREC license # (e.g. 724479)"
+          inputMode="numeric"
+          className="h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold"
+        />
+        <button
+          type="button"
+          onClick={inviteByLicense}
+          disabled={checking}
+          className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-gold px-4 text-sm font-bold text-gold disabled:opacity-60"
+        >
+          <UserPlus className="h-4 w-4" /> {checking ? "Checking…" : "Verify & invite"}
+        </button>
+      </div>
+      {msg && (
+        <p className={`mt-2 text-xs ${msg.kind === "ok" ? "text-teal-soft" : "text-red-300"}`}>{msg.text}</p>
+      )}
+
+      {invites.length > 0 && (
+        <div className="mt-4">
+          <p className="font-mono text-[10px] uppercase text-[var(--muted)]">Pending invites</p>
+          <ul className="mt-2 space-y-2">
+            {invites.map((i) => (
+              <li key={i.id} className="flex items-center justify-between rounded-lg border border-dashed border-hairline bg-[var(--background)] px-3 py-2">
+                <span className="text-sm text-ink">{i.agentName ?? i.agentLicense} <span className="font-mono text-[11px] text-[var(--muted)]">· {i.agentLicense}</span></span>
+                <button type="button" onClick={async () => { await cancelInvite(i.id); await refresh(); }} className="text-xs font-semibold text-[var(--muted)] hover:text-red-300">Cancel</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-4">
+        <p className="font-mono text-[10px] uppercase text-[var(--muted)]">Current agents ({agents.length})</p>
+        {agents.length === 0 ? (
+          <p className="mt-2 text-sm text-[var(--muted)]">No agents on your roster yet.</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {agents.map((a) => (
+              <li key={a.id} className="flex items-center justify-between rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+                <span className="text-sm text-ink">{a.fullName}{a.primaryMarketCity ? <span className="text-[var(--muted)]"> · {a.primaryMarketCity}</span> : null}</span>
+                <button
+                  type="button"
+                  onClick={async () => { if (a.id !== brokerId) { await removeAgent(a.id); await refresh(); } }}
+                  disabled={a.id === brokerId}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--muted)] hover:text-red-300 disabled:opacity-40"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   );
 }
 
