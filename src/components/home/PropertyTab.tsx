@@ -23,6 +23,7 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/broker/ui";
+import { CountyRecordPanel } from "@/components/home/CountyRecordPanel";
 import { cn } from "@/lib/utils";
 
 const STRUCTURE_KINDS = [
@@ -49,6 +50,9 @@ export function PropertyTab({
 
   return (
     <div className="space-y-8">
+      {home.address && home.zip && (
+        <CountyRecordPanel addressLine={home.address} zip={home.zip} />
+      )}
       <LandSection home={home} onSaved={onHomeChange} />
       <StructuresSection
         structures={structures}

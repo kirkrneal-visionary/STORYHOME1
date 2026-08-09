@@ -212,6 +212,31 @@ export async function fetchSharedHomes(): Promise<Home[]> {
   return (data ?? []).map(toHome);
 }
 
+export type SharedHome = {
+  home: Home;
+  scope: "full" | "report";
+  ownerName: string | null;
+};
+
+/** Homes a consumer has actively granted to this agent (the CRM payoff). */
+export async function fetchHomesSharedWithMe(
+  agentId: string,
+): Promise<SharedHome[]> {
+  const { data, error } = await client()
+    .from("home_access_grants")
+    .select("scope, home:homes(*, owner:profiles!homes_owner_id_fkey(full_name))")
+    .eq("grantee_agent_id", agentId)
+    .eq("status", "active");
+  if (error) throw error;
+  return (data ?? [])
+    .filter((r: any) => r.home)
+    .map((r: any) => ({
+      home: toHome(r.home),
+      scope: r.scope,
+      ownerName: r.home?.owner?.full_name ?? null,
+    }));
+}
+
 export async function createHome(
   ownerId: string,
   input: Partial<Home>,

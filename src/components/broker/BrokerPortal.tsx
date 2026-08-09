@@ -6,6 +6,7 @@ import {
   Building2,
   Calculator,
   Home,
+  KeyRound,
   MessagesSquare,
   UserRound,
   Users,
@@ -16,16 +17,24 @@ import { MyToolsView } from "@/components/broker/MyToolsView";
 import { MyListingsView } from "@/components/broker/MyListingsView";
 import { MyBuyersView } from "@/components/broker/MyBuyersView";
 import { MySellersView } from "@/components/broker/MySellersView";
+import { SharedHomesView } from "@/components/broker/SharedHomesView";
 import { CommunityView } from "@/components/broker/CommunityView";
 import { cn } from "@/lib/utils";
 
-type PortalTab = "tools" | "listings" | "buyers" | "sellers" | "community";
+type PortalTab =
+  | "tools"
+  | "listings"
+  | "buyers"
+  | "sellers"
+  | "clientHomes"
+  | "community";
 
 const TABS: { id: PortalTab; label: string; icon: typeof Calculator }[] = [
   { id: "tools", label: "My Tools", icon: Calculator },
   { id: "listings", label: "My Listings", icon: Building2 },
   { id: "buyers", label: "My Buyers", icon: Users },
   { id: "sellers", label: "My Sellers", icon: Home },
+  { id: "clientHomes", label: "Client Homes", icon: KeyRound },
   { id: "community", label: "Community", icon: MessagesSquare },
 ];
 
@@ -109,6 +118,7 @@ export function BrokerPortal() {
           {tab === "listings" && <MyListingsView />}
           {tab === "buyers" && <MyBuyersView />}
           {tab === "sellers" && <MySellersView />}
+          {tab === "clientHomes" && <SharedHomesView />}
           {tab === "community" && <CommunityView />}
         </div>
       </div>
