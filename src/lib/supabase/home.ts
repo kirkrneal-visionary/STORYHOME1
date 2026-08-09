@@ -25,6 +25,39 @@ export type Home = {
   purchaseDate: string | null;
   purchasePrice: number | null;
   photoUrl: string | null;
+  photoPath: string | null;
+  lotAcres: number | null;
+  waterSource: string | null;
+  sewerType: string | null;
+  fenced: boolean;
+  agExemption: boolean;
+  roadFrontage: string | null;
+  isFinanced: boolean | null;
+  titleCompany: string | null;
+  gfNumber: string | null;
+  lender: string | null;
+  loanAmount: number | null;
+};
+
+export type HomeStructure = {
+  id: string;
+  homeId: string;
+  kind: string;
+  kindOther: string | null;
+  name: string;
+  sizeSqft: number | null;
+  yearBuilt: number | null;
+  notes: string | null;
+};
+
+export type HomeFolder = { id: string; homeId: string; name: string };
+
+export type AuditEntry = {
+  id: string;
+  action: string;
+  scope: string | null;
+  detail: string | null;
+  at: string;
 };
 
 export type HomeRecord = {
@@ -32,12 +65,15 @@ export type HomeRecord = {
   homeId: string;
   occurredOn: string;
   category: string;
+  categoryOther: string | null;
   title: string;
   description: string | null;
   cost: number;
   contractor: string | null;
   warrantyUntil: string | null;
   isCapitalImprovement: boolean;
+  receiptPath: string | null;
+  receiptName: string | null;
 };
 
 export type HomeExpense = {
@@ -45,18 +81,26 @@ export type HomeExpense = {
   homeId: string;
   spentOn: string;
   category: string;
+  categoryOther: string | null;
   vendor: string | null;
   amount: number;
   taxYear: number | null;
   isCapitalImprovement: boolean;
+  receiptPath: string | null;
+  receiptName: string | null;
 };
 
 export type HomeDocument = {
   id: string;
   homeId: string;
   docType: string;
+  docTypeOther: string | null;
   title: string;
   filePath: string | null;
+  folderId: string | null;
+  isClosingDoc: boolean;
+  closingSlot: string | null;
+  sensitive: boolean;
   createdAt: string;
 };
 
@@ -90,6 +134,18 @@ const toHome = (r: any): Home => ({
   purchaseDate: r.purchase_date,
   purchasePrice: n(r.purchase_price),
   photoUrl: r.photo_url,
+  photoPath: r.photo_path,
+  lotAcres: n(r.lot_acres),
+  waterSource: r.water_source,
+  sewerType: r.sewer_type,
+  fenced: Boolean(r.fenced),
+  agExemption: Boolean(r.ag_exemption),
+  roadFrontage: r.road_frontage,
+  isFinanced: r.is_financed,
+  titleCompany: r.title_company,
+  gfNumber: r.gf_number,
+  lender: r.lender,
+  loanAmount: n(r.loan_amount),
 });
 
 const toRecord = (r: any): HomeRecord => ({
@@ -97,12 +153,15 @@ const toRecord = (r: any): HomeRecord => ({
   homeId: r.home_id,
   occurredOn: r.occurred_on,
   category: r.category,
+  categoryOther: r.category_other,
   title: r.title,
   description: r.description,
   cost: Number(r.cost ?? 0),
   contractor: r.contractor,
   warrantyUntil: r.warranty_until,
   isCapitalImprovement: Boolean(r.is_capital_improvement),
+  receiptPath: r.receipt_path,
+  receiptName: r.receipt_name,
 });
 
 const toExpense = (r: any): HomeExpense => ({
@@ -110,18 +169,26 @@ const toExpense = (r: any): HomeExpense => ({
   homeId: r.home_id,
   spentOn: r.spent_on,
   category: r.category,
+  categoryOther: r.category_other,
   vendor: r.vendor,
   amount: Number(r.amount ?? 0),
   taxYear: n(r.tax_year),
   isCapitalImprovement: Boolean(r.is_capital_improvement),
+  receiptPath: r.receipt_path,
+  receiptName: r.receipt_name,
 });
 
 const toDoc = (r: any): HomeDocument => ({
   id: r.id,
   homeId: r.home_id,
   docType: r.doc_type,
+  docTypeOther: r.doc_type_other,
   title: r.title,
   filePath: r.file_path,
+  folderId: r.folder_id,
+  isClosingDoc: Boolean(r.is_closing_doc),
+  closingSlot: r.closing_slot,
+  sensitive: Boolean(r.sensitive),
   createdAt: r.created_at,
 });
 
@@ -201,12 +268,15 @@ export async function addRecord(
     owner_id: ownerId,
     occurred_on: input.occurredOn || new Date().toISOString().slice(0, 10),
     category: input.category || "Other",
+    category_other: input.categoryOther || null,
     title: input.title,
     description: input.description || null,
     cost: input.cost ?? 0,
     contractor: input.contractor || null,
     warranty_until: input.warrantyUntil || null,
     is_capital_improvement: input.isCapitalImprovement ?? false,
+    receipt_path: input.receiptPath || null,
+    receipt_name: input.receiptName || null,
   });
   if (error) throw error;
 }
@@ -238,12 +308,15 @@ export async function addExpense(
     owner_id: ownerId,
     spent_on: input.spentOn || new Date().toISOString().slice(0, 10),
     category: input.category || "Other",
+    category_other: input.categoryOther || null,
     vendor: input.vendor || null,
     amount: input.amount ?? 0,
     tax_year:
       input.taxYear ??
       Number(new Date(input.spentOn || Date.now()).getFullYear()),
     is_capital_improvement: input.isCapitalImprovement ?? false,
+    receipt_path: input.receiptPath || null,
+    receipt_name: input.receiptName || null,
   });
   if (error) throw error;
 }
@@ -315,15 +388,37 @@ export async function uploadHomeFile(
 export async function addDocument(
   ownerId: string,
   homeId: string,
-  input: { docType: string; title: string; filePath: string | null },
+  input: {
+    docType: string;
+    docTypeOther?: string | null;
+    title: string;
+    filePath: string | null;
+    folderId?: string | null;
+    isClosingDoc?: boolean;
+    closingSlot?: string | null;
+    sensitive?: boolean;
+  },
 ): Promise<void> {
   const { error } = await client().from("home_documents").insert({
     home_id: homeId,
     owner_id: ownerId,
     doc_type: input.docType,
+    doc_type_other: input.docTypeOther || null,
     title: input.title,
     file_path: input.filePath,
+    folder_id: input.folderId || null,
+    is_closing_doc: input.isClosingDoc ?? false,
+    closing_slot: input.closingSlot || null,
+    sensitive: input.sensitive ?? false,
   });
+  if (error) throw error;
+}
+
+export async function renameDocument(id: string, title: string): Promise<void> {
+  const { error } = await client()
+    .from("home_documents")
+    .update({ title })
+    .eq("id", id);
   if (error) throw error;
 }
 
@@ -428,6 +523,161 @@ export async function fetchPros(): Promise<ProContact[]> {
     role: r.professional_role,
     city: r.primary_market_city,
   }));
+}
+
+/* ------------------------------ Update home ---------------------------- */
+
+export async function updateHome(
+  id: string,
+  patch: Partial<Home>,
+): Promise<void> {
+  const row: Record<string, unknown> = {};
+  const map: Record<string, string> = {
+    nickname: "nickname", address: "address", city: "city",
+    countyName: "county_name", state: "state", zip: "zip", beds: "beds",
+    baths: "baths", sqft: "sqft", yearBuilt: "year_built",
+    propertyType: "property_type", purchaseDate: "purchase_date",
+    purchasePrice: "purchase_price", photoPath: "photo_path",
+    lotAcres: "lot_acres", waterSource: "water_source", sewerType: "sewer_type",
+    fenced: "fenced", agExemption: "ag_exemption", roadFrontage: "road_frontage",
+    isFinanced: "is_financed", titleCompany: "title_company",
+    gfNumber: "gf_number", lender: "lender", loanAmount: "loan_amount",
+  };
+  for (const [k, col] of Object.entries(map)) {
+    if (k in patch) row[col] = (patch as Record<string, unknown>)[k] ?? null;
+  }
+  if (Object.keys(row).length === 0) return;
+  const { error } = await client().from("homes").update(row).eq("id", id);
+  if (error) throw error;
+}
+
+/* ------------------------------ Structures ----------------------------- */
+
+const toStructure = (r: any): HomeStructure => ({
+  id: r.id, homeId: r.home_id, kind: r.kind, kindOther: r.kind_other,
+  name: r.name, sizeSqft: n(r.size_sqft), yearBuilt: n(r.year_built),
+  notes: r.notes,
+});
+
+export async function fetchStructures(homeId: string): Promise<HomeStructure[]> {
+  const { data, error } = await client()
+    .from("home_structures").select("*").eq("home_id", homeId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(toStructure);
+}
+
+export async function addStructure(
+  ownerId: string, homeId: string, input: Partial<HomeStructure>,
+): Promise<void> {
+  const { error } = await client().from("home_structures").insert({
+    home_id: homeId, owner_id: ownerId, kind: input.kind || "Other",
+    kind_other: input.kindOther || null, name: input.name || "",
+    size_sqft: input.sizeSqft, year_built: input.yearBuilt,
+    notes: input.notes || null,
+  });
+  if (error) throw error;
+}
+
+export async function deleteStructure(id: string): Promise<void> {
+  const { error } = await client().from("home_structures").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/* ------------------------------- Folders ------------------------------- */
+
+export async function fetchFolders(homeId: string): Promise<HomeFolder[]> {
+  const { data, error } = await client()
+    .from("home_folders").select("*").eq("home_id", homeId)
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({ id: r.id, homeId: r.home_id, name: r.name }));
+}
+
+export async function addFolder(
+  ownerId: string, homeId: string, name: string,
+): Promise<void> {
+  const { error } = await client().from("home_folders").insert({
+    home_id: homeId, owner_id: ownerId, scope: "documents", name,
+  });
+  if (error) throw error;
+}
+
+export async function deleteFolder(id: string): Promise<void> {
+  const { error } = await client().from("home_folders").delete().eq("id", id);
+  if (error) throw error;
+}
+
+/* ------------------------------ Disclosure ----------------------------- */
+
+export async function fetchDisclosure(
+  homeId: string,
+): Promise<Record<string, unknown>> {
+  const { data, error } = await client()
+    .from("home_disclosures").select("data").eq("home_id", homeId).maybeSingle();
+  if (error) return {};
+  return (data?.data as Record<string, unknown>) ?? {};
+}
+
+export async function saveDisclosure(
+  ownerId: string, homeId: string, data: Record<string, unknown>,
+): Promise<void> {
+  const { error } = await client().from("home_disclosures").upsert(
+    { home_id: homeId, owner_id: ownerId, data, updated_at: new Date().toISOString() },
+    { onConflict: "home_id" },
+  );
+  if (error) throw error;
+}
+
+/* -------------------------------- Audit -------------------------------- */
+
+export async function fetchAudit(homeId: string): Promise<AuditEntry[]> {
+  const { data, error } = await client()
+    .from("home_access_audit").select("*").eq("home_id", homeId)
+    .order("at", { ascending: false });
+  if (error) return [];
+  return (data ?? []).map((r: any) => ({
+    id: r.id, action: r.action, scope: r.scope, detail: r.detail, at: r.at,
+  }));
+}
+
+export async function logAudit(
+  ownerId: string, homeId: string,
+  action: string, scope: string | null, detail: string | null,
+): Promise<void> {
+  await client().from("home_access_audit").insert({
+    home_id: homeId, owner_id: ownerId, actor_id: ownerId,
+    action, scope, detail,
+  });
+}
+
+/* -------------------------------- Export ------------------------------- */
+
+export async function exportHomeData(homeId: string): Promise<string> {
+  const [home, records, expenses, docs, grants, structures, disclosure] =
+    await Promise.all([
+      client().from("homes").select("*").eq("id", homeId).maybeSingle(),
+      client().from("home_records").select("*").eq("home_id", homeId),
+      client().from("home_expenses").select("*").eq("home_id", homeId),
+      client().from("home_documents").select("*").eq("home_id", homeId),
+      client().from("home_access_grants").select("*").eq("home_id", homeId),
+      client().from("home_structures").select("*").eq("home_id", homeId),
+      client().from("home_disclosures").select("data").eq("home_id", homeId).maybeSingle(),
+    ]);
+  return JSON.stringify(
+    {
+      home: home.data,
+      records: records.data,
+      expenses: expenses.data,
+      documents: docs.data,
+      grants: grants.data,
+      structures: structures.data,
+      disclosure: disclosure.data?.data ?? {},
+      exportedAt: new Date().toISOString(),
+    },
+    null,
+    2,
+  );
 }
 
 /** Curated East Texas banks & credit unions (static until a data source is added). */
