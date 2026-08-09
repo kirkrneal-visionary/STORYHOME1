@@ -3,29 +3,38 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star } from "lucide-react";
-import {
-  DEMO_LISTINGS,
-  formatUsd,
-  getAgent,
-} from "@/lib/demo-data";
+import { formatUsd, getAgent } from "@/lib/demo-data";
+import { getServerSupabase } from "@/lib/supabase/server";
+import { LISTING_SELECT, rowToListing } from "@/lib/listings-map";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+async function loadListing(id: string) {
+  const supabase = await getServerSupabase();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("listings")
+    .select(LISTING_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+  return data ? rowToListing(data) : null;
+}
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const listing = DEMO_LISTINGS.find((item) => item.id === id);
+  const listing = await loadListing(id);
   return { title: listing?.addressSerif ?? "Listing" };
 }
 
 export default async function ListingDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const listing = DEMO_LISTINGS.find((item) => item.id === id);
+  const listing = await loadListing(id);
   if (!listing) notFound();
-  const agent = getAgent(listing.agentId);
+  const agent = listing.agent ?? getAgent(listing.agentId);
 
   return (
     <div className="min-h-dvh pb-24 pt-[72px] md:pb-10">
@@ -38,15 +47,21 @@ export default async function ListingDetailPage({ params }: PageProps) {
         </Link>
       </div>
 
-      <div className="relative mt-4 aspect-[16/9] w-full md:aspect-[21/9]">
-        <Image
-          src={listing.photoUrl}
-          alt={listing.addressSerif}
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
+      <div className="relative mt-4 aspect-[16/9] w-full bg-[var(--nav-surface)] md:aspect-[21/9]">
+        {listing.photoUrl ? (
+          <Image
+            src={listing.photoUrl}
+            alt={listing.addressSerif}
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center font-mono text-sm text-paper/50">
+            No photo provided
+          </div>
+        )}
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-8 md:grid-cols-[1fr_320px] md:px-6">

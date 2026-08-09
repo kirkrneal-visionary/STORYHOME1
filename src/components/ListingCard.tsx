@@ -26,7 +26,7 @@ export function ListingCard({
   selected = false,
   onSelect,
 }: ListingCardProps) {
-  const agent = getAgent(listing.agentId);
+  const agent = listing.agent ?? getAgent(listing.agentId);
   const { isListingInAnySuite } = useSuites();
   const saved = isListingInAnySuite(listing.id);
   const [suiteOpen, setSuiteOpen] = useState(false);
@@ -44,13 +44,19 @@ export function ListingCard({
     >
       <Link href={`/marketplace/${listing.id}`} className="block">
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]">
-          <Image
-            src={listing.photoUrl}
-            alt={listing.addressSerif}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            sizes="(max-width: 768px) 100vw, 480px"
-          />
+          {listing.photoUrl ? (
+            <Image
+              src={listing.photoUrl}
+              alt={listing.addressSerif}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              sizes="(max-width: 768px) 100vw, 480px"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center font-mono text-xs text-paper/50">
+              No photo
+            </div>
+          )}
           <span className="absolute bottom-3 left-3 rounded bg-navy px-2.5 py-1 font-mono text-sm font-semibold text-paper shadow-md">
             {formatUsd(listing.price)}
           </span>

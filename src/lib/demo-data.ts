@@ -42,6 +42,8 @@ export type DemoListing = {
   commentCount: number;
   lat: number;
   lng: number;
+  /** Owning agent, resolved from the DB when available. */
+  agent?: DemoAgent;
 };
 
 export const DEMO_AGENT: DemoAgent = {

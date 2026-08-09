@@ -7,7 +7,8 @@ import { X } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
 import { SearchToolbar } from "@/components/marketplace/SearchToolbar";
-import { DEMO_LISTINGS } from "@/lib/demo-data";
+import type { DemoListing } from "@/lib/demo-data";
+import { fetchMarketplaceListings } from "@/lib/supabase/listings";
 import {
   DEFAULT_SEARCH_FILTERS,
   applySearchFilters,
@@ -51,14 +52,33 @@ export default function MarketplaceView() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
+  const [allListings, setAllListings] = useState<DemoListing[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    fetchMarketplaceListings()
+      .then((rows) => {
+        if (active) setAllListings(rows);
+      })
+      .catch(() => {
+        if (active) setAllListings([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const listings = useMemo(() => {
-    const filtered = applySearchFilters(DEMO_LISTINGS, filters);
+    const filtered = applySearchFilters(allListings, filters);
     if (!boundary) return filtered;
     return filtered.filter((listing) =>
       listingInBoundary({ lat: listing.lat, lng: listing.lng }, boundary),
     );
-  }, [filters, boundary]);
+  }, [allListings, filters, boundary]);
 
   useEffect(() => {
     if (listings.length === 0) {
@@ -100,7 +120,20 @@ export default function MarketplaceView() {
           }
         >
           <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-20 md:pb-3">
-            {listings.length === 0 ? (
+            {loading ? (
+              <div className="rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center text-sm text-[var(--muted)]">
+                Loading listings…
+              </div>
+            ) : allListings.length === 0 ? (
+              <div className="rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center">
+                <p className="font-serif text-xl font-bold text-ink">
+                  No listings yet
+                </p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  New homes will appear here as local agents list them.
+                </p>
+              </div>
+            ) : listings.length === 0 ? (
               <div className="rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center">
                 <p className="font-serif text-xl font-bold text-ink">
                   No homes in this map area

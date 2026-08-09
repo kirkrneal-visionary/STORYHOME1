@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { MapPin, Search } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
-import { DEMO_LISTINGS } from "@/lib/demo-data";
+import type { DemoListing } from "@/lib/demo-data";
+import { fetchMarketplaceListings } from "@/lib/supabase/listings";
 import {
   DEFAULT_MARKET,
   REGION,
@@ -21,6 +22,25 @@ export function HomeSearchHero() {
   const router = useRouter();
   const [intent, setIntent] = useState<Intent>("sale");
   const [query, setQuery] = useState<string>(DEFAULT_MARKET.label);
+  const [featured, setFeatured] = useState<DemoListing[]>([]);
+  const [featuredLoaded, setFeaturedLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    fetchMarketplaceListings()
+      .then((rows) => {
+        if (active) setFeatured(rows.slice(0, 6));
+      })
+      .catch(() => {
+        if (active) setFeatured([]);
+      })
+      .finally(() => {
+        if (active) setFeaturedLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
@@ -183,11 +203,22 @@ export function HomeSearchHero() {
               See marketplace
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {DEMO_LISTINGS.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          {featuredLoaded && featured.length === 0 ? (
+            <div className="rounded-2xl border border-hairline bg-navy-soft p-10 text-center">
+              <p className="font-serif text-xl font-bold text-paper">
+                No listings yet
+              </p>
+              <p className="mt-2 text-sm text-paper/65">
+                East Texas homes will appear here as local agents list them.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+              {featured.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

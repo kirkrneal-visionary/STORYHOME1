@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ListingCard } from "@/components/ListingCard";
-import { DEMO_AGENT, DEMO_LISTINGS } from "@/lib/demo-data";
 
 export const metadata: Metadata = { title: "Following" };
 
@@ -14,29 +12,20 @@ export default function FollowingPage() {
           Homes from agents you follow.
         </p>
 
-        <div className="mt-8 rounded-xl border border-hairline bg-[var(--surface)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <Link
-                href={`/agents/${DEMO_AGENT.id}`}
-                className="font-semibold text-ink hover:underline"
-              >
-                {DEMO_AGENT.fullName}
-              </Link>
-              <p className="font-mono text-[11px] text-[var(--muted)] uppercase">
-                {DEMO_AGENT.primaryMarketCity}
-              </p>
-            </div>
-            <span className="rounded-full bg-gold/25 px-3 py-1 font-mono text-[11px] font-semibold text-navy">
-              3 new listings this week
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
-          {DEMO_LISTINGS.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
-          ))}
+        <div className="mt-8 rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-10 text-center">
+          <p className="font-serif text-xl font-bold text-ink">
+            You&rsquo;re not following anyone yet
+          </p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Browse the marketplace and follow agents to see their new listings
+            here.
+          </p>
+          <Link
+            href="/marketplace"
+            className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-6 text-sm font-bold text-navy"
+          >
+            Browse the marketplace
+          </Link>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Pencil,
@@ -12,11 +12,11 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import {
-  useProListings,
-  upsertListing,
-  removeListing,
-  setListingStatus,
-} from "@/components/broker/proListingsStore";
+  fetchAgentListings,
+  saveListing,
+  deleteListing,
+  updateListingStatus,
+} from "@/lib/supabase/listings";
 import { ListingForm } from "@/components/broker/ListingForm";
 import { validateListing } from "@/lib/listing-compliance";
 import {
@@ -31,11 +31,27 @@ import { cn } from "@/lib/utils";
 
 export function MyListingsView() {
   const { user } = useAuth();
-  const listings = useProListings();
+  const [listings, setListings] = useState<ProListing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"list" | "edit">("list");
   const [editing, setEditing] = useState<ProListing | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [scanNote, setScanNote] = useState("");
+
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      setListings(await fetchAgentListings(user.id));
+    } catch {
+      // keep prior listings on transient error
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   const live = listings.filter((l) => isLiveStatus(l.status));
   const offMarket = listings.filter((l) => !isLiveStatus(l.status));
@@ -55,21 +71,24 @@ export function MyListingsView() {
     setMode("edit");
   }
 
-  function handleSave(listing: ProListing) {
-    upsertListing(listing);
+  async function handleSave(listing: ProListing) {
+    if (!user) return;
+    await saveListing(listing, user.id);
+    await refresh();
     setMode("list");
     setEditing(null);
   }
 
   // Simulate the site scanning the MLS for external status changes and
   // auto-de-listing anything that has sold since it was published.
-  function scanMls() {
+  async function scanMls() {
     const target = live.find((l) => l.status === "Under Contract") ?? null;
     if (!target) {
       setScanNote("MLS scan complete — no new sold listings detected.");
       return;
     }
-    setListingStatus(target.id, "Sold");
+    await updateListingStatus(target.id, "Sold");
+    await refresh();
     setScanNote(
       `MLS scan: “${target.streetAddress}” closed and was auto-de-listed.`,
     );
@@ -127,8 +146,10 @@ export function MyListingsView() {
         <h3 className="mb-3 font-mono text-[11px] font-bold tracking-wider text-[var(--muted)] uppercase">
           Live listings · {live.length}
         </h3>
-        {live.length === 0 ? (
-          <EmptyState text="No live listings. Create one to get started." />
+        {loading ? (
+          <EmptyState text="Loading your listings…" />
+        ) : live.length === 0 ? (
+          <EmptyState text="No live listings yet. Click “New listing” to add your first property." />
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {live.map((listing) => (
@@ -136,11 +157,15 @@ export function MyListingsView() {
                 key={listing.id}
                 listing={listing}
                 onEdit={() => startEdit(listing)}
-                onStatus={(s) => setListingStatus(listing.id, s)}
+                onStatus={async (s) => {
+                  await updateListingStatus(listing.id, s);
+                  void refresh();
+                }}
                 onDeleteRequest={() => setDeletingId(listing.id)}
-                onDeleteConfirm={() => {
-                  removeListing(listing.id);
+                onDeleteConfirm={async () => {
+                  await deleteListing(listing.id);
                   setDeletingId(null);
+                  void refresh();
                 }}
                 onDeleteCancel={() => setDeletingId(null)}
                 confirming={deletingId === listing.id}
@@ -161,11 +186,15 @@ export function MyListingsView() {
                 key={listing.id}
                 listing={listing}
                 onEdit={() => startEdit(listing)}
-                onStatus={(s) => setListingStatus(listing.id, s)}
+                onStatus={async (s) => {
+                  await updateListingStatus(listing.id, s);
+                  void refresh();
+                }}
                 onDeleteRequest={() => setDeletingId(listing.id)}
-                onDeleteConfirm={() => {
-                  removeListing(listing.id);
+                onDeleteConfirm={async () => {
+                  await deleteListing(listing.id);
                   setDeletingId(null);
+                  void refresh();
                 }}
                 onDeleteCancel={() => setDeletingId(null)}
                 confirming={deletingId === listing.id}
