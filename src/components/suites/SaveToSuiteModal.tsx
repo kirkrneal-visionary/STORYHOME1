@@ -25,7 +25,7 @@ export function SaveToSuiteModal({
 
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-4 sm:items-center">
+      <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
         <div className="w-full max-w-md rounded-2xl border border-hairline bg-navy-soft p-6 text-paper">
           <h3 className="font-serif text-2xl font-bold">Save to a Suite</h3>
           <p className="mt-2 text-sm text-paper/70">
@@ -52,7 +52,7 @@ export function SaveToSuiteModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-4 sm:items-center">
+    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
       <div className="w-full max-w-md rounded-2xl border border-hairline bg-navy-soft p-5 text-paper shadow-xl">
         <div className="flex items-start justify-between gap-3">
           <div>

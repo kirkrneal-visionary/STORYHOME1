@@ -208,7 +208,7 @@ export function MarketplaceMap({
   }
 
   return (
-    <div className={cn("relative h-full min-h-[360px] w-full", className)}>
+    <div className={cn("relative isolate h-full min-h-[360px] w-full", className)}>
       <MapContainer
         center={[EAST_TEXAS_CENTER.lat, EAST_TEXAS_CENTER.lng]}
         zoom={EAST_TEXAS_DEFAULT_ZOOM}
