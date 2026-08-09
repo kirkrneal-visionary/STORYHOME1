@@ -37,7 +37,15 @@ type AuthContextType = {
   signUp: (
     email: string,
     password: string,
-    opts: { fullName: string; accountKind: AccountKind; professionalRole?: ProRole },
+    opts: {
+      fullName: string;
+      accountKind: AccountKind;
+      professionalRole?: ProRole;
+      trecLicense?: string;
+      trecStatus?: string;
+      sponsorLicenseNumber?: string;
+      sponsorName?: string;
+    },
   ) => Promise<AuthResult>;
   logout: () => void;
 };
@@ -242,6 +250,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fullName: string;
         accountKind: AccountKind;
         professionalRole?: ProRole;
+        trecLicense?: string;
+        trecStatus?: string;
+        sponsorLicenseNumber?: string;
+        sponsorName?: string;
       },
     ): Promise<AuthResult> => {
       if (!supabase) return { ok: false, error: "Auth is not configured." };
@@ -255,6 +267,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             full_name: opts.fullName,
             account_kind,
             professional_role: opts.professionalRole ?? null,
+            trec_license: opts.trecLicense ?? null,
+            trec_status: opts.trecStatus ?? null,
+            sponsor_license_number: opts.sponsorLicenseNumber ?? null,
+            sponsor_name: opts.sponsorName ?? null,
           },
         },
       });
