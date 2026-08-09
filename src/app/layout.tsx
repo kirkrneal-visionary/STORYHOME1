@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
 import GlobalNav from "@/components/GlobalNav";
+import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
@@ -52,6 +53,7 @@ export default function RootLayout({
         <Providers>
           <GlobalNav />
           {children}
+          <Footer />
         </Providers>
       </body>
     </html>
