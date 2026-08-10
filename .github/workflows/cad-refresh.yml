@@ -1,0 +1,36 @@
+# Wave L4: refresh launch-county CAD parcels on a 24h cadence.
+# Each county only re-ingests when its last success is older than 72h
+# (see scripts/refresh-cad.mjs + cad_county_status.refresh_interval_hours).
+name: CAD 72h refresh
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force refresh even if within 72h window"
+        required: false
+        default: "false"
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Refresh stale CAD counties
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            node scripts/refresh-cad.mjs --force
+          else
+            node scripts/refresh-cad.mjs
+          fi

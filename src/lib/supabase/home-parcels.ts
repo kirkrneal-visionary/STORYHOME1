@@ -24,7 +24,7 @@ export async function listHomeParcels(homeId: string): Promise<LinkedParcel[]> {
   const { data: pdata } = await s
     .from("county_parcels")
     .select(
-      "source, prop_id, county_fips, situs_address, situs_city, situs_zip, legal_acreage, improvement_value, legal_description",
+      "source, prop_id, county_fips, situs_address, situs_city, situs_zip, legal_acreage, improvement_value, legal_description, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, property_category",
     )
     .in(
       "prop_id",
@@ -51,6 +51,14 @@ export async function listHomeParcels(homeId: string): Promise<LinkedParcel[]> {
       improvementValue:
         f?.improvement_value != null ? Number(f.improvement_value) : null,
       legalDescription: (f?.legal_description as string) ?? null,
+      mhSerialNumber: (f?.mh_serial_number as string) ?? null,
+      mhHudLabel: (f?.mh_hud_label as string) ?? null,
+      detailLevel:
+        (f?.detail_level as LinkedParcel["detailLevel"]) ?? null,
+      needsAgentDetail: Boolean(f?.needs_agent_detail),
+      ingestedAt: (f?.ingested_at as string) ?? null,
+      propertyCategory:
+        (f?.property_category as LinkedParcel["propertyCategory"]) ?? null,
     };
   });
 }

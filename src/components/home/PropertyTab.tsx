@@ -88,6 +88,8 @@ function HomeFactsSection({ home, onSaved }: { home: Home; onSaved: () => void }
     sqft: home.sqft ?? null,
     yearBuilt: home.yearBuilt ?? null,
     propertyType: home.propertyType ?? "",
+    mhSerialNumber: home.mhSerialNumber ?? "",
+    mhHudLabel: home.mhHudLabel ?? "",
   });
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -95,8 +97,8 @@ function HomeFactsSection({ home, onSaved }: { home: Home; onSaved: () => void }
     <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
       <h3 className="font-serif text-xl font-bold text-ink">Home facts</h3>
       <p className="mt-1 text-xs text-[var(--muted)]">
-        Editable anytime — these appear on your Overview. (Beds/baths aren&apos;t in
-        county records, so set them here.)
+        Editable anytime — these appear on your Overview. Mobile-home serials
+        auto-fill from CAD when available; otherwise enter them here.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <TextField id="hf-addr" label="Street address" value={f.address} onChange={(v) => setF((p) => ({ ...p, address: v }))} />
@@ -107,6 +109,12 @@ function HomeFactsSection({ home, onSaved }: { home: Home; onSaved: () => void }
         <NumberField id="hf-baths" label="Baths" step="0.5" value={String(f.baths ?? "")} onChange={(v) => setF((p) => ({ ...p, baths: Number(v) || null }))} />
         <NumberField id="hf-sqft" label="Building sqft" value={String(f.sqft ?? "")} onChange={(v) => setF((p) => ({ ...p, sqft: Number(v) || null }))} />
         <NumberField id="hf-year" label="Year built" value={String(f.yearBuilt ?? "")} onChange={(v) => setF((p) => ({ ...p, yearBuilt: Number(v) || null }))} />
+        {(f.propertyType === "Mobile / Manufactured" || f.mhSerialNumber) && (
+          <>
+            <TextField id="hf-mh-serial" label="Mobile home serial #" value={f.mhSerialNumber} onChange={(v) => setF((p) => ({ ...p, mhSerialNumber: v.toUpperCase() }))} />
+            <TextField id="hf-mh-hud" label="HUD / label #" value={f.mhHudLabel} onChange={(v) => setF((p) => ({ ...p, mhHudLabel: v.toUpperCase() }))} />
+          </>
+        )}
       </div>
       <div className="mt-4 flex items-center gap-3">
         <button

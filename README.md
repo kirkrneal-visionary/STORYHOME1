@@ -59,5 +59,28 @@ Apply the database in a Supabase project (SQL editor or `supabase db push`):
 2. `supabase/migrations/0002_rls.sql` — Row Level Security policies.
 3. `supabase/migrations/0003_homes.sql` — consumer "My Home" vault (homes, records, expenses, documents, access grants) + consent RLS.
 4. `supabase/migrations/0004_storage.sql` — private Storage bucket for home documents.
+5. Continue through `0020_cad_l4.sql` for Wave L4 CAD columns + 72h refresh status.
 
 RLS is verified against plain Postgres via `supabase/test/` (shim + scenario + assertions).
+
+## Wave L4 — CAD ingestion (7 launch counties)
+
+Ingest **Real + Personal** (mobile homes) property only from county appraisal districts. Mineral / auto / other classes are excluded. Mobile-home serial numbers parsed from CAD legal descriptions populate MLS listing fields. Each county refreshes on a **72-hour** cycle.
+
+| County | Mode | Source |
+|---|---|---|
+| Polk | ArcGIS | Polk CAD FeatureServer |
+| Angelina | ArcGIS | AngelinaParcels FeatureServer |
+| Tyler | File | Official shapefile download (geometry + prop_id; agent fills detail) |
+| Trinity · San Jacinto · Liberty · Walker | File / agent | Drop a CAD export with `--file`, or enter details in the listing form |
+
+```bash
+npm run cad:list
+npm run cad:ingest -- --source polk_cad --all
+npm run cad:ingest -- --source angelina_cad --all
+npm run cad:ingest -- --source tyler_cad --download
+npm run cad:ingest -- --source trinity_cad --file ./drops/trinity.geojson
+npm run cad:refresh          # re-ingest counties older than 72h
+```
+
+Live upserts require `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. A GitHub Action (`.github/workflows/cad-refresh.yml`) runs the refresh daily; configure those secrets on the repo.
