@@ -128,11 +128,14 @@ export async function fetchAgentListings(
   return (data ?? []).map(rowToProListing);
 }
 
-/** Insert (new) or update (existing) a listing owned by the current agent. */
+/**
+ * Insert (new) or update (existing) a listing owned by the current agent.
+ * Returns the listing id (needed to sync its linked parcels/tracts).
+ */
 export async function saveListing(
   pro: ProListing,
   agentId: string,
-): Promise<void> {
+): Promise<string> {
   const row = proListingToRow(pro, agentId);
   const supabase = client();
   const isExisting =
@@ -143,10 +146,15 @@ export async function saveListing(
       .update(row)
       .eq("id", pro.id);
     if (error) throw error;
-  } else {
-    const { error } = await supabase.from("listings").insert(row);
-    if (error) throw error;
+    return pro.id;
   }
+  const { data, error } = await supabase
+    .from("listings")
+    .insert(row)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id as string;
 }
 
 export async function deleteListing(id: string): Promise<void> {

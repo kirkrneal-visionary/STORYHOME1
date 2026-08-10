@@ -21,6 +21,11 @@ import {
   deleteListing,
   updateListingStatus,
 } from "@/lib/supabase/listings";
+import {
+  listListingParcels,
+  syncListingParcels,
+  type LinkedParcel,
+} from "@/lib/supabase/listing-parcels";
 import { ListingForm } from "@/components/broker/ListingForm";
 import { validateListing } from "@/lib/listing-compliance";
 import {
@@ -39,6 +44,7 @@ export function MyListingsView() {
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"list" | "edit">("list");
   const [editing, setEditing] = useState<ProListing | null>(null);
+  const [editingTracts, setEditingTracts] = useState<LinkedParcel[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [scanNote, setScanNote] = useState("");
 
@@ -61,6 +67,7 @@ export function MyListingsView() {
   const offMarket = listings.filter((l) => !isLiveStatus(l.status));
 
   function startCreate() {
+    setEditingTracts([]);
     setEditing(
       emptyProListing({
         listingAgentName: user?.name ?? "",
@@ -70,17 +77,30 @@ export function MyListingsView() {
     setMode("edit");
   }
 
-  function startEdit(listing: ProListing) {
+  async function startEdit(listing: ProListing) {
+    const isExisting =
+      listing.id && !listing.id.startsWith("listing-") && listing.id.length > 20;
+    let tracts: LinkedParcel[] = [];
+    if (isExisting) {
+      try {
+        tracts = await listListingParcels(listing.id);
+      } catch {
+        tracts = [];
+      }
+    }
+    setEditingTracts(tracts);
     setEditing(listing);
     setMode("edit");
   }
 
-  async function handleSave(listing: ProListing) {
+  async function handleSave(listing: ProListing, tracts: LinkedParcel[]) {
     if (!user) return;
-    await saveListing(listing, user.id);
+    const id = await saveListing(listing, user.id);
+    await syncListingParcels(id, tracts);
     await refresh();
     setMode("list");
     setEditing(null);
+    setEditingTracts([]);
   }
 
   // Simulate the site scanning the MLS for external status changes and
@@ -102,10 +122,12 @@ export function MyListingsView() {
     return (
       <ListingForm
         initial={editing}
+        initialTracts={editingTracts}
         onSave={handleSave}
         onCancel={() => {
           setMode("list");
           setEditing(null);
+          setEditingTracts([]);
         }}
       />
     );
