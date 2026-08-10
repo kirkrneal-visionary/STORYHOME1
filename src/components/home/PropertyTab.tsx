@@ -50,9 +50,8 @@ export function PropertyTab({
 
   return (
     <div className="space-y-8">
-      {home.address && home.zip && (
-        <CountyRecordPanel addressLine={home.address} zip={home.zip} />
-      )}
+      <CountyRecordPanel home={home} ownerId={ownerId} onHomeChange={onHomeChange} />
+      <HomeFactsSection home={home} onSaved={onHomeChange} />
       <LandSection home={home} onSaved={onHomeChange} />
       <StructuresSection
         structures={structures}
@@ -76,6 +75,59 @@ export function PropertyTab({
         savedNote={savedNote}
       />
     </div>
+  );
+}
+
+function HomeFactsSection({ home, onSaved }: { home: Home; onSaved: () => void }) {
+  const [f, setF] = useState({
+    address: home.address ?? "",
+    city: home.city ?? "",
+    zip: home.zip ?? "",
+    beds: home.beds ?? null,
+    baths: home.baths ?? null,
+    sqft: home.sqft ?? null,
+    yearBuilt: home.yearBuilt ?? null,
+    propertyType: home.propertyType ?? "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  return (
+    <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+      <h3 className="font-serif text-xl font-bold text-ink">Home facts</h3>
+      <p className="mt-1 text-xs text-[var(--muted)]">
+        Editable anytime — these appear on your Overview. (Beds/baths aren&apos;t in
+        county records, so set them here.)
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <TextField id="hf-addr" label="Street address" value={f.address} onChange={(v) => setF((p) => ({ ...p, address: v }))} />
+        <TextField id="hf-city" label="City" value={f.city} onChange={(v) => setF((p) => ({ ...p, city: v }))} />
+        <TextField id="hf-zip" label="ZIP" value={f.zip} onChange={(v) => setF((p) => ({ ...p, zip: v }))} />
+        <SelectField id="hf-type" label="Property type" value={f.propertyType} onChange={(v) => setF((p) => ({ ...p, propertyType: v }))} options={["", "Single Family", "Farm and Ranch", "Condo", "Town Home", "Mobile / Manufactured"].map((o) => ({ value: o, label: o || "—" }))} />
+        <NumberField id="hf-beds" label="Beds" value={String(f.beds ?? "")} onChange={(v) => setF((p) => ({ ...p, beds: Number(v) || null }))} />
+        <NumberField id="hf-baths" label="Baths" step="0.5" value={String(f.baths ?? "")} onChange={(v) => setF((p) => ({ ...p, baths: Number(v) || null }))} />
+        <NumberField id="hf-sqft" label="Building sqft" value={String(f.sqft ?? "")} onChange={(v) => setF((p) => ({ ...p, sqft: Number(v) || null }))} />
+        <NumberField id="hf-year" label="Year built" value={String(f.yearBuilt ?? "")} onChange={(v) => setF((p) => ({ ...p, yearBuilt: Number(v) || null }))} />
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              await updateHome(home.id, f);
+              setNote("Saved.");
+              setTimeout(() => setNote(""), 2000);
+              onSaved();
+            } finally { setBusy(false); }
+          }}
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60"
+        >
+          <Save className="h-4 w-4" /> {busy ? "Saving…" : "Save home facts"}
+        </button>
+        {note && <span className="text-sm text-teal-soft">{note}</span>}
+      </div>
+    </section>
   );
 }
 

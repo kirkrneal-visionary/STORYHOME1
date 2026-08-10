@@ -37,6 +37,7 @@ export type Home = {
   gfNumber: string | null;
   lender: string | null;
   loanAmount: number | null;
+  cadPropId: string | null;
 };
 
 export type HomeStructure = {
@@ -146,6 +147,7 @@ const toHome = (r: any): Home => ({
   gfNumber: r.gf_number,
   lender: r.lender,
   loanAmount: n(r.loan_amount),
+  cadPropId: r.cad_prop_id ?? null,
 });
 
 const toRecord = (r: any): HomeRecord => ({
@@ -567,6 +569,7 @@ export async function updateHome(
     fenced: "fenced", agExemption: "ag_exemption", roadFrontage: "road_frontage",
     isFinanced: "is_financed", titleCompany: "title_company",
     gfNumber: "gf_number", lender: "lender", loanAmount: "loan_amount",
+    cadPropId: "cad_prop_id",
   };
   for (const [k, col] of Object.entries(map)) {
     if (k in patch) row[col] = (patch as Record<string, unknown>)[k] ?? null;
