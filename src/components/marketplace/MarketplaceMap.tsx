@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection } from "geojson";
 import {
+  Grid3x3,
   Hand,
   Layers,
   LocateFixed,
@@ -17,13 +18,17 @@ import {
 } from "lucide-react";
 import type { DemoListing } from "@/lib/demo-data";
 import {
+  AREA_UNITS,
+  DISTANCE_UNITS,
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
   boundaryLabel,
-  formatArea,
-  formatDistance,
-  pathLengthMiles,
+  formatAreaIn,
+  formatDistanceIn,
+  pathLengthMeters,
   polygonAreaSqMeters,
+  type AreaUnit,
+  type DistanceUnit,
   type DrawnBoundary,
   type LatLng,
 } from "@/lib/geo";
@@ -182,6 +187,9 @@ export function MarketplaceMap({
   const [showSearchArea, setShowSearchArea] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [viewportVersion, setViewportVersion] = useState(0);
+  const [distUnit, setDistUnit] = useState<DistanceUnit>("mi");
+  const [areaUnit, setAreaUnit] = useState<AreaUnit>("acres");
+  const [showParcels, setShowParcels] = useState(true);
 
   useEffect(() => {
     toolRef.current = tool;
@@ -218,6 +226,46 @@ export function MarketplaceMap({
         type: "line",
         source: "boundary",
         paint: { "line-color": GOLD, "line-width": 2 },
+      });
+      // Parcel-grid overlay (our own MVT tiles) — shows CAD lot boundaries at zoom.
+      map.addSource("parcels", {
+        type: "vector",
+        tiles: [`${window.location.origin}/api/parcels/{z}/{x}/{y}`],
+        minzoom: 13,
+        maxzoom: 16,
+      });
+      map.addLayer({
+        id: "parcels-fill",
+        type: "fill",
+        source: "parcels",
+        "source-layer": "parcels",
+        minzoom: 13,
+        paint: { "fill-color": GOLD, "fill-opacity": 0.05 },
+      });
+      map.addLayer({
+        id: "parcels-line",
+        type: "line",
+        source: "parcels",
+        "source-layer": "parcels",
+        minzoom: 13,
+        paint: {
+          "line-color": GOLD,
+          "line-opacity": 0.9,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.4, 16, 1.3],
+        },
+      });
+      map.on("click", "parcels-fill", (e) => {
+        const f = e.features?.[0];
+        if (!f) return;
+        const p = f.properties as Record<string, unknown>;
+        new maplibregl.Popup({ closeButton: true })
+          .setLngLat(e.lngLat)
+          .setHTML(
+            `<div style="font:700 12px system-ui;color:#17335e">${p.situs_address ?? "Parcel"}</div>` +
+              `<div style="font:400 11px system-ui;color:#333">Owner: ${p.owner_name ?? "—"}</div>` +
+              `<div style="font:400 11px system-ui;color:#333">${p.legal_acreage ?? "—"} ac · CAD #${p.prop_id ?? "—"}</div>`,
+          )
+          .addTo(map);
       });
       map.addLayer({
         id: "draft-line",
@@ -278,6 +326,16 @@ export function MarketplaceMap({
       map.setLayoutProperty(`base-${b}`, "visibility", b === base ? "visible" : "none");
     });
   }, [ready, base]);
+
+  // Parcel overlay visibility.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const v = showParcels ? "visible" : "none";
+    ["parcels-fill", "parcels-line"].forEach((id) => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
+    });
+  }, [ready, showParcels]);
 
   // Cursor + double-click zoom per tool.
   useEffect(() => {
@@ -421,10 +479,10 @@ export function MarketplaceMap({
 
   const measureReadout = useMemo(() => {
     if (measurePoints.length < 2) return null;
-    const dist = pathLengthMiles(measurePoints);
-    const area =
+    const distMeters = pathLengthMeters(measurePoints);
+    const areaSqm =
       measurePoints.length >= 3 ? polygonAreaSqMeters(measurePoints) : 0;
-    return { dist, area };
+    return { distMeters, areaSqm };
   }, [measurePoints]);
 
   function selectTool(next: DrawTool) {
@@ -556,6 +614,18 @@ export function MarketplaceMap({
         </div>
         <button
           type="button"
+          onClick={() => setShowParcels((v) => !v)}
+          title="Toggle parcel grid (CAD lot lines at zoom)"
+          className={cn(
+            "flex items-center gap-1.5 rounded-full border border-hairline px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur",
+            showParcels ? "bg-gold text-navy" : "bg-navy/90 text-paper hover:bg-white/10",
+          )}
+        >
+          <Grid3x3 className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Parcels</span>
+        </button>
+        <button
+          type="button"
           onClick={() => setExpanded((v) => !v)}
           title={expanded ? "Exit fullscreen" : "Expand map"}
           className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-navy/90 text-paper shadow-lg hover:bg-white/10"
@@ -578,19 +648,53 @@ export function MarketplaceMap({
       {/* Info / measure readout (bottom-left) */}
       <div className="absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-xl border border-hairline bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg backdrop-blur">
         {tool === "measure" ? (
-          measureReadout ? (
-            <div className="space-y-0.5">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
               <p className="font-mono text-[10px] tracking-wider text-paper/60 uppercase">
                 Measure
               </p>
-              <p className="font-bold">Distance: {formatDistance(measureReadout.dist)}</p>
-              {measureReadout.area > 0 && (
-                <p className="font-bold">Area: {formatArea(measureReadout.area)}</p>
-              )}
+              <div className="flex gap-1">
+                <select
+                  value={distUnit}
+                  onChange={(e) => setDistUnit(e.target.value as DistanceUnit)}
+                  title="Distance unit"
+                  className="rounded border border-hairline bg-navy px-1 py-0.5 text-[10px] font-semibold text-paper"
+                >
+                  {DISTANCE_UNITS.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={areaUnit}
+                  onChange={(e) => setAreaUnit(e.target.value as AreaUnit)}
+                  title="Area unit"
+                  className="rounded border border-hairline bg-navy px-1 py-0.5 text-[10px] font-semibold text-paper"
+                >
+                  {AREA_UNITS.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          ) : (
-            <p>Click points to measure distance. 3+ points also measures area.</p>
-          )
+            {measureReadout ? (
+              <>
+                <p className="font-bold">
+                  Distance: {formatDistanceIn(measureReadout.distMeters, distUnit)}
+                </p>
+                {measureReadout.areaSqm > 0 && (
+                  <p className="font-bold">
+                    Area: {formatAreaIn(measureReadout.areaSqm, areaUnit)}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p>Click points to measure distance. 3+ points also measures area.</p>
+            )}
+          </div>
         ) : tool === "polygon" ? (
           <p>Click to drop points, then double‑click or “Apply shape”.</p>
         ) : tool === "radius" ? (

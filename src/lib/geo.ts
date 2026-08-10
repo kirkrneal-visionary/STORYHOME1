@@ -81,6 +81,73 @@ export function pathLengthMiles(points: LatLng[]) {
   return total;
 }
 
+/** Total path length in meters across an ordered list of points. */
+export function pathLengthMeters(points: LatLng[]) {
+  return pathLengthMiles(points) * 1609.344;
+}
+
+// --- Unit-aware measurement formatting -------------------------------------
+
+export type DistanceUnit = "in" | "ft" | "yd" | "cm" | "m" | "km" | "mi";
+export type AreaUnit = "sqft" | "sqm" | "acres" | "ha";
+
+export const DISTANCE_UNITS: { id: DistanceUnit; label: string }[] = [
+  { id: "in", label: "in" },
+  { id: "ft", label: "ft" },
+  { id: "yd", label: "yd" },
+  { id: "cm", label: "cm" },
+  { id: "m", label: "m" },
+  { id: "km", label: "km" },
+  { id: "mi", label: "mi" },
+];
+
+export const AREA_UNITS: { id: AreaUnit; label: string }[] = [
+  { id: "sqft", label: "sq ft" },
+  { id: "sqm", label: "m²" },
+  { id: "acres", label: "acres" },
+  { id: "ha", label: "hectares" },
+];
+
+const METERS_PER: Record<DistanceUnit, number> = {
+  in: 0.0254,
+  ft: 0.3048,
+  yd: 0.9144,
+  cm: 0.01,
+  m: 1,
+  km: 1000,
+  mi: 1609.344,
+};
+
+const SQM_PER: Record<AreaUnit, number> = {
+  sqft: 0.09290304,
+  sqm: 1,
+  acres: 4046.8564224,
+  ha: 10000,
+};
+
+function withUnit(value: number, decimals: number, label: string) {
+  return `${value.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} ${label}`;
+}
+
+/** Format a distance (given in meters) in the requested unit. */
+export function formatDistanceIn(meters: number, unit: DistanceUnit) {
+  const value = meters / METERS_PER[unit];
+  const u = DISTANCE_UNITS.find((d) => d.id === unit)!;
+  const decimals = unit === "in" || unit === "cm" ? 0 : unit === "mi" || unit === "km" ? 3 : 1;
+  return withUnit(value, decimals, u.label);
+}
+
+/** Format an area (given in square meters) in the requested unit. */
+export function formatAreaIn(sqMeters: number, unit: AreaUnit) {
+  const value = sqMeters / SQM_PER[unit];
+  const u = AREA_UNITS.find((a) => a.id === unit)!;
+  const decimals = unit === "acres" || unit === "ha" ? 3 : 0;
+  return withUnit(value, decimals, u.label);
+}
+
 /** Spherical polygon area in square meters (closed automatically). */
 export function polygonAreaSqMeters(points: LatLng[]) {
   if (points.length < 3) return 0;
