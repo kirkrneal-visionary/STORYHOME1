@@ -4,13 +4,14 @@ import { useMemo, useState } from "react";
 import {
   AlertTriangle,
   ClipboardPaste,
+  Home,
   ImagePlus,
-  Link2,
   MapPin,
   Search,
   ShieldCheck,
   Star,
   Trash2,
+  Trees,
   X,
 } from "lucide-react";
 import {
@@ -24,11 +25,15 @@ import {
 } from "@/lib/pro-listings";
 import {
   AVAILABLE_COUNTIES,
-  parcelCountyLabel,
   searchParcels,
   searchParcelsStatewide,
   type CountyParcel,
 } from "@/lib/supabase/parcels";
+import {
+  summarizeTracts,
+  type LinkedParcel,
+} from "@/lib/supabase/listing-parcels";
+import { txCountyNameByFips } from "@/lib/tx-counties";
 import { LISTING_STATUSES, PROPERTY_TYPES } from "@/lib/listing-filters";
 import { SERVICE_COUNTIES } from "@/lib/markets";
 import {
@@ -58,14 +63,17 @@ const STATUS_OPTIONS = LISTING_STATUSES.map((s) => ({ value: s, label: s }));
 
 export function ListingForm({
   initial,
+  initialTracts = [],
   onSave,
   onCancel,
 }: {
   initial: ProListing;
-  onSave: (listing: ProListing) => void;
+  initialTracts?: LinkedParcel[];
+  onSave: (listing: ProListing, tracts: LinkedParcel[]) => void;
   onCancel: () => void;
 }) {
   const [form, setForm] = useState<ProListing>(initial);
+  const [tracts, setTracts] = useState<LinkedParcel[]>(initialTracts);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
   const [importNote, setImportNote] = useState("");
@@ -117,22 +125,33 @@ export function ListingForm({
     });
   }
 
-  function linkParcel(p: CountyParcel) {
-    setForm((prev) => ({
-      ...prev,
-      cadPropId: p.propId,
-      streetAddress: p.situsAddress || prev.streetAddress,
-      city: p.situsCity || prev.city,
-      countyName: parcelCountyLabel(p) || prev.countyName,
-      zip: p.situsZip || prev.zip,
-      acres: p.legalAcreage ?? prev.acres,
-    }));
+  // Tracts drive the listing's location, total acreage, and CAD link. Auto-fill
+  // is applied here (not in an effect) so we never fight the agent's manual edits
+  // except when the parcel set actually changes.
+  function updateTracts(next: LinkedParcel[]) {
+    setTracts(next);
+    if (next.length > 0) {
+      const primary = next.find((t) => t.isPrimary) ?? next[0];
+      const sum = summarizeTracts(next);
+      setForm((prev) => ({
+        ...prev,
+        cadPropId: primary.propId,
+        streetAddress: primary.situsAddress || prev.streetAddress,
+        city: primary.situsCity || prev.city,
+        countyName: txCountyNameByFips(primary.countyFips) || prev.countyName,
+        zip: primary.situsZip || prev.zip,
+        acres:
+          sum.totalAcres > 0 ? Number(sum.totalAcres.toFixed(4)) : prev.acres,
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, cadPropId: "" }));
+    }
   }
 
   function handleSave() {
     setAttemptedPublish(true);
     if (!compliance.canPublish) return;
-    onSave({ ...form, photos: form.photos.filter((p) => p.trim()) });
+    onSave({ ...form, photos: form.photos.filter((p) => p.trim()) }, tracts);
   }
 
   return (
@@ -185,12 +204,9 @@ export function ListingForm({
         )}
       </section>
 
-      {/* County (CAD) parcel link — auto-fills location + drives the map pin */}
-      <ParcelLink
-        cadPropId={form.cadPropId}
-        onLink={linkParcel}
-        onUnlink={() => set("cadPropId", "")}
-      />
+      {/* Multi-tract CAD parcel manager — auto-fills location, totals land,
+          flags homes vs. lots, and combines the legal description */}
+      <TractManager tracts={tracts} onChange={updateTracts} />
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* Left: form fields */}
@@ -536,14 +552,12 @@ function CompliancePanel({
   );
 }
 
-function ParcelLink({
-  cadPropId,
-  onLink,
-  onUnlink,
+function TractManager({
+  tracts,
+  onChange,
 }: {
-  cadPropId: string;
-  onLink: (parcel: CountyParcel) => void;
-  onUnlink: () => void;
+  tracts: LinkedParcel[];
+  onChange: (next: LinkedParcel[]) => void;
 }) {
   // "" = statewide (all ingested counties); a source key narrows to one county.
   const [countyFilter, setCountyFilter] = useState<string>("");
@@ -568,105 +582,211 @@ function ParcelLink({
     }
   }
 
+  function addTract(p: CountyParcel) {
+    if (tracts.some((t) => t.source === p.source && t.propId === p.propId)) return;
+    const linked: LinkedParcel = {
+      source: p.source,
+      propId: p.propId,
+      countyFips: p.countyFips,
+      isPrimary: tracts.length === 0,
+      situsAddress: p.situsAddress,
+      situsCity: p.situsCity,
+      situsZip: p.situsZip,
+      legalAcreage: p.legalAcreage,
+      improvementValue: p.improvementValue,
+      legalDescription: p.legalDescription,
+    };
+    onChange([...tracts, linked]);
+    setResults([]);
+    setSearched(false);
+    setQuery("");
+  }
+
+  function removeTract(t: LinkedParcel) {
+    const next = tracts.filter(
+      (x) => !(x.source === t.source && x.propId === t.propId),
+    );
+    if (t.isPrimary && next.length > 0 && !next.some((x) => x.isPrimary)) {
+      next[0] = { ...next[0], isPrimary: true };
+    }
+    onChange(next);
+  }
+
+  function setPrimary(t: LinkedParcel) {
+    onChange(
+      tracts.map((x) => ({
+        ...x,
+        isPrimary: x.source === t.source && x.propId === t.propId,
+      })),
+    );
+  }
+
+  const sum = summarizeTracts(tracts);
+
   return (
     <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-gold" />
         <h4 className="text-sm font-semibold text-ink">
-          Find the parcel — search Texas CAD records by parcel ID, address, or owner
+          Parcels / tracts — search Texas CAD by parcel ID, address, or owner
         </h4>
       </div>
+      <p className="mt-1 text-xs text-[var(--muted)]">
+        A property can span multiple tracts. Add each one — we total the land,
+        flag homes vs. lots, and combine the legal description for your listing.
+      </p>
 
-      {cadPropId ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-3">
-          <p className="inline-flex items-center gap-1.5 font-mono text-xs text-teal-soft">
-            <Link2 className="h-3.5 w-3.5" /> Linked to CAD parcel #{cadPropId}
-          </p>
-          <button
-            type="button"
-            onClick={onUnlink}
-            className="inline-flex items-center gap-1 text-xs text-[var(--muted)] hover:text-red-300"
-          >
-            <X className="h-3.5 w-3.5" /> Unlink
-          </button>
-        </div>
-      ) : (
-        <div className="mt-3">
-          <div className="flex flex-wrap gap-2">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void run();
-                }
-              }}
-              placeholder="Parcel / CAD Property ID, address, or owner name"
-              className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
-            />
-            <select
-              value={countyFilter}
-              onChange={(e) => setCountyFilter(e.target.value)}
-              title="Optional: narrow to one county"
-              className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
-            >
-              <option value="">All Texas counties</option>
-              {AVAILABLE_COUNTIES.map((c) => (
-                <option key={c.source} value={c.source}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={run}
-              disabled={searching}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
-            >
-              <Search className="h-4 w-4" /> {searching ? "…" : "Search"}
-            </button>
-          </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              void run();
+            }
+          }}
+          placeholder="Parcel / CAD Property ID, address, or owner name"
+          className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+        />
+        <select
+          value={countyFilter}
+          onChange={(e) => setCountyFilter(e.target.value)}
+          title="Optional: narrow to one county"
+          className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+        >
+          <option value="">All Texas counties</option>
+          {AVAILABLE_COUNTIES.map((c) => (
+            <option key={c.source} value={c.source}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={run}
+          disabled={searching}
+          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
+        >
+          <Search className="h-4 w-4" /> {searching ? "…" : "Search"}
+        </button>
+      </div>
 
-          {searched && !searching && results.length === 0 && (
-            <p className="mt-2 text-xs text-[var(--muted)]">
-              No matching parcels. Try the CAD Property ID, just the street name, or the owner’s last name.
-            </p>
-          )}
+      {searched && !searching && results.length === 0 && (
+        <p className="mt-2 text-xs text-[var(--muted)]">
+          No matching parcels. Try the CAD Property ID, just the street name, or
+          the owner’s last name.
+        </p>
+      )}
 
-          {results.length > 0 && (
-            <ul className="mt-2 max-h-56 space-y-2 overflow-y-auto">
-              {results.map((p) => (
-                <li
-                  key={`${p.source}-${p.propId}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
+      {results.length > 0 && (
+        <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto">
+          {results.map((p) => {
+            const added = tracts.some(
+              (t) => t.source === p.source && t.propId === p.propId,
+            );
+            return (
+              <li
+                key={`${p.source}-${p.propId}`}
+                className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-ink">
+                    {p.situsAddress || p.legalDescription}
+                  </p>
+                  <p className="truncate font-mono text-[11px] text-[var(--muted)]">
+                    {txCountyNameByFips(p.countyFips) ?? p.source} · Prop {p.propId}
+                    {p.ownerName ? ` · ${p.ownerName}` : ""}
+                    {p.legalAcreage != null ? ` · ${p.legalAcreage} ac` : ""}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => addTract(p)}
+                  disabled={added}
+                  className="shrink-0 rounded-lg border border-gold px-3 py-1.5 text-xs font-bold text-gold disabled:opacity-40"
                 >
+                  {added ? "Added" : "Add tract"}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {tracts.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {tracts.map((t) => {
+            const isHome = (t.improvementValue ?? 0) > 0;
+            return (
+              <div
+                key={`${t.source}-${t.propId}`}
+                className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    title={isHome ? "Has a structure" : "Land only"}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase",
+                      isHome
+                        ? "bg-teal-soft/20 text-teal-soft"
+                        : "bg-gold/15 text-gold",
+                    )}
+                  >
+                    {isHome ? <Home className="h-3 w-3" /> : <Trees className="h-3 w-3" />}
+                    {isHome ? "Home" : "Land"}
+                  </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-ink">
-                      {p.situsAddress || p.legalDescription}
+                      {t.situsAddress || t.legalDescription || `Parcel ${t.propId}`}
                     </p>
                     <p className="truncate font-mono text-[11px] text-[var(--muted)]">
-                      {parcelCountyLabel(p)} · Prop {p.propId}
-                      {p.ownerName ? ` · ${p.ownerName}` : ""}
-                      {p.legalAcreage != null ? ` · ${p.legalAcreage} ac` : ""}
+                      {txCountyNameByFips(t.countyFips) ?? t.source} · Prop {t.propId}
+                      {t.legalAcreage != null ? ` · ${t.legalAcreage} ac` : ""}
                     </p>
                   </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => {
-                      onLink(p);
-                      setResults([]);
-                      setSearched(false);
-                      setQuery("");
-                    }}
-                    className="shrink-0 rounded-lg border border-gold px-3 py-1.5 text-xs font-bold text-gold"
+                    onClick={() => setPrimary(t)}
+                    title={t.isPrimary ? "Primary tract" : "Set as primary"}
+                    className={cn(
+                      "rounded p-1.5",
+                      t.isPrimary ? "text-gold" : "text-[var(--muted)] hover:text-gold",
+                    )}
                   >
-                    Use this parcel
+                    <Star className={cn("h-4 w-4", t.isPrimary && "fill-gold")} />
                   </button>
-                </li>
-              ))}
-            </ul>
+                  <button
+                    type="button"
+                    onClick={() => removeTract(t)}
+                    title="Remove tract"
+                    className="rounded p-1.5 text-[var(--muted)] hover:text-red-300"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="rounded-lg bg-[color-mix(in_srgb,var(--gold)_12%,var(--surface))] px-3 py-2 font-mono text-[11px] font-bold text-ink">
+            {sum.tractCount} tract{sum.tractCount === 1 ? "" : "s"} ·{" "}
+            {sum.totalAcres.toFixed(2)} ac total · {sum.homes} home
+            {sum.homes === 1 ? "" : "s"} + {sum.lots} lot
+            {sum.lots === 1 ? "" : "s"}
+          </div>
+          {sum.legalCombined && (
+            <p className="text-[11px] leading-relaxed text-[var(--muted)]">
+              Combined legal: {sum.legalCombined}
+            </p>
           )}
+          <p className="text-[11px] text-[var(--muted)]">
+            The starred tract is primary (map pin + address). Building sqft / year
+            built come from CAD improvements where available; otherwise enter them
+            under Property facts.
+          </p>
         </div>
       )}
     </section>
