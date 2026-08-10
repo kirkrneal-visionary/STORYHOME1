@@ -5,6 +5,9 @@ import {
   AlertTriangle,
   ClipboardPaste,
   ImagePlus,
+  Link2,
+  MapPin,
+  Search,
   ShieldCheck,
   Star,
   Trash2,
@@ -19,6 +22,11 @@ import {
   toListingDraft,
   type ProListing,
 } from "@/lib/pro-listings";
+import {
+  AVAILABLE_COUNTIES,
+  searchParcels,
+  type CountyParcel,
+} from "@/lib/supabase/parcels";
 import { LISTING_STATUSES, PROPERTY_TYPES } from "@/lib/listing-filters";
 import { SERVICE_COUNTIES } from "@/lib/markets";
 import {
@@ -107,6 +115,20 @@ export function ListingForm({
     });
   }
 
+  function linkParcel(p: CountyParcel, source: string) {
+    const countyName =
+      AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ?? form.countyName;
+    setForm((prev) => ({
+      ...prev,
+      cadPropId: p.propId,
+      streetAddress: p.situsAddress || prev.streetAddress,
+      city: p.situsCity || prev.city,
+      countyName,
+      zip: p.situsZip || prev.zip,
+      acres: p.legalAcreage ?? prev.acres,
+    }));
+  }
+
   function handleSave() {
     setAttemptedPublish(true);
     if (!compliance.canPublish) return;
@@ -162,6 +184,13 @@ export function ListingForm({
           </div>
         )}
       </section>
+
+      {/* County (CAD) parcel link — auto-fills location + drives the map pin */}
+      <ParcelLink
+        cadPropId={form.cadPropId}
+        onLink={linkParcel}
+        onUnlink={() => set("cadPropId", "")}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* Left: form fields */}
@@ -504,6 +533,135 @@ function CompliancePanel({
         </ul>
       )}
     </div>
+  );
+}
+
+function ParcelLink({
+  cadPropId,
+  onLink,
+  onUnlink,
+}: {
+  cadPropId: string;
+  onLink: (parcel: CountyParcel, source: string) => void;
+  onUnlink: () => void;
+}) {
+  const [source, setSource] = useState<string>(AVAILABLE_COUNTIES[0].source);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<CountyParcel[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+
+  async function run() {
+    setSearching(true);
+    setSearched(true);
+    try {
+      setResults(await searchParcels(source, query));
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  return (
+    <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+      <div className="flex items-center gap-2">
+        <MapPin className="h-4 w-4 text-gold" />
+        <h4 className="text-sm font-semibold text-ink">
+          Link county (CAD) parcel — auto-fills location & drops the map pin
+        </h4>
+      </div>
+
+      {cadPropId ? (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-3">
+          <p className="inline-flex items-center gap-1.5 font-mono text-xs text-teal-soft">
+            <Link2 className="h-3.5 w-3.5" /> Linked to CAD parcel #{cadPropId}
+          </p>
+          <button
+            type="button"
+            onClick={onUnlink}
+            className="inline-flex items-center gap-1 text-xs text-[var(--muted)] hover:text-red-300"
+          >
+            <X className="h-3.5 w-3.5" /> Unlink
+          </button>
+        </div>
+      ) : (
+        <div className="mt-3">
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+            >
+              {AVAILABLE_COUNTIES.map((c) => (
+                <option key={c.source} value={c.source}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void run();
+                }
+              }}
+              placeholder="Search by address, owner, or CAD Property ID"
+              className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+            />
+            <button
+              type="button"
+              onClick={run}
+              disabled={searching}
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-lg bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
+            >
+              <Search className="h-4 w-4" /> {searching ? "…" : "Search"}
+            </button>
+          </div>
+
+          {searched && !searching && results.length === 0 && (
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              No matching parcels. Try just the street name, owner last name, or CAD Property ID.
+            </p>
+          )}
+
+          {results.length > 0 && (
+            <ul className="mt-2 max-h-56 space-y-2 overflow-y-auto">
+              {results.map((p) => (
+                <li
+                  key={p.propId}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {p.situsAddress || p.legalDescription}
+                    </p>
+                    <p className="truncate font-mono text-[11px] text-[var(--muted)]">
+                      {p.ownerName ? `${p.ownerName} · ` : ""}
+                      {p.legalAcreage != null ? `${p.legalAcreage} ac · ` : ""}Prop {p.propId}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onLink(p, source);
+                      setResults([]);
+                      setSearched(false);
+                      setQuery("");
+                    }}
+                    className="shrink-0 rounded-lg border border-gold px-3 py-1.5 text-xs font-bold text-gold"
+                  >
+                    Use this parcel
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 

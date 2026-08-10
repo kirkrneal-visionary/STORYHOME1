@@ -27,7 +27,6 @@ type AgentRow = {
   avatar_url: string | null;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type ListingRow = Record<string, any>;
 
 function num(v: unknown, fallback = 0): number {
@@ -122,6 +121,7 @@ export function rowToProListing(row: ListingRow): ProListing {
     photos,
     leadPaintDisclosureProvided: Boolean(row.lead_paint_disclosure_provided),
     sellersDisclosureProvided: Boolean(row.sellers_disclosure_provided),
+    cadPropId: row.cad_prop_id ?? "",
     source: "manual",
     updatedAt: row.updated_at ? Date.parse(row.updated_at) : Date.now(),
   };
@@ -156,6 +156,8 @@ export function proListingToRow(pro: ProListing, agentId: string): ListingRow {
     photo_urls: pro.photos.filter((p) => p.trim()),
     lead_paint_disclosure_provided: pro.leadPaintDisclosureProvided,
     sellers_disclosure_provided: pro.sellersDisclosureProvided,
+    // Linking a CAD parcel lets the DB geocode trigger set lat/lng (map pin).
+    cad_prop_id: pro.cadPropId || null,
     updated_at: new Date().toISOString(),
   };
 }
