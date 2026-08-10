@@ -20,6 +20,17 @@ type ListingCardProps = {
   onSelect?: () => void;
 };
 
+/** Color-code the status badge like HAR (green active, orange pending, red sold). */
+function statusTone(status: string): string {
+  if (status === "Active") return "bg-teal text-paper";
+  if (status === "Sold") return "bg-red-500 text-paper";
+  if (status.includes("Option") || status.includes("Under Contract"))
+    return "bg-amber-500 text-navy";
+  if (status === "Withdrawn" || status === "Expired" || status === "Terminated")
+    return "bg-[var(--muted)] text-paper";
+  return "bg-gold text-navy";
+}
+
 export function ListingCard({
   listing,
   dense = false,
@@ -60,7 +71,12 @@ export function ListingCard({
           <span className="absolute bottom-3 left-3 rounded bg-navy px-2.5 py-1 font-mono text-sm font-semibold text-paper shadow-md">
             {formatUsd(listing.price)}
           </span>
-          <span className="absolute top-3 left-3 max-w-[70%] truncate rounded bg-gold px-2 py-1 font-mono text-[10px] font-bold tracking-wide text-navy uppercase shadow-md">
+          <span
+            className={cn(
+              "absolute top-3 left-3 max-w-[70%] truncate rounded px-2 py-1 font-mono text-[10px] font-bold tracking-wide uppercase shadow-md",
+              statusTone(listing.status),
+            )}
+          >
             {listing.status}
           </span>
           <button
@@ -90,6 +106,9 @@ export function ListingCard({
           <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
             {listing.beds} Beds · {listing.baths} Baths ·{" "}
             {listing.sqft.toLocaleString()} Sqft · {listing.lotSize}
+            {listing.sqft > 0 && (
+              <> · ${Math.round(listing.price / listing.sqft)}/sqft</>
+            )}
           </p>
         </div>
       </Link>

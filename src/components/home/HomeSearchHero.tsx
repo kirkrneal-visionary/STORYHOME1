@@ -133,6 +133,15 @@ export function HomeSearchHero() {
             </form>
           </div>
 
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+            <Link href="/home" className="font-semibold text-paper/85 hover:text-gold">
+              Home Values →
+            </Link>
+            <span className="text-paper/40" title="Coming soon">
+              Schools (coming soon)
+            </span>
+          </div>
+
           <div className="mt-5 flex flex-wrap gap-2">
             {REGION_CITIES.slice(0, 6).map((area) => (
               <button

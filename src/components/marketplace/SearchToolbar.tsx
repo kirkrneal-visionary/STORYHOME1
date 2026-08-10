@@ -6,6 +6,7 @@ import {
   type SearchFilters,
   type SortOption,
 } from "@/lib/listing-filters";
+import { SavedSearchControl } from "@/components/marketplace/SavedSearchControl";
 import { cn } from "@/lib/utils";
 
 type SearchToolbarProps = {
@@ -117,6 +118,9 @@ export function SearchToolbar({
           </button>
 
           <div className="ml-auto flex items-center gap-2">
+            <div className="hidden md:block">
+              <SavedSearchControl filters={filters} onApply={onChange} />
+            </div>
             <label className="hidden items-center gap-2 text-xs text-[var(--muted)] md:flex">
               Sort
               <select
