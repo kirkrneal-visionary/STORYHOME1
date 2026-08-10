@@ -86,3 +86,7 @@ npm run cad:refresh          # re-ingest counties older than 72h (parallel)
 ```
 
 Live upserts require `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. A GitHub Action (`.github/workflows/cad-refresh.yml`) runs the refresh daily; configure those secrets on the repo.
+
+## Wave L5 — Listing upload map ↔ CAD
+
+The broker listing form shows a MapLibre map (same Street / Satellite / Terrain basemaps as the marketplace) to the right of CAD parcel search. Searching or linking a CAD tract auto pin-drops the parcel and outlines its lot geometry.

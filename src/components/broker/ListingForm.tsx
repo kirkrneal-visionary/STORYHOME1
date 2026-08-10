@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -48,6 +49,19 @@ import {
 import { CadCountyStatusPanel } from "@/components/broker/CadCountyStatusPanel";
 import { cn } from "@/lib/utils";
 
+const ListingCadMap = dynamic(
+  () =>
+    import("@/components/broker/ListingCadMap").then((m) => m.ListingCadMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-hairline bg-[var(--surface)] text-sm text-[var(--muted)]">
+        Loading CAD map…
+      </div>
+    ),
+  },
+);
+
 const COUNTY_OPTIONS = [
   { value: "", label: "— Select county —" },
   ...SERVICE_COUNTIES.map((c) => ({ value: c.name, label: c.name })),
@@ -76,6 +90,7 @@ export function ListingForm({
 }) {
   const [form, setForm] = useState<ProListing>(initial);
   const [tracts, setTracts] = useState<LinkedParcel[]>(initialTracts);
+  const [previewParcel, setPreviewParcel] = useState<CountyParcel | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
   const [importNote, setImportNote] = useState("");
@@ -217,9 +232,19 @@ export function ListingForm({
         )}
       </section>
 
-      {/* Multi-tract CAD parcel manager — auto-fills location, totals land,
-          flags homes vs. lots, MH serials, and combines the legal description */}
-      <TractManager tracts={tracts} onChange={updateTracts} />
+      {/* Wave L5: CAD search (left) + MapLibre auto pin-drop (right) */}
+      <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:items-stretch">
+        <TractManager
+          tracts={tracts}
+          onChange={updateTracts}
+          onPreview={setPreviewParcel}
+        />
+        <ListingCadMap
+          tracts={tracts}
+          previewParcel={previewParcel}
+          className="lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-120px)]"
+        />
+      </div>
       <CadCountyStatusPanel />
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -602,9 +627,11 @@ function CompliancePanel({
 function TractManager({
   tracts,
   onChange,
+  onPreview,
 }: {
   tracts: LinkedParcel[];
   onChange: (next: LinkedParcel[]) => void;
+  onPreview?: (parcel: CountyParcel | null) => void;
 }) {
   // "" = statewide (all ingested counties); a source key narrows to one county.
   const [countyFilter, setCountyFilter] = useState<string>("");
@@ -616,14 +643,17 @@ function TractManager({
   async function run() {
     setSearching(true);
     setSearched(true);
+    onPreview?.(null);
     try {
-      setResults(
-        countyFilter
-          ? await searchParcels(countyFilter, query)
-          : await searchParcelsStatewide(query),
-      );
+      const next = countyFilter
+        ? await searchParcels(countyFilter, query)
+        : await searchParcelsStatewide(query);
+      setResults(next);
+      // Auto pin-drop the best match as soon as CAD returns results.
+      onPreview?.(next[0] ?? null);
     } catch {
       setResults([]);
+      onPreview?.(null);
     } finally {
       setSearching(false);
     }
@@ -650,6 +680,7 @@ function TractManager({
       propertyCategory: p.propertyCategory,
     };
     onChange([...tracts, linked]);
+    onPreview?.(null);
     setResults([]);
     setSearched(false);
     setQuery("");
@@ -677,7 +708,7 @@ function TractManager({
   const sum = summarizeTracts(tracts);
 
   return (
-    <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+    <section className="flex h-full flex-col rounded-xl border border-hairline bg-[var(--surface)] p-4">
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-gold" />
         <h4 className="text-sm font-semibold text-ink">
@@ -685,9 +716,9 @@ function TractManager({
         </h4>
       </div>
       <p className="mt-1 text-xs text-[var(--muted)]">
-        Search Real + Personal CAD parcels across the 7 launch counties. MH
-        serial numbers from CAD legal descriptions auto-fill the MLS fields.
-        Geometry-only counties (e.g. Tyler) require agent detail entry.
+        Search Real + Personal CAD across the 7 launch counties. Results pin-drop
+        on the map to the right; MH serials auto-fill MLS fields. Geometry-only
+        counties (e.g. Tyler) still need agent detail entry.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -742,6 +773,8 @@ function TractManager({
             return (
               <li
                 key={`${p.source}-${p.propId}`}
+                onMouseEnter={() => onPreview?.(p)}
+                onFocus={() => onPreview?.(p)}
                 className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
               >
                 <div className="min-w-0">
@@ -755,6 +788,7 @@ function TractManager({
                     {p.legalAcreage != null ? ` · ${p.legalAcreage} ac` : ""}
                     {p.mhSerialNumber ? ` · SN ${p.mhSerialNumber}` : ""}
                     {p.needsAgentDetail ? " · needs agent detail" : ""}
+                    {p.centroidLat != null ? " · map✓" : ""}
                   </p>
                 </div>
                 <button

@@ -32,11 +32,17 @@ import {
   type DrawnBoundary,
   type LatLng,
 } from "@/lib/geo";
+import {
+  buildStoryMapStyle,
+  MAP_GOLD as GOLD,
+  MAP_NAVY as NAVY,
+  MAP_PAPER as PAPER,
+  type MapBaseLayer as BaseLayer,
+} from "@/lib/map-style";
 import { cn } from "@/lib/utils";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export type DrawTool = "pan" | "polygon" | "radius" | "rectangle" | "measure";
-type BaseLayer = "street" | "satellite" | "terrain";
 
 type MarketplaceMapProps = {
   listings: DemoListing[];
@@ -47,68 +53,11 @@ type MarketplaceMapProps = {
   className?: string;
 };
 
-const NAVY = "#17335e";
-const GOLD = "#f5b71e";
-const PAPER = "#f7f4ec";
-
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 
 function priceLabel(price: number) {
   if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(2)}M`;
   return `$${Math.round(price / 1000)}K`;
-}
-
-/** Base map style with three switchable raster layers (no traffic, no token). */
-function buildStyle(): maplibregl.StyleSpecification {
-  return {
-    version: 8,
-    sources: {
-      street: {
-        type: "raster",
-        tiles: [
-          "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        attribution: "&copy; OpenStreetMap contributors",
-      },
-      satellite: {
-        type: "raster",
-        tiles: [
-          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        ],
-        tileSize: 256,
-        attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics",
-      },
-      terrain: {
-        type: "raster",
-        tiles: [
-          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
-          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        maxzoom: 17,
-        attribution: "&copy; OpenTopoMap (CC-BY-SA)",
-      },
-    },
-    layers: [
-      { id: "base-street", type: "raster", source: "street" },
-      {
-        id: "base-satellite",
-        type: "raster",
-        source: "satellite",
-        layout: { visibility: "none" },
-      },
-      {
-        id: "base-terrain",
-        type: "raster",
-        source: "terrain",
-        layout: { visibility: "none" },
-      },
-    ],
-  };
 }
 
 function circleRing(center: LatLng, radiusMiles: number, steps = 72): number[][] {
@@ -203,7 +152,7 @@ export function MarketplaceMap({
     if (!containerRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildStyle(),
+      style: buildStoryMapStyle(),
       center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
       attributionControl: { compact: true },
