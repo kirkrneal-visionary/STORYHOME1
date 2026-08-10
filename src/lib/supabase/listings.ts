@@ -10,6 +10,7 @@ import {
 import type { DemoListing } from "@/lib/demo-data";
 import type { ListingStatus } from "@/lib/listing-filters";
 import type { ProListing } from "@/lib/pro-listings";
+import { mapSellerPortal, type SellerPortal } from "@/lib/seller-portal";
 
 function client() {
   const supabase = getBrowserSupabase();
@@ -49,6 +50,35 @@ export async function fetchListingByAccessCode(
     .maybeSingle();
   if (error) return null;
   return data ? rowToListing(data) : null;
+}
+
+/**
+ * Resolve a seller portal (listing + real analytics) by access code. Uses the
+ * code-gated SECURITY DEFINER RPC so an unauthenticated seller who holds the
+ * code can read analytics that RLS otherwise reserves for the listing's agent.
+ */
+export async function fetchSellerPortalByCode(
+  code: string,
+): Promise<SellerPortal | null> {
+  const { data, error } = await client().rpc("seller_portal_by_code", {
+    p_code: code,
+  });
+  if (error) return null;
+  return mapSellerPortal(data);
+}
+
+/**
+ * Generate (once) and return the unique seller access code for a listing the
+ * current agent/broker owns. Idempotent — returns the existing code if set.
+ */
+export async function ensureSellerAccessCode(
+  listingId: string,
+): Promise<string | null> {
+  const { data, error } = await client().rpc("ensure_seller_access_code", {
+    p_listing: listingId,
+  });
+  if (error) throw error;
+  return (data as string | null) ?? null;
 }
 
 /** Listings owned by a specific agent. */

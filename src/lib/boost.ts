@@ -52,32 +52,12 @@ export type ActiveBoost = {
   status: "active" | "canceled" | "expired";
 };
 
-/** Demo inventory — replaced by Supabase aggregate when MLS is live.
- * Leave open spots in Polk County so the seller portal demo can activate boosts.
+/**
+ * No boosts are sold yet — payments launch later, at which point active boosts
+ * are read from Supabase (listing_boosts) and county slot counts are enforced
+ * server-side. Until then this is empty so nothing fabricates county usage.
  */
-export const DEMO_ACTIVE_BOOSTS: ActiveBoost[] = [
-  {
-    listingId: "other-1",
-    countyFips: "48373",
-    countyName: "Polk County",
-    tierId: "starter",
-    status: "active",
-  },
-  {
-    listingId: "other-2",
-    countyFips: "48373",
-    countyName: "Polk County",
-    tierId: "starter",
-    status: "active",
-  },
-  {
-    listingId: "other-3",
-    countyFips: "48373",
-    countyName: "Polk County",
-    tierId: "growth",
-    status: "active",
-  },
-];
+export const DEMO_ACTIVE_BOOSTS: ActiveBoost[] = [];
 
 export function countActiveBoostsInCounty(
   countyFips: string,

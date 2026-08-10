@@ -21,7 +21,7 @@ import {
 } from "@/lib/boost";
 import {
   formatAvgTime,
-  getAnalytics,
+  type ListingAnalytics,
   type SellerListing,
 } from "@/lib/seller-portal";
 import { formatUsd } from "@/lib/demo-data";
@@ -29,19 +29,25 @@ import { cn } from "@/lib/utils";
 
 type SellerPortalViewProps = {
   listing: SellerListing;
+  analytics: ListingAnalytics;
 };
 
-export function SellerPortalView({ listing }: SellerPortalViewProps) {
-  const analytics = getAnalytics(listing.id);
+export function SellerPortalView({
+  listing,
+  analytics,
+}: SellerPortalViewProps) {
   const [selectedTier, setSelectedTier] = useState<BoostTierId | null>(null);
   const [activeBoost, setActiveBoost] = useState<BoostTierId | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const availability = useMemo(() => {
+    // No boosts are sold yet (payments launch later), so every county slot is
+    // open. Availability is computed against an empty active-boost set rather
+    // than fabricated demo inventory.
     return Object.fromEntries(
       BOOST_TIERS.map((tier) => [
         tier.id,
-        getTierAvailability(listing.countyFips, tier),
+        getTierAvailability(listing.countyFips, tier, []),
       ]),
     ) as Record<
       BoostTierId,
@@ -98,15 +104,21 @@ export function SellerPortalView({ listing }: SellerPortalViewProps) {
             </p>
           </section>
 
-          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-hairline">
-            <Image
-              src={listing.photoUrl}
-              alt={listing.addressSerif}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 420px"
-              priority
-            />
+          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--navy)_85%,black)]">
+            {listing.photoUrl ? (
+              <Image
+                src={listing.photoUrl}
+                alt={listing.addressSerif}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 420px"
+                priority
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center font-mono text-[11px] tracking-wider text-paper/60 uppercase">
+                No photo yet
+              </div>
+            )}
           </div>
         </div>
 
