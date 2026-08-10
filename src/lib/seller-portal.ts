@@ -1,5 +1,4 @@
-import { DEMO_LISTINGS, type DemoListing } from "@/lib/demo-data";
-import { SERVICE_COUNTIES } from "@/lib/markets";
+import { type DemoListing } from "@/lib/demo-data";
 
 export type SellerListing = DemoListing & {
   countyFips: string;
@@ -19,49 +18,14 @@ export type ListingAnalytics = {
   savesThisWeek: number;
 };
 
-const POLK = SERVICE_COUNTIES.find((c) => c.fips === "48373")!;
-const WALKER = SERVICE_COUNTIES.find((c) => c.fips === "48471")!;
-
-/** Auto-generated client codes — created when an agent publishes a listing */
-export const SELLER_LISTINGS: SellerListing[] = [
-  {
-    ...DEMO_LISTINGS[0],
-    countyFips: POLK.fips,
-    countyName: POLK.name,
-    state: "TX",
-    accessCode: "WILLOW-875",
-    daysOnMarket: 18,
-  },
-  {
-    ...DEMO_LISTINGS[1],
-    countyFips: WALKER.fips,
-    countyName: WALKER.name,
-    state: "TX",
-    accessCode: "RIDGE-1245",
-    daysOnMarket: 9,
-  },
-];
-
-export const LISTING_ANALYTICS: Record<string, ListingAnalytics> = {
-  [DEMO_LISTINGS[0].id]: {
-    views: 1284,
-    clicks: 376,
-    saves: 48,
-    repeatViewers: 162,
-    avgTimeViewedSeconds: 74,
-    viewsThisWeek: 214,
-    savesThisWeek: 11,
-  },
-  [DEMO_LISTINGS[1].id]: {
-    views: 862,
-    clicks: 241,
-    saves: 29,
-    repeatViewers: 98,
-    avgTimeViewedSeconds: 61,
-    viewsThisWeek: 147,
-    savesThisWeek: 7,
-  },
-};
+/**
+ * No demo listings. The seller portal resolves a real listing by its
+ * access code from the database (listings.seller_access_code); analytics come
+ * from listing_analytics once wired. Until a code matches a real listing,
+ * lookup returns null (invalid code).
+ */
+export const SELLER_LISTINGS: SellerListing[] = [];
+export const LISTING_ANALYTICS: Record<string, ListingAnalytics> = {};
 
 export function findSellerListingByCode(code: string) {
   const normalized = code.trim().toUpperCase();

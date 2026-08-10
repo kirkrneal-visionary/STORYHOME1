@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Award, Layers, Plus } from "lucide-react";
-import { DEMO_AGENT, DEMO_REFERRAL } from "@/lib/demo-data";
+import { Award, Layers, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FILTERS = [
@@ -24,18 +23,17 @@ export default function ProfessionalView() {
           <MetricCard
             icon={<Award className="h-6 w-6" />}
             label="Reputation Score"
-            value={String(DEMO_AGENT.reputationScore)}
-            trend="+2%"
+            value="—"
           />
           <MetricCard
             icon={<Layers className="h-6 w-6" />}
             label="Open Network Leads"
-            value="12"
+            value="0"
           />
           <MetricCard
             icon={<Plus className="h-6 w-6" />}
             label="Active Listings"
-            value="4"
+            value="0"
           />
         </div>
       </section>
@@ -77,42 +75,8 @@ export default function ProfessionalView() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <BoardColumn title="Open" count={1} tone="gold">
-            <div className="space-y-4 rounded-xl border border-hairline bg-[var(--surface)] p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <span className="block font-mono text-[11px] font-bold text-[var(--muted)] uppercase">
-                    Target market
-                  </span>
-                  <span className="font-serif text-lg font-bold text-ink">
-                    {DEMO_REFERRAL.targetMarket}
-                  </span>
-                </div>
-                <StatusBadge status="Open" />
-              </div>
-              <p className="text-sm leading-relaxed text-[var(--muted)]">
-                {DEMO_REFERRAL.clientDescription}
-              </p>
-              <div className="flex items-center justify-between border-t border-hairline pt-3">
-                <div>
-                  <span className="block font-mono text-[10px] text-[var(--muted)] uppercase">
-                    Budget · Terms
-                  </span>
-                  <span className="text-xs font-semibold text-ink">
-                    {DEMO_REFERRAL.budgetRange} · 25% split
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="h-8 rounded-md bg-gold px-4 text-xs font-semibold text-navy"
-                >
-                  Claim
-                </button>
-              </div>
-              <p className="font-mono text-[11px] text-[var(--muted)]">
-                Posted by {DEMO_REFERRAL.posterName}
-              </p>
-            </div>
+          <BoardColumn title="Open" count={0} tone="gold">
+            <EmptyState text="No open referrals yet — post one to share a client." />
           </BoardColumn>
 
           <BoardColumn title="Claimed" count={0} tone="teal">
@@ -132,12 +96,10 @@ function MetricCard({
   icon,
   label,
   value,
-  trend,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  trend?: string;
 }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-hairline bg-[var(--background)] p-4">
@@ -148,14 +110,7 @@ function MetricCard({
         <span className="block font-mono text-[11px] font-medium tracking-wider text-[var(--muted)] uppercase">
           {label}
         </span>
-        <div className="flex items-baseline gap-2">
-          <span className="font-serif text-3xl font-bold text-ink">{value}</span>
-          {trend && (
-            <span className="inline-flex items-center font-mono text-xs font-bold text-teal-soft">
-              <ArrowUpRight className="h-3 w-3" /> {trend}
-            </span>
-          )}
-        </div>
+        <span className="font-serif text-3xl font-bold text-ink">{value}</span>
       </div>
     </div>
   );

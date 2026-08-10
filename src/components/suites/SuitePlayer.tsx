@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -11,7 +11,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useSuites } from "@/components/SuitesContext";
-import { DEMO_LISTINGS, formatUsd } from "@/lib/demo-data";
+import { formatUsd, type DemoListing } from "@/lib/demo-data";
+import { fetchListingsByIds } from "@/lib/supabase/listings";
 import { cn } from "@/lib/utils";
 
 type SuitePlayerProps = {
@@ -21,13 +22,28 @@ type SuitePlayerProps = {
 export function SuitePlayer({ suiteId }: SuitePlayerProps) {
   const { suites, removeListingFromSuite } = useSuites();
   const suite = suites.find((s) => s.id === suiteId);
-  const listings = useMemo(
-    () =>
-      (suite?.listingIds ?? [])
-        .map((id) => DEMO_LISTINGS.find((l) => l.id === id))
-        .filter((l): l is (typeof DEMO_LISTINGS)[number] => Boolean(l)),
-    [suite],
-  );
+  const [listings, setListings] = useState<DemoListing[]>([]);
+
+  useEffect(() => {
+    const ids = suite?.listingIds ?? [];
+    if (ids.length === 0) {
+      setListings([]);
+      return;
+    }
+    let active = true;
+    fetchListingsByIds(ids)
+      .then((rows) => {
+        if (!active) return;
+        // Preserve the saved order.
+        const byId = new Map(rows.map((r) => [r.id, r]));
+        setListings(ids.map((id) => byId.get(id)).filter(Boolean) as DemoListing[]);
+      })
+      .catch(() => active && setListings([]));
+    return () => {
+      active = false;
+    };
+  }, [suite?.listingIds]);
+
   const [index, setIndex] = useState(0);
   const [shareNote, setShareNote] = useState("");
 
@@ -120,15 +136,21 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
           <div className="relative mt-8 overflow-hidden rounded-3xl border border-hairline bg-[var(--surface)]">
             {current && (
               <div className="grid md:grid-cols-[1.2fr_0.8fr]">
-                <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[420px]">
-                  <Image
-                    src={current.photoUrl}
-                    alt={current.addressSerif}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 60vw"
-                    priority
-                  />
+                <div className="relative aspect-[4/3] bg-[var(--nav-surface)] md:aspect-auto md:min-h-[420px]">
+                  {current.photoUrl ? (
+                    <Image
+                      src={current.photoUrl}
+                      alt={current.addressSerif}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 60vw"
+                      priority
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center font-mono text-xs text-paper/50">
+                      No photo
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col justify-between p-6 md:p-8">
                   <div>
@@ -200,17 +222,19 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                 type="button"
                 onClick={() => setIndex(i)}
                 className={cn(
-                  "relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border",
+                  "relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border bg-[var(--nav-surface)]",
                   i === index ? "border-gold" : "border-hairline opacity-70",
                 )}
               >
-                <Image
-                  src={listing.photoUrl}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  sizes="112px"
-                />
+                {listing.photoUrl && (
+                  <Image
+                    src={listing.photoUrl}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="112px"
+                  />
+                )}
               </button>
             ))}
           </div>
