@@ -69,6 +69,46 @@ function runIngest(sourceKey, extraArgs = []) {
   });
 }
 
+async function refreshOne(key, args, statusMap) {
+  const src = getSource(key);
+  const status = statusMap.get(key);
+  const stale = isStale(status, src, args.force);
+
+  if (!stale) {
+    const ageH = status?.last_success_at
+      ? (
+          (Date.now() - new Date(status.last_success_at).getTime()) /
+          3600000
+        ).toFixed(1)
+      : "?";
+    console.log(`[refresh] ${key}: fresh (${ageH}h old) — skip`);
+    return { key, action: "skip_fresh" };
+  }
+
+  if (src.mode === "arcgis") {
+    if (args.dryRun) {
+      console.log(`[refresh] ${key}: would ingest --all`);
+      return { key, action: "dry_arcgis" };
+    }
+    const code = await runIngest(key, ["--all"]);
+    return { key, action: "arcgis", code };
+  }
+
+  if (src.mode === "file" && src.downloadUrl) {
+    if (args.dryRun) {
+      console.log(`[refresh] ${key}: would --download`);
+      return { key, action: "dry_download" };
+    }
+    const code = await runIngest(key, ["--download"]);
+    return { key, action: "download", code };
+  }
+
+  console.log(
+    `[refresh] ${key}: file source with no downloadUrl — pass --file on ingest-cad`,
+  );
+  return { key, action: "awaiting_file" };
+}
+
 async function main() {
   const args = parseArgs(process.argv);
   const keys = args.sources ?? LAUNCH_COUNTY_KEYS;
@@ -78,51 +118,19 @@ async function main() {
     `[refresh] checking ${keys.length} counties (force=${args.force} dryRun=${args.dryRun})`,
   );
 
+  // Run up to 2 county refreshes in parallel — ArcGIS + DB upsert bound the rest.
+  const concurrency = 2;
   const results = [];
-  for (const key of keys) {
-    const src = getSource(key);
-    const status = statusMap.get(key);
-    const stale = isStale(status, src, args.force);
-
-    if (!stale) {
-      const ageH = status?.last_success_at
-        ? (
-            (Date.now() - new Date(status.last_success_at).getTime()) /
-            3600000
-          ).toFixed(1)
-        : "?";
-      console.log(`[refresh] ${key}: fresh (${ageH}h old) — skip`);
-      results.push({ key, action: "skip_fresh" });
-      continue;
+  let cursor = 0;
+  async function worker() {
+    while (cursor < keys.length) {
+      const i = cursor++;
+      results[i] = await refreshOne(keys[i], args, statusMap);
     }
-
-    if (src.mode === "arcgis") {
-      if (args.dryRun) {
-        console.log(`[refresh] ${key}: would ingest --all`);
-        results.push({ key, action: "dry_arcgis" });
-        continue;
-      }
-      const code = await runIngest(key, ["--all"]);
-      results.push({ key, action: "arcgis", code });
-      continue;
-    }
-
-    if (src.mode === "file" && src.downloadUrl) {
-      if (args.dryRun) {
-        console.log(`[refresh] ${key}: would --download`);
-        results.push({ key, action: "dry_download" });
-        continue;
-      }
-      const code = await runIngest(key, ["--download"]);
-      results.push({ key, action: "download", code });
-      continue;
-    }
-
-    console.log(
-      `[refresh] ${key}: file/manual source with no downloadUrl — drop a CAD export via --file or wait for agent entry`,
-    );
-    results.push({ key, action: "awaiting_file" });
   }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, keys.length) }, () => worker()),
+  );
 
   const failed = results.filter((r) => r.code && r.code !== 0);
   console.log(`[refresh] done. ${results.length} checked, ${failed.length} failed.`);

@@ -157,16 +157,26 @@ export const AVAILABLE_COUNTIES = [
     name: "Angelina County",
     mode: "arcgis",
   },
-  { source: "trinity_cad", fips: "48455", name: "Trinity County", mode: "file" },
+  {
+    source: "trinity_cad",
+    fips: "48455",
+    name: "Trinity County",
+    mode: "arcgis",
+  },
   { source: "tyler_cad", fips: "48457", name: "Tyler County", mode: "file" },
   {
     source: "san_jacinto_cad",
     fips: "48407",
     name: "San Jacinto County",
-    mode: "file",
+    mode: "arcgis",
   },
-  { source: "liberty_cad", fips: "48291", name: "Liberty County", mode: "file" },
-  { source: "walker_cad", fips: "48471", name: "Walker County", mode: "file" },
+  {
+    source: "liberty_cad",
+    fips: "48291",
+    name: "Liberty County",
+    mode: "arcgis",
+  },
+  { source: "walker_cad", fips: "48471", name: "Walker County", mode: "arcgis" },
 ] as const;
 
 /** Human county label for a parcel (from its FIPS, else its source key). */

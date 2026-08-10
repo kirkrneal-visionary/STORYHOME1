@@ -1,16 +1,18 @@
 /**
  * Parse mobile-home serial / HUD label numbers out of Texas CAD legal
- * descriptions and attribute bags. CAD formats vary by county; these patterns
- * cover the Polk + Angelina samples we verified against live FeatureServers.
+ * descriptions and attribute bags. Covers Polk, Angelina, Liberty, Trinity,
+ * and other BIS CAD legal formats verified against live FeatureServers.
  */
 
 const SERIAL_PATTERNS = [
+  /MH\s*SERIAL\s*#?\s*([A-Z0-9][A-Z0-9\-]{5,})/i,
   /SERIAL\s*#?\s*([A-Z0-9][A-Z0-9\-]{5,})/i,
   /\bSN\s*1?\s*[:#]?\s*([A-Z0-9][A-Z0-9\-]{5,})/i,
   /\bSERIAL\s+(\d+)\s+([A-Z0-9][A-Z0-9\-]{5,})/i, // "SERIAL 1 CAV150…"
 ];
 
 const HUD_PATTERNS = [
+  /MH\s*LABEL\s*#?\s*([A-Z0-9][A-Z0-9\-]{4,})/i,
   /(?:HUD|LABEL)\s*#?\s*([A-Z0-9][A-Z0-9\-]{4,})/i,
   /\bLABEL\s+(\d+)\s+([A-Z0-9][A-Z0-9\-]{4,})/i,
 ];
@@ -23,14 +25,29 @@ export function looksLikeMobileHome(text) {
     t.includes("SERIAL") ||
     t.includes("HUD") ||
     /\bMH\b/.test(t) ||
+    t.includes("MH LABEL") ||
+    t.includes("MH ONLY") ||
     t.includes("MOBILE HOME") ||
     t.includes("MANUFACTURED")
   );
 }
 
+function cleanId(raw) {
+  if (!raw) return null;
+  const s = String(raw)
+    .toUpperCase()
+    .replace(/[^A-Z0-9\-]/g, "");
+  // Reject bare years / too-short tokens ("2018", "RP").
+  if (!s || s.length < 6) return null;
+  if (/^\d{4}$/.test(s)) return null;
+  return s;
+}
+
 /**
  * Extract the primary MH serial + HUD label from free text (legal desc).
  * Returns { serial, hud } with nulls when not found.
+ * When only a HUD/LABEL is present (common in Liberty/Trinity), serial is
+ * filled from that label so MLS still receives a searchable identifier.
  */
 export function parseMhFromText(text) {
   if (!text) return { serial: null, hud: null };
@@ -41,19 +58,19 @@ export function parseMhFromText(text) {
   for (const re of SERIAL_PATTERNS) {
     const m = t.match(re);
     if (!m) continue;
-    // Pattern with unit index captures serial in group 2.
-    serial = (m[2] || m[1] || "").toUpperCase().replace(/[^A-Z0-9\-]/g, "");
-    if (serial && serial.length >= 6 && !/^\d{4}$/.test(serial)) break;
-    serial = null;
+    serial = cleanId(m[2] || m[1]);
+    if (serial) break;
   }
 
   for (const re of HUD_PATTERNS) {
     const m = t.match(re);
     if (!m) continue;
-    hud = (m[2] || m[1] || "").toUpperCase().replace(/[^A-Z0-9\-]/g, "");
-    if (hud && hud.length >= 4) break;
-    hud = null;
+    hud = cleanId(m[2] || m[1]);
+    if (hud) break;
   }
+
+  // Liberty/Trinity often only publish MH LABEL — promote to serial for MLS.
+  if (!serial && hud) serial = hud;
 
   return { serial, hud };
 }
@@ -71,7 +88,7 @@ export function extractMhFields(attrs = {}, legal = null) {
     return null;
   };
 
-  let serial =
+  let serial = cleanId(
     pick(
       "mh_serial",
       "mh_serial_number",
@@ -80,17 +97,16 @@ export function extractMhFields(attrs = {}, legal = null) {
       "serial",
       "sn1",
       "SN1",
-    ) || null;
-  let hud =
-    pick("mh_hud_label", "hud_label", "hud_num", "label_num", "label", "HUD") ||
-    null;
+    ),
+  );
+  let hud = cleanId(
+    pick("mh_hud_label", "hud_label", "hud_num", "label_num", "label", "HUD"),
+  );
 
   const fromLegal = parseMhFromText(legal);
   if (!serial) serial = fromLegal.serial;
   if (!hud) hud = fromLegal.hud;
-
-  if (serial) serial = serial.toUpperCase().replace(/[^A-Z0-9\-]/g, "");
-  if (hud) hud = hud.toUpperCase().replace(/[^A-Z0-9\-]/g, "");
+  if (!serial && hud) serial = hud;
 
   const yearRaw = pick("mh_year", "year_built", "YEAR_BUILT");
   const year = yearRaw && /^\d{4}$/.test(String(yearRaw)) ? Number(yearRaw) : null;
@@ -119,7 +135,8 @@ export function categorizeProperty(codeOrPrefix) {
     s === "PERSONAL" ||
     s.startsWith("PERSONAL") ||
     s.includes("MOBILE") ||
-    s === "MH"
+    s === "MH" ||
+    s.startsWith("MH")
   ) {
     return "personal";
   }

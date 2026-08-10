@@ -30,7 +30,7 @@ import {
 import { readShapefile } from "./lib/shapefile.mjs";
 
 function parseArgs(argv) {
-  const a = {};
+  const a = { emitSqlExplicit: false };
   for (let i = 2; i < argv.length; i++) {
     const k = argv[i];
     const v = argv[i + 1];
@@ -42,14 +42,19 @@ function parseArgs(argv) {
     else if (k === "--all") a.all = true;
     else if (k === "--download") a.download = true;
     else if (k === "--file") (a.file = v), i++;
-    else if (k === "--emit-sql") (a.emitSql = v), i++;
-    else if (k === "--no-live") a.noLive = true;
+    else if (k === "--emit-sql") {
+      a.emitSql = v;
+      a.emitSqlExplicit = true;
+      i++;
+    } else if (k === "--no-live") a.noLive = true;
     else if (k === "--limit") (a.limit = Number(v)), i++;
     else if (k === "--list") a.list = true;
   }
   if (a.list) return a;
   if (!a.source) throw new Error("Specify --source <key> (e.g. polk_cad)");
-  if (!a.emitSql) a.emitSql = `supabase/seed/${a.source}_seed.sql`;
+  // Large full-county runs skip SQL seed by default (live upsert is the path).
+  // Pass --emit-sql <path> to force a seed file.
+  if (!a.emitSql && !a.all) a.emitSql = `supabase/seed/${a.source}_seed.sql`;
   return a;
 }
 
@@ -72,13 +77,14 @@ function buildWhere(a, src) {
   throw new Error("Specify --num/--street, --prop-id, --where, --all, --download, or --file");
 }
 
-async function queryArcgis(serviceUrl, where, offset = 0) {
+async function queryArcgis(serviceUrl, where, offset = 0, pageSize = 2000) {
   const url =
     `${serviceUrl}/query?where=${encodeURIComponent(where)}` +
     `&outFields=*&returnGeometry=true&outSR=4326&f=json` +
-    `&resultOffset=${offset}&resultRecordCount=1000`;
+    `&resultOffset=${offset}&resultRecordCount=${pageSize}`;
   const res = await fetch(url, {
-    headers: { "User-Agent": "StoryHome-Ingest/1.0" },
+    headers: { "User-Agent": "StoryHome-Ingest/2.0" },
+    keepalive: true,
   });
   if (!res.ok) throw new Error(`ArcGIS query failed: ${res.status}`);
   const json = await res.json();
@@ -475,17 +481,46 @@ async function getSupabase() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
+async function mapPool(items, concurrency, worker) {
+  const results = new Array(items.length);
+  let next = 0;
+  async function run() {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await worker(items[i], i);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, () => run()),
+  );
+  return results;
+}
+
 async function upsertLive(rows) {
   const sb = await getSupabase();
   if (!sb) return false;
   const batch = 500;
+  const chunks = [];
   for (let i = 0; i < rows.length; i += batch) {
-    const chunk = rows.slice(i, i + batch);
+    chunks.push(rows.slice(i, i + batch));
+  }
+  // Parallel upserts (bounded) — materially faster on large counties like Liberty.
+  const errors = await mapPool(chunks, 4, async (chunk, idx) => {
     const { error } = await sb
       .from("county_parcels")
       .upsert(chunk, { onConflict: "source,prop_id" });
-    if (error) throw new Error(`parcel upsert: ${error.message}`);
-  }
+    if (error) return `parcel batch ${idx}: ${error.message}`;
+    if ((idx + 1) % 10 === 0 || idx === chunks.length - 1) {
+      console.log(
+        `[live] parcels ${Math.min((idx + 1) * batch, rows.length)}/${rows.length}`,
+      );
+    }
+    return null;
+  });
+  const first = errors.find(Boolean);
+  if (first) throw new Error(first);
+
   const valRows = rows
     .filter((r) => r.tax_year != null)
     .map((r) => ({
@@ -496,13 +531,18 @@ async function upsertLive(rows) {
       improvement_value: r.improvement_value,
       market_value: r.market_value,
     }));
+  const valChunks = [];
   for (let i = 0; i < valRows.length; i += batch) {
-    const chunk = valRows.slice(i, i + batch);
+    valChunks.push(valRows.slice(i, i + batch));
+  }
+  const valErrors = await mapPool(valChunks, 4, async (chunk, idx) => {
     const { error: e2 } = await sb
       .from("county_parcel_values")
       .upsert(chunk, { onConflict: "source,prop_id,tax_year" });
-    if (e2) throw new Error(`values upsert: ${e2.message}`);
-  }
+    return e2 ? `values batch ${idx}: ${e2.message}` : null;
+  });
+  const firstVal = valErrors.find(Boolean);
+  if (firstVal) throw new Error(firstVal);
   return true;
 }
 
@@ -539,8 +579,10 @@ async function recordStatus(src, { ok, error, rows }) {
 async function fetchArcgisRows(src, where, limit) {
   const rows = [];
   let offset = 0;
+  const pageSize = src.pageSize || 2000;
+  const t0 = Date.now();
   for (;;) {
-    const json = await queryArcgis(src.serviceUrl, where, offset);
+    const json = await queryArcgis(src.serviceUrl, where, offset, pageSize);
     const feats = json.features ?? [];
     for (const f of feats) {
       const row = mapFeature(f, src);
@@ -549,7 +591,10 @@ async function fetchArcgisRows(src, where, limit) {
     }
     if (!json.exceededTransferLimit || feats.length === 0) break;
     offset += feats.length;
-    console.log(`[${src.source}] fetched ${rows.length} kept so far…`);
+    const rate = Math.round((rows.length / (Date.now() - t0)) * 1000);
+    console.log(
+      `[${src.source}] fetched ${rows.length} kept · ${rate}/s · offset=${offset}`,
+    );
   }
   return rows;
 }
@@ -620,13 +665,21 @@ async function main() {
       );
     }
 
-    // For full-county seeds, skip writing enormous SQL unless explicitly asked
-    // with a small --limit, or always write (chunked). Write always but warn.
-    if (rows.length > 0) {
+    // Full-county runs skip SQL seed by default (live upsert is the fast path).
+    // Forced with --emit-sql <path>, or auto for small targeted pulls.
+    const shouldEmit =
+      rows.length > 0 &&
+      args.emitSql &&
+      (args.emitSqlExplicit || rows.length <= 2500);
+    if (shouldEmit) {
       const sql = toSql(rows, src);
       mkdirSync(dirname(args.emitSql), { recursive: true });
       writeFileSync(args.emitSql, sql);
       console.log(`[${src.source}] wrote SQL seed -> ${args.emitSql}`);
+    } else if (args.all && rows.length > 2500) {
+      console.log(
+        `[${src.source}] skipped SQL seed for ${rows.length} rows (pass --emit-sql <path> to force)`,
+      );
     }
 
     if (!args.noLive) {
