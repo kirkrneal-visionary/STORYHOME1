@@ -6,6 +6,7 @@ import { Home as HomeIcon, Landmark, MapPin, Search, Star, Trees, X } from "luci
 import { updateHome, type Home } from "@/lib/supabase/home";
 import {
   AVAILABLE_COUNTIES,
+  cadFreshnessLabel,
   fetchParcelsByPropIdsAny,
   searchParcels,
   searchParcelsStatewide,
@@ -98,6 +99,18 @@ export function CountyRecordPanel({
           city: p.situsCity || home.city,
           countyName: txCountyNameByFips(p.countyFips) || home.countyName,
           zip: p.situsZip || home.zip,
+          mhSerialNumber: p.mhSerialNumber || home.mhSerialNumber,
+          mhHudLabel: p.mhHudLabel || home.mhHudLabel,
+          propertyType:
+            p.propertyCategory === "personal" || p.mhSerialNumber
+              ? "Mobile / Manufactured"
+              : home.propertyType,
+        });
+      } else if (p.mhSerialNumber && !home.mhSerialNumber) {
+        await updateHome(home.id, {
+          mhSerialNumber: p.mhSerialNumber,
+          mhHudLabel: p.mhHudLabel || home.mhHudLabel,
+          propertyType: "Mobile / Manufactured",
         });
       }
       setResults([]);
@@ -150,8 +163,9 @@ export function CountyRecordPanel({
               County records (tracts)
             </h4>
             <p className="text-xs text-[var(--muted)]">
-              Look up your property in the County Appraisal District. If it spans
-              more than one lot or tract, add each one — we combine the land.
+              Look up Real + Personal CAD parcels across the launch counties. If
+              your property spans tracts, add each one — we combine the land and
+              pull mobile-home serial numbers when CAD has them.
             </p>
           </div>
         </div>
@@ -176,7 +190,11 @@ export function CountyRecordPanel({
       ) : tracts.length > 0 ? (
         <div className="mt-4 space-y-2">
           {tracts.map((t) => {
-            const isHome = (t.improvementValue ?? 0) > 0;
+            const isHome =
+              (t.improvementValue ?? 0) > 0 ||
+              t.propertyCategory === "personal" ||
+              Boolean(t.mhSerialNumber);
+            const fresh = cadFreshnessLabel(t.ingestedAt);
             return (
               <div
                 key={`${t.source}-${t.propId}`}
@@ -184,7 +202,7 @@ export function CountyRecordPanel({
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
-                    title={isHome ? "Has a structure" : "Land only"}
+                    title={isHome ? "Has a structure / MH" : "Land only"}
                     className={cn(
                       "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase",
                       isHome
@@ -193,7 +211,7 @@ export function CountyRecordPanel({
                     )}
                   >
                     {isHome ? <HomeIcon className="h-3 w-3" /> : <Trees className="h-3 w-3" />}
-                    {isHome ? "Home" : "Land"}
+                    {t.mhSerialNumber ? "MH" : isHome ? "Home" : "Land"}
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-ink">
@@ -202,6 +220,12 @@ export function CountyRecordPanel({
                     <p className="truncate font-mono text-[11px] text-[var(--muted)]">
                       {txCountyNameByFips(t.countyFips) ?? t.source} · Prop {t.propId}
                       {t.legalAcreage != null ? ` · ${t.legalAcreage} ac` : ""}
+                      {t.mhSerialNumber ? ` · SN ${t.mhSerialNumber}` : ""}
+                      {" · "}
+                      <span className={fresh.stale ? "text-gold" : ""}>
+                        {fresh.label}
+                      </span>
+                      {t.needsAgentDetail ? " · details incomplete" : ""}
                     </p>
                   </div>
                 </div>
@@ -269,7 +293,7 @@ export function CountyRecordPanel({
               void runSearch();
             }
           }}
-          placeholder="Search by address, owner name, or CAD Property ID"
+          placeholder="Address, owner, CAD Property ID, or MH serial #"
           className="h-11 min-w-[220px] flex-1 rounded-xl border border-hairline bg-[var(--background)] px-4 text-sm text-ink outline-none focus:border-gold"
         />
         <button
@@ -307,8 +331,10 @@ export function CountyRecordPanel({
                   </p>
                   <p className="truncate font-mono text-[11px] text-[var(--muted)]">
                     {txCountyNameByFips(p.countyFips) ?? p.source} · Prop {p.propId}
+                    {p.propertyCategory ? ` · ${p.propertyCategory}` : ""}
                     {p.ownerName ? ` · ${p.ownerName}` : ""}
                     {p.legalAcreage != null ? ` · ${p.legalAcreage} ac` : ""}
+                    {p.mhSerialNumber ? ` · SN ${p.mhSerialNumber}` : ""}
                   </p>
                 </div>
                 <button

@@ -38,6 +38,8 @@ export type Home = {
   lender: string | null;
   loanAmount: number | null;
   cadPropId: string | null;
+  mhSerialNumber: string | null;
+  mhHudLabel: string | null;
 };
 
 export type HomeStructure = {
@@ -148,6 +150,8 @@ const toHome = (r: any): Home => ({
   lender: r.lender,
   loanAmount: n(r.loan_amount),
   cadPropId: r.cad_prop_id ?? null,
+  mhSerialNumber: r.mh_serial_number ?? null,
+  mhHudLabel: r.mh_hud_label ?? null,
 });
 
 const toRecord = (r: any): HomeRecord => ({
@@ -570,6 +574,8 @@ export async function updateHome(
     isFinanced: "is_financed", titleCompany: "title_company",
     gfNumber: "gf_number", lender: "lender", loanAmount: "loan_amount",
     cadPropId: "cad_prop_id",
+    mhSerialNumber: "mh_serial_number",
+    mhHudLabel: "mh_hud_label",
   };
   for (const [k, col] of Object.entries(map)) {
     if (k in patch) row[col] = (patch as Record<string, unknown>)[k] ?? null;

@@ -25,6 +25,7 @@ import {
 } from "@/lib/pro-listings";
 import {
   AVAILABLE_COUNTIES,
+  cadFreshnessLabel,
   searchParcels,
   searchParcelsStatewide,
   type CountyParcel,
@@ -44,6 +45,7 @@ import {
   TextField,
   toNumber,
 } from "@/components/broker/ui";
+import { CadCountyStatusPanel } from "@/components/broker/CadCountyStatusPanel";
 import { cn } from "@/lib/utils";
 
 const COUNTY_OPTIONS = [
@@ -125,14 +127,20 @@ export function ListingForm({
     });
   }
 
-  // Tracts drive the listing's location, total acreage, and CAD link. Auto-fill
-  // is applied here (not in an effect) so we never fight the agent's manual edits
-  // except when the parcel set actually changes.
+  // Tracts drive the listing's location, total acreage, CAD link, and MH
+  // serial → MLS auto-fill. Applied here (not in an effect) so we never fight
+  // the agent's manual edits except when the parcel set actually changes.
   function updateTracts(next: LinkedParcel[]) {
     setTracts(next);
     if (next.length > 0) {
       const primary = next.find((t) => t.isPrimary) ?? next[0];
       const sum = summarizeTracts(next);
+      const serialFromCad =
+        next.map((t) => t.mhSerialNumber).find(Boolean) || "";
+      const hudFromCad = next.map((t) => t.mhHudLabel).find(Boolean) || "";
+      const isMh =
+        next.some((t) => t.propertyCategory === "personal") ||
+        Boolean(serialFromCad);
       setForm((prev) => ({
         ...prev,
         cadPropId: primary.propId,
@@ -142,6 +150,11 @@ export function ListingForm({
         zip: primary.situsZip || prev.zip,
         acres:
           sum.totalAcres > 0 ? Number(sum.totalAcres.toFixed(4)) : prev.acres,
+        mhSerialNumber: serialFromCad || prev.mhSerialNumber,
+        mhHudLabel: hudFromCad || prev.mhHudLabel,
+        propertyType: isMh
+          ? "Mobile / Manufactured"
+          : prev.propertyType,
       }));
     } else {
       setForm((prev) => ({ ...prev, cadPropId: "" }));
@@ -205,12 +218,26 @@ export function ListingForm({
       </section>
 
       {/* Multi-tract CAD parcel manager — auto-fills location, totals land,
-          flags homes vs. lots, and combines the legal description */}
+          flags homes vs. lots, MH serials, and combines the legal description */}
       <TractManager tracts={tracts} onChange={updateTracts} />
+      <CadCountyStatusPanel />
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         {/* Left: form fields */}
         <div className="space-y-5">
+          {tracts.some((t) => t.needsAgentDetail) && (
+            <div className="rounded-xl border border-gold/40 bg-gold/10 p-4">
+              <p className="text-sm font-semibold text-ink">
+                CAD details incomplete — agent entry required
+              </p>
+              <p className="mt-1 text-xs text-[var(--muted)]">
+                One or more linked tracts (for example Tyler County geometry-only
+                parcels) are missing ownership, legal, or improvement detail.
+                Fill the fields below so the MLS listing is complete.
+              </p>
+            </div>
+          )}
+
           <FieldGroup title="Location">
             <TextField
               id="lf-address"
@@ -316,6 +343,26 @@ export function ListingForm({
                 step="1"
               />
             </div>
+            {(form.propertyType === "Mobile / Manufactured" ||
+              form.mhSerialNumber ||
+              tracts.some((t) => t.mhSerialNumber || t.needsAgentDetail)) && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <TextField
+                  id="lf-mh-serial"
+                  label="Mobile home serial #"
+                  value={form.mhSerialNumber}
+                  onChange={(v) => set("mhSerialNumber", v.toUpperCase())}
+                  placeholder="From CAD legal or agent entry"
+                />
+                <TextField
+                  id="lf-mh-hud"
+                  label="HUD / label #"
+                  value={form.mhHudLabel}
+                  onChange={(v) => set("mhHudLabel", v.toUpperCase())}
+                  placeholder="Optional HUD label"
+                />
+              </div>
+            )}
           </FieldGroup>
 
           <FieldGroup title="Marketing description">
@@ -595,6 +642,12 @@ function TractManager({
       legalAcreage: p.legalAcreage,
       improvementValue: p.improvementValue,
       legalDescription: p.legalDescription,
+      mhSerialNumber: p.mhSerialNumber,
+      mhHudLabel: p.mhHudLabel,
+      detailLevel: p.detailLevel,
+      needsAgentDetail: p.needsAgentDetail,
+      ingestedAt: p.ingestedAt,
+      propertyCategory: p.propertyCategory,
     };
     onChange([...tracts, linked]);
     setResults([]);
@@ -632,8 +685,9 @@ function TractManager({
         </h4>
       </div>
       <p className="mt-1 text-xs text-[var(--muted)]">
-        A property can span multiple tracts. Add each one — we total the land,
-        flag homes vs. lots, and combine the legal description for your listing.
+        Search Real + Personal CAD parcels across the 7 launch counties. MH
+        serial numbers from CAD legal descriptions auto-fill the MLS fields.
+        Geometry-only counties (e.g. Tyler) require agent detail entry.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -646,7 +700,7 @@ function TractManager({
               void run();
             }
           }}
-          placeholder="Parcel / CAD Property ID, address, or owner name"
+          placeholder="Parcel ID, address, owner, or MH serial #"
           className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
         />
         <select
@@ -696,8 +750,11 @@ function TractManager({
                   </p>
                   <p className="truncate font-mono text-[11px] text-[var(--muted)]">
                     {txCountyNameByFips(p.countyFips) ?? p.source} · Prop {p.propId}
+                    {p.propertyCategory ? ` · ${p.propertyCategory}` : ""}
                     {p.ownerName ? ` · ${p.ownerName}` : ""}
                     {p.legalAcreage != null ? ` · ${p.legalAcreage} ac` : ""}
+                    {p.mhSerialNumber ? ` · SN ${p.mhSerialNumber}` : ""}
+                    {p.needsAgentDetail ? " · needs agent detail" : ""}
                   </p>
                 </div>
                 <button
@@ -717,7 +774,11 @@ function TractManager({
       {tracts.length > 0 && (
         <div className="mt-3 space-y-2">
           {tracts.map((t) => {
-            const isHome = (t.improvementValue ?? 0) > 0;
+            const isHome =
+              (t.improvementValue ?? 0) > 0 ||
+              t.propertyCategory === "personal" ||
+              Boolean(t.mhSerialNumber);
+            const fresh = cadFreshnessLabel(t.ingestedAt);
             return (
               <div
                 key={`${t.source}-${t.propId}`}
@@ -725,7 +786,7 @@ function TractManager({
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
-                    title={isHome ? "Has a structure" : "Land only"}
+                    title={isHome ? "Has a structure / MH" : "Land only"}
                     className={cn(
                       "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase",
                       isHome
@@ -734,7 +795,7 @@ function TractManager({
                     )}
                   >
                     {isHome ? <Home className="h-3 w-3" /> : <Trees className="h-3 w-3" />}
-                    {isHome ? "Home" : "Land"}
+                    {t.mhSerialNumber ? "MH" : isHome ? "Home" : "Land"}
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-ink">
@@ -743,6 +804,12 @@ function TractManager({
                     <p className="truncate font-mono text-[11px] text-[var(--muted)]">
                       {txCountyNameByFips(t.countyFips) ?? t.source} · Prop {t.propId}
                       {t.legalAcreage != null ? ` · ${t.legalAcreage} ac` : ""}
+                      {t.mhSerialNumber ? ` · SN ${t.mhSerialNumber}` : ""}
+                      {" · "}
+                      <span className={fresh.stale ? "text-gold" : ""}>
+                        {fresh.label}
+                      </span>
+                      {t.needsAgentDetail ? " · agent detail needed" : ""}
                     </p>
                   </div>
                 </div>

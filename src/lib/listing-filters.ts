@@ -20,6 +20,7 @@ export const PROPERTY_TYPES = [
   "Farm and Ranch",
   "Condo",
   "Town Home",
+  "Mobile / Manufactured",
 ] as const;
 
 export type PropertyType = (typeof PROPERTY_TYPES)[number];

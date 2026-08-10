@@ -122,6 +122,8 @@ export function rowToProListing(row: ListingRow): ProListing {
     leadPaintDisclosureProvided: Boolean(row.lead_paint_disclosure_provided),
     sellersDisclosureProvided: Boolean(row.sellers_disclosure_provided),
     cadPropId: row.cad_prop_id ?? "",
+    mhSerialNumber: row.mh_serial_number ?? "",
+    mhHudLabel: row.mh_hud_label ?? "",
     source: "manual",
     updatedAt: row.updated_at ? Date.parse(row.updated_at) : Date.now(),
   };
@@ -158,6 +160,8 @@ export function proListingToRow(pro: ProListing, agentId: string): ListingRow {
     sellers_disclosure_provided: pro.sellersDisclosureProvided,
     // Linking a CAD parcel lets the DB geocode trigger set lat/lng (map pin).
     cad_prop_id: pro.cadPropId || null,
+    mh_serial_number: pro.mhSerialNumber || null,
+    mh_hud_label: pro.mhHudLabel || null,
     updated_at: new Date().toISOString(),
   };
 }

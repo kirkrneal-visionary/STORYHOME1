@@ -35,6 +35,10 @@ export type ProListing = {
   sellersDisclosureProvided: boolean;
   /** Linked county appraisal-district parcel id (drives map pin + auto-fill). */
   cadPropId: string;
+  /** Mobile / manufactured home serial parsed from CAD legal → MLS. */
+  mhSerialNumber: string;
+  /** HUD / label number when CAD provides it. */
+  mhHudLabel: string;
   source: "manual" | "mls-import" | "seed";
   updatedAt: number;
 };
@@ -81,6 +85,8 @@ export function emptyProListing(overrides: Partial<ProListing> = {}): ProListing
     leadPaintDisclosureProvided: false,
     sellersDisclosureProvided: false,
     cadPropId: "",
+    mhSerialNumber: "",
+    mhHudLabel: "",
     source: "manual",
     updatedAt: Date.now(),
     ...overrides,
@@ -178,6 +184,15 @@ const MLS_FIELD_ALIASES: Record<string, keyof ProListing> = {
   "description": "description",
   "remarks": "description",
   "public remarks": "description",
+  "serial": "mhSerialNumber",
+  "serial #": "mhSerialNumber",
+  "serial number": "mhSerialNumber",
+  "mh serial": "mhSerialNumber",
+  "mobile home serial": "mhSerialNumber",
+  "hud": "mhHudLabel",
+  "hud #": "mhHudLabel",
+  "hud label": "mhHudLabel",
+  "label #": "mhHudLabel",
 };
 
 function toNumber(raw: string): number {
@@ -186,10 +201,17 @@ function toNumber(raw: string): number {
 }
 
 function normalizePropertyType(raw: string): PropertyType | "" {
-  const found = PROPERTY_TYPES.find(
-    (t) => t.toLowerCase() === raw.trim().toLowerCase(),
-  );
-  return found ?? "";
+  const cleaned = raw.trim().toLowerCase();
+  const found = PROPERTY_TYPES.find((t) => t.toLowerCase() === cleaned);
+  if (found) return found;
+  if (
+    cleaned.includes("mobile") ||
+    cleaned.includes("manufactured") ||
+    cleaned === "mh"
+  ) {
+    return "Mobile / Manufactured";
+  }
+  return "";
 }
 
 /**
