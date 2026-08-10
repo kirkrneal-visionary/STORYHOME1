@@ -56,7 +56,8 @@ export function SuitesProvider({ children }: { children: React.ReactNode }) {
         window.localStorage.getItem(SUITES_STORAGE_KEY),
       );
       const next = parsed ?? defaultSuites();
-      if (!parsed) persist(next);
+      // Always write back so stale/demo albums are cleaned from storage too.
+      persist(next);
       setSuites(next);
     } catch {
       setSuites(defaultSuites());

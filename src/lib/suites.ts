@@ -22,12 +22,15 @@ export function defaultSuites(): StorySuite[] {
   return [];
 }
 
+/** Legacy demo albums seeded into older browsers — always dropped now. */
+const DEMO_SUITE_IDS = new Set(["suite-lake", "suite-invest", "suite-mom"]);
+
 export function parseStoredSuites(raw: string | null): StorySuite[] | null {
   if (!raw) return null;
   try {
     const data = JSON.parse(raw) as StorySuite[];
     if (!Array.isArray(data)) return null;
-    return data;
+    return data.filter((s) => !DEMO_SUITE_IDS.has(s.id));
   } catch {
     return null;
   }
