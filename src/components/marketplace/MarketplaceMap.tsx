@@ -1,32 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import type { FeatureCollection } from "geojson";
 import {
-  Circle,
-  MapContainer,
-  Marker,
-  Polygon,
-  Rectangle,
-  TileLayer,
-  Tooltip,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
-import L from "leaflet";
+  Hand,
+  Layers,
+  LocateFixed,
+  Maximize2,
+  Minimize2,
+  PenTool,
+  Ruler,
+  Search,
+  Square,
+  X,
+} from "lucide-react";
 import type { DemoListing } from "@/lib/demo-data";
-import { formatUsd } from "@/lib/demo-data";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
+  boundaryLabel,
+  formatArea,
+  formatDistance,
+  pathLengthMiles,
+  polygonAreaSqMeters,
   type DrawnBoundary,
   type LatLng,
-  type MapBounds,
-  boundaryLabel,
 } from "@/lib/geo";
 import { cn } from "@/lib/utils";
-import "leaflet/dist/leaflet.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 
-export type DrawTool = "pan" | "polygon" | "radius" | "rectangle";
+export type DrawTool = "pan" | "polygon" | "radius" | "rectangle" | "measure";
+type BaseLayer = "street" | "satellite" | "terrain";
 
 type MarketplaceMapProps = {
   listings: DemoListing[];
@@ -37,137 +42,121 @@ type MarketplaceMapProps = {
   className?: string;
 };
 
+const NAVY = "#17335e";
+const GOLD = "#f5b71e";
+const PAPER = "#f7f4ec";
+
+const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
+
 function priceLabel(price: number) {
   if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(2)}M`;
   return `$${Math.round(price / 1000)}K`;
 }
 
-function priceIcon(price: number, active: boolean) {
-  return L.divIcon({
-    className: "",
-    iconSize: [64, 28],
-    iconAnchor: [32, 28],
-    html: `<div style="
-      background:${active ? "#F0B93B" : "#0E1E38"};
-      color:${active ? "#0E1E38" : "#F7F4EC"};
-      border:2px solid ${active ? "#0E1E38" : "#F0B93B"};
-      border-radius:999px;
-      padding:4px 8px;
-      font:700 11px/1 ui-monospace,monospace;
-      box-shadow:0 6px 18px rgba(0,0,0,.35);
-      white-space:nowrap;
-      transform:translateY(${active ? "-2px" : "0"});
-    ">${priceLabel(price)}</div>`,
-  });
+/** Base map style with three switchable raster layers (no traffic, no token). */
+function buildStyle(): maplibregl.StyleSpecification {
+  return {
+    version: 8,
+    sources: {
+      street: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        attribution: "&copy; OpenStreetMap contributors",
+      },
+      satellite: {
+        type: "raster",
+        tiles: [
+          "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        ],
+        tileSize: 256,
+        attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics",
+      },
+      terrain: {
+        type: "raster",
+        tiles: [
+          "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+          "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+        ],
+        tileSize: 256,
+        maxzoom: 17,
+        attribution: "&copy; OpenTopoMap (CC-BY-SA)",
+      },
+    },
+    layers: [
+      { id: "base-street", type: "raster", source: "street" },
+      {
+        id: "base-satellite",
+        type: "raster",
+        source: "satellite",
+        layout: { visibility: "none" },
+      },
+      {
+        id: "base-terrain",
+        type: "raster",
+        source: "terrain",
+        layout: { visibility: "none" },
+      },
+    ],
+  };
 }
 
-function MapController({
-  selected,
-}: {
-  selected: DemoListing | null;
-}) {
-  const map = useMap();
-  useEffect(() => {
-    if (!selected) return;
-    map.flyTo([selected.lat, selected.lng], Math.max(map.getZoom(), 11), {
-      duration: 0.6,
+function circleRing(center: LatLng, radiusMiles: number, steps = 72): number[][] {
+  const latR = radiusMiles / 69;
+  const lngR = radiusMiles / (69 * Math.cos((center.lat * Math.PI) / 180));
+  const ring: number[][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = (2 * Math.PI * i) / steps;
+    ring.push([center.lng + lngR * Math.cos(t), center.lat + latR * Math.sin(t)]);
+  }
+  return ring;
+}
+
+function boundaryFeature(boundary: DrawnBoundary | null): FeatureCollection {
+  if (!boundary) return EMPTY_FC;
+  let ring: number[][];
+  if (boundary.type === "polygon") {
+    ring = boundary.points.map((p) => [p.lng, p.lat]);
+    if (ring.length) ring.push(ring[0]);
+  } else if (boundary.type === "circle") {
+    ring = circleRing(boundary.center, boundary.radiusMiles);
+  } else {
+    const b = boundary.bounds;
+    ring = [
+      [b.west, b.north],
+      [b.east, b.north],
+      [b.east, b.south],
+      [b.west, b.south],
+      [b.west, b.north],
+    ];
+  }
+  return {
+    type: "FeatureCollection",
+    features: [
+      { type: "Feature", geometry: { type: "Polygon", coordinates: [ring] }, properties: {} },
+    ],
+  };
+}
+
+function lineAndVertices(points: LatLng[]): FeatureCollection {
+  const coords = points.map((p) => [p.lng, p.lat]);
+  const features: FeatureCollection["features"] = [];
+  if (coords.length >= 2) {
+    features.push({
+      type: "Feature",
+      geometry: { type: "LineString", coordinates: coords },
+      properties: {},
     });
-  }, [map, selected]);
-  return null;
-}
-
-function DrawEngine({
-  tool,
-  draftPoints,
-  setDraftPoints,
-  radiusMiles,
-  onBoundaryChange,
-  setShowSearchArea,
-}: {
-  tool: DrawTool;
-  draftPoints: LatLng[];
-  setDraftPoints: (points: LatLng[]) => void;
-  radiusMiles: number;
-  onBoundaryChange: (boundary: DrawnBoundary | null) => void;
-  setShowSearchArea: (show: boolean) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      const point = { lat: e.latlng.lat, lng: e.latlng.lng };
-      if (tool === "polygon") {
-        setDraftPoints([...draftPoints, point]);
-        return;
-      }
-      if (tool === "radius") {
-        onBoundaryChange({
-          type: "circle",
-          center: point,
-          radiusMiles,
-        });
-        setDraftPoints([]);
-        return;
-      }
-      if (tool === "rectangle") {
-        if (draftPoints.length === 0) {
-          setDraftPoints([point]);
-          return;
-        }
-        const a = draftPoints[0];
-        const b = point;
-        onBoundaryChange({
-          type: "rectangle",
-          bounds: {
-            north: Math.max(a.lat, b.lat),
-            south: Math.min(a.lat, b.lat),
-            east: Math.max(a.lng, b.lng),
-            west: Math.min(a.lng, b.lng),
-          },
-        });
-        setDraftPoints([]);
-      }
-    },
-    dblclick(e) {
-      if (tool !== "polygon" || draftPoints.length < 2) return;
-      e.originalEvent.preventDefault();
-      const closed = [...draftPoints, { lat: e.latlng.lat, lng: e.latlng.lng }];
-      if (closed.length >= 3) {
-        onBoundaryChange({ type: "polygon", points: closed });
-        setDraftPoints([]);
-      }
-    },
-    moveend() {
-      if (tool === "pan") setShowSearchArea(true);
-    },
-  });
-  return null;
-}
-
-function SearchAreaButton({
-  show,
-  onSearch,
-}: {
-  show: boolean;
-  onSearch: (bounds: MapBounds) => void;
-}) {
-  const map = useMap();
-  if (!show) return null;
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        const b = map.getBounds();
-        onSearch({
-          north: b.getNorth(),
-          south: b.getSouth(),
-          east: b.getEast(),
-          west: b.getWest(),
-        });
-      }}
-      className="absolute top-3 left-1/2 z-[500] -translate-x-1/2 rounded-full bg-gold px-4 py-2 text-xs font-bold text-navy shadow-lg"
-    >
-      Search this area
-    </button>
-  );
+  }
+  for (const c of coords) {
+    features.push({ type: "Feature", geometry: { type: "Point", coordinates: c }, properties: {} });
+  }
+  return { type: "FeatureCollection", features };
 }
 
 export function MarketplaceMap({
@@ -178,177 +167,341 @@ export function MarketplaceMap({
   onBoundaryChange,
   className,
 }: MarketplaceMapProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const draftRef = useRef<LatLng[]>([]);
+  const toolRef = useRef<DrawTool>("pan");
+
+  const [ready, setReady] = useState(false);
   const [tool, setTool] = useState<DrawTool>("pan");
-  const [draftPoints, setDraftPoints] = useState<LatLng[]>([]);
+  const [base, setBase] = useState<BaseLayer>("street");
   const [radiusMiles, setRadiusMiles] = useState(10);
+  const [draftPoints, setDraftPoints] = useState<LatLng[]>([]);
+  const [measurePoints, setMeasurePoints] = useState<LatLng[]>([]);
   const [showSearchArea, setShowSearchArea] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [viewportVersion, setViewportVersion] = useState(0);
 
-  const selected = useMemo(
-    () => listings.find((l) => l.id === selectedId) ?? null,
-    [listings, selectedId],
-  );
+  useEffect(() => {
+    toolRef.current = tool;
+  }, [tool]);
+  useEffect(() => {
+    draftRef.current = draftPoints;
+  }, [draftPoints]);
 
-  const draftPath = useMemo(
-    () => draftPoints.map((p) => [p.lat, p.lng] as [number, number]),
-    [draftPoints],
-  );
+  // Init map once.
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: buildStyle(),
+      center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
+      zoom: EAST_TEXAS_DEFAULT_ZOOM,
+      attributionControl: { compact: true },
+    });
+    mapRef.current = map;
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
-  function applyPolygon() {
-    if (draftPoints.length < 3) return;
-    onBoundaryChange({ type: "polygon", points: draftPoints });
+    map.on("load", () => {
+      map.addSource("boundary", { type: "geojson", data: EMPTY_FC });
+      map.addSource("draft", { type: "geojson", data: EMPTY_FC });
+      map.addSource("measure", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: "boundary-fill",
+        type: "fill",
+        source: "boundary",
+        paint: { "fill-color": GOLD, "fill-opacity": 0.14 },
+      });
+      map.addLayer({
+        id: "boundary-line",
+        type: "line",
+        source: "boundary",
+        paint: { "line-color": GOLD, "line-width": 2 },
+      });
+      map.addLayer({
+        id: "draft-line",
+        type: "line",
+        source: "draft",
+        paint: { "line-color": GOLD, "line-width": 2, "line-dasharray": [2, 2] },
+      });
+      map.addLayer({
+        id: "draft-points",
+        type: "circle",
+        source: "draft",
+        filter: ["==", "$type", "Point"],
+        paint: { "circle-radius": 4, "circle-color": GOLD, "circle-stroke-color": PAPER, "circle-stroke-width": 1.5 },
+      });
+      map.addLayer({
+        id: "measure-line",
+        type: "line",
+        source: "measure",
+        paint: { "line-color": GOLD, "line-width": 2.5 },
+      });
+      map.addLayer({
+        id: "measure-points",
+        type: "circle",
+        source: "measure",
+        filter: ["==", "$type", "Point"],
+        paint: { "circle-radius": 5, "circle-color": PAPER, "circle-stroke-color": NAVY, "circle-stroke-width": 2 },
+      });
+      setReady(true);
+    });
+
+    map.on("moveend", () => {
+      if (toolRef.current === "pan") setShowSearchArea(true);
+      setViewportVersion((v) => v + 1);
+    });
+
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(containerRef.current);
+    const onWinResize = () => map.resize();
+    window.addEventListener("resize", onWinResize);
+    window.addEventListener("orientationchange", onWinResize);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onWinResize);
+      window.removeEventListener("orientationchange", onWinResize);
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Base-layer switch.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    (["street", "satellite", "terrain"] as BaseLayer[]).forEach((b) => {
+      map.setLayoutProperty(`base-${b}`, "visibility", b === base ? "visible" : "none");
+    });
+  }, [ready, base]);
+
+  // Cursor + double-click zoom per tool.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (tool === "polygon" || tool === "measure") map.doubleClickZoom.disable();
+    else map.doubleClickZoom.enable();
+    map.getCanvas().style.cursor = tool === "pan" ? "" : "crosshair";
+  }, [ready, tool]);
+
+  // Click / double-click handlers (rebound when tool or radius changes).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      if (tool === "polygon") {
+        setDraftPoints((prev) => [...prev, pt]);
+      } else if (tool === "measure") {
+        setMeasurePoints((prev) => [...prev, pt]);
+      } else if (tool === "radius") {
+        onBoundaryChange({ type: "circle", center: pt, radiusMiles });
+        setShowSearchArea(false);
+        setTool("pan");
+      } else if (tool === "rectangle") {
+        if (draftRef.current.length === 0) {
+          setDraftPoints([pt]);
+        } else {
+          const a = draftRef.current[0];
+          onBoundaryChange({
+            type: "rectangle",
+            bounds: {
+              north: Math.max(a.lat, pt.lat),
+              south: Math.min(a.lat, pt.lat),
+              east: Math.max(a.lng, pt.lng),
+              west: Math.min(a.lng, pt.lng),
+            },
+          });
+          setShowSearchArea(false);
+          setDraftPoints([]);
+          setTool("pan");
+        }
+      }
+    };
+
+    const onDbl = (e: maplibregl.MapMouseEvent) => {
+      if (tool !== "polygon") return;
+      e.preventDefault();
+      if (draftRef.current.length >= 3) {
+        onBoundaryChange({ type: "polygon", points: draftRef.current });
+        setDraftPoints([]);
+        setTool("pan");
+      }
+    };
+
+    map.on("click", onClick);
+    map.on("dblclick", onDbl);
+    return () => {
+      map.off("click", onClick);
+      map.off("dblclick", onDbl);
+    };
+  }, [ready, tool, radiusMiles, onBoundaryChange]);
+
+  // Sync overlay sources.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    (map.getSource("boundary") as maplibregl.GeoJSONSource | undefined)?.setData(
+      boundaryFeature(boundary),
+    );
+  }, [ready, boundary]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    (map.getSource("draft") as maplibregl.GeoJSONSource | undefined)?.setData(
+      lineAndVertices(draftPoints),
+    );
+  }, [ready, draftPoints]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    (map.getSource("measure") as maplibregl.GeoJSONSource | undefined)?.setData(
+      lineAndVertices(measurePoints),
+    );
+  }, [ready, measurePoints]);
+
+  // Fly to the selected listing.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !selectedId) return;
+    const l = listings.find((x) => x.id === selectedId);
+    if (!l) return;
+    map.flyTo({ center: [l.lng, l.lat], zoom: Math.max(map.getZoom(), 12), duration: 600 });
+  }, [ready, selectedId, listings]);
+
+  // Render viewport-culled price-pill markers.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    markersRef.current.forEach((m) => m.remove());
+    markersRef.current = [];
+    const b = map.getBounds();
+    const visible = listings.filter(
+      (l) => l.lat && l.lng && b.contains([l.lng, l.lat]),
+    );
+    for (const l of visible.slice(0, 400)) {
+      const el = document.createElement("button");
+      el.type = "button";
+      const active = l.id === selectedId;
+      el.textContent = priceLabel(l.price);
+      el.style.cssText = `
+        background:${active ? GOLD : NAVY};
+        color:${active ? NAVY : PAPER};
+        border:2px solid ${active ? NAVY : GOLD};
+        border-radius:999px;padding:4px 9px;
+        font:700 11px/1 ui-monospace,monospace;white-space:nowrap;
+        box-shadow:0 6px 16px rgba(0,0,0,.35);cursor:pointer;
+        transform:translateY(${active ? "-2px" : "0"});`;
+      if (active) el.style.zIndex = "10";
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        onSelect(l.id);
+      });
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([l.lng, l.lat])
+        .addTo(map);
+      markersRef.current.push(marker);
+    }
+  }, [ready, listings, selectedId, viewportVersion, onSelect]);
+
+  // Resize after expand toggle so the canvas fills the new box (mobile fix).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const id = requestAnimationFrame(() => map.resize());
+    return () => cancelAnimationFrame(id);
+  }, [ready, expanded]);
+
+  const measureReadout = useMemo(() => {
+    if (measurePoints.length < 2) return null;
+    const dist = pathLengthMiles(measurePoints);
+    const area =
+      measurePoints.length >= 3 ? polygonAreaSqMeters(measurePoints) : 0;
+    return { dist, area };
+  }, [measurePoints]);
+
+  function selectTool(next: DrawTool) {
+    setTool(next);
     setDraftPoints([]);
-    setTool("pan");
+    if (next !== "measure") setMeasurePoints([]);
+    setShowSearchArea(false);
   }
 
   function clearBoundary() {
     onBoundaryChange(null);
     setDraftPoints([]);
+    setMeasurePoints([]);
     setShowSearchArea(false);
     setTool("pan");
   }
 
+  function searchThisArea() {
+    const map = mapRef.current;
+    if (!map) return;
+    const b = map.getBounds();
+    onBoundaryChange({
+      type: "viewport",
+      bounds: { north: b.getNorth(), south: b.getSouth(), east: b.getEast(), west: b.getWest() },
+    });
+    setShowSearchArea(false);
+  }
+
+  const TOOLS: { id: DrawTool; label: string; icon: typeof Hand }[] = [
+    { id: "pan", label: "Move", icon: Hand },
+    { id: "polygon", label: "Draw", icon: PenTool },
+    { id: "radius", label: "Radius", icon: LocateFixed },
+    { id: "rectangle", label: "Box", icon: Square },
+    { id: "measure", label: "Measure", icon: Ruler },
+  ];
+
+  const BASES: { id: BaseLayer; label: string }[] = [
+    { id: "street", label: "Street" },
+    { id: "satellite", label: "Satellite" },
+    { id: "terrain", label: "Terrain" },
+  ];
+
   return (
-    <div className={cn("relative isolate h-full min-h-[360px] w-full", className)}>
-      <MapContainer
-        center={[EAST_TEXAS_CENTER.lat, EAST_TEXAS_CENTER.lng]}
-        zoom={EAST_TEXAS_DEFAULT_ZOOM}
-        className="h-full w-full"
-        scrollWheelZoom
-        doubleClickZoom={tool !== "polygon"}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+    <div
+      className={cn(
+        "relative isolate h-full min-h-[360px] w-full",
+        expanded && "fixed inset-0 z-[1200] h-dvh",
+        className,
+      )}
+    >
+      <div ref={containerRef} className="h-full w-full" />
 
-        <MapController selected={selected} />
-        <DrawEngine
-          tool={tool}
-          draftPoints={draftPoints}
-          setDraftPoints={setDraftPoints}
-          radiusMiles={radiusMiles}
-          onBoundaryChange={(b) => {
-            onBoundaryChange(b);
-            setShowSearchArea(false);
-            setTool("pan");
-          }}
-          setShowSearchArea={setShowSearchArea}
-        />
-        <SearchAreaButton
-          show={showSearchArea && tool === "pan"}
-          onSearch={(bounds) => {
-            onBoundaryChange({ type: "viewport", bounds });
-            setShowSearchArea(false);
-          }}
-        />
+      {/* Tool toolbar (top-left) */}
+      <div className="absolute top-3 left-3 z-[500] flex max-w-[min(100%,460px)] flex-wrap items-center gap-1.5">
+        <div className="flex overflow-hidden rounded-full border border-hairline bg-navy/90 shadow-lg backdrop-blur">
+          {TOOLS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => selectTool(id)}
+              title={label}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold transition-colors",
+                tool === id ? "bg-gold text-navy" : "text-paper hover:bg-white/10",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
+        </div>
 
-        {boundary?.type === "polygon" && (
-          <Polygon
-            positions={boundary.points.map((p) => [p.lat, p.lng] as [number, number])}
-            pathOptions={{
-              color: "#F0B93B",
-              fillColor: "#F0B93B",
-              fillOpacity: 0.18,
-              weight: 2,
-            }}
-          />
-        )}
-        {boundary?.type === "circle" && (
-          <Circle
-            center={[boundary.center.lat, boundary.center.lng]}
-            radius={boundary.radiusMiles * 1609.34}
-            pathOptions={{
-              color: "#F0B93B",
-              fillColor: "#F0B93B",
-              fillOpacity: 0.15,
-              weight: 2,
-            }}
-          />
-        )}
-        {(boundary?.type === "rectangle" || boundary?.type === "viewport") && (
-          <Rectangle
-            bounds={[
-              [boundary.bounds.south, boundary.bounds.west],
-              [boundary.bounds.north, boundary.bounds.east],
-            ]}
-            pathOptions={{
-              color: "#F0B93B",
-              fillColor: "#F0B93B",
-              fillOpacity: 0.12,
-              weight: 2,
-              dashArray: boundary.type === "viewport" ? "6 6" : undefined,
-            }}
-          />
-        )}
-
-        {draftPath.length > 0 && (
-          <Polygon
-            positions={draftPath}
-            pathOptions={{
-              color: "#F0B93B",
-              fillOpacity: 0.08,
-              dashArray: "4 6",
-              weight: 2,
-            }}
-          />
-        )}
-
-        {listings.map((listing) => (
-          <Marker
-            key={listing.id}
-            position={[listing.lat, listing.lng]}
-            icon={priceIcon(listing.price, listing.id === selectedId)}
-            eventHandlers={{
-              click: () => onSelect(listing.id),
-            }}
-            zIndexOffset={listing.id === selectedId ? 1000 : 0}
-          >
-            <Tooltip direction="top" offset={[0, -24]}>
-              <div className="text-xs">
-                <strong>{formatUsd(listing.price)}</strong>
-                <div>{listing.addressSerif}</div>
-                <div>
-                  {listing.beds} bd · {listing.baths} ba · {listing.city}
-                </div>
-              </div>
-            </Tooltip>
-          </Marker>
-        ))}
-      </MapContainer>
-
-      {/* Map toolbar — Zillow/Realtor style */}
-      <div className="absolute top-3 left-3 z-[500] flex max-w-[min(100%,420px)] flex-wrap gap-1.5">
-        {(
-          [
-            ["pan", "Move"],
-            ["polygon", "Draw"],
-            ["radius", "Radius"],
-            ["rectangle", "Box"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => {
-              setTool(id);
-              setDraftPoints([]);
-              setShowSearchArea(false);
-            }}
-            className={cn(
-              "rounded-full px-3 py-1.5 text-[11px] font-bold shadow-md",
-              tool === id
-                ? "bg-gold text-navy"
-                : "border border-hairline bg-navy/90 text-paper",
-            )}
-          >
-            {label}
-          </button>
-        ))}
         {tool === "radius" && (
           <select
             value={radiusMiles}
             onChange={(e) => setRadiusMiles(Number(e.target.value))}
-            className="rounded-full border border-hairline bg-navy/90 px-2 py-1.5 text-[11px] font-semibold text-paper"
+            className="rounded-full border border-hairline bg-navy/90 px-3 py-2 text-[11px] font-semibold text-paper shadow-lg"
           >
             {[5, 10, 15, 25, 50].map((m) => (
               <option key={m} value={m}>
@@ -360,39 +513,94 @@ export function MarketplaceMap({
         {tool === "polygon" && draftPoints.length >= 3 && (
           <button
             type="button"
-            onClick={applyPolygon}
-            className="rounded-full bg-gold px-3 py-1.5 text-[11px] font-bold text-navy shadow-md"
+            onClick={() => {
+              onBoundaryChange({ type: "polygon", points: draftPoints });
+              setDraftPoints([]);
+              setTool("pan");
+            }}
+            className="rounded-full bg-gold px-3 py-2 text-[11px] font-bold text-navy shadow-lg"
           >
             Apply shape
           </button>
         )}
-        {(boundary || draftPoints.length > 0) && (
+        {(boundary || draftPoints.length > 0 || measurePoints.length > 0) && (
           <button
             type="button"
             onClick={clearBoundary}
-            className="rounded-full border border-hairline bg-navy/90 px-3 py-1.5 text-[11px] font-bold text-paper shadow-md"
+            className="flex items-center gap-1 rounded-full border border-hairline bg-navy/90 px-3 py-2 text-[11px] font-bold text-paper shadow-lg"
           >
-            Clear boundary
+            <X className="h-3.5 w-3.5" /> Clear
           </button>
         )}
       </div>
 
-      <div className="absolute right-3 bottom-3 z-[500] max-w-[220px] rounded-lg border border-hairline bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg">
-        {tool === "polygon" && (
-          <p>Click to drop points. Double-click or Apply to finish.</p>
-        )}
-        {tool === "radius" && (
-          <p>Click the map center for a {radiusMiles}-mile search radius.</p>
-        )}
-        {tool === "rectangle" && (
-          <p>Click two corners to box an area.</p>
-        )}
-        {tool === "pan" && (
-          <p>
-            {boundaryLabel(boundary)
-              ? `Boundary: ${boundaryLabel(boundary)}`
-              : "Pan the map, then Search this area — or draw a custom boundary."}
-          </p>
+      {/* Layer switcher + fullscreen (top-right) */}
+      <div className="absolute top-3 right-3 z-[500] flex items-center gap-1.5">
+        <div className="flex overflow-hidden rounded-full border border-hairline bg-navy/90 shadow-lg backdrop-blur">
+          <span className="flex items-center pl-3 pr-1 text-paper/70">
+            <Layers className="h-3.5 w-3.5" />
+          </span>
+          {BASES.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => setBase(b.id)}
+              className={cn(
+                "px-3 py-2 text-[11px] font-bold transition-colors",
+                base === b.id ? "bg-gold text-navy" : "text-paper hover:bg-white/10",
+              )}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          title={expanded ? "Exit fullscreen" : "Expand map"}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-navy/90 text-paper shadow-lg hover:bg-white/10"
+        >
+          {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
+      </div>
+
+      {/* Search this area (top-center) */}
+      {showSearchArea && tool === "pan" && (
+        <button
+          type="button"
+          onClick={searchThisArea}
+          className="absolute top-16 left-1/2 z-[500] flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-gold px-4 py-2 text-xs font-bold text-navy shadow-xl"
+        >
+          <Search className="h-3.5 w-3.5" /> Search this area
+        </button>
+      )}
+
+      {/* Info / measure readout (bottom-left) */}
+      <div className="absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-xl border border-hairline bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg backdrop-blur">
+        {tool === "measure" ? (
+          measureReadout ? (
+            <div className="space-y-0.5">
+              <p className="font-mono text-[10px] tracking-wider text-paper/60 uppercase">
+                Measure
+              </p>
+              <p className="font-bold">Distance: {formatDistance(measureReadout.dist)}</p>
+              {measureReadout.area > 0 && (
+                <p className="font-bold">Area: {formatArea(measureReadout.area)}</p>
+              )}
+            </div>
+          ) : (
+            <p>Click points to measure distance. 3+ points also measures area.</p>
+          )
+        ) : tool === "polygon" ? (
+          <p>Click to drop points, then double‑click or “Apply shape”.</p>
+        ) : tool === "radius" ? (
+          <p>Click a center point for a {radiusMiles}‑mile radius.</p>
+        ) : tool === "rectangle" ? (
+          <p>Click two opposite corners to box an area.</p>
+        ) : boundaryLabel(boundary) ? (
+          <p>Boundary: {boundaryLabel(boundary)}</p>
+        ) : (
+          <p>Pan and “Search this area”, or use Draw / Measure. Switch Street · Satellite · Terrain top‑right.</p>
         )}
       </div>
     </div>
