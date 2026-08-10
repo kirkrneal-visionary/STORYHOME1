@@ -67,6 +67,40 @@ export async function fetchSellerPortalByCode(
   return mapSellerPortal(data);
 }
 
+export type TierAvailability = {
+  capacity: number;
+  used: number;
+  remaining: number;
+  isAvailable: boolean;
+};
+
+/**
+ * Real per-county boost availability for every tier, keyed by tier id. Uses the
+ * code-gated public RPC so the seller portal can show live "X of Y spots left"
+ * for the listing's county — for any of the 254 TX counties.
+ */
+export async function fetchCountyBoostAvailability(
+  countyFips: string,
+): Promise<Record<string, TierAvailability>> {
+  const { data, error } = await client().rpc("county_boost_availability", {
+    p_county_fips: countyFips,
+  });
+  if (error || !Array.isArray(data)) return {};
+  const out: Record<string, TierAvailability> = {};
+  for (const row of data as Array<Record<string, unknown>>) {
+    const tierId = String(row.tier_id);
+    const capacity = Number(row.capacity ?? 0);
+    const remaining = Number(row.remaining ?? 0);
+    out[tierId] = {
+      capacity,
+      used: Number(row.used ?? 0),
+      remaining,
+      isAvailable: remaining > 0,
+    };
+  }
+  return out;
+}
+
 /**
  * Generate (once) and return the unique seller access code for a listing the
  * current agent/broker owns. Idempotent — returns the existing code if set.

@@ -6,6 +6,7 @@
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
 import type { ListingStatus, PropertyType } from "@/lib/listing-filters";
 import type { ProListing } from "@/lib/pro-listings";
+import { txCountyFipsByName } from "@/lib/tx-counties";
 
 /** Columns to fetch for a listing, with the owning agent embedded. */
 export const LISTING_SELECT =
@@ -134,6 +135,10 @@ export function proListingToRow(pro: ProListing, agentId: string): ListingRow {
     address_serif: pro.streetAddress,
     city: pro.city,
     county_name: pro.countyName,
+    // Normalize the free-text county to a FIPS code so per-county features
+    // (boost slot caps, market segmentation) work for any of the 254 TX
+    // counties, not just the launch footprint. Null if the name is unknown.
+    county_fips: txCountyFipsByName(pro.countyName),
     state: pro.state || "TX",
     zip: pro.zip || null,
     price: pro.price,

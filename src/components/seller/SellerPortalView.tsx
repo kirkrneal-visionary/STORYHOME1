@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -19,6 +19,10 @@ import {
   getTierAvailability,
   type BoostTierId,
 } from "@/lib/boost";
+import {
+  fetchCountyBoostAvailability,
+  type TierAvailability,
+} from "@/lib/supabase/listings";
 import {
   formatAvgTime,
   type ListingAnalytics,
@@ -39,21 +43,39 @@ export function SellerPortalView({
   const [selectedTier, setSelectedTier] = useState<BoostTierId | null>(null);
   const [activeBoost, setActiveBoost] = useState<BoostTierId | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [dbAvailability, setDbAvailability] = useState<Record<
+    string,
+    TierAvailability
+  > | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!listing.countyFips) return; // defaults to tier capacity below
+    // Live, per-county availability from the database — works for any of the
+    // 254 TX counties because it keys on the listing's county FIPS.
+    fetchCountyBoostAvailability(listing.countyFips)
+      .then((res) => {
+        if (!cancelled) setDbAvailability(res);
+      })
+      .catch(() => {
+        if (!cancelled) setDbAvailability(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [listing.countyFips]);
 
   const availability = useMemo(() => {
-    // No boosts are sold yet (payments launch later), so every county slot is
-    // open. Availability is computed against an empty active-boost set rather
-    // than fabricated demo inventory.
+    // Prefer real DB counts for this county; fall back to tier defaults (all
+    // slots open) before the RPC resolves or when the county is unknown.
     return Object.fromEntries(
       BOOST_TIERS.map((tier) => [
         tier.id,
-        getTierAvailability(listing.countyFips, tier, []),
+        dbAvailability?.[tier.id] ??
+          getTierAvailability(listing.countyFips, tier, []),
       ]),
-    ) as Record<
-      BoostTierId,
-      ReturnType<typeof getTierAvailability>
-    >;
-  }, [listing.countyFips]);
+    ) as Record<BoostTierId, TierAvailability>;
+  }, [listing.countyFips, dbAvailability]);
 
   const selected = BOOST_TIERS.find((t) => t.id === selectedTier) ?? null;
 
