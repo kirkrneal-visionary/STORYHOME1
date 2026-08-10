@@ -1,21 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --navy: #0e1e38;
-  --navy-soft: #152a4e;
-  --navy-deep: #091525;
-  --gold: #f0b93b;
+  /* Brand navy — matches the Story Home logo background (rich, not too dark). */
+  --navy: #17335e;
+  --navy-soft: #21467a;
+  --navy-deep: #10294c;
+  --gold: #f5b71e;
   --teal: #123f38;
   --teal-soft: #1b5a50;
   --paper: #f7f4ec;
   --ink: #f4f1e8;
-  --hairline: rgba(247, 244, 236, 0.12);
+  --hairline: rgba(247, 244, 236, 0.14);
 
-  /* Site-wide dark navy (HAR/Zillow competitor mode) */
-  --background: var(--navy-deep);
+  /* Site-wide brand navy (the logo blue) */
+  --background: var(--navy);
   --foreground: #f4f1e8;
   --surface: var(--navy-soft);
-  --nav-surface: color-mix(in srgb, var(--navy) 92%, black);
+  --nav-surface: color-mix(in srgb, var(--navy) 90%, black);
   --muted: color-mix(in srgb, #f7f4ec 64%, transparent);
   --accent: var(--gold);
   --accent-contrast: var(--navy);
@@ -43,8 +44,8 @@ html[data-role="professional"] {
   --color-hairline: var(--hairline);
   --color-surface: var(--surface);
   --color-muted: var(--muted);
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-poppins);
+  --font-serif: var(--font-poppins);
   --font-mono: var(--font-ibm-plex-mono);
 }
 
@@ -62,14 +63,18 @@ html[data-role="professional"] {
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
   }
 
+  /* Headings — will switch to "Now" once its font files are added. */
   h1,
   h2,
   h3,
   .font-serif {
-    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
+    font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   .font-mono {
