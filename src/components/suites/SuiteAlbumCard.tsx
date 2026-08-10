@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Share2 } from "lucide-react";
-import { type StorySuite, suiteCoverPhotos } from "@/lib/suites";
+import { type StorySuite } from "@/lib/suites";
 import { cn } from "@/lib/utils";
 
 type SuiteAlbumCardProps = {
@@ -12,7 +12,9 @@ type SuiteAlbumCardProps = {
 };
 
 export function SuiteAlbumCard({ suite, onShare }: SuiteAlbumCardProps) {
-  const covers = suiteCoverPhotos(suite).slice(0, 4);
+  // Cover thumbnails are resolved from real listings inside the suite player;
+  // the album card uses the gradient/initial cover to avoid per-card fetches.
+  const covers: string[] = [];
 
   return (
     <article className="group">

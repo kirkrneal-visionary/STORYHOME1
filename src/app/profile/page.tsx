@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
 import { accountLabel } from "@/lib/auth";
-import { DEMO_AGENT } from "@/lib/demo-data";
 
 export default function ProfilePage() {
   const { user, isLoggedIn, logout } = useAuth();
@@ -47,7 +46,7 @@ export default function ProfilePage() {
             ? "Build Story Home Suites, save homes into albums, and message agents when you’re ready."
             : user.kind === "seller"
               ? `Seller access via passcode ${user.sellerListingCode}. Open your listing portal for analytics and boosts.`
-              : DEMO_AGENT.bio}
+              : "Manage your Story Pro workspace, public profile, listings, and referrals."}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -76,7 +75,7 @@ export default function ProfilePage() {
                 Story Pro
               </Link>
               <Link
-                href={`/agents/${DEMO_AGENT.id}`}
+                href={`/agents/${user.id}`}
                 className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-ink"
               >
                 Public profile

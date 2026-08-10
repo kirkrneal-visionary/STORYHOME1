@@ -12,7 +12,6 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
-import { DEMO_AGENT } from "@/lib/demo-data";
 import { MyToolsView } from "@/components/broker/MyToolsView";
 import { MyListingsView } from "@/components/broker/MyListingsView";
 import { MyBuyersView } from "@/components/broker/MyBuyersView";
@@ -105,7 +104,7 @@ export function BrokerPortal() {
             );
           })}
           <Link
-            href={`/agents/${DEMO_AGENT.id}`}
+            href={`/agents/${user.id}`}
             className="-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-ink"
           >
             <UserRound className="h-4 w-4" />

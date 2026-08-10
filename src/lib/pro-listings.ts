@@ -6,7 +6,6 @@
  * `src/components/broker/proListingsStore.ts`.
  */
 
-import { DEMO_LISTINGS } from "@/lib/demo-data";
 import type { ListingDraft } from "@/lib/listing-compliance";
 import type { ListingStatus, PropertyType } from "@/lib/listing-filters";
 import { PROPERTY_TYPES } from "@/lib/listing-filters";
@@ -120,41 +119,6 @@ export const SOLD_LIKE_STATUSES: ListingStatus[] = [
 
 export function isLiveStatus(status: ListingStatus): boolean {
   return !SOLD_LIKE_STATUSES.includes(status);
-}
-
-/** Seed a pro's book from the shared demo listings. */
-export function seedProListings(agent: {
-  name: string;
-  license: string;
-  brokerage: string;
-}): ProListing[] {
-  return DEMO_LISTINGS.map((l, i) => ({
-    id: l.id,
-    mlsNumber: `ETX${(1000 + i).toString()}`,
-    streetAddress: l.addressSerif,
-    city: l.city,
-    countyName: l.countyName,
-    state: "TX",
-    zip: zipForCity(l.city),
-    price: l.price,
-    propertyType: l.propertyType,
-    status: l.status,
-    beds: l.beds,
-    baths: l.baths,
-    sqft: l.sqft,
-    acres: l.acres,
-    yearBuilt: l.yearBuilt,
-    description: l.description,
-    brokerageName: agent.brokerage,
-    listingAgentName: agent.name,
-    listingAgentLicense: agent.license,
-    photos: [l.photoUrl],
-    // Seeded demo listings are treated as fully disclosed so they are compliant.
-    leadPaintDisclosureProvided: true,
-    sellersDisclosureProvided: true,
-    source: "seed" as const,
-    updatedAt: Date.now() - i * 86_400_000,
-  }));
 }
 
 const NUM_KEYS = new Set([

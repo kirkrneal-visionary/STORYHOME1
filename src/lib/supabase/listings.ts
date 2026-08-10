@@ -27,6 +27,30 @@ export async function fetchMarketplaceListings(): Promise<DemoListing[]> {
   return (data ?? []).map(rowToListing);
 }
 
+/** Resolve specific listings by id (for saved Suites, etc.). */
+export async function fetchListingsByIds(ids: string[]): Promise<DemoListing[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await client()
+    .from("listings")
+    .select(LISTING_SELECT)
+    .in("id", ids);
+  if (error) throw error;
+  return (data ?? []).map(rowToListing);
+}
+
+/** Find a live listing by its seller-portal access code. */
+export async function fetchListingByAccessCode(
+  code: string,
+): Promise<DemoListing | null> {
+  const { data, error } = await client()
+    .from("listings")
+    .select(LISTING_SELECT)
+    .eq("seller_access_code", code.trim().toUpperCase())
+    .maybeSingle();
+  if (error) return null;
+  return data ? rowToListing(data) : null;
+}
+
 /** Listings owned by a specific agent. */
 export async function fetchAgentListings(
   agentId: string,
