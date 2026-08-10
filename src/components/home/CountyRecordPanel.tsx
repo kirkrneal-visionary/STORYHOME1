@@ -7,9 +7,11 @@ import { formatUsd } from "@/lib/demo-data";
 import { updateHome, type Home } from "@/lib/supabase/home";
 import {
   AVAILABLE_COUNTIES,
-  fetchParcelByPropId,
+  fetchParcelByPropIdAny,
+  parcelCountyLabel,
   schoolLabel,
   searchParcels,
+  searchParcelsStatewide,
   type CountyParcel,
 } from "@/lib/supabase/parcels";
 
@@ -23,7 +25,7 @@ export function CountyRecordPanel({
   ownerId: string;
   onHomeChange: () => void;
 }) {
-  const [source, setSource] = useState<string>(AVAILABLE_COUNTIES[0].source);
+  const [countyFilter, setCountyFilter] = useState<string>("");
   const [linked, setLinked] = useState<CountyParcel | null>(null);
   const [loadingLinked, setLoadingLinked] = useState(true);
   const [query, setQuery] = useState(home.address || "");
@@ -35,13 +37,13 @@ export function CountyRecordPanel({
   const loadLinked = useCallback(async () => {
     setLoadingLinked(true);
     try {
-      setLinked(home.cadPropId ? await fetchParcelByPropId(home.cadPropId, source) : null);
+      setLinked(home.cadPropId ? await fetchParcelByPropIdAny(home.cadPropId) : null);
     } catch {
       setLinked(null);
     } finally {
       setLoadingLinked(false);
     }
-  }, [home.cadPropId, source]);
+  }, [home.cadPropId]);
 
   useEffect(() => {
     void loadLinked();
@@ -51,7 +53,11 @@ export function CountyRecordPanel({
     setSearching(true);
     setSearched(true);
     try {
-      setResults(await searchParcels(source, query));
+      setResults(
+        countyFilter
+          ? await searchParcels(countyFilter, query)
+          : await searchParcelsStatewide(query),
+      );
     } catch {
       setResults([]);
     } finally {
@@ -62,7 +68,7 @@ export function CountyRecordPanel({
   async function linkParcel(p: CountyParcel) {
     setBusyId(p.propId);
     try {
-      const countyName = AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ?? home.countyName;
+      const countyName = parcelCountyLabel(p) || home.countyName;
       await updateHome(home.id, {
         cadPropId: p.propId,
         address: p.situsAddress || home.address,
@@ -97,10 +103,12 @@ export function CountyRecordPanel({
           </div>
         </div>
         <select
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
+          value={countyFilter}
+          onChange={(e) => setCountyFilter(e.target.value)}
+          title="Optional: narrow to one county"
           className="h-9 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
         >
+          <option value="">All Texas counties</option>
           {AVAILABLE_COUNTIES.map((c) => (
             <option key={c.source} value={c.source}>{c.name}</option>
           ))}
@@ -139,7 +147,7 @@ export function CountyRecordPanel({
             <LotMap parcels={[linked]} />
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted)]">
-            Source: {AVAILABLE_COUNTIES.find((c) => c.source === source)?.name}
+            Source: {parcelCountyLabel(linked)}
             {linked.taxYear ? `, ${linked.taxYear} roll` : ""}. Appraisal‑district values are for
             property‑tax purposes and are not a market appraisal. Building sqft / year built and
             beds/baths are not part of county parcel data — edit those under “Home facts.”

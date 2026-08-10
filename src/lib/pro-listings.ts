@@ -33,6 +33,8 @@ export type ProListing = {
   photos: string[];
   leadPaintDisclosureProvided: boolean;
   sellersDisclosureProvided: boolean;
+  /** Linked county appraisal-district parcel id (drives map pin + auto-fill). */
+  cadPropId: string;
   source: "manual" | "mls-import" | "seed";
   updatedAt: number;
 };
@@ -78,6 +80,7 @@ export function emptyProListing(overrides: Partial<ProListing> = {}): ProListing
     photos: [],
     leadPaintDisclosureProvided: false,
     sellersDisclosureProvided: false,
+    cadPropId: "",
     source: "manual",
     updatedAt: Date.now(),
     ...overrides,
