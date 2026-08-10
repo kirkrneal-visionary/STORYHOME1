@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { LeadsInbox } from "@/components/broker/LeadsInbox";
 import { formatUsd } from "@/lib/demo-data";
 import {
   CheckboxField,
@@ -71,6 +72,7 @@ export function MyBuyersView() {
 
   return (
     <div className="space-y-6">
+      <LeadsInbox />
       {user && <CampaignPanel agentId={user.id} />}
 
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
