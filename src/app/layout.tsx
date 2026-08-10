@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
+import { IBM_Plex_Mono, Poppins } from "next/font/google";
 import GlobalNav from "@/components/GlobalNav";
 import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Body font (Light / Regular / Medium / SemiBold). Headings temporarily use
+// Poppins too until the licensed "Now" (Now Trial, Book + Medium) files are
+// added and self-hosted via next/font/local.
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -48,7 +46,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${fraunces.variable} ${inter.variable} ${ibmPlexMono.variable} antialiased`}
+        className={`${poppins.variable} ${ibmPlexMono.variable} antialiased`}
       >
         <Providers>
           <GlobalNav />
