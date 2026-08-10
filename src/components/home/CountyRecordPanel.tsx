@@ -2,46 +2,87 @@
 
 import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { Landmark, RefreshCcw } from "lucide-react";
+import { Landmark, Link2, Search, X } from "lucide-react";
 import { formatUsd } from "@/lib/demo-data";
+import { updateHome, type Home } from "@/lib/supabase/home";
 import {
-  fetchParcelsByAddress,
+  AVAILABLE_COUNTIES,
+  fetchParcelByPropId,
   schoolLabel,
+  searchParcels,
   type CountyParcel,
 } from "@/lib/supabase/parcels";
 
 const LotMap = dynamic(() => import("@/components/home/LotMap"), { ssr: false });
 
 export function CountyRecordPanel({
-  addressLine,
-  zip,
+  home,
+  onHomeChange,
 }: {
-  addressLine: string;
-  zip: string;
+  home: Home;
+  ownerId: string;
+  onHomeChange: () => void;
 }) {
-  const [parcels, setParcels] = useState<CountyParcel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [source, setSource] = useState<string>(AVAILABLE_COUNTIES[0].source);
+  const [linked, setLinked] = useState<CountyParcel | null>(null);
+  const [loadingLinked, setLoadingLinked] = useState(true);
+  const [query, setQuery] = useState(home.address || "");
+  const [results, setResults] = useState<CountyParcel[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setErr(null);
+  const loadLinked = useCallback(async () => {
+    setLoadingLinked(true);
     try {
-      setParcels(await fetchParcelsByAddress(addressLine, zip));
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to load county record.");
+      setLinked(home.cadPropId ? await fetchParcelByPropId(home.cadPropId, source) : null);
+    } catch {
+      setLinked(null);
     } finally {
-      setLoading(false);
+      setLoadingLinked(false);
     }
-  }, [addressLine, zip]);
+  }, [home.cadPropId, source]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadLinked();
+  }, [loadLinked]);
 
-  const totalAcres = parcels.reduce((s, p) => s + (p.legalAcreage ?? 0), 0);
-  const totalMarket = parcels.reduce((s, p) => s + (p.marketValue ?? 0), 0);
-  const taxYear = parcels.find((p) => p.taxYear)?.taxYear;
+  async function runSearch() {
+    setSearching(true);
+    setSearched(true);
+    try {
+      setResults(await searchParcels(source, query));
+    } catch {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function linkParcel(p: CountyParcel) {
+    setBusyId(p.propId);
+    try {
+      const countyName = AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ?? home.countyName;
+      await updateHome(home.id, {
+        cadPropId: p.propId,
+        address: p.situsAddress || home.address,
+        city: p.situsCity || home.city,
+        countyName,
+        zip: p.situsZip || home.zip,
+        lotAcres: p.legalAcreage ?? home.lotAcres,
+      });
+      onHomeChange();
+      setResults([]);
+      setSearched(false);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function unlink() {
+    await updateHome(home.id, { cadPropId: null });
+    onHomeChange();
+  }
 
   return (
     <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
@@ -51,89 +92,111 @@ export function CountyRecordPanel({
           <div>
             <h4 className="font-serif text-lg font-bold text-ink">County record</h4>
             <p className="text-xs text-[var(--muted)]">
-              Polk Central Appraisal District — public record
+              Look up your property in the County Appraisal District and auto‑fill your profile.
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs font-semibold text-ink hover:border-gold/40"
+        <select
+          value={source}
+          onChange={(e) => setSource(e.target.value)}
+          className="h-9 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
         >
-          <RefreshCcw className="h-3.5 w-3.5" /> Refresh
-        </button>
+          {AVAILABLE_COUNTIES.map((c) => (
+            <option key={c.source} value={c.source}>{c.name}</option>
+          ))}
+        </select>
       </div>
 
-      {loading ? (
-        <p className="mt-4 text-sm text-[var(--muted)]">Looking up the county record…</p>
-      ) : err ? (
-        <p className="mt-4 text-sm text-[var(--muted)]">
-          Couldn&apos;t load the county record right now.
-        </p>
-      ) : parcels.length === 0 ? (
-        <p className="mt-4 text-sm text-[var(--muted)]">
-          No matching Polk County parcel was found for this address yet. County
-          data currently covers Polk County, TX; more counties are added over time.
-        </p>
-      ) : (
-        <>
-          {parcels.length > 1 && (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Stat label="Parcels" value={String(parcels.length)} />
-              <Stat label="Total acreage" value={`${totalAcres.toFixed(2)} ac`} />
-              <Stat label="Total market value" value={formatUsd(totalMarket)} />
+      {/* Linked parcel */}
+      {loadingLinked ? (
+        <p className="mt-4 text-sm text-[var(--muted)]">Loading…</p>
+      ) : linked ? (
+        <div className="mt-4">
+          <div className="rounded-xl border border-hairline bg-[var(--background)] p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase text-teal-soft">
+                  <Link2 className="h-3.5 w-3.5" /> Linked to CAD parcel
+                </p>
+                <p className="mt-1 font-semibold text-ink">{linked.legalDescription || linked.situsAddress}</p>
+                <p className="font-mono text-[11px] text-[var(--muted)]">
+                  Prop ID {linked.propId}{linked.geoId ? ` · Geo ID ${linked.geoId}` : ""}
+                  {schoolLabel(linked.schoolCode) ? ` · ${schoolLabel(linked.schoolCode)}` : ""}
+                </p>
+              </div>
+              <button type="button" onClick={unlink} className="inline-flex items-center gap-1 text-xs text-[var(--muted)] hover:text-red-300">
+                <X className="h-3.5 w-3.5" /> Unlink
+              </button>
             </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
+              <Fact label="Acreage" value={linked.legalAcreage != null ? `${linked.legalAcreage} ac` : "—"} />
+              <Fact label="Land" value={linked.landValue != null ? formatUsd(linked.landValue) : "—"} />
+              <Fact label="Improvements" value={linked.improvementValue != null ? formatUsd(linked.improvementValue) : "—"} />
+              <Fact label="Market" value={linked.marketValue != null ? formatUsd(linked.marketValue) : "—"} />
+            </div>
+          </div>
+          <div className="mt-3">
+            <LotMap parcels={[linked]} />
+          </div>
+          <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted)]">
+            Source: {AVAILABLE_COUNTIES.find((c) => c.source === source)?.name}
+            {linked.taxYear ? `, ${linked.taxYear} roll` : ""}. Appraisal‑district values are for
+            property‑tax purposes and are not a market appraisal. Building sqft / year built and
+            beds/baths are not part of county parcel data — edit those under “Home facts.”
+          </p>
+        </div>
+      ) : (
+        /* Search + select */
+        <div className="mt-4">
+          <div className="flex gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") void runSearch(); }}
+              placeholder="Search by address, owner name, or CAD Property ID"
+              className="h-11 w-full rounded-xl border border-hairline bg-[var(--background)] px-4 text-sm text-ink outline-none focus:border-gold"
+            />
+            <button
+              type="button"
+              onClick={runSearch}
+              disabled={searching}
+              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
+            >
+              <Search className="h-4 w-4" /> {searching ? "Searching…" : "Search"}
+            </button>
+          </div>
+
+          {searched && !searching && results.length === 0 && (
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              No matching parcels. Try just your street name, your last name, or your CAD Property ID.
+            </p>
           )}
 
-          <div className="mt-4 space-y-3">
-            {parcels.map((p) => (
-              <div key={p.id} className="rounded-xl border border-hairline bg-[var(--background)] p-4">
-                <div className="flex items-start justify-between gap-3">
+          {results.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {results.map((p) => (
+                <li key={p.propId} className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-ink">{p.legalDescription || "—"}</p>
-                    <p className="mt-0.5 font-mono text-[11px] text-[var(--muted)]">
-                      Prop ID {p.propId}
-                      {p.geoId ? ` · Geo ID ${p.geoId}` : ""}
-                      {schoolLabel(p.schoolCode) ? ` · ${schoolLabel(p.schoolCode)}` : ""}
+                    <p className="truncate text-sm font-semibold text-ink">{p.situsAddress || p.legalDescription}</p>
+                    <p className="truncate font-mono text-[11px] text-[var(--muted)]">
+                      {p.ownerName ? `${p.ownerName} · ` : ""}{p.legalAcreage != null ? `${p.legalAcreage} ac · ` : ""}Prop {p.propId}
                     </p>
                   </div>
-                  <span className="shrink-0 font-mono text-sm font-bold text-ink">
-                    {p.marketValue != null ? formatUsd(p.marketValue) : "—"}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-xs sm:grid-cols-4">
-                  <Fact label="Acreage" value={p.legalAcreage != null ? `${p.legalAcreage} ac` : "—"} />
-                  <Fact label="Land" value={p.landValue != null ? formatUsd(p.landValue) : "—"} />
-                  <Fact label="Improvements" value={p.improvementValue != null ? formatUsd(p.improvementValue) : "—"} />
-                  <Fact label="Market" value={p.marketValue != null ? formatUsd(p.marketValue) : "—"} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <LotMap parcels={parcels} />
-          </div>
-
-          <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted)]">
-            Source: Polk Central Appraisal District{taxYear ? `, ${taxYear} roll` : ""}.
-            Appraisal-district values are for property-tax purposes and are not a
-            market appraisal or opinion of value. Legal descriptions, acreage, and
-            lot boundaries are estimates from the county and should be independently
-            verified before use in any legal document.
-          </p>
-        </>
+                  <button
+                    type="button"
+                    onClick={() => linkParcel(p)}
+                    disabled={busyId === p.propId}
+                    className="shrink-0 rounded-lg border border-gold px-3 py-1.5 text-xs font-bold text-gold disabled:opacity-60"
+                  >
+                    {busyId === p.propId ? "Linking…" : "Use this parcel"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </section>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
-      <p className="font-mono text-[10px] uppercase text-[var(--muted)]">{label}</p>
-      <p className="mt-0.5 text-sm font-bold text-ink">{value}</p>
-    </div>
   );
 }
 

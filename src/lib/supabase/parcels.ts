@@ -110,6 +110,59 @@ export function parseAddress(line: string): { num: string | null; streetKeyword:
   return { num, streetKeyword };
 }
 
+/** Counties whose CAD data is ingested and searchable in Story Home. */
+export const AVAILABLE_COUNTIES = [
+  { source: "polk_cad", fips: "48373", name: "Polk County" },
+] as const;
+
+/**
+ * Search a county's ingested CAD parcels by owner name, street, situs address,
+ * or CAD Property/Geographic ID — the "look up your property" flow.
+ */
+export async function searchParcels(
+  source: string,
+  query: string,
+): Promise<CountyParcel[]> {
+  const s = getBrowserSupabase();
+  const q = query.trim();
+  if (!s || !q) return [];
+  const digits = q.replace(/[^\d]/g, "");
+  const like = `%${q}%`;
+  const ors = [
+    `owner_name.ilike.${like}`,
+    `situs_address.ilike.${like}`,
+    `situs_street.ilike.${like}`,
+  ];
+  if (digits) {
+    ors.push(`prop_id.ilike.%${digits}%`, `geo_id.ilike.%${digits}%`);
+  }
+  const { data, error } = await s
+    .from("county_parcels")
+    .select(SELECT)
+    .eq("source", source)
+    .or(ors.join(","))
+    .limit(25);
+  if (error) throw error;
+  return (data ?? []).map(toParcel);
+}
+
+/** A single parcel by its CAD Property ID (used for a linked home). */
+export async function fetchParcelByPropId(
+  propId: string,
+  source = "polk_cad",
+): Promise<CountyParcel | null> {
+  const s = getBrowserSupabase();
+  if (!s || !propId) return null;
+  const { data, error } = await s
+    .from("county_parcels")
+    .select(SELECT)
+    .eq("source", source)
+    .eq("prop_id", propId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toParcel(data) : null;
+}
+
 export async function fetchParcelsByPropIds(
   propIds: string[],
   source = "polk_cad",
