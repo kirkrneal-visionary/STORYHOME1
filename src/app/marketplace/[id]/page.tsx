@@ -6,6 +6,7 @@ import { ArrowLeft, Star } from "lucide-react";
 import { formatUsd, getAgent } from "@/lib/demo-data";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { LISTING_SELECT, rowToListing } from "@/lib/listings-map";
+import { InquireButton } from "@/components/marketplace/InquireButton";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -117,12 +118,11 @@ export default async function ListingDetailPage({ params }: PageProps) {
             </div>
           </div>
           <div className="mt-5 grid gap-2">
-            <Link
-              href="/messages"
-              className="flex h-11 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]"
-            >
-              Message
-            </Link>
+            <InquireButton
+              listingId={listing.id}
+              agentId={listing.agentId}
+              listingLabel={listing.addressSerif}
+            />
             <Link
               href={`/agents/${agent.id}`}
               className="flex h-11 items-center justify-center rounded-lg border border-hairline text-sm font-semibold text-ink"
