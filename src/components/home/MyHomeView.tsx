@@ -32,12 +32,14 @@ import {
   exportHomeData,
   fetchAudit,
   fetchDocuments,
+  fetchDisclosure,
   fetchExpenses,
   fetchFolders,
   fetchGrants,
   fetchMyHomes,
   fetchPros,
   fetchRecords,
+  fetchStructures,
   findProfileByEmail,
   grantAccess,
   logAudit,
@@ -54,8 +56,10 @@ import {
   type HomeFolder,
   type HomeGrant,
   type HomeRecord,
+  type HomeStructure,
   type ProContact,
 } from "@/lib/supabase/home";
+import { DISCLOSURE_SECTIONS } from "@/lib/home-disclosure";
 import { PropertyTab } from "@/components/home/PropertyTab";
 import {
   CheckboxField,
@@ -426,6 +430,21 @@ function Overview({
     else setPhotoUrl(null);
   }, [home.photoPath]);
 
+  // Property details entered in the Property tab, surfaced here automatically.
+  const [structures, setStructures] = useState<HomeStructure[]>([]);
+  const [discAnswered, setDiscAnswered] = useState(0);
+  useEffect(() => {
+    fetchStructures(home.id).then(setStructures).catch(() => setStructures([]));
+    fetchDisclosure(home.id)
+      .then((d) =>
+        setDiscAnswered(
+          Object.values(d).filter((v) => v !== undefined && v !== "").length,
+        ),
+      )
+      .catch(() => setDiscAnswered(0));
+  }, [home.id]);
+  const discTotal = DISCLOSURE_SECTIONS.reduce((n, s) => n + s.questions.length, 0);
+
   async function onPhoto(file: File) {
     setUploading(true);
     try {
@@ -472,6 +491,40 @@ function Overview({
             <Field label="Type" value={home.propertyType ?? "—"} />
           </div>
         </div>
+      </div>
+
+      {/* Property snapshot — auto-populated from the Property tab */}
+      <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+        <div className="flex items-center justify-between">
+          <h4 className="font-mono text-[11px] font-bold tracking-wider text-[var(--muted)] uppercase">
+            Property snapshot
+          </h4>
+          <span className="text-xs text-[var(--muted)]">from your Property tab</span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
+          <Field label="Lot size" value={home.lotAcres ? `${home.lotAcres} ac` : "—"} />
+          <Field label="Water" value={home.waterSource || "—"} />
+          <Field label="Sewer" value={home.sewerType || "—"} />
+          <Field label="Fenced" value={home.fenced ? "Yes" : "No"} />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full border border-hairline px-2.5 py-1 text-[var(--muted)]">
+            {structures.length} structure{structures.length === 1 ? "" : "s"}
+          </span>
+          <span className="rounded-full border border-hairline px-2.5 py-1 text-[var(--muted)]">
+            Disclosure {discAnswered}/{discTotal} answered
+          </span>
+          {home.agExemption && (
+            <span className="rounded-full border border-hairline px-2.5 py-1 text-[var(--muted)]">
+              Ag exemption
+            </span>
+          )}
+        </div>
+        {structures.length > 0 && (
+          <p className="mt-2 text-xs text-[var(--muted)]">
+            {structures.map((s) => s.name || (s.kind === "Other" ? s.kindOther : s.kind)).filter(Boolean).join(" · ")}
+          </p>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
