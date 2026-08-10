@@ -215,6 +215,20 @@ export async function fetchParcelByPropId(
   return data ? toParcel(data) : null;
 }
 
+/** Full parcels (incl. geometry) for a set of prop ids across any county. */
+export async function fetchParcelsByPropIdsAny(
+  propIds: string[],
+): Promise<CountyParcel[]> {
+  const s = getBrowserSupabase();
+  if (!s || propIds.length === 0) return [];
+  const { data, error } = await s
+    .from("county_parcels")
+    .select(SELECT)
+    .in("prop_id", propIds);
+  if (error) throw error;
+  return (data ?? []).map(toParcel);
+}
+
 export async function fetchParcelsByPropIds(
   propIds: string[],
   source = "polk_cad",
