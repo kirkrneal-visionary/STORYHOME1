@@ -1,6 +1,7 @@
 "use client";
 
 import { getBrowserSupabase } from "@/lib/supabase/client";
+import { txCountyNameByFips } from "@/lib/tx-counties";
 
 /**
  * County parcel data access (public record). Pilot source: Polk Central
@@ -12,6 +13,7 @@ import { getBrowserSupabase } from "@/lib/supabase/client";
 export type CountyParcel = {
   id: string;
   source: string;
+  countyFips: string | null;
   propId: string;
   geoId: string | null;
   ownerName: string | null;
@@ -70,12 +72,13 @@ export function schoolLabel(code: string | null): string | null {
 }
 
 const SELECT =
-  "id, source, prop_id, geo_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, geojson, centroid_lat, centroid_lng, source_url";
+  "id, source, county_fips, prop_id, geo_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, geojson, centroid_lat, centroid_lng, source_url";
 
 function toParcel(r: any): CountyParcel {
   return {
     id: r.id,
     source: r.source,
+    countyFips: r.county_fips ?? null,
     propId: r.prop_id,
     geoId: r.geo_id,
     ownerName: r.owner_name,
@@ -114,6 +117,55 @@ export function parseAddress(line: string): { num: string | null; streetKeyword:
 export const AVAILABLE_COUNTIES = [
   { source: "polk_cad", fips: "48373", name: "Polk County" },
 ] as const;
+
+/** Human county label for a parcel (from its FIPS, else its source key). */
+export function parcelCountyLabel(p: CountyParcel): string {
+  return txCountyNameByFips(p.countyFips) ?? p.source;
+}
+
+/**
+ * Statewide parcel search — across every ingested county at once. A CAD Property
+ * ID is only unique WITHIN a county, so results carry their county for
+ * disambiguation. Matches owner, address, street, or CAD Property/Geographic ID.
+ */
+export async function searchParcelsStatewide(
+  query: string,
+): Promise<CountyParcel[]> {
+  const s = getBrowserSupabase();
+  const q = query.trim();
+  if (!s || !q) return [];
+  const digits = q.replace(/[^\d]/g, "");
+  const like = `%${q}%`;
+  const ors = [
+    `owner_name.ilike.${like}`,
+    `situs_address.ilike.${like}`,
+    `situs_street.ilike.${like}`,
+  ];
+  if (digits) {
+    ors.push(`prop_id.ilike.%${digits}%`, `geo_id.ilike.%${digits}%`);
+  }
+  const { data, error } = await s
+    .from("county_parcels")
+    .select(SELECT)
+    .or(ors.join(","))
+    .limit(30);
+  if (error) throw error;
+  return (data ?? []).map(toParcel);
+}
+
+/** A parcel by CAD Property ID across any county (optionally scoped by FIPS). */
+export async function fetchParcelByPropIdAny(
+  propId: string,
+  countyFips?: string | null,
+): Promise<CountyParcel | null> {
+  const s = getBrowserSupabase();
+  if (!s || !propId) return null;
+  let q = s.from("county_parcels").select(SELECT).eq("prop_id", propId);
+  if (countyFips) q = q.eq("county_fips", countyFips);
+  const { data, error } = await q.limit(1);
+  if (error || !data?.length) return null;
+  return toParcel(data[0]);
+}
 
 /**
  * Search a county's ingested CAD parcels by owner name, street, situs address,

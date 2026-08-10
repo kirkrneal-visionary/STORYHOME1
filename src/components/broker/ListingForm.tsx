@@ -24,7 +24,9 @@ import {
 } from "@/lib/pro-listings";
 import {
   AVAILABLE_COUNTIES,
+  parcelCountyLabel,
   searchParcels,
+  searchParcelsStatewide,
   type CountyParcel,
 } from "@/lib/supabase/parcels";
 import { LISTING_STATUSES, PROPERTY_TYPES } from "@/lib/listing-filters";
@@ -115,15 +117,13 @@ export function ListingForm({
     });
   }
 
-  function linkParcel(p: CountyParcel, source: string) {
-    const countyName =
-      AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ?? form.countyName;
+  function linkParcel(p: CountyParcel) {
     setForm((prev) => ({
       ...prev,
       cadPropId: p.propId,
       streetAddress: p.situsAddress || prev.streetAddress,
       city: p.situsCity || prev.city,
-      countyName,
+      countyName: parcelCountyLabel(p) || prev.countyName,
       zip: p.situsZip || prev.zip,
       acres: p.legalAcreage ?? prev.acres,
     }));
@@ -542,10 +542,11 @@ function ParcelLink({
   onUnlink,
 }: {
   cadPropId: string;
-  onLink: (parcel: CountyParcel, source: string) => void;
+  onLink: (parcel: CountyParcel) => void;
   onUnlink: () => void;
 }) {
-  const [source, setSource] = useState<string>(AVAILABLE_COUNTIES[0].source);
+  // "" = statewide (all ingested counties); a source key narrows to one county.
+  const [countyFilter, setCountyFilter] = useState<string>("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CountyParcel[]>([]);
   const [searching, setSearching] = useState(false);
@@ -555,7 +556,11 @@ function ParcelLink({
     setSearching(true);
     setSearched(true);
     try {
-      setResults(await searchParcels(source, query));
+      setResults(
+        countyFilter
+          ? await searchParcels(countyFilter, query)
+          : await searchParcelsStatewide(query),
+      );
     } catch {
       setResults([]);
     } finally {
@@ -568,7 +573,7 @@ function ParcelLink({
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-gold" />
         <h4 className="text-sm font-semibold text-ink">
-          Link county (CAD) parcel — auto-fills location & drops the map pin
+          Find the parcel — search Texas CAD records by parcel ID, address, or owner
         </h4>
       </div>
 
@@ -588,17 +593,6 @@ function ParcelLink({
       ) : (
         <div className="mt-3">
           <div className="flex flex-wrap gap-2">
-            <select
-              value={source}
-              onChange={(e) => setSource(e.target.value)}
-              className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
-            >
-              {AVAILABLE_COUNTIES.map((c) => (
-                <option key={c.source} value={c.source}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -608,9 +602,22 @@ function ParcelLink({
                   void run();
                 }
               }}
-              placeholder="Search by address, owner, or CAD Property ID"
+              placeholder="Parcel / CAD Property ID, address, or owner name"
               className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
             />
+            <select
+              value={countyFilter}
+              onChange={(e) => setCountyFilter(e.target.value)}
+              title="Optional: narrow to one county"
+              className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+            >
+              <option value="">All Texas counties</option>
+              {AVAILABLE_COUNTIES.map((c) => (
+                <option key={c.source} value={c.source}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={run}
@@ -623,7 +630,7 @@ function ParcelLink({
 
           {searched && !searching && results.length === 0 && (
             <p className="mt-2 text-xs text-[var(--muted)]">
-              No matching parcels. Try just the street name, owner last name, or CAD Property ID.
+              No matching parcels. Try the CAD Property ID, just the street name, or the owner’s last name.
             </p>
           )}
 
@@ -631,7 +638,7 @@ function ParcelLink({
             <ul className="mt-2 max-h-56 space-y-2 overflow-y-auto">
               {results.map((p) => (
                 <li
-                  key={p.propId}
+                  key={`${p.source}-${p.propId}`}
                   className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
                 >
                   <div className="min-w-0">
@@ -639,14 +646,15 @@ function ParcelLink({
                       {p.situsAddress || p.legalDescription}
                     </p>
                     <p className="truncate font-mono text-[11px] text-[var(--muted)]">
-                      {p.ownerName ? `${p.ownerName} · ` : ""}
-                      {p.legalAcreage != null ? `${p.legalAcreage} ac · ` : ""}Prop {p.propId}
+                      {parcelCountyLabel(p)} · Prop {p.propId}
+                      {p.ownerName ? ` · ${p.ownerName}` : ""}
+                      {p.legalAcreage != null ? ` · ${p.legalAcreage} ac` : ""}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      onLink(p, source);
+                      onLink(p);
                       setResults([]);
                       setSearched(false);
                       setQuery("");
