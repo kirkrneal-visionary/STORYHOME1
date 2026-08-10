@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { findSellerListingByCode } from "@/lib/seller-portal";
-
-const DEMO_CODES = ["WILLOW-875", "RIDGE-1245"] as const;
+import { fetchSellerPortalByCode } from "@/lib/supabase/listings";
+import { TERMINAL_STATUSES } from "@/lib/seller-portal";
 
 export function SellerAccessForm() {
   const router = useRouter();
@@ -13,33 +11,32 @@ export function SellerAccessForm() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  function resolvePath(rawCode: string) {
-    const listing = findSellerListingByCode(rawCode);
-    if (!listing) {
-      setError(
-        "Code not found. Check with your agent for the latest access code.",
-      );
-      return null;
-    }
-    if (
-      listing.status === "Sold" ||
-      listing.status === "Withdrawn" ||
-      listing.status === "Terminated" ||
-      listing.status === "Expired"
-    ) {
-      setError("This listing is sold or withdrawn — seller access has expired.");
-      return null;
-    }
-    return `/seller/portal/${listing.accessCode.toLowerCase()}`;
-  }
-
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const path = resolvePath(code);
-    if (!path) return;
+    const raw = code.trim();
+    if (raw.length < 3) return;
     setPending(true);
     setError("");
-    router.push(path);
+    try {
+      const portal = await fetchSellerPortalByCode(raw);
+      if (!portal) {
+        setError(
+          "Code not found. Check with your agent for the latest access code.",
+        );
+        return;
+      }
+      if (TERMINAL_STATUSES.has(portal.listing.status)) {
+        setError(
+          "This listing is sold or withdrawn — seller access has expired.",
+        );
+        return;
+      }
+      router.push(`/seller/portal/${portal.listing.accessCode.toLowerCase()}`);
+    } catch {
+      setError("Could not reach the server. Try again in a moment.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -82,22 +79,10 @@ export function SellerAccessForm() {
         </button>
       </form>
 
-      <div className="pt-2">
-        <p className="mb-2 text-center font-mono text-[11px] text-[var(--muted)]">
-          Tap a demo code to enter instantly
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {DEMO_CODES.map((demo) => (
-            <Link
-              key={demo}
-              href={`/seller/portal/${demo.toLowerCase()}`}
-              className="flex h-11 items-center justify-center rounded-xl border border-hairline bg-[var(--surface)] font-mono text-xs font-semibold tracking-wide text-gold transition-colors hover:border-gold/50"
-            >
-              {demo}
-            </Link>
-          ))}
-        </div>
-      </div>
+      <p className="text-center text-xs leading-relaxed text-[var(--muted)]">
+        Your agent generates this code from their Story Pro listing and shares it
+        with you. It stays active while the home is on the market.
+      </p>
     </div>
   );
 }

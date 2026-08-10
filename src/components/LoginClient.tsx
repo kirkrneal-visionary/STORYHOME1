@@ -50,9 +50,9 @@ export function LoginClient() {
     router.push(next !== "/" ? next : destForKind(user.kind));
   }
 
-  function onSellerSubmit(e: FormEvent) {
+  async function onSellerSubmit(e: FormEvent) {
     e.preventDefault();
-    const result = loginSellerWithCode(sellerCode);
+    const result = await loginSellerWithCode(sellerCode);
     if (!result.ok) {
       setError(result.error);
       return;

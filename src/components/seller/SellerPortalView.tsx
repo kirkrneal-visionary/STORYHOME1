@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -20,8 +20,12 @@ import {
   type BoostTierId,
 } from "@/lib/boost";
 import {
+  fetchCountyBoostAvailability,
+  type TierAvailability,
+} from "@/lib/supabase/listings";
+import {
   formatAvgTime,
-  getAnalytics,
+  type ListingAnalytics,
   type SellerListing,
 } from "@/lib/seller-portal";
 import { formatUsd } from "@/lib/demo-data";
@@ -29,25 +33,49 @@ import { cn } from "@/lib/utils";
 
 type SellerPortalViewProps = {
   listing: SellerListing;
+  analytics: ListingAnalytics;
 };
 
-export function SellerPortalView({ listing }: SellerPortalViewProps) {
-  const analytics = getAnalytics(listing.id);
+export function SellerPortalView({
+  listing,
+  analytics,
+}: SellerPortalViewProps) {
   const [selectedTier, setSelectedTier] = useState<BoostTierId | null>(null);
   const [activeBoost, setActiveBoost] = useState<BoostTierId | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [dbAvailability, setDbAvailability] = useState<Record<
+    string,
+    TierAvailability
+  > | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!listing.countyFips) return; // defaults to tier capacity below
+    // Live, per-county availability from the database — works for any of the
+    // 254 TX counties because it keys on the listing's county FIPS.
+    fetchCountyBoostAvailability(listing.countyFips)
+      .then((res) => {
+        if (!cancelled) setDbAvailability(res);
+      })
+      .catch(() => {
+        if (!cancelled) setDbAvailability(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [listing.countyFips]);
 
   const availability = useMemo(() => {
+    // Prefer real DB counts for this county; fall back to tier defaults (all
+    // slots open) before the RPC resolves or when the county is unknown.
     return Object.fromEntries(
       BOOST_TIERS.map((tier) => [
         tier.id,
-        getTierAvailability(listing.countyFips, tier),
+        dbAvailability?.[tier.id] ??
+          getTierAvailability(listing.countyFips, tier, []),
       ]),
-    ) as Record<
-      BoostTierId,
-      ReturnType<typeof getTierAvailability>
-    >;
-  }, [listing.countyFips]);
+    ) as Record<BoostTierId, TierAvailability>;
+  }, [listing.countyFips, dbAvailability]);
 
   const selected = BOOST_TIERS.find((t) => t.id === selectedTier) ?? null;
 
@@ -98,15 +126,21 @@ export function SellerPortalView({ listing }: SellerPortalViewProps) {
             </p>
           </section>
 
-          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-hairline">
-            <Image
-              src={listing.photoUrl}
-              alt={listing.addressSerif}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 420px"
-              priority
-            />
+          <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--navy)_85%,black)]">
+            {listing.photoUrl ? (
+              <Image
+                src={listing.photoUrl}
+                alt={listing.addressSerif}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 420px"
+                priority
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center font-mono text-[11px] tracking-wider text-paper/60 uppercase">
+                No photo yet
+              </div>
+            )}
           </div>
         </div>
 

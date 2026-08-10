@@ -3,15 +3,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
+  Check,
+  Copy,
   Pencil,
   Plus,
   RefreshCcw,
+  Share2,
   ShieldAlert,
   ShieldCheck,
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import {
+  ensureSellerAccessCode,
   fetchAgentListings,
   saveListing,
   deleteListing,
@@ -156,6 +160,7 @@ export function MyListingsView() {
               <ListingCard
                 key={listing.id}
                 listing={listing}
+                canShare
                 onEdit={() => startEdit(listing)}
                 onStatus={async (s) => {
                   await updateListingStatus(listing.id, s);
@@ -216,6 +221,7 @@ function ListingCard({
   onDeleteConfirm,
   onDeleteCancel,
   confirming,
+  canShare,
   dimmed,
 }: {
   listing: ProListing;
@@ -225,6 +231,7 @@ function ListingCard({
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
   confirming: boolean;
+  canShare?: boolean;
   dimmed?: boolean;
 }) {
   const compliance = useMemo(
@@ -293,6 +300,8 @@ function ListingCard({
         </div>
       </div>
 
+      {canShare && <SellerShare listingId={listing.id} />}
+
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-[var(--background)] px-4 py-2.5">
         <label className="flex items-center gap-2">
           <span className="font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
@@ -352,6 +361,92 @@ function ListingCard({
         </div>
       </div>
     </article>
+  );
+}
+
+/**
+ * Generate + reveal the seller access code for a listing. The code is idempotent
+ * server-side, so re-generating returns the same code. The agent copies the
+ * portal link and shares it with their seller.
+ */
+function SellerShare({ listingId }: { listingId: string }) {
+  const [code, setCode] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function generate() {
+    setPending(true);
+    setErr("");
+    try {
+      const c = await ensureSellerAccessCode(listingId);
+      if (!c) setErr("Could not generate a code for this listing.");
+      else setCode(c);
+    } catch {
+      setErr("Could not generate a code. Try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function copyLink() {
+    if (!code) return;
+    const url = `${window.location.origin}/seller/portal/${code.toLowerCase()}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard blocked — the code stays visible for manual copy
+    }
+  }
+
+  return (
+    <div className="border-t border-hairline bg-[var(--surface)] px-4 py-2.5">
+      {!code ? (
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
+            Seller portal
+          </span>
+          <button
+            type="button"
+            onClick={generate}
+            disabled={pending}
+            className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-semibold text-ink disabled:opacity-50"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            {pending ? "Generating…" : "Share with seller"}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
+              Access code
+            </p>
+            <p className="font-mono text-sm font-bold tracking-wide text-gold">
+              {code}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={copyLink}
+            className="inline-flex items-center gap-1.5 rounded-md bg-[var(--accent)] px-3 py-1.5 text-xs font-semibold text-[var(--accent-contrast)]"
+          >
+            {copied ? (
+              <>
+                <Check className="h-3.5 w-3.5" /> Copied link
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" /> Copy portal link
+              </>
+            )}
+          </button>
+        </div>
+      )}
+      {err && <p className="mt-1 text-xs text-red-300">{err}</p>}
+    </div>
   );
 }
 

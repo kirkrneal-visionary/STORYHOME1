@@ -15,7 +15,8 @@ import {
   type ProRole,
   parseStoredUser,
 } from "@/lib/auth";
-import { findSellerListingByCode } from "@/lib/seller-portal";
+import { TERMINAL_STATUSES } from "@/lib/seller-portal";
+import { fetchSellerPortalByCode } from "@/lib/supabase/listings";
 import { useApp } from "@/components/AppContext";
 import {
   getBrowserSupabase,
@@ -30,7 +31,7 @@ type AuthContextType = {
   /** Whether real Supabase Auth is active (vs demo mode). */
   supabaseConfigured: boolean;
   loginAs: (user: AuthUser) => void;
-  loginSellerWithCode: (code: string) => AuthResult;
+  loginSellerWithCode: (code: string) => Promise<AuthResult>;
   loginPro: (proRole: ProRole, name?: string) => void;
   loginConsumer: (name?: string) => void;
   signInWithPassword: (email: string, password: string) => Promise<AuthResult>;
@@ -200,29 +201,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const loginSellerWithCode = useCallback(
-    (code: string): AuthResult => {
-      const listing = findSellerListingByCode(code);
-      if (!listing) {
+    async (code: string): Promise<AuthResult> => {
+      const portal = await fetchSellerPortalByCode(code);
+      if (!portal) {
         return { ok: false, error: "Invalid seller access code." };
       }
-      if (
-        listing.status === "Sold" ||
-        listing.status === "Withdrawn" ||
-        listing.status === "Terminated" ||
-        listing.status === "Expired"
-      ) {
+      if (TERMINAL_STATUSES.has(portal.listing.status)) {
         return {
           ok: false,
           error: "This listing access code is no longer active.",
         };
       }
       loginAs({
-        id: `seller-${listing.accessCode}`,
-        name: `Seller · ${listing.addressSerif}`,
-        email: "seller@storyhome.demo",
+        id: `seller-${portal.listing.accessCode}`,
+        name: `Seller · ${portal.listing.addressSerif}`,
+        email: "seller@storyhome.app",
         initials: "SE",
         kind: "seller",
-        sellerListingCode: listing.accessCode,
+        sellerListingCode: portal.listing.accessCode,
       });
       return { ok: true };
     },
