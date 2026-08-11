@@ -46,10 +46,20 @@ import {
   ensureCadOverlayLayers,
   useCadOverlays,
 } from "@/hooks/useCadOverlays";
+import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
+import { SHI_CAPS } from "@/lib/shi/caps";
+import {
+  FREEHAND_MIN_STEP_PX,
+  FREEHAND_SNAP_PX,
+  FREEHAND_VERTEX_RADIUS_PX,
+  finalizeFreehandPoints,
+  isNearStart,
+  pointsFarEnoughPx,
+} from "@/lib/shi/freehand";
 import { cn } from "@/lib/utils";
 import "maplibre-gl/dist/maplibre-gl.css";
 
-export type DrawTool = "pan" | "polygon" | "radius" | "rectangle" | "measure";
+export type DrawTool = "pan" | "freehand" | "radius" | "rectangle" | "measure";
 
 type MarketplaceMapProps = {
   listings: DemoListing[];
@@ -132,6 +142,12 @@ export function MarketplaceMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const draftRef = useRef<LatLng[]>([]);
+  const freehandRef = useRef<{
+    active: boolean;
+    leftStart: boolean;
+    points: LatLng[];
+    canClose: boolean;
+  }>({ active: false, leftStart: false, points: [], canClose: false });
   const toolRef = useRef<DrawTool>("pan");
 
   const [ready, setReady] = useState(false);
@@ -146,6 +162,7 @@ export function MarketplaceMap({
   const [distUnit, setDistUnit] = useState<DistanceUnit>("mi");
   const [areaUnit, setAreaUnit] = useState<AreaUnit>("acres");
   const [showParcels, setShowParcels] = useState(true);
+  const [freehandHint, setFreehandHint] = useState<"idle" | "drawing" | "closeable">("idle");
   const overlays = useCadOverlays(mapRef, ready);
 
   useEffect(() => {
@@ -226,6 +243,72 @@ export function MarketplaceMap({
           )
           .addTo(map);
       });
+      map.addSource("freehand", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: "freehand-fill",
+        type: "fill",
+        source: "freehand",
+        filter: ["==", ["get", "kind"], "poly"],
+        paint: {
+          "fill-color": GOLD,
+          "fill-opacity": ["case", ["==", ["get", "closeable"], 1], 0.18, 0.06],
+        },
+      });
+      map.addLayer({
+        id: "freehand-line",
+        type: "line",
+        source: "freehand",
+        filter: ["==", ["get", "kind"], "path"],
+        paint: { "line-color": GOLD, "line-width": 2.25 },
+      });
+      map.addLayer({
+        id: "freehand-vertices",
+        type: "circle",
+        source: "freehand",
+        filter: ["==", ["get", "kind"], "vertex"],
+        paint: {
+          "circle-radius": FREEHAND_VERTEX_RADIUS_PX,
+          "circle-color": NAVY,
+          "circle-stroke-color": PAPER,
+          "circle-stroke-width": 1,
+        },
+      });
+      map.addLayer({
+        id: "freehand-start",
+        type: "circle",
+        source: "freehand",
+        filter: ["==", ["get", "kind"], "start"],
+        paint: {
+          "circle-radius": [
+            "case",
+            ["==", ["get", "closeable"], 1],
+            FREEHAND_SNAP_PX * 0.55,
+            4.5,
+          ],
+          "circle-color": [
+            "case",
+            ["==", ["get", "closeable"], 1],
+            GOLD,
+            PAPER,
+          ],
+          "circle-stroke-color": NAVY,
+          "circle-stroke-width": 1.5,
+        },
+      });
+      map.addLayer({
+        id: "freehand-snap",
+        type: "circle",
+        source: "freehand",
+        filter: ["==", ["get", "kind"], "snap"],
+        paint: {
+          "circle-radius": FREEHAND_SNAP_PX,
+          "circle-color": GOLD,
+          "circle-opacity": 0.12,
+          "circle-stroke-color": GOLD,
+          "circle-stroke-width": 1.25,
+          "circle-stroke-opacity": 0.85,
+        },
+      });
       map.addLayer({
         id: "draft-line",
         type: "line",
@@ -298,21 +381,20 @@ export function MarketplaceMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (tool === "polygon" || tool === "measure") map.doubleClickZoom.disable();
+    if (tool === "measure" || tool === "freehand") map.doubleClickZoom.disable();
     else map.doubleClickZoom.enable();
     map.getCanvas().style.cursor = tool === "pan" ? "" : "crosshair";
   }, [ready, tool]);
 
-  // Click / double-click handlers (rebound when tool or radius changes).
+  // Click handlers for radius / box / measure (freehand uses pointer stream).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+    if (tool === "freehand") return;
 
     const onClick = (e: maplibregl.MapMouseEvent) => {
       const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-      if (tool === "polygon") {
-        setDraftPoints((prev) => [...prev, pt]);
-      } else if (tool === "measure") {
+      if (tool === "measure") {
         setMeasurePoints((prev) => [...prev, pt]);
       } else if (tool === "radius") {
         onBoundaryChange({ type: "circle", center: pt, radiusMiles });
@@ -339,23 +421,152 @@ export function MarketplaceMap({
       }
     };
 
-    const onDbl = (e: maplibregl.MapMouseEvent) => {
-      if (tool !== "polygon") return;
+    map.on("click", onClick);
+    return () => {
+      map.off("click", onClick);
+    };
+  }, [ready, tool, radiusMiles, onBoundaryChange]);
+
+  // Shared Draw OS — freehand snap-seal (same engine as SHI).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    const clearDraft = () => {
+      freehandRef.current = {
+        active: false,
+        leftStart: false,
+        points: [],
+        canClose: false,
+      };
+      setFreehandHint("idle");
+      (map.getSource("freehand") as maplibregl.GeoJSONSource | undefined)?.setData(
+        EMPTY_FC,
+      );
+      map.dragPan.enable();
+    };
+
+    if (tool !== "freehand") {
+      clearDraft();
+      return;
+    }
+
+    const paint = (points: LatLng[], tip: LatLng | null, canClose: boolean) => {
+      (map.getSource("freehand") as maplibregl.GeoJSONSource | undefined)?.setData(
+        buildFreehandGeoJSON(points, tip, canClose),
+      );
+    };
+
+    const seal = () => {
+      const pts = finalizeFreehandPoints(freehandRef.current.points);
+      if (pts.length < SHI_CAPS.minFreehandVertices) return false;
+      if (!freehandRef.current.canClose) return false;
+      onBoundaryChange({ type: "polygon", points: pts });
+      setShowSearchArea(false);
+      clearDraft();
+      setTool("pan");
+      return true;
+    };
+
+    const onDown = (e: maplibregl.MapMouseEvent) => {
+      if (toolRef.current !== "freehand") return;
       e.preventDefault();
-      if (draftRef.current.length >= 3) {
-        onBoundaryChange({ type: "polygon", points: draftRef.current });
-        setDraftPoints([]);
+      map.dragPan.disable();
+      const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      const fh = freehandRef.current;
+      fh.active = true;
+      if (fh.points.length === 0) {
+        fh.points = [pt];
+        fh.leftStart = false;
+        fh.canClose = false;
+      } else if (
+        pointsFarEnoughPx(
+          map,
+          fh.points[fh.points.length - 1]!,
+          pt,
+          FREEHAND_MIN_STEP_PX,
+        )
+      ) {
+        if (fh.points.length < SHI_CAPS.maxFreehandVertices) fh.points.push(pt);
+      }
+      setFreehandHint("drawing");
+      paint(fh.points, null, false);
+    };
+
+    const onMove = (e: maplibregl.MapMouseEvent) => {
+      if (toolRef.current !== "freehand") return;
+      const fh = freehandRef.current;
+      if (!fh.points.length) return;
+      const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      const start = fh.points[0]!;
+      if (fh.active) {
+        const last = fh.points[fh.points.length - 1]!;
+        if (
+          pointsFarEnoughPx(map, last, tip, FREEHAND_MIN_STEP_PX) &&
+          fh.points.length < SHI_CAPS.maxFreehandVertices
+        ) {
+          fh.points.push(tip);
+        }
+        if (
+          !fh.leftStart &&
+          pointsFarEnoughPx(map, start, tip, FREEHAND_SNAP_PX * 2.2)
+        ) {
+          fh.leftStart = true;
+        }
+      }
+      const near =
+        fh.leftStart &&
+        fh.points.length >= SHI_CAPS.minFreehandVertices &&
+        isNearStart(map, tip, start, FREEHAND_SNAP_PX);
+      fh.canClose = near;
+      setFreehandHint(near ? "closeable" : "drawing");
+      paint(fh.points, tip, near);
+      if (fh.active && near) seal();
+    };
+
+    const onUp = () => {
+      if (toolRef.current !== "freehand") return;
+      const fh = freehandRef.current;
+      if (!fh.active) return;
+      fh.active = false;
+      map.dragPan.enable();
+      if (fh.canClose) {
+        seal();
+        return;
+      }
+      paint(fh.points, null, false);
+      setFreehandHint(fh.points.length ? "drawing" : "idle");
+    };
+
+    const onKey = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        clearDraft();
         setTool("pan");
+      } else if (ev.key === "Enter") {
+        freehandRef.current.canClose =
+          freehandRef.current.points.length >= SHI_CAPS.minFreehandVertices;
+        seal();
       }
     };
 
-    map.on("click", onClick);
-    map.on("dblclick", onDbl);
+    map.on("mousedown", onDown);
+    map.on("mousemove", onMove);
+    map.on("mouseup", onUp);
+    map.on("touchstart", onDown);
+    map.on("touchmove", onMove);
+    map.on("touchend", onUp);
+    window.addEventListener("keydown", onKey);
     return () => {
-      map.off("click", onClick);
-      map.off("dblclick", onDbl);
+      map.off("mousedown", onDown);
+      map.off("mousemove", onMove);
+      map.off("mouseup", onUp);
+      map.off("touchstart", onDown);
+      map.off("touchmove", onMove);
+      map.off("touchend", onUp);
+      window.removeEventListener("keydown", onKey);
+      map.dragPan.enable();
     };
-  }, [ready, tool, radiusMiles, onBoundaryChange]);
+  }, [ready, tool, onBoundaryChange]);
 
   // Sync overlay sources.
   useEffect(() => {
@@ -445,6 +656,13 @@ export function MarketplaceMap({
   function selectTool(next: DrawTool) {
     setTool(next);
     setDraftPoints([]);
+    freehandRef.current = {
+      active: false,
+      leftStart: false,
+      points: [],
+      canClose: false,
+    };
+    setFreehandHint("idle");
     if (next !== "measure") setMeasurePoints([]);
     setShowSearchArea(false);
   }
@@ -453,6 +671,17 @@ export function MarketplaceMap({
     onBoundaryChange(null);
     setDraftPoints([]);
     setMeasurePoints([]);
+    freehandRef.current = {
+      active: false,
+      leftStart: false,
+      points: [],
+      canClose: false,
+    };
+    setFreehandHint("idle");
+    const map = mapRef.current;
+    (map?.getSource("freehand") as maplibregl.GeoJSONSource | undefined)?.setData(
+      EMPTY_FC,
+    );
     setShowSearchArea(false);
     setTool("pan");
   }
@@ -470,7 +699,7 @@ export function MarketplaceMap({
 
   const TOOLS: { id: DrawTool; label: string; icon: typeof Hand }[] = [
     { id: "pan", label: "Move", icon: Hand },
-    { id: "polygon", label: "Draw", icon: PenTool },
+    { id: "freehand", label: "Freehand", icon: PenTool },
     { id: "radius", label: "Radius", icon: LocateFixed },
     { id: "rectangle", label: "Box", icon: Square },
     { id: "measure", label: "Measure", icon: Ruler },
@@ -519,20 +748,10 @@ export function MarketplaceMap({
             ))}
           </select>
         )}
-        {tool === "polygon" && draftPoints.length >= 3 && (
-          <button
-            type="button"
-            onClick={() => {
-              onBoundaryChange({ type: "polygon", points: draftPoints });
-              setDraftPoints([]);
-              setTool("pan");
-            }}
-            className="rounded-full bg-gold px-3 py-2 text-[11px] font-bold text-navy shadow-lg"
-          >
-            Apply shape
-          </button>
-        )}
-        {(boundary || draftPoints.length > 0 || measurePoints.length > 0) && (
+        {(boundary ||
+          draftPoints.length > 0 ||
+          measurePoints.length > 0 ||
+          freehandHint !== "idle") && (
           <button
             type="button"
             onClick={clearBoundary}
@@ -673,8 +892,14 @@ export function MarketplaceMap({
               <p>Click points to measure distance. 3+ points also measures area.</p>
             )}
           </div>
-        ) : tool === "polygon" ? (
-          <p>Click to drop points, then double‑click or “Apply shape”.</p>
+        ) : tool === "freehand" ? (
+          <p>
+            {freehandHint === "closeable"
+              ? "Near start — release to seal search area"
+              : freehandHint === "drawing"
+                ? "Draw a loop · return to start to snap-seal"
+                : "Hold and draw · loop back to start to seal"}
+          </p>
         ) : tool === "radius" ? (
           <p>Click a center point for a {radiusMiles}‑mile radius.</p>
         ) : tool === "rectangle" ? (
@@ -682,7 +907,10 @@ export function MarketplaceMap({
         ) : boundaryLabel(boundary) ? (
           <p>Boundary: {boundaryLabel(boundary)}</p>
         ) : (
-          <p>Pan and “Search this area”, or use Draw / Measure. Basemaps + CAD layers top‑right.</p>
+          <p>
+            Pan and “Search this area”, or Freehand / Box / Measure. Basemaps +
+            CAD layers top‑right.
+          </p>
         )}
       </div>
     </div>

@@ -123,6 +123,8 @@ export type ShiAreaAnalysis = {
   method: "centroid_in_boundary";
   countySource: string;
   note: string;
+  /** True when the analyze scan hit the hard parcel safety cap. */
+  capped?: boolean;
   parcels: ShiAreaParcel[];
 };
 

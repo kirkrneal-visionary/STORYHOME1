@@ -97,9 +97,9 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2.5",
     name: "Market Frames · Analyzer · Study folders",
     goal: "Multi-box market frames, on-demand parcel value estimates, save/reopen in county folders.",
-    status: "current",
+    status: "done",
     frontend: [
-      "Multi-frame box/radius draw (many frames on map)",
+      "Multi-frame box/radius/freehand draw (many frames on map)",
       "Analyze active frame → parcel list + estimated area value",
       "Study folders (square tiles + acronym) by county",
       "Save capture bundle (geometry + metrics + map thumbnail)",
@@ -114,6 +114,28 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Background infinite recompute",
       "Cross-agent shared folders (v1)",
+    ],
+  },
+  {
+    id: "SHI-2.6",
+    name: "Cockpit · Study Vault · Draw OS",
+    goal: "Research cockpit layout, Study Vault submenu, shared freehand toolbox on Marketplace.",
+    status: "current",
+    frontend: [
+      "SHI submenu: Research | Study Vault (Community-style)",
+      "Horizontal cockpit: search left · wide map right",
+      "Study Vault rename/delete/thumbnails/reopen",
+      "Shared Draw OS freehand on Marketplace refine map",
+    ],
+    backend: [
+      "Folder/frame PATCH+DELETE owner-gated APIs",
+      "Signed thumbnail URLs (owner path prefix only)",
+      "Boundary safety caps shared helper",
+      "Armor script for freehand downsample + span caps",
+    ],
+    outOfScope: [
+      "SHI-3 prospects",
+      "Listing-form CAD redesign",
     ],
   },
   {

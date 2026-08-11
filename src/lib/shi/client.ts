@@ -124,6 +124,28 @@ export async function shiCreateFolder(opts: {
   return body.folder;
 }
 
+export async function shiRenameFolder(opts: {
+  folderId: string;
+  name: string;
+}) {
+  const body = await shiFetch<{ folder: ShiStudyFolder }>(
+    "/api/shi/studies/folders",
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    },
+  );
+  return body.folder;
+}
+
+export async function shiDeleteFolder(folderId: string) {
+  await shiFetch<{ ok: boolean }>(
+    `/api/shi/studies/folders?folderId=${encodeURIComponent(folderId)}`,
+    { method: "DELETE" },
+  );
+}
+
 export async function shiListFrames(folderId: string) {
   const body = await shiFetch<{ frames: ShiSavedFrame[] }>(
     `/api/shi/studies/frames?folderId=${encodeURIComponent(folderId)}`,
@@ -152,4 +174,52 @@ export async function shiSaveFrame(opts: {
     },
   );
   return body.frame;
+}
+
+export async function shiRenameFrame(opts: { frameId: string; name: string }) {
+  const body = await shiFetch<{ frame: ShiSavedFrame }>(
+    "/api/shi/studies/frames",
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    },
+  );
+  return body.frame;
+}
+
+export async function shiDeleteFrame(frameId: string) {
+  await shiFetch<{ ok: boolean }>(
+    `/api/shi/studies/frames?frameId=${encodeURIComponent(frameId)}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function shiThumbnailUrl(thumbnailPath: string) {
+  const body = await shiFetch<{ url: string | null }>(
+    `/api/shi/studies/frames?thumbnailPath=${encodeURIComponent(thumbnailPath)}`,
+  );
+  return body.url;
+}
+
+/** Hand-off a saved frame from Study Vault → Research cockpit. */
+export const SHI_OPEN_FRAME_KEY = "shi:openSavedFrame";
+
+export function queueOpenSavedFrame(frame: ShiSavedFrame) {
+  try {
+    sessionStorage.setItem(SHI_OPEN_FRAME_KEY, JSON.stringify(frame));
+  } catch {
+    /* private mode */
+  }
+}
+
+export function consumeOpenSavedFrame(): ShiSavedFrame | null {
+  try {
+    const raw = sessionStorage.getItem(SHI_OPEN_FRAME_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(SHI_OPEN_FRAME_KEY);
+    return JSON.parse(raw) as ShiSavedFrame;
+  } catch {
+    return null;
+  }
 }

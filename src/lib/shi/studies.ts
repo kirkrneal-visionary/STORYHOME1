@@ -156,6 +156,150 @@ export async function listFolderFrames(
   return withSnaps;
 }
 
+export async function renameStudyFolder(
+  supabase: SupabaseClient,
+  ownerId: string,
+  folderId: string,
+  nameRaw: string,
+): Promise<ShiStudyFolder> {
+  const name = nameRaw.trim();
+  if (name.length < 2) throw new Error("Folder name is required");
+  const acronym = makeShiAcronym(name);
+  const { data, error } = await supabase
+    .from("shi_study_folders")
+    .update({
+      name,
+      acronym,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", folderId)
+    .eq("owner_id", ownerId)
+    .select("id, name, acronym, county_source, county_name, updated_at")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Folder not found");
+
+  const { count } = await supabase
+    .from("shi_market_frames")
+    .select("id", { count: "exact", head: true })
+    .eq("folder_id", folderId)
+    .eq("owner_id", ownerId);
+
+  return {
+    id: data.id,
+    name: data.name,
+    acronym: data.acronym,
+    countySource: data.county_source,
+    countyName: data.county_name,
+    frameCount: count ?? 0,
+    updatedAt: data.updated_at,
+  };
+}
+
+export async function deleteStudyFolder(
+  supabase: SupabaseClient,
+  ownerId: string,
+  folderId: string,
+): Promise<void> {
+  // Cascades frames + snapshots via FK. Clear storage thumbnails best-effort.
+  const { data: frames } = await supabase
+    .from("shi_market_frames")
+    .select("id")
+    .eq("folder_id", folderId)
+    .eq("owner_id", ownerId);
+  const ids = (frames ?? []).map((f) => f.id as string);
+  if (ids.length) {
+    const { data: snaps } = await supabase
+      .from("shi_frame_snapshots")
+      .select("thumbnail_path")
+      .eq("owner_id", ownerId)
+      .in("frame_id", ids);
+    const paths = (snaps ?? [])
+      .map((s) => s.thumbnail_path as string | null)
+      .filter((p): p is string => !!p);
+    if (paths.length) {
+      await supabase.storage.from("shi-studies").remove(paths);
+    }
+  }
+
+  const { error } = await supabase
+    .from("shi_study_folders")
+    .delete()
+    .eq("id", folderId)
+    .eq("owner_id", ownerId);
+  if (error) throw new Error(error.message);
+}
+
+export async function renameMarketFrame(
+  supabase: SupabaseClient,
+  ownerId: string,
+  frameId: string,
+  nameRaw: string,
+): Promise<ShiSavedFrame> {
+  const name = nameRaw.trim();
+  if (name.length < 2) throw new Error("Frame name is required");
+  const acronym = makeShiAcronym(name);
+  const { data, error } = await supabase
+    .from("shi_market_frames")
+    .update({
+      name,
+      acronym,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", frameId)
+    .eq("owner_id", ownerId)
+    .select("folder_id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Frame not found");
+  const listed = await listFolderFrames(
+    supabase,
+    ownerId,
+    data.folder_id as string,
+  );
+  const frame = listed.find((f) => f.id === frameId);
+  if (!frame) throw new Error("Frame not found after rename");
+  return frame;
+}
+
+export async function deleteMarketFrame(
+  supabase: SupabaseClient,
+  ownerId: string,
+  frameId: string,
+): Promise<void> {
+  const { data: snap } = await supabase
+    .from("shi_frame_snapshots")
+    .select("thumbnail_path")
+    .eq("frame_id", frameId)
+    .eq("owner_id", ownerId)
+    .maybeSingle();
+  const path = snap?.thumbnail_path as string | null | undefined;
+  if (path) {
+    await supabase.storage.from("shi-studies").remove([path]);
+  }
+  const { error } = await supabase
+    .from("shi_market_frames")
+    .delete()
+    .eq("id", frameId)
+    .eq("owner_id", ownerId);
+  if (error) throw new Error(error.message);
+}
+
+export async function signedThumbnailUrl(
+  supabase: SupabaseClient,
+  ownerId: string,
+  thumbnailPath: string | null | undefined,
+): Promise<string | null> {
+  if (!thumbnailPath) return null;
+  // Path must stay under this owner's prefix.
+  if (!thumbnailPath.startsWith(`${ownerId}/`)) return null;
+  const { data, error } = await supabase.storage
+    .from("shi-studies")
+    .createSignedUrl(thumbnailPath, 60 * 30);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}
+
 export async function saveMarketFrame(
   supabase: SupabaseClient,
   ownerId: string,
