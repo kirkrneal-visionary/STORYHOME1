@@ -15,7 +15,14 @@ import {
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
+import { NetworkDivider } from "@/components/nav/NetworkDivider";
+import { NetworkNode } from "@/components/nav/NetworkNode";
 import { accountLabel } from "@/lib/auth";
+import {
+  isArchiePath,
+  isStoryProPath,
+  NAVIGATION_NETWORKS,
+} from "@/lib/navigation/networks";
 import { cn } from "@/lib/utils";
 
 function shortKind(kind?: string): string {
@@ -38,6 +45,9 @@ export default function GlobalNav() {
 
   const isHome = pathname === "/";
   const showMessages = isLoggedIn;
+  const archie = NAVIGATION_NETWORKS.archie;
+  const archieActive = isArchiePath(pathname);
+  const showArchieNode = isPro && isLoggedIn;
 
   return (
     <>
@@ -59,7 +69,7 @@ export default function GlobalNav() {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-7 font-sans text-sm font-medium md:flex">
+        <div className="hidden items-center gap-6 font-sans text-sm font-medium md:flex">
           {isHome ? (
             <>
               <NavLink
@@ -91,10 +101,7 @@ export default function GlobalNav() {
               </NavLink>
               {isPro && isLoggedIn ? (
                 <>
-                  <NavLink
-                    href="/portal"
-                    active={pathname.startsWith("/portal")}
-                  >
+                  <NavLink href="/portal" active={isStoryProPath(pathname)}>
                     Story Pro
                   </NavLink>
                   <NavLink
@@ -150,6 +157,17 @@ export default function GlobalNav() {
               )}
             </>
           )}
+
+          {showArchieNode ? (
+            <>
+              <NetworkDivider />
+              <NetworkNode
+                href={archie.href}
+                label={archie.shortLabel}
+                active={archieActive}
+              />
+            </>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-3 md:gap-4">
