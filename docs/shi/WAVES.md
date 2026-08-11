@@ -78,7 +78,7 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 **History gap:** No ownership-transfer event table yet. UI states this clearly. True change intel lands with farms (SHI-4).
 
-### SHI-3 — Prospects · Notes · CRM convert (current)
+### SHI-3 — Prospects · Notes · CRM convert ✅
 
 | Front-end | Back-end |
 |---|---|
@@ -87,12 +87,14 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 See `docs/shi/SHI-3-PLAN.md`.
 
-### SHI-4 — Farms · Change intelligence
+### SHI-4 — Farms · Change intelligence (current)
 
 | Front-end | Back-end |
 |---|---|
-| Save farm · farm detail | `saved_farms` + RLS |
-| Since last review deltas | Delta vs 72h refresh / last_seen |
+| Save as Farm · Farms module · change feed | `shi_farms` / `shi_farm_baselines` + RLS (`0026`) |
+| Since your last review (honest baseline diff) | Live `analyzeArea` vs review baseline — not deed dates |
+
+See `docs/shi/SHI-4-PLAN.md`.
 
 ### SHI-5 — Find Similar · Portfolio polish
 

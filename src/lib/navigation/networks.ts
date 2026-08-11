@@ -62,6 +62,12 @@ export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
         match: "/portal/intelligence",
       },
       {
+        id: "farms",
+        href: archieHrefForModule("farms"),
+        label: "Farms",
+        match: "/portal/intelligence",
+      },
+      {
         id: "vault",
         href: archieHrefForModule("vault"),
         label: "Study Vault",
@@ -102,6 +108,8 @@ export function isArchieModuleActive(
       ? "vault"
       : section === "prospects"
         ? "prospects"
-        : "research";
+        : section === "farms"
+          ? "farms"
+          : "research";
   return current === module;
 }

@@ -206,3 +206,26 @@ export type ShiProspectNote = {
 export type ShiProspectDetail = ShiProspect & {
   notes: ShiProspectNote[];
 };
+
+/** SHI-4 agent territory — geometry + county; membership computed live. */
+export type ShiFarm = {
+  id: string;
+  name: string;
+  countySource: string;
+  countyName: string;
+  boundary: import("@/lib/geo").DrawnBoundary;
+  mapCenterLat: number | null;
+  mapCenterLng: number | null;
+  mapZoom: number | null;
+  lastReviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ShiFarmDetail = ShiFarm & {
+  live: ShiAreaAnalysis;
+  /** Null when never baselined or just marked reviewed. */
+  diff: import("@/lib/shi/farm-diff").ShiFarmDiffSummary | null;
+  baselineAt: string | null;
+  baselineParcelCount: number | null;
+};
