@@ -12,10 +12,13 @@ export const SHI_PRODUCT = {
   positioning: "Research your market. Public records. Professional workflow.",
 } as const;
 
+export type ShiWaveStatus = "done" | "current" | "planned";
+
 export type ShiWave = {
   id: string;
   name: string;
   goal: string;
+  status: ShiWaveStatus;
   frontend: string[];
   backend: string[];
   outOfScope: string[];
@@ -26,6 +29,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-0",
     name: "Shell & brand entry",
     goal: "Put SHI on the Story Pro menu with a brandable mark and its own page.",
+    status: "done",
     frontend: [
       "Story Pro tab: SHI + ShiIcon",
       "Dedicated Property Intelligence page shell",
@@ -45,6 +49,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-1",
     name: "Search · Map · Property record",
     goal: "Universal property search + map research + property intelligence panel.",
+    status: "current",
     frontend: [
       "Left: search + filters (county-first, real fields only)",
       "Center: MapLibre parcel map (viewport load)",
@@ -70,6 +75,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2",
     name: "Relationships · Area · History",
     goal: "Owner matches, multi-tract, area analysis, observed CAD history.",
+    status: "planned",
     frontend: [
       "Owner relationship panel (EXACT / POSSIBLE match wording)",
       "Multi-tract visualization",
@@ -91,6 +97,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-3",
     name: "Prospects · Notes · CRM convert",
     goal: "Agent workflow on top of public records without mutating CAD.",
+    status: "planned",
     frontend: [
       "Add to Prospects",
       "Prospect lists + statuses",
@@ -112,6 +119,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-4",
     name: "Farms · Change intelligence",
     goal: "Saved territories wired to CAD refresh deltas.",
+    status: "planned",
     frontend: [
       "Save farm from map selection",
       "Farm detail + property count",
@@ -131,6 +139,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-5",
     name: "Find Similar · Portfolio polish",
     goal: "Deterministic similarity + confident owner portfolios.",
+    status: "planned",
     frontend: [
       "Find Similar with explainable criteria",
       "Owner portfolio map + totals",

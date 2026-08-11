@@ -110,7 +110,12 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
 
   return (
     <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6 md:pb-12">
-      <div className="mx-auto max-w-6xl">
+      <div
+        className={cn(
+          "mx-auto",
+          tab === "intelligence" ? "max-w-7xl" : "max-w-6xl",
+        )}
+      >
         <header className="flex flex-col gap-1">
           <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
             Story Pro · {user.name}
