@@ -90,14 +90,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!body.folderId || !body.boundary || !body.analysis) {
+  if (!body.folderId || !body.boundary) {
     return NextResponse.json(
-      { error: "folderId, boundary, and analysis are required" },
+      { error: "folderId and boundary are required" },
       { status: 400 },
     );
   }
 
   try {
+    // Server recomputes analysis from CAD for the folder county — client metrics are not trusted.
     const frame = await saveMarketFrame(gate.supabase, gate.user.id, {
       folderId: body.folderId,
       name: body.name ?? "Market frame",

@@ -12,9 +12,8 @@ import type {
 /**
  * SHI-1 server query layer.
  *
- * Index note (do not slow-scan): owner_name / situs_address currently rely on
- * ILIKE. Prefer county-scoped search + short queries. Recommended follow-up:
- * pg_trgm GIN on owner_name, situs_address, legal_description.
+ * Index note: prefer county-scoped search. Apply migration 0024 for pg_trgm
+ * GIN on owner_name / situs_address / legal_description and source+centroid.
  */
 
 const LIST_SELECT =

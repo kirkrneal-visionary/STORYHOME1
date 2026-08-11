@@ -34,19 +34,29 @@ Source of truth in code: `src/lib/shi/waves.ts`
 | Property Intelligence panel + results | Reuse `/api/parcels/{z}/{x}/{y}` (no full download) |
 | County labels + freshness chips | `GET /api/shi/freshness` (pro-safe DTO) |
 
-**Index note:** fuzzy owner/address search uses `ILIKE`. Prefer county-scoped search. Recommended: `pg_trgm` GIN on `owner_name`, `situs_address`, `legal_description`.
+**Index note:** fuzzy owner/address search uses `ILIKE`. Prefer county-scoped search. Apply migration `0024_shi_backlog_harden.sql` for `pg_trgm` GIN + centroid indexes.
 
 ### SHI-2 — Relationships · Area · History ✅
 
-### SHI-2.5 — Market Frames · Analyzer · Study folders ✅ (current)
+### SHI-2.5 — Market Frames · Analyzer · Study folders ✅
 
 | Front-end | Back-end |
 |---|---|
-| Multi-box/radius frames on map | Hard caps (frames, area size, parcels) |
+| Multi-box/radius/freehand frames on map | Hard caps (frames, area size, parcels) |
 | On-demand analyze → parcel values + area estimate | `POST /api/shi/area` county-locked |
 | Study folders (square + acronym) by county | `shi_study_folders` / frames / snapshots + RLS |
-| Save geometry + metrics + map thumbnail | `shi-studies` private storage |
+| Save geometry + metrics + Map Memory snap | `shi-studies` private storage |
 | Reopen saved frames | Never writes CAD; no infinite jobs |
+
+### SHI-2.6 — Research shell · Study Vault · Draw OS ✅
+
+### SHI-2.7 — Analyzer harden (current)
+
+| Front-end | Back-end |
+|---|---|
+| Frame county locked at draw time | Server recomputes analysis on save |
+| Save form clears stale folders + shows errors | Resave can move frame to another folder |
+| Honest capped-analysis messaging | Owner-match triggers + indexes (`0024`) |
 
 ### SHI-2 note (superseded analyzer)
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FolderPlus, Loader2, PlaySquare, Save } from "lucide-react";
 import { SHI_CAPS } from "@/lib/shi/caps";
+import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import type {
   ShiAreaAnalysis,
   ShiLocalFrame,
@@ -30,7 +31,10 @@ type Props = {
   analyzeError: string;
   onAnalyze: () => void;
   folders: ShiStudyFolder[];
-  onCreateFolder: (name: string) => Promise<ShiStudyFolder | void>;
+  onCreateFolder: (
+    name: string,
+    countySource?: string,
+  ) => Promise<ShiStudyFolder | void>;
   onSaveActive: (name: string, folderId: string) => Promise<void>;
   saving: boolean;
   onOpenVault: () => void;
@@ -61,7 +65,17 @@ export function ShiMarketFramesPanel({
   const [newFolder, setNewFolder] = useState("");
   const [showSave, setShowSave] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const active = frames.find((f) => f.localId === activeFrameId) ?? null;
+  const frameCounty = active?.countySource || countySource;
+  const countyFolders = folders.filter((f) => f.countySource === frameCounty);
+
+  // Drop stale folder selection when county / active frame changes.
+  useEffect(() => {
+    setFolderId("");
+    setNewFolder("");
+    setSaveError("");
+  }, [frameCounty, activeFrameId]);
 
   return (
     <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
@@ -110,7 +124,7 @@ export function ShiMarketFramesPanel({
                           : "border-transparent",
                       )}
                       style={{ background: f.color }}
-                      title={f.name}
+                      title={`${f.name} · ${f.countySource || "no county"}`}
                     >
                       <span className="font-mono text-[11px] font-extrabold text-white">
                         {f.acronym}
@@ -126,7 +140,7 @@ export function ShiMarketFramesPanel({
             <button
               type="button"
               onClick={onAnalyze}
-              disabled={analyzing || !active || !countySource}
+              disabled={analyzing || !active || !frameCounty}
               className="inline-flex h-9 min-w-[9rem] flex-1 items-center justify-center gap-2 rounded-xl bg-navy text-xs font-bold text-gold disabled:opacity-50"
             >
               {analyzing ? (
@@ -136,8 +150,11 @@ export function ShiMarketFramesPanel({
             </button>
             <button
               type="button"
-              onClick={() => setShowSave((v) => !v)}
-              disabled={!active || !analysis || !countySource}
+              onClick={() => {
+                setSaveError("");
+                setShowSave((v) => !v);
+              }}
+              disabled={!active || !analysis || !frameCounty}
               className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-navy px-3 text-xs font-bold text-navy disabled:opacity-50"
             >
               <Save className="h-3.5 w-3.5" />
@@ -145,8 +162,18 @@ export function ShiMarketFramesPanel({
             </button>
           </div>
 
+          {active && active.countySource && active.countySource !== countySource ? (
+            <p className="text-[11px] font-semibold text-navy">
+              This frame is locked to its draw county. Analyze/Save will use
+              that county (not the search dropdown).
+            </p>
+          ) : null}
+
           {analyzeError ? (
             <p className="text-xs font-semibold text-red-700">{analyzeError}</p>
+          ) : null}
+          {saveError ? (
+            <p className="text-xs font-semibold text-red-700">{saveError}</p>
           ) : null}
 
           {showSave && active && analysis ? (
@@ -156,21 +183,33 @@ export function ShiMarketFramesPanel({
                 e.preventDefault();
                 const name = frameName.trim() || active.name;
                 setBusy(true);
+                setSaveError("");
                 void (async () => {
                   try {
                     let id = folderId;
-                    if (!id && newFolder.trim()) {
-                      const created = await onCreateFolder(newFolder.trim());
+                    if (id) {
+                      const folderOk = countyFolders.some((f) => f.id === id);
+                      if (!folderOk) {
+                        throw new Error(
+                          "Pick a folder in this frame’s county (or create a new one)",
+                        );
+                      }
+                    } else if (newFolder.trim()) {
+                      const created = await onCreateFolder(
+                        newFolder.trim(),
+                        frameCounty,
+                      );
                       id = created?.id ?? "";
                     }
                     if (!id) throw new Error("Pick or create a folder");
                     await onSaveActive(name, id);
                     setFrameName("");
                     setNewFolder("");
+                    setFolderId("");
                     setShowSave(false);
                     onOpenVault();
-                  } catch {
-                    /* parent surfaces areaError */
+                  } catch (err) {
+                    setSaveError(formatShiVaultError(err));
                   } finally {
                     setBusy(false);
                   }
@@ -196,13 +235,11 @@ export function ShiMarketFramesPanel({
                 className="w-full rounded-lg border border-hairline bg-[var(--surface)] px-2.5 py-2 text-sm"
               >
                 <option value="">Select folder…</option>
-                {folders
-                  .filter((f) => f.countySource === countySource)
-                  .map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.acronym} — {f.name}
-                    </option>
-                  ))}
+                {countyFolders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.acronym} — {f.name}
+                  </option>
+                ))}
               </select>
               <div className="flex gap-2">
                 <input
