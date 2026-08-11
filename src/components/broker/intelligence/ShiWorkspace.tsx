@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
+import { ShiFarmsView } from "@/components/broker/intelligence/ShiFarmsView";
 import { ShiProspectsView } from "@/components/broker/intelligence/ShiProspectsView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
 import {
@@ -23,12 +24,17 @@ const MODULE_COPY: Record<
   research: {
     title: "Research",
     blurb:
-      "Search · map · property record. Define a market area, analyze parcels, and save Map Memory.",
+      "Search · map · property record. Define a market area, analyze parcels, and save Map Memory or Farms.",
   },
   prospects: {
     title: "Prospects",
     blurb:
       "Your property opportunity pipeline. Save discoveries from Research, track status, and keep private notes.",
+  },
+  farms: {
+    title: "Farms",
+    blurb:
+      "Know your territory. Return to a saved market area and review county-record changes since your last visit.",
   },
   vault: {
     title: "Study Vault",
@@ -39,7 +45,7 @@ const MODULE_COPY: Record<
 
 /**
  * Archie's Intelligence shell.
- * Modules: Research · Prospects · Study Vault (federated ribbon).
+ * Modules: Research · Prospects · Farms · Study Vault.
  */
 export function ShiWorkspace() {
   const router = useRouter();
@@ -117,9 +123,12 @@ export function ShiWorkspace() {
         {section === "research" ? (
           <PropertyIntelligenceView
             onOpenVault={() => selectSection("vault")}
+            onOpenFarms={() => selectSection("farms")}
           />
         ) : section === "prospects" ? (
           <ShiProspectsView />
+        ) : section === "farms" ? (
+          <ShiFarmsView />
         ) : (
           <ShiStudyVaultView onOpenInResearch={openFrameInResearch} />
         )}

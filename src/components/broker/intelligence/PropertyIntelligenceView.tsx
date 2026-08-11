@@ -25,6 +25,7 @@ import {
   consumeOpenSavedFrame,
   shiAddProspect,
   shiAnalyzeArea,
+  shiCreateFarm,
   shiCreateFolder,
   shiFreshness,
   shiGetFrame,
@@ -63,13 +64,17 @@ function acres(n: number | null | undefined) {
 
 type ResearchProps = {
   onOpenVault?: () => void;
+  onOpenFarms?: () => void;
 };
 
 /**
  * SHI Research — classic 3-split (Search | Map | Property) with Market Frames below.
  * Study Vault lives on its own submenu (not crammed here).
  */
-export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
+export function PropertyIntelligenceView({
+  onOpenVault,
+  onOpenFarms,
+}: ResearchProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -372,6 +377,32 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
       setSource(county);
     }
     return folder;
+  }
+
+  async function saveActiveAsFarm(name: string) {
+    const active = frames.find((f) => f.localId === activeFrameId);
+    if (!active) throw new Error("Select a market frame first");
+    if (!active.analysis) throw new Error("Analyze the frame before saving");
+    const county = active.countySource || source;
+    if (!county) throw new Error("Pick a county before saving a farm");
+    setSaving(true);
+    setAreaError("");
+    try {
+      const view = mapRef.current?.getView();
+      const countyLabel =
+        AVAILABLE_COUNTIES.find((c) => c.source === county)?.name ?? countyName;
+      await shiCreateFarm({
+        name,
+        countySource: county,
+        countyName: countyLabel,
+        boundary: active.boundary,
+        mapCenterLat: view?.centerLat,
+        mapCenterLng: view?.centerLng,
+        mapZoom: view?.zoom,
+      });
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function saveActiveFrame(name: string, folderId: string) {
@@ -1059,8 +1090,10 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         folders={folders}
         onCreateFolder={createFolder}
         onSaveActive={saveActiveFrame}
+        onSaveAsFarm={saveActiveAsFarm}
         saving={saving}
         onOpenVault={() => onOpenVault?.()}
+        onOpenFarms={() => onOpenFarms?.()}
       />
     </div>
   );

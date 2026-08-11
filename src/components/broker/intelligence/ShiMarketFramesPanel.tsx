@@ -36,8 +36,11 @@ type Props = {
     countySource?: string,
   ) => Promise<ShiStudyFolder | void>;
   onSaveActive: (name: string, folderId: string) => Promise<void>;
+  /** SHI-4 — persist analyzed frame as a watched territory. */
+  onSaveAsFarm?: (name: string) => Promise<void>;
   saving: boolean;
   onOpenVault: () => void;
+  onOpenFarms?: () => void;
 };
 
 /**
@@ -57,13 +60,17 @@ export function ShiMarketFramesPanel({
   folders,
   onCreateFolder,
   onSaveActive,
+  onSaveAsFarm,
   saving,
   onOpenVault,
+  onOpenFarms,
 }: Props) {
   const [frameName, setFrameName] = useState("");
   const [folderId, setFolderId] = useState("");
   const [newFolder, setNewFolder] = useState("");
   const [showSave, setShowSave] = useState(false);
+  const [showFarm, setShowFarm] = useState(false);
+  const [farmName, setFarmName] = useState("");
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
   const active = frames.find((f) => f.localId === activeFrameId) ?? null;
@@ -152,6 +159,7 @@ export function ShiMarketFramesPanel({
               type="button"
               onClick={() => {
                 setSaveError("");
+                setShowFarm(false);
                 setShowSave((v) => !v);
               }}
               disabled={!active || !analysis || !frameCounty}
@@ -160,6 +168,21 @@ export function ShiMarketFramesPanel({
               <Save className="h-3.5 w-3.5" />
               Save to Vault
             </button>
+            {onSaveAsFarm ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSaveError("");
+                  setShowSave(false);
+                  setFarmName(active?.name || "");
+                  setShowFarm((v) => !v);
+                }}
+                disabled={!active || !analysis || !frameCounty}
+                className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-gold px-3 text-xs font-bold text-gold disabled:opacity-50"
+              >
+                Save as Farm
+              </button>
+            ) : null}
           </div>
 
           {active && active.countySource && active.countySource !== countySource ? (
@@ -174,6 +197,56 @@ export function ShiMarketFramesPanel({
           ) : null}
           {saveError ? (
             <p className="text-xs font-semibold text-red-700">{saveError}</p>
+          ) : null}
+
+          {showFarm && active && analysis && onSaveAsFarm ? (
+            <form
+              className="space-y-2 rounded-xl border border-gold/40 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const name = farmName.trim() || active.name;
+                setBusy(true);
+                setSaveError("");
+                void (async () => {
+                  try {
+                    await onSaveAsFarm(name);
+                    setShowFarm(false);
+                    setFarmName("");
+                    onOpenFarms?.();
+                  } catch (err) {
+                    setSaveError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not save farm",
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                })();
+              }}
+            >
+              <p className="font-mono text-[10px] font-bold text-gold uppercase">
+                Save as Farm — watch this territory
+              </p>
+              <p className="text-[11px] text-[var(--muted)]">
+                Archie keeps the boundary and compares live county records to
+                your review baseline. This is not a Study Vault snapshot.
+              </p>
+              <input
+                value={farmName}
+                onChange={(e) => setFarmName(e.target.value)}
+                placeholder={active.name}
+                className="w-full rounded-lg border border-hairline bg-[var(--surface)] px-2.5 py-2 text-sm"
+              />
+              <button
+                type="submit"
+                disabled={busy || saving}
+                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-gold text-xs font-bold text-navy disabled:opacity-50"
+              >
+                {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                Create farm
+              </button>
+            </form>
           ) : null}
 
           {showSave && active && analysis ? (

@@ -4,6 +4,8 @@ import type { ShiProspectStatus } from "@/lib/shi/prospect-statuses";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
+  ShiFarm,
+  ShiFarmDetail,
   ShiOwnerMatch,
   ShiProspect,
   ShiProspectDetail,
@@ -326,4 +328,54 @@ export async function shiConvertProspectToSellerLead(id: string): Promise<{
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ convertToSellerLead: true }),
   });
+}
+
+/* ------------------------------- Farms (SHI-4) ------------------------------- */
+
+export async function shiListFarms(): Promise<ShiFarm[]> {
+  const body = await shiFetch<{ farms: ShiFarm[] }>("/api/shi/farms");
+  return body.farms ?? [];
+}
+
+export async function shiCreateFarm(input: {
+  name: string;
+  countySource: string;
+  countyName?: string;
+  boundary: DrawnBoundary;
+  mapCenterLat?: number | null;
+  mapCenterLng?: number | null;
+  mapZoom?: number | null;
+}): Promise<ShiFarmDetail> {
+  const body = await shiFetch<{ farm: ShiFarmDetail }>("/api/shi/farms", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return body.farm;
+}
+
+export async function shiGetFarm(id: string): Promise<ShiFarmDetail> {
+  const body = await shiFetch<{ farm: ShiFarmDetail }>(
+    `/api/shi/farms/${encodeURIComponent(id)}`,
+  );
+  return body.farm;
+}
+
+export async function shiMarkFarmReviewed(id: string): Promise<ShiFarmDetail> {
+  const body = await shiFetch<{ farm: ShiFarmDetail }>(
+    `/api/shi/farms/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markReviewed: true }),
+    },
+  );
+  return body.farm;
+}
+
+export async function shiDeleteFarm(id: string): Promise<void> {
+  await shiFetch<{ ok: boolean }>(
+    `/api/shi/farms/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+  );
 }
