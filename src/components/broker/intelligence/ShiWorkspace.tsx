@@ -1,39 +1,38 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FolderKanban, Map } from "lucide-react";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
+import {
+  parseArchieModule,
+  writeLastArchieModule,
+  type ArchieModule,
+} from "@/lib/navigation/archieMemory";
 import type { ShiSavedFrame } from "@/lib/shi/types";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
-import { cn } from "@/lib/utils";
 
-export type ShiSection = "research" | "vault";
-
-const SECTIONS: {
-  id: ShiSection;
-  label: string;
-  icon: typeof Map;
-}[] = [
-  { id: "research", label: "Research", icon: Map },
-  { id: "vault", label: "Study Vault", icon: FolderKanban },
-];
+export type ShiSection = ArchieModule;
 
 /**
- * Archie's Intelligence shell — Community-style submenu.
+ * Archie's Intelligence shell.
+ * Module switching lives in the federated context ribbon (Wave N2).
  * Research = 3-split workbench · Study Vault = saved folders/frames.
  */
 export function ShiWorkspace() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const raw = searchParams.get("section");
-  const section: ShiSection = raw === "vault" ? "vault" : "research";
+  const section: ShiSection = parseArchieModule(searchParams.get("section"));
+
+  useEffect(() => {
+    writeLastArchieModule(section);
+  }, [section]);
 
   const selectSection = useCallback(
     (next: ShiSection) => {
+      writeLastArchieModule(next);
       const params = new URLSearchParams(searchParams.toString());
       if (next === "research") params.delete("section");
       else {
@@ -53,6 +52,7 @@ export function ShiWorkspace() {
 
   const openFrameInResearch = useCallback(
     (frame: ShiSavedFrame) => {
+      writeLastArchieModule("research");
       const params = new URLSearchParams();
       params.set("openFrame", frame.id);
       if (frame.folderId) params.set("folderId", frame.folderId);
@@ -78,53 +78,24 @@ export function ShiWorkspace() {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-[var(--muted)] uppercase">
-            {SHI_PRODUCT.fullName} · {SHI_PRODUCT.subtitle}
+          <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-gold uppercase">
+            {SHI_PRODUCT.fullName}
           </p>
           <h2 className="font-serif text-2xl font-bold text-ink">
-            {SHI_PRODUCT.fullName}
+            {section === "vault" ? "Study Vault" : "Research"}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Three-panel research: search · map · property record. Market Frames
-            analyze below. Saved studies live in Study Vault.
+            {section === "vault"
+              ? "Saved Market Frames and study folders. Reopen any frame into Research."
+              : "Three-panel research: search · map · property record. Market Frames analyze below."}
           </p>
         </div>
       </header>
 
       <div
-        role="tablist"
-        aria-label={`${SHI_PRODUCT.fullName} sections`}
-        className="flex gap-2 overflow-x-auto border-b border-hairline pb-px"
+        key={section}
+        className="motion-safe:animate-[archieModuleIn_200ms_ease-out]"
       >
-        {SECTIONS.map(({ id, label, icon: Icon }) => {
-          const active = section === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              aria-label={label}
-              title={label}
-              onClick={() => selectSection(id)}
-              className={cn(
-                "-mb-px inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors",
-                active
-                  ? "border-gold text-navy"
-                  : "border-transparent text-[var(--muted)] hover:text-ink",
-              )}
-            >
-              <Icon
-                className={cn("h-4 w-4 shrink-0", active && "text-gold")}
-                aria-hidden
-              />
-              <span>{label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div>
         {section === "research" ? (
           <PropertyIntelligenceView
             onOpenVault={() => selectSection("vault")}

@@ -116,12 +116,18 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
   const inArchie = tab === "intelligence";
 
   return (
-    <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6 md:pb-12">
+    <div
+      className={cn(
+        "min-h-dvh px-4 pb-24 md:px-6 md:pb-12",
+        /* 72 nav + 40 Archie ribbon when in Intelligence */
+        inArchie ? "pt-[128px]" : "pt-[96px]",
+      )}
+    >
       <div
         className={cn("mx-auto", inArchie ? "max-w-[90rem]" : "max-w-6xl")}
       >
         {inArchie ? (
-          <div className="mb-4">
+          <div className="mb-3">
             <Link
               href="/portal?tab=tools"
               className="inline-flex w-fit items-center gap-1.5 font-mono text-[11px] font-semibold tracking-[0.12em] text-[var(--muted)] uppercase transition-colors hover:text-ink"

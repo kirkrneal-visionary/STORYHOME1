@@ -55,6 +55,40 @@ html[data-role="professional"] {
   }
 }
 
+/* Federated Archie ribbon / module microtransitions (Wave N2) */
+@keyframes archieRibbonIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes archieGoldRail {
+  from {
+    transform: scaleX(0.35);
+    opacity: 0.35;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes archieModuleIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;
