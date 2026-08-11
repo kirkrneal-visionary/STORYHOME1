@@ -96,12 +96,13 @@ See `docs/shi/SHI-3-PLAN.md`.
 
 See `docs/shi/SHI-4-PLAN.md`.
 
-### SHI-5 — Find Similar · Portfolio polish (current)
+### SHI-5 — Find Similar · Portfolio · act-loop (current)
 
 | Front-end | Back-end |
 |---|---|
 | Find Similar + explainable reasons · Portfolio panel | `POST /api/shi/similar` · `GET /api/shi/portfolio` |
 | Exact vs possible owner lists never silently merged | No new migration — existing parcel indexes |
+| Discover map pins · bulk Add to Prospects · Save selection as Farm | Reuse prospects + farms create APIs |
 
 See `docs/shi/SHI-5-PLAN.md`.
 
