@@ -3,9 +3,13 @@
  * Backend routes stay `/api/shi/*` and `/portal/intelligence`; this is UX only.
  */
 
+import type { ArchieModule } from "@/lib/navigation/archieMemory";
+import { archieHrefForModule } from "@/lib/navigation/archieMemory";
+
 export type NetworkId = "storyhome" | "archie";
 
 export type NetworkLink = {
+  id?: ArchieModule;
   href: string;
   label: string;
   /** Match path prefix for active state */
@@ -19,9 +23,15 @@ export type NetworkDefinition = {
   href: string;
   /** Paths that activate this network node */
   matchPrefixes: string[];
-  /** Context ribbon / sub-nav links (Wave N2 consumes these) */
+  /** Context ribbon / sub-nav links */
   modules: NetworkLink[];
 };
+
+/** Top bar height (px) — keep in sync with GlobalNav. */
+export const GLOBAL_NAV_HEIGHT_PX = 72;
+
+/** Archie context ribbon height (px) — Wave N2. */
+export const ARCHIE_RIBBON_HEIGHT_PX = 40;
 
 export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
   storyhome: {
@@ -40,12 +50,14 @@ export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
     matchPrefixes: ["/portal/intelligence"],
     modules: [
       {
-        href: "/portal/intelligence",
+        id: "research",
+        href: archieHrefForModule("research"),
         label: "Research",
         match: "/portal/intelligence",
       },
       {
-        href: "/portal/intelligence?section=vault",
+        id: "vault",
+        href: archieHrefForModule("vault"),
         label: "Study Vault",
         match: "/portal/intelligence",
       },
@@ -73,4 +85,12 @@ export function isStoryProPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
   if (!pathname.startsWith("/portal")) return false;
   return !isArchiePath(pathname);
+}
+
+export function isArchieModuleActive(
+  module: ArchieModule,
+  section: string | null | undefined,
+): boolean {
+  const current = section === "vault" ? "vault" : "research";
+  return current === module;
 }

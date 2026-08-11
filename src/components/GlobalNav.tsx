@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,8 +16,10 @@ import {
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
+import { NetworkContextRibbon } from "@/components/nav/NetworkContextRibbon";
 import { NetworkDivider } from "@/components/nav/NetworkDivider";
 import { NetworkNode } from "@/components/nav/NetworkNode";
+import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
 import { accountLabel } from "@/lib/auth";
 import {
   isArchiePath,
@@ -48,6 +51,7 @@ export default function GlobalNav() {
   const archie = NAVIGATION_NETWORKS.archie;
   const archieActive = isArchiePath(pathname);
   const showArchieNode = isPro && isLoggedIn;
+  const archieEntryHref = useArchieEntryHref();
 
   return (
     <>
@@ -162,7 +166,7 @@ export default function GlobalNav() {
             <>
               <NetworkDivider />
               <NetworkNode
-                href={archie.href}
+                href={archieEntryHref}
                 label={archie.shortLabel}
                 active={archieActive}
               />
@@ -236,6 +240,12 @@ export default function GlobalNav() {
           )}
         </div>
       </nav>
+
+      {archieActive ? (
+        <Suspense fallback={null}>
+          <NetworkContextRibbon />
+        </Suspense>
+      ) : null}
 
       <div
         className={cn(
