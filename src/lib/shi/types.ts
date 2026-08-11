@@ -268,3 +268,24 @@ export type ShiOwnerPortfolio = {
   };
   note: string;
 };
+
+/** SHI-5.2 Discover map pin — centroid markers for similar / portfolio act-loop. */
+export type ShiDiscoverPinKind = "similar" | "exact" | "possible";
+
+export type ShiDiscoverPin = {
+  key: string;
+  propId: string;
+  source: string;
+  countyFips: string | null;
+  countyName: string;
+  lat: number;
+  lng: number;
+  kind: ShiDiscoverPinKind;
+  selected: boolean;
+  label: string | null;
+  ownerName: string | null;
+  situsAddress: string | null;
+  situsCity: string | null;
+  legalAcreage: number | null;
+  marketValue: number | null;
+};

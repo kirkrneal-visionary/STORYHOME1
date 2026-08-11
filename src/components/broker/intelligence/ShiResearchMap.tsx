@@ -47,6 +47,7 @@ import {
   FREEHAND_VERTEX_RADIUS_PX,
 } from "@/lib/shi/freehand";
 import type {
+  ShiDiscoverPin,
   ShiLocalFrame,
   ShiOwnerMatch,
   ShiPropertyDetail,
@@ -85,6 +86,8 @@ export type ShiMapHandle = {
 type ShiResearchMapProps = {
   selected: ShiPropertyDetail | null;
   related: ShiOwnerMatch[];
+  /** SHI-5.2 Discover centroid pins (similar / portfolio). */
+  discoverPins?: ShiDiscoverPin[];
   frames: ShiLocalFrame[];
   activeFrameId: string | null;
   /** County must be picked before market frames can be committed. */
@@ -160,6 +163,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     {
       selected,
       related,
+      discoverPins = [],
       frames,
       activeFrameId,
       canDrawFrames = true,
@@ -452,6 +456,38 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           },
         });
 
+        map.addSource("shi-discover", { type: "geojson", data: EMPTY_FC });
+        map.addLayer({
+          id: "shi-discover-circle",
+          type: "circle",
+          source: "shi-discover",
+          paint: {
+            "circle-radius": [
+              "case",
+              ["==", ["get", "selected"], 1],
+              9,
+              6.5,
+            ],
+            "circle-color": [
+              "match",
+              ["get", "kind"],
+              "similar",
+              MAP_GOLD,
+              "exact",
+              MAP_NAVY,
+              MAP_TEAL,
+            ],
+            "circle-opacity": 0.92,
+            "circle-stroke-width": [
+              "case",
+              ["==", ["get", "selected"], 1],
+              2.5,
+              1.5,
+            ],
+            "circle-stroke-color": "#ffffff",
+          },
+        });
+
         map.addSource("shi-selected", { type: "geojson", data: EMPTY_FC });
         map.addLayer({
           id: "shi-selected-fill",
@@ -644,11 +680,36 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             preferredSource: preferredSourceRef.current,
           });
         });
+        map.on("click", "shi-discover-circle", (e) => {
+          if (toolRef.current !== "pan") return;
+          const f = e.features?.[0];
+          const propId = f?.properties?.propId;
+          if (typeof propId !== "string" || !propId) return;
+          const srcRaw = f?.properties?.source;
+          const fipsRaw = f?.properties?.countyFips;
+          onSelectRef.current({
+            propId,
+            source: typeof srcRaw === "string" && srcRaw ? srcRaw : undefined,
+            countyFips:
+              typeof fipsRaw === "string" && fipsRaw ? fipsRaw : undefined,
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng,
+            preferredSource: preferredSourceRef.current,
+          });
+        });
         map.on("mouseenter", "parcels-fill", () => {
           if (toolRef.current === "pan")
             map.getCanvas().style.cursor = "pointer";
         });
         map.on("mouseleave", "parcels-fill", () => {
+          map.getCanvas().style.cursor =
+            toolRef.current === "pan" ? "" : "crosshair";
+        });
+        map.on("mouseenter", "shi-discover-circle", () => {
+          if (toolRef.current === "pan")
+            map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "shi-discover-circle", () => {
           map.getCanvas().style.cursor =
             toolRef.current === "pan" ? "" : "crosshair";
         });
@@ -988,6 +1049,70 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       }
       src.setData({ type: "FeatureCollection", features });
     }, [ready, related, selected]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      const src = map.getSource("shi-discover") as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      if (!src) return;
+      const features: FeatureCollection["features"] = discoverPins.map((p) => ({
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [p.lng, p.lat],
+        },
+        properties: {
+          propId: p.propId,
+          source: p.source,
+          countyFips: p.countyFips,
+          kind: p.kind,
+          selected: p.selected ? 1 : 0,
+          label: p.label,
+        },
+      }));
+      src.setData({ type: "FeatureCollection", features });
+    }, [ready, discoverPins]);
+
+    const discoverFitKey = discoverPins
+      .map((p) => `${p.key}:${p.lat.toFixed(5)},${p.lng.toFixed(5)}`)
+      .sort()
+      .join("|");
+    const discoverPinsRef = useRef(discoverPins);
+    discoverPinsRef.current = discoverPins;
+    const selectedCentroidRef = useRef({
+      lat: selected?.centroidLat ?? null,
+      lng: selected?.centroidLng ?? null,
+    });
+    selectedCentroidRef.current = {
+      lat: selected?.centroidLat ?? null,
+      lng: selected?.centroidLng ?? null,
+    };
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready || !discoverFitKey) return;
+      try {
+        const bounds = new maplibregl.LngLatBounds();
+        for (const p of discoverPinsRef.current) {
+          bounds.extend([p.lng, p.lat]);
+        }
+        const c = selectedCentroidRef.current;
+        if (c.lng != null && c.lat != null) {
+          bounds.extend([c.lng, c.lat]);
+        }
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, {
+            padding: 56,
+            maxZoom: 15,
+            duration: 450,
+          });
+        }
+      } catch {
+        /* ignore camera fit errors */
+      }
+    }, [ready, discoverFitKey]);
 
     useEffect(() => {
       const map = mapRef.current;

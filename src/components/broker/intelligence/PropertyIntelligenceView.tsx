@@ -40,6 +40,7 @@ import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
+  ShiDiscoverPin,
   ShiLocalFrame,
   ShiOwnerMatch,
   ShiPropertyDetail,
@@ -103,6 +104,7 @@ export function PropertyIntelligenceView({
   const [reopening, setReopening] = useState(false);
   const [savingProspect, setSavingProspect] = useState(false);
   const [prospectMsg, setProspectMsg] = useState("");
+  const [discoverPins, setDiscoverPins] = useState<ShiDiscoverPin[]>([]);
   const mapRef = useRef<ShiMapHandle | null>(null);
   const openedPropRef = useRef<string | null>(null);
   const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
@@ -196,9 +198,11 @@ export function PropertyIntelligenceView({
           setError("Property not found");
           setSelected(null);
           setMatches([]);
+          setDiscoverPins([]);
           return;
         }
         setSelected(property);
+        setDiscoverPins([]);
         // Keep search / frames county aligned with the opened parcel.
         if (property.source && property.source !== countyLockRef.current.filterSource) {
           setSource(property.source);
@@ -795,6 +799,7 @@ export function PropertyIntelligenceView({
           ref={mapRef}
           selected={selected}
           related={matches}
+          discoverPins={discoverPins}
           frames={frames}
           activeFrameId={activeFrameId}
           canDrawFrames={Boolean(source)}
@@ -992,8 +997,12 @@ export function PropertyIntelligenceView({
               </div>
 
               <ShiDiscoverPanel
+                key={`${selected.source}:${selected.propId}`}
                 property={selected}
                 onOpenProperty={(opts) => void openProperty(opts)}
+                onDiscoverPinsChange={setDiscoverPins}
+                onPortfolioRelated={setMatches}
+                onOpenFarms={onOpenFarms}
               />
 
               <div className="space-y-2 border-t border-hairline pt-3">

@@ -228,18 +228,20 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "SHI-5",
-    name: "Find Similar · Portfolio polish",
-    goal: "Deterministic similarity + confident owner portfolios.",
+    name: "Find Similar · Portfolio · act-loop",
+    goal: "Deterministic similarity + confident owner portfolios + act on results.",
     status: "current",
     frontend: [
       "Find Similar Properties with explainable reasons (no fake %)",
       "Owner portfolio: exact vs possible kept separate + totals",
       "Discover actions on property record",
+      "Discover map pins (similar / exact / possible)",
+      "Bulk Add to Prospects · Save selection as Farm",
     ],
     backend: [
       "POST /api/shi/similar — county-locked deterministic query",
       "GET /api/shi/portfolio — EXACT aggregates + POSSIBLE list",
-      "No new migration — uses existing parcel indexes",
+      "Reuse prospects + farms create — no new migration",
     ],
     outOfScope: [
       "Generative AI similarity",
