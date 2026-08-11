@@ -58,8 +58,11 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          echo "Running CAD refresh from commit $GITHUB_SHA"
           FORCE="${{ github.event.inputs.force }}"
           FORCE="$(echo "$FORCE" | tr '[:upper:]' '[:lower:]')"
+          # Default: only stale / never-succeeded counties.
+          # force=true re-ingests all 7 (use sparingly — long run).
           if [ "$FORCE" = "true" ]; then
             node scripts/refresh-cad.mjs --force
           else

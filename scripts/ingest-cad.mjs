@@ -505,37 +505,129 @@ function dedupeByKey(rows, keyFn) {
   return [...map.values()];
 }
 
+function normalizePropId(id) {
+  return String(id ?? "")
+    .trim()
+    .replace(/^0+(\d)$/, "$1"); // keep leading zeros for real IDs; only collapse empty noise
+}
+
+/** Columns written to county_parcels (avoid unknown keys / trigger side-noise). */
+function toParcelUpsertRow(r) {
+  return {
+    source: r.source,
+    county_fips: r.county_fips,
+    prop_id: normalizePropId(r.prop_id),
+    geo_id: r.geo_id ?? null,
+    cad_owner_id: r.cad_owner_id ?? null,
+    owner_name: r.owner_name ?? null,
+    situs_num: r.situs_num ?? null,
+    situs_street: r.situs_street ?? null,
+    situs_city: r.situs_city ?? null,
+    situs_state: r.situs_state ?? null,
+    situs_zip: r.situs_zip ?? null,
+    situs_address: r.situs_address ?? null,
+    legal_description: r.legal_description ?? null,
+    abstract_subdivision_code: r.abstract_subdivision_code ?? null,
+    tract_or_lot: r.tract_or_lot ?? null,
+    block: r.block ?? null,
+    legal_acreage: r.legal_acreage ?? null,
+    land_value: r.land_value ?? null,
+    improvement_value: r.improvement_value ?? null,
+    market_value: r.market_value ?? null,
+    tax_year: r.tax_year ?? null,
+    school_code: r.school_code ?? null,
+    property_category: r.property_category ?? null,
+    mh_serial_number: r.mh_serial_number ?? null,
+    mh_hud_label: r.mh_hud_label ?? null,
+    mh_make: r.mh_make ?? null,
+    mh_model: r.mh_model ?? null,
+    mh_year: r.mh_year ?? null,
+    detail_level: r.detail_level ?? null,
+    needs_agent_detail: r.needs_agent_detail ?? false,
+    geojson: r.geojson ?? null,
+    centroid_lat: r.centroid_lat ?? null,
+    centroid_lng: r.centroid_lng ?? null,
+    source_url: r.source_url ?? null,
+    ingested_at: r.ingested_at ?? new Date().toISOString(),
+  };
+}
+
+function isConflictDupError(msg) {
+  return /cannot affect row a second time/i.test(msg || "");
+}
+
+function isTimeoutError(msg) {
+  return /statement timeout|canceling statement/i.test(msg || "");
+}
+
+/**
+ * Upsert a chunk; on duplicate-in-batch or timeout, split and retry so one
+ * bad pair cannot fail a whole 30k+ county after most rows already landed.
+ */
+async function upsertChunkWithSplit(sb, table, chunk, onConflict, label) {
+  if (!chunk.length) return;
+  const { error } = await sb.from(table).upsert(chunk, { onConflict });
+  if (!error) return;
+
+  const msg = error.message || String(error);
+  if (chunk.length === 1) {
+    throw new Error(`${label}: ${msg}`);
+  }
+  if (isConflictDupError(msg) || isTimeoutError(msg)) {
+    const mid = Math.ceil(chunk.length / 2);
+    await upsertChunkWithSplit(
+      sb,
+      table,
+      chunk.slice(0, mid),
+      onConflict,
+      label,
+    );
+    await upsertChunkWithSplit(
+      sb,
+      table,
+      chunk.slice(mid),
+      onConflict,
+      label,
+    );
+    return;
+  }
+  throw new Error(`${label}: ${msg}`);
+}
+
 async function upsertLive(rows) {
   const sb = await getSupabase();
   if (!sb) return false;
-  // CAD extracts can repeat the same prop_id; Postgres rejects
-  // ON CONFLICT DO UPDATE when one statement touches a row twice.
-  const parcelRows = dedupeByKey(rows, (r) => `${r.source}::${r.prop_id}`);
+
+  // CAD FeatureServers often emit the same prop_id multiple times (multi-part
+  // geometry / duplicate features). Postgres rejects ON CONFLICT DO UPDATE when
+  // one statement updates the same (source, prop_id) twice.
+  const parcelRows = dedupeByKey(
+    rows.map(toParcelUpsertRow).filter((r) => r.prop_id),
+    (r) => `${r.source}::${r.prop_id}`,
+  );
   if (parcelRows.length !== rows.length) {
     console.log(
       `[live] deduped parcels ${rows.length} → ${parcelRows.length}`,
     );
   }
-  const batch = 500;
-  const chunks = [];
+
+  // Sequential small batches: large GeoJSON + parallel writes caused timeouts
+  // and made "batch 0" errors appear after later progress lines.
+  const batch = 100;
   for (let i = 0; i < parcelRows.length; i += batch) {
-    chunks.push(parcelRows.slice(i, i + batch));
-  }
-  // Parallel upserts (bounded) — materially faster on large counties like Liberty.
-  const errors = await mapPool(chunks, 4, async (chunk, idx) => {
-    const { error } = await sb
-      .from("county_parcels")
-      .upsert(chunk, { onConflict: "source,prop_id" });
-    if (error) return `parcel batch ${idx}: ${error.message}`;
-    if ((idx + 1) % 10 === 0 || idx === chunks.length - 1) {
-      console.log(
-        `[live] parcels ${Math.min((idx + 1) * batch, parcelRows.length)}/${parcelRows.length}`,
-      );
+    const chunk = parcelRows.slice(i, i + batch);
+    const n = Math.min(i + chunk.length, parcelRows.length);
+    await upsertChunkWithSplit(
+      sb,
+      "county_parcels",
+      chunk,
+      "source,prop_id",
+      `parcel batch ${Math.floor(i / batch)}`,
+    );
+    if (n % 2000 === 0 || n === parcelRows.length) {
+      console.log(`[live] parcels ${n}/${parcelRows.length}`);
     }
-    return null;
-  });
-  const first = errors.find(Boolean);
-  if (first) throw new Error(first);
+  }
 
   const valRows = dedupeByKey(
     parcelRows
@@ -550,18 +642,16 @@ async function upsertLive(rows) {
       })),
     (r) => `${r.source}::${r.prop_id}::${r.tax_year}`,
   );
-  const valChunks = [];
   for (let i = 0; i < valRows.length; i += batch) {
-    valChunks.push(valRows.slice(i, i + batch));
+    const chunk = valRows.slice(i, i + batch);
+    await upsertChunkWithSplit(
+      sb,
+      "county_parcel_values",
+      chunk,
+      "source,prop_id,tax_year",
+      `values batch ${Math.floor(i / batch)}`,
+    );
   }
-  const valErrors = await mapPool(valChunks, 4, async (chunk, idx) => {
-    const { error: e2 } = await sb
-      .from("county_parcel_values")
-      .upsert(chunk, { onConflict: "source,prop_id,tax_year" });
-    return e2 ? `values batch ${idx}: ${e2.message}` : null;
-  });
-  const firstVal = valErrors.find(Boolean);
-  if (firstVal) throw new Error(firstVal);
   return true;
 }
 
