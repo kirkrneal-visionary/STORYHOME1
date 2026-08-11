@@ -6,8 +6,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * SHI-1 — single Property Intelligence record (Story Pro only).
- * Includes geometry + value history for the research panel/map highlight.
+ * SHI — single Property Intelligence record (Story Pro only).
+ * Disambiguates colliding prop_ids via source / preferredSource / click lat-lng.
  */
 export async function GET(request: Request) {
   const gate = await requireStoryPro();
@@ -26,12 +26,19 @@ export async function GET(request: Request) {
 
   const source = searchParams.get("source")?.trim() || undefined;
   const countyFips = searchParams.get("countyFips")?.trim() || undefined;
+  const preferredSource =
+    searchParams.get("preferredSource")?.trim() || undefined;
+  const nearLat = Number(searchParams.get("nearLat"));
+  const nearLng = Number(searchParams.get("nearLng"));
 
   try {
     const property = await getProperty(gate.supabase, {
       propId,
       source,
       countyFips,
+      preferredSource,
+      nearLat: Number.isFinite(nearLat) ? nearLat : undefined,
+      nearLng: Number.isFinite(nearLng) ? nearLng : undefined,
     });
     if (!property) {
       return NextResponse.json({ property: null }, { status: 404 });

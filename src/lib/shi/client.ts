@@ -40,11 +40,17 @@ export async function shiGetProperty(opts: {
   propId: string;
   source?: string;
   countyFips?: string;
+  preferredSource?: string;
+  nearLat?: number;
+  nearLng?: number;
 }): Promise<ShiPropertyDetail | null> {
   const params = new URLSearchParams();
   params.set("propId", opts.propId);
   if (opts.source) params.set("source", opts.source);
   if (opts.countyFips) params.set("countyFips", opts.countyFips);
+  if (opts.preferredSource) params.set("preferredSource", opts.preferredSource);
+  if (opts.nearLat != null) params.set("nearLat", String(opts.nearLat));
+  if (opts.nearLng != null) params.set("nearLng", String(opts.nearLng));
   const body = await shiFetch<{ property: ShiPropertyDetail | null }>(
     `/api/shi/property?${params.toString()}`,
   );

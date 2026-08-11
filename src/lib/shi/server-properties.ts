@@ -212,9 +212,37 @@ export async function searchProperties(
   };
 }
 
+function haversineMiles(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 3958.8;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Resolve a property by prop_id.
+ * CAD Property IDs collide across counties — always prefer source / click location.
+ */
 export async function getProperty(
   supabase: SupabaseClient,
-  opts: { propId: string; source?: string; countyFips?: string },
+  opts: {
+    propId: string;
+    source?: string;
+    countyFips?: string;
+    /** Prefer this county source when prop_id matches multiple rows. */
+    preferredSource?: string;
+    nearLat?: number;
+    nearLng?: number;
+  },
 ): Promise<ShiPropertyDetail | null> {
   const propId = opts.propId.trim();
   if (!propId) return null;
@@ -226,10 +254,46 @@ export async function getProperty(
   if (opts.source) req = req.eq("source", opts.source);
   if (opts.countyFips) req = req.eq("county_fips", opts.countyFips);
 
-  const { data, error } = await req.limit(1);
+  // Fetch a small candidate set when source is unknown so we can disambiguate.
+  const { data, error } = await req.limit(opts.source || opts.countyFips ? 1 : 12);
   if (error) throw new Error(error.message);
-  const row = (data?.[0] ?? null) as Record<string, unknown> | null;
-  if (!row) return null;
+  const rows = (data ?? []) as Record<string, unknown>[];
+  if (rows.length === 0) return null;
+
+  let row = rows[0];
+  if (rows.length > 1) {
+    const preferred = opts.source || opts.preferredSource;
+    if (preferred) {
+      const hit = rows.find((r) => String(r.source) === preferred);
+      if (hit) row = hit;
+    }
+    if (
+      opts.nearLat != null &&
+      opts.nearLng != null &&
+      Number.isFinite(opts.nearLat) &&
+      Number.isFinite(opts.nearLng)
+    ) {
+      const click = { lat: opts.nearLat, lng: opts.nearLng };
+      let best = row;
+      let bestDist = Number.POSITIVE_INFINITY;
+      for (const r of rows) {
+        // If preferred source still set, only rank within that source when present.
+        if (preferred && String(r.source) !== preferred) {
+          const hasPreferred = rows.some((x) => String(x.source) === preferred);
+          if (hasPreferred) continue;
+        }
+        const lat = num(r.centroid_lat);
+        const lng = num(r.centroid_lng);
+        if (lat == null || lng == null) continue;
+        const d = haversineMiles(click, { lat, lng });
+        if (d < bestDist) {
+          bestDist = d;
+          best = r;
+        }
+      }
+      row = best;
+    }
+  }
 
   const summary = toSummary(row);
   const source = summary.source;

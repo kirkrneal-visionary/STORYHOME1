@@ -41,10 +41,13 @@ export function buildStoryMapStyle(): StyleSpecification {
         tileSize: 256,
         attribution: "&copy; OpenStreetMap contributors",
       },
+      // Esri World Imagery (Maxar) — high-zoom aerial. Web maps stream tiles
+      // (not a single 8K frame); maxzoom + retina pixelRatio give crisp close-ups.
       satellite: {
         type: "raster",
         tiles: [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`],
         tileSize: 256,
+        maxzoom: 22,
         attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics",
       },
       labels: {
@@ -53,12 +56,14 @@ export function buildStoryMapStyle(): StyleSpecification {
           `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
         ],
         tileSize: 256,
+        maxzoom: 19,
         attribution: "Labels &copy; Esri",
       },
       topo: {
         type: "raster",
         tiles: [`${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`],
         tileSize: 256,
+        maxzoom: 19,
         attribution: "Topographic &copy; Esri",
       },
       terrain: {
