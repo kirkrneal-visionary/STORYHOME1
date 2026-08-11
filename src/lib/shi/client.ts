@@ -1,22 +1,23 @@
 import type { CadSearchField } from "@/lib/cad-layers";
 import type { DrawnBoundary } from "@/lib/geo";
 import type {
-  ShiAreaMetrics,
+  ShiAreaAnalysis,
   ShiCountyFreshness,
   ShiOwnerMatch,
   ShiPropertyDetail,
   ShiPropertySummary,
+  ShiSavedFrame,
+  ShiStudyFolder,
 } from "@/lib/shi/types";
 
-async function shiFetch<T>(
-  url: string,
-  init?: RequestInit,
-): Promise<T> {
+async function shiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { credentials: "same-origin", ...init });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
-      typeof body?.error === "string" ? body.error : `Request failed (${res.status})`,
+      typeof body?.error === "string"
+        ? body.error
+        : `Request failed (${res.status})`,
     );
   }
   return body as T;
@@ -85,9 +86,9 @@ export async function shiOwnerMatches(opts: {
 
 export async function shiAnalyzeArea(opts: {
   boundary: DrawnBoundary;
-  source?: string;
-}): Promise<ShiAreaMetrics> {
-  const body = await shiFetch<{ metrics: ShiAreaMetrics }>("/api/shi/area", {
+  source: string;
+}): Promise<ShiAreaAnalysis> {
+  const body = await shiFetch<{ analysis: ShiAreaAnalysis }>("/api/shi/area", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -95,5 +96,60 @@ export async function shiAnalyzeArea(opts: {
       source: opts.source,
     }),
   });
-  return body.metrics;
+  return body.analysis;
+}
+
+export async function shiListFolders(countySource?: string) {
+  const params = new URLSearchParams();
+  if (countySource) params.set("countySource", countySource);
+  const q = params.toString();
+  const body = await shiFetch<{ folders: ShiStudyFolder[] }>(
+    `/api/shi/studies/folders${q ? `?${q}` : ""}`,
+  );
+  return body.folders ?? [];
+}
+
+export async function shiCreateFolder(opts: {
+  name: string;
+  countySource: string;
+}) {
+  const body = await shiFetch<{ folder: ShiStudyFolder }>(
+    "/api/shi/studies/folders",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    },
+  );
+  return body.folder;
+}
+
+export async function shiListFrames(folderId: string) {
+  const body = await shiFetch<{ frames: ShiSavedFrame[] }>(
+    `/api/shi/studies/frames?folderId=${encodeURIComponent(folderId)}`,
+  );
+  return body.frames ?? [];
+}
+
+export async function shiSaveFrame(opts: {
+  folderId: string;
+  name: string;
+  color: string;
+  boundary: DrawnBoundary;
+  analysis: ShiAreaAnalysis;
+  mapCenterLat?: number;
+  mapCenterLng?: number;
+  mapZoom?: number;
+  thumbnailDataUrl?: string | null;
+  frameId?: string;
+}) {
+  const body = await shiFetch<{ frame: ShiSavedFrame }>(
+    "/api/shi/studies/frames",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(opts),
+    },
+  );
+  return body.frame;
 }

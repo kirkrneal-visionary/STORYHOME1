@@ -75,7 +75,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2",
     name: "Relationships · Area · History",
     goal: "Owner matches, multi-tract, area analysis, observed CAD history.",
-    status: "current",
+    status: "done",
     frontend: [
       "Owner relationship panel (EXACT / POSSIBLE match wording)",
       "Multi-tract visualization",
@@ -91,6 +91,29 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Absentee-owner claims",
       "Invented ownership history",
+    ],
+  },
+  {
+    id: "SHI-2.5",
+    name: "Market Frames · Analyzer · Study folders",
+    goal: "Multi-box market frames, on-demand parcel value estimates, save/reopen in county folders.",
+    status: "current",
+    frontend: [
+      "Multi-frame box/radius draw (many frames on map)",
+      "Analyze active frame → parcel list + estimated area value",
+      "Study folders (square tiles + acronym) by county",
+      "Save capture bundle (geometry + metrics + map thumbnail)",
+      "Reopen saved frames onto the map",
+    ],
+    backend: [
+      "shi_study_folders / shi_market_frames / shi_frame_snapshots + RLS",
+      "County-locked analyze with hard caps (no infinite jobs)",
+      "Thumbnail storage (shi-studies) private to owner",
+      "Never write CAD; never overwrite other agents",
+    ],
+    outOfScope: [
+      "Background infinite recompute",
+      "Cross-agent shared folders (v1)",
     ],
   },
   {

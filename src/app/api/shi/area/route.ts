@@ -18,7 +18,8 @@ function isBoundary(v: unknown): v is DrawnBoundary {
 }
 
 /**
- * SHI-2 — area analysis for a drawn boundary (Story Pro only).
+ * SHI Market Frame analyzer — county-locked, capped, on-demand.
+ * Returns individual parcel values + estimated area market total.
  */
 export async function POST(request: Request) {
   const gate = await requireStoryPro();
@@ -36,19 +37,25 @@ export async function POST(request: Request) {
   const boundary = (body as { boundary?: unknown }).boundary;
   const source =
     typeof (body as { source?: unknown }).source === "string"
-      ? ((body as { source: string }).source.trim() || undefined)
-      : undefined;
+      ? (body as { source: string }).source.trim()
+      : "";
 
   if (!isBoundary(boundary)) {
     return NextResponse.json(
-      { error: "boundary is required (polygon | circle | rectangle | viewport)" },
+      { error: "boundary is required (box or radius)" },
+      { status: 400 },
+    );
+  }
+  if (!source) {
+    return NextResponse.json(
+      { error: "Pick a county before analyzing" },
       { status: 400 },
     );
   }
 
   try {
-    const metrics = await analyzeArea(gate.supabase, { boundary, source });
-    return NextResponse.json({ metrics });
+    const analysis = await analyzeArea(gate.supabase, { boundary, source });
+    return NextResponse.json({ analysis, metrics: analysis });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Area analysis failed" },
