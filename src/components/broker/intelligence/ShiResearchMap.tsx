@@ -129,7 +129,16 @@ export function ShiResearchMap({
       "bottom-right",
     );
 
+    // Grid layouts often init at 0×0; force a paint after the container has size.
+    const kickResize = () => {
+      map.resize();
+    };
+    requestAnimationFrame(kickResize);
+    const t1 = window.setTimeout(kickResize, 50);
+    const t2 = window.setTimeout(kickResize, 250);
+
     map.on("load", () => {
+      kickResize();
       map.addSource("shi-boundary", { type: "geojson", data: EMPTY_FC });
       map.addLayer({
         id: "shi-boundary-fill",
@@ -237,10 +246,13 @@ export function ShiResearchMap({
       setReady(true);
     });
 
+    const host = containerRef.current.parentElement ?? containerRef.current;
     const ro = new ResizeObserver(() => map.resize());
-    ro.observe(containerRef.current);
+    ro.observe(host);
 
     return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
       ro.disconnect();
       map.remove();
       mapRef.current = null;
@@ -402,13 +414,18 @@ export function ShiResearchMap({
   return (
     <div
       className={cn(
-        "relative min-h-[320px] overflow-hidden rounded-2xl border border-hairline bg-[var(--surface)]",
+        // Explicit height (not absolute+min-h only) — CSS grid was collapsing the map to 0px.
+        "relative flex h-[560px] w-full min-h-[420px] flex-col overflow-hidden rounded-2xl border border-hairline bg-[var(--background)] xl:h-[720px]",
         className,
       )}
     >
-      <div ref={containerRef} className="absolute inset-0" />
+      <div
+        ref={containerRef}
+        className="relative min-h-0 w-full flex-1 bg-[var(--background)] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none"
+      />
 
-      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
+      <div className="pointer-events-none absolute inset-0 z-10">
+      <div className="pointer-events-auto absolute top-3 left-3 flex flex-wrap gap-1.5">
         {MAP_BASE_OPTIONS.map((opt) => (
           <button
             key={opt.id}
@@ -426,7 +443,7 @@ export function ShiResearchMap({
         ))}
       </div>
 
-      <div className="absolute bottom-12 left-3 z-10 flex flex-wrap items-center gap-1.5">
+      <div className="pointer-events-auto absolute bottom-12 left-3 flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() => {
@@ -485,7 +502,7 @@ export function ShiResearchMap({
         ) : null}
       </div>
 
-      <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-1.5">
+      <div className="pointer-events-auto absolute top-3 right-3 flex flex-col items-end gap-1.5">
         <button
           type="button"
           onClick={() => setShowParcels((v) => !v)}
@@ -519,7 +536,7 @@ export function ShiResearchMap({
         ) : null}
       </div>
 
-      <p className="pointer-events-none absolute bottom-3 left-3 z-10 inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-2 py-1 font-mono text-[10px] font-bold text-navy uppercase shadow-sm backdrop-blur">
+      <p className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-2 py-1 font-mono text-[10px] font-bold text-navy uppercase shadow-sm backdrop-blur">
         <Layers className="h-3 w-3" />
         {tool === "rectangle"
           ? "Click two corners for area"
@@ -527,6 +544,7 @@ export function ShiResearchMap({
             ? "Click center for radius area"
             : "Zoom · click parcel · gold=EXACT · teal=POSSIBLE"}
       </p>
+      </div>
     </div>
   );
 }
