@@ -58,6 +58,9 @@ export async function analyzeArea(
   }
   const bounds = cap.bounds;
 
+  // Fetch one past the cap so "capped" means the bbox scan was truncated
+  // (not that we happened to land on exactly N rows).
+  const scanLimit = SHI_CAPS.maxParcelsPerAnalyze + 1;
   const { data, error } = await supabase
     .from("county_parcels")
     .select(AREA_SELECT)
@@ -68,8 +71,12 @@ export async function analyzeArea(
     .lte("centroid_lng", bounds.east)
     .not("centroid_lat", "is", null)
     .not("centroid_lng", "is", null)
-    .limit(SHI_CAPS.maxParcelsPerAnalyze);
+    .limit(scanLimit);
   if (error) throw new Error(error.message);
+
+  const raw = data ?? [];
+  const hitCap = raw.length >= scanLimit;
+  const rows = hitCap ? raw.slice(0, SHI_CAPS.maxParcelsPerAnalyze) : raw;
 
   const parcels: ShiAreaParcel[] = [];
   const acres: number[] = [];
@@ -79,7 +86,7 @@ export async function analyzeArea(
   let estimatedTotalMarketValue = 0;
   let valuedParcelCount = 0;
 
-  for (const row of data ?? []) {
+  for (const row of rows) {
     const lat = Number(row.centroid_lat);
     const lng = Number(row.centroid_lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
@@ -112,9 +119,6 @@ export async function analyzeArea(
     });
   }
 
-  const scanned = (data ?? []).length;
-  const hitCap = scanned >= SHI_CAPS.maxParcelsPerAnalyze;
-
   return {
     parcelCount: parcels.length,
     realCount,
@@ -128,7 +132,7 @@ export async function analyzeArea(
     countySource: opts.source,
     capped: hitCap,
     note: hitCap
-      ? `Hit safety cap (${SHI_CAPS.maxParcelsPerAnalyze} scan) — draw a smaller frame for a complete estimate.`
+      ? `Incomplete estimate: the map-box scan hit the safety cap (${SHI_CAPS.maxParcelsPerAnalyze} parcels) before every parcel in the frame could be checked. Draw a smaller frame for a full count.`
       : `Estimated area value sums CAD market_value on ${valuedParcelCount} valued parcels inside the frame (centroids).`,
     parcels,
   };

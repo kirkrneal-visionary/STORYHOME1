@@ -164,6 +164,8 @@ export type ShiLocalFrame = {
   localId: string;
   savedId?: string;
   folderId?: string;
+  /** County CAD source locked at draw time — analyze/save must use this. */
+  countySource: string;
   name: string;
   acronym: string;
   color: string;

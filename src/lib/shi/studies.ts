@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DrawnBoundary } from "@/lib/geo";
+import { analyzeArea } from "@/lib/shi/area";
 import { makeShiAcronym } from "@/lib/shi/acronym";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
@@ -310,7 +311,8 @@ export async function saveMarketFrame(
     name: string;
     color: string;
     boundary: DrawnBoundary;
-    analysis: ShiAreaAnalysis;
+    /** Ignored for persistence — server recomputes from CAD (never trust client). */
+    analysis?: ShiAreaAnalysis | null;
     mapCenterLat?: number;
     mapCenterLng?: number;
     mapZoom?: number;
@@ -333,12 +335,11 @@ export async function saveMarketFrame(
   if (folderErr) throw new Error(formatShiVaultError(folderErr));
   if (!folder) throw new Error("Folder not found");
 
-  if (
-    opts.analysis.countySource &&
-    opts.analysis.countySource !== folder.county_source
-  ) {
-    throw new Error("Frame county must match the study folder county");
-  }
+  // Always recompute on the server for the folder's county — never trust browser metrics.
+  const analysis = await analyzeArea(supabase, {
+    boundary: opts.boundary,
+    source: folder.county_source as string,
+  });
 
   if (!opts.frameId) {
     const { count } = await supabase
@@ -351,6 +352,27 @@ export async function saveMarketFrame(
         `Frame limit for this folder (${SHI_CAPS.maxFramesPerFolder}).`,
       );
     }
+  } else {
+    // Moving into a different folder — enforce destination capacity.
+    const { data: existing } = await supabase
+      .from("shi_market_frames")
+      .select("folder_id")
+      .eq("id", opts.frameId)
+      .eq("owner_id", ownerId)
+      .maybeSingle();
+    if (!existing) throw new Error("Frame not found");
+    if (existing.folder_id !== opts.folderId) {
+      const { count } = await supabase
+        .from("shi_market_frames")
+        .select("id", { count: "exact", head: true })
+        .eq("folder_id", opts.folderId)
+        .eq("owner_id", ownerId);
+      if ((count ?? 0) >= SHI_CAPS.maxFramesPerFolder) {
+        throw new Error(
+          `Frame limit for this folder (${SHI_CAPS.maxFramesPerFolder}).`,
+        );
+      }
+    }
   }
 
   const acronym = makeShiAcronym(name);
@@ -360,6 +382,7 @@ export async function saveMarketFrame(
     const { error } = await supabase
       .from("shi_market_frames")
       .update({
+        folder_id: opts.folderId,
         name,
         acronym,
         color: opts.color,
@@ -424,7 +447,7 @@ export async function saveMarketFrame(
     thumbnailPath = (prior?.thumbnail_path as string | null) ?? null;
   }
 
-  const { parcels, ...metricsOnly } = opts.analysis;
+  const { parcels, ...metricsOnly } = analysis;
   // Cap stored parcels list for payload safety.
   const storedParcels = parcels.slice(0, SHI_CAPS.maxParcelsPerAnalyze);
 

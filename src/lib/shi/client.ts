@@ -158,7 +158,8 @@ export async function shiSaveFrame(opts: {
   name: string;
   color: string;
   boundary: DrawnBoundary;
-  analysis: ShiAreaAnalysis;
+  /** Optional — server recomputes; kept for backward-compatible clients. */
+  analysis?: ShiAreaAnalysis;
   mapCenterLat?: number;
   mapCenterLng?: number;
   mapZoom?: number;

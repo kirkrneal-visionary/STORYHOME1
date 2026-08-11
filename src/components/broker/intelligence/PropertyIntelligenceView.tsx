@@ -266,6 +266,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         : `frame-${n}-${Date.now()}`;
     const frame: ShiLocalFrame = {
       localId,
+      countySource: source,
       name,
       acronym: makeShiAcronym(name),
       color: nextFrameColor(frames.length),
@@ -284,21 +285,29 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
       setAreaError("Select or draw a market frame first");
       return;
     }
-    if (!source) {
+    const frameCounty = active.countySource || source;
+    if (!frameCounty) {
       setAreaError("Pick a county before analyzing");
       return;
+    }
+    // Keep the search selector aligned with the frame's locked county.
+    if (frameCounty !== source) {
+      setSource(frameCounty);
+      void refreshFolders(frameCounty);
     }
     setAnalyzing(true);
     setAreaError("");
     try {
       const result = await shiAnalyzeArea({
         boundary: active.boundary,
-        source,
+        source: frameCounty,
       });
       setAnalysis(result);
       setFrames((prev) =>
         prev.map((f) =>
-          f.localId === active.localId ? { ...f, analysis: result } : f,
+          f.localId === active.localId
+            ? { ...f, countySource: frameCounty, analysis: result }
+            : f,
         ),
       );
     } catch (e) {
@@ -309,16 +318,24 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     }
   }
 
-  async function createFolder(name: string): Promise<ShiStudyFolder> {
-    if (!source) throw new Error("Pick a county first");
-    const folder = await shiCreateFolder({ name, countySource: source });
-    await refreshFolders(source);
+  async function createFolder(
+    name: string,
+    countyForFolder?: string,
+  ): Promise<ShiStudyFolder> {
+    const county = countyForFolder || source;
+    if (!county) throw new Error("Pick a county first");
+    const folder = await shiCreateFolder({ name, countySource: county });
+    await refreshFolders(county);
+    if (county !== source) {
+      setSource(county);
+    }
     return folder;
   }
 
   async function saveActiveFrame(name: string, folderId: string) {
     const active = frames.find((f) => f.localId === activeFrameId);
-    if (!active?.analysis) throw new Error("Analyze the frame before saving");
+    if (!active) throw new Error("Select a market frame first");
+    if (!active.analysis) throw new Error("Analyze the frame before saving");
     setSaving(true);
     setAreaError("");
     try {
@@ -340,6 +357,8 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         thumbnailDataUrl: thumb,
         frameId: active.savedId,
       });
+      const savedCounty =
+        saved.snapshot?.metrics?.countySource || active.countySource;
       setFrames((prev) =>
         prev.map((f) =>
           f.localId === active.localId
@@ -347,13 +366,26 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
                 ...f,
                 savedId: saved.id,
                 folderId: saved.folderId,
+                countySource: savedCounty,
                 name: saved.name,
                 acronym: saved.acronym,
+                analysis: saved.snapshot
+                  ? ({
+                      ...saved.snapshot.metrics,
+                      parcels: saved.snapshot.metrics.parcels ?? [],
+                    } as ShiAreaAnalysis)
+                  : f.analysis,
               }
             : f,
         ),
       );
-      await refreshFolders(source);
+      if (saved.snapshot?.metrics) {
+        setAnalysis({
+          ...(saved.snapshot.metrics as ShiAreaAnalysis),
+          parcels: saved.snapshot.metrics.parcels ?? [],
+        });
+      }
+      await refreshFolders(savedCounty || source);
     } catch (e) {
       setAreaError(formatShiVaultError(e));
       throw e;
@@ -364,11 +396,16 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
 
   function loadSavedFrame(frame: ShiSavedFrame) {
     const localId = frame.id;
+    const countyFromSnap = frame.snapshot?.metrics?.countySource || "";
     const existing = frames.find(
       (f) => f.savedId === frame.id || f.localId === frame.id,
     );
     if (existing) {
       setActiveFrameId(existing.localId);
+      if (countyFromSnap && countyFromSnap !== source) {
+        setSource(countyFromSnap);
+        void refreshFolders(countyFromSnap);
+      }
     } else {
       if (frames.length >= SHI_CAPS.maxFramesOnMap) {
         setAreaError(`Map frame limit (${SHI_CAPS.maxFramesOnMap}).`);
@@ -378,6 +415,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         localId,
         savedId: frame.id,
         folderId: frame.folderId,
+        countySource: countyFromSnap || source,
         name: frame.name,
         acronym: frame.acronym,
         color: frame.color,
@@ -391,6 +429,10 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
       };
       setFrames((prev) => [...prev, local]);
       setActiveFrameId(localId);
+      if (local.countySource && local.countySource !== source) {
+        setSource(local.countySource);
+        void refreshFolders(local.countySource);
+      }
     }
     if (frame.snapshot?.metrics) {
       setAnalysis({

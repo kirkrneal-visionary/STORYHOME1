@@ -120,10 +120,10 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2.6",
     name: "Cockpit · Study Vault · Draw OS",
     goal: "Research cockpit layout, Study Vault submenu, shared freehand toolbox on Marketplace.",
-    status: "current",
+    status: "done",
     frontend: [
       "SHI submenu: Research | Study Vault (Community-style)",
-      "Horizontal cockpit: search left · wide map right",
+      "3-split Research + Map Memory vault cards",
       "Study Vault rename/delete/thumbnails/reopen",
       "Shared Draw OS freehand on Marketplace refine map",
     ],
@@ -136,6 +136,26 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "SHI-3 prospects",
       "Listing-form CAD redesign",
+    ],
+  },
+  {
+    id: "SHI-2.7",
+    name: "Analyzer harden · county lock · vault trust",
+    goal: "Finish Analyzer/Vault backlog before SHI-3: county-locked frames, server recompute, indexes.",
+    status: "current",
+    frontend: [
+      "Frame county locked at draw time",
+      "Save form clears stale folders + surfaces errors",
+      "Honest capped-analysis messaging",
+    ],
+    backend: [
+      "Server recomputes analysis on save (never trust client metrics)",
+      "Resave can move frame to another folder",
+      "Owner-match triggers + trgm/centroid indexes (migration 0024)",
+    ],
+    outOfScope: [
+      "SHI-3 prospects",
+      "Farms / change intel",
     ],
   },
   {
