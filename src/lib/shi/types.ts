@@ -229,3 +229,42 @@ export type ShiFarmDetail = ShiFarm & {
   baselineAt: string | null;
   baselineParcelCount: number | null;
 };
+
+/** SHI-5 explainable similarity match — reasons are user-facing, not a fake %. */
+export type ShiSimilarMatch = ShiPropertySummary & {
+  landValue: number | null;
+  improvementValue: number | null;
+  schoolCode: string | null;
+  abstractSubdivisionCode: string | null;
+  distanceMiles: number;
+  strength: "strong" | "close" | "related";
+  reasons: string[];
+  /** Internal ranking only — do not show as a percent score. */
+  rankScore: number;
+};
+
+export type ShiSimilarResult = {
+  subject: ShiPropertySummary;
+  criteria: import("@/lib/shi/similar").SimilarCriteria;
+  matches: ShiSimilarMatch[];
+  totalConsidered: number;
+  note: string;
+};
+
+export type ShiOwnerPortfolio = {
+  subject: ShiPropertySummary;
+  ownerName: string | null;
+  cadOwnerId: string | null;
+  exact: ShiOwnerMatch[];
+  possible: ShiOwnerMatch[];
+  exactCount: number;
+  possibleCount: number;
+  totals: {
+    propertyCount: number;
+    totalAcres: number;
+    totalMarketValue: number;
+    valuedCount: number;
+    byCategory: Record<string, number>;
+  };
+  note: string;
+};

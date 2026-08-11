@@ -1,18 +1,21 @@
 import type { CadSearchField } from "@/lib/cad-layers";
 import type { DrawnBoundary } from "@/lib/geo";
 import type { ShiProspectStatus } from "@/lib/shi/prospect-statuses";
+import type { SimilarCriteria } from "@/lib/shi/similar";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
   ShiFarm,
   ShiFarmDetail,
   ShiOwnerMatch,
+  ShiOwnerPortfolio,
   ShiProspect,
   ShiProspectDetail,
   ShiProspectNote,
   ShiPropertyDetail,
   ShiPropertySummary,
   ShiSavedFrame,
+  ShiSimilarResult,
   ShiStudyFolder,
 } from "@/lib/shi/types";
 
@@ -378,4 +381,36 @@ export async function shiDeleteFarm(id: string): Promise<void> {
     `/api/shi/farms/${encodeURIComponent(id)}`,
     { method: "DELETE" },
   );
+}
+
+/* --------------------- Find Similar · Portfolio (SHI-5) --------------------- */
+
+export async function shiFindSimilar(input: {
+  source: string;
+  propId: string;
+  criteria?: Partial<SimilarCriteria>;
+  limit?: number;
+}): Promise<ShiSimilarResult> {
+  return shiFetch("/api/shi/similar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function shiOwnerPortfolio(opts: {
+  source: string;
+  propId: string;
+  cadOwnerId?: string | null;
+  ownerName?: string | null;
+}): Promise<ShiOwnerPortfolio> {
+  const params = new URLSearchParams();
+  params.set("source", opts.source);
+  params.set("propId", opts.propId);
+  if (opts.cadOwnerId) params.set("cadOwnerId", opts.cadOwnerId);
+  if (opts.ownerName) params.set("ownerName", opts.ownerName);
+  const body = await shiFetch<{ portfolio: ShiOwnerPortfolio }>(
+    `/api/shi/portfolio?${params.toString()}`,
+  );
+  return body.portfolio;
 }

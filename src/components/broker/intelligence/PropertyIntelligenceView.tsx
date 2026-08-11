@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
+import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
 import {
   ShiResearchMap,
@@ -879,13 +880,15 @@ export function PropertyIntelligenceView({
               <div>
                 <h4 className="flex items-center gap-2 text-xs font-bold text-ink">
                   <Users className="h-3.5 w-3.5 text-gold" />
-                  Owner relationships
+                  Owner portfolio
                 </h4>
                 <p className="mt-1 text-[10px] text-[var(--muted)]">
-                  {exactCount} EXACT · {possibleCount} POSSIBLE
+                  {exactCount} exact · {possibleCount} possible related
                 </p>
                 <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
-                  {matchNote}
+                  Properties associated with this owner in this county. Exact =
+                  same owner id. Possible = normalized name only — not confirmed
+                  the same person. {matchNote}
                 </p>
                 {matches.length === 0 ? (
                   <p className="mt-2 text-xs text-[var(--muted)]">
@@ -987,6 +990,11 @@ export function PropertyIntelligenceView({
                   </ol>
                 )}
               </div>
+
+              <ShiDiscoverPanel
+                property={selected}
+                onOpenProperty={(opts) => void openProperty(opts)}
+              />
 
               <div className="space-y-2 border-t border-hairline pt-3">
                 <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">

@@ -87,7 +87,7 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 See `docs/shi/SHI-3-PLAN.md`.
 
-### SHI-4 — Farms · Change intelligence (current)
+### SHI-4 — Farms · Change intelligence ✅
 
 | Front-end | Back-end |
 |---|---|
@@ -96,12 +96,14 @@ See `docs/shi/SHI-3-PLAN.md`.
 
 See `docs/shi/SHI-4-PLAN.md`.
 
-### SHI-5 — Find Similar · Portfolio polish
+### SHI-5 — Find Similar · Portfolio polish (current)
 
 | Front-end | Back-end |
 |---|---|
-| Find Similar (explainable) | Deterministic similarity query |
-| Owner portfolio map | Portfolio for EXACT matches only |
+| Find Similar + explainable reasons · Portfolio panel | `POST /api/shi/similar` · `GET /api/shi/portfolio` |
+| Exact vs possible owner lists never silently merged | No new migration — existing parcel indexes |
+
+See `docs/shi/SHI-5-PLAN.md`.
 
 ## Out of scope for SHI UI waves
 

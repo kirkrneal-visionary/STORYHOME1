@@ -208,7 +208,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-4",
     name: "Farms · Change intelligence",
     goal: "Saved territories with honest since-last-review change feed.",
-    status: "current",
+    status: "done",
     frontend: [
       "Save as Farm from analyzed Market Frame",
       "Farms ribbon module — list + territory dossier",
@@ -230,18 +230,21 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-5",
     name: "Find Similar · Portfolio polish",
     goal: "Deterministic similarity + confident owner portfolios.",
-    status: "planned",
+    status: "current",
     frontend: [
-      "Find Similar with explainable criteria",
-      "Owner portfolio map + totals",
+      "Find Similar Properties with explainable reasons (no fake %)",
+      "Owner portfolio: exact vs possible kept separate + totals",
+      "Discover actions on property record",
     ],
     backend: [
-      "Deterministic similar-property query builder",
-      "Portfolio aggregation for EXACT owner matches only",
+      "POST /api/shi/similar — county-locked deterministic query",
+      "GET /api/shi/portfolio — EXACT aggregates + POSSIBLE list",
+      "No new migration — uses existing parcel indexes",
     ],
     outOfScope: [
       "Generative AI similarity",
       "AVM / seller probability scores",
+      "Silent merge of uncertain owner matches",
     ],
   },
 ];
