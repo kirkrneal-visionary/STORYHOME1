@@ -77,4 +77,56 @@ function canMoveToFolder(destCount, max = 40) {
 assert.equal(canMoveToFolder(39), true);
 assert.equal(canMoveToFolder(40), false);
 
+// Box draft GeoJSON (rubber-band) — mirrors src/lib/map-draw/box-draft.ts
+function buildBoxDraftGeoJSON(corner, tip) {
+  const features = [
+    {
+      type: "Feature",
+      properties: { kind: "corner" },
+      geometry: { type: "Point", coordinates: [corner.lng, corner.lat] },
+    },
+  ];
+  if (!tip) return { type: "FeatureCollection", features };
+  const north = Math.max(corner.lat, tip.lat);
+  const south = Math.min(corner.lat, tip.lat);
+  const east = Math.max(corner.lng, tip.lng);
+  const west = Math.min(corner.lng, tip.lng);
+  features.push({
+    type: "Feature",
+    properties: { kind: "poly" },
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [west, north],
+          [east, north],
+          [east, south],
+          [west, south],
+          [west, north],
+        ],
+      ],
+    },
+  });
+  return { type: "FeatureCollection", features };
+}
+const draft = buildBoxDraftGeoJSON(
+  { lat: 30.0, lng: -95.1 },
+  { lat: 30.1, lng: -95.0 },
+);
+assert.ok(draft.features.some((f) => f.properties.kind === "poly"));
+assert.equal(
+  validateBoundaryCaps({
+    type: "rectangle",
+    bounds: { north: 30.1, south: 30.0, east: -95.0, west: -95.1 },
+  }).ok,
+  true,
+);
+
+// Thumbnail byte-size estimate — mirrors fitThumbnailDataUrl early-exit
+function approxDataUrlBytes(dataUrl) {
+  return Math.ceil(((dataUrl.length - dataUrl.indexOf(",")) * 3) / 4);
+}
+const tiny = "data:image/jpeg;base64," + "A".repeat(40);
+assert.ok(approxDataUrlBytes(tiny) < 100_000);
+
 console.log("shi-backlog: ok");

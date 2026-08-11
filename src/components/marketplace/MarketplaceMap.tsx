@@ -47,14 +47,17 @@ import {
   useCadOverlays,
 } from "@/hooks/useCadOverlays";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
-import { SHI_CAPS } from "@/lib/shi/caps";
 import {
-  FREEHAND_MIN_STEP_PX,
+  emptyFreehandSession,
+  freehandForceSeal,
+  freehandPointerDown,
+  freehandPointerMove,
+  freehandSealPoints,
+  type FreehandSession,
+} from "@/lib/map-draw/freehand-session";
+import {
   FREEHAND_SNAP_PX,
   FREEHAND_VERTEX_RADIUS_PX,
-  finalizeFreehandPoints,
-  isNearStart,
-  pointsFarEnoughPx,
 } from "@/lib/shi/freehand";
 import { cn } from "@/lib/utils";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -142,12 +145,7 @@ export function MarketplaceMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const draftRef = useRef<LatLng[]>([]);
-  const freehandRef = useRef<{
-    active: boolean;
-    leftStart: boolean;
-    points: LatLng[];
-    canClose: boolean;
-  }>({ active: false, leftStart: false, points: [], canClose: false });
+  const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
   const toolRef = useRef<DrawTool>("pan");
 
   const [ready, setReady] = useState(false);
@@ -433,12 +431,7 @@ export function MarketplaceMap({
     if (!map || !ready) return;
 
     const clearDraft = () => {
-      freehandRef.current = {
-        active: false,
-        leftStart: false,
-        points: [],
-        canClose: false,
-      };
+      freehandRef.current = emptyFreehandSession();
       setFreehandHint("idle");
       (map.getSource("freehand") as maplibregl.GeoJSONSource | undefined)?.setData(
         EMPTY_FC,
@@ -457,10 +450,11 @@ export function MarketplaceMap({
       );
     };
 
-    const seal = () => {
-      const pts = finalizeFreehandPoints(freehandRef.current.points);
-      if (pts.length < SHI_CAPS.minFreehandVertices) return false;
-      if (!freehandRef.current.canClose) return false;
+    const seal = (force = false) => {
+      const pts = force
+        ? freehandForceSeal(freehandRef.current)
+        : freehandSealPoints(freehandRef.current);
+      if (!pts) return false;
       onBoundaryChange({ type: "polygon", points: pts });
       setShowSearchArea(false);
       clearDraft();
@@ -473,69 +467,34 @@ export function MarketplaceMap({
       e.preventDefault();
       map.dragPan.disable();
       const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-      const fh = freehandRef.current;
-      fh.active = true;
-      if (fh.points.length === 0) {
-        fh.points = [pt];
-        fh.leftStart = false;
-        fh.canClose = false;
-      } else if (
-        pointsFarEnoughPx(
-          map,
-          fh.points[fh.points.length - 1]!,
-          pt,
-          FREEHAND_MIN_STEP_PX,
-        )
-      ) {
-        if (fh.points.length < SHI_CAPS.maxFreehandVertices) fh.points.push(pt);
-      }
+      freehandRef.current = freehandPointerDown(map, freehandRef.current, pt);
       setFreehandHint("drawing");
-      paint(fh.points, null, false);
+      paint(freehandRef.current.points, null, false);
     };
 
     const onMove = (e: maplibregl.MapMouseEvent) => {
       if (toolRef.current !== "freehand") return;
-      const fh = freehandRef.current;
-      if (!fh.points.length) return;
+      if (!freehandRef.current.points.length) return;
       const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-      const start = fh.points[0]!;
-      if (fh.active) {
-        const last = fh.points[fh.points.length - 1]!;
-        if (
-          pointsFarEnoughPx(map, last, tip, FREEHAND_MIN_STEP_PX) &&
-          fh.points.length < SHI_CAPS.maxFreehandVertices
-        ) {
-          fh.points.push(tip);
-        }
-        if (
-          !fh.leftStart &&
-          pointsFarEnoughPx(map, start, tip, FREEHAND_SNAP_PX * 2.2)
-        ) {
-          fh.leftStart = true;
-        }
-      }
-      const near =
-        fh.leftStart &&
-        fh.points.length >= SHI_CAPS.minFreehandVertices &&
-        isNearStart(map, tip, start, FREEHAND_SNAP_PX);
-      fh.canClose = near;
+      freehandRef.current = freehandPointerMove(map, freehandRef.current, tip);
+      const near = freehandRef.current.canClose;
       setFreehandHint(near ? "closeable" : "drawing");
-      paint(fh.points, tip, near);
-      if (fh.active && near) seal();
+      paint(freehandRef.current.points, tip, near);
+      if (freehandRef.current.active && near) seal();
     };
 
     const onUp = () => {
       if (toolRef.current !== "freehand") return;
       const fh = freehandRef.current;
       if (!fh.active) return;
-      fh.active = false;
+      freehandRef.current = { ...fh, active: false };
       map.dragPan.enable();
-      if (fh.canClose) {
+      if (freehandRef.current.canClose) {
         seal();
         return;
       }
-      paint(fh.points, null, false);
-      setFreehandHint(fh.points.length ? "drawing" : "idle");
+      paint(freehandRef.current.points, null, false);
+      setFreehandHint(freehandRef.current.points.length ? "drawing" : "idle");
     };
 
     const onKey = (ev: KeyboardEvent) => {
@@ -543,9 +502,7 @@ export function MarketplaceMap({
         clearDraft();
         setTool("pan");
       } else if (ev.key === "Enter") {
-        freehandRef.current.canClose =
-          freehandRef.current.points.length >= SHI_CAPS.minFreehandVertices;
-        seal();
+        seal(true);
       }
     };
 

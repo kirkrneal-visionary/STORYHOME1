@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
 import {
@@ -15,14 +16,17 @@ import {
 } from "@/lib/cad-layers";
 import type { DrawnBoundary } from "@/lib/geo";
 import { makeShiAcronym } from "@/lib/shi/acronym";
+import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import { nextFrameColor } from "@/lib/shi/frame-colors";
+import { fitThumbnailDataUrl } from "@/lib/shi/thumbnail";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import {
   consumeOpenSavedFrame,
   shiAnalyzeArea,
   shiCreateFolder,
   shiFreshness,
+  shiGetFrame,
   shiGetProperty,
   shiListFolders,
   shiOwnerMatches,
@@ -65,6 +69,9 @@ type ResearchProps = {
  * Study Vault lives on its own submenu (not crammed here).
  */
 export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [field, setField] = useState<CadSearchField>("all");
   const [source, setSource] = useState("");
@@ -91,6 +98,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     { filterSource: "" },
   );
   const frameSeq = useRef(1);
+  const openedFrameRef = useRef<string | null>(null);
 
   const countyName =
     AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ?? "";
@@ -258,6 +266,11 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
       setAreaError("Pick a county before drawing market frames");
       return;
     }
+    const cap = validateBoundaryCaps(boundary);
+    if (!cap.ok) {
+      setAreaError(cap.error);
+      return;
+    }
     const n = frameSeq.current++;
     const name = `Frame ${n}`;
     const localId =
@@ -339,11 +352,18 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     setSaving(true);
     setAreaError("");
     try {
-      // Map Memory: fit frame at readable distance → snap → restore camera.
-      const thumb =
+      // Map Memory: fit frame → snap → downscale to vault byte cap → restore camera.
+      let thumb =
         (await mapRef.current?.captureMapMemory(active.boundary)) ??
         mapRef.current?.captureThumbnail() ??
         null;
+      if (thumb) {
+        try {
+          thumb = await fitThumbnailDataUrl(thumb);
+        } catch {
+          /* keep original snap */
+        }
+      }
       const view = mapRef.current?.getView();
       const saved = await shiSaveFrame({
         folderId,
@@ -443,19 +463,71 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     mapRef.current?.fitBoundary(frame.boundary);
   }
 
-  // Study Vault → Research hand-off (after loadSavedFrame is defined).
+  function clearOpenFrameParams() {
+    const params = new URLSearchParams(searchParams.toString());
+    if (!params.has("openFrame") && !params.has("folderId")) return;
+    params.delete("openFrame");
+    params.delete("folderId");
+    const q = params.toString();
+    const base = pathname?.includes("/intelligence")
+      ? "/portal/intelligence"
+      : "/portal/intelligence";
+    router.replace(q ? `${base}?${q}` : base, { scroll: false });
+  }
+
+  // Study Vault → Research hand-off: sessionStorage (same tab) + durable ?openFrame=.
   useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+
+    const applyFrame = (frame: ShiSavedFrame) => {
+      if (cancelled || openedFrameRef.current === frame.id) return;
+      openedFrameRef.current = frame.id;
+      const fromMetrics = frame.snapshot?.metrics?.countySource;
+      if (fromMetrics) {
+        setSource(fromMetrics);
+        void refreshFolders(fromMetrics);
+      }
+      timer = window.setTimeout(() => {
+        if (!cancelled) loadSavedFrame(frame);
+      }, 120);
+    };
+
     const queued = consumeOpenSavedFrame();
-    if (!queued?.boundary) return;
-    const fromMetrics = queued.snapshot?.metrics?.countySource;
-    if (fromMetrics) {
-      setSource(fromMetrics);
-      void refreshFolders(fromMetrics);
+    if (queued?.boundary) {
+      applyFrame(queued);
+      clearOpenFrameParams();
+      return () => {
+        cancelled = true;
+        if (timer) window.clearTimeout(timer);
+      };
     }
-    const t = window.setTimeout(() => loadSavedFrame(queued), 120);
-    return () => window.clearTimeout(t);
+
+    const openFrame = searchParams.get("openFrame")?.trim() || "";
+    if (!openFrame) return;
+
+    void (async () => {
+      try {
+        const frame = await shiGetFrame(openFrame);
+        if (cancelled || !frame?.boundary) return;
+        applyFrame(frame);
+      } catch (e) {
+        if (!cancelled) {
+          setAreaError(
+            e instanceof Error ? e.message : "Could not reopen saved frame",
+          );
+        }
+      } finally {
+        if (!cancelled) clearOpenFrameParams();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const selectedFresh =
     selected &&

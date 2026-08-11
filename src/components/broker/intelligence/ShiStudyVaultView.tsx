@@ -7,6 +7,7 @@ import {
   Pencil,
   Trash2,
   MapPinned,
+  X,
 } from "lucide-react";
 import {
   queueOpenSavedFrame,
@@ -35,8 +36,14 @@ function money(n: number | null | undefined) {
 }
 
 type Props = {
-  onOpenInResearch: () => void;
+  onOpenInResearch: (frame: ShiSavedFrame) => void;
 };
+
+type VaultDialog =
+  | { kind: "rename-folder"; folder: ShiStudyFolder; name: string }
+  | { kind: "delete-folder"; folder: ShiStudyFolder }
+  | { kind: "rename-frame"; frame: ShiSavedFrame; name: string }
+  | { kind: "delete-frame"; frame: ShiSavedFrame };
 
 /**
  * Study Vault — Map Memory album of saved market frames.
@@ -53,6 +60,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
+  const [dialog, setDialog] = useState<VaultDialog | null>(null);
 
   async function refreshFolders(source?: string) {
     setLoading(true);
@@ -119,68 +127,44 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
     }
   }
 
-  async function renameFolder(folder: ShiStudyFolder) {
-    const name = window.prompt("Rename folder", folder.name);
-    if (!name?.trim()) return;
+  async function confirmDialog() {
+    if (!dialog) return;
     setBusy(true);
+    setError("");
     try {
-      const updated = await shiRenameFolder({
-        folderId: folder.id,
-        name: name.trim(),
-      });
-      await refreshFolders(countySource);
-      if (activeFolder?.id === folder.id) setActiveFolder(updated);
-    } catch (e) {
-      setError(formatShiVaultError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function removeFolder(folder: ShiStudyFolder) {
-    if (
-      !window.confirm(
-        `Delete folder “${folder.name}” and all saved frames inside? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-    setBusy(true);
-    try {
-      await shiDeleteFolder(folder.id);
-      if (activeFolder?.id === folder.id) {
-        setActiveFolder(null);
-        setFrames([]);
+      if (dialog.kind === "rename-folder") {
+        const name = dialog.name.trim();
+        if (name.length < 2) {
+          setError("Folder name is required");
+          return;
+        }
+        const updated = await shiRenameFolder({
+          folderId: dialog.folder.id,
+          name,
+        });
+        await refreshFolders(countySource);
+        if (activeFolder?.id === dialog.folder.id) setActiveFolder(updated);
+      } else if (dialog.kind === "delete-folder") {
+        await shiDeleteFolder(dialog.folder.id);
+        if (activeFolder?.id === dialog.folder.id) {
+          setActiveFolder(null);
+          setFrames([]);
+        }
+        await refreshFolders(countySource);
+      } else if (dialog.kind === "rename-frame") {
+        const name = dialog.name.trim();
+        if (name.length < 2) {
+          setError("Frame name is required");
+          return;
+        }
+        await shiRenameFrame({ frameId: dialog.frame.id, name });
+        if (activeFolder) await loadFolder(activeFolder);
+      } else if (dialog.kind === "delete-frame") {
+        await shiDeleteFrame(dialog.frame.id);
+        if (activeFolder) await loadFolder(activeFolder);
+        await refreshFolders(countySource);
       }
-      await refreshFolders(countySource);
-    } catch (e) {
-      setError(formatShiVaultError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function renameFrame(frame: ShiSavedFrame) {
-    const name = window.prompt("Rename frame", frame.name);
-    if (!name?.trim()) return;
-    setBusy(true);
-    try {
-      await shiRenameFrame({ frameId: frame.id, name: name.trim() });
-      if (activeFolder) await loadFolder(activeFolder);
-    } catch (e) {
-      setError(formatShiVaultError(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function removeFrame(frame: ShiSavedFrame) {
-    if (!window.confirm(`Delete saved frame “${frame.name}”?`)) return;
-    setBusy(true);
-    try {
-      await shiDeleteFrame(frame.id);
-      if (activeFolder) await loadFolder(activeFolder);
-      await refreshFolders(countySource);
+      setDialog(null);
     } catch (e) {
       setError(formatShiVaultError(e));
     } finally {
@@ -190,12 +174,33 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
 
   function openInResearch(frame: ShiSavedFrame) {
     queueOpenSavedFrame(frame);
-    onOpenInResearch();
+    onOpenInResearch(frame);
   }
 
   const countyName =
     AVAILABLE_COUNTIES.find((c) => c.source === countySource)?.name ??
     "All counties";
+
+  const dialogTitle =
+    dialog?.kind === "rename-folder"
+      ? "Rename folder"
+      : dialog?.kind === "delete-folder"
+        ? "Delete folder"
+        : dialog?.kind === "rename-frame"
+          ? "Rename Map Memory"
+          : dialog?.kind === "delete-frame"
+            ? "Delete Map Memory"
+            : "";
+
+  const dialogBody =
+    dialog?.kind === "delete-folder"
+      ? `Delete folder “${dialog.folder.name}” and all saved frames inside? This cannot be undone.`
+      : dialog?.kind === "delete-frame"
+        ? `Delete saved frame “${dialog.frame.name}”? This cannot be undone.`
+        : null;
+
+  const isRename =
+    dialog?.kind === "rename-folder" || dialog?.kind === "rename-frame";
 
   return (
     <div className="space-y-5">
@@ -313,7 +318,13 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => void renameFolder(f)}
+                      onClick={() =>
+                        setDialog({
+                          kind: "rename-folder",
+                          folder: f,
+                          name: f.name,
+                        })
+                      }
                       className="rounded-lg p-1.5 text-navy hover:bg-navy/10"
                       title="Rename"
                     >
@@ -321,7 +332,9 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => void removeFolder(f)}
+                      onClick={() =>
+                        setDialog({ kind: "delete-folder", folder: f })
+                      }
                       className="rounded-lg p-1.5 text-red-700 hover:bg-red-50"
                       title="Delete"
                     >
@@ -418,7 +431,13 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => void renameFrame(f)}
+                          onClick={() =>
+                            setDialog({
+                              kind: "rename-frame",
+                              frame: f,
+                              name: f.name,
+                            })
+                          }
                           className="rounded-lg border border-hairline px-2 py-1.5 text-navy hover:bg-navy/5"
                           title="Rename"
                         >
@@ -426,7 +445,9 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => void removeFrame(f)}
+                          onClick={() =>
+                            setDialog({ kind: "delete-frame", frame: f })
+                          }
                           className="rounded-lg border border-hairline px-2 py-1.5 text-red-700 hover:bg-red-50"
                           title="Delete"
                         >
@@ -441,6 +462,96 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
           )}
         </section>
       </div>
+
+      {dialog ? (
+        <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="shi-vault-dialog-title"
+            className="w-full max-w-md rounded-2xl border border-hairline bg-[var(--surface)] p-5 shadow-xl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h3
+                id="shi-vault-dialog-title"
+                className="font-serif text-xl font-bold text-ink"
+              >
+                {dialogTitle}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setDialog(null)}
+                disabled={busy}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ink"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {dialogBody ? (
+              <p className="mt-3 text-sm text-[var(--muted)]">{dialogBody}</p>
+            ) : null}
+
+            {isRename ? (
+              <label className="mt-4 block text-[11px] font-semibold text-[var(--muted)]">
+                Name
+                <input
+                  autoFocus
+                  value={
+                    dialog.kind === "rename-folder" ||
+                    dialog.kind === "rename-frame"
+                      ? dialog.name
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const name = e.target.value;
+                    setDialog((prev) =>
+                      prev &&
+                      (prev.kind === "rename-folder" ||
+                        prev.kind === "rename-frame")
+                        ? { ...prev, name }
+                        : prev,
+                    );
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void confirmDialog();
+                    }
+                  }}
+                  className="mt-1 block w-full rounded-lg border border-hairline bg-[var(--background)] px-3 py-2 text-sm text-ink"
+                />
+              </label>
+            ) : null}
+
+            <div className="mt-6 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setDialog(null)}
+                disabled={busy}
+                className="h-11 flex-1 rounded-lg border border-hairline text-sm font-semibold text-ink"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDialog()}
+                disabled={busy}
+                className={cn(
+                  "inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg text-sm font-bold",
+                  dialog.kind.startsWith("delete")
+                    ? "bg-red-700 text-white"
+                    : "bg-navy text-gold",
+                )}
+              >
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {dialog.kind.startsWith("delete") ? "Delete" : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

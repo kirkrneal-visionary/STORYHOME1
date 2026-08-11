@@ -159,6 +159,54 @@ export async function listFolderFrames(
   return withSnaps;
 }
 
+/** Load one saved frame by id (owner-scoped). Used by durable Vault → Research URL reopen. */
+export async function getMarketFrame(
+  supabase: SupabaseClient,
+  ownerId: string,
+  frameId: string,
+): Promise<ShiSavedFrame> {
+  const { data, error } = await supabase
+    .from("shi_market_frames")
+    .select(
+      "id, folder_id, name, acronym, color, boundary, map_center_lat, map_center_lng, map_zoom, updated_at",
+    )
+    .eq("owner_id", ownerId)
+    .eq("id", frameId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Frame not found");
+
+  const { data: snap } = await supabase
+    .from("shi_frame_snapshots")
+    .select("metrics, parcels, thumbnail_path, analyzed_at")
+    .eq("frame_id", data.id)
+    .eq("owner_id", ownerId)
+    .maybeSingle();
+
+  return {
+    id: data.id as string,
+    folderId: data.folder_id as string,
+    name: data.name as string,
+    acronym: data.acronym as string,
+    color: data.color as string,
+    boundary: data.boundary as DrawnBoundary,
+    mapCenterLat: data.map_center_lat == null ? null : Number(data.map_center_lat),
+    mapCenterLng: data.map_center_lng == null ? null : Number(data.map_center_lng),
+    mapZoom: data.map_zoom == null ? null : Number(data.map_zoom),
+    updatedAt: data.updated_at as string,
+    snapshot: snap
+      ? {
+          metrics: {
+            ...(snap.metrics as Record<string, unknown>),
+            parcels: (snap.parcels as ShiAreaAnalysis["parcels"]) ?? [],
+          } as NonNullable<ShiSavedFrame["snapshot"]>["metrics"],
+          thumbnailPath: (snap.thumbnail_path as string | null) ?? null,
+          analyzedAt: snap.analyzed_at as string,
+        }
+      : null,
+  };
+}
+
 export async function renameStudyFolder(
   supabase: SupabaseClient,
   ownerId: string,

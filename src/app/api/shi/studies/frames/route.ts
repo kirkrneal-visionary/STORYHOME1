@@ -3,6 +3,7 @@ import type { DrawnBoundary } from "@/lib/geo";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import {
   deleteMarketFrame,
+  getMarketFrame,
   listFolderFrames,
   renameMarketFrame,
   saveMarketFrame,
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
   }
   const url = new URL(request.url);
   const folderId = url.searchParams.get("folderId")?.trim() || "";
+  const frameId = url.searchParams.get("frameId")?.trim() || "";
   const thumbPath = url.searchParams.get("thumbnailPath")?.trim() || "";
 
   // Signed thumbnail for Study Vault (owner-only path check inside helper).
@@ -38,6 +40,26 @@ export async function GET(request: Request) {
           url: null,
         },
         { status: 400 },
+      );
+    }
+  }
+
+  // Single-frame reopen (Vault → Research via ?openFrame=).
+  if (frameId) {
+    try {
+      const frame = await getMarketFrame(
+        gate.supabase,
+        gate.user.id,
+        frameId,
+      );
+      return NextResponse.json({ frame });
+    } catch (e) {
+      return NextResponse.json(
+        {
+          error: e instanceof Error ? e.message : "Frame not found",
+          frame: null,
+        },
+        { status: 404 },
       );
     }
   }
