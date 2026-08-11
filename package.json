@@ -10,7 +10,8 @@
     "lint": "eslint",
     "cad:list": "node scripts/ingest-cad.mjs --list",
     "cad:ingest": "node scripts/ingest-cad.mjs",
-    "cad:refresh": "node scripts/refresh-cad.mjs"
+    "cad:refresh": "node scripts/refresh-cad.mjs",
+    "cad:audit": "node scripts/audit-cad.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
