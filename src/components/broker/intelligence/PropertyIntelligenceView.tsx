@@ -448,14 +448,14 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         </div>
       ) : null}
 
-      {/* Classic 3-split: Search | Map | Property */}
-      <div className="grid gap-3 xl:grid-cols-[280px_minmax(0,1fr)_340px] xl:items-start">
-        <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+      {/* Classic 3-split: Search | Map | Property — equal height, bottoms aligned */}
+      <div className="grid gap-3 xl:h-[540px] xl:grid-cols-[280px_minmax(0,1fr)_340px] xl:items-stretch">
+        <section className="flex min-h-[420px] flex-col rounded-2xl border border-hairline bg-[var(--surface)] p-4 xl:min-h-0 xl:h-full">
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
             <Search className="h-4 w-4 text-gold" />
             Search
           </h3>
-          <form onSubmit={runSearch} className="mt-3 space-y-2">
+          <form onSubmit={runSearch} className="mt-3 shrink-0 space-y-2">
             <label className="block text-[11px] font-semibold text-[var(--muted)]">
               County
               <select
@@ -515,7 +515,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
             <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
           ) : null}
 
-          <ul className="mt-3 max-h-[420px] space-y-1 overflow-y-auto">
+          <ul className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
             {results.length === 0 && !searching ? (
               <li className="py-4 text-center text-xs text-[var(--muted)]">
                 Results appear here. Or click a parcel on the map.
@@ -573,11 +573,11 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
           onActiveFrameIdChange={setActiveFrameId}
           onCreateFrame={createFrame}
           onSelectParcel={openFromMap}
-          className="h-[480px] min-h-[400px] xl:h-[600px]"
+          className="h-[420px] min-h-[400px] xl:h-full xl:min-h-0"
         />
 
-        <section className="max-h-[600px] overflow-y-auto rounded-2xl border border-hairline bg-[var(--surface)] p-4 xl:max-h-[600px]">
-          <h3 className="text-sm font-bold text-ink">Property record</h3>
+        <section className="flex min-h-[420px] flex-col overflow-y-auto rounded-2xl border border-hairline bg-[var(--surface)] p-4 xl:h-full xl:min-h-0">
+          <h3 className="shrink-0 text-sm font-bold text-ink">Property record</h3>
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
