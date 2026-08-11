@@ -1,9 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Loader2, MapPinned, Search, Users } from "lucide-react";
 import { ShiIcon } from "@/components/brand/ShiIcon";
-import { ShiResearchMap } from "@/components/broker/intelligence/ShiResearchMap";
+import {
+  ShiResearchMap,
+  type ShiMapSelect,
+} from "@/components/broker/intelligence/ShiResearchMap";
 import {
   CAD_SEARCH_FIELDS,
   cadSearchPlaceholder,
@@ -65,6 +68,16 @@ export function PropertyIntelligenceView() {
   const [error, setError] = useState("");
   const [searching, startSearch] = useTransition();
   const [loadingProperty, setLoadingProperty] = useState(false);
+  const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
+    { filterSource: "" },
+  );
+
+  useEffect(() => {
+    countyLockRef.current = {
+      selectedSource: selected?.source,
+      filterSource: source,
+    };
+  }, [selected?.source, source]);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,11 +115,28 @@ export function PropertyIntelligenceView() {
   }, []);
 
   const openProperty = useCallback(
-    async (opts: { propId: string; source?: string; countyFips?: string }) => {
+    async (opts: {
+      propId: string;
+      source?: string;
+      countyFips?: string;
+      preferredSource?: string;
+      nearLat?: number;
+      nearLng?: number;
+    }) => {
       setLoadingProperty(true);
       setError("");
+      const lock = countyLockRef.current;
       try {
-        const property = await shiGetProperty(opts);
+        const property = await shiGetProperty({
+          ...opts,
+          // Stay in the county the agent is researching when prop_ids collide.
+          preferredSource:
+            opts.preferredSource ||
+            opts.source ||
+            lock.selectedSource ||
+            lock.filterSource ||
+            undefined,
+        });
         if (!property) {
           setError("Property not found");
           setSelected(null);
@@ -114,6 +144,8 @@ export function PropertyIntelligenceView() {
           return;
         }
         setSelected(property);
+        // Keep search county filter aligned with the opened parcel.
+        if (property.source) setSource(property.source);
         void loadMatches(property);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load property");
@@ -122,6 +154,22 @@ export function PropertyIntelligenceView() {
       }
     },
     [loadMatches],
+  );
+
+  const openFromMap = useCallback(
+    (sel: ShiMapSelect) => {
+      const lock = countyLockRef.current;
+      void openProperty({
+        propId: sel.propId,
+        source: sel.source,
+        countyFips: sel.countyFips,
+        preferredSource:
+          sel.preferredSource || lock.selectedSource || lock.filterSource,
+        nearLat: sel.lat,
+        nearLng: sel.lng,
+      });
+    },
+    [openProperty],
   );
 
   function runSearch(e?: React.FormEvent) {
@@ -402,9 +450,7 @@ export function PropertyIntelligenceView() {
           related={matches}
           boundary={boundary}
           onBoundaryChange={handleBoundaryChange}
-          onSelectPropId={(propId, src) =>
-            void openProperty({ propId, source: src })
-          }
+          onSelectParcel={openFromMap}
         />
 
         {/* Property panel */}

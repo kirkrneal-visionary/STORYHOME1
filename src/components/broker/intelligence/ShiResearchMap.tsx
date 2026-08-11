@@ -32,12 +32,22 @@ const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 
 type DrawTool = "pan" | "radius" | "rectangle";
 
+export type ShiMapSelect = {
+  propId: string;
+  source?: string;
+  countyFips?: string;
+  lat: number;
+  lng: number;
+  /** Keep research locked to the county the agent is already in. */
+  preferredSource?: string;
+};
+
 type ShiResearchMapProps = {
   selected: ShiPropertyDetail | null;
   related: ShiOwnerMatch[];
   boundary: DrawnBoundary | null;
   onBoundaryChange: (boundary: DrawnBoundary | null) => void;
-  onSelectPropId: (propId: string, source?: string) => void;
+  onSelectParcel: (sel: ShiMapSelect) => void;
   className?: string;
 };
 
@@ -91,12 +101,13 @@ export function ShiResearchMap({
   related,
   boundary,
   onBoundaryChange,
-  onSelectPropId,
+  onSelectParcel,
   className,
 }: ShiResearchMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const onSelectRef = useRef(onSelectPropId);
+  const onSelectRef = useRef(onSelectParcel);
+  const preferredSourceRef = useRef<string | undefined>(undefined);
   const toolRef = useRef<DrawTool>("pan");
   const draftRef = useRef<LatLng[]>([]);
   const [ready, setReady] = useState(false);
@@ -107,8 +118,29 @@ export function ShiResearchMap({
   const overlays = useCadOverlays(mapRef, ready);
 
   useEffect(() => {
-    onSelectRef.current = onSelectPropId;
-  }, [onSelectPropId]);
+    onSelectRef.current = onSelectParcel;
+  }, [onSelectParcel]);
+
+  useEffect(() => {
+    preferredSourceRef.current =
+      selected?.source || overlays.activeCounty || undefined;
+  }, [selected?.source, overlays.activeCounty]);
+
+  // Keep BIS overlay county in sync with the property being researched.
+  useEffect(() => {
+    const src = selected?.source;
+    if (!src) return;
+    if (
+      src === "polk_cad" ||
+      src === "trinity_cad" ||
+      src === "san_jacinto_cad" ||
+      src === "liberty_cad" ||
+      src === "walker_cad"
+    ) {
+      overlays.setActiveCounty(src);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when parcel source changes
+  }, [selected?.source]);
 
   useEffect(() => {
     toolRef.current = tool;
@@ -121,6 +153,12 @@ export function ShiResearchMap({
       style: buildStoryMapStyle(),
       center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
+      // Retina / HiDPI requests sharper imagery tiles (crisper satellite close-ups).
+      pixelRatio: Math.min(
+        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+        2,
+      ),
+      maxZoom: 22,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
@@ -232,9 +270,18 @@ export function ShiResearchMap({
         if (toolRef.current !== "pan") return;
         const f = e.features?.[0];
         const propId = f?.properties?.prop_id;
-        if (typeof propId === "string" && propId) {
-          onSelectRef.current(propId);
-        }
+        if (typeof propId !== "string" || !propId) return;
+        const srcRaw = f?.properties?.source;
+        const fipsRaw = f?.properties?.county_fips;
+        onSelectRef.current({
+          propId,
+          source: typeof srcRaw === "string" && srcRaw ? srcRaw : undefined,
+          countyFips:
+            typeof fipsRaw === "string" && fipsRaw ? fipsRaw : undefined,
+          lat: e.lngLat.lat,
+          lng: e.lngLat.lng,
+          preferredSource: preferredSourceRef.current,
+        });
       });
       map.on("mouseenter", "parcels-fill", () => {
         if (toolRef.current === "pan") map.getCanvas().style.cursor = "pointer";
@@ -386,13 +433,27 @@ export function ShiResearchMap({
           for (const c of coords) walk(c);
         };
         walk(selected.geojson.coordinates);
-        // Expand bounds with related EXACT tracts when present.
+        // Only pull in nearby EXACT tracts in the *same county* — never yank
+        // the camera across East Texas when a colliding prop_id mis-resolves.
+        const anchorLng = selected.centroidLng;
+        const anchorLat = selected.centroidLat;
         for (const m of related) {
           if (m.matchTier !== "EXACT" || !m.geojson) continue;
+          if (m.source !== selected.source) continue;
+          if (
+            anchorLat != null &&
+            anchorLng != null &&
+            m.centroidLat != null &&
+            m.centroidLng != null
+          ) {
+            const dLat = Math.abs(m.centroidLat - anchorLat);
+            const dLng = Math.abs(m.centroidLng - anchorLng);
+            if (dLat > 0.18 || dLng > 0.18) continue;
+          }
           walk(m.geojson.coordinates);
         }
         if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, { padding: 56, maxZoom: 16, duration: 600 });
+          map.fitBounds(bounds, { padding: 56, maxZoom: 17, duration: 550 });
           return;
         }
       } catch {
@@ -425,17 +486,18 @@ export function ShiResearchMap({
       />
 
       <div className="pointer-events-none absolute inset-0 z-10">
-      <div className="pointer-events-auto absolute top-3 left-3 flex flex-wrap gap-1.5">
+      <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 rounded-xl border border-navy/20 bg-[var(--paper,#f7f4ec)]/95 p-1 shadow-md backdrop-blur">
         {MAP_BASE_OPTIONS.map((opt) => (
           <button
             key={opt.id}
             type="button"
             onClick={() => setBase(opt.id)}
+            title={opt.label}
             className={cn(
-              "rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase shadow-sm backdrop-blur",
+              "rounded-lg px-2 py-1.5 font-mono text-[10px] font-extrabold tracking-wide uppercase",
               base === opt.id
                 ? "bg-navy text-gold"
-                : "bg-white/90 text-ink hover:bg-white",
+                : "bg-transparent text-navy hover:bg-navy/10",
             )}
           >
             {opt.short}
@@ -443,7 +505,7 @@ export function ShiResearchMap({
         ))}
       </div>
 
-      <div className="pointer-events-auto absolute bottom-12 left-3 flex flex-wrap items-center gap-1.5">
+      <div className="pointer-events-auto absolute bottom-12 left-3 flex flex-wrap items-center gap-1.5 rounded-xl border border-navy/20 bg-[var(--paper,#f7f4ec)]/95 p-1 shadow-md backdrop-blur">
         <button
           type="button"
           onClick={() => {
@@ -451,15 +513,15 @@ export function ShiResearchMap({
             draftRef.current = [];
           }}
           className={cn(
-            "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur",
-            tool === "radius" ? "bg-navy text-gold" : "bg-white/90 text-ink",
+            "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
+            tool === "radius" ? "bg-navy text-gold" : "hover:bg-navy/10",
           )}
           title="Draw radius area"
         >
           <Circle className="h-3.5 w-3.5" />
           Radius
         </button>
-        <label className="inline-flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-semibold text-ink shadow-sm backdrop-blur">
+        <label className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-navy">
           mi
           <input
             type="number"
@@ -468,7 +530,7 @@ export function ShiResearchMap({
             step={0.25}
             value={radiusMiles}
             onChange={(e) => setRadiusMiles(Number(e.target.value) || 1)}
-            className="w-12 rounded border border-hairline bg-white px-1 py-0.5 font-mono text-[10px]"
+            className="w-12 rounded border border-navy/25 bg-white px-1 py-0.5 font-mono text-[10px] font-bold text-navy"
           />
         </label>
         <button
@@ -478,8 +540,8 @@ export function ShiResearchMap({
             draftRef.current = [];
           }}
           className={cn(
-            "inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm backdrop-blur",
-            tool === "rectangle" ? "bg-navy text-gold" : "bg-white/90 text-ink",
+            "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
+            tool === "rectangle" ? "bg-navy text-gold" : "hover:bg-navy/10",
           )}
           title="Draw rectangle (two clicks)"
         >
@@ -494,7 +556,7 @@ export function ShiResearchMap({
               setTool("pan");
               draftRef.current = [];
             }}
-            className="inline-flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1.5 text-[11px] font-semibold text-ink shadow-sm backdrop-blur"
+            className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy hover:bg-navy/10"
           >
             <X className="h-3.5 w-3.5" />
             Clear area
@@ -507,8 +569,10 @@ export function ShiResearchMap({
           type="button"
           onClick={() => setShowParcels((v) => !v)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm backdrop-blur",
-            showParcels ? "bg-navy text-gold" : "bg-white/90 text-ink",
+            "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold shadow-md backdrop-blur",
+            showParcels
+              ? "bg-navy text-gold"
+              : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
           )}
         >
           <Grid3x3 className="h-3.5 w-3.5" />
@@ -518,8 +582,10 @@ export function ShiResearchMap({
           type="button"
           onClick={() => overlays.setPanelOpen((v) => !v)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold shadow-sm backdrop-blur",
-            overlays.panelOpen ? "bg-navy text-gold" : "bg-white/90 text-ink",
+            "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold shadow-md backdrop-blur",
+            overlays.panelOpen
+              ? "bg-navy text-gold"
+              : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
           )}
         >
           <Layers className="h-3.5 w-3.5" />
