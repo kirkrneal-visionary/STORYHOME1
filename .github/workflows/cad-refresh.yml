@@ -12,6 +12,7 @@ on:
         description: "Force refresh even if within 72h window"
         required: false
         default: "false"
+        type: boolean
 
 jobs:
   refresh:
@@ -24,12 +25,42 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Require Supabase secrets
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          ok=1
+          if [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "::error::GitHub secret NEXT_PUBLIC_SUPABASE_URL is missing or empty."
+            echo "Add it at: Settings → Secrets and variables → Actions"
+            echo "Value must be https://YOURPROJECT.supabase.co  (NO /rest/v1/)"
+            ok=0
+          fi
+          case "$NEXT_PUBLIC_SUPABASE_URL" in
+            */rest/v1|*/rest/v1/)
+              echo "::error::NEXT_PUBLIC_SUPABASE_URL must NOT end with /rest/v1/"
+              echo "Use only: https://YOURPROJECT.supabase.co"
+              ok=0
+              ;;
+          esac
+          if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::GitHub secret SUPABASE_SERVICE_ROLE_KEY is missing or empty."
+            ok=0
+          fi
+          if [ "$ok" != "1" ]; then
+            exit 1
+          fi
+          echo "Supabase URL present (length ${#NEXT_PUBLIC_SUPABASE_URL})"
+          echo "Service role key present (length ${#SUPABASE_SERVICE_ROLE_KEY})"
       - name: Refresh stale CAD counties
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+          FORCE="${{ github.event.inputs.force }}"
+          FORCE="$(echo "$FORCE" | tr '[:upper:]' '[:lower:]')"
+          if [ "$FORCE" = "true" ]; then
             node scripts/refresh-cad.mjs --force
           else
             node scripts/refresh-cad.mjs
