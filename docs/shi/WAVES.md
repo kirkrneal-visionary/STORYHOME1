@@ -17,7 +17,7 @@ Do **not** turn listing CAD into market research. Do **not** show internal sourc
 
 Source of truth in code: `src/lib/shi/waves.ts`
 
-### SHI-0 — Shell & brand entry (this PR)
+### SHI-0 — Shell & brand entry ✅
 
 | Front-end | Back-end |
 |---|---|
@@ -25,14 +25,16 @@ Source of truth in code: `src/lib/shi/waves.ts`
 | Property Intelligence page shell | No ingest changes |
 | Deep link `/portal/intelligence` | — |
 
-### SHI-1 — Search · Map · Property record
+### SHI-1 — Search · Map · Property record ✅ (current)
 
 | Front-end | Back-end |
 |---|---|
-| Search + filters (county-first, real fields) | `searchProperties` / `getProperty` query layer |
-| MapLibre parcel map (viewport load) | Indexed search / safe selects |
-| Property Intelligence panel + results | Viewport parcel query (no full county download) |
-| County labels + freshness chips | County freshness DTO (pro-safe) |
+| Search + filters (county-first, real fields) | `GET /api/shi/search` + `searchProperties` |
+| MapLibre parcel map (MVT viewport tiles) | `GET /api/shi/property` + `getProperty` |
+| Property Intelligence panel + results | Reuse `/api/parcels/{z}/{x}/{y}` (no full download) |
+| County labels + freshness chips | `GET /api/shi/freshness` (pro-safe DTO) |
+
+**Index note:** fuzzy owner/address search uses `ILIKE`. Prefer county-scoped search. Recommended: `pg_trgm` GIN on `owner_name`, `situs_address`, `legal_description`.
 
 ### SHI-2 — Relationships · Area · History
 
