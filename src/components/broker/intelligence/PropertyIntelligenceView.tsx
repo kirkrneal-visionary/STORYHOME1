@@ -405,7 +405,6 @@ export function PropertyIntelligenceView() {
           onSelectPropId={(propId, src) =>
             void openProperty({ propId, source: src })
           }
-          className="min-h-[520px] xl:min-h-[720px]"
         />
 
         {/* Property panel */}
