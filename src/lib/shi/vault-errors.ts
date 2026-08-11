@@ -1,6 +1,16 @@
 /** User-facing Study Vault errors (never dump internal CAD keys). */
 export function formatShiVaultError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : String(err ?? "Unknown error");
+  let msg = "Unknown error";
+  if (err instanceof Error) msg = err.message;
+  else if (typeof err === "string") msg = err;
+  else if (
+    err &&
+    typeof err === "object" &&
+    "message" in err &&
+    typeof (err as { message: unknown }).message === "string"
+  ) {
+    msg = (err as { message: string }).message;
+  }
   if (
     /shi_study_folders|shi_market_frames|shi_frame_snapshots|schema cache|does not exist|relation/i.test(
       msg,
