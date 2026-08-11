@@ -178,7 +178,11 @@ export function ShiMarketFramesPanel({
               }}
             >
               <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
-                Save capture → Study Vault
+                Save Map Memory → Study Vault
+              </p>
+              <p className="text-[11px] text-[var(--muted)]">
+                We snap your drawn frame at a readable distance — that image
+                becomes the file in Study Vault.
               </p>
               <input
                 value={frameName}
@@ -222,7 +226,7 @@ export function ShiMarketFramesPanel({
                 ) : (
                   <Save className="h-3.5 w-3.5" />
                 )}
-                Save + open Vault
+                {saving || busy ? "Capturing Map Memory…" : "Save + open Vault"}
               </button>
             </form>
           ) : null}

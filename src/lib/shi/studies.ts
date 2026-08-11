@@ -1,12 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DrawnBoundary } from "@/lib/geo";
 import { makeShiAcronym } from "@/lib/shi/acronym";
+import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import type {
   ShiAreaAnalysis,
   ShiSavedFrame,
   ShiStudyFolder,
 } from "@/lib/shi/types";
+import { formatShiVaultError } from "@/lib/shi/vault-errors";
 
 const SOURCE_NAME: Record<string, string> = {
   polk_cad: "Polk County",
@@ -35,7 +37,7 @@ export async function listStudyFolders(
     .limit(SHI_CAPS.maxFoldersPerAgent);
   if (countySource) req = req.eq("county_source", countySource);
   const { data, error } = await req;
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(formatShiVaultError(error));
 
   const folders = data ?? [];
   const counts = await Promise.all(
@@ -93,7 +95,7 @@ export async function createStudyFolder(
     })
     .select("id, name, acronym, county_source, county_name, updated_at")
     .single();
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(formatShiVaultError(error));
   return {
     id: data.id,
     name: data.name,
@@ -319,13 +321,16 @@ export async function saveMarketFrame(
   const name = opts.name.trim();
   if (name.length < 2) throw new Error("Frame name is required");
 
+  const cap = validateBoundaryCaps(opts.boundary);
+  if (!cap.ok) throw new Error(cap.error);
+
   const { data: folder, error: folderErr } = await supabase
     .from("shi_study_folders")
     .select("id, county_source")
     .eq("id", opts.folderId)
     .eq("owner_id", ownerId)
     .maybeSingle();
-  if (folderErr) throw new Error(folderErr.message);
+  if (folderErr) throw new Error(formatShiVaultError(folderErr));
   if (!folder) throw new Error("Folder not found");
 
   if (
@@ -366,7 +371,7 @@ export async function saveMarketFrame(
       })
       .eq("id", frameId)
       .eq("owner_id", ownerId);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(formatShiVaultError(error));
   } else {
     const { data, error } = await supabase
       .from("shi_market_frames")
@@ -383,18 +388,40 @@ export async function saveMarketFrame(
       })
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(formatShiVaultError(error));
     frameId = data.id as string;
   }
 
   let thumbnailPath: string | null = null;
+  const isNew = !opts.frameId;
   if (opts.thumbnailDataUrl?.startsWith("data:image")) {
-    thumbnailPath = await uploadThumbnail(
-      supabase,
-      ownerId,
-      frameId!,
-      opts.thumbnailDataUrl,
-    );
+    try {
+      thumbnailPath = await uploadThumbnail(
+        supabase,
+        ownerId,
+        frameId!,
+        opts.thumbnailDataUrl,
+      );
+    } catch (e) {
+      // Don't leave an orphan frame when Map Memory storage is missing.
+      if (isNew && frameId) {
+        await supabase
+          .from("shi_market_frames")
+          .delete()
+          .eq("id", frameId)
+          .eq("owner_id", ownerId);
+      }
+      throw e;
+    }
+  } else if (opts.frameId) {
+    // Keep prior Map Memory if this save had no new image.
+    const { data: prior } = await supabase
+      .from("shi_frame_snapshots")
+      .select("thumbnail_path")
+      .eq("frame_id", opts.frameId)
+      .eq("owner_id", ownerId)
+      .maybeSingle();
+    thumbnailPath = (prior?.thumbnail_path as string | null) ?? null;
   }
 
   const { parcels, ...metricsOnly } = opts.analysis;
@@ -413,7 +440,7 @@ export async function saveMarketFrame(
     },
     { onConflict: "frame_id" },
   );
-  if (snapErr) throw new Error(snapErr.message);
+  if (snapErr) throw new Error(formatShiVaultError(snapErr));
 
   await supabase
     .from("shi_study_folders")
@@ -448,9 +475,8 @@ async function uploadThumbnail(
     upsert: true,
   });
   if (error) {
-    // Storage bucket may not be applied yet — save metrics without image.
-    console.warn("[shi] thumbnail upload skipped:", error.message);
-    return null;
+    // Surface storage setup issues — Map Memory is a first-class save product.
+    throw new Error(formatShiVaultError(error));
   }
   return path;
 }

@@ -63,6 +63,11 @@ export type ShiMapSelect = {
 
 export type ShiMapHandle = {
   captureThumbnail: () => string | null;
+  /**
+   * Fit the drawn frame at a readable distance, snap a Map Memory JPEG,
+   * then restore the previous camera. Used by Study Vault save.
+   */
+  captureMapMemory: (boundary: DrawnBoundary) => Promise<string | null>;
   getView: () => {
     centerLat: number;
     centerLng: number;
@@ -218,10 +223,84 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         const map = mapRef.current;
         if (!map) return null;
         try {
-          return map.getCanvas().toDataURL("image/jpeg", 0.72);
+          return map.getCanvas().toDataURL("image/jpeg", 0.78);
         } catch {
           return null;
         }
+      },
+      captureMapMemory: (boundary: DrawnBoundary) => {
+        const map = mapRef.current;
+        if (!map) return Promise.resolve(null);
+        const ring = boundaryRing(boundary);
+        if (!ring?.length) return Promise.resolve(null);
+
+        const bounds = new maplibregl.LngLatBounds();
+        for (const c of ring) {
+          bounds.extend([c[0]!, c[1]!]);
+        }
+        if (bounds.isEmpty()) return Promise.resolve(null);
+
+        const prevCenter = map.getCenter();
+        const prevZoom = map.getZoom();
+
+        return new Promise<string | null>((resolve) => {
+          let settled = false;
+          const finish = (dataUrl: string | null) => {
+            if (settled) return;
+            settled = true;
+            try {
+              map.jumpTo({ center: prevCenter, zoom: prevZoom });
+            } catch {
+              /* ignore */
+            }
+            resolve(dataUrl);
+          };
+
+          const snap = () => {
+            try {
+              map.triggerRepaint();
+              // Double-rAF so WebGL presents a readable frame after fit.
+              requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                  try {
+                    const url = map
+                      .getCanvas()
+                      .toDataURL("image/jpeg", 0.8);
+                    finish(
+                      url.startsWith("data:image") && url.length > 64
+                        ? url
+                        : null,
+                    );
+                  } catch {
+                    finish(null);
+                  }
+                });
+              });
+            } catch {
+              finish(null);
+            }
+          };
+
+          // Timeout if tiles never idle — still try a snap.
+          const timer = window.setTimeout(() => {
+            map.off("idle", onIdle);
+            snap();
+          }, 2200);
+
+          const onIdle = () => {
+            window.clearTimeout(timer);
+            window.setTimeout(snap, 140);
+          };
+
+          map.once("idle", onIdle);
+
+          // Instant fit — readable padding, capped zoom (not nose-on-pixel).
+          map.fitBounds(bounds, {
+            padding: { top: 72, bottom: 88, left: 72, right: 72 },
+            maxZoom: 15,
+            duration: 0,
+          });
+        });
       },
       getView: () => {
         const map = mapRef.current;
@@ -239,7 +318,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           bounds.extend([c[0]!, c[1]!]);
         }
         if (!bounds.isEmpty()) {
-          map.fitBounds(bounds, { padding: 64, maxZoom: 16, duration: 500 });
+          map.fitBounds(bounds, {
+            padding: { top: 72, bottom: 88, left: 72, right: 72 },
+            maxZoom: 15,
+            duration: 500,
+          });
         }
       },
     }));
@@ -256,6 +339,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           2,
         ),
         maxZoom: 22,
+        // Required so Map Memory toDataURL is not a blank canvas.
+        preserveDrawingBuffer: true,
         attributionControl: { compact: true },
       });
       mapRef.current = map;

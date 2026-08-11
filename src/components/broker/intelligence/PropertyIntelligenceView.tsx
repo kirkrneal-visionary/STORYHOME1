@@ -29,6 +29,7 @@ import {
   shiSaveFrame,
   shiSearch,
 } from "@/lib/shi/client";
+import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
@@ -321,8 +322,12 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     setSaving(true);
     setAreaError("");
     try {
+      // Map Memory: fit frame at readable distance → snap → restore camera.
+      const thumb =
+        (await mapRef.current?.captureMapMemory(active.boundary)) ??
+        mapRef.current?.captureThumbnail() ??
+        null;
       const view = mapRef.current?.getView();
-      const thumb = mapRef.current?.captureThumbnail() ?? null;
       const saved = await shiSaveFrame({
         folderId,
         name,
@@ -350,7 +355,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
       );
       await refreshFolders(source);
     } catch (e) {
-      setAreaError(e instanceof Error ? e.message : "Save failed");
+      setAreaError(formatShiVaultError(e));
       throw e;
     } finally {
       setSaving(false);

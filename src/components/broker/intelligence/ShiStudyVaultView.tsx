@@ -22,6 +22,7 @@ import {
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import type { ShiSavedFrame, ShiStudyFolder } from "@/lib/shi/types";
 import { SHI_CAPS } from "@/lib/shi/caps";
+import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import { cn } from "@/lib/utils";
 
 function money(n: number | null | undefined) {
@@ -38,8 +39,8 @@ type Props = {
 };
 
 /**
- * Study Vault — private county folders + saved Market Frames.
- * Owner-only APIs; rename/delete; reopen onto Research cockpit.
+ * Study Vault — Map Memory album of saved market frames.
+ * Snap-first cards (not acronym tiles). Owner-only APIs.
  */
 export function ShiStudyVaultView({ onOpenInResearch }: Props) {
   const [countySource, setCountySource] = useState("");
@@ -59,7 +60,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
     try {
       setFolders(await shiListFolders(source || undefined));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load vault");
+      setError(formatShiVaultError(e));
       setFolders([]);
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       );
       setThumbs(next);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not load frames");
+      setError(formatShiVaultError(e));
       setFrames([]);
     } finally {
       setFramesLoading(false);
@@ -112,7 +113,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       await refreshFolders(countySource);
       await loadFolder(folder);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create folder");
+      setError(formatShiVaultError(e));
     } finally {
       setBusy(false);
     }
@@ -130,7 +131,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       await refreshFolders(countySource);
       if (activeFolder?.id === folder.id) setActiveFolder(updated);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Rename failed");
+      setError(formatShiVaultError(e));
     } finally {
       setBusy(false);
     }
@@ -153,7 +154,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       }
       await refreshFolders(countySource);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed");
+      setError(formatShiVaultError(e));
     } finally {
       setBusy(false);
     }
@@ -167,7 +168,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       await shiRenameFrame({ frameId: frame.id, name: name.trim() });
       if (activeFolder) await loadFolder(activeFolder);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Rename failed");
+      setError(formatShiVaultError(e));
     } finally {
       setBusy(false);
     }
@@ -181,7 +182,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       if (activeFolder) await loadFolder(activeFolder);
       await refreshFolders(countySource);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed");
+      setError(formatShiVaultError(e));
     } finally {
       setBusy(false);
     }
@@ -202,9 +203,9 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
         <div>
           <h3 className="font-serif text-xl font-bold text-ink">Study Vault</h3>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Private folders by county · thumbnails · reopen onto Research.
+            Your Map Memory album — each file is a snap of the market you drew.
             Limit {SHI_CAPS.maxFoldersPerAgent} folders ·{" "}
-            {SHI_CAPS.maxFramesPerFolder} frames each.
+            {SHI_CAPS.maxFramesPerFolder} memories each.
           </p>
         </div>
         <label className="block text-[11px] font-semibold text-[var(--muted)]">
@@ -229,7 +230,9 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       </div>
 
       {error ? (
-        <p className="text-xs font-semibold text-red-700">{error}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800">
+          {error}
+        </div>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -347,78 +350,88 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
           ) : (
             <>
               <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
-                {activeFolder.name} · {frames.length} frames
+                {activeFolder.name} · {frames.length} map memories
               </p>
               <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {frames.map((f) => {
                   const metrics = f.snapshot?.metrics;
                   const capped = Boolean(metrics?.capped);
+                  const hasSnap = Boolean(thumbs[f.id]);
                   return (
                     <li
                       key={f.id}
-                      className="overflow-hidden rounded-2xl border border-hairline bg-[var(--background)]"
+                      className="group overflow-hidden rounded-2xl border border-hairline bg-[var(--background)] shadow-sm transition-shadow hover:shadow-md"
                     >
-                      <div
-                        className="relative aspect-[16/10] bg-navy/10"
-                        style={{ background: f.color }}
+                      <button
+                        type="button"
+                        onClick={() => openInResearch(f)}
+                        className="relative block aspect-[16/10] w-full overflow-hidden bg-navy text-left"
+                        title={`Open ${f.name} in Research`}
                       >
-                        {thumbs[f.id] ? (
+                        {hasSnap ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={thumbs[f.id]}
-                            alt=""
-                            className="absolute inset-0 h-full w-full object-cover"
+                            alt={`Map Memory: ${f.name}`}
+                            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                           />
                         ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="font-mono text-2xl font-extrabold text-white/90">
+                          <div
+                            className="absolute inset-0 flex flex-col items-center justify-center gap-1"
+                            style={{ background: f.color }}
+                          >
+                            <span className="font-mono text-[10px] font-bold tracking-wider text-white/70 uppercase">
+                              Map Memory pending
+                            </span>
+                            <span className="font-mono text-lg font-extrabold text-white/90">
                               {f.acronym}
                             </span>
                           </div>
                         )}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy/90 via-navy/45 to-transparent px-3 pt-10 pb-2.5">
+                          <p className="truncate text-sm font-bold text-white">
+                            {f.name}
+                          </p>
+                          <p className="truncate text-[11px] text-white/80">
+                            {metrics
+                              ? `${metrics.parcelCount} parcels · ${money(metrics.estimatedTotalMarketValue)}`
+                              : "Open to re-analyze"}
+                          </p>
+                        </div>
                         {capped ? (
                           <span className="absolute top-2 right-2 rounded bg-gold px-1.5 py-0.5 font-mono text-[9px] font-bold text-navy uppercase">
                             Capped
                           </span>
                         ) : null}
-                      </div>
-                      <div className="space-y-2 p-3">
-                        <div>
-                          <p className="truncate text-sm font-bold text-ink">
-                            {f.name}
-                          </p>
-                          <p className="text-[11px] text-[var(--muted)]">
-                            {metrics
-                              ? `${metrics.parcelCount} parcels · ${money(metrics.estimatedTotalMarketValue)}`
-                              : "No snapshot metrics"}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => openInResearch(f)}
-                            className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-navy px-2 py-1.5 text-[11px] font-bold text-gold"
-                          >
-                            <MapPinned className="h-3.5 w-3.5" />
-                            Open in Research
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void renameFrame(f)}
-                            className="rounded-lg border border-hairline px-2 py-1.5 text-navy hover:bg-navy/5"
-                            title="Rename"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void removeFrame(f)}
-                            className="rounded-lg border border-hairline px-2 py-1.5 text-red-700 hover:bg-red-50"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                        <span className="absolute top-2 left-2 rounded bg-navy/70 px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-gold uppercase backdrop-blur-sm">
+                          Map Memory
+                        </span>
+                      </button>
+                      <div className="flex flex-wrap gap-1.5 p-2.5">
+                        <button
+                          type="button"
+                          onClick={() => openInResearch(f)}
+                          className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-navy px-2 py-1.5 text-[11px] font-bold text-gold"
+                        >
+                          <MapPinned className="h-3.5 w-3.5" />
+                          Open in Research
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void renameFrame(f)}
+                          className="rounded-lg border border-hairline px-2 py-1.5 text-navy hover:bg-navy/5"
+                          title="Rename"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void removeFrame(f)}
+                          className="rounded-lg border border-hairline px-2 py-1.5 text-red-700 hover:bg-red-50"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </li>
                   );
