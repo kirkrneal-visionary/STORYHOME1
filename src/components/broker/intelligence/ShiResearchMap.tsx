@@ -31,6 +31,7 @@ import {
   useCadOverlays,
 } from "@/hooks/useCadOverlays";
 import { SHI_CAPS } from "@/lib/shi/caps";
+import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
 import {
   FREEHAND_MIN_STEP_PX,
   FREEHAND_SNAP_PX,
@@ -555,74 +556,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const src = map.getSource("shi-freehand") as
         | maplibregl.GeoJSONSource
         | undefined;
-      if (!src) return;
-      if (!points.length) {
-        src.setData(EMPTY_FC);
-        return;
-      }
-      const pathPts = tip ? [...points, tip] : points;
-      const lineCoords = pathPts.map((p) => [p.lng, p.lat]);
-      const features: FeatureCollection["features"] = [
-        {
-          type: "Feature",
-          geometry: { type: "LineString", coordinates: lineCoords },
-          properties: { kind: "path", closeable: canClose ? 1 : 0 },
-        },
-      ];
-      if (canClose && pathPts.length >= 3) {
-        const ring = pathPts.map((p) => [p.lng, p.lat]);
-        ring.push(ring[0]!);
-        features.push({
-          type: "Feature",
-          geometry: { type: "Polygon", coordinates: [ring] },
-          properties: { kind: "poly", closeable: 1 },
-        });
-      }
-      const start = points[0]!;
-      features.push({
-        type: "Feature",
-        geometry: {
-          type: "Point",
-          coordinates: [start.lng, start.lat],
-        },
-        properties: { kind: "start", closeable: canClose ? 1 : 0 },
-      });
-      if (canClose) {
-        features.push({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [start.lng, start.lat],
-          },
-          properties: { kind: "snap", closeable: 1 },
-        });
-      }
-      // Sparse precision vertices (every Nth + last) — keeps map crisp.
-      const step = Math.max(1, Math.floor(points.length / 48));
-      for (let i = 0; i < points.length; i += step) {
-        const p = points[i]!;
-        if (i === 0) continue;
-        features.push({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [p.lng, p.lat],
-          },
-          properties: { kind: "vertex" },
-        });
-      }
-      const last = points[points.length - 1]!;
-      if (points.length > 1) {
-        features.push({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [last.lng, last.lat],
-          },
-          properties: { kind: "vertex" },
-        });
-      }
-      src.setData({ type: "FeatureCollection", features });
+      src?.setData(buildFreehandGeoJSON(points, tip, canClose));
     }
 
     // Draw tools — each completed draw ADDS a frame (multi-box).

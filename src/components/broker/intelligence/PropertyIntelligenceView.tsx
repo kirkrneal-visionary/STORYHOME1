@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Loader2, Search, Users } from "lucide-react";
-import { ShiIcon } from "@/components/brand/ShiIcon";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
 import {
   ShiResearchMap,
@@ -20,17 +19,16 @@ import { SHI_CAPS } from "@/lib/shi/caps";
 import { nextFrameColor } from "@/lib/shi/frame-colors";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import {
+  consumeOpenSavedFrame,
   shiAnalyzeArea,
   shiCreateFolder,
   shiFreshness,
   shiGetProperty,
   shiListFolders,
-  shiListFrames,
   shiOwnerMatches,
   shiSaveFrame,
   shiSearch,
 } from "@/lib/shi/client";
-import { SHI_PRODUCT } from "@/lib/shi/waves";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
@@ -57,11 +55,15 @@ function acres(n: number | null | undefined) {
   return `${n.toLocaleString("en-US", { maximumFractionDigits: 2 })} ac`;
 }
 
+type ResearchProps = {
+  onOpenVault?: () => void;
+};
+
 /**
- * Story Home Intelligence — SHI-1 + SHI-2 workspace.
- * Listing-form CAD remains MLS-limited; full research lives here.
+ * SHI Research cockpit — search rail left, wide map right, frames strip below map.
+ * Study Vault lives on its own submenu (not crammed here).
  */
-export function PropertyIntelligenceView() {
+export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
   const [query, setQuery] = useState("");
   const [field, setField] = useState<CadSearchField>("all");
   const [source, setSource] = useState("");
@@ -78,9 +80,6 @@ export function PropertyIntelligenceView() {
   const [areaError, setAreaError] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [folders, setFolders] = useState<ShiStudyFolder[]>([]);
-  const [foldersLoading, setFoldersLoading] = useState(false);
-  const [openFolder, setOpenFolder] = useState<ShiStudyFolder | null>(null);
-  const [savedFrames, setSavedFrames] = useState<ShiSavedFrame[]>([]);
   const [saving, setSaving] = useState(false);
   const [freshness, setFreshness] = useState<ShiCountyFreshness[]>([]);
   const [error, setError] = useState("");
@@ -142,13 +141,10 @@ export function PropertyIntelligenceView() {
       setFolders([]);
       return;
     }
-    setFoldersLoading(true);
     try {
       setFolders(await shiListFolders(countySource));
     } catch {
       setFolders([]);
-    } finally {
-      setFoldersLoading(false);
     }
   }, []);
 
@@ -185,8 +181,6 @@ export function PropertyIntelligenceView() {
         // Keep search / frames county aligned with the opened parcel.
         if (property.source && property.source !== countyLockRef.current.filterSource) {
           setSource(property.source);
-          setOpenFolder(null);
-          setSavedFrames([]);
           void refreshFolders(property.source);
         }
         void loadMatches(property);
@@ -249,8 +243,6 @@ export function PropertyIntelligenceView() {
 
   function onCountyChange(next: string) {
     setSource(next);
-    setOpenFolder(null);
-    setSavedFrames([]);
     void refreshFolders(next);
   }
 
@@ -316,27 +308,18 @@ export function PropertyIntelligenceView() {
     }
   }
 
-  async function createFolder(name: string) {
+  async function createFolder(name: string): Promise<ShiStudyFolder> {
     if (!source) throw new Error("Pick a county first");
     const folder = await shiCreateFolder({ name, countySource: source });
     await refreshFolders(source);
-    setOpenFolder(folder);
-    setSavedFrames([]);
-  }
-
-  async function openStudyFolder(folder: ShiStudyFolder) {
-    setOpenFolder(folder);
-    try {
-      setSavedFrames(await shiListFrames(folder.id));
-    } catch {
-      setSavedFrames([]);
-    }
+    return folder;
   }
 
   async function saveActiveFrame(name: string, folderId: string) {
     const active = frames.find((f) => f.localId === activeFrameId);
     if (!active?.analysis) throw new Error("Analyze the frame before saving");
     setSaving(true);
+    setAreaError("");
     try {
       const view = mapRef.current?.getView();
       const thumb = mapRef.current?.captureThumbnail() ?? null;
@@ -365,8 +348,10 @@ export function PropertyIntelligenceView() {
             : f,
         ),
       );
-      setSavedFrames(await shiListFrames(folderId));
       await refreshFolders(source);
+    } catch (e) {
+      setAreaError(e instanceof Error ? e.message : "Save failed");
+      throw e;
     } finally {
       setSaving(false);
     }
@@ -411,6 +396,20 @@ export function PropertyIntelligenceView() {
     mapRef.current?.fitBoundary(frame.boundary);
   }
 
+  // Study Vault → Research hand-off (after loadSavedFrame is defined).
+  useEffect(() => {
+    const queued = consumeOpenSavedFrame();
+    if (!queued?.boundary) return;
+    const fromMetrics = queued.snapshot?.metrics?.countySource;
+    if (fromMetrics) {
+      setSource(fromMetrics);
+      void refreshFolders(fromMetrics);
+    }
+    const t = window.setTimeout(() => loadSavedFrame(queued), 120);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectedFresh =
     selected &&
     freshness.find(
@@ -420,25 +419,7 @@ export function PropertyIntelligenceView() {
     );
 
   return (
-    <div className="space-y-4">
-      <header className="flex flex-wrap items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-gold">
-          <ShiIcon className="h-6 w-6" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-[var(--muted)] uppercase">
-            {SHI_PRODUCT.shortName} · Property Intelligence
-          </p>
-          <h2 className="font-serif text-2xl font-bold text-ink">
-            {SHI_PRODUCT.fullName}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Search, Market Frames analyzer, owner relationships, and observed CAD
-            history. Listing upload CAD stays MLS-limited.
-          </p>
-        </div>
-      </header>
-
+    <div className="space-y-3">
       {freshness.length > 0 ? (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {freshness.map((c) => (
@@ -467,9 +448,9 @@ export function PropertyIntelligenceView() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)_340px]">
-        {/* Search + area */}
-        <section className="flex flex-col gap-4">
+      {/* Cockpit: search rail | map + frames · property slides under on mobile */}
+      <div className="grid gap-3 xl:grid-cols-[270px_minmax(0,1fr)] xl:items-stretch">
+        <aside className="flex min-h-0 flex-col gap-3 xl:max-h-[calc(100dvh-220px)] xl:overflow-y-auto">
           <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
             <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
               <Search className="h-4 w-4 text-gold" />
@@ -535,7 +516,7 @@ export function PropertyIntelligenceView() {
               <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
             ) : null}
 
-            <ul className="mt-3 max-h-[280px] space-y-1 overflow-y-auto">
+            <ul className="mt-3 max-h-[220px] space-y-1 overflow-y-auto xl:max-h-[280px]">
               {results.length === 0 && !searching ? (
                 <li className="py-4 text-center text-xs text-[var(--muted)]">
                   Results appear here. Or click a parcel on the map.
@@ -583,47 +564,8 @@ export function PropertyIntelligenceView() {
             </ul>
           </div>
 
-          <ShiMarketFramesPanel
-            countySource={source}
-            countyName={countyName}
-            frames={frames}
-            activeFrameId={activeFrameId}
-            onSelectFrame={(id) => {
-              setActiveFrameId(id);
-              const f = frames.find((x) => x.localId === id);
-              setAnalysis(f?.analysis ?? null);
-            }}
-            analysis={analysis}
-            analyzing={analyzing}
-            analyzeError={areaError}
-            onAnalyze={() => void runAreaAnalyze()}
-            folders={folders}
-            foldersLoading={foldersLoading}
-            onCreateFolder={createFolder}
-            onOpenFolder={openStudyFolder}
-            openFolder={openFolder}
-            savedFrames={savedFrames}
-            onSaveActive={saveActiveFrame}
-            onLoadSaved={loadSavedFrame}
-            saving={saving}
-          />
-        </section>
-
-        <ShiResearchMap
-          ref={mapRef}
-          selected={selected}
-          related={matches}
-          frames={frames}
-          activeFrameId={activeFrameId}
-          onFramesChange={setFrames}
-          onActiveFrameIdChange={setActiveFrameId}
-          onCreateFrame={createFrame}
-          onSelectParcel={openFromMap}
-        />
-
-        {/* Property panel */}
-        <section className="max-h-[860px] overflow-y-auto rounded-2xl border border-hairline bg-[var(--surface)] p-4">
-          <h3 className="text-sm font-bold text-ink">Property record</h3>
+          <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+            <h3 className="text-sm font-bold text-ink">Property record</h3>
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -814,7 +756,44 @@ export function PropertyIntelligenceView() {
               </p>
             </div>
           )}
-        </section>
+          </section>
+        </aside>
+
+        <div className="flex min-h-0 min-w-0 flex-col gap-3">
+          <ShiResearchMap
+            ref={mapRef}
+            selected={selected}
+            related={matches}
+            frames={frames}
+            activeFrameId={activeFrameId}
+            onFramesChange={setFrames}
+            onActiveFrameIdChange={setActiveFrameId}
+            onCreateFrame={createFrame}
+            onSelectParcel={openFromMap}
+            className="h-[480px] xl:h-[min(720px,calc(100dvh-280px))]"
+          />
+          <ShiMarketFramesPanel
+            compact
+            countySource={source}
+            countyName={countyName}
+            frames={frames}
+            activeFrameId={activeFrameId}
+            onSelectFrame={(id) => {
+              setActiveFrameId(id);
+              const f = frames.find((x) => x.localId === id);
+              setAnalysis(f?.analysis ?? null);
+            }}
+            analysis={analysis}
+            analyzing={analyzing}
+            analyzeError={areaError}
+            onAnalyze={() => void runAreaAnalyze()}
+            folders={folders}
+            onCreateFolder={createFolder}
+            onSaveActive={saveActiveFrame}
+            saving={saving}
+            onOpenVault={() => onOpenVault?.()}
+          />
+        </div>
       </div>
     </div>
   );

@@ -20,7 +20,7 @@ import { MyBuyersView } from "@/components/broker/MyBuyersView";
 import { MySellersView } from "@/components/broker/MySellersView";
 import { SharedHomesView } from "@/components/broker/SharedHomesView";
 import { CommunityView } from "@/components/broker/CommunityView";
-import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
+import { ShiWorkspace } from "@/components/broker/intelligence/ShiWorkspace";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +113,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
       <div
         className={cn(
           "mx-auto",
-          tab === "intelligence" ? "max-w-7xl" : "max-w-6xl",
+          tab === "intelligence" ? "max-w-[90rem]" : "max-w-6xl",
         )}
       >
         <header className="flex flex-col gap-1">
@@ -178,7 +178,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
         <div className="mt-8">
           {tab === "tools" && <MyToolsView />}
           {tab === "listings" && <MyListingsView />}
-          {tab === "intelligence" && <PropertyIntelligenceView />}
+          {tab === "intelligence" && <ShiWorkspace />}
           {tab === "buyers" && <MyBuyersView />}
           {tab === "sellers" && <MySellersView />}
           {tab === "clientHomes" && <SharedHomesView />}

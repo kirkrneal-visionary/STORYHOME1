@@ -170,7 +170,7 @@ export function SearchToolbar({
             {resultCount} results · East Texas map search
           </p>
           <p className="hidden text-xs text-[var(--muted)] lg:block">
-            Draw on the map or pan + “Search this area” — same flow as Zillow /
+            Freehand / Box on the map or pan + “Search this area” — same flow as Zillow /
             Realtor.com
           </p>
         </div>

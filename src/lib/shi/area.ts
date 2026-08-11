@@ -5,45 +5,13 @@ import {
   pointInPolygon,
   type DrawnBoundary,
   type LatLng,
-  type MapBounds,
 } from "@/lib/geo";
+import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import type { ShiAreaAnalysis, ShiAreaParcel } from "@/lib/shi/types";
 
 const AREA_SELECT =
   "prop_id, source, county_fips, owner_name, situs_address, legal_acreage, market_value, land_value, improvement_value, property_category, centroid_lat, centroid_lng";
-
-function boundsOf(boundary: DrawnBoundary): MapBounds | null {
-  if (boundary.type === "rectangle" || boundary.type === "viewport") {
-    return boundary.bounds;
-  }
-  if (boundary.type === "circle") {
-    const { center, radiusMiles } = boundary;
-    const latR = radiusMiles / 69;
-    const lngR =
-      radiusMiles / (69 * Math.max(0.2, Math.cos((center.lat * Math.PI) / 180)));
-    return {
-      north: center.lat + latR,
-      south: center.lat - latR,
-      east: center.lng + lngR,
-      west: center.lng - lngR,
-    };
-  }
-  if (boundary.type === "polygon" && boundary.points.length >= 3) {
-    let north = -90;
-    let south = 90;
-    let east = -180;
-    let west = 180;
-    for (const p of boundary.points) {
-      north = Math.max(north, p.lat);
-      south = Math.min(south, p.lat);
-      east = Math.max(east, p.lng);
-      west = Math.min(west, p.lng);
-    }
-    return { north, south, east, west };
-  }
-  return null;
-}
 
 function inBoundary(point: LatLng, boundary: DrawnBoundary): boolean {
   if (boundary.type === "polygon") {
@@ -84,30 +52,11 @@ export async function analyzeArea(
     throw new Error("Pick a county before analyzing a market frame");
   }
 
-  const bounds = boundsOf(opts.boundary);
-  if (!bounds) {
-    throw new Error("Draw a box or radius first");
+  const cap = validateBoundaryCaps(opts.boundary);
+  if (!cap.ok) {
+    throw new Error(cap.error);
   }
-
-  const latSpan = bounds.north - bounds.south;
-  const lngSpan = bounds.east - bounds.west;
-  if (latSpan <= 0 || lngSpan <= 0) {
-    throw new Error("Invalid frame size");
-  }
-  if (
-    latSpan < SHI_CAPS.minAreaSpanDegrees &&
-    lngSpan < SHI_CAPS.minAreaSpanDegrees
-  ) {
-    throw new Error("Frame is too small — draw a larger box");
-  }
-  if (
-    latSpan > SHI_CAPS.maxAreaSpanDegrees ||
-    lngSpan > SHI_CAPS.maxAreaSpanDegrees
-  ) {
-    throw new Error(
-      "Frame is too large — zoom in or draw a smaller market box (safety cap)",
-    );
-  }
+  const bounds = cap.bounds;
 
   const { data, error } = await supabase
     .from("county_parcels")
@@ -177,6 +126,7 @@ export async function analyzeArea(
     valuedParcelCount,
     method: "centroid_in_boundary",
     countySource: opts.source,
+    capped: hitCap,
     note: hitCap
       ? `Hit safety cap (${SHI_CAPS.maxParcelsPerAnalyze} scan) — draw a smaller frame for a complete estimate.`
       : `Estimated area value sums CAD market_value on ${valuedParcelCount} valued parcels inside the frame (centroids).`,
