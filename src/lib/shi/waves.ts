@@ -1,0 +1,147 @@
+/**
+ * Story Home Intelligence (SHI) — product waves.
+ * Listing-form CAD stays MLS-limited (pin/search for listing tracts only).
+ * SHI is the full professional Property Intelligence product.
+ */
+
+export const SHI_PRODUCT = {
+  shortName: "SHI",
+  menuLabel: "SHI",
+  fullName: "Story Home Intelligence",
+  subtitle: "Property Intelligence for Story Pro",
+  positioning: "Research your market. Public records. Professional workflow.",
+} as const;
+
+export type ShiWave = {
+  id: string;
+  name: string;
+  goal: string;
+  frontend: string[];
+  backend: string[];
+  outOfScope: string[];
+};
+
+export const SHI_WAVES: ShiWave[] = [
+  {
+    id: "SHI-0",
+    name: "Shell & brand entry",
+    goal: "Put SHI on the Story Pro menu with a brandable mark and its own page.",
+    frontend: [
+      "Story Pro tab: SHI + ShiIcon",
+      "Dedicated Property Intelligence page shell",
+      "Deep link /portal/intelligence",
+      "Copy: Story Home Intelligence (not CAD filenames)",
+    ],
+    backend: [
+      "No ingest changes",
+      "Reuse existing authenticated pro gate on /portal",
+    ],
+    outOfScope: [
+      "Listing-form CAD redesign (stays MLS-limited)",
+      "Marketplace / My Home redesign",
+    ],
+  },
+  {
+    id: "SHI-1",
+    name: "Search · Map · Property record",
+    goal: "Universal property search + map research + property intelligence panel.",
+    frontend: [
+      "Left: search + filters (county-first, real fields only)",
+      "Center: MapLibre parcel map (viewport load)",
+      "Right: Property Intelligence panel",
+      "Results list/table",
+      "County labels (Polk County) — never polk_cad in UI",
+      "Freshness chips from county status",
+    ],
+    backend: [
+      "Property Intelligence query layer (searchProperties, getProperty)",
+      "Indexed search endpoints / safe Supabase selects",
+      "Viewport parcel query (no full 345k client download)",
+      "County freshness DTO (pro-safe subset only)",
+      "Report missing indexes — do not slow-scan",
+    ],
+    outOfScope: [
+      "CAD ingest / 72h refresh changes",
+      "Fake AI scores",
+      "Bulk county download",
+    ],
+  },
+  {
+    id: "SHI-2",
+    name: "Relationships · Area · History",
+    goal: "Owner matches, multi-tract, area analysis, observed CAD history.",
+    frontend: [
+      "Owner relationship panel (EXACT / POSSIBLE match wording)",
+      "Multi-tract visualization",
+      "Area analyze (draw/radius/bounds → metrics)",
+      "Record history timeline (only observed CAD changes)",
+    ],
+    backend: [
+      "Owner match service with confidence tiers",
+      "Area aggregation queries (counts, medians, classifications)",
+      "Property history events (if table exists; else document need)",
+      "Multi-tract fetch by linked prop ids",
+    ],
+    outOfScope: [
+      "Absentee-owner claims",
+      "Invented ownership history",
+    ],
+  },
+  {
+    id: "SHI-3",
+    name: "Prospects · Notes · CRM convert",
+    goal: "Agent workflow on top of public records without mutating CAD.",
+    frontend: [
+      "Add to Prospects",
+      "Prospect lists + statuses",
+      "Private notes",
+      "Create Seller Lead (prefill from property)",
+    ],
+    backend: [
+      "agent_prospects / prospect_lists / prospect_notes tables + RLS",
+      "createProspect / updateStatus / addNote APIs",
+      "createSellerLeadFromProperty into existing CRM",
+      "Strict separation: public parcel vs agent private data",
+    ],
+    outOfScope: [
+      "Phone/email scraping",
+      "Writing into county_parcels from prospects",
+    ],
+  },
+  {
+    id: "SHI-4",
+    name: "Farms · Change intelligence",
+    goal: "Saved territories wired to CAD refresh deltas.",
+    frontend: [
+      "Save farm from map selection",
+      "Farm detail + property count",
+      "Since last review: new / changed / inactive",
+    ],
+    backend: [
+      "saved_farms table (geometry + metadata) + RLS",
+      "Farm membership as references to parcels (not CAD copies)",
+      "Delta detection against 72h refresh / last_seen",
+      "Meaningful change filters (no noise)",
+    ],
+    outOfScope: [
+      "Destructive CAD replace logic (separate reliability wave)",
+    ],
+  },
+  {
+    id: "SHI-5",
+    name: "Find Similar · Portfolio polish",
+    goal: "Deterministic similarity + confident owner portfolios.",
+    frontend: [
+      "Find Similar with explainable criteria",
+      "Owner portfolio map + totals",
+    ],
+    backend: [
+      "Deterministic similar-property query builder",
+      "Portfolio aggregation for EXACT owner matches only",
+    ],
+    outOfScope: [
+      "Generative AI similarity",
+      "AVM / seller probability scores",
+    ],
+  },
+];
