@@ -24,6 +24,14 @@ export type ShiPropertySummary = {
   centroidLng: number | null;
 };
 
+/** Observed CAD history only (values + ingest). No deed/ownership transfers. */
+export type ShiHistoryEvent = {
+  kind: "value_year" | "ingest_observed";
+  at: string;
+  title: string;
+  detail: string;
+};
+
 export type ShiPropertyDetail = ShiPropertySummary & {
   situsState: string | null;
   tractOrLot: string | null;
@@ -53,6 +61,8 @@ export type ShiPropertyDetail = ShiPropertySummary & {
     stale: boolean;
     ageHours: number | null;
   };
+  /** Observed CAD history only — never deed/ownership transfers. */
+  observedHistory: ShiHistoryEvent[];
 };
 
 /** Pro-safe county freshness — no internal URLs or raw source keys in UI. */
@@ -72,4 +82,27 @@ export type ShiSearchParams = {
   source?: string;
   field?: CadSearchField;
   limit?: number;
+};
+
+/** Owner relationship confidence — never invent absentee / same-person claims. */
+export type ShiOwnerMatchTier = "EXACT" | "POSSIBLE";
+
+export type ShiOwnerMatch = ShiPropertySummary & {
+  matchTier: ShiOwnerMatchTier;
+  matchReason: string;
+  geojson: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: number[][][] | number[][][][];
+  } | null;
+};
+
+export type ShiAreaMetrics = {
+  parcelCount: number;
+  realCount: number;
+  personalCount: number;
+  totalAcres: number;
+  medianAcres: number | null;
+  medianMarketValue: number | null;
+  method: "centroid_in_boundary";
+  note: string;
 };

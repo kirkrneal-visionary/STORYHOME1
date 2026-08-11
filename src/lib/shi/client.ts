@@ -1,12 +1,18 @@
 import type { CadSearchField } from "@/lib/cad-layers";
+import type { DrawnBoundary } from "@/lib/geo";
 import type {
+  ShiAreaMetrics,
   ShiCountyFreshness,
+  ShiOwnerMatch,
   ShiPropertyDetail,
   ShiPropertySummary,
 } from "@/lib/shi/types";
 
-async function shiFetch<T>(url: string): Promise<T> {
-  const res = await fetch(url, { credentials: "same-origin" });
+async function shiFetch<T>(
+  url: string,
+  init?: RequestInit,
+): Promise<T> {
+  const res = await fetch(url, { credentials: "same-origin", ...init });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(
@@ -50,4 +56,38 @@ export async function shiFreshness(): Promise<ShiCountyFreshness[]> {
     "/api/shi/freshness",
   );
   return body.counties ?? [];
+}
+
+export async function shiOwnerMatches(opts: {
+  source: string;
+  propId: string;
+  cadOwnerId?: string | null;
+  ownerName?: string | null;
+}): Promise<{
+  matches: ShiOwnerMatch[];
+  exactCount: number;
+  possibleCount: number;
+  note: string;
+}> {
+  const params = new URLSearchParams();
+  params.set("source", opts.source);
+  params.set("propId", opts.propId);
+  if (opts.cadOwnerId) params.set("cadOwnerId", opts.cadOwnerId);
+  if (opts.ownerName) params.set("ownerName", opts.ownerName);
+  return shiFetch(`/api/shi/owner-matches?${params.toString()}`);
+}
+
+export async function shiAnalyzeArea(opts: {
+  boundary: DrawnBoundary;
+  source?: string;
+}): Promise<ShiAreaMetrics> {
+  const body = await shiFetch<{ metrics: ShiAreaMetrics }>("/api/shi/area", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      boundary: opts.boundary,
+      source: opts.source,
+    }),
+  });
+  return body.metrics;
 }

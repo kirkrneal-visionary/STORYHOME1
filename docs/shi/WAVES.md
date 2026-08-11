@@ -25,7 +25,7 @@ Source of truth in code: `src/lib/shi/waves.ts`
 | Property Intelligence page shell | No ingest changes |
 | Deep link `/portal/intelligence` | — |
 
-### SHI-1 — Search · Map · Property record ✅ (current)
+### SHI-1 — Search · Map · Property record ✅
 
 | Front-end | Back-end |
 |---|---|
@@ -36,13 +36,16 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 **Index note:** fuzzy owner/address search uses `ILIKE`. Prefer county-scoped search. Recommended: `pg_trgm` GIN on `owner_name`, `situs_address`, `legal_description`.
 
-### SHI-2 — Relationships · Area · History
+### SHI-2 — Relationships · Area · History ✅ (current)
 
 | Front-end | Back-end |
 |---|---|
-| Owner matches (EXACT / POSSIBLE) | Owner match service + confidence tiers |
-| Multi-tract viz · area analyze | Area aggregation queries |
-| Observed CAD history timeline | History events (or document need) |
+| Owner relationships panel (EXACT / POSSIBLE) | `GET /api/shi/owner-matches` |
+| Multi-tract map (gold EXACT / teal POSSIBLE) | Geometry on match rows (capped) |
+| Area draw (radius / box) + metrics | `POST /api/shi/area` (centroid-in-boundary) |
+| Observed CAD history timeline | Values + ingest only — no deed history |
+
+**History gap:** No ownership-transfer event table yet. UI states this clearly. True change intel lands with farms (SHI-4).
 
 ### SHI-3 — Prospects · Notes · CRM convert
 

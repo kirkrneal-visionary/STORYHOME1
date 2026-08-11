@@ -49,7 +49,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-1",
     name: "Search · Map · Property record",
     goal: "Universal property search + map research + property intelligence panel.",
-    status: "current",
+    status: "done",
     frontend: [
       "Left: search + filters (county-first, real fields only)",
       "Center: MapLibre parcel map (viewport load)",
@@ -75,7 +75,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2",
     name: "Relationships · Area · History",
     goal: "Owner matches, multi-tract, area analysis, observed CAD history.",
-    status: "planned",
+    status: "current",
     frontend: [
       "Owner relationship panel (EXACT / POSSIBLE match wording)",
       "Multi-tract visualization",

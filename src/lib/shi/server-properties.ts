@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CadSearchField } from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
+import { buildObservedHistory } from "@/lib/shi/history";
 import type {
   ShiCountyFreshness,
   ShiPropertyDetail,
@@ -243,8 +244,17 @@ export async function getProperty(
     .order("tax_year", { ascending: true });
 
   const schoolCode = (row.school_code as string | null) ?? null;
+  const freshness = freshnessFromAge(summary.ingestedAt);
+  const values = (valueRows ?? []).map((r: Record<string, unknown>) => ({
+    taxYear: Number(r.tax_year),
+    landValue: num(r.land_value),
+    improvementValue: num(r.improvement_value),
+    marketValue: num(r.market_value),
+    appraisedValue: num(r.appraised_value),
+    assessedValue: num(r.assessed_value),
+  }));
 
-  return {
+  const detail: ShiPropertyDetail = {
     ...summary,
     situsState: (row.situs_state as string | null) ?? null,
     tractOrLot: (row.tract_or_lot as string | null) ?? null,
@@ -259,16 +269,12 @@ export async function getProperty(
     detailLevel: String(row.detail_level ?? "full"),
     needsAgentDetail: Boolean(row.needs_agent_detail),
     geojson: (row.geojson as ShiPropertyDetail["geojson"]) ?? null,
-    values: (valueRows ?? []).map((r: Record<string, unknown>) => ({
-      taxYear: Number(r.tax_year),
-      landValue: num(r.land_value),
-      improvementValue: num(r.improvement_value),
-      marketValue: num(r.market_value),
-      appraisedValue: num(r.appraised_value),
-      assessedValue: num(r.assessed_value),
-    })),
-    freshness: freshnessFromAge(summary.ingestedAt),
+    values,
+    freshness,
+    observedHistory: [],
   };
+  detail.observedHistory = buildObservedHistory(detail);
+  return detail;
 }
 
 export async function getCountyFreshness(
