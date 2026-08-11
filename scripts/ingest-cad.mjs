@@ -506,9 +506,7 @@ function dedupeByKey(rows, keyFn) {
 }
 
 function normalizePropId(id) {
-  return String(id ?? "")
-    .trim()
-    .replace(/^0+(\d)$/, "$1"); // keep leading zeros for real IDs; only collapse empty noise
+  return String(id ?? "").trim();
 }
 
 /** Columns written to county_parcels (avoid unknown keys / trigger side-noise). */
