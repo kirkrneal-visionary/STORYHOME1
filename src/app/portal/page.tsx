@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { BrokerPortal } from "@/components/broker/BrokerPortal";
 
 export const metadata: Metadata = {
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function PortalPage() {
-  return <BrokerPortal />;
+  return (
+    <Suspense fallback={null}>
+      <BrokerPortal />
+    </Suspense>
+  );
 }
