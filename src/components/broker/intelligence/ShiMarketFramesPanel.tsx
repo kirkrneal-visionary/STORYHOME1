@@ -271,7 +271,15 @@ export function ShiMarketFramesPanel({
 
         {/* Right: market data fills the void */}
         <div className="min-h-[140px] rounded-xl border border-hairline bg-[var(--background)] p-3">
-          {!analysis ? (
+          {analyzing ? (
+            <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-[var(--muted)]">
+              <Loader2 className="h-5 w-5 animate-spin text-navy" />
+              <p className="text-sm font-semibold text-ink">Analyzing frame…</p>
+              <p className="max-w-sm text-xs">
+                Pulling parcel values inside your drawn market frame.
+              </p>
+            </div>
+          ) : !analysis ? (
             <div className="flex h-full min-h-[140px] flex-col items-center justify-center px-4 text-center">
               <p className="text-sm font-semibold text-ink">Market data</p>
               <p className="mt-1 max-w-sm text-xs text-[var(--muted)]">
@@ -333,11 +341,18 @@ export function ShiMarketFramesPanel({
                     </li>
                   ))}
                 </ul>
-              ) : (
+              ) : null}
+              {analysis.parcels.length > 60 ? (
+                <p className="text-[10px] font-semibold text-[var(--muted)]">
+                  Showing 60 of {analysis.parcels.length} parcels in this
+                  analysis.
+                </p>
+              ) : null}
+              {analysis.parcels.length === 0 ? (
                 <p className="text-xs text-[var(--muted)]">
                   No valued parcels inside this frame.
                 </p>
-              )}
+              ) : null}
             </div>
           )}
         </div>

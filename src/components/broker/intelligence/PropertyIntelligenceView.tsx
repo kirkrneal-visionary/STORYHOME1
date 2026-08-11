@@ -93,6 +93,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
   const [error, setError] = useState("");
   const [searching, startSearch] = useTransition();
   const [loadingProperty, setLoadingProperty] = useState(false);
+  const [reopening, setReopening] = useState(false);
   const mapRef = useRef<ShiMapHandle | null>(null);
   const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
     { filterSource: "" },
@@ -152,8 +153,9 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     }
     try {
       setFolders(await shiListFolders(countySource));
-    } catch {
+    } catch (e) {
       setFolders([]);
+      setAreaError(formatShiVaultError(e));
     }
   }, []);
 
@@ -255,21 +257,21 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     void refreshFolders(next);
   }
 
-  function createFrame(boundary: DrawnBoundary) {
+  function createFrame(boundary: DrawnBoundary): boolean {
     if (frames.length >= SHI_CAPS.maxFramesOnMap) {
       setAreaError(
         `Map frame limit (${SHI_CAPS.maxFramesOnMap}). Remove a frame first.`,
       );
-      return;
+      return false;
     }
     if (!source) {
       setAreaError("Pick a county before drawing market frames");
-      return;
+      return false;
     }
     const cap = validateBoundaryCaps(boundary);
     if (!cap.ok) {
       setAreaError(cap.error);
-      return;
+      return false;
     }
     const n = frameSeq.current++;
     const name = `Frame ${n}`;
@@ -290,6 +292,29 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     setActiveFrameId(localId);
     setAnalysis(null);
     setAreaError("");
+    return true;
+  }
+
+  function onFramesChange(next: ShiLocalFrame[]) {
+    setFrames(next);
+    const stillActive =
+      activeFrameId != null && next.some((f) => f.localId === activeFrameId);
+    if (!stillActive) {
+      setActiveFrameId(null);
+      setAnalysis(null);
+      setAreaError("");
+    }
+    // Allow Vault → Research reopen of the same memory after remove.
+    if (
+      openedFrameRef.current &&
+      !next.some(
+        (f) =>
+          f.savedId === openedFrameRef.current ||
+          f.localId === openedFrameRef.current,
+      )
+    ) {
+      openedFrameRef.current = null;
+    }
   }
 
   async function runAreaAnalyze() {
@@ -481,7 +506,17 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     let timer: number | undefined;
 
     const applyFrame = (frame: ShiSavedFrame) => {
-      if (cancelled || openedFrameRef.current === frame.id) return;
+      if (cancelled) return;
+      // Sticky only while that memory is still on the map.
+      if (
+        openedFrameRef.current === frame.id &&
+        frames.some(
+          (f) => f.savedId === frame.id || f.localId === frame.id,
+        )
+      ) {
+        setReopening(false);
+        return;
+      }
       openedFrameRef.current = frame.id;
       const fromMetrics = frame.snapshot?.metrics?.countySource;
       if (fromMetrics) {
@@ -489,12 +524,16 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         void refreshFolders(fromMetrics);
       }
       timer = window.setTimeout(() => {
-        if (!cancelled) loadSavedFrame(frame);
+        if (!cancelled) {
+          loadSavedFrame(frame);
+          setReopening(false);
+        }
       }, 120);
     };
 
     const queued = consumeOpenSavedFrame();
     if (queued?.boundary) {
+      setReopening(true);
       applyFrame(queued);
       clearOpenFrameParams();
       return () => {
@@ -506,13 +545,18 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
     const openFrame = searchParams.get("openFrame")?.trim() || "";
     if (!openFrame) return;
 
+    setReopening(true);
     void (async () => {
       try {
         const frame = await shiGetFrame(openFrame);
-        if (cancelled || !frame?.boundary) return;
+        if (cancelled || !frame?.boundary) {
+          if (!cancelled) setReopening(false);
+          return;
+        }
         applyFrame(frame);
       } catch (e) {
         if (!cancelled) {
+          setReopening(false);
           setAreaError(
             e instanceof Error ? e.message : "Could not reopen saved frame",
           );
@@ -688,7 +732,8 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
           related={matches}
           frames={frames}
           activeFrameId={activeFrameId}
-          onFramesChange={setFrames}
+          canDrawFrames={Boolean(source)}
+          onFramesChange={onFramesChange}
           onActiveFrameIdChange={setActiveFrameId}
           onCreateFrame={createFrame}
           onSelectParcel={openFromMap}
@@ -888,6 +933,13 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         </section>
       </div>
 
+      {reopening ? (
+        <div className="flex items-center gap-2 rounded-xl border border-hairline bg-[var(--surface)] px-3 py-2 text-xs font-semibold text-navy">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Opening Map Memory from Study Vault…
+        </div>
+      ) : null}
+
       <ShiMarketFramesPanel
         countySource={source}
         countyName={countyName}
@@ -897,6 +949,8 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
           setActiveFrameId(id);
           const f = frames.find((x) => x.localId === id);
           setAnalysis(f?.analysis ?? null);
+          setAreaError("");
+          if (f?.boundary) mapRef.current?.fitBoundary(f.boundary);
         }}
         analysis={analysis}
         analyzing={analyzing}

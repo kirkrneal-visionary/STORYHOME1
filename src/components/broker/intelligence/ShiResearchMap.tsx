@@ -9,7 +9,7 @@ import {
 } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Circle, Grid3x3, Layers, PenTool, Square, X } from "lucide-react";
+import { Circle, Grid3x3, Hand, Layers, PenTool, Square, X } from "lucide-react";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
@@ -87,9 +87,12 @@ type ShiResearchMapProps = {
   related: ShiOwnerMatch[];
   frames: ShiLocalFrame[];
   activeFrameId: string | null;
+  /** County must be picked before market frames can be committed. */
+  canDrawFrames?: boolean;
   onFramesChange: (frames: ShiLocalFrame[]) => void;
   onActiveFrameIdChange: (id: string | null) => void;
-  onCreateFrame: (boundary: DrawnBoundary) => void;
+  /** Return false to keep the in-progress draft (county / caps / limit). */
+  onCreateFrame: (boundary: DrawnBoundary) => boolean;
   onSelectParcel: (sel: ShiMapSelect) => void;
   className?: string;
 };
@@ -159,6 +162,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       related,
       frames,
       activeFrameId,
+      canDrawFrames = true,
       onFramesChange,
       onActiveFrameIdChange,
       onCreateFrame,
@@ -173,6 +177,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const onCreateRef = useRef(onCreateFrame);
     const onActiveRef = useRef(onActiveFrameIdChange);
     const preferredSourceRef = useRef<string | undefined>(undefined);
+    const canDrawRef = useRef(canDrawFrames);
     const toolRef = useRef<DrawTool>("pan");
     const draftRef = useRef<LatLng[]>([]);
     const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
@@ -184,7 +189,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const [freehandHint, setFreehandHint] = useState<
       "idle" | "drawing" | "closeable"
     >("idle");
-    const [boxDraftWarn, setBoxDraftWarn] = useState("");
+    const [drawWarn, setDrawWarn] = useState("");
     const [boxDraftActive, setBoxDraftActive] = useState(false);
     const overlays = useCadOverlays(mapRef, ready);
 
@@ -200,11 +205,37 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       toolRef.current = tool;
     }, [tool]);
+    useEffect(() => {
+      canDrawRef.current = canDrawFrames;
+    }, [canDrawFrames]);
 
     useEffect(() => {
       preferredSourceRef.current =
         selected?.source || overlays.activeCounty || undefined;
     }, [selected?.source, overlays.activeCounty]);
+
+    useEffect(() => {
+      if (!canDrawFrames && tool !== "pan") {
+        clearFreehandDraft();
+        clearBoxDraft();
+        setTool("pan");
+        setDrawWarn("Pick a county before drawing market frames");
+      } else if (canDrawFrames && drawWarn === "Pick a county before drawing market frames") {
+        setDrawWarn("");
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [canDrawFrames]);
+
+    useEffect(() => {
+      if (tool !== "radius") return;
+      const probe: DrawnBoundary = {
+        type: "circle",
+        center: { lat: 30.1, lng: -95.0 },
+        radiusMiles,
+      };
+      const cap = validateBoundaryCaps(probe);
+      setDrawWarn(cap.ok ? "" : cap.error);
+    }, [tool, radiusMiles]);
 
     useEffect(() => {
       const src = selected?.source;
@@ -661,7 +692,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
     function clearBoxDraft(map?: maplibregl.Map | null) {
       draftRef.current = [];
-      setBoxDraftWarn("");
+      setDrawWarn("");
       setBoxDraftActive(false);
       const m = map ?? mapRef.current;
       const src = m?.getSource("shi-box-draft") as
@@ -680,7 +711,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         | undefined;
       src?.setData(buildBoxDraftGeoJSON(corner, tip));
       if (!tip) {
-        setBoxDraftWarn("");
+        setDrawWarn("");
         return;
       }
       const boundary: DrawnBoundary = {
@@ -693,12 +724,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         },
       };
       const cap = validateBoundaryCaps(boundary);
-      setBoxDraftWarn(cap.ok ? "" : cap.error);
+      setDrawWarn(cap.ok ? "" : cap.error);
     }
 
     function clearFreehandDraft(map?: maplibregl.Map | null) {
       freehandRef.current = emptyFreehandSession();
       setFreehandHint("idle");
+      setDrawWarn("");
       const m = map ?? mapRef.current;
       const src = m?.getSource("shi-freehand") as
         | maplibregl.GeoJSONSource
@@ -731,14 +763,26 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
       const onClick = (e: maplibregl.MapMouseEvent) => {
         const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+        if (!canDrawRef.current) {
+          setDrawWarn("Pick a county before drawing market frames");
+          return;
+        }
         if (tool === "radius") {
-          onCreateRef.current({
+          const boundary: DrawnBoundary = {
             type: "circle",
             center: pt,
             radiusMiles,
-          });
-          setTool("pan");
-          clearBoxDraft(map);
+          };
+          const cap = validateBoundaryCaps(boundary);
+          if (!cap.ok) {
+            setDrawWarn(cap.error);
+            return;
+          }
+          if (onCreateRef.current(boundary)) {
+            setDrawWarn("");
+            setTool("pan");
+            clearBoxDraft(map);
+          }
           return;
         }
         if (tool === "rectangle") {
@@ -760,12 +804,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           };
           const cap = validateBoundaryCaps(boundary);
           if (!cap.ok) {
-            setBoxDraftWarn(cap.error);
+            setDrawWarn(cap.error);
             return;
           }
-          onCreateRef.current(boundary);
-          clearBoxDraft(map);
-          setTool("pan");
+          if (onCreateRef.current(boundary)) {
+            clearBoxDraft(map);
+            setTool("pan");
+          }
         }
       };
 
@@ -776,8 +821,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       };
 
       const onKey = (ev: KeyboardEvent) => {
-        if (ev.key === "Escape" && tool === "rectangle") {
+        if (ev.key !== "Escape") return;
+        if (tool === "rectangle" || tool === "radius") {
           clearBoxDraft(map);
+          setDrawWarn("");
           setTool("pan");
         }
       };
@@ -803,11 +850,24 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       }
 
       const sealIfReady = (force = false) => {
+        if (!canDrawRef.current) {
+          setDrawWarn("Pick a county before drawing market frames");
+          return false;
+        }
         const pts = force
           ? freehandForceSeal(freehandRef.current)
           : freehandSealPoints(freehandRef.current);
         if (!pts) return false;
-        onCreateRef.current({ type: "polygon", points: pts });
+        const boundary: DrawnBoundary = { type: "polygon", points: pts };
+        const cap = validateBoundaryCaps(boundary);
+        if (!cap.ok) {
+          setDrawWarn(cap.error);
+          return false;
+        }
+        if (!onCreateRef.current(boundary)) {
+          // Keep the loop on the map so the agent can fix county / remove a frame.
+          return false;
+        }
         clearFreehandDraft(map);
         setTool("pan");
         return true;
@@ -815,6 +875,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
       const onDown = (e: maplibregl.MapMouseEvent) => {
         if (toolRef.current !== "freehand") return;
+        if (!canDrawRef.current) {
+          setDrawWarn("Pick a county before drawing market frames");
+          return;
+        }
         e.preventDefault();
         map.dragPan.disable();
         const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
@@ -835,6 +899,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         const near = freehandRef.current.canClose;
         setFreehandHint(near ? "closeable" : "drawing");
         paintFreehand(map, freehandRef.current.points, tip, near);
+        const pts = freehandRef.current.points;
+        if (pts.length >= 3) {
+          const cap = validateBoundaryCaps({ type: "polygon", points: pts });
+          setDrawWarn(cap.ok ? "" : cap.error);
+        }
         if (freehandRef.current.active && near) {
           sealIfReady();
         }
@@ -1042,20 +1111,50 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               onClick={() => {
                 clearFreehandDraft();
                 clearBoxDraft();
+                setDrawWarn("");
+                setTool("pan");
+              }}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
+                tool === "pan" ? "bg-navy text-gold" : "hover:bg-navy/10",
+              )}
+              title="Pan / select"
+            >
+              <Hand className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Pan</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!canDrawFrames) {
+                  setDrawWarn("Pick a county before drawing market frames");
+                  return;
+                }
+                clearFreehandDraft();
+                clearBoxDraft();
                 setTool("rectangle");
               }}
               className={cn(
                 "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
                 tool === "rectangle" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                !canDrawFrames && "opacity-60",
               )}
-              title="Draw a market box (adds a new frame)"
+              title={
+                canDrawFrames
+                  ? "Draw a market box (adds a new frame)"
+                  : "Pick a county first"
+              }
             >
               <Square className="h-3.5 w-3.5" />
-              Box
+              <span className="hidden sm:inline">Box</span>
             </button>
             <button
               type="button"
               onClick={() => {
+                if (!canDrawFrames) {
+                  setDrawWarn("Pick a county before drawing market frames");
+                  return;
+                }
                 clearFreehandDraft();
                 clearBoxDraft();
                 setTool("freehand");
@@ -1063,15 +1162,24 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               className={cn(
                 "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
                 tool === "freehand" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                !canDrawFrames && "opacity-60",
               )}
-              title="Freehand — draw a loop; snap-closes when you return to start"
+              title={
+                canDrawFrames
+                  ? "Freehand — draw a loop; snap-closes when you return to start"
+                  : "Pick a county first"
+              }
             >
               <PenTool className="h-3.5 w-3.5" />
-              Freehand
+              <span className="hidden sm:inline">Freehand</span>
             </button>
             <button
               type="button"
               onClick={() => {
+                if (!canDrawFrames) {
+                  setDrawWarn("Pick a county before drawing market frames");
+                  return;
+                }
                 clearFreehandDraft();
                 clearBoxDraft();
                 setTool("radius");
@@ -1079,10 +1187,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               className={cn(
                 "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
                 tool === "radius" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                !canDrawFrames && "opacity-60",
               )}
+              title={canDrawFrames ? "Radius frame" : "Pick a county first"}
             >
               <Circle className="h-3.5 w-3.5" />
-              Radius
+              <span className="hidden sm:inline">Radius</span>
             </button>
             <label className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-navy">
               mi
@@ -1092,22 +1202,28 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 max={10}
                 step={0.25}
                 value={radiusMiles}
-                onChange={(e) => setRadiusMiles(Number(e.target.value) || 1)}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  if (!Number.isFinite(n)) return;
+                  setRadiusMiles(Math.min(10, Math.max(0.25, n)));
+                }}
                 className="w-12 rounded border border-navy/25 bg-white px-1 py-0.5 font-mono text-[10px] font-bold text-navy"
               />
             </label>
-            {tool === "freehand" && freehandHint !== "idle" ? (
+            {tool !== "pan" ? (
               <button
                 type="button"
                 onClick={() => {
                   clearFreehandDraft();
+                  clearBoxDraft();
+                  setDrawWarn("");
                   setTool("pan");
                 }}
                 className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy hover:bg-navy/10"
-                title="Cancel freehand (Esc)"
+                title="Cancel draw (Esc)"
               >
                 <X className="h-3.5 w-3.5" />
-                Cancel
+                <span className="hidden sm:inline">Cancel</span>
               </button>
             ) : null}
             {activeFrameId ? (
@@ -1117,7 +1233,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy hover:bg-navy/10"
               >
                 <X className="h-3.5 w-3.5" />
-                Remove frame
+                <span className="hidden sm:inline">Remove</span>
               </button>
             ) : null}
             <span className="px-1 font-mono text-[10px] font-bold text-navy/70">
@@ -1166,20 +1282,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           <p
             className={cn(
               "pointer-events-none absolute bottom-3 left-3 inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase shadow-sm",
-              boxDraftWarn
+              drawWarn
                 ? "bg-red-50/95 text-red-800"
                 : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
             )}
           >
             <Layers className="h-3 w-3 shrink-0" />
-            {boxDraftWarn
-              ? boxDraftWarn
+            {drawWarn
+              ? drawWarn
               : tool === "rectangle"
                 ? boxDraftActive
                   ? "Move to size · click second corner · Esc cancel"
                   : "Click two corners — adds a new market frame"
                 : tool === "radius"
-                  ? "Click center — adds a radius frame"
+                  ? `Click center — ${radiusMiles}-mile radius · Esc cancel`
                   : tool === "freehand"
                     ? freehandHint === "closeable"
                       ? "Near start — release to seal frame"

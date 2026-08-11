@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
   if (!isBoundary(boundary)) {
     return NextResponse.json(
-      { error: "boundary is required (box or radius)" },
+      { error: "boundary is required (box, freehand, or radius)" },
       { status: 400 },
     );
   }

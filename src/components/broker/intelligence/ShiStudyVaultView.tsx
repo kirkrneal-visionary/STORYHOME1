@@ -61,6 +61,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
   const [busy, setBusy] = useState(false);
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [dialog, setDialog] = useState<VaultDialog | null>(null);
+  const [dialogError, setDialogError] = useState("");
 
   async function refreshFolders(source?: string) {
     setLoading(true);
@@ -130,12 +131,13 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
   async function confirmDialog() {
     if (!dialog) return;
     setBusy(true);
+    setDialogError("");
     setError("");
     try {
       if (dialog.kind === "rename-folder") {
         const name = dialog.name.trim();
         if (name.length < 2) {
-          setError("Folder name is required");
+          setDialogError("Folder name is required");
           return;
         }
         const updated = await shiRenameFolder({
@@ -154,7 +156,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       } else if (dialog.kind === "rename-frame") {
         const name = dialog.name.trim();
         if (name.length < 2) {
-          setError("Frame name is required");
+          setDialogError("Frame name is required");
           return;
         }
         await shiRenameFrame({ frameId: dialog.frame.id, name });
@@ -165,8 +167,9 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
         await refreshFolders(countySource);
       }
       setDialog(null);
+      setDialogError("");
     } catch (e) {
-      setError(formatShiVaultError(e));
+      setDialogError(formatShiVaultError(e));
     } finally {
       setBusy(false);
     }
@@ -318,13 +321,14 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setDialogError("");
                         setDialog({
                           kind: "rename-folder",
                           folder: f,
                           name: f.name,
-                        })
-                      }
+                        });
+                      }}
                       className="rounded-lg p-1.5 text-navy hover:bg-navy/10"
                       title="Rename"
                     >
@@ -332,9 +336,10 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        setDialog({ kind: "delete-folder", folder: f })
-                      }
+                      onClick={() => {
+                        setDialogError("");
+                        setDialog({ kind: "delete-folder", folder: f });
+                      }}
                       className="rounded-lg p-1.5 text-red-700 hover:bg-red-50"
                       title="Delete"
                     >
@@ -431,13 +436,14 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                         </button>
                         <button
                           type="button"
-                          onClick={() =>
+                          onClick={() => {
+                            setDialogError("");
                             setDialog({
                               kind: "rename-frame",
                               frame: f,
                               name: f.name,
-                            })
-                          }
+                            });
+                          }}
                           className="rounded-lg border border-hairline px-2 py-1.5 text-navy hover:bg-navy/5"
                           title="Rename"
                         >
@@ -445,9 +451,10 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                         </button>
                         <button
                           type="button"
-                          onClick={() =>
-                            setDialog({ kind: "delete-frame", frame: f })
-                          }
+                          onClick={() => {
+                            setDialogError("");
+                            setDialog({ kind: "delete-frame", frame: f });
+                          }}
                           className="rounded-lg border border-hairline px-2 py-1.5 text-red-700 hover:bg-red-50"
                           title="Delete"
                         >
@@ -480,7 +487,10 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
               </h3>
               <button
                 type="button"
-                onClick={() => setDialog(null)}
+                onClick={() => {
+                  setDialog(null);
+                  setDialogError("");
+                }}
                 disabled={busy}
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ink"
                 aria-label="Close"
@@ -491,6 +501,12 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
 
             {dialogBody ? (
               <p className="mt-3 text-sm text-[var(--muted)]">{dialogBody}</p>
+            ) : null}
+
+            {dialogError ? (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800">
+                {dialogError}
+              </p>
             ) : null}
 
             {isRename ? (
@@ -528,7 +544,10 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
             <div className="mt-6 flex gap-2">
               <button
                 type="button"
-                onClick={() => setDialog(null)}
+                onClick={() => {
+                  setDialog(null);
+                  setDialogError("");
+                }}
                 disabled={busy}
                 className="h-11 flex-1 rounded-lg border border-hairline text-sm font-semibold text-ink"
               >
