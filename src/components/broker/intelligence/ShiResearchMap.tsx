@@ -852,7 +852,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     return (
       <div
         className={cn(
-          "relative flex h-[560px] w-full min-h-[420px] flex-col overflow-hidden rounded-2xl border border-hairline bg-[var(--background)] xl:h-[720px]",
+          "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden rounded-2xl border border-hairline bg-[var(--background)] xl:h-[600px]",
           className,
         )}
       >

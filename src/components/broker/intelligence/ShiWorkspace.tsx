@@ -16,13 +16,13 @@ const SECTIONS: {
   label: string;
   icon: typeof Map;
 }[] = [
-  { id: "research", label: "Research", icon: Map },
+  { id: "research", label: "SHI Research", icon: Map },
   { id: "vault", label: "Study Vault", icon: FolderKanban },
 ];
 
 /**
  * Story Home Intelligence shell — Community-style submenu.
- * Research = cockpit · Study Vault = saved folders/frames (not crammed under the map).
+ * Research = 3-split workbench · Study Vault = saved folders/frames.
  */
 export function ShiWorkspace() {
   const router = useRouter();
@@ -59,8 +59,8 @@ export function ShiWorkspace() {
             {SHI_PRODUCT.fullName}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Research cockpit on the left rail · living map on the right · saved
-            studies live in Study Vault — not crammed under the map.
+            Three-panel research: search · map · property record. Market Frames
+            analyze below. Saved studies live in Study Vault.
           </p>
         </div>
       </header>
@@ -78,16 +78,21 @@ export function ShiWorkspace() {
               type="button"
               role="tab"
               aria-selected={active}
+              aria-label={label}
+              title={label}
               onClick={() => selectSection(id)}
               className={cn(
-                "-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors",
+                "-mb-px inline-flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors",
                 active
                   ? "border-gold text-navy"
                   : "border-transparent text-[var(--muted)] hover:text-ink",
               )}
             >
-              <Icon className={cn("h-4 w-4", active && "text-gold")} />
-              {label}
+              <Icon
+                className={cn("h-4 w-4 shrink-0", active && "text-gold")}
+                aria-hidden
+              />
+              <span>{label}</span>
             </button>
           );
         })}

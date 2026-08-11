@@ -60,7 +60,7 @@ type ResearchProps = {
 };
 
 /**
- * SHI Research cockpit — search rail left, wide map right, frames strip below map.
+ * SHI Research — classic 3-split (Search | Map | Property) with Market Frames below.
  * Study Vault lives on its own submenu (not crammed here).
  */
 export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
@@ -448,124 +448,136 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
         </div>
       ) : null}
 
-      {/* Cockpit: search rail | map + frames · property slides under on mobile */}
-      <div className="grid gap-3 xl:grid-cols-[270px_minmax(0,1fr)] xl:items-stretch">
-        <aside className="flex min-h-0 flex-col gap-3 xl:max-h-[calc(100dvh-220px)] xl:overflow-y-auto">
-          <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
-              <Search className="h-4 w-4 text-gold" />
-              Search
-            </h3>
-            <form onSubmit={runSearch} className="mt-3 space-y-2">
-              <label className="block text-[11px] font-semibold text-[var(--muted)]">
-                County
-                <select
-                  value={source}
-                  onChange={(e) => onCountyChange(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
-                >
-                  <option value="">Select county (required for frames)</option>
-                  {AVAILABLE_COUNTIES.map((c) => (
-                    <option key={c.source} value={c.source}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-[11px] font-semibold text-[var(--muted)]">
-                Field
-                <select
-                  value={field}
-                  onChange={(e) => setField(e.target.value as CadSearchField)}
-                  className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
-                >
-                  {CAD_SEARCH_FIELDS.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block text-[11px] font-semibold text-[var(--muted)]">
-                Query
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={cadSearchPlaceholder(field)}
-                  className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink outline-none focus:border-gold"
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={searching}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold disabled:opacity-60"
+      {/* Classic 3-split: Search | Map | Property */}
+      <div className="grid gap-3 xl:grid-cols-[280px_minmax(0,1fr)_340px] xl:items-start">
+        <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+          <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
+            <Search className="h-4 w-4 text-gold" />
+            Search
+          </h3>
+          <form onSubmit={runSearch} className="mt-3 space-y-2">
+            <label className="block text-[11px] font-semibold text-[var(--muted)]">
+              County
+              <select
+                value={source}
+                onChange={(e) => onCountyChange(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
               >
-                {searching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4" />
-                )}
-                Search properties
-              </button>
-            </form>
+                <option value="">Select county (required for frames)</option>
+                {AVAILABLE_COUNTIES.map((c) => (
+                  <option key={c.source} value={c.source}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-[11px] font-semibold text-[var(--muted)]">
+              Field
+              <select
+                value={field}
+                onChange={(e) => setField(e.target.value as CadSearchField)}
+                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
+              >
+                {CAD_SEARCH_FIELDS.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-[11px] font-semibold text-[var(--muted)]">
+              Query
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={cadSearchPlaceholder(field)}
+                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink outline-none focus:border-gold"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={searching}
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold disabled:opacity-60"
+            >
+              {searching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+              Search properties
+            </button>
+          </form>
 
-            {error ? (
-              <p className="mt-2 text-xs font-semibold text-red-700">{error}</p>
-            ) : null}
-            {indexNote ? (
-              <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
-            ) : null}
+          {error ? (
+            <p className="mt-2 text-xs font-semibold text-red-700">{error}</p>
+          ) : null}
+          {indexNote ? (
+            <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
+          ) : null}
 
-            <ul className="mt-3 max-h-[220px] space-y-1 overflow-y-auto xl:max-h-[280px]">
-              {results.length === 0 && !searching ? (
-                <li className="py-4 text-center text-xs text-[var(--muted)]">
-                  Results appear here. Or click a parcel on the map.
+          <ul className="mt-3 max-h-[420px] space-y-1 overflow-y-auto">
+            {results.length === 0 && !searching ? (
+              <li className="py-4 text-center text-xs text-[var(--muted)]">
+                Results appear here. Or click a parcel on the map.
+              </li>
+            ) : null}
+            {results.map((r) => {
+              const active =
+                selected?.propId === r.propId && selected?.source === r.source;
+              return (
+                <li key={`${r.source}:${r.propId}`}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void openProperty({
+                        propId: r.propId,
+                        source: r.source,
+                        countyFips: r.countyFips ?? undefined,
+                      })
+                    }
+                    className={cn(
+                      "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
+                      active
+                        ? "border-gold bg-gold/10"
+                        : "border-hairline hover:border-gold/50 hover:bg-[var(--background)]",
+                    )}
+                  >
+                    <p className="truncate text-sm font-bold text-ink">
+                      {r.situsAddress ||
+                        r.legalDescription ||
+                        `Parcel ${r.propId}`}
+                    </p>
+                    <p className="truncate text-xs text-[var(--muted)]">
+                      {r.ownerName || "Owner unknown"}
+                    </p>
+                    <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
+                      {r.countyName} · ID {r.propId}
+                      {r.legalAcreage != null
+                        ? ` · ${acres(r.legalAcreage)}`
+                        : ""}
+                    </p>
+                  </button>
                 </li>
-              ) : null}
-              {results.map((r) => {
-                const active =
-                  selected?.propId === r.propId && selected?.source === r.source;
-                return (
-                  <li key={`${r.source}:${r.propId}`}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        void openProperty({
-                          propId: r.propId,
-                          source: r.source,
-                          countyFips: r.countyFips ?? undefined,
-                        })
-                      }
-                      className={cn(
-                        "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
-                        active
-                          ? "border-gold bg-gold/10"
-                          : "border-hairline hover:border-gold/50 hover:bg-[var(--background)]",
-                      )}
-                    >
-                      <p className="truncate text-sm font-bold text-ink">
-                        {r.situsAddress ||
-                          r.legalDescription ||
-                          `Parcel ${r.propId}`}
-                      </p>
-                      <p className="truncate text-xs text-[var(--muted)]">
-                        {r.ownerName || "Owner unknown"}
-                      </p>
-                      <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
-                        {r.countyName} · ID {r.propId}
-                        {r.legalAcreage != null
-                          ? ` · ${acres(r.legalAcreage)}`
-                          : ""}
-                      </p>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+              );
+            })}
+          </ul>
+        </section>
 
-          <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
-            <h3 className="text-sm font-bold text-ink">Property record</h3>
+        <ShiResearchMap
+          ref={mapRef}
+          selected={selected}
+          related={matches}
+          frames={frames}
+          activeFrameId={activeFrameId}
+          onFramesChange={setFrames}
+          onActiveFrameIdChange={setActiveFrameId}
+          onCreateFrame={createFrame}
+          onSelectParcel={openFromMap}
+          className="h-[480px] min-h-[400px] xl:h-[600px]"
+        />
+
+        <section className="max-h-[600px] overflow-y-auto rounded-2xl border border-hairline bg-[var(--surface)] p-4 xl:max-h-[600px]">
+          <h3 className="text-sm font-bold text-ink">Property record</h3>
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -636,7 +648,6 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
                 />
               </dl>
 
-              {/* Owner relationships */}
               <div>
                 <h4 className="flex items-center gap-2 text-xs font-bold text-ink">
                   <Users className="h-3.5 w-3.5 text-gold" />
@@ -723,7 +734,6 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
                 </div>
               ) : null}
 
-              {/* Observed history */}
               <div>
                 <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
                   Observed CAD history
@@ -756,48 +766,33 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
               </p>
             </div>
           )}
-          </section>
-        </aside>
-
-        <div className="flex min-h-0 min-w-0 flex-col gap-3">
-          <ShiResearchMap
-            ref={mapRef}
-            selected={selected}
-            related={matches}
-            frames={frames}
-            activeFrameId={activeFrameId}
-            onFramesChange={setFrames}
-            onActiveFrameIdChange={setActiveFrameId}
-            onCreateFrame={createFrame}
-            onSelectParcel={openFromMap}
-            className="h-[480px] xl:h-[min(720px,calc(100dvh-280px))]"
-          />
-          <ShiMarketFramesPanel
-            compact
-            countySource={source}
-            countyName={countyName}
-            frames={frames}
-            activeFrameId={activeFrameId}
-            onSelectFrame={(id) => {
-              setActiveFrameId(id);
-              const f = frames.find((x) => x.localId === id);
-              setAnalysis(f?.analysis ?? null);
-            }}
-            analysis={analysis}
-            analyzing={analyzing}
-            analyzeError={areaError}
-            onAnalyze={() => void runAreaAnalyze()}
-            folders={folders}
-            onCreateFolder={createFolder}
-            onSaveActive={saveActiveFrame}
-            saving={saving}
-            onOpenVault={() => onOpenVault?.()}
-          />
-        </div>
+        </section>
       </div>
+
+      <ShiMarketFramesPanel
+        countySource={source}
+        countyName={countyName}
+        frames={frames}
+        activeFrameId={activeFrameId}
+        onSelectFrame={(id) => {
+          setActiveFrameId(id);
+          const f = frames.find((x) => x.localId === id);
+          setAnalysis(f?.analysis ?? null);
+        }}
+        analysis={analysis}
+        analyzing={analyzing}
+        analyzeError={areaError}
+        onAnalyze={() => void runAreaAnalyze()}
+        folders={folders}
+        onCreateFolder={createFolder}
+        onSaveActive={saveActiveFrame}
+        saving={saving}
+        onOpenVault={() => onOpenVault?.()}
+      />
     </div>
   );
 }
+
 
 function Chip({ label, stale }: { label: string; stale: boolean }) {
   return (
