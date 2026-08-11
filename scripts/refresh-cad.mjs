@@ -8,6 +8,9 @@
  *   - file with downloadUrl → re-download + ingest (Tyler)
  *   - file without downloadUrl → skip (ops must drop a new --file)
  *
+ * Counties run ONE AT A TIME so a Liberty-sized upsert cannot fight Polk
+ * for DB capacity, and successful counties are skipped on the next run.
+ *
  * Usage:
  *   node scripts/refresh-cad.mjs
  *   node scripts/refresh-cad.mjs --force
@@ -81,14 +84,16 @@ async function refreshOne(key, args, statusMap) {
           3600000
         ).toFixed(1)
       : "?";
-    console.log(`[refresh] ${key}: fresh (${ageH}h old) — skip`);
-    return { key, action: "skip_fresh" };
+    console.log(
+      `[refresh] ${key}: fresh (${ageH}h old, parcels=${status?.parcel_count ?? "?"}) — skip`,
+    );
+    return { key, action: "skip_fresh", code: 0 };
   }
 
   if (src.mode === "arcgis") {
     if (args.dryRun) {
       console.log(`[refresh] ${key}: would ingest --all`);
-      return { key, action: "dry_arcgis" };
+      return { key, action: "dry_arcgis", code: 0 };
     }
     const code = await runIngest(key, ["--all"]);
     return { key, action: "arcgis", code };
@@ -97,7 +102,7 @@ async function refreshOne(key, args, statusMap) {
   if (src.mode === "file" && src.downloadUrl) {
     if (args.dryRun) {
       console.log(`[refresh] ${key}: would --download`);
-      return { key, action: "dry_download" };
+      return { key, action: "dry_download", code: 0 };
     }
     const code = await runIngest(key, ["--download"]);
     return { key, action: "download", code };
@@ -106,7 +111,7 @@ async function refreshOne(key, args, statusMap) {
   console.log(
     `[refresh] ${key}: file source with no downloadUrl — pass --file on ingest-cad`,
   );
-  return { key, action: "awaiting_file" };
+  return { key, action: "awaiting_file", code: 0 };
 }
 
 async function main() {
@@ -115,26 +120,35 @@ async function main() {
   const statusMap = await getStatusMap();
 
   console.log(
-    `[refresh] checking ${keys.length} counties (force=${args.force} dryRun=${args.dryRun})`,
+    `[refresh] checking ${keys.length} counties sequentially (force=${args.force} dryRun=${args.dryRun})`,
   );
 
-  // Run up to 2 county refreshes in parallel — ArcGIS + DB upsert bound the rest.
-  const concurrency = 2;
   const results = [];
-  let cursor = 0;
-  async function worker() {
-    while (cursor < keys.length) {
-      const i = cursor++;
-      results[i] = await refreshOne(keys[i], args, statusMap);
-    }
+  for (const key of keys) {
+    // Re-read status before each county so a success earlier in THIS run
+    // is visible if we ever restructure; also logs clearer progress.
+    const latest = await getStatusMap();
+    const r = await refreshOne(key, args, latest.size ? latest : statusMap);
+    results.push(r);
+    console.log(
+      `[refresh] ${key}: action=${r.action} code=${r.code ?? 0}`,
+    );
   }
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, keys.length) }, () => worker()),
-  );
 
   const failed = results.filter((r) => r.code && r.code !== 0);
-  console.log(`[refresh] done. ${results.length} checked, ${failed.length} failed.`);
-  if (failed.length) process.exitCode = 1;
+  const skipped = results.filter((r) => r.action === "skip_fresh");
+  const ok = results.filter(
+    (r) => (!r.code || r.code === 0) && r.action !== "skip_fresh",
+  );
+  console.log(
+    `[refresh] done. ${results.length} checked · ${ok.length} ingested · ${skipped.length} skipped(fresh) · ${failed.length} failed.`,
+  );
+  if (failed.length) {
+    console.error(
+      `[refresh] failed counties: ${failed.map((f) => f.key).join(", ")}`,
+    );
+    process.exitCode = 1;
+  }
 }
 
 main().catch((e) => {
