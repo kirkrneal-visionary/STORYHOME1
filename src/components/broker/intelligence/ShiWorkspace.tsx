@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback } from "react";
+import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { FolderKanban, Map } from "lucide-react";
-import { ShiIcon } from "@/components/brand/ShiIcon";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
 import type { ShiSavedFrame } from "@/lib/shi/types";
@@ -17,12 +17,12 @@ const SECTIONS: {
   label: string;
   icon: typeof Map;
 }[] = [
-  { id: "research", label: "SHI Research", icon: Map },
+  { id: "research", label: "Research", icon: Map },
   { id: "vault", label: "Study Vault", icon: FolderKanban },
 ];
 
 /**
- * Story Home Intelligence shell — Community-style submenu.
+ * Archie's Intelligence shell — Community-style submenu.
  * Research = 3-split workbench · Study Vault = saved folders/frames.
  */
 export function ShiWorkspace() {
@@ -67,12 +67,19 @@ export function ShiWorkspace() {
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-start gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy text-gold">
-          <ShiIcon className="h-6 w-6" />
+        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[18px] bg-white ring-1 ring-hairline shadow-sm">
+          <Image
+            src={SHI_PRODUCT.markSrc}
+            alt=""
+            width={48}
+            height={48}
+            className="h-full w-full object-cover"
+            priority
+          />
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-[var(--muted)] uppercase">
-            {SHI_PRODUCT.shortName} · {SHI_PRODUCT.subtitle}
+            {SHI_PRODUCT.fullName} · {SHI_PRODUCT.subtitle}
           </p>
           <h2 className="font-serif text-2xl font-bold text-ink">
             {SHI_PRODUCT.fullName}
@@ -86,7 +93,7 @@ export function ShiWorkspace() {
 
       <div
         role="tablist"
-        aria-label="Story Home Intelligence sections"
+        aria-label={`${SHI_PRODUCT.fullName} sections`}
         className="flex gap-2 overflow-x-auto border-b border-hairline pb-px"
       >
         {SECTIONS.map(({ id, label, icon: Icon }) => {

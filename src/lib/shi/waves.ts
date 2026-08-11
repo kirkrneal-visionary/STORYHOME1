@@ -1,15 +1,17 @@
 /**
- * Story Home Intelligence (SHI) — product waves.
+ * Archie's Intelligence (product waves; code paths still use `shi` for APIs).
  * Listing-form CAD stays MLS-limited (pin/search for listing tracts only).
- * SHI is the full professional Property Intelligence product.
+ * Archie's Intelligence is the full professional Property Intelligence product.
  */
 
 export const SHI_PRODUCT = {
-  shortName: "SHI",
-  menuLabel: "SHI",
-  fullName: "Story Home Intelligence",
+  shortName: "Archie",
+  menuLabel: "INTELLIGENCE",
+  fullName: "Archie's Intelligence",
   subtitle: "Property Intelligence for Story Pro",
   positioning: "Research your market. Public records. Professional workflow.",
+  /** Menu mark — cleaned bloodhound asset (no frame). */
+  markSrc: "/brand/archie-intelligence.png",
 } as const;
 
 export type ShiWaveStatus = "done" | "current" | "planned";

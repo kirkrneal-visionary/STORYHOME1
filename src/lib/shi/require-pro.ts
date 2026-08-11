@@ -46,7 +46,7 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
     return {
       ok: false,
       status: 403,
-      error: "Story Home Intelligence is available to Story Pro accounts",
+      error: "Archie's Intelligence is available to Story Pro accounts",
     };
   }
 

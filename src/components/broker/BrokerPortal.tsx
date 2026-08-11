@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
-import { ShiIcon } from "@/components/brand/ShiIcon";
+import { ArchiesIntelligenceTab } from "@/components/brand/ArchiesIntelligenceTab";
 import { MyToolsView } from "@/components/broker/MyToolsView";
 import { MyListingsView } from "@/components/broker/MyListingsView";
 import { MyBuyersView } from "@/components/broker/MyBuyersView";
@@ -38,20 +38,25 @@ type TabIcon = ComponentType<{ className?: string; size?: number }>;
 const TABS: { id: PortalTab; label: string; icon: TabIcon }[] = [
   { id: "tools", label: "My Tools", icon: Calculator },
   { id: "listings", label: "My Listings", icon: Building2 },
-  { id: "intelligence", label: SHI_PRODUCT.menuLabel, icon: ShiIcon },
   { id: "buyers", label: "My Buyers", icon: Users },
   { id: "sellers", label: "My Sellers", icon: Home },
   { id: "clientHomes", label: "Client Homes", icon: KeyRound },
   { id: "community", label: "Community", icon: MessagesSquare },
 ];
 
-const TAB_IDS = new Set<string>(TABS.map((t) => t.id));
+const TAB_IDS = new Set<string>([
+  ...TABS.map((t) => t.id),
+  "intelligence",
+]);
 
 function resolveInitialTab(
   pathname: string | null,
   searchTab: string | null,
 ): PortalTab {
-  if (pathname?.endsWith("/intelligence") || pathname?.includes("/portal/intelligence")) {
+  if (
+    pathname?.endsWith("/intelligence") ||
+    pathname?.includes("/portal/intelligence")
+  ) {
     return "intelligence";
   }
   if (searchTab && TAB_IDS.has(searchTab)) {
@@ -124,51 +129,53 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
             Story Pro
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            List properties, research your market with SHI, manage clients, and
-            run the numbers — your agent workspace.
+            List properties, research your market with{" "}
+            {SHI_PRODUCT.fullName}, manage clients, and run the numbers — your
+            agent workspace.
           </p>
         </header>
 
+        {/* Custom menu rail — Archie's pill is the premium unit */}
         <div
           role="tablist"
           aria-label="Broker portal sections"
-          className="mt-6 flex gap-2 overflow-x-auto border-b border-hairline pb-px"
+          className="mt-6 flex items-center gap-2 overflow-x-auto rounded-2xl border border-hairline/80 bg-[color-mix(in_srgb,var(--surface)_88%,var(--paper))]/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-md"
         >
+          <ArchiesIntelligenceTab
+            active={tab === "intelligence"}
+            onClick={() => selectTab("intelligence")}
+          />
+
+          <span
+            aria-hidden
+            className="mx-0.5 hidden h-7 w-px shrink-0 bg-hairline sm:block"
+          />
+
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id;
-            const isShi = id === "intelligence";
             return (
               <button
                 key={id}
                 type="button"
                 role="tab"
                 aria-selected={active}
-                aria-label={isShi ? SHI_PRODUCT.fullName : label}
-                title={isShi ? SHI_PRODUCT.fullName : undefined}
+                aria-label={label}
                 onClick={() => selectTab(id)}
                 className={cn(
-                  "-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors",
+                  "inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold transition-colors",
                   active
-                    ? isShi
-                      ? "border-gold text-navy"
-                      : "border-[var(--accent)] text-ink"
-                    : "border-transparent text-[var(--muted)] hover:text-ink",
-                  isShi && !active && "text-navy/80",
+                    ? "bg-navy text-gold shadow-sm"
+                    : "text-[var(--muted)] hover:bg-white/70 hover:text-ink",
                 )}
               >
-                <Icon
-                  className={cn(
-                    "h-4 w-4",
-                    isShi && (active ? "text-gold" : "text-navy"),
-                  )}
-                />
-                {label}
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="whitespace-nowrap">{label}</span>
               </button>
             );
           })}
           <Link
             href={`/agents/${user.id}`}
-            className="-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:text-ink"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/70 hover:text-ink"
           >
             <UserRound className="h-4 w-4" />
             Public Profile
@@ -199,12 +206,12 @@ function Gate({
   cta: { href: string; label: string };
 }) {
   return (
-    <div className="mx-auto max-w-lg px-4 pb-24 pt-[120px] text-center md:px-6">
+    <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 pb-24 pt-[96px] text-center">
       <h1 className="font-serif text-3xl font-bold text-ink">{title}</h1>
       <p className="mt-3 text-sm text-[var(--muted)]">{description}</p>
       <Link
         href={cta.href}
-        className="mt-8 inline-flex h-12 items-center rounded-xl bg-gold px-6 text-sm font-bold text-navy"
+        className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-navy px-5 text-sm font-bold text-gold"
       >
         {cta.label}
       </Link>
