@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, MapPinned, Search, Users } from "lucide-react";
 import { ShiIcon } from "@/components/brand/ShiIcon";
 import { ShiResearchMap } from "@/components/broker/intelligence/ShiResearchMap";
 import {
@@ -9,11 +9,20 @@ import {
   cadSearchPlaceholder,
   type CadSearchField,
 } from "@/lib/cad-layers";
+import type { DrawnBoundary } from "@/lib/geo";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
-import { shiFreshness, shiGetProperty, shiSearch } from "@/lib/shi/client";
+import {
+  shiAnalyzeArea,
+  shiFreshness,
+  shiGetProperty,
+  shiOwnerMatches,
+  shiSearch,
+} from "@/lib/shi/client";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import type {
+  ShiAreaMetrics,
   ShiCountyFreshness,
+  ShiOwnerMatch,
   ShiPropertyDetail,
   ShiPropertySummary,
 } from "@/lib/shi/types";
@@ -34,7 +43,7 @@ function acres(n: number | null | undefined) {
 }
 
 /**
- * Story Home Intelligence — SHI-1 Property Intelligence workspace.
+ * Story Home Intelligence — SHI-1 + SHI-2 workspace.
  * Listing-form CAD remains MLS-limited; full research lives here.
  */
 export function PropertyIntelligenceView() {
@@ -44,6 +53,14 @@ export function PropertyIntelligenceView() {
   const [results, setResults] = useState<ShiPropertySummary[]>([]);
   const [indexNote, setIndexNote] = useState<string | null>(null);
   const [selected, setSelected] = useState<ShiPropertyDetail | null>(null);
+  const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
+  const [matchNote, setMatchNote] = useState("");
+  const [exactCount, setExactCount] = useState(0);
+  const [possibleCount, setPossibleCount] = useState(0);
+  const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
+  const [areaMetrics, setAreaMetrics] = useState<ShiAreaMetrics | null>(null);
+  const [areaError, setAreaError] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
   const [freshness, setFreshness] = useState<ShiCountyFreshness[]>([]);
   const [error, setError] = useState("");
   const [searching, startSearch] = useTransition();
@@ -56,12 +73,32 @@ export function PropertyIntelligenceView() {
         const rows = await shiFreshness();
         if (!cancelled) setFreshness(rows);
       } catch {
-        /* optional strip */
+        /* optional */
       }
     })();
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  const loadMatches = useCallback(async (property: ShiPropertyDetail) => {
+    try {
+      const res = await shiOwnerMatches({
+        source: property.source,
+        propId: property.propId,
+        cadOwnerId: property.cadOwnerId,
+        ownerName: property.ownerName,
+      });
+      setMatches(res.matches);
+      setMatchNote(res.note);
+      setExactCount(res.exactCount);
+      setPossibleCount(res.possibleCount);
+    } catch {
+      setMatches([]);
+      setMatchNote("Could not load owner relationships.");
+      setExactCount(0);
+      setPossibleCount(0);
+    }
   }, []);
 
   const openProperty = useCallback(
@@ -73,16 +110,18 @@ export function PropertyIntelligenceView() {
         if (!property) {
           setError("Property not found");
           setSelected(null);
+          setMatches([]);
           return;
         }
         setSelected(property);
+        void loadMatches(property);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load property");
       } finally {
         setLoadingProperty(false);
       }
     },
-    [],
+    [loadMatches],
   );
 
   function runSearch(e?: React.FormEvent) {
@@ -117,6 +156,35 @@ export function PropertyIntelligenceView() {
     });
   }
 
+  async function runAreaAnalyze() {
+    if (!boundary) {
+      setAreaError("Draw a radius or box on the map first");
+      return;
+    }
+    setAnalyzing(true);
+    setAreaError("");
+    try {
+      const metrics = await shiAnalyzeArea({
+        boundary,
+        source: source || selected?.source || undefined,
+      });
+      setAreaMetrics(metrics);
+    } catch (e) {
+      setAreaMetrics(null);
+      setAreaError(e instanceof Error ? e.message : "Area analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  function handleBoundaryChange(next: DrawnBoundary | null) {
+    setBoundary(next);
+    if (!next) {
+      setAreaMetrics(null);
+      setAreaError("");
+    }
+  }
+
   const selectedFresh =
     selected &&
     freshness.find(
@@ -139,8 +207,8 @@ export function PropertyIntelligenceView() {
             {SHI_PRODUCT.fullName}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Search public records, research on the map, open a property record.
-            Listing upload CAD stays MLS-limited.
+            Search, map research, owner relationships, area metrics, and observed
+            CAD history. Listing upload CAD stays MLS-limited.
           </p>
         </div>
       </header>
@@ -173,126 +241,175 @@ export function PropertyIntelligenceView() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)_320px]">
-        {/* Search column */}
-        <section className="flex flex-col rounded-2xl border border-hairline bg-[var(--surface)] p-4">
-          <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
-            <Search className="h-4 w-4 text-gold" />
-            Search
-          </h3>
-          <form onSubmit={runSearch} className="mt-3 space-y-2">
-            <label className="block text-[11px] font-semibold text-[var(--muted)]">
-              County
-              <select
-                value={source}
-                onChange={(e) => setSource(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
+      <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)_340px]">
+        {/* Search + area */}
+        <section className="flex flex-col gap-4">
+          <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
+              <Search className="h-4 w-4 text-gold" />
+              Search
+            </h3>
+            <form onSubmit={runSearch} className="mt-3 space-y-2">
+              <label className="block text-[11px] font-semibold text-[var(--muted)]">
+                County
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
+                >
+                  <option value="">All launch counties</option>
+                  {AVAILABLE_COUNTIES.map((c) => (
+                    <option key={c.source} value={c.source}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-[11px] font-semibold text-[var(--muted)]">
+                Field
+                <select
+                  value={field}
+                  onChange={(e) => setField(e.target.value as CadSearchField)}
+                  className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
+                >
+                  {CAD_SEARCH_FIELDS.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-[11px] font-semibold text-[var(--muted)]">
+                Query
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={cadSearchPlaceholder(field)}
+                  className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink outline-none focus:border-gold"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={searching}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold disabled:opacity-60"
               >
-                <option value="">All launch counties</option>
-                {AVAILABLE_COUNTIES.map((c) => (
-                  <option key={c.source} value={c.source}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-[11px] font-semibold text-[var(--muted)]">
-              Field
-              <select
-                value={field}
-                onChange={(e) => setField(e.target.value as CadSearchField)}
-                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
-              >
-                {CAD_SEARCH_FIELDS.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-[11px] font-semibold text-[var(--muted)]">
-              Query
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={cadSearchPlaceholder(field)}
-                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink outline-none focus:border-gold"
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={searching}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold disabled:opacity-60"
-            >
-              {searching ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-              Search properties
-            </button>
-          </form>
+                {searching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                Search properties
+              </button>
+            </form>
 
-          {error ? (
-            <p className="mt-2 text-xs font-semibold text-red-700">{error}</p>
-          ) : null}
-          {indexNote ? (
-            <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
-          ) : null}
-
-          <ul className="mt-3 max-h-[420px] flex-1 space-y-1 overflow-y-auto">
-            {results.length === 0 && !searching ? (
-              <li className="py-6 text-center text-xs text-[var(--muted)]">
-                Results appear here. Or zoom the map and click a parcel.
-              </li>
+            {error ? (
+              <p className="mt-2 text-xs font-semibold text-red-700">{error}</p>
             ) : null}
-            {results.map((r) => {
-              const active =
-                selected?.propId === r.propId && selected?.source === r.source;
-              return (
-                <li key={`${r.source}:${r.propId}`}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void openProperty({
-                        propId: r.propId,
-                        source: r.source,
-                        countyFips: r.countyFips ?? undefined,
-                      })
-                    }
-                    className={cn(
-                      "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
-                      active
-                        ? "border-gold bg-gold/10"
-                        : "border-hairline hover:border-gold/50 hover:bg-[var(--background)]",
-                    )}
-                  >
-                    <p className="truncate text-sm font-bold text-ink">
-                      {r.situsAddress || r.legalDescription || `Parcel ${r.propId}`}
-                    </p>
-                    <p className="truncate text-xs text-[var(--muted)]">
-                      {r.ownerName || "Owner unknown"}
-                    </p>
-                    <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
-                      {r.countyName} · ID {r.propId}
-                      {r.legalAcreage != null ? ` · ${acres(r.legalAcreage)}` : ""}
-                    </p>
-                  </button>
+            {indexNote ? (
+              <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
+            ) : null}
+
+            <ul className="mt-3 max-h-[280px] space-y-1 overflow-y-auto">
+              {results.length === 0 && !searching ? (
+                <li className="py-4 text-center text-xs text-[var(--muted)]">
+                  Results appear here. Or click a parcel on the map.
                 </li>
-              );
-            })}
-          </ul>
+              ) : null}
+              {results.map((r) => {
+                const active =
+                  selected?.propId === r.propId && selected?.source === r.source;
+                return (
+                  <li key={`${r.source}:${r.propId}`}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void openProperty({
+                          propId: r.propId,
+                          source: r.source,
+                          countyFips: r.countyFips ?? undefined,
+                        })
+                      }
+                      className={cn(
+                        "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
+                        active
+                          ? "border-gold bg-gold/10"
+                          : "border-hairline hover:border-gold/50 hover:bg-[var(--background)]",
+                      )}
+                    >
+                      <p className="truncate text-sm font-bold text-ink">
+                        {r.situsAddress ||
+                          r.legalDescription ||
+                          `Parcel ${r.propId}`}
+                      </p>
+                      <p className="truncate text-xs text-[var(--muted)]">
+                        {r.ownerName || "Owner unknown"}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
+                        {r.countyName} · ID {r.propId}
+                        {r.legalAcreage != null
+                          ? ` · ${acres(r.legalAcreage)}`
+                          : ""}
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
+              <MapPinned className="h-4 w-4 text-gold" />
+              Area analyze
+            </h3>
+            <p className="mt-1 text-[11px] text-[var(--muted)]">
+              Draw a radius or box on the map, then run metrics.
+            </p>
+            <button
+              type="button"
+              onClick={() => void runAreaAnalyze()}
+              disabled={analyzing || !boundary}
+              className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-navy bg-navy/5 text-sm font-bold text-navy disabled:opacity-50"
+            >
+              {analyzing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              Analyze drawn area
+            </button>
+            {areaError ? (
+              <p className="mt-2 text-xs font-semibold text-red-700">{areaError}</p>
+            ) : null}
+            {areaMetrics ? (
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                <Fact label="Parcels" value={String(areaMetrics.parcelCount)} />
+                <Fact label="Real / Personal" value={`${areaMetrics.realCount} / ${areaMetrics.personalCount}`} />
+                <Fact label="Total acres" value={acres(areaMetrics.totalAcres)} />
+                <Fact label="Median acres" value={acres(areaMetrics.medianAcres)} />
+                <Fact
+                  label="Median market"
+                  value={money(areaMetrics.medianMarketValue)}
+                />
+                <div className="col-span-2 text-[10px] leading-relaxed text-[var(--muted)]">
+                  {areaMetrics.note}
+                </div>
+              </dl>
+            ) : null}
+          </div>
         </section>
 
-        {/* Map */}
         <ShiResearchMap
           selected={selected}
-          onSelectPropId={(propId) => void openProperty({ propId })}
-          className="min-h-[480px] xl:min-h-[640px]"
+          related={matches}
+          boundary={boundary}
+          onBoundaryChange={handleBoundaryChange}
+          onSelectPropId={(propId, src) =>
+            void openProperty({ propId, source: src })
+          }
+          className="min-h-[520px] xl:min-h-[720px]"
         />
 
         {/* Property panel */}
-        <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+        <section className="max-h-[860px] overflow-y-auto rounded-2xl border border-hairline bg-[var(--surface)] p-4">
           <h3 className="text-sm font-bold text-ink">Property record</h3>
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
@@ -300,8 +417,7 @@ export function PropertyIntelligenceView() {
             </div>
           ) : !selected ? (
             <p className="mt-6 text-sm text-[var(--muted)]">
-              Select a search result or click a parcel on the map to open the
-              full public record.
+              Select a search result or click a parcel on the map.
             </p>
           ) : (
             <div className="mt-3 space-y-4">
@@ -347,7 +463,9 @@ export function PropertyIntelligenceView() {
                 />
                 <Fact
                   label="Tax year"
-                  value={selected.taxYear != null ? String(selected.taxYear) : "—"}
+                  value={
+                    selected.taxYear != null ? String(selected.taxYear) : "—"
+                  }
                 />
                 <Fact
                   label="School"
@@ -355,11 +473,77 @@ export function PropertyIntelligenceView() {
                 />
                 <Fact
                   label="City / ZIP"
-                  value={[selected.situsCity, selected.situsZip]
-                    .filter(Boolean)
-                    .join(" ") || "—"}
+                  value={
+                    [selected.situsCity, selected.situsZip]
+                      .filter(Boolean)
+                      .join(" ") || "—"
+                  }
                 />
               </dl>
+
+              {/* Owner relationships */}
+              <div>
+                <h4 className="flex items-center gap-2 text-xs font-bold text-ink">
+                  <Users className="h-3.5 w-3.5 text-gold" />
+                  Owner relationships
+                </h4>
+                <p className="mt-1 text-[10px] text-[var(--muted)]">
+                  {exactCount} EXACT · {possibleCount} POSSIBLE
+                </p>
+                <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
+                  {matchNote}
+                </p>
+                {matches.length === 0 ? (
+                  <p className="mt-2 text-xs text-[var(--muted)]">
+                    No related tracts in this county.
+                  </p>
+                ) : (
+                  <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
+                    {matches.map((m) => (
+                      <li key={`${m.source}:${m.propId}`}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void openProperty({
+                              propId: m.propId,
+                              source: m.source,
+                              countyFips: m.countyFips ?? undefined,
+                            })
+                          }
+                          className="w-full rounded-lg border border-hairline px-2.5 py-2 text-left hover:border-gold/50"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span
+                              className={cn(
+                                "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase",
+                                m.matchTier === "EXACT"
+                                  ? "bg-gold/25 text-navy"
+                                  : "bg-[var(--background)] text-[var(--muted)]",
+                              )}
+                            >
+                              {m.matchTier}
+                            </span>
+                            <span className="truncate font-mono text-[10px] text-[var(--muted)]">
+                              {m.propId}
+                            </span>
+                          </div>
+                          <p className="mt-1 truncate text-xs font-semibold text-ink">
+                            {m.situsAddress ||
+                              m.legalDescription ||
+                              `Parcel ${m.propId}`}
+                          </p>
+                          <p className="truncate text-[10px] text-[var(--muted)]">
+                            {m.matchReason}
+                            {m.legalAcreage != null
+                              ? ` · ${acres(m.legalAcreage)}`
+                              : ""}
+                          </p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
               {selected.legalDescription ? (
                 <div>
@@ -384,32 +568,36 @@ export function PropertyIntelligenceView() {
                 </div>
               ) : null}
 
-              {selected.values.length > 0 ? (
-                <div>
-                  <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
-                    Value history
+              {/* Observed history */}
+              <div>
+                <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
+                  Observed CAD history
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-[var(--muted)]">
+                  Only values and county pull observations — not deed or
+                  ownership transfer history.
+                </p>
+                {(selected.observedHistory ?? []).length === 0 ? (
+                  <p className="mt-2 text-xs text-[var(--muted)]">
+                    No observed history rows on file for this parcel.
                   </p>
-                  <ul className="mt-1 divide-y divide-hairline rounded-lg border border-hairline">
-                    {selected.values.map((v) => (
-                      <li
-                        key={v.taxYear}
-                        className="flex items-center justify-between px-2.5 py-1.5 text-[11px]"
-                      >
-                        <span className="font-mono font-bold text-[var(--muted)]">
-                          {v.taxYear}
-                        </span>
-                        <span className="font-semibold text-ink">
-                          {money(v.marketValue)}
-                        </span>
+                ) : (
+                  <ol className="mt-2 space-y-2 border-l border-hairline pl-3">
+                    {(selected.observedHistory ?? []).map((ev, i) => (
+                      <li key={`${ev.kind}-${ev.at}-${i}`}>
+                        <p className="text-xs font-semibold text-ink">{ev.title}</p>
+                        <p className="text-[10px] text-[var(--muted)]">
+                          {ev.detail}
+                        </p>
                       </li>
                     ))}
-                  </ul>
-                </div>
-              ) : null}
+                  </ol>
+                )}
+              </div>
 
               <p className="text-[10px] leading-relaxed text-[var(--muted)]">
-                Public appraisal record for research. Private prospect notes and
-                CRM convert ship in later SHI waves.
+                Public appraisal record for research. Prospects + CRM convert ship
+                in SHI-3.
               </p>
             </div>
           )}
