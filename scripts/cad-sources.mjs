@@ -16,6 +16,8 @@
 const BIS_FIELDS = {
   prop_id: ["prop_id", "prop_id_text"],
   geo_id: "geo_id",
+  // Parcel GIS rarely exposes Owner ID; keep aliases for when present.
+  owner_id: ["owner_id", "Owner_ID", "OWNER_ID", "ownerId"],
   owner_name: "file_as_name",
   situs_num: "situs_num",
   situs_street_prefx: "situs_street_prefx",
@@ -87,6 +89,7 @@ export const CAD_SOURCES = {
     fields: {
       prop_id: ["prop_id", "PACSPID", "PID"],
       geo_id: ["GeoID", "PACSGEO", "GEONUMBER"],
+      owner_id: ["owner_id", "OwnerID", "OWNER_ID"],
       owner_name: "CADName",
       situs_num: "situs_num",
       situs_street: "situs_stre",
@@ -132,6 +135,7 @@ export const CAD_SOURCES = {
     fields: {
       prop_id: ["prop_id", "PID_"],
       geo_id: ["tyler_cad_", "Account5"],
+      owner_id: null,
       owner_name: null,
       situs_num: null,
       situs_street: null,
@@ -195,6 +199,7 @@ export const CAD_SOURCES = {
     fields: {
       prop_id: ["PIN", "pid", "prop_id"],
       geo_id: ["PIN", "pid"],
+      owner_id: ["ownerId", "OWNER_ID"],
       owner_name: ["ownerName", "OWNER_NAME"],
       situs_num: null,
       situs_street: ["situs", "SITUS"],

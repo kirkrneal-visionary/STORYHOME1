@@ -32,6 +32,11 @@ import {
   type CountyParcel,
 } from "@/lib/supabase/parcels";
 import {
+  CAD_SEARCH_FIELDS,
+  cadSearchPlaceholder,
+  type CadSearchField,
+} from "@/lib/cad-layers";
+import {
   summarizeTracts,
   type LinkedParcel,
 } from "@/lib/supabase/listing-parcels";
@@ -635,6 +640,7 @@ function TractManager({
 }) {
   // "" = statewide (all ingested counties); a source key narrows to one county.
   const [countyFilter, setCountyFilter] = useState<string>("");
+  const [searchField, setSearchField] = useState<CadSearchField>("all");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CountyParcel[]>([]);
   const [searching, setSearching] = useState(false);
@@ -646,8 +652,8 @@ function TractManager({
     onPreview?.(null);
     try {
       const next = countyFilter
-        ? await searchParcels(countyFilter, query)
-        : await searchParcelsStatewide(query);
+        ? await searchParcels(countyFilter, query, searchField)
+        : await searchParcelsStatewide(query, searchField);
       setResults(next);
       // Auto pin-drop the best match as soon as CAD returns results.
       onPreview?.(next[0] ?? null);
@@ -712,16 +718,28 @@ function TractManager({
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-gold" />
         <h4 className="text-sm font-semibold text-ink">
-          Parcels / tracts — search Texas CAD by parcel ID, address, or owner
+          Parcels / tracts — advanced Texas CAD search
         </h4>
       </div>
       <p className="mt-1 text-xs text-[var(--muted)]">
-        Search Real + Personal CAD across the 7 launch counties. Results pin-drop
-        on the map to the right; MH serials auto-fill MLS fields. Geometry-only
-        counties (e.g. Tyler) still need agent detail entry.
+        Search by Owner, Address, Property ID, Owner ID, Geographic ID, Property
+        Type, or Tax Year across the 7 launch counties (county-labeled). Results
+        pin-drop on the map; MH serials auto-fill MLS fields.
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
+        <select
+          value={searchField}
+          onChange={(e) => setSearchField(e.target.value as CadSearchField)}
+          title="Search field"
+          className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+        >
+          {CAD_SEARCH_FIELDS.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.label}
+            </option>
+          ))}
+        </select>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -731,7 +749,7 @@ function TractManager({
               void run();
             }
           }}
-          placeholder="Parcel ID, address, owner, or MH serial #"
+          placeholder={cadSearchPlaceholder(searchField)}
           className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
         />
         <select

@@ -1,6 +1,7 @@
 "use client";
 
 import { getBrowserSupabase } from "@/lib/supabase/client";
+import type { CadSearchField } from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
 
 /**
@@ -8,6 +9,9 @@ import { txCountyNameByFips } from "@/lib/tx-counties";
  * launch counties (Polk ArcGIS, Angelina ArcGIS, Tyler shapefile, plus
  * file/manual counties). Read-only from the client — only the service role
  * writes via the ingest/refresh scripts.
+ *
+ * Wave L6 adds advanced CAD search facets (Owner / Address / Property ID /
+ * Owner ID / Geographic ID / Property Type / Tax Year).
  */
 
 export type PropertyCategory = "real" | "personal";
@@ -19,6 +23,7 @@ export type CountyParcel = {
   countyFips: string | null;
   propId: string;
   geoId: string | null;
+  cadOwnerId: string | null;
   ownerName: string | null;
   situsAddress: string | null;
   situsCity: string | null;
@@ -98,7 +103,7 @@ export function schoolLabel(code: string | null): string | null {
 }
 
 const SELECT =
-  "id, source, county_fips, prop_id, geo_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, geojson, centroid_lat, centroid_lng, source_url";
+  "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, geojson, centroid_lat, centroid_lng, source_url";
 
 function toParcel(r: any): CountyParcel {
   return {
@@ -107,6 +112,7 @@ function toParcel(r: any): CountyParcel {
     countyFips: r.county_fips ?? null,
     propId: r.prop_id,
     geoId: r.geo_id,
+    cadOwnerId: r.cad_owner_id ?? null,
     ownerName: r.owner_name,
     situsAddress: r.situs_address,
     situsCity: r.situs_city,
@@ -218,36 +224,100 @@ export function cadFreshnessLabel(
   };
 }
 
+export type CadSearchOpts = {
+  /** Empty / omit = all ingested counties */
+  source?: string;
+  field?: CadSearchField;
+  limit?: number;
+};
+
+/**
+ * Advanced CAD search (Wave L6) — facet by Owner / Address / Property ID /
+ * Owner ID / Geographic ID / Property Type / Tax Year. Statewide by default;
+ * results stay county-labeled via parcel FIPS/source.
+ */
+export async function searchCadParcels(
+  query: string,
+  opts: CadSearchOpts = {},
+): Promise<CountyParcel[]> {
+  const s = getBrowserSupabase();
+  const q = query.trim();
+  if (!s || !q) return [];
+  const field: CadSearchField = opts.field ?? "all";
+  const limit = opts.limit ?? 30;
+  let req = s.from("county_parcels").select(SELECT);
+  if (opts.source) req = req.eq("source", opts.source);
+
+  const like = `%${q}%`;
+  const digits = q.replace(/[^\d]/g, "");
+
+  switch (field) {
+    case "owner":
+      req = req.ilike("owner_name", like);
+      break;
+    case "address":
+      req = req.or(
+        `situs_address.ilike.${like},situs_street.ilike.${like}`,
+      );
+      break;
+    case "prop_id":
+      req = req.ilike("prop_id", `%${digits || q}%`);
+      break;
+    case "owner_id":
+      req = req.ilike("cad_owner_id", like);
+      break;
+    case "geo_id":
+      req = req.ilike("geo_id", `%${digits || q}%`);
+      break;
+    case "property_type": {
+      const cat = q.toLowerCase().startsWith("p") ? "personal" : "real";
+      if (/^(real|personal|r|p)$/i.test(q.trim())) {
+        req = req.eq("property_category", cat);
+      } else {
+        req = req.ilike("property_category", like);
+      }
+      break;
+    }
+    case "tax_year": {
+      const year = Number(digits || q);
+      if (Number.isFinite(year) && year > 1900) req = req.eq("tax_year", year);
+      else return [];
+      break;
+    }
+    default: {
+      const ors = [
+        `owner_name.ilike.${like}`,
+        `situs_address.ilike.${like}`,
+        `situs_street.ilike.${like}`,
+        `mh_serial_number.ilike.${like}`,
+        `mh_hud_label.ilike.${like}`,
+        `legal_description.ilike.${like}`,
+        `cad_owner_id.ilike.${like}`,
+      ];
+      if (digits) {
+        ors.push(
+          `prop_id.ilike.%${digits}%`,
+          `geo_id.ilike.%${digits}%`,
+        );
+      }
+      req = req.or(ors.join(","));
+    }
+  }
+
+  const { data, error } = await req.limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(toParcel);
+}
+
 /**
  * Statewide parcel search — across every ingested county at once. Matches
  * owner, address, street, CAD Property/Geographic ID, or MH serial number.
  */
 export async function searchParcelsStatewide(
   query: string,
+  field: CadSearchField = "all",
 ): Promise<CountyParcel[]> {
-  const s = getBrowserSupabase();
-  const q = query.trim();
-  if (!s || !q) return [];
-  const digits = q.replace(/[^\d]/g, "");
-  const like = `%${q}%`;
-  const ors = [
-    `owner_name.ilike.${like}`,
-    `situs_address.ilike.${like}`,
-    `situs_street.ilike.${like}`,
-    `mh_serial_number.ilike.${like}`,
-    `mh_hud_label.ilike.${like}`,
-    `legal_description.ilike.${like}`,
-  ];
-  if (digits) {
-    ors.push(`prop_id.ilike.%${digits}%`, `geo_id.ilike.%${digits}%`);
-  }
-  const { data, error } = await s
-    .from("county_parcels")
-    .select(SELECT)
-    .or(ors.join(","))
-    .limit(30);
-  if (error) throw error;
-  return (data ?? []).map(toParcel);
+  return searchCadParcels(query, { field, limit: 30 });
 }
 
 /** A parcel by CAD Property ID across any county (optionally scoped by FIPS). */
@@ -266,36 +336,14 @@ export async function fetchParcelByPropIdAny(
 
 /**
  * Search a county's ingested CAD parcels by owner name, street, situs address,
- * CAD Property/Geographic ID, or MH serial.
+ * CAD Property/Geographic ID, or MH serial. Pass `field` for L6 facet search.
  */
 export async function searchParcels(
   source: string,
   query: string,
+  field: CadSearchField = "all",
 ): Promise<CountyParcel[]> {
-  const s = getBrowserSupabase();
-  const q = query.trim();
-  if (!s || !q) return [];
-  const digits = q.replace(/[^\d]/g, "");
-  const like = `%${q}%`;
-  const ors = [
-    `owner_name.ilike.${like}`,
-    `situs_address.ilike.${like}`,
-    `situs_street.ilike.${like}`,
-    `mh_serial_number.ilike.${like}`,
-    `mh_hud_label.ilike.${like}`,
-    `legal_description.ilike.${like}`,
-  ];
-  if (digits) {
-    ors.push(`prop_id.ilike.%${digits}%`, `geo_id.ilike.%${digits}%`);
-  }
-  const { data, error } = await s
-    .from("county_parcels")
-    .select(SELECT)
-    .eq("source", source)
-    .or(ors.join(","))
-    .limit(25);
-  if (error) throw error;
-  return (data ?? []).map(toParcel);
+  return searchCadParcels(query, { source, field, limit: 25 });
 }
 
 /** A single parcel by its CAD Property ID (used for a linked home). */
