@@ -498,13 +498,28 @@ async function mapPool(items, concurrency, worker) {
   return results;
 }
 
+/** Dedupe by key so one upsert batch never hits the same conflict target twice. */
+function dedupeByKey(rows, keyFn) {
+  const map = new Map();
+  for (const row of rows) map.set(keyFn(row), row);
+  return [...map.values()];
+}
+
 async function upsertLive(rows) {
   const sb = await getSupabase();
   if (!sb) return false;
+  // CAD extracts can repeat the same prop_id; Postgres rejects
+  // ON CONFLICT DO UPDATE when one statement touches a row twice.
+  const parcelRows = dedupeByKey(rows, (r) => `${r.source}::${r.prop_id}`);
+  if (parcelRows.length !== rows.length) {
+    console.log(
+      `[live] deduped parcels ${rows.length} → ${parcelRows.length}`,
+    );
+  }
   const batch = 500;
   const chunks = [];
-  for (let i = 0; i < rows.length; i += batch) {
-    chunks.push(rows.slice(i, i + batch));
+  for (let i = 0; i < parcelRows.length; i += batch) {
+    chunks.push(parcelRows.slice(i, i + batch));
   }
   // Parallel upserts (bounded) — materially faster on large counties like Liberty.
   const errors = await mapPool(chunks, 4, async (chunk, idx) => {
@@ -514,7 +529,7 @@ async function upsertLive(rows) {
     if (error) return `parcel batch ${idx}: ${error.message}`;
     if ((idx + 1) % 10 === 0 || idx === chunks.length - 1) {
       console.log(
-        `[live] parcels ${Math.min((idx + 1) * batch, rows.length)}/${rows.length}`,
+        `[live] parcels ${Math.min((idx + 1) * batch, parcelRows.length)}/${parcelRows.length}`,
       );
     }
     return null;
@@ -522,16 +537,19 @@ async function upsertLive(rows) {
   const first = errors.find(Boolean);
   if (first) throw new Error(first);
 
-  const valRows = rows
-    .filter((r) => r.tax_year != null)
-    .map((r) => ({
-      source: r.source,
-      prop_id: r.prop_id,
-      tax_year: r.tax_year,
-      land_value: r.land_value,
-      improvement_value: r.improvement_value,
-      market_value: r.market_value,
-    }));
+  const valRows = dedupeByKey(
+    parcelRows
+      .filter((r) => r.tax_year != null)
+      .map((r) => ({
+        source: r.source,
+        prop_id: r.prop_id,
+        tax_year: r.tax_year,
+        land_value: r.land_value,
+        improvement_value: r.improvement_value,
+        market_value: r.market_value,
+      })),
+    (r) => `${r.source}::${r.prop_id}::${r.tax_year}`,
+  );
   const valChunks = [];
   for (let i = 0; i < valRows.length; i += batch) {
     valChunks.push(valRows.slice(i, i + batch));
