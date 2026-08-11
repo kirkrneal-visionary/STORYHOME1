@@ -153,6 +153,14 @@ export async function shiListFrames(folderId: string) {
   return body.frames ?? [];
 }
 
+/** Load one saved frame (durable Vault → Research reopen). */
+export async function shiGetFrame(frameId: string) {
+  const body = await shiFetch<{ frame: ShiSavedFrame }>(
+    `/api/shi/studies/frames?frameId=${encodeURIComponent(frameId)}`,
+  );
+  return body.frame;
+}
+
 export async function shiSaveFrame(opts: {
   folderId: string;
   name: string;

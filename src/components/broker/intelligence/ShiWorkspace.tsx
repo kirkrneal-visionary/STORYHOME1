@@ -6,6 +6,7 @@ import { FolderKanban, Map } from "lucide-react";
 import { ShiIcon } from "@/components/brand/ShiIcon";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
+import type { ShiSavedFrame } from "@/lib/shi/types";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,12 @@ export function ShiWorkspace() {
     (next: ShiSection) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next === "research") params.delete("section");
-      else params.set("section", next);
+      else {
+        params.set("section", next);
+        // Leaving research — drop reopen params so they don't linger.
+        params.delete("openFrame");
+        params.delete("folderId");
+      }
       const q = params.toString();
       const base = pathname?.includes("/intelligence")
         ? "/portal/intelligence"
@@ -43,6 +49,19 @@ export function ShiWorkspace() {
       router.replace(q ? `${base}?${q}` : base, { scroll: false });
     },
     [pathname, router, searchParams],
+  );
+
+  const openFrameInResearch = useCallback(
+    (frame: ShiSavedFrame) => {
+      const params = new URLSearchParams();
+      params.set("openFrame", frame.id);
+      if (frame.folderId) params.set("folderId", frame.folderId);
+      const base = pathname?.includes("/intelligence")
+        ? "/portal/intelligence"
+        : "/portal/intelligence";
+      router.replace(`${base}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
   );
 
   return (
@@ -104,9 +123,7 @@ export function ShiWorkspace() {
             onOpenVault={() => selectSection("vault")}
           />
         ) : (
-          <ShiStudyVaultView
-            onOpenInResearch={() => selectSection("research")}
-          />
+          <ShiStudyVaultView onOpenInResearch={openFrameInResearch} />
         )}
       </div>
     </div>
