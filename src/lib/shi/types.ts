@@ -172,3 +172,37 @@ export type ShiLocalFrame = {
   boundary: import("@/lib/geo").DrawnBoundary;
   analysis?: ShiAreaAnalysis | null;
 };
+
+/** SHI-3 agent-private prospect — references public parcel; snapshot may go stale. */
+export type ShiProspect = {
+  id: string;
+  source: string;
+  propId: string;
+  countyFips: string | null;
+  countyName: string;
+  label: string;
+  ownerNameSnapshot: string | null;
+  situsAddressSnapshot: string | null;
+  situsCitySnapshot: string | null;
+  legalAcreageSnapshot: number | null;
+  marketValueSnapshot: number | null;
+  centroidLat: number | null;
+  centroidLng: number | null;
+  status: import("@/lib/shi/prospect-statuses").ShiProspectStatus;
+  tags: string[];
+  sellerClientId: string | null;
+  lastActivityAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ShiProspectNote = {
+  id: string;
+  prospectId: string;
+  body: string;
+  createdAt: string;
+};
+
+export type ShiProspectDetail = ShiProspect & {
+  notes: ShiProspectNote[];
+};

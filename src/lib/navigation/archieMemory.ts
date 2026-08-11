@@ -1,9 +1,9 @@
 /**
- * Remember last Archie module (Research / Study Vault) for this browser tab.
- * Wave N2 — sessionStorage only; no server state.
+ * Remember last Archie module for this browser tab.
+ * sessionStorage only — no server state.
  */
 
-export type ArchieModule = "research" | "vault";
+export type ArchieModule = "research" | "vault" | "prospects";
 
 const STORAGE_KEY = "archie-last-module";
 
@@ -23,20 +23,22 @@ function emitArchieMemory() {
 export function parseArchieModule(
   section: string | null | undefined,
 ): ArchieModule {
-  return section === "vault" ? "vault" : "research";
+  if (section === "vault") return "vault";
+  if (section === "prospects") return "prospects";
+  return "research";
 }
 
 export function archieHrefForModule(module: ArchieModule): string {
-  return module === "vault"
-    ? "/portal/intelligence?section=vault"
-    : "/portal/intelligence";
+  if (module === "vault") return "/portal/intelligence?section=vault";
+  if (module === "prospects") return "/portal/intelligence?section=prospects";
+  return "/portal/intelligence";
 }
 
 export function readLastArchieModule(): ArchieModule {
   if (typeof window === "undefined") return "research";
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
-    return raw === "vault" ? "vault" : "research";
+    return parseArchieModule(raw);
   } catch {
     return "research";
   }

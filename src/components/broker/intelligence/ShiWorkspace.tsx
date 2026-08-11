@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
+import { ShiProspectsView } from "@/components/broker/intelligence/ShiProspectsView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
 import {
   parseArchieModule,
@@ -15,10 +16,30 @@ import { SHI_PRODUCT } from "@/lib/shi/waves";
 
 export type ShiSection = ArchieModule;
 
+const MODULE_COPY: Record<
+  ArchieModule,
+  { title: string; blurb: string }
+> = {
+  research: {
+    title: "Research",
+    blurb:
+      "Search · map · property record. Define a market area, analyze parcels, and save Map Memory.",
+  },
+  prospects: {
+    title: "Prospects",
+    blurb:
+      "Your property opportunity pipeline. Save discoveries from Research, track status, and keep private notes.",
+  },
+  vault: {
+    title: "Study Vault",
+    blurb:
+      "Saved Market Frames and study folders. Reopen any frame into Research.",
+  },
+};
+
 /**
  * Archie's Intelligence shell.
- * Module switching lives in the federated context ribbon (Wave N2).
- * Research = 3-split workbench · Study Vault = saved folders/frames.
+ * Modules: Research · Prospects · Study Vault (federated ribbon).
  */
 export function ShiWorkspace() {
   const router = useRouter();
@@ -37,7 +58,6 @@ export function ShiWorkspace() {
       if (next === "research") params.delete("section");
       else {
         params.set("section", next);
-        // Leaving research — drop reopen params so they don't linger.
         params.delete("openFrame");
         params.delete("folderId");
       }
@@ -64,6 +84,8 @@ export function ShiWorkspace() {
     [pathname, router],
   );
 
+  const copy = MODULE_COPY[section];
+
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-start gap-3">
@@ -81,13 +103,9 @@ export function ShiWorkspace() {
           <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-gold uppercase">
             {SHI_PRODUCT.fullName}
           </p>
-          <h2 className="font-serif text-2xl font-bold text-ink">
-            {section === "vault" ? "Study Vault" : "Research"}
-          </h2>
+          <h2 className="font-serif text-2xl font-bold text-ink">{copy.title}</h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            {section === "vault"
-              ? "Saved Market Frames and study folders. Reopen any frame into Research."
-              : "Three-panel research: search · map · property record. Market Frames analyze below."}
+            {copy.blurb}
           </p>
         </div>
       </header>
@@ -100,6 +118,8 @@ export function ShiWorkspace() {
           <PropertyIntelligenceView
             onOpenVault={() => selectSection("vault")}
           />
+        ) : section === "prospects" ? (
+          <ShiProspectsView />
         ) : (
           <ShiStudyVaultView onOpenInResearch={openFrameInResearch} />
         )}

@@ -59,7 +59,7 @@ Source of truth in code: `src/lib/shi/waves.ts`
 | Save form clears stale folders + shows errors | Resave can move frame to another folder |
 | Honest capped-analysis messaging | Owner-match triggers + indexes (`0024`) |
 
-### SHI-2.8 — Research perfect (current)
+### SHI-2.8 — Research perfect ✅
 
 | Front-end | Back-end |
 |---|---|
@@ -78,12 +78,14 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 **History gap:** No ownership-transfer event table yet. UI states this clearly. True change intel lands with farms (SHI-4).
 
-### SHI-3 — Prospects · Notes · CRM convert
+### SHI-3 — Prospects · Notes · CRM convert (current)
 
 | Front-end | Back-end |
 |---|---|
-| Add to Prospects · lists · statuses · notes | `agent_prospects` / lists / notes + RLS |
-| Create Seller Lead (prefill) | CRM convert API; never mutate CAD |
+| Save Prospect · Prospects module · dossier · notes | `shi_prospects` / `shi_prospect_notes` + RLS (`0025`) |
+| Create Seller Lead (prefill; no invented contact) | convert → `seller_clients`; never mutate CAD |
+
+See `docs/shi/SHI-3-PLAN.md`.
 
 ### SHI-4 — Farms · Change intelligence
 

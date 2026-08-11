@@ -23,6 +23,7 @@ import { fitThumbnailDataUrl } from "@/lib/shi/thumbnail";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import {
   consumeOpenSavedFrame,
+  shiAddProspect,
   shiAnalyzeArea,
   shiCreateFolder,
   shiFreshness,
@@ -94,7 +95,10 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
   const [searching, startSearch] = useTransition();
   const [loadingProperty, setLoadingProperty] = useState(false);
   const [reopening, setReopening] = useState(false);
+  const [savingProspect, setSavingProspect] = useState(false);
+  const [prospectMsg, setProspectMsg] = useState("");
   const mapRef = useRef<ShiMapHandle | null>(null);
+  const openedPropRef = useRef<string | null>(null);
   const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
     { filterSource: "" },
   );
@@ -499,6 +503,35 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
       : "/portal/intelligence";
     router.replace(q ? `${base}?${q}` : base, { scroll: false });
   }
+
+  // Prospects → Research hand-off via ?propId=&source=
+  useEffect(() => {
+    const propId = searchParams.get("propId")?.trim() || "";
+    const src = searchParams.get("source")?.trim() || "";
+    const countyFips = searchParams.get("countyFips")?.trim() || "";
+    if (!propId) return;
+    const key = `${src}:${propId}`;
+    if (openedPropRef.current === key) return;
+    openedPropRef.current = key;
+    void openProperty({
+      propId,
+      source: src || undefined,
+      countyFips: countyFips || undefined,
+    }).finally(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("propId");
+      params.delete("source");
+      params.delete("countyFips");
+      // Keep section= out of research URL
+      params.delete("section");
+      const q = params.toString();
+      router.replace(
+        q ? `/portal/intelligence?${q}` : "/portal/intelligence",
+        { scroll: false },
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Study Vault → Research hand-off: sessionStorage (same tab) + durable ?openFrame=.
   useEffect(() => {
@@ -924,10 +957,77 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
                 )}
               </div>
 
-              <p className="text-[10px] leading-relaxed text-[var(--muted)]">
-                Public appraisal record for research. Prospects + CRM convert ship
-                in the next Archie's Intelligence wave.
-              </p>
+              <div className="space-y-2 border-t border-hairline pt-3">
+                <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
+                  Private workspace
+                </p>
+                <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+                  Save this public property into your Prospects pipeline. Notes
+                  and status stay private — Archie never writes county records.
+                </p>
+                <button
+                  type="button"
+                  disabled={savingProspect}
+                  onClick={() => {
+                    setSavingProspect(true);
+                    setProspectMsg("");
+                    void shiAddProspect({
+                      source: selected.source,
+                      propId: selected.propId,
+                      countyFips: selected.countyFips,
+                      countyName: selected.countyName,
+                      label:
+                        selected.situsAddress ||
+                        selected.legalDescription ||
+                        `Property ${selected.propId}`,
+                      ownerName: selected.ownerName,
+                      situsAddress: selected.situsAddress,
+                      situsCity: selected.situsCity,
+                      legalAcreage: selected.legalAcreage,
+                      marketValue: selected.marketValue,
+                      centroidLat: selected.centroidLat,
+                      centroidLng: selected.centroidLng,
+                    })
+                      .then((res) => {
+                        setProspectMsg(
+                          res.created
+                            ? "Saved to Prospects."
+                            : "Already in Prospects — opened existing.",
+                        );
+                      })
+                      .catch((e) =>
+                        setProspectMsg(
+                          e instanceof Error
+                            ? e.message
+                            : "Could not save prospect",
+                        ),
+                      )
+                      .finally(() => setSavingProspect(false));
+                  }}
+                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gold text-sm font-bold text-navy disabled:opacity-60"
+                >
+                  {savingProspect ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : null}
+                  Save Prospect
+                </button>
+                {prospectMsg ? (
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[11px] text-ink">{prospectMsg}</p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.replace("/portal/intelligence?section=prospects", {
+                          scroll: false,
+                        })
+                      }
+                      className="text-[11px] font-semibold text-gold underline-offset-2 hover:underline"
+                    >
+                      Open Prospects
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
         </section>
