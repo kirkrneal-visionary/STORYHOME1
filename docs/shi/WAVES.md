@@ -50,13 +50,21 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 ### SHI-2.6 — Research shell · Study Vault · Draw OS ✅
 
-### SHI-2.7 — Analyzer harden (current)
+### SHI-2.7 — Analyzer harden ✅
 
 | Front-end | Back-end |
 |---|---|
 | Frame county locked at draw time | Server recomputes analysis on save |
 | Save form clears stale folders + shows errors | Resave can move frame to another folder |
 | Honest capped-analysis messaging | Owner-match triggers + indexes (`0024`) |
+
+### SHI-2.8 — Research perfect (current)
+
+| Front-end | Back-end |
+|---|---|
+| Keep drafts when create rejected · live size warns | Honest area boundary copy |
+| Pan/Esc · county guard before draw | No new migration |
+| Remove/reopen/select trust · vault dialog errors · analyze loading | — |
 
 ### SHI-2 note (superseded analyzer)
 

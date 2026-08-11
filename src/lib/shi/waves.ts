@@ -142,7 +142,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2.7",
     name: "Analyzer harden · county lock · vault trust",
     goal: "Finish Analyzer/Vault backlog before SHI-3: county-locked frames, server recompute, indexes.",
-    status: "current",
+    status: "done",
     frontend: [
       "Frame county locked at draw time",
       "Save form clears stale folders + surfaces errors",
@@ -152,6 +152,26 @@ export const SHI_WAVES: ShiWave[] = [
       "Server recomputes analysis on save (never trust client metrics)",
       "Resave can move frame to another folder",
       "Owner-match triggers + trgm/centroid indexes (migration 0024)",
+    ],
+    outOfScope: [
+      "SHI-3 prospects",
+      "Farms / change intel",
+    ],
+  },
+  {
+    id: "SHI-2.8",
+    name: "Research perfect · draw trust · vault UX",
+    goal: "One polish pass so Research feels finished before Prospects: keep drafts on fail, radius/freehand warns, reopen/remove trust.",
+    status: "current",
+    frontend: [
+      "Keep freehand/box drafts when create is rejected",
+      "Radius + freehand live size warnings · Pan/Esc",
+      "Remove/reopen/select frame clears stale market data",
+      "Vault dialog errors · analyze loading · reopen banner",
+    ],
+    backend: [
+      "Honest area API boundary copy (box / freehand / radius)",
+      "No new migrations — 0024 already applied",
     ],
     outOfScope: [
       "SHI-3 prospects",
