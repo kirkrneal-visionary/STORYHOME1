@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Loader2, MapPinned, Search, Users } from "lucide-react";
+import { Loader2, Search, Users } from "lucide-react";
 import { ShiIcon } from "@/components/brand/ShiIcon";
+import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
 import {
   ShiResearchMap,
+  type ShiMapHandle,
   type ShiMapSelect,
 } from "@/components/broker/intelligence/ShiResearchMap";
 import {
@@ -13,21 +15,31 @@ import {
   type CadSearchField,
 } from "@/lib/cad-layers";
 import type { DrawnBoundary } from "@/lib/geo";
+import { makeShiAcronym } from "@/lib/shi/acronym";
+import { SHI_CAPS } from "@/lib/shi/caps";
+import { nextFrameColor } from "@/lib/shi/frame-colors";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import {
   shiAnalyzeArea,
+  shiCreateFolder,
   shiFreshness,
   shiGetProperty,
+  shiListFolders,
+  shiListFrames,
   shiOwnerMatches,
+  shiSaveFrame,
   shiSearch,
 } from "@/lib/shi/client";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import type {
-  ShiAreaMetrics,
+  ShiAreaAnalysis,
   ShiCountyFreshness,
+  ShiLocalFrame,
   ShiOwnerMatch,
   ShiPropertyDetail,
   ShiPropertySummary,
+  ShiSavedFrame,
+  ShiStudyFolder,
 } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
 
@@ -60,17 +72,28 @@ export function PropertyIntelligenceView() {
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
   const [possibleCount, setPossibleCount] = useState(0);
-  const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
-  const [areaMetrics, setAreaMetrics] = useState<ShiAreaMetrics | null>(null);
+  const [frames, setFrames] = useState<ShiLocalFrame[]>([]);
+  const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<ShiAreaAnalysis | null>(null);
   const [areaError, setAreaError] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [folders, setFolders] = useState<ShiStudyFolder[]>([]);
+  const [foldersLoading, setFoldersLoading] = useState(false);
+  const [openFolder, setOpenFolder] = useState<ShiStudyFolder | null>(null);
+  const [savedFrames, setSavedFrames] = useState<ShiSavedFrame[]>([]);
+  const [saving, setSaving] = useState(false);
   const [freshness, setFreshness] = useState<ShiCountyFreshness[]>([]);
   const [error, setError] = useState("");
   const [searching, startSearch] = useTransition();
   const [loadingProperty, setLoadingProperty] = useState(false);
+  const mapRef = useRef<ShiMapHandle | null>(null);
   const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
     { filterSource: "" },
   );
+  const frameSeq = useRef(1);
+
+  const countyName =
+    AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ?? "";
 
   useEffect(() => {
     countyLockRef.current = {
@@ -114,6 +137,21 @@ export function PropertyIntelligenceView() {
     }
   }, []);
 
+  const refreshFolders = useCallback(async (countySource: string) => {
+    if (!countySource) {
+      setFolders([]);
+      return;
+    }
+    setFoldersLoading(true);
+    try {
+      setFolders(await shiListFolders(countySource));
+    } catch {
+      setFolders([]);
+    } finally {
+      setFoldersLoading(false);
+    }
+  }, []);
+
   const openProperty = useCallback(
     async (opts: {
       propId: string;
@@ -144,8 +182,13 @@ export function PropertyIntelligenceView() {
           return;
         }
         setSelected(property);
-        // Keep search county filter aligned with the opened parcel.
-        if (property.source) setSource(property.source);
+        // Keep search / frames county aligned with the opened parcel.
+        if (property.source && property.source !== countyLockRef.current.filterSource) {
+          setSource(property.source);
+          setOpenFolder(null);
+          setSavedFrames([]);
+          void refreshFolders(property.source);
+        }
         void loadMatches(property);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load property");
@@ -153,7 +196,7 @@ export function PropertyIntelligenceView() {
         setLoadingProperty(false);
       }
     },
-    [loadMatches],
+    [loadMatches, refreshFolders],
   );
 
   const openFromMap = useCallback(
@@ -204,33 +247,168 @@ export function PropertyIntelligenceView() {
     });
   }
 
+  function onCountyChange(next: string) {
+    setSource(next);
+    setOpenFolder(null);
+    setSavedFrames([]);
+    void refreshFolders(next);
+  }
+
+  function createFrame(boundary: DrawnBoundary) {
+    if (frames.length >= SHI_CAPS.maxFramesOnMap) {
+      setAreaError(
+        `Map frame limit (${SHI_CAPS.maxFramesOnMap}). Remove a frame first.`,
+      );
+      return;
+    }
+    if (!source) {
+      setAreaError("Pick a county before drawing market frames");
+      return;
+    }
+    const n = frameSeq.current++;
+    const name = `Frame ${n}`;
+    const localId =
+      typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `frame-${n}-${Date.now()}`;
+    const frame: ShiLocalFrame = {
+      localId,
+      name,
+      acronym: makeShiAcronym(name),
+      color: nextFrameColor(frames.length),
+      boundary,
+      analysis: null,
+    };
+    setFrames((prev) => [...prev, frame]);
+    setActiveFrameId(localId);
+    setAnalysis(null);
+    setAreaError("");
+  }
+
   async function runAreaAnalyze() {
-    if (!boundary) {
-      setAreaError("Draw a radius or box on the map first");
+    const active = frames.find((f) => f.localId === activeFrameId);
+    if (!active) {
+      setAreaError("Select or draw a market frame first");
+      return;
+    }
+    if (!source) {
+      setAreaError("Pick a county before analyzing");
       return;
     }
     setAnalyzing(true);
     setAreaError("");
     try {
-      const metrics = await shiAnalyzeArea({
-        boundary,
-        source: source || selected?.source || undefined,
+      const result = await shiAnalyzeArea({
+        boundary: active.boundary,
+        source,
       });
-      setAreaMetrics(metrics);
+      setAnalysis(result);
+      setFrames((prev) =>
+        prev.map((f) =>
+          f.localId === active.localId ? { ...f, analysis: result } : f,
+        ),
+      );
     } catch (e) {
-      setAreaMetrics(null);
+      setAnalysis(null);
       setAreaError(e instanceof Error ? e.message : "Area analysis failed");
     } finally {
       setAnalyzing(false);
     }
   }
 
-  function handleBoundaryChange(next: DrawnBoundary | null) {
-    setBoundary(next);
-    if (!next) {
-      setAreaMetrics(null);
-      setAreaError("");
+  async function createFolder(name: string) {
+    if (!source) throw new Error("Pick a county first");
+    const folder = await shiCreateFolder({ name, countySource: source });
+    await refreshFolders(source);
+    setOpenFolder(folder);
+    setSavedFrames([]);
+  }
+
+  async function openStudyFolder(folder: ShiStudyFolder) {
+    setOpenFolder(folder);
+    try {
+      setSavedFrames(await shiListFrames(folder.id));
+    } catch {
+      setSavedFrames([]);
     }
+  }
+
+  async function saveActiveFrame(name: string, folderId: string) {
+    const active = frames.find((f) => f.localId === activeFrameId);
+    if (!active?.analysis) throw new Error("Analyze the frame before saving");
+    setSaving(true);
+    try {
+      const view = mapRef.current?.getView();
+      const thumb = mapRef.current?.captureThumbnail() ?? null;
+      const saved = await shiSaveFrame({
+        folderId,
+        name,
+        color: active.color,
+        boundary: active.boundary,
+        analysis: active.analysis,
+        mapCenterLat: view?.centerLat,
+        mapCenterLng: view?.centerLng,
+        mapZoom: view?.zoom,
+        thumbnailDataUrl: thumb,
+        frameId: active.savedId,
+      });
+      setFrames((prev) =>
+        prev.map((f) =>
+          f.localId === active.localId
+            ? {
+                ...f,
+                savedId: saved.id,
+                folderId: saved.folderId,
+                name: saved.name,
+                acronym: saved.acronym,
+              }
+            : f,
+        ),
+      );
+      setSavedFrames(await shiListFrames(folderId));
+      await refreshFolders(source);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function loadSavedFrame(frame: ShiSavedFrame) {
+    const localId = frame.id;
+    const existing = frames.find(
+      (f) => f.savedId === frame.id || f.localId === frame.id,
+    );
+    if (existing) {
+      setActiveFrameId(existing.localId);
+    } else {
+      if (frames.length >= SHI_CAPS.maxFramesOnMap) {
+        setAreaError(`Map frame limit (${SHI_CAPS.maxFramesOnMap}).`);
+        return;
+      }
+      const local: ShiLocalFrame = {
+        localId,
+        savedId: frame.id,
+        folderId: frame.folderId,
+        name: frame.name,
+        acronym: frame.acronym,
+        color: frame.color,
+        boundary: frame.boundary,
+        analysis: frame.snapshot
+          ? ({
+              ...frame.snapshot.metrics,
+              parcels: frame.snapshot.metrics.parcels ?? [],
+            } as ShiAreaAnalysis)
+          : null,
+      };
+      setFrames((prev) => [...prev, local]);
+      setActiveFrameId(localId);
+    }
+    if (frame.snapshot?.metrics) {
+      setAnalysis({
+        ...(frame.snapshot.metrics as ShiAreaAnalysis),
+        parcels: frame.snapshot.metrics.parcels ?? [],
+      });
+    }
+    mapRef.current?.fitBoundary(frame.boundary);
   }
 
   const selectedFresh =
@@ -255,8 +433,8 @@ export function PropertyIntelligenceView() {
             {SHI_PRODUCT.fullName}
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            Search, map research, owner relationships, area metrics, and observed
-            CAD history. Listing upload CAD stays MLS-limited.
+            Search, Market Frames analyzer, owner relationships, and observed CAD
+            history. Listing upload CAD stays MLS-limited.
           </p>
         </div>
       </header>
@@ -302,10 +480,10 @@ export function PropertyIntelligenceView() {
                 County
                 <select
                   value={source}
-                  onChange={(e) => setSource(e.target.value)}
+                  onChange={(e) => onCountyChange(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
                 >
-                  <option value="">All launch counties</option>
+                  <option value="">Select county (required for frames)</option>
                   {AVAILABLE_COUNTIES.map((c) => (
                     <option key={c.source} value={c.source}>
                       {c.name}
@@ -405,51 +583,41 @@ export function PropertyIntelligenceView() {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
-            <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
-              <MapPinned className="h-4 w-4 text-gold" />
-              Area analyze
-            </h3>
-            <p className="mt-1 text-[11px] text-[var(--muted)]">
-              Draw a radius or box on the map, then run metrics.
-            </p>
-            <button
-              type="button"
-              onClick={() => void runAreaAnalyze()}
-              disabled={analyzing || !boundary}
-              className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-navy bg-navy/5 text-sm font-bold text-navy disabled:opacity-50"
-            >
-              {analyzing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
-              Analyze drawn area
-            </button>
-            {areaError ? (
-              <p className="mt-2 text-xs font-semibold text-red-700">{areaError}</p>
-            ) : null}
-            {areaMetrics ? (
-              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <Fact label="Parcels" value={String(areaMetrics.parcelCount)} />
-                <Fact label="Real / Personal" value={`${areaMetrics.realCount} / ${areaMetrics.personalCount}`} />
-                <Fact label="Total acres" value={acres(areaMetrics.totalAcres)} />
-                <Fact label="Median acres" value={acres(areaMetrics.medianAcres)} />
-                <Fact
-                  label="Median market"
-                  value={money(areaMetrics.medianMarketValue)}
-                />
-                <div className="col-span-2 text-[10px] leading-relaxed text-[var(--muted)]">
-                  {areaMetrics.note}
-                </div>
-              </dl>
-            ) : null}
-          </div>
+          <ShiMarketFramesPanel
+            countySource={source}
+            countyName={countyName}
+            frames={frames}
+            activeFrameId={activeFrameId}
+            onSelectFrame={(id) => {
+              setActiveFrameId(id);
+              const f = frames.find((x) => x.localId === id);
+              setAnalysis(f?.analysis ?? null);
+            }}
+            analysis={analysis}
+            analyzing={analyzing}
+            analyzeError={areaError}
+            onAnalyze={() => void runAreaAnalyze()}
+            folders={folders}
+            foldersLoading={foldersLoading}
+            onCreateFolder={createFolder}
+            onOpenFolder={openStudyFolder}
+            openFolder={openFolder}
+            savedFrames={savedFrames}
+            onSaveActive={saveActiveFrame}
+            onLoadSaved={loadSavedFrame}
+            saving={saving}
+          />
         </section>
 
         <ShiResearchMap
+          ref={mapRef}
           selected={selected}
           related={matches}
-          boundary={boundary}
-          onBoundaryChange={handleBoundaryChange}
+          frames={frames}
+          activeFrameId={activeFrameId}
+          onFramesChange={setFrames}
+          onActiveFrameIdChange={setActiveFrameId}
+          onCreateFrame={createFrame}
           onSelectParcel={openFromMap}
         />
 

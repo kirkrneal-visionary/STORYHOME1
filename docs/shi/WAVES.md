@@ -36,7 +36,19 @@ Source of truth in code: `src/lib/shi/waves.ts`
 
 **Index note:** fuzzy owner/address search uses `ILIKE`. Prefer county-scoped search. Recommended: `pg_trgm` GIN on `owner_name`, `situs_address`, `legal_description`.
 
-### SHI-2 — Relationships · Area · History ✅ (current)
+### SHI-2 — Relationships · Area · History ✅
+
+### SHI-2.5 — Market Frames · Analyzer · Study folders ✅ (current)
+
+| Front-end | Back-end |
+|---|---|
+| Multi-box/radius frames on map | Hard caps (frames, area size, parcels) |
+| On-demand analyze → parcel values + area estimate | `POST /api/shi/area` county-locked |
+| Study folders (square + acronym) by county | `shi_study_folders` / frames / snapshots + RLS |
+| Save geometry + metrics + map thumbnail | `shi-studies` private storage |
+| Reopen saved frames | Never writes CAD; no infinite jobs |
+
+### SHI-2 note (superseded analyzer)
 
 | Front-end | Back-end |
 |---|---|

@@ -7,10 +7,11 @@ import {
   type LatLng,
   type MapBounds,
 } from "@/lib/geo";
-import type { ShiAreaMetrics } from "@/lib/shi/types";
+import { SHI_CAPS } from "@/lib/shi/caps";
+import type { ShiAreaAnalysis, ShiAreaParcel } from "@/lib/shi/types";
 
 const AREA_SELECT =
-  "prop_id, source, county_fips, legal_acreage, market_value, property_category, centroid_lat, centroid_lng";
+  "prop_id, source, county_fips, owner_name, situs_address, legal_acreage, market_value, land_value, improvement_value, property_category, centroid_lat, centroid_lng";
 
 function boundsOf(boundary: DrawnBoundary): MapBounds | null {
   if (boundary.type === "rectangle" || boundary.type === "viewport") {
@@ -59,78 +60,139 @@ function median(nums: number[]): number | null {
   const sorted = [...nums].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   if (sorted.length % 2 === 0) {
-    return (sorted[mid - 1] + sorted[mid]) / 2;
+    return (sorted[mid - 1]! + sorted[mid]!) / 2;
   }
-  return sorted[mid];
+  return sorted[mid]!;
+}
+
+function num(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
- * Area analysis via centroid-in-boundary (bounded bbox query).
- * Geometry-accurate ST_Intersects can replace this later; no full-county download.
+ * On-demand Market Frame analysis.
+ * County-locked when source provided. Bounded query — never full-county dump.
+ * Returns individual parcel values + estimated area market total.
  */
 export async function analyzeArea(
   supabase: SupabaseClient,
   opts: { boundary: DrawnBoundary; source?: string },
-): Promise<ShiAreaMetrics> {
+): Promise<ShiAreaAnalysis> {
+  if (!opts.source) {
+    throw new Error("Pick a county before analyzing a market frame");
+  }
+
   const bounds = boundsOf(opts.boundary);
   if (!bounds) {
-    throw new Error("Draw a rectangle, radius, or polygon first");
+    throw new Error("Draw a box or radius first");
   }
 
   const latSpan = bounds.north - bounds.south;
   const lngSpan = bounds.east - bounds.west;
-  if (latSpan > 0.6 || lngSpan > 0.6 || latSpan <= 0 || lngSpan <= 0) {
-    throw new Error("Area is too large — zoom in or draw a smaller area");
+  if (latSpan <= 0 || lngSpan <= 0) {
+    throw new Error("Invalid frame size");
+  }
+  if (
+    latSpan < SHI_CAPS.minAreaSpanDegrees &&
+    lngSpan < SHI_CAPS.minAreaSpanDegrees
+  ) {
+    throw new Error("Frame is too small — draw a larger box");
+  }
+  if (
+    latSpan > SHI_CAPS.maxAreaSpanDegrees ||
+    lngSpan > SHI_CAPS.maxAreaSpanDegrees
+  ) {
+    throw new Error(
+      "Frame is too large — zoom in or draw a smaller market box (safety cap)",
+    );
   }
 
-  let req = supabase
+  const { data, error } = await supabase
     .from("county_parcels")
     .select(AREA_SELECT)
+    .eq("source", opts.source)
     .gte("centroid_lat", bounds.south)
     .lte("centroid_lat", bounds.north)
     .gte("centroid_lng", bounds.west)
     .lte("centroid_lng", bounds.east)
     .not("centroid_lat", "is", null)
     .not("centroid_lng", "is", null)
-    .limit(2500);
-
-  if (opts.source) req = req.eq("source", opts.source);
-
-  const { data, error } = await req;
+    .limit(SHI_CAPS.maxParcelsPerAnalyze);
   if (error) throw new Error(error.message);
 
+  const parcels: ShiAreaParcel[] = [];
   const acres: number[] = [];
   const values: number[] = [];
   let realCount = 0;
   let personalCount = 0;
-  let parcelCount = 0;
+  let estimatedTotalMarketValue = 0;
+  let valuedParcelCount = 0;
 
   for (const row of data ?? []) {
     const lat = Number(row.centroid_lat);
     const lng = Number(row.centroid_lng);
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
     if (!inBoundary({ lat, lng }, opts.boundary)) continue;
-    parcelCount += 1;
-    const a = row.legal_acreage == null ? null : Number(row.legal_acreage);
-    if (a != null && Number.isFinite(a)) acres.push(a);
-    const v = row.market_value == null ? null : Number(row.market_value);
-    if (v != null && Number.isFinite(v)) values.push(v);
+
+    const marketValue = num(row.market_value);
+    const legalAcreage = num(row.legal_acreage);
+    if (legalAcreage != null) acres.push(legalAcreage);
+    if (marketValue != null) {
+      values.push(marketValue);
+      estimatedTotalMarketValue += marketValue;
+      valuedParcelCount += 1;
+    }
     if (row.property_category === "personal") personalCount += 1;
     else if (row.property_category === "real") realCount += 1;
+
+    parcels.push({
+      propId: String(row.prop_id ?? ""),
+      source: String(row.source ?? opts.source),
+      ownerName: (row.owner_name as string | null) ?? null,
+      situsAddress: (row.situs_address as string | null) ?? null,
+      legalAcreage,
+      marketValue,
+      landValue: num(row.land_value),
+      improvementValue: num(row.improvement_value),
+      propertyCategory:
+        (row.property_category as "real" | "personal" | null) ?? null,
+      centroidLat: lat,
+      centroidLng: lng,
+    });
   }
 
   const scanned = (data ?? []).length;
+  const hitCap = scanned >= SHI_CAPS.maxParcelsPerAnalyze;
+
   return {
-    parcelCount,
+    parcelCount: parcels.length,
     realCount,
     personalCount,
     totalAcres: acres.reduce((s, n) => s + n, 0),
     medianAcres: median(acres),
     medianMarketValue: median(values),
+    estimatedTotalMarketValue,
+    valuedParcelCount,
     method: "centroid_in_boundary",
-    note:
-      scanned >= 2500
-        ? "Hit scan cap (2,500) — draw a smaller area for complete metrics."
-        : "Metrics use parcel centroids inside your drawn area (not full polygon clip).",
+    countySource: opts.source,
+    note: hitCap
+      ? `Hit safety cap (${SHI_CAPS.maxParcelsPerAnalyze} scan) — draw a smaller frame for a complete estimate.`
+      : `Estimated area value sums CAD market_value on ${valuedParcelCount} valued parcels inside the frame (centroids).`,
+    parcels,
   };
 }
+
+/** @deprecated alias — keep older imports compiling */
+export type ShiAreaMetrics = Pick<
+  ShiAreaAnalysis,
+  | "parcelCount"
+  | "realCount"
+  | "personalCount"
+  | "totalAcres"
+  | "medianAcres"
+  | "medianMarketValue"
+  | "method"
+  | "note"
+>;
