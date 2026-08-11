@@ -1,9 +1,13 @@
 import type { CadSearchField } from "@/lib/cad-layers";
 import type { DrawnBoundary } from "@/lib/geo";
+import type { ShiProspectStatus } from "@/lib/shi/prospect-statuses";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
   ShiOwnerMatch,
+  ShiProspect,
+  ShiProspectDetail,
+  ShiProspectNote,
   ShiPropertyDetail,
   ShiPropertySummary,
   ShiSavedFrame,
@@ -231,4 +235,95 @@ export function consumeOpenSavedFrame(): ShiSavedFrame | null {
   } catch {
     return null;
   }
+}
+
+/* ----------------------------- Prospects (SHI-3) ----------------------------- */
+
+export async function shiListProspects(opts?: {
+  status?: string;
+  q?: string;
+}): Promise<{
+  prospects: ShiProspect[];
+  summary: {
+    total: number;
+    byStatus: Partial<Record<ShiProspectStatus, number>>;
+  };
+}> {
+  const params = new URLSearchParams();
+  if (opts?.status) params.set("status", opts.status);
+  if (opts?.q) params.set("q", opts.q);
+  const q = params.toString();
+  return shiFetch(`/api/shi/prospects${q ? `?${q}` : ""}`);
+}
+
+export async function shiAddProspect(input: {
+  source: string;
+  propId: string;
+  countyFips?: string | null;
+  countyName: string;
+  label?: string | null;
+  ownerName?: string | null;
+  situsAddress?: string | null;
+  situsCity?: string | null;
+  legalAcreage?: number | null;
+  marketValue?: number | null;
+  centroidLat?: number | null;
+  centroidLng?: number | null;
+  status?: ShiProspectStatus;
+}): Promise<{ prospect: ShiProspect; created: boolean }> {
+  return shiFetch("/api/shi/prospects", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+}
+
+export async function shiGetProspect(
+  id: string,
+): Promise<ShiProspectDetail | null> {
+  const body = await shiFetch<{ prospect: ShiProspectDetail }>(
+    `/api/shi/prospects/${encodeURIComponent(id)}`,
+  );
+  return body.prospect ?? null;
+}
+
+export async function shiUpdateProspectStatus(
+  id: string,
+  status: ShiProspectStatus,
+): Promise<ShiProspect> {
+  const body = await shiFetch<{ prospect: ShiProspect }>(
+    `/api/shi/prospects/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    },
+  );
+  return body.prospect;
+}
+
+export async function shiAddProspectNote(
+  id: string,
+  noteBody: string,
+): Promise<ShiProspectNote> {
+  const body = await shiFetch<{ note: ShiProspectNote }>(
+    `/api/shi/prospects/${encodeURIComponent(id)}/notes`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: noteBody }),
+    },
+  );
+  return body.note;
+}
+
+export async function shiConvertProspectToSellerLead(id: string): Promise<{
+  prospect: ShiProspect;
+  sellerClientId: string;
+}> {
+  return shiFetch(`/api/shi/prospects/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ convertToSellerLead: true }),
+  });
 }

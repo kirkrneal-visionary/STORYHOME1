@@ -164,7 +164,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-2.8",
     name: "Research perfect · draw trust · vault UX",
     goal: "One polish pass so Research feels finished before Prospects: keep drafts on fail, radius/freehand warns, reopen/remove trust.",
-    status: "current",
+    status: "done",
     frontend: [
       "Keep freehand/box drafts when create is rejected",
       "Radius + freehand live size warnings · Pan/Esc",
@@ -183,23 +183,25 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "SHI-3",
     name: "Prospects · Notes · CRM convert",
-    goal: "Agent workflow on top of public records without mutating CAD.",
-    status: "planned",
+    goal: "Property-native opportunity pipeline on top of public records without mutating CAD.",
+    status: "current",
     frontend: [
-      "Add to Prospects",
-      "Prospect lists + statuses",
-      "Private notes",
-      "Create Seller Lead (prefill from property)",
+      "Save Prospect from Research property record",
+      "Prospects module (ribbon) — pipeline + dossier",
+      "Statuses + private notes",
+      "Create Seller Lead (prefill; no invented contact)",
+      "Research ↔ Prospects hand-off",
     ],
     backend: [
-      "agent_prospects / prospect_lists / prospect_notes tables + RLS",
-      "createProspect / updateStatus / addNote APIs",
-      "createSellerLeadFromProperty into existing CRM",
+      "shi_prospects / shi_prospect_notes + RLS (migration 0025)",
+      "GET/POST /api/shi/prospects · PATCH detail · notes",
+      "convertProspectToSellerLead → seller_clients",
       "Strict separation: public parcel vs agent private data",
     ],
     outOfScope: [
       "Phone/email scraping",
       "Writing into county_parcels from prospects",
+      "Custom statuses / Salesforce clone",
     ],
   },
   {
