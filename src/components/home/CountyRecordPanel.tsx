@@ -12,6 +12,11 @@ import {
   searchParcelsStatewide,
   type CountyParcel,
 } from "@/lib/supabase/parcels";
+import {
+  CAD_SEARCH_FIELDS,
+  cadSearchPlaceholder,
+  type CadSearchField,
+} from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
 import {
   addHomeParcel,
@@ -41,6 +46,7 @@ export function CountyRecordPanel({
   const [busy, setBusy] = useState(false);
 
   const [countyFilter, setCountyFilter] = useState<string>("");
+  const [searchField, setSearchField] = useState<CadSearchField>("all");
   const [query, setQuery] = useState(home.address || "");
   const [results, setResults] = useState<CountyParcel[]>([]);
   const [searching, setSearching] = useState(false);
@@ -72,8 +78,8 @@ export function CountyRecordPanel({
     try {
       setResults(
         countyFilter
-          ? await searchParcels(countyFilter, query)
-          : await searchParcelsStatewide(query),
+          ? await searchParcels(countyFilter, query, searchField)
+          : await searchParcelsStatewide(query, searchField),
       );
     } catch {
       setResults([]);
@@ -282,8 +288,20 @@ export function CountyRecordPanel({
         </p>
       )}
 
-      {/* Search + add */}
+      {/* Advanced CAD search + add */}
       <div className="mt-4 flex flex-wrap gap-2">
+        <select
+          value={searchField}
+          onChange={(e) => setSearchField(e.target.value as CadSearchField)}
+          title="Search field"
+          className="h-11 rounded-xl border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+        >
+          {CAD_SEARCH_FIELDS.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.label}
+            </option>
+          ))}
+        </select>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -293,7 +311,7 @@ export function CountyRecordPanel({
               void runSearch();
             }
           }}
-          placeholder="Address, owner, CAD Property ID, or MH serial #"
+          placeholder={cadSearchPlaceholder(searchField)}
           className="h-11 min-w-[220px] flex-1 rounded-xl border border-hairline bg-[var(--background)] px-4 text-sm text-ink outline-none focus:border-gold"
         />
         <button

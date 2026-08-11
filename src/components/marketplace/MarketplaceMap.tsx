@@ -34,11 +34,18 @@ import {
 } from "@/lib/geo";
 import {
   buildStoryMapStyle,
+  MAP_BASE_OPTIONS,
   MAP_GOLD as GOLD,
   MAP_NAVY as NAVY,
   MAP_PAPER as PAPER,
+  setBaseLayerVisibility,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
+import { CadOverlayControl } from "@/components/map/CadOverlayControl";
+import {
+  ensureCadOverlayLayers,
+  useCadOverlays,
+} from "@/hooks/useCadOverlays";
 import { cn } from "@/lib/utils";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -139,6 +146,7 @@ export function MarketplaceMap({
   const [distUnit, setDistUnit] = useState<DistanceUnit>("mi");
   const [areaUnit, setAreaUnit] = useState<AreaUnit>("acres");
   const [showParcels, setShowParcels] = useState(true);
+  const overlays = useCadOverlays(mapRef, ready);
 
   useEffect(() => {
     toolRef.current = tool;
@@ -203,6 +211,8 @@ export function MarketplaceMap({
           "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.4, 16, 1.3],
         },
       });
+      // Wave L6 — BIS CAD overlays (Abstracts / Subdivisions / Schools / …)
+      ensureCadOverlayLayers(map, "boundary-fill");
       map.on("click", "parcels-fill", (e) => {
         const f = e.features?.[0];
         if (!f) return;
@@ -267,13 +277,11 @@ export function MarketplaceMap({
     };
   }, []);
 
-  // Base-layer switch.
+  // Base-layer switch (Wave L6 gallery).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    (["street", "satellite", "terrain"] as BaseLayer[]).forEach((b) => {
-      map.setLayoutProperty(`base-${b}`, "visibility", b === base ? "visible" : "none");
-    });
+    setBaseLayerVisibility(map, base);
   }, [ready, base]);
 
   // Parcel overlay visibility.
@@ -468,12 +476,6 @@ export function MarketplaceMap({
     { id: "measure", label: "Measure", icon: Ruler },
   ];
 
-  const BASES: { id: BaseLayer; label: string }[] = [
-    { id: "street", label: "Street" },
-    { id: "satellite", label: "Satellite" },
-    { id: "terrain", label: "Terrain" },
-  ];
-
   return (
     <div
       className={cn(
@@ -541,46 +543,73 @@ export function MarketplaceMap({
         )}
       </div>
 
-      {/* Layer switcher + fullscreen (top-right) */}
-      <div className="absolute top-3 right-3 z-[500] flex items-center gap-1.5">
-        <div className="flex overflow-hidden rounded-full border border-hairline bg-navy/90 shadow-lg backdrop-blur">
-          <span className="flex items-center pl-3 pr-1 text-paper/70">
-            <Layers className="h-3.5 w-3.5" />
-          </span>
-          {BASES.map((b) => (
-            <button
-              key={b.id}
-              type="button"
-              onClick={() => setBase(b.id)}
-              className={cn(
-                "px-3 py-2 text-[11px] font-bold transition-colors",
-                base === b.id ? "bg-gold text-navy" : "text-paper hover:bg-white/10",
-              )}
-            >
-              {b.label}
-            </button>
-          ))}
+      {/* Basemap gallery + CAD overlays + fullscreen (top-right) */}
+      <div className="absolute top-3 right-3 z-[500] flex flex-col items-end gap-1.5">
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <div className="flex max-w-[min(100vw-2rem,420px)] flex-wrap overflow-hidden rounded-2xl border border-hairline bg-navy/90 shadow-lg backdrop-blur">
+            <span className="flex items-center pl-3 pr-1 text-paper/70">
+              <Layers className="h-3.5 w-3.5" />
+            </span>
+            {MAP_BASE_OPTIONS.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setBase(b.id)}
+                title={b.label}
+                className={cn(
+                  "px-2.5 py-2 text-[10px] font-bold transition-colors sm:text-[11px]",
+                  base === b.id ? "bg-gold text-navy" : "text-paper hover:bg-white/10",
+                )}
+              >
+                <span className="sm:hidden">{b.short}</span>
+                <span className="hidden sm:inline">{b.label}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => overlays.setPanelOpen((v) => !v)}
+            title="BIS CAD layers"
+            className={cn(
+              "flex items-center gap-1.5 rounded-full border border-hairline px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur",
+              overlays.panelOpen
+                ? "bg-gold text-navy"
+                : "bg-navy/90 text-paper hover:bg-white/10",
+            )}
+          >
+            <Grid3x3 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">CAD</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowParcels((v) => !v)}
+            title="Toggle parcel grid (CAD lot lines at zoom)"
+            className={cn(
+              "flex items-center gap-1.5 rounded-full border border-hairline px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur",
+              showParcels ? "bg-gold text-navy" : "bg-navy/90 text-paper hover:bg-white/10",
+            )}
+          >
+            <Grid3x3 className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Parcels</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            title={expanded ? "Exit fullscreen" : "Expand map"}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-navy/90 text-paper shadow-lg hover:bg-white/10"
+          >
+            {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowParcels((v) => !v)}
-          title="Toggle parcel grid (CAD lot lines at zoom)"
-          className={cn(
-            "flex items-center gap-1.5 rounded-full border border-hairline px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur",
-            showParcels ? "bg-gold text-navy" : "bg-navy/90 text-paper hover:bg-white/10",
-          )}
-        >
-          <Grid3x3 className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Parcels</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          title={expanded ? "Exit fullscreen" : "Expand map"}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-navy/90 text-paper shadow-lg hover:bg-white/10"
-        >
-          {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
+        {overlays.panelOpen ? (
+          <CadOverlayControl
+            activeCounty={overlays.activeCounty}
+            onCountyChange={overlays.setActiveCounty}
+            enabled={overlays.enabled}
+            onToggle={overlays.toggle}
+            loading={overlays.loading}
+          />
+        ) : null}
       </div>
 
       {/* Search this area (top-center) */}
@@ -653,7 +682,7 @@ export function MarketplaceMap({
         ) : boundaryLabel(boundary) ? (
           <p>Boundary: {boundaryLabel(boundary)}</p>
         ) : (
-          <p>Pan and “Search this area”, or use Draw / Measure. Switch Street · Satellite · Terrain top‑right.</p>
+          <p>Pan and “Search this area”, or use Draw / Measure. Basemaps + CAD layers top‑right.</p>
         )}
       </div>
     </div>

@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Layers, MapPin } from "lucide-react";
+import { Grid3x3, Layers, MapPin } from "lucide-react";
 import { EAST_TEXAS_CENTER, EAST_TEXAS_DEFAULT_ZOOM } from "@/lib/geo";
 import {
   buildStoryMapStyle,
+  MAP_BASE_OPTIONS,
   MAP_GOLD,
   MAP_NAVY,
   MAP_PAPER,
@@ -19,6 +20,11 @@ import {
   type CountyParcel,
 } from "@/lib/supabase/parcels";
 import type { LinkedParcel } from "@/lib/supabase/listing-parcels";
+import { CadOverlayControl } from "@/components/map/CadOverlayControl";
+import {
+  ensureCadOverlayLayers,
+  useCadOverlays,
+} from "@/hooks/useCadOverlays";
 import { cn } from "@/lib/utils";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -57,8 +63,8 @@ function tractsKey(tracts: LinkedParcel[]) {
 }
 
 /**
- * Wave L5 — MapLibre map for the listing upload form.
- * Same basemap language as the marketplace map. When a CAD parcel is searched
+ * Wave L5/L6 — MapLibre map for the listing upload form.
+ * Expanded basemap gallery + BIS CAD overlays. When a CAD parcel is searched
  * or linked, the map auto pin-drops and outlines the lot geometry.
  */
 export function ListingCadMap({
@@ -73,6 +79,7 @@ export function ListingCadMap({
   const [base, setBase] = useState<MapBaseLayer>("street");
   const [linkedParcels, setLinkedParcels] = useState<CountyParcel[]>([]);
   const [loading, setLoading] = useState(false);
+  const overlays = useCadOverlays(mapRef, ready);
 
   const key = tractsKey(tracts);
 
@@ -186,6 +193,7 @@ export function ListingCadMap({
         },
       });
 
+      ensureCadOverlayLayers(map, "cad-tracts-fill");
       setReady(true);
     });
 
@@ -301,6 +309,22 @@ export function ListingCadMap({
     }
   }, [ready, tracts, linkedParcels, previewParcel, focusParcel]);
 
+  // Keep overlay county in sync with the focused parcel's source when BIS.
+  useEffect(() => {
+    const src = focusParcel?.source;
+    if (!src) return;
+    if (
+      src === "polk_cad" ||
+      src === "trinity_cad" ||
+      src === "san_jacinto_cad" ||
+      src === "liberty_cad" ||
+      src === "walker_cad"
+    ) {
+      overlays.setActiveCounty(src);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to parcel source
+  }, [focusParcel?.source]);
+
   const statusLabel = previewParcel
     ? `Preview · CAD #${previewParcel.propId}`
     : primary
@@ -314,7 +338,7 @@ export function ListingCadMap({
         className,
       )}
     >
-      <div className="flex items-center justify-between gap-2 border-b border-hairline px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-hairline px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="h-4 w-4 shrink-0 text-gold" />
           <div className="min-w-0">
@@ -326,35 +350,56 @@ export function ListingCadMap({
             </p>
           </div>
         </div>
-        <div
-          className="inline-flex items-center gap-0.5 rounded-lg border border-hairline bg-[var(--background)] p-0.5"
-          title="Basemap"
-        >
-          <Layers className="ml-1 h-3.5 w-3.5 text-[var(--muted)]" />
-          {(
-            [
-              ["street", "Street"],
-              ["satellite", "Sat"],
-              ["terrain", "Terrain"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setBase(id)}
-              className={cn(
-                "rounded-md px-2 py-1 font-mono text-[10px] font-bold uppercase",
-                base === id
-                  ? "bg-gold text-navy"
-                  : "text-[var(--muted)] hover:text-ink",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-1">
+          <div
+            className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-hairline bg-[var(--background)] p-0.5"
+            title="Basemap"
+          >
+            <Layers className="ml-1 h-3.5 w-3.5 text-[var(--muted)]" />
+            {MAP_BASE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setBase(opt.id)}
+                title={opt.label}
+                className={cn(
+                  "rounded-md px-1.5 py-1 font-mono text-[9px] font-bold uppercase sm:text-[10px]",
+                  base === opt.id
+                    ? "bg-gold text-navy"
+                    : "text-[var(--muted)] hover:text-ink",
+                )}
+              >
+                {opt.short}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => overlays.setPanelOpen((v) => !v)}
+            title="BIS CAD layers"
+            className={cn(
+              "inline-flex items-center gap-1 rounded-lg border border-hairline px-2 py-1 font-mono text-[10px] font-bold uppercase",
+              overlays.panelOpen
+                ? "border-gold bg-gold text-navy"
+                : "bg-[var(--background)] text-[var(--muted)] hover:text-ink",
+            )}
+          >
+            <Grid3x3 className="h-3.5 w-3.5" /> CAD
+          </button>
         </div>
       </div>
       <div ref={containerRef} className="relative min-h-[280px] flex-1 bg-[var(--background)]">
+        {overlays.panelOpen ? (
+          <div className="absolute top-2 right-2 z-20">
+            <CadOverlayControl
+              activeCounty={overlays.activeCounty}
+              onCountyChange={overlays.setActiveCounty}
+              enabled={overlays.enabled}
+              onToggle={overlays.toggle}
+              loading={overlays.loading}
+            />
+          </div>
+        ) : null}
         {!tracts.length && !previewParcel && (
           <div
             className="pointer-events-none absolute inset-x-0 bottom-3 z-10 mx-auto max-w-[90%] rounded-lg border border-hairline px-3 py-2 text-center text-xs text-ink"

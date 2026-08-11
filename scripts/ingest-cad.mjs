@@ -218,6 +218,7 @@ function mapAttrsToRow(attrs, src, { geojson, lat, lng }) {
     county_fips: src.countyFips,
     prop_id: propId,
     geo_id: nullishStr(pick(attrs, F.geo_id)),
+    cad_owner_id: nullishStr(pick(attrs, F.owner_id)),
     owner_name: nullishStr(pick(attrs, F.owner_name)),
     situs_num: nullishStr(pick(attrs, F.situs_num)),
     situs_street: street,
