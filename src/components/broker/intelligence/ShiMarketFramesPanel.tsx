@@ -86,7 +86,8 @@ export function ShiMarketFramesPanel({
         </p>
         {frames.length === 0 ? (
           <p className="mt-2 text-xs text-[var(--muted)]">
-            Use <strong>Box</strong> on the map (two clicks) to add a frame.
+            Use <strong>Box</strong>, <strong>Freehand</strong>, or{" "}
+            <strong>Radius</strong> on the map to add a frame.
           </p>
         ) : (
           <ul className="mt-2 flex flex-wrap gap-2">

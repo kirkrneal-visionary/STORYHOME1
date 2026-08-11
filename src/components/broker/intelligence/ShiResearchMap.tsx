@@ -9,7 +9,7 @@ import {
 } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Circle, Grid3x3, Layers, Square, X } from "lucide-react";
+import { Circle, Grid3x3, Layers, PenTool, Square, X } from "lucide-react";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
@@ -31,6 +31,14 @@ import {
   useCadOverlays,
 } from "@/hooks/useCadOverlays";
 import { SHI_CAPS } from "@/lib/shi/caps";
+import {
+  FREEHAND_MIN_STEP_PX,
+  FREEHAND_SNAP_PX,
+  FREEHAND_VERTEX_RADIUS_PX,
+  finalizeFreehandPoints,
+  isNearStart,
+  pointsFarEnoughPx,
+} from "@/lib/shi/freehand";
 import type {
   ShiLocalFrame,
   ShiOwnerMatch,
@@ -41,7 +49,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 
-type DrawTool = "pan" | "radius" | "rectangle";
+type DrawTool = "pan" | "radius" | "rectangle" | "freehand";
 
 export type ShiMapSelect = {
   propId: string;
@@ -155,11 +163,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const preferredSourceRef = useRef<string | undefined>(undefined);
     const toolRef = useRef<DrawTool>("pan");
     const draftRef = useRef<LatLng[]>([]);
+    const freehandRef = useRef<{
+      active: boolean;
+      leftStart: boolean;
+      points: LatLng[];
+      canClose: boolean;
+    }>({ active: false, leftStart: false, points: [], canClose: false });
     const [ready, setReady] = useState(false);
     const [base, setBase] = useState<MapBaseLayer>("street");
     const [showParcels, setShowParcels] = useState(true);
     const [tool, setTool] = useState<DrawTool>("pan");
     const [radiusMiles, setRadiusMiles] = useState(1);
+    const [freehandHint, setFreehandHint] = useState<
+      "idle" | "drawing" | "closeable"
+    >("idle");
     const overlays = useCadOverlays(mapRef, ready);
 
     useEffect(() => {
@@ -171,6 +188,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       onActiveRef.current = onActiveFrameIdChange;
     }, [onActiveFrameIdChange]);
+    useEffect(() => {
+      toolRef.current = tool;
+    }, [tool]);
 
     useEffect(() => {
       preferredSourceRef.current =
@@ -361,6 +381,84 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           },
         });
 
+        map.addSource("shi-freehand", { type: "geojson", data: EMPTY_FC });
+        map.addLayer({
+          id: "shi-freehand-fill",
+          type: "fill",
+          source: "shi-freehand",
+          filter: ["==", ["get", "kind"], "poly"],
+          paint: {
+            "fill-color": MAP_TEAL,
+            "fill-opacity": [
+              "case",
+              ["==", ["get", "closeable"], 1],
+              0.18,
+              0.06,
+            ],
+          },
+        });
+        map.addLayer({
+          id: "shi-freehand-line",
+          type: "line",
+          source: "shi-freehand",
+          filter: ["==", ["get", "kind"], "path"],
+          paint: {
+            "line-color": MAP_NAVY,
+            "line-width": 2.25,
+            "line-opacity": 0.95,
+          },
+        });
+        map.addLayer({
+          id: "shi-freehand-vertices",
+          type: "circle",
+          source: "shi-freehand",
+          filter: ["==", ["get", "kind"], "vertex"],
+          paint: {
+            "circle-radius": FREEHAND_VERTEX_RADIUS_PX,
+            "circle-color": MAP_NAVY,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 1,
+            "circle-opacity": 0.9,
+          },
+        });
+        map.addLayer({
+          id: "shi-freehand-start",
+          type: "circle",
+          source: "shi-freehand",
+          filter: ["==", ["get", "kind"], "start"],
+          paint: {
+            "circle-radius": [
+              "case",
+              ["==", ["get", "closeable"], 1],
+              FREEHAND_SNAP_PX * 0.55,
+              4.5,
+            ],
+            "circle-color": [
+              "case",
+              ["==", ["get", "closeable"], 1],
+              MAP_GOLD,
+              MAP_TEAL,
+            ],
+            "circle-stroke-color": MAP_NAVY,
+            "circle-stroke-width": 1.5,
+            "circle-opacity": 0.95,
+          },
+        });
+        map.addLayer({
+          id: "shi-freehand-snap",
+          type: "circle",
+          source: "shi-freehand",
+          filter: ["==", ["get", "kind"], "snap"],
+          paint: {
+            "circle-radius": FREEHAND_SNAP_PX,
+            "circle-color": MAP_GOLD,
+            "circle-opacity": 0.12,
+            "circle-stroke-color": MAP_GOLD,
+            "circle-stroke-width": 1.25,
+            "circle-stroke-opacity": 0.85,
+          },
+        });
+
         ensureCadOverlayLayers(map, "shi-selected-fill");
 
         map.on("click", "shi-frames-fill", (e) => {
@@ -432,10 +530,106 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       map.getCanvas().style.cursor = tool === "pan" ? "" : "crosshair";
     }, [ready, tool]);
 
+    function clearFreehandDraft(map?: maplibregl.Map | null) {
+      freehandRef.current = {
+        active: false,
+        leftStart: false,
+        points: [],
+        canClose: false,
+      };
+      setFreehandHint("idle");
+      const m = map ?? mapRef.current;
+      const src = m?.getSource("shi-freehand") as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      src?.setData(EMPTY_FC);
+      m?.dragPan.enable();
+    }
+
+    function paintFreehand(
+      map: maplibregl.Map,
+      points: LatLng[],
+      tip: LatLng | null,
+      canClose: boolean,
+    ) {
+      const src = map.getSource("shi-freehand") as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      if (!src) return;
+      if (!points.length) {
+        src.setData(EMPTY_FC);
+        return;
+      }
+      const pathPts = tip ? [...points, tip] : points;
+      const lineCoords = pathPts.map((p) => [p.lng, p.lat]);
+      const features: FeatureCollection["features"] = [
+        {
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: lineCoords },
+          properties: { kind: "path", closeable: canClose ? 1 : 0 },
+        },
+      ];
+      if (canClose && pathPts.length >= 3) {
+        const ring = pathPts.map((p) => [p.lng, p.lat]);
+        ring.push(ring[0]!);
+        features.push({
+          type: "Feature",
+          geometry: { type: "Polygon", coordinates: [ring] },
+          properties: { kind: "poly", closeable: 1 },
+        });
+      }
+      const start = points[0]!;
+      features.push({
+        type: "Feature",
+        geometry: {
+          type: "Point",
+          coordinates: [start.lng, start.lat],
+        },
+        properties: { kind: "start", closeable: canClose ? 1 : 0 },
+      });
+      if (canClose) {
+        features.push({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [start.lng, start.lat],
+          },
+          properties: { kind: "snap", closeable: 1 },
+        });
+      }
+      // Sparse precision vertices (every Nth + last) — keeps map crisp.
+      const step = Math.max(1, Math.floor(points.length / 48));
+      for (let i = 0; i < points.length; i += step) {
+        const p = points[i]!;
+        if (i === 0) continue;
+        features.push({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [p.lng, p.lat],
+          },
+          properties: { kind: "vertex" },
+        });
+      }
+      const last = points[points.length - 1]!;
+      if (points.length > 1) {
+        features.push({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [last.lng, last.lat],
+          },
+          properties: { kind: "vertex" },
+        });
+      }
+      src.setData({ type: "FeatureCollection", features });
+    }
+
     // Draw tools — each completed draw ADDS a frame (multi-box).
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
+      if (tool === "freehand") return;
 
       const onClick = (e: maplibregl.MapMouseEvent) => {
         const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
@@ -474,6 +668,133 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         map.off("click", onClick);
       };
     }, [ready, tool, radiusMiles]);
+
+    // Freehand: stream path, snap-seal when tip returns near start.
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+
+      if (tool !== "freehand") {
+        clearFreehandDraft(map);
+        return;
+      }
+
+      const sealIfReady = () => {
+        const pts = finalizeFreehandPoints(freehandRef.current.points);
+        if (pts.length < SHI_CAPS.minFreehandVertices) return false;
+        if (!freehandRef.current.canClose && !freehandRef.current.leftStart) {
+          return false;
+        }
+        if (!freehandRef.current.canClose) return false;
+        onCreateRef.current({ type: "polygon", points: pts });
+        clearFreehandDraft(map);
+        setTool("pan");
+        return true;
+      };
+
+      const onDown = (e: maplibregl.MapMouseEvent) => {
+        if (toolRef.current !== "freehand") return;
+        e.preventDefault();
+        map.dragPan.disable();
+        const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+        const fh = freehandRef.current;
+        fh.active = true;
+        if (fh.points.length === 0) {
+          fh.points = [pt];
+          fh.leftStart = false;
+          fh.canClose = false;
+        } else if (pointsFarEnoughPx(map, fh.points[fh.points.length - 1]!, pt, FREEHAND_MIN_STEP_PX)) {
+          if (fh.points.length < SHI_CAPS.maxFreehandVertices) {
+            fh.points.push(pt);
+          }
+        }
+        setFreehandHint("drawing");
+        paintFreehand(map, fh.points, null, false);
+      };
+
+      const onMove = (e: maplibregl.MapMouseEvent) => {
+        if (toolRef.current !== "freehand") return;
+        const fh = freehandRef.current;
+        if (!fh.points.length) return;
+        const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+        const start = fh.points[0]!;
+
+        if (fh.active) {
+          const last = fh.points[fh.points.length - 1]!;
+          if (
+            pointsFarEnoughPx(map, last, tip, FREEHAND_MIN_STEP_PX) &&
+            fh.points.length < SHI_CAPS.maxFreehandVertices
+          ) {
+            fh.points.push(tip);
+          }
+          if (
+            !fh.leftStart &&
+            pointsFarEnoughPx(map, start, tip, FREEHAND_SNAP_PX * 2.2)
+          ) {
+            fh.leftStart = true;
+          }
+        }
+
+        const near =
+          fh.leftStart &&
+          fh.points.length >= SHI_CAPS.minFreehandVertices &&
+          isNearStart(map, tip, start, FREEHAND_SNAP_PX);
+        fh.canClose = near;
+        setFreehandHint(near ? "closeable" : "drawing");
+        paintFreehand(map, fh.points, tip, near);
+
+        // Auto-seal when tip re-enters the magnet while stroking.
+        if (fh.active && near) {
+          sealIfReady();
+        }
+      };
+
+      const onUp = () => {
+        if (toolRef.current !== "freehand") return;
+        const fh = freehandRef.current;
+        if (!fh.active) return;
+        fh.active = false;
+        map.dragPan.enable();
+        if (fh.canClose) {
+          sealIfReady();
+          return;
+        }
+        paintFreehand(map, fh.points, null, false);
+        setFreehandHint(fh.points.length ? "drawing" : "idle");
+      };
+
+      const onKey = (ev: KeyboardEvent) => {
+        if (ev.key === "Escape") {
+          clearFreehandDraft(map);
+          setTool("pan");
+        } else if (ev.key === "Enter") {
+          const fh = freehandRef.current;
+          if (fh.points.length >= SHI_CAPS.minFreehandVertices) {
+            fh.canClose = true;
+            sealIfReady();
+          }
+        }
+      };
+
+      map.on("mousedown", onDown);
+      map.on("mousemove", onMove);
+      map.on("mouseup", onUp);
+      map.on("touchstart", onDown);
+      map.on("touchmove", onMove);
+      map.on("touchend", onUp);
+      window.addEventListener("keydown", onKey);
+
+      return () => {
+        map.off("mousedown", onDown);
+        map.off("mousemove", onMove);
+        map.off("mouseup", onUp);
+        map.off("touchstart", onDown);
+        map.off("touchmove", onMove);
+        map.off("touchend", onUp);
+        window.removeEventListener("keydown", onKey);
+        map.dragPan.enable();
+      };
+    }, [ready, tool]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -630,6 +951,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             <button
               type="button"
               onClick={() => {
+                clearFreehandDraft();
                 setTool("rectangle");
                 draftRef.current = [];
               }}
@@ -645,6 +967,23 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             <button
               type="button"
               onClick={() => {
+                clearFreehandDraft();
+                setTool("freehand");
+                draftRef.current = [];
+              }}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
+                tool === "freehand" ? "bg-navy text-gold" : "hover:bg-navy/10",
+              )}
+              title="Freehand — draw a loop; snap-closes when you return to start"
+            >
+              <PenTool className="h-3.5 w-3.5" />
+              Freehand
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                clearFreehandDraft();
                 setTool("radius");
                 draftRef.current = [];
               }}
@@ -668,6 +1007,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 className="w-12 rounded border border-navy/25 bg-white px-1 py-0.5 font-mono text-[10px] font-bold text-navy"
               />
             </label>
+            {tool === "freehand" && freehandHint !== "idle" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  clearFreehandDraft();
+                  setTool("pan");
+                }}
+                className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy hover:bg-navy/10"
+                title="Cancel freehand (Esc)"
+              >
+                <X className="h-3.5 w-3.5" />
+                Cancel
+              </button>
+            ) : null}
             {activeFrameId ? (
               <button
                 type="button"
@@ -727,7 +1080,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               ? "Click two corners — adds a new market frame"
               : tool === "radius"
                 ? "Click center — adds a radius frame"
-                : "Pan · click frame to select · click parcel for record"}
+                : tool === "freehand"
+                  ? freehandHint === "closeable"
+                    ? "Near start — release to seal frame"
+                    : freehandHint === "drawing"
+                      ? "Draw a loop · return to start to snap-seal"
+                      : "Hold and draw · loop back to start to seal"
+                  : "Pan · click frame to select · click parcel for record"}
           </p>
         </div>
       </div>
