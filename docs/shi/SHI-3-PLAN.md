@@ -18,9 +18,16 @@ Research discovers → **Prospects organizes** → Farms monitor (SHI-4) → Fin
 - **Never** write `county_parcels`
 
 ## Increments
-1. **SHI-3.1 (this PR):** Add to Prospects · list/filter by status · notes · open research · Create Seller Lead prefill
-2. **SHI-3.2:** Prospect dossier polish · tags · activity feed · mobile bottom sheet
+1. **SHI-3.1:** Add to Prospects · list/filter by status · notes · open research · Create Seller Lead prefill ✅
+2. **SHI-3.2 (this PR):** Prospect dossier polish · tags · activity feed · mobile bottom sheet
 3. **SHI-3.3:** Pipeline summary metrics from real counts · related intelligence hooks for SHI-4/5
+
+### SHI-3.2 (UI labels)
+- Pipeline list shows private **tags** chips
+- Dossier: **Tags** editor (Add / remove) · search includes tags
+- **Activity** feed = notes + system lines (`Status changed: …`) — agent activity only, not CAD
+- Mobile: dossier opens as **bottom sheet** (Escape / backdrop close); desktop keeps aside
+- No new migration — uses `tags` + notes from `0025`
 
 ## Statuses (V1 fixed)
 Saved · Researching · Watching · Contacted · Qualified · Opportunity · Closed · Archived

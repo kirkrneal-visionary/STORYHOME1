@@ -96,7 +96,7 @@ See `docs/shi/SHI-3-PLAN.md`.
 
 See `docs/shi/SHI-4-PLAN.md`.
 
-### SHI-5 — Find Similar · Portfolio · act-loop (current)
+### SHI-5 — Find Similar · Portfolio · act-loop ✅
 
 | Front-end | Back-end |
 |---|---|
@@ -105,6 +105,15 @@ See `docs/shi/SHI-4-PLAN.md`.
 | Discover map pins · bulk Add to Prospects · Save selection as Farm | Reuse prospects + farms create APIs |
 
 See `docs/shi/SHI-5-PLAN.md`.
+
+### SHI-3.2 — Prospects polish (current)
+
+| Front-end | Back-end |
+|---|---|
+| Dossier tags · Activity feed · mobile bottom sheet | PATCH tags · status-change system notes |
+| Pipeline tag chips · tag search | No new migration — `0025` `tags` + notes |
+
+See `docs/shi/SHI-3-PLAN.md`.
 
 ## Out of scope for SHI UI waves
 

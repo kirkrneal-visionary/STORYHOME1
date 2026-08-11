@@ -191,10 +191,11 @@ export const SHI_WAVES: ShiWave[] = [
       "Statuses + private notes",
       "Create Seller Lead (prefill; no invented contact)",
       "Research ↔ Prospects hand-off",
+      "Tags · Activity feed · mobile dossier sheet (SHI-3.2)",
     ],
     backend: [
       "shi_prospects / shi_prospect_notes + RLS (migration 0025)",
-      "GET/POST /api/shi/prospects · PATCH detail · notes",
+      "GET/POST /api/shi/prospects · PATCH status/tags · notes",
       "convertProspectToSellerLead → seller_clients",
       "Strict separation: public parcel vs agent private data",
     ],
@@ -230,7 +231,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "SHI-5",
     name: "Find Similar · Portfolio · act-loop",
     goal: "Deterministic similarity + confident owner portfolios + act on results.",
-    status: "current",
+    status: "done",
     frontend: [
       "Find Similar Properties with explainable reasons (no fake %)",
       "Owner portfolio: exact vs possible kept separate + totals",
@@ -250,3 +251,6 @@ export const SHI_WAVES: ShiWave[] = [
     ],
   },
 ];
+
+/** Active polish line after SHI-5 — Prospects dossier (tags / activity / mobile). */
+export const SHI_CURRENT_LINE = "SHI-3.2" as const;

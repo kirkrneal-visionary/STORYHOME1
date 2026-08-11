@@ -307,6 +307,21 @@ export async function shiUpdateProspectStatus(
   return body.prospect;
 }
 
+export async function shiUpdateProspectTags(
+  id: string,
+  tags: string[],
+): Promise<ShiProspect> {
+  const body = await shiFetch<{ prospect: ShiProspect }>(
+    `/api/shi/prospects/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags }),
+    },
+  );
+  return body.prospect;
+}
+
 export async function shiAddProspectNote(
   id: string,
   noteBody: string,
