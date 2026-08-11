@@ -12,4 +12,7 @@ export const SHI_CAPS = {
   minAreaSpanDegrees: 0.0003,
   maxThumbnailBytes: 900_000,
   maxAcronymLength: 4,
+  /** Freehand path hard cap — downsample if exceeded (no infinite vertex growth). */
+  maxFreehandVertices: 400,
+  minFreehandVertices: 3,
 } as const;
