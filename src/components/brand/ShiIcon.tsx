@@ -8,13 +8,13 @@ type ShiIconProps = {
 };
 
 /**
- * Story Home Intelligence mark — brandable, distinct from Lucide nav icons.
+ * Legacy geometric mark (fallback). Menu uses Archie's bloodhound asset.
  * Geometry: three orbit nodes around a core (search → research → convert).
  */
 export function ShiIcon({
   className,
   size,
-  title = "Story Home Intelligence",
+  title = "Archie's Intelligence",
 }: ShiIconProps) {
   return (
     <svg

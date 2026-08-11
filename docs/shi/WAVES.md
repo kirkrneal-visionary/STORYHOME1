@@ -1,8 +1,9 @@
-# Story Home Intelligence (SHI) — Build Waves
+# Archie's Intelligence — Build Waves
 
-**Product name:** Story Home Intelligence (menu: **SHI**)  
-**Home:** Story Pro → SHI · deep link `/portal/intelligence`  
-**Positioning:** Research your market. Public records. Professional workflow.
+**Product name:** Archie's Intelligence (menu: logo + **INTELLIGENCE**)  
+**Home:** Story Pro → Archie's Intelligence · deep link `/portal/intelligence`  
+**Positioning:** Research your market. Public records. Professional workflow.  
+**Code paths:** APIs/folders still use `shi` prefixes for stability.
 
 ## Boundary (do not blur)
 

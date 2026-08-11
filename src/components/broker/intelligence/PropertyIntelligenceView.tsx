@@ -926,7 +926,7 @@ export function PropertyIntelligenceView({ onOpenVault }: ResearchProps = {}) {
 
               <p className="text-[10px] leading-relaxed text-[var(--muted)]">
                 Public appraisal record for research. Prospects + CRM convert ship
-                in SHI-3.
+                in the next Archie's Intelligence wave.
               </p>
             </div>
           )}
