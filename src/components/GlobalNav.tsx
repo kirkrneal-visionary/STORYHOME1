@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,14 +8,18 @@ import {
   Bookmark,
   Home,
   LogIn,
+  Menu,
   MessageSquare,
   Search,
   Settings,
   User,
-  Users,
 } from "lucide-react";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
+import {
+  FederatedNavDrawer,
+  type FederatedDrawerLink,
+} from "@/components/nav/FederatedNavDrawer";
 import { NetworkContextRibbon } from "@/components/nav/NetworkContextRibbon";
 import { NetworkDivider } from "@/components/nav/NetworkDivider";
 import { NetworkNode } from "@/components/nav/NetworkNode";
@@ -41,22 +45,125 @@ export default function GlobalNav() {
   const pathname = usePathname();
   const isProAccount = user?.kind === "pro" || user?.kind === "broker";
   const isPro = isProAccount && role === "professional";
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerPath, setDrawerPath] = useState(pathname);
+  const archieEntryHref = useArchieEntryHref();
 
-  if (pathname.startsWith("/seller")) {
-    return null;
+  // Close the mobile drawer when the route changes (render-time adjust).
+  if (drawerPath !== pathname) {
+    setDrawerPath(pathname);
+    if (drawerOpen) setDrawerOpen(false);
   }
+
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   const isHome = pathname === "/";
   const showMessages = isLoggedIn;
   const archie = NAVIGATION_NETWORKS.archie;
   const archieActive = isArchiePath(pathname);
   const showArchieNode = isPro && isLoggedIn;
-  const archieEntryHref = useArchieEntryHref();
+  const isSellerPath = pathname.startsWith("/seller");
+
+  const hostLinks = useMemo(() => {
+    const links: FederatedDrawerLink[] = [];
+    if (isHome) {
+      links.push(
+        {
+          href: "/marketplace?q=Lufkin%2C%20TX&intent=sale",
+          label: "Buy",
+          active: false,
+        },
+        {
+          href: "/marketplace?q=Lufkin%2C%20TX&intent=rent",
+          label: "Rent",
+          active: false,
+        },
+        { href: "/seller", label: "Sell", active: false },
+        {
+          href: "/network",
+          label: "Agents",
+          active: pathname.startsWith("/network"),
+        },
+      );
+    } else {
+      links.push({
+        href: "/marketplace",
+        label: "Marketplace",
+        active: pathname.startsWith("/marketplace"),
+      });
+      if (isPro && isLoggedIn) {
+        links.push(
+          {
+            href: "/portal",
+            label: "Story Pro",
+            active: isStoryProPath(pathname),
+          },
+          {
+            href: "/network",
+            label: "Network",
+            active: pathname.startsWith("/network"),
+          },
+          {
+            href: "/referrals",
+            label: "Referrals",
+            active: pathname.startsWith("/referrals"),
+            unread: openReferralCount > 0,
+          },
+        );
+      } else {
+        links.push(
+          {
+            href: "/home",
+            label: "My Home",
+            active: pathname.startsWith("/home"),
+          },
+          {
+            href: "/saved",
+            label: "Suites",
+            active: pathname.startsWith("/saved"),
+          },
+          {
+            href: "/following",
+            label: "Following",
+            active: pathname.startsWith("/following"),
+          },
+        );
+      }
+      if (showMessages) {
+        links.push({
+          href: "/messages",
+          label: "Messages",
+          active: pathname.startsWith("/messages"),
+          unread: unreadMessages,
+        });
+      }
+    }
+    if (isLoggedIn) {
+      links.push({
+        href: "/settings",
+        label: "Settings",
+        active: pathname.startsWith("/settings"),
+      });
+    }
+    return links;
+  }, [
+    isHome,
+    isLoggedIn,
+    isPro,
+    openReferralCount,
+    pathname,
+    showMessages,
+    unreadMessages,
+  ]);
+
+  if (isSellerPath) {
+    return null;
+  }
 
   return (
     <>
       <nav className="fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-hairline bg-[var(--nav-surface)]/95 px-4 backdrop-blur-md md:px-6">
-        <Link href="/" className="flex select-none flex-col">
+        <Link href="/" className="flex min-w-0 select-none flex-col">
           <div className="flex items-center gap-0.5 tracking-tighter">
             <span className="font-sans text-2xl font-extrabold text-[var(--brand-word)]">
               STORY
@@ -174,7 +281,27 @@ export default function GlobalNav() {
           ) : null}
         </div>
 
-        <div className="flex items-center gap-3 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          {showArchieNode ? (
+            <NetworkNode
+              href={archieEntryHref}
+              label={archie.shortLabel}
+              active={archieActive}
+              size="icon"
+              className="md:hidden"
+            />
+          ) : null}
+
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:text-gold md:hidden"
+            aria-label="Open network menu"
+            aria-expanded={drawerOpen}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
           {isLoggedIn &&
             isProAccount &&
             (role === "professional" ? (
@@ -212,7 +339,7 @@ export default function GlobalNav() {
               </Link>
               <Link
                 href="/profile"
-                className="flex h-10 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] pl-1 pr-3 font-bold text-navy"
+                className="flex h-10 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] pl-1 pr-2 font-bold text-navy sm:pr-3"
                 aria-label="Profile"
                 title={accountLabel(user)}
               >
@@ -232,10 +359,10 @@ export default function GlobalNav() {
           ) : (
             <Link
               href="/login"
-              className="inline-flex h-10 items-center gap-2 rounded-full bg-gold px-4 text-sm font-bold text-navy"
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-gold px-3 text-sm font-bold text-navy sm:px-4"
             >
               <LogIn className="h-4 w-4" />
-              Log in
+              <span className="hidden sm:inline">Log in</span>
             </Link>
           )}
         </div>
@@ -247,6 +374,16 @@ export default function GlobalNav() {
         </Suspense>
       ) : null}
 
+      <Suspense fallback={null}>
+        <FederatedNavDrawer
+          open={drawerOpen}
+          onClose={closeDrawer}
+          hostLinks={hostLinks}
+          showArchie={Boolean(showArchieNode)}
+          archieEntryHref={archieEntryHref}
+        />
+      </Suspense>
+
       <div
         className={cn(
           "fixed bottom-0 left-0 z-50 grid h-16 w-full items-center justify-items-center border-t border-hairline bg-[var(--nav-surface)]/96 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden",
@@ -257,17 +394,17 @@ export default function GlobalNav() {
         {isPro && isLoggedIn ? (
           <>
             <MobileTab
-              href="/network"
-              label="Network"
-              icon={Users}
-              active={pathname.startsWith("/network")}
+              href="/portal"
+              label="Pro"
+              icon={Briefcase}
+              active={isStoryProPath(pathname)}
             />
             <MobileTab
-              href="/referrals"
-              label="Referrals"
+              href={archieEntryHref}
+              label="Archie"
               icon={Briefcase}
-              active={pathname.startsWith("/referrals")}
-              unread={openReferralCount > 0}
+              active={archieActive}
+              mark
             />
           </>
         ) : (
@@ -339,25 +476,44 @@ function MobileTab({
   icon: Icon,
   active,
   unread,
+  mark,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   active: boolean;
   unread?: boolean;
+  /** Use Archie brand mark instead of lucide icon */
+  mark?: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
         "relative flex flex-col items-center gap-0.5",
-        active ? "text-ink" : "text-[var(--muted)]",
+        active ? "text-gold" : "text-[var(--muted)]",
       )}
     >
-      <Icon className="h-5 w-5" />
-      {unread && (
-        <span className="absolute top-0 right-1 h-1.5 w-1.5 rounded-full bg-gold" />
+      {mark ? (
+        <span
+          className={cn(
+            "relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white ring-1",
+            active ? "ring-gold" : "ring-black/10",
+          )}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/archie-intelligence-sm.png"
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </span>
+      ) : (
+        <Icon className="h-5 w-5" />
       )}
+      {unread ? (
+        <span className="absolute top-0 right-1 h-1.5 w-1.5 rounded-full bg-gold" />
+      ) : null}
       <span className="text-[10px] font-medium">{label}</span>
     </Link>
   );

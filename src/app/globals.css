@@ -89,6 +89,26 @@ html[data-role="professional"] {
   }
 }
 
+@keyframes archieDrawerIn {
+  from {
+    opacity: 0.85;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes archieDrawerScrim {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @layer base {
   html {
     color-scheme: dark;
