@@ -7,7 +7,7 @@ export function makeShiAcronym(name: string): string {
     .replace(/[^A-Za-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
-  if (words.length === 0) return "SHI";
+  if (words.length === 0) return "ARCH";
   if (words.length === 1) {
     return words[0].slice(0, SHI_CAPS.maxAcronymLength).toUpperCase();
   }

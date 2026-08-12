@@ -29,17 +29,17 @@ export function NetworkContextRibbon() {
     <div
       role="navigation"
       aria-label={`${archie.label} modules`}
-      className="fixed top-[72px] left-0 z-40 flex h-10 w-full items-center border-b border-[color-mix(in_srgb,var(--gold)_28%,var(--hairline))] bg-[color-mix(in_srgb,var(--navy-deep)_92%,black)]/95 px-4 backdrop-blur-md motion-safe:animate-[archieRibbonIn_220ms_ease-out] md:px-6"
+      className="fixed top-[72px] left-0 z-40 flex h-10 w-full items-center border-b border-[color-mix(in_srgb,var(--gold)_28%,var(--hairline))] bg-[color-mix(in_srgb,var(--navy-deep)_92%,black)]/95 px-3 backdrop-blur-md motion-safe:animate-[archieRibbonIn_220ms_ease-out] md:px-6"
     >
-      <div className="mx-auto flex w-full max-w-[90rem] items-center gap-3 overflow-x-auto">
-        <span className="shrink-0 font-mono text-[10px] font-bold tracking-[0.16em] text-gold uppercase">
-          Archie Intelligence
+      <div className="mx-auto flex w-full max-w-[90rem] items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:gap-3 [&::-webkit-scrollbar]:hidden">
+        <span className="shrink-0 font-mono text-[9px] font-bold tracking-[0.14em] text-gold uppercase sm:text-[10px] sm:tracking-[0.16em]">
+          Archie&apos;s Intelligence
         </span>
         <span
           aria-hidden
           className="hidden h-3.5 w-px shrink-0 bg-[color-mix(in_srgb,var(--gold)_35%,transparent)] sm:block"
         />
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {archie.modules.map((mod) => {
             const id = (mod.id ?? "research") as ArchieModule;
             const active = isArchieModuleActive(id, section);

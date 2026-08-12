@@ -1,10 +1,15 @@
 /**
- * Archie's Intelligence (product waves; code paths still use `shi` for APIs).
+ * Archie's Intelligence — product waves.
+ *
+ * User-facing name is always Archie's Intelligence (never "SHI").
+ * Internal API/table prefixes may still use `shi` for stability until a
+ * dedicated rename wave — that is plumbing, not product brand.
+ *
  * Listing-form CAD stays MLS-limited (pin/search for listing tracts only).
  * Archie's Intelligence is the full professional Property Intelligence product.
  */
 
-export const SHI_PRODUCT = {
+export const ARCHIE_PRODUCT = {
   shortName: "Archie",
   menuLabel: "INTELLIGENCE",
   fullName: "Archie's Intelligence",
@@ -13,6 +18,9 @@ export const SHI_PRODUCT = {
   /** Menu mark — cleaned bloodhound asset (no frame). */
   markSrc: "/brand/archie-intelligence.png",
 } as const;
+
+/** @deprecated Use ARCHIE_PRODUCT — kept so older imports keep working. */
+export const SHI_PRODUCT = ARCHIE_PRODUCT;
 
 export type ShiWaveStatus = "done" | "current" | "planned";
 
@@ -30,13 +38,13 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "SHI-0",
     name: "Shell & brand entry",
-    goal: "Put SHI on the Story Pro menu with a brandable mark and its own page.",
+    goal: "Put Archie's Intelligence on the Story Pro menu with a brandable mark and its own page.",
     status: "done",
     frontend: [
-      "Story Pro tab: SHI + ShiIcon",
+      "Story Pro tab: Intelligence + Archie mark",
       "Dedicated Property Intelligence page shell",
       "Deep link /portal/intelligence",
-      "Copy: Story Home Intelligence (not CAD filenames)",
+      "Copy: Archie's Intelligence (not CAD filenames)",
     ],
     backend: [
       "No ingest changes",
@@ -50,135 +58,37 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "SHI-1",
     name: "Search · Map · Property record",
-    goal: "Universal property search + map research + property intelligence panel.",
+    goal: "County-first search and map with a real property record.",
     status: "done",
     frontend: [
-      "Left: search + filters (county-first, real fields only)",
-      "Center: MapLibre parcel map (viewport load)",
-      "Right: Property Intelligence panel",
-      "Results list/table",
-      "County labels (Polk County) — never polk_cad in UI",
-      "Freshness chips from county status",
+      "Search + filters (county-first, real fields)",
+      "MapLibre parcel map (MVT viewport tiles)",
+      "Property Intelligence panel + results",
+      "County labels + freshness chips",
     ],
     backend: [
-      "Property Intelligence query layer (searchProperties, getProperty)",
-      "Indexed search endpoints / safe Supabase selects",
-      "Viewport parcel query (no full 345k client download)",
-      "County freshness DTO (pro-safe subset only)",
-      "Report missing indexes — do not slow-scan",
+      "GET /api/shi/search + searchProperties",
+      "GET /api/shi/property + getProperty",
+      "Reuse /api/parcels/{z}/{x}/{y}",
+      "GET /api/shi/freshness (pro-safe DTO)",
     ],
-    outOfScope: [
-      "CAD ingest / 72h refresh changes",
-      "Fake AI scores",
-      "Bulk county download",
-    ],
+    outOfScope: ["Bulk county download", "Plugins"],
   },
   {
     id: "SHI-2",
-    name: "Relationships · Area · History",
-    goal: "Owner matches, multi-tract, area analysis, observed CAD history.",
+    name: "Relationships · Area · History · Frames",
+    goal: "Owner matches, area analyze, Market Frames, Study Vault.",
     status: "done",
     frontend: [
-      "Owner relationship panel (EXACT / POSSIBLE match wording)",
-      "Multi-tract visualization",
-      "Area analyze (draw/radius/bounds → metrics)",
-      "Record history timeline (only observed CAD changes)",
+      "Owner relationships EXACT / POSSIBLE",
+      "Market Frames · Analyzer · Study Vault",
+      "Observed CAD history (values/ingest only)",
     ],
     backend: [
-      "Owner match service with confidence tiers",
-      "Area aggregation queries (counts, medians, classifications)",
-      "Property history events (if table exists; else document need)",
-      "Multi-tract fetch by linked prop ids",
+      "owner-matches · area · studies APIs",
+      "shi_study_* + RLS · hard caps",
     ],
-    outOfScope: [
-      "Absentee-owner claims",
-      "Invented ownership history",
-    ],
-  },
-  {
-    id: "SHI-2.5",
-    name: "Market Frames · Analyzer · Study folders",
-    goal: "Multi-box market frames, on-demand parcel value estimates, save/reopen in county folders.",
-    status: "done",
-    frontend: [
-      "Multi-frame box/radius/freehand draw (many frames on map)",
-      "Analyze active frame → parcel list + estimated area value",
-      "Study folders (square tiles + acronym) by county",
-      "Save capture bundle (geometry + metrics + map thumbnail)",
-      "Reopen saved frames onto the map",
-    ],
-    backend: [
-      "shi_study_folders / shi_market_frames / shi_frame_snapshots + RLS",
-      "County-locked analyze with hard caps (no infinite jobs)",
-      "Thumbnail storage (shi-studies) private to owner",
-      "Never write CAD; never overwrite other agents",
-    ],
-    outOfScope: [
-      "Background infinite recompute",
-      "Cross-agent shared folders (v1)",
-    ],
-  },
-  {
-    id: "SHI-2.6",
-    name: "Cockpit · Study Vault · Draw OS",
-    goal: "Research cockpit layout, Study Vault submenu, shared freehand toolbox on Marketplace.",
-    status: "done",
-    frontend: [
-      "SHI submenu: Research | Study Vault (Community-style)",
-      "3-split Research + Map Memory vault cards",
-      "Study Vault rename/delete/thumbnails/reopen",
-      "Shared Draw OS freehand on Marketplace refine map",
-    ],
-    backend: [
-      "Folder/frame PATCH+DELETE owner-gated APIs",
-      "Signed thumbnail URLs (owner path prefix only)",
-      "Boundary safety caps shared helper",
-      "Armor script for freehand downsample + span caps",
-    ],
-    outOfScope: [
-      "SHI-3 prospects",
-      "Listing-form CAD redesign",
-    ],
-  },
-  {
-    id: "SHI-2.7",
-    name: "Analyzer harden · county lock · vault trust",
-    goal: "Finish Analyzer/Vault backlog before SHI-3: county-locked frames, server recompute, indexes.",
-    status: "done",
-    frontend: [
-      "Frame county locked at draw time",
-      "Save form clears stale folders + surfaces errors",
-      "Honest capped-analysis messaging",
-    ],
-    backend: [
-      "Server recomputes analysis on save (never trust client metrics)",
-      "Resave can move frame to another folder",
-      "Owner-match triggers + trgm/centroid indexes (migration 0024)",
-    ],
-    outOfScope: [
-      "SHI-3 prospects",
-      "Farms / change intel",
-    ],
-  },
-  {
-    id: "SHI-2.8",
-    name: "Research perfect · draw trust · vault UX",
-    goal: "One polish pass so Research feels finished before Prospects: keep drafts on fail, radius/freehand warns, reopen/remove trust.",
-    status: "done",
-    frontend: [
-      "Keep freehand/box drafts when create is rejected",
-      "Radius + freehand live size warnings · Pan/Esc",
-      "Remove/reopen/select frame clears stale market data",
-      "Vault dialog errors · analyze loading · reopen banner",
-    ],
-    backend: [
-      "Honest area API boundary copy (box / freehand / radius)",
-      "No new migrations — 0024 already applied",
-    ],
-    outOfScope: [
-      "SHI-3 prospects",
-      "Farms / change intel",
-    ],
+    outOfScope: ["Deed / ownership-transfer history"],
   },
   {
     id: "SHI-3",
@@ -187,17 +97,15 @@ export const SHI_WAVES: ShiWave[] = [
     status: "done",
     frontend: [
       "Save Prospect from Research property record",
-      "Prospects module (ribbon) — pipeline + dossier",
-      "Statuses + private notes",
+      "Prospects module — pipeline + dossier",
+      "Statuses + private notes + tags + Activity",
       "Create Seller Lead (prefill; no invented contact)",
-      "Research ↔ Prospects hand-off",
-      "Tags · Activity feed · mobile dossier sheet (SHI-3.2)",
+      "Mobile dossier sheet · metric chips · related intelligence (3.3)",
     ],
     backend: [
       "shi_prospects / shi_prospect_notes + RLS (migration 0025)",
       "GET/POST /api/shi/prospects · PATCH status/tags · notes",
       "convertProspectToSellerLead → seller_clients",
-      "Strict separation: public parcel vs agent private data",
     ],
     outOfScope: [
       "Phone/email scraping",
@@ -220,10 +128,9 @@ export const SHI_WAVES: ShiWave[] = [
       "shi_farms / shi_farm_baselines + RLS (migration 0026)",
       "Live membership via analyzeArea (county-locked, capped)",
       "Baseline diff (appeared / disappeared / owner / situs / value / acreage)",
-      "Never claims CAD deed dates — Archie detected = compare time",
     ],
     outOfScope: [
-      "Full CAD observation event history (SHI-4.2+)",
+      "Full CAD observation event history (4.2+)",
       "Destructive CAD replace logic (separate reliability wave)",
     ],
   },
@@ -233,15 +140,12 @@ export const SHI_WAVES: ShiWave[] = [
     goal: "Deterministic similarity + confident owner portfolios + act on results.",
     status: "done",
     frontend: [
-      "Find Similar Properties with explainable reasons (no fake %)",
-      "Owner portfolio: exact vs possible kept separate + totals",
-      "Discover actions on property record",
-      "Discover map pins (similar / exact / possible)",
-      "Bulk Add to Prospects · Save selection as Farm",
+      "Find Similar with explainable reasons (no fake %)",
+      "Owner portfolio: exact vs possible kept separate",
+      "Discover map pins · bulk Prospects · Farm from selection",
     ],
     backend: [
-      "POST /api/shi/similar — county-locked deterministic query",
-      "GET /api/shi/portfolio — EXACT aggregates + POSSIBLE list",
+      "POST /api/shi/similar · GET /api/shi/portfolio",
       "Reuse prospects + farms create — no new migration",
     ],
     outOfScope: [
@@ -250,7 +154,54 @@ export const SHI_WAVES: ShiWave[] = [
       "Silent merge of uncertain owner matches",
     ],
   },
+  {
+    id: "ARCHIE-FOUNDATION",
+    name: "Federated shell · Prospects hub",
+    goal: "One clean OS pass: mobile federated Network menu + Prospects as the decision hub with real metric filters and Research / Discover / Farms hand-offs. Brand is Archie's Intelligence.",
+    status: "current",
+    frontend: [
+      "N3 mobile Network menu drawer + Archie node",
+      "Prospects clickable pipeline metrics (real counts)",
+      "Related intelligence: Research · Discover · Farms",
+      "User-facing copy: Archie's Intelligence (never SHI)",
+    ],
+    backend: [
+      "No new migration",
+      "Reuse prospects summary counts + existing deep links",
+      "Internal /api/shi/* prefixes remain for stability",
+    ],
+    outOfScope: [
+      "Market projection / war-risk / financial odds models",
+      "Truth-vs-false claim engines (future lane)",
+      "SHI-4.2 / 4.3 observation history (separate)",
+      "Full public rename of API folders (optional later)",
+    ],
+  },
+  {
+    id: "ARCHIE-TRUTH-MARKET",
+    name: "Truth lane · market projection (future)",
+    goal: "Leave Archie's Intelligence open to improve: separate strong evidence from weak claims, and later project/analyze market scenarios (real estate, financial, geopolitical risk, odds) for USA predictability — always with honest confidence, never fake certainty.",
+    status: "planned",
+    frontend: [
+      "Evidence strength labels (supported / weak / unknown)",
+      "Scenario views that show assumptions + ranges",
+      "Clear separation: county fact vs model projection",
+    ],
+    backend: [
+      "Server-side evidence engines + model outputs as DTOs",
+      "Never ship proprietary method weights to the browser",
+      "Human-readable reasons; no black-box % theater",
+    ],
+    outOfScope: [
+      "Guaranteed predictions",
+      "Seller-probability theater",
+      "Scraping private competitor systems",
+    ],
+  },
 ];
 
-/** Active polish line after SHI-5 — Prospects dossier (tags / activity / mobile). */
-export const SHI_CURRENT_LINE = "SHI-3.2" as const;
+/** Active foundation wave — N3 + Prospects 3.3 under Archie brand. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-FOUNDATION" as const;
+
+/** @deprecated Use ARCHIE_CURRENT_WAVE */
+export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

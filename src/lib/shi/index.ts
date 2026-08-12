@@ -1,4 +1,11 @@
-export { SHI_PRODUCT, SHI_WAVES, type ShiWave } from "./waves";
+export {
+  ARCHIE_PRODUCT,
+  ARCHIE_CURRENT_WAVE,
+  SHI_PRODUCT,
+  SHI_WAVES,
+  SHI_CURRENT_LINE,
+  type ShiWave,
+} from "./waves";
 export type {
   ShiAreaAnalysis,
   ShiAreaMetrics,

@@ -19,15 +19,21 @@ Research discovers → **Prospects organizes** → Farms monitor (SHI-4) → Fin
 
 ## Increments
 1. **SHI-3.1:** Add to Prospects · list/filter by status · notes · open research · Create Seller Lead prefill ✅
-2. **SHI-3.2 (this PR):** Prospect dossier polish · tags · activity feed · mobile bottom sheet
-3. **SHI-3.3:** Pipeline summary metrics from real counts · related intelligence hooks for SHI-4/5
+2. **SHI-3.2:** Prospect dossier polish · tags · activity feed · mobile bottom sheet ✅
+3. **SHI-3.3 (in ARCHIE-FOUNDATION):** Pipeline summary metrics from real counts · related intelligence hooks for Farms/Discover
 
-### SHI-3.2 (UI labels)
+### SHI-3.2 (UI labels) ✅
 - Pipeline list shows private **tags** chips
 - Dossier: **Tags** editor (Add / remove) · search includes tags
 - **Activity** feed = notes + system lines (`Status changed: …`) — agent activity only, not CAD
 - Mobile: dossier opens as **bottom sheet** (Escape / backdrop close); desktop keeps aside
 - No new migration — uses `tags` + notes from `0025`
+
+### SHI-3.3 (UI labels)
+- Tap metric chips (**All · Researching · Watching · Contacted · Opportunity**) to filter — real counts only
+- Dossier **Related intelligence**: Research property · Open Discover · Open Farms
+- Discover deep-link: `?focus=discover` scrolls to Discover on the property record
+- Product brand: Archie's Intelligence (never “SHI” in UI)
 
 ## Statuses (V1 fixed)
 Saved · Researching · Watching · Contacted · Qualified · Opportunity · Closed · Archived

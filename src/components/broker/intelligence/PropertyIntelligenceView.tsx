@@ -540,13 +540,14 @@ export function PropertyIntelligenceView({
     router.replace(q ? `${base}?${q}` : base, { scroll: false });
   }
 
-  // Prospects → Research hand-off via ?propId=&source=
+  // Prospects → Research hand-off via ?propId=&source= (& optional focus=discover)
   useEffect(() => {
     const propId = searchParams.get("propId")?.trim() || "";
     const src = searchParams.get("source")?.trim() || "";
     const countyFips = searchParams.get("countyFips")?.trim() || "";
+    const focus = searchParams.get("focus")?.trim() || "";
     if (!propId) return;
-    const key = `${src}:${propId}`;
+    const key = `${src}:${propId}:${focus}`;
     if (openedPropRef.current === key) return;
     openedPropRef.current = key;
     void openProperty({
@@ -558,6 +559,7 @@ export function PropertyIntelligenceView({
       params.delete("propId");
       params.delete("source");
       params.delete("countyFips");
+      params.delete("focus");
       // Keep section= out of research URL
       params.delete("section");
       const q = params.toString();
@@ -565,6 +567,13 @@ export function PropertyIntelligenceView({
         q ? `/portal/intelligence?${q}` : "/portal/intelligence",
         { scroll: false },
       );
+      if (focus === "discover") {
+        window.setTimeout(() => {
+          document
+            .getElementById("archie-discover")
+            ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 120);
+      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
