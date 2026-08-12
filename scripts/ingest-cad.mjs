@@ -28,7 +28,7 @@ import {
   looksLikeMobileHome,
 } from "./lib/mh-serial.mjs";
 import { readShapefile } from "./lib/shapefile.mjs";
-import { ownerFieldsChanged } from "./lib/owner-diff.mjs";
+import { parcelFieldsChanged } from "./lib/parcel-diff.mjs";
 
 function parseArgs(argv) {
   const a = { emitSqlExplicit: false };
@@ -553,6 +553,8 @@ function toParcelUpsertRow(r, prior = null) {
     ingested_at: now,
     first_seen_at: firstSeen,
     last_seen_at: now,
+    // Cleared whenever Archie sees the parcel again in a pull.
+    absent_at: null,
   };
 }
 
@@ -569,16 +571,20 @@ async function fetchPriorParcelState(sb, source, propIds) {
     const { data, error } = await sb
       .from("county_parcels")
       .select(
-        "prop_id, cad_owner_id, owner_name, first_seen_at, ingested_at",
+        "prop_id, cad_owner_id, owner_name, situs_address, market_value, legal_acreage, first_seen_at, ingested_at, absent_at",
       )
       .eq("source", source)
       .in("prop_id", ids);
     if (error) {
-      // Migration 0027 may not be applied yet — fall back without events.
-      if (/first_seen_at|does not exist/i.test(error.message || "")) {
+      // Older schemas — fall back with fewer columns.
+      if (
+        /first_seen_at|absent_at|does not exist/i.test(error.message || "")
+      ) {
         const { data: legacy, error: legacyErr } = await sb
           .from("county_parcels")
-          .select("prop_id, cad_owner_id, owner_name, ingested_at")
+          .select(
+            "prop_id, cad_owner_id, owner_name, situs_address, market_value, legal_acreage, ingested_at",
+          )
           .eq("source", source)
           .in("prop_id", ids);
         if (legacyErr) throw legacyErr;
@@ -596,7 +602,7 @@ async function fetchPriorParcelState(sb, source, propIds) {
   return map;
 }
 
-async function insertOwnerChangeEvents(sb, events) {
+async function insertChangeEvents(sb, events) {
   if (!events.length) return;
   const batch = 200;
   for (let i = 0; i < events.length; i += batch) {
@@ -605,13 +611,82 @@ async function insertOwnerChangeEvents(sb, events) {
     if (error) {
       if (/county_parcel_change_events|does not exist/i.test(error.message || "")) {
         console.warn(
-          "[live] county_parcel_change_events missing — apply migration 0027 to record owner changes",
+          "[live] county_parcel_change_events missing — apply migration 0027",
         );
         return;
       }
       throw error;
     }
   }
+}
+
+/** Cap absence writes per full pull so Nano/Micro cannot time out. */
+const MAX_ABSENCE_MARKS = 5000;
+
+/**
+ * After a full-county pull (--all), mark parcels not seen in this run as absent.
+ * Emits presence events. Never claims deed/sale — only "missing from this pull".
+ */
+async function markAbsencesForFullPull(sb, source, seenPropIds, observedAt) {
+  let marked = 0;
+  let from = 0;
+  const pageSize = 1000;
+  for (;;) {
+    if (marked >= MAX_ABSENCE_MARKS) {
+      console.warn(
+        `[live] absence cap ${MAX_ABSENCE_MARKS} reached for ${source} — remaining unmarked this run`,
+      );
+      break;
+    }
+    const to = from + pageSize - 1;
+    const { data, error } = await sb
+      .from("county_parcels")
+      .select("prop_id, absent_at")
+      .eq("source", source)
+      .range(from, to);
+    if (error) {
+      if (/absent_at|does not exist/i.test(error.message || "")) {
+        console.warn(
+          "[live] absent_at missing — apply migration 0028 to mark absences",
+        );
+        return 0;
+      }
+      throw error;
+    }
+    const rows = data ?? [];
+    if (!rows.length) break;
+
+    const missing = rows
+      .filter((r) => !r.absent_at)
+      .map((r) => normalizePropId(r.prop_id))
+      .filter((id) => id && !seenPropIds.has(id));
+
+    for (let i = 0; i < missing.length && marked < MAX_ABSENCE_MARKS; i += 100) {
+      const chunk = missing.slice(i, i + 100);
+      const { error: upErr } = await sb
+        .from("county_parcels")
+        .update({ absent_at: observedAt })
+        .eq("source", source)
+        .in("prop_id", chunk);
+      if (upErr) throw upErr;
+      await insertChangeEvents(
+        sb,
+        chunk.map((prop_id) => ({
+          source,
+          prop_id,
+          field: "presence",
+          old_value: "present",
+          new_value: "absent",
+          observed_at: observedAt,
+        })),
+      );
+      marked += chunk.length;
+    }
+
+    from += rows.length;
+    if (rows.length < pageSize) break;
+  }
+  return marked;
 }
 
 function isConflictDupError(msg) {
@@ -656,9 +731,10 @@ async function upsertChunkWithSplit(sb, table, chunk, onConflict, label) {
   throw new Error(`${label}: ${msg}`);
 }
 
-async function upsertLive(rows) {
+async function upsertLive(rows, opts = {}) {
   const sb = await getSupabase();
   if (!sb) return false;
+  const markAbsent = Boolean(opts.markAbsent);
 
   // CAD FeatureServers often emit the same prop_id multiple times (multi-part
   // geometry / duplicate features). Postgres rejects ON CONFLICT DO UPDATE when
@@ -692,7 +768,7 @@ async function upsertLive(rows) {
     const chunk = rawChunk.map((r) => {
       const prev = prior.get(r.prop_id) || null;
       if (prev) {
-        for (const diff of ownerFieldsChanged(prev, r)) {
+        for (const diff of parcelFieldsChanged(prev, r)) {
           events.push({
             source: r.source,
             prop_id: r.prop_id,
@@ -702,11 +778,22 @@ async function upsertLive(rows) {
             observed_at: observedAt,
           });
         }
+        // Reappearance after absence
+        if (prev.absent_at) {
+          events.push({
+            source: r.source,
+            prop_id: r.prop_id,
+            field: "presence",
+            old_value: "absent",
+            new_value: "present",
+            observed_at: observedAt,
+          });
+        }
       }
       return toParcelUpsertRow(r, prev);
     });
 
-    // Drop first/last_seen if columns missing (pre-0027) so upsert still works.
+    // Drop observation cols if missing so upsert still works on older schemas.
     let upsertChunk = chunk;
     try {
       await upsertChunkWithSplit(
@@ -718,9 +805,14 @@ async function upsertLive(rows) {
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (/first_seen_at|last_seen_at/i.test(msg)) {
+      if (/first_seen_at|last_seen_at|absent_at/i.test(msg)) {
         upsertChunk = chunk.map((r) => {
-          const { first_seen_at: _f, last_seen_at: _l, ...rest } = r;
+          const {
+            first_seen_at: _f,
+            last_seen_at: _l,
+            absent_at: _a,
+            ...rest
+          } = r;
           return rest;
         });
         await upsertChunkWithSplit(
@@ -736,7 +828,7 @@ async function upsertLive(rows) {
     }
 
     if (events.length) {
-      await insertOwnerChangeEvents(sb, events);
+      await insertChangeEvents(sb, events);
       ownerEventsTotal += events.length;
     }
 
@@ -746,7 +838,24 @@ async function upsertLive(rows) {
     }
   }
   if (ownerEventsTotal) {
-    console.log(`[live] owner change events recorded: ${ownerEventsTotal}`);
+    console.log(`[live] field change events recorded: ${ownerEventsTotal}`);
+  }
+
+  if (markAbsent && rawParcelRows.length) {
+    const source = rawParcelRows[0].source;
+    const seen = new Set(rawParcelRows.map((r) => r.prop_id));
+    const observedAt = new Date().toISOString();
+    const marked = await markAbsencesForFullPull(
+      sb,
+      source,
+      seen,
+      observedAt,
+    );
+    if (marked) {
+      console.log(
+        `[live] marked ${marked} parcels absent (missing from this full pull)`,
+      );
+    }
   }
 
   const parcelRows = rawParcelRows;
@@ -915,7 +1024,10 @@ async function main() {
 
     if (!args.noLive) {
       try {
-        const live = await upsertLive(rows);
+        const live = await upsertLive(rows, {
+          // Only full-county pulls may mark absence — partial queries would false-flag.
+          markAbsent: Boolean(args.all) && !args.limit && !args.where && !args.propIds,
+        });
         console.log(
           live
             ? `[${src.source}] live upsert OK (${rows.length} parcels)`

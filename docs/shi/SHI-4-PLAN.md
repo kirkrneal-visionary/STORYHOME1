@@ -20,8 +20,8 @@
 
 ## Increments
 1. **SHI-4.1:** Save farm · live membership · since-last-review diff · Mark reviewed · Farms ribbon module ✅
-2. **SHI-4.2 + thin 4.3 (this PR):** Ingest `first_seen_at` / `last_seen_at` · `county_parcel_change_events` on owner compare · Ownership Stability Index on property record
-3. **SHI-4.3 full:** County-level change feed · absence marking on full pulls · more field types
+2. **SHI-4.2 + thin 4.3:** Ingest `first_seen_at` / `last_seen_at` · `county_parcel_change_events` on owner compare · Ownership Stability Index on property record ✅
+3. **SHI-4.3 full (this PR):** County-level change feed · absence marking on full pulls · more field types
 
 ### Ownership Stability Index (honesty)
 - Familiar **300–850** scale (quiet/stable high ↔ active observed owner changes low)
@@ -29,8 +29,13 @@
 - **Not** a credit score, **not** a prediction the owner will sell, **not** deed history
 - History accrues **forward** from migration 0027 + CAD refreshes
 
-### Apply migration 0027
+### County observation feed (4.3 honesty)
+- Shows Archie-detected CAD field diffs: owner, site address, market value, acreage, presence
+- Absence = missing from a full-county pull (`--all`), not a deed/sale
+- Cap on absence marks per run so compute stays healthy
+
+### Apply migration 0028
 1. Open [Supabase SQL](https://supabase.com/dashboard/project/ksvllgzsnzyahqsjuove/sql/new)
-2. Paste `supabase/migrations/0027_cad_observation_events.sql`
+2. Paste `supabase/migrations/0028_cad_absence_and_feed.sql` (or the short `ALTER` only — no backfill)
 3. Run
-4. Refresh a county CAD (`node scripts/ingest-cad.mjs --source polk_cad --all`) so owner diffs can start recording
+4. Full refresh: `node scripts/ingest-cad.mjs --source polk_cad --all`

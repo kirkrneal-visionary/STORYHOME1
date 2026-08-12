@@ -8,7 +8,7 @@
     "start": "next start --hostname 0.0.0.0 --port 3000",
     "demo": "next build && next start --hostname 0.0.0.0 --port 3000",
     "lint": "eslint",
-    "test:shi": "node scripts/test-shi-armor.mjs && node scripts/test-shi-backlog.mjs && node scripts/test-shi-prospects.mjs && node scripts/test-shi-farms.mjs && node scripts/test-shi-similar.mjs && node scripts/test-shi-discover-act.mjs && node scripts/test-shi-ownership-churn.mjs",
+    "test:shi": "node scripts/test-shi-armor.mjs && node scripts/test-shi-backlog.mjs && node scripts/test-shi-prospects.mjs && node scripts/test-shi-farms.mjs && node scripts/test-shi-similar.mjs && node scripts/test-shi-discover-act.mjs && node scripts/test-shi-ownership-churn.mjs && node scripts/test-shi-change-feed.mjs",
     "cad:list": "node scripts/ingest-cad.mjs --list",
     "cad:ingest": "node scripts/ingest-cad.mjs",
     "cad:refresh": "node scripts/refresh-cad.mjs",

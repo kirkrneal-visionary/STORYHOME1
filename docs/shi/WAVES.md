@@ -11,26 +11,38 @@
 | **Listing upload CAD** | MLS-limited listing form only |
 | **Archie's Intelligence** | Full Property Intelligence for agents |
 
-## Current: ARCHIE-OWNER-CHURN (4.2 + thin 4.3)
+## Current: ARCHIE-CHANGE-FEED (4.3 full)
 
 | Front-end | Back-end |
 |---|---|
-| **Ownership Stability Index** (300–850, explainable) on property record | Migration **0027** `first_seen_at` / `last_seen_at` + `county_parcel_change_events` |
-| Observed history includes owner-field changes between CAD pulls | Ingest compares owner id/name before upsert |
+| **County observation feed** on Research + Farms | Migration **0028** `county_parcels.absent_at` |
+| Filter by field · open property into Research | Ingest diffs owner + situs + value + acreage |
+| Property history includes presence / expanded fields | Full-pull absence marking (capped) + `GET /api/shi/changes` |
 
-**Honesty:** Not a credit score. Not a prediction the owner will sell. Not deed history. Index builds as CAD refreshes run after 0027.
+**Honesty:** Not deed history. Not a sale prediction. Events are what Archie saw change between CAD pulls.
 
-### Apply 0027 (click path)
+### Apply 0028 (click path)
 1. [Supabase SQL editor](https://supabase.com/dashboard/project/ksvllgzsnzyahqsjuove/sql/new)
-2. Paste `supabase/migrations/0027_cad_observation_events.sql` → Run
-3. Refresh CAD so diffs can start: `node scripts/ingest-cad.mjs --source polk_cad --all`
+2. Paste only this (no giant UPDATE):
+
+```sql
+alter table public.county_parcels
+  add column if not exists absent_at timestamptz;
+
+create index if not exists county_parcels_source_absent_idx
+  on public.county_parcels (source, absent_at)
+  where absent_at is not null;
+```
+
+3. Run
+4. After deploy, full refresh so absences can mark: `node scripts/ingest-cad.mjs --source polk_cad --all`
 
 ## Done
 - Foundation OS (Research · Prospects · Farms · Discover · N3 shell)
 - Farms since-last-review (4.1)
+- Ownership Stability Index + CAD observation events (4.2 / thin 4.3 · migration **0027**)
 
 ## Next (separate)
-- **4.3 full** — county change feed · absence on full pulls · more fields  
 - **ARCHIE-TRUTH-MARKET** — broader truth lane + market projection scenarios  
 
 ## Out of scope

@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
+import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import {
   shiDeleteFarm,
   shiGetFarm,
@@ -120,6 +121,18 @@ export function ShiFarmsView() {
           {error}
         </p>
       ) : null}
+
+      <ShiCountyChangeFeed
+        source={detail?.countySource || farms[0]?.countySource || ""}
+        onOpenProperty={(opts) => {
+          const params = new URLSearchParams();
+          params.set("propId", opts.propId);
+          params.set("source", opts.source);
+          router.replace(`/portal/intelligence?${params.toString()}`, {
+            scroll: false,
+          });
+        }}
+      />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <section className="min-h-[28rem] rounded-2xl border border-hairline bg-[var(--surface)]">
