@@ -11,26 +11,19 @@
 | **Listing upload CAD** | MLS-limited listing form only |
 | **Archie's Intelligence** | Full Property Intelligence for agents |
 
-## Current: ARCHIE-TRUTH-MARKET
+## Two big waves (remaining)
 
-| Front-end | Back-end |
-|---|---|
-| **CAD evidence · market context** on property record | `buildCadEvidenceLane` (no new migration) |
-| Evidence strength chips · CAD value trajectory | Frame band via existing `analyzeArea` |
-| Vs active Market Frame median · illustrative carry | Finance math under user rate/down/term |
+### 1 · ARCHIE-LOOKALIKE-CONTEXT (current)
+Lookalike CAD band from Find Similar + illustrative **assumption ranges** on carry math.
 
-**Honesty:** CAD market value ≠ list/sale price. Not an AVM. Not a prediction someone will sell. Carry math is illustrative under your inputs.
+### 2 · ARCHIE-OBS-OPS (next)
+Observation health — empty feed / Building history honesty, readiness for migrations **0027/0028**, county pull status.
 
 ## Done
-- Foundation OS (Research · Prospects · Farms · Discover · N3 shell)
-- Farms since-last-review (4.1)
-- Ownership Stability Index + CAD observation (4.2 · migration **0027**)
-- County observation feed · absence · more fields (4.3 · migration **0028**)
+- Foundation OS · Farms · Discover · N3
+- Ownership Stability · County change feed (0027/0028)
+- CAD evidence · market context (truth lane)
 
-## Next (separate)
-- Deeper scenario ranges / risk bands still labeled as assumptions  
-- Lookalike CAD band from Find Similar (compose, don’t invent %)
-
-## Out of scope
+## Out of scope forever
 - Fake seller-probability theater / AVM guarantees  
 - Phone/email scraping · bulk county download plugins  

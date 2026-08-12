@@ -1,12 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Scale } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Scale } from "lucide-react";
 import {
+  buildAssumptionCarryCases,
   compareSubjectToFrame,
+  compareSubjectToLookalikes,
   type CadEvidenceClaim,
+  type CadLookalikeBand,
   type EvidenceStrength,
 } from "@/lib/shi/cad-evidence";
+import { shiFindSimilar } from "@/lib/shi/client";
 import { monthlyMortgagePayment, roundCents } from "@/lib/finance";
 import type { ShiAreaAnalysis, ShiPropertyDetail } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
@@ -61,7 +65,7 @@ type Props = {
 };
 
 /**
- * Truth lane · CAD evidence + thin illustrative carry.
+ * Truth lane · CAD evidence + lookalike band + assumption ranges.
  * Never shows seller probability or AVM "true value".
  */
 export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
@@ -69,11 +73,73 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
   const [ratePct, setRatePct] = useState("6.5");
   const [downPct, setDownPct] = useState("20");
   const [termYears, setTermYears] = useState("30");
+  const [lookalike, setLookalike] = useState<CadLookalikeBand | null>(null);
+  const [lookalikeLoading, setLookalikeLoading] = useState(false);
+  const [lookalikeError, setLookalikeError] = useState("");
+  const [lookalikeNote, setLookalikeNote] = useState("");
 
   const frameBand = useMemo(
     () => compareSubjectToFrame(property.marketValue, frameAnalysis),
     [property.marketValue, frameAnalysis],
   );
+
+  const loadLookalikes = useCallback(async () => {
+    if (
+      property.centroidLat == null ||
+      property.centroidLng == null ||
+      !Number.isFinite(property.centroidLat) ||
+      !Number.isFinite(property.centroidLng)
+    ) {
+      setLookalike(null);
+      setLookalikeError("No map centroid — lookalike band needs a located parcel.");
+      return;
+    }
+    setLookalikeLoading(true);
+    setLookalikeError("");
+    try {
+      const result = await shiFindSimilar({
+        source: property.source,
+        propId: property.propId,
+        limit: 20,
+      });
+      const band = compareSubjectToLookalikes(
+        property.marketValue,
+        result.matches.map((m) => m.marketValue),
+      );
+      setLookalike(band);
+      setLookalikeNote(result.note);
+      if (!band) {
+        setLookalikeError(
+          result.matches.length === 0
+            ? "No lookalike CAD matches in range yet."
+            : "Lookalike matches lack CAD market values.",
+        );
+      }
+    } catch (e) {
+      setLookalike(null);
+      setLookalikeError(
+        e instanceof Error ? e.message : "Could not load lookalike band",
+      );
+    } finally {
+      setLookalikeLoading(false);
+    }
+  }, [
+    property.centroidLat,
+    property.centroidLng,
+    property.marketValue,
+    property.propId,
+    property.source,
+  ]);
+
+  useEffect(() => {
+    setLookalike(null);
+    setLookalikeError("");
+    setLookalikeNote("");
+    const t = window.setTimeout(() => {
+      void loadLookalikes();
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [loadLookalikes]);
 
   const scenario = useMemo(() => {
     const price = property.marketValue;
@@ -95,7 +161,14 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
     const downPayment = roundCents((price * down) / 100);
     const principal = roundCents(price - downPayment);
     const pi = roundCents(monthlyMortgagePayment(principal, rate, term));
-    return { price, downPayment, principal, pi, rate, down, term };
+    const ranges = buildAssumptionCarryCases({
+      price,
+      baseRatePct: rate,
+      baseDownPct: down,
+      termYears: term,
+      monthlyPi: (p, r, y) => monthlyMortgagePayment(p, r, y),
+    });
+    return { price, downPayment, principal, pi, rate, down, term, ranges };
   }, [property.marketValue, ratePct, downPct, termYears]);
 
   if (!evidence) return null;
@@ -184,6 +257,49 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
         ) : null}
       </div>
 
+      <div className="mt-3 rounded-lg border border-hairline px-2.5 py-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-mono text-[9px] font-bold uppercase text-gold">
+            Lookalike CAD band
+          </p>
+          <button
+            type="button"
+            onClick={() => void loadLookalikes()}
+            disabled={lookalikeLoading}
+            className="text-[10px] font-bold text-gold disabled:opacity-50"
+          >
+            {lookalikeLoading ? "Loading…" : "Refresh"}
+          </button>
+        </div>
+        {lookalikeLoading ? (
+          <div className="mt-2 flex justify-center text-[var(--muted)]">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : lookalike ? (
+          <>
+            <p className="mt-1 text-xs font-semibold text-ink">
+              {lookalike.summary}
+            </p>
+            <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
+              Median {money(lookalike.median)} · range {money(lookalike.min)}–
+              {money(lookalike.max)} · {lookalike.valuedCount}/
+              {lookalike.matchCount} valued
+            </p>
+            <p className="mt-0.5 text-[10px] text-[var(--muted)]">
+              {lookalike.note}
+            </p>
+          </>
+        ) : (
+          <p className="mt-1 text-[10px] text-[var(--muted)]">
+            {lookalikeError ||
+              "Load lookalike CAD matches to compare this parcel’s appraisal band."}
+          </p>
+        )}
+        {lookalikeNote && lookalike ? (
+          <p className="mt-1 text-[9px] text-[var(--muted)]">{lookalikeNote}</p>
+        ) : null}
+      </div>
+
       {frameBand ? (
         <div className="mt-3 rounded-lg border border-hairline px-2.5 py-2">
           <p className="font-mono text-[9px] font-bold uppercase text-gold">
@@ -208,7 +324,7 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
         </p>
         <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
           Payment math if someone financed the CAD market value. Not a quote.
-          Not what the property will sell for.
+          Not what the property will sell for. Ranges only vary your rate/down.
         </p>
         {scenario ? (
           <>
@@ -253,6 +369,24 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
               down · {money(scenario.principal)} loan · {scenario.rate}% ·{" "}
               {scenario.term} yr
             </p>
+
+            <p className="mt-3 font-mono text-[9px] font-bold uppercase text-gold">
+              Assumption ranges
+            </p>
+            <ul className="mt-1 space-y-1">
+              {scenario.ranges.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between gap-2 rounded-md border border-hairline px-2 py-1.5 text-[11px]"
+                >
+                  <span className="text-[var(--muted)]">{c.label}</span>
+                  <span className="font-semibold text-ink">
+                    {money(c.monthlyPi)}
+                    <span className="font-normal text-[var(--muted)]"> /mo</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </>
         ) : (
           <p className="mt-2 text-[10px] text-[var(--muted)]">

@@ -50,6 +50,31 @@ export type CadFrameBand = {
   note: string;
 };
 
+export type CadLookalikeBand = {
+  subjectMarketValue: number;
+  median: number;
+  min: number;
+  max: number;
+  matchCount: number;
+  valuedCount: number;
+  deltaAbs: number;
+  deltaPct: number;
+  position: "above" | "near" | "below";
+  summary: string;
+  note: string;
+};
+
+export type CadCarryCase = {
+  id: string;
+  label: string;
+  ratePct: number;
+  downPct: number;
+  termYears: number;
+  monthlyPi: number;
+  principal: number;
+  downPayment: number;
+};
+
 export type CadEvidenceLane = {
   trajectory: CadValueTrajectory;
   claims: CadEvidenceClaim[];
@@ -183,6 +208,141 @@ export function compareSubjectToFrame(
     summary: `Subject CAD market value is ${formatPct(absPct)} ${positionWord} the active frame median (${money(frameMedian)}).`,
     note: "Frame median is CAD market_value among parcels Archie counted inside your drawn boundary — not sale comps.",
   };
+}
+
+/**
+ * Lookalike CAD band from Find Similar match market values.
+ * Not MLS comps. Not an AVM.
+ */
+export function compareSubjectToLookalikes(
+  subjectMarketValue: number | null | undefined,
+  matchMarketValues: Array<number | null | undefined>,
+): CadLookalikeBand | null {
+  if (
+    subjectMarketValue == null ||
+    !Number.isFinite(subjectMarketValue) ||
+    subjectMarketValue <= 0
+  ) {
+    return null;
+  }
+  const valued = matchMarketValues
+    .map((v) => (v == null ? null : Number(v)))
+    .filter((v): v is number => v != null && Number.isFinite(v) && v > 0)
+    .sort((a, b) => a - b);
+  if (valued.length === 0) return null;
+
+  const median = medianOf(valued);
+  const min = valued[0]!;
+  const max = valued[valued.length - 1]!;
+  const deltaAbs = subjectMarketValue - median;
+  const deltaPct = (deltaAbs / median) * 100;
+  const absPct = Math.abs(deltaPct);
+  const position: CadLookalikeBand["position"] =
+    absPct <= 8 ? "near" : deltaAbs > 0 ? "above" : "below";
+  const positionWord =
+    position === "near" ? "near" : position === "above" ? "above" : "below";
+
+  return {
+    subjectMarketValue,
+    median,
+    min,
+    max,
+    matchCount: matchMarketValues.length,
+    valuedCount: valued.length,
+    deltaAbs,
+    deltaPct,
+    position,
+    summary: `Subject CAD market value is ${formatPct(absPct)} ${positionWord} the lookalike CAD median (${money(median)}).`,
+    note: "Lookalikes are deterministic CAD matches (acres/value/distance) — not sale comps and not a predicted sale price.",
+  };
+}
+
+/** Illustrative P&I cases under explicit assumptions (caller supplies payment fn). */
+export function buildAssumptionCarryCases(opts: {
+  price: number;
+  baseRatePct: number;
+  baseDownPct: number;
+  termYears: number;
+  monthlyPi: (principal: number, ratePct: number, termYears: number) => number;
+}): CadCarryCase[] {
+  const price = opts.price;
+  if (!Number.isFinite(price) || price <= 0) return [];
+  const term = opts.termYears > 0 ? opts.termYears : 30;
+  const baseRate = Math.max(0, opts.baseRatePct);
+  const baseDown = Math.min(Math.max(opts.baseDownPct, 0), 100);
+
+  const specs: Array<{ id: string; label: string; rate: number; down: number }> =
+    [
+      {
+        id: "rate_low",
+        label: `Rate ${formatRate(baseRate - 1)}%`,
+        rate: Math.max(0, baseRate - 1),
+        down: baseDown,
+      },
+      {
+        id: "base",
+        label: "Your base",
+        rate: baseRate,
+        down: baseDown,
+      },
+      {
+        id: "rate_high",
+        label: `Rate ${formatRate(baseRate + 1)}%`,
+        rate: baseRate + 1,
+        down: baseDown,
+      },
+      {
+        id: "down_10",
+        label: "10% down",
+        rate: baseRate,
+        down: 10,
+      },
+      {
+        id: "down_20",
+        label: "20% down",
+        rate: baseRate,
+        down: 20,
+      },
+    ];
+
+  // Dedupe identical rate/down pairs (e.g. base already 20% down).
+  const seen = new Set<string>();
+  const cases: CadCarryCase[] = [];
+  for (const s of specs) {
+    const key = `${s.rate}|${s.down}|${term}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const downPayment = Math.round((price * s.down) / 100);
+    const principal = Math.max(0, Math.round(price - downPayment));
+    const monthlyPi = Math.round(
+      opts.monthlyPi(principal, s.rate, term) * 100,
+    ) / 100;
+    cases.push({
+      id: s.id,
+      label: s.label,
+      ratePct: s.rate,
+      downPct: s.down,
+      termYears: term,
+      monthlyPi,
+      principal,
+      downPayment,
+    });
+  }
+  return cases;
+}
+
+function medianOf(sorted: number[]) {
+  const n = sorted.length;
+  const mid = Math.floor(n / 2);
+  if (n % 2 === 1) return sorted[mid]!;
+  return (sorted[mid - 1]! + sorted[mid]!) / 2;
+}
+
+function formatRate(n: number) {
+  return n.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  });
 }
 
 export function buildCadEvidenceLane(opts: {
