@@ -254,7 +254,7 @@ export function buildGrowthWatchAreas(
       recentEventCount: cadCount,
       note: cadAvailable
         ? "CAD pulse is observation activity between pulls — not a market forecast."
-        : "No recent CAD change events available for this county yet (migrations/pulls may still be building history).",
+        : "No recent CAD change events in this window — empty pulse is not “quiet market”; tracking may still be awaiting another pull.",
     },
   };
 }

@@ -5,7 +5,15 @@
 import assert from "node:assert/strict";
 import { ownerFieldsChanged } from "./lib/owner-diff.mjs";
 
-function computeOwnershipChurnSignal({ firstSeenAt, ownerEvents }) {
+function hasSuccessiveObservation(firstSeenAt, lastSeenAt) {
+  if (!firstSeenAt || !lastSeenAt) return false;
+  const a = new Date(firstSeenAt).getTime();
+  const b = new Date(lastSeenAt).getTime();
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  return b - a >= 12 * 3600 * 1000;
+}
+
+function computeOwnershipChurnSignal({ firstSeenAt, lastSeenAt, ownerEvents }) {
   const moments = new Set(
     ownerEvents
       .filter((e) => e.field === "cad_owner_id" || e.field === "owner_name")
@@ -14,6 +22,9 @@ function computeOwnershipChurnSignal({ firstSeenAt, ownerEvents }) {
   const changeCount = moments.size;
   if (!firstSeenAt && changeCount === 0) {
     return { index: null, band: "building", ownerChangeCount: 0 };
+  }
+  if (changeCount === 0 && !hasSuccessiveObservation(firstSeenAt, lastSeenAt)) {
+    return { index: null, band: "building", ownerChangeCount: 0, awaiting: true };
   }
   if (changeCount === 0) return { index: 820, band: "quiet", ownerChangeCount: 0 };
   if (changeCount === 1)
@@ -51,13 +62,24 @@ assert.equal(
 
 const quiet = computeOwnershipChurnSignal({
   firstSeenAt: "2026-01-01T00:00:00Z",
+  lastSeenAt: "2026-02-01T00:00:00Z",
   ownerEvents: [],
 });
 assert.equal(quiet.band, "quiet");
 assert.equal(quiet.index, 820);
 
+const awaiting = computeOwnershipChurnSignal({
+  firstSeenAt: "2026-01-01T00:00:00Z",
+  lastSeenAt: "2026-01-01T00:00:00Z",
+  ownerEvents: [],
+});
+assert.equal(awaiting.band, "building");
+assert.equal(awaiting.index, null);
+assert.equal(awaiting.awaiting, true);
+
 const active = computeOwnershipChurnSignal({
   firstSeenAt: "2026-01-01T00:00:00Z",
+  lastSeenAt: "2026-04-01T00:00:00Z",
   ownerEvents: [
     { field: "owner_name", observedAt: "2026-02-01T00:00:00Z" },
     { field: "cad_owner_id", observedAt: "2026-02-01T00:00:00Z" },
@@ -70,6 +92,7 @@ assert.equal(active.ownerChangeCount, 3);
 
 const building = computeOwnershipChurnSignal({
   firstSeenAt: null,
+  lastSeenAt: null,
   ownerEvents: [],
 });
 assert.equal(building.band, "building");

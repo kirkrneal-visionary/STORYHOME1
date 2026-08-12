@@ -878,7 +878,19 @@ export function PropertyIntelligenceView({
                       label={`County ${selectedFresh.stale ? "stale" : "fresh"}`}
                     />
                   ) : null}
+                  {selected.absentAt ? (
+                    <Chip
+                      stale
+                      label="Missing from latest full pull"
+                    />
+                  ) : null}
                 </div>
+                {selected.absentAt ? (
+                  <p className="mt-2 text-[10px] leading-relaxed text-[var(--muted)]">
+                    Archie marked this parcel absent on a full-county CAD pull
+                    (not a deed or sale). Cleared automatically when seen again.
+                  </p>
+                ) : null}
               </div>
 
               <dl className="grid grid-cols-2 gap-2 text-xs">
