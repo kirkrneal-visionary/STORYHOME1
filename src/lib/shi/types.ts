@@ -65,6 +65,11 @@ export type ShiPropertyDetail = ShiPropertySummary & {
   observedHistory: ShiHistoryEvent[];
   firstSeenAt: string | null;
   lastSeenAt: string | null;
+  /**
+   * When set, Archie did not see this parcel in a full-county pull.
+   * Null / missing column = present or unknown. Not a deed/sale.
+   */
+  absentAt: string | null;
   /** Explainable ownership stability signal — not a sale prediction. */
   ownershipChurn: import("@/lib/shi/ownership-churn").OwnershipChurnSignal | null;
   /** Honest CAD evidence lane — not AVM / not seller probability. */

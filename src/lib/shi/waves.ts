@@ -237,7 +237,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-LOOKALIKE-CONTEXT",
     name: "Lookalike CAD band · assumption ranges",
     goal: "Compose Find Similar into an honest lookalike CAD appraisal band and show illustrative carry ranges under explicit rate/down assumptions.",
-    status: "current",
+    status: "done",
     frontend: [
       "Lookalike CAD band on evidence panel",
       "Vs lookalike median / min–max range",
@@ -257,15 +257,17 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-OBS-OPS",
     name: "Observation health · empty-state honesty",
     goal: "Make Ownership Stability and County observation feed trustworthy — distinguish migrations pending vs awaiting next pull vs truly quiet.",
-    status: "planned",
+    status: "current",
     frontend: [
-      "Observation setup / readiness copy on feed + stability",
-      "County pull status tied to freshness",
-      "Clear Building history vs quiet tracking",
+      "Observation setup banner on County observation feed",
+      "County pull status · presence marking readiness",
+      "Clearer Building history reasons",
+      "Missing from latest full pull chip when absent_at set",
     ],
     backend: [
-      "Observation readiness DTO (events table / absent_at / tracking)",
-      "Apply existing 0027/0028 — prefer no new migration",
+      "getObservationReadiness on GET /api/shi/changes",
+      "Property detail loads absent_at (soft if column missing)",
+      "No new migration — apply existing 0027/0028",
     ],
     outOfScope: [
       "Inventing backfilled change events",
@@ -274,8 +276,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — lookalike band + assumption ranges. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-LOOKALIKE-CONTEXT" as const;
+/** Active wave — observation health / empty-state honesty. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-OBS-OPS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
