@@ -29,7 +29,7 @@ const MODULE_COPY: Record<
   prospects: {
     title: "Prospects",
     blurb:
-      "Your property opportunity pipeline. Save discoveries from Research, track status, and keep private notes.",
+      "Your property opportunity pipeline. Tap real counts to filter, open Research or Farms, and keep tags and notes private.",
   },
   farms: {
     title: "Farms",
@@ -126,7 +126,10 @@ export function ShiWorkspace() {
             onOpenFarms={() => selectSection("farms")}
           />
         ) : section === "prospects" ? (
-          <ShiProspectsView />
+          <ShiProspectsView
+            onOpenFarms={() => selectSection("farms")}
+            onOpenResearch={() => selectSection("research")}
+          />
         ) : section === "farms" ? (
           <ShiFarmsView />
         ) : (

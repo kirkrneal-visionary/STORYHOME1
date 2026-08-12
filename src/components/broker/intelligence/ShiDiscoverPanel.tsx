@@ -349,7 +349,10 @@ export function ShiDiscoverPanel({
   }
 
   return (
-    <div className="space-y-3 border-t border-hairline pt-3">
+    <div
+      id="archie-discover"
+      className="space-y-3 border-t border-hairline pt-3"
+    >
       <div>
         <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
           Discover

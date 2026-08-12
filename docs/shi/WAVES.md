@@ -1,127 +1,58 @@
 # Archie's Intelligence — Build Waves
 
 **Product name:** Archie's Intelligence (menu: logo + **INTELLIGENCE**)  
+**Never show “SHI” in the UI** — that was an internal codename.  
 **Home:** Story Pro → Archie's Intelligence · deep link `/portal/intelligence`  
 **Positioning:** Research your market. Public records. Professional workflow.  
-**Code paths:** APIs/folders still use `shi` prefixes for stability.
+**Code paths:** APIs/folders may still use `shi` prefixes for stability (plumbing only).
 
 ## Boundary (do not blur)
 
 | Surface | Role |
 |---|---|
 | **Listing upload CAD** | MLS-limited: tract search + pin-drop for the listing form only |
-| **Story Home Intelligence** | Full Property Intelligence product for agents |
+| **Archie's Intelligence** | Full Property Intelligence product for agents |
 
 Do **not** turn listing CAD into market research. Do **not** show internal source keys (`polk_cad`) in UI — use “Polk County”.
 
-## Wave map (front-end + back-end tied)
+## Wave map
 
-Source of truth in code: `src/lib/shi/waves.ts`
+Source of truth in code: `src/lib/shi/waves.ts` (`ARCHIE_PRODUCT`, `SHI_WAVES`, `ARCHIE_CURRENT_WAVE`).
 
-### SHI-0 — Shell & brand entry ✅
+### Completed core OS ✅
+- Shell · Search/Map · Relationships/Frames/Vault  
+- Prospects (incl. tags · Activity · mobile sheet)  
+- Farms (since-last-review)  
+- Discover (Similar · Portfolio · act-loop)
 
-| Front-end | Back-end |
-|---|---|
-| Story Pro tab **SHI** + brandable `ShiIcon` | Reuse pro gate on `/portal` |
-| Property Intelligence page shell | No ingest changes |
-| Deep link `/portal/intelligence` | — |
-
-### SHI-1 — Search · Map · Property record ✅
+### ARCHIE-FOUNDATION — Federated shell · Prospects hub (current)
 
 | Front-end | Back-end |
 |---|---|
-| Search + filters (county-first, real fields) | `GET /api/shi/search` + `searchProperties` |
-| MapLibre parcel map (MVT viewport tiles) | `GET /api/shi/property` + `getProperty` |
-| Property Intelligence panel + results | Reuse `/api/parcels/{z}/{x}/{y}` (no full download) |
-| County labels + freshness chips | `GET /api/shi/freshness` (pro-safe DTO) |
+| N3 mobile Network menu + Archie node | No new migration |
+| Prospects clickable real-count metrics | Reuse prospect summary counts |
+| Related intelligence → Research / Discover / Farms | Deep links + existing APIs |
+| Brand: Archie's Intelligence everywhere in UI | Internal `shi` API prefixes stay for now |
 
-**Index note:** fuzzy owner/address search uses `ILIKE`. Prefer county-scoped search. Apply migration `0024_shi_backlog_harden.sql` for `pg_trgm` GIN + centroid indexes.
+### SHI-4.2 / 4.3 — Observation truth (next major, separate)
+- `first_seen_at` / `last_seen_at` + absence on full pulls  
+- Then `county_parcel_change_events` → county change feed  
 
-### SHI-2 — Relationships · Area · History ✅
+### ARCHIE-TRUTH-MARKET — Future improvement lane (planned, open)
+Archie stays open to grow toward:
+- **Truth vs weak claim** — label what county records support vs what is unknown  
+- **Market projection / analysis** — real estate, financial, geopolitical/war risk, odds and scenario outcomes for **USA market predictability**  
+- Always **honest confidence + assumptions** — never fake certainty or black-box “AI scores”
 
-### SHI-2.5 — Market Frames · Analyzer · Study folders ✅
+This lane is **not** in the foundation pass. It is reserved so the platform can stay ahead without polluting today’s evidence-first OS.
 
-| Front-end | Back-end |
-|---|---|
-| Multi-box/radius/freehand frames on map | Hard caps (frames, area size, parcels) |
-| On-demand analyze → parcel values + area estimate | `POST /api/shi/area` county-locked |
-| Study folders (square + acronym) by county | `shi_study_folders` / frames / snapshots + RLS |
-| Save geometry + metrics + Map Memory snap | `shi-studies` private storage |
-| Reopen saved frames | Never writes CAD; no infinite jobs |
+## Out of scope for product waves (unless a dedicated ops wave)
 
-### SHI-2.6 — Research shell · Study Vault · Draw OS ✅
+- Fake AI / AVM / seller-probability theater  
+- Plugins / bulk county download  
+- Phone/email scraping  
+- CAD ingest reliability hardening (safe replace, locks) — separate ops track  
 
-### SHI-2.7 — Analyzer harden ✅
+## Branch naming
 
-| Front-end | Back-end |
-|---|---|
-| Frame county locked at draw time | Server recomputes analysis on save |
-| Save form clears stale folders + shows errors | Resave can move frame to another folder |
-| Honest capped-analysis messaging | Owner-match triggers + indexes (`0024`) |
-
-### SHI-2.8 — Research perfect ✅
-
-| Front-end | Back-end |
-|---|---|
-| Keep drafts when create rejected · live size warns | Honest area boundary copy |
-| Pan/Esc · county guard before draw | No new migration |
-| Remove/reopen/select trust · vault dialog errors · analyze loading | — |
-
-### SHI-2 note (superseded analyzer)
-
-| Front-end | Back-end |
-|---|---|
-| Owner relationships panel (EXACT / POSSIBLE) | `GET /api/shi/owner-matches` |
-| Multi-tract map (gold EXACT / teal POSSIBLE) | Geometry on match rows (capped) |
-| Area draw (radius / box) + metrics | `POST /api/shi/area` (centroid-in-boundary) |
-| Observed CAD history timeline | Values + ingest only — no deed history |
-
-**History gap:** No ownership-transfer event table yet. UI states this clearly. True change intel lands with farms (SHI-4).
-
-### SHI-3 — Prospects · Notes · CRM convert ✅
-
-| Front-end | Back-end |
-|---|---|
-| Save Prospect · Prospects module · dossier · notes | `shi_prospects` / `shi_prospect_notes` + RLS (`0025`) |
-| Create Seller Lead (prefill; no invented contact) | convert → `seller_clients`; never mutate CAD |
-
-See `docs/shi/SHI-3-PLAN.md`.
-
-### SHI-4 — Farms · Change intelligence ✅
-
-| Front-end | Back-end |
-|---|---|
-| Save as Farm · Farms module · change feed | `shi_farms` / `shi_farm_baselines` + RLS (`0026`) |
-| Since your last review (honest baseline diff) | Live `analyzeArea` vs review baseline — not deed dates |
-
-See `docs/shi/SHI-4-PLAN.md`.
-
-### SHI-5 — Find Similar · Portfolio · act-loop ✅
-
-| Front-end | Back-end |
-|---|---|
-| Find Similar + explainable reasons · Portfolio panel | `POST /api/shi/similar` · `GET /api/shi/portfolio` |
-| Exact vs possible owner lists never silently merged | No new migration — existing parcel indexes |
-| Discover map pins · bulk Add to Prospects · Save selection as Farm | Reuse prospects + farms create APIs |
-
-See `docs/shi/SHI-5-PLAN.md`.
-
-### SHI-3.2 — Prospects polish (current)
-
-| Front-end | Back-end |
-|---|---|
-| Dossier tags · Activity feed · mobile bottom sheet | PATCH tags · status-change system notes |
-| Pipeline tag chips · tag search | No new migration — `0025` `tags` + notes |
-
-See `docs/shi/SHI-3-PLAN.md`.
-
-## Out of scope for SHI UI waves
-
-- Fake AI / AVM / seller-probability scores
-- Plugins / bulk county download
-- Phone/email scraping
-- CAD ingest reliability hardening (safe replace, locks) — separate ops track
-
-## Suggested branch naming
-
-`cursor/shi-0-shell-6cf4` · `cursor/shi-1-search-map-6cf4` · … through `shi-5-…`
+`cursor/archie-<descriptive>-6cf4`

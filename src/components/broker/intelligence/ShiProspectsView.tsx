@@ -65,11 +65,19 @@ function isSystemNote(body: string) {
   );
 }
 
+type ProspectsProps = {
+  onOpenFarms?: () => void;
+  onOpenResearch?: () => void;
+};
+
 /**
- * Prospects — property opportunity pipeline (SHI-3 / 3.2 polish).
+ * Prospects — Archie's Intelligence opportunity pipeline.
  * Public parcel reference + private notes/status/tags. Never writes CAD.
  */
-export function ShiProspectsView() {
+export function ShiProspectsView({
+  onOpenFarms,
+  onOpenResearch,
+}: ProspectsProps = {}) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -86,6 +94,20 @@ export function ShiProspectsView() {
   const [noteDraft, setNoteDraft] = useState("");
   const [tagDraft, setTagDraft] = useState("");
   const [busy, setBusy] = useState("");
+
+  function goResearchProperty(
+    p: Pick<ShiProspect, "propId" | "source" | "countyFips">,
+    focusDiscover = false,
+  ) {
+    const params = new URLSearchParams();
+    params.set("propId", p.propId);
+    params.set("source", p.source);
+    if (p.countyFips) params.set("countyFips", p.countyFips);
+    if (focusDiscover) params.set("focus", "discover");
+    router.replace(`/portal/intelligence?${params.toString()}`, {
+      scroll: false,
+    });
+  }
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -164,15 +186,39 @@ export function ShiProspectsView() {
     };
   }, [selectedId]);
 
-  const watchingCount = summary.byStatus.Watching ?? 0;
-  const researchingCount = summary.byStatus.Researching ?? 0;
-  const opportunityCount = summary.byStatus.Opportunity ?? 0;
-
   const empty = !loading && prospects.length === 0;
 
   const statusOptions = useMemo(
     () => ["", ...SHI_PROSPECT_STATUSES] as const,
     [],
+  );
+
+  const metricChips = useMemo(
+    () =>
+      [
+        { key: "", label: "All", value: summary.total },
+        {
+          key: "Researching",
+          label: "Researching",
+          value: summary.byStatus.Researching ?? 0,
+        },
+        {
+          key: "Watching",
+          label: "Watching",
+          value: summary.byStatus.Watching ?? 0,
+        },
+        {
+          key: "Contacted",
+          label: "Contacted",
+          value: summary.byStatus.Contacted ?? 0,
+        },
+        {
+          key: "Opportunity",
+          label: "Opportunity",
+          value: summary.byStatus.Opportunity ?? 0,
+        },
+      ] as const,
+    [summary],
   );
 
   async function reloadDetail(id: string) {
@@ -198,26 +244,29 @@ export function ShiProspectsView() {
         onBusy={setBusy}
         onRefreshList={() => void refresh()}
         onReloadDetail={() => reloadDetail(detail.id)}
-        onResearch={() => {
-          const params = new URLSearchParams();
-          params.set("propId", detail.propId);
-          params.set("source", detail.source);
-          if (detail.countyFips) params.set("countyFips", detail.countyFips);
-          router.replace(`/portal/intelligence?${params.toString()}`, {
-            scroll: false,
-          });
-        }}
+        onResearch={() => goResearchProperty(detail)}
+        onDiscover={() => goResearchProperty(detail, true)}
+        onOpenFarms={onOpenFarms}
       />
     ) : null;
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <SummaryChip label="Prospects" value={summary.total} />
-        <SummaryChip label="Researching" value={researchingCount} />
-        <SummaryChip label="Watching" value={watchingCount} />
-        <SummaryChip label="Opportunity" value={opportunityCount} />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {metricChips.map((chip) => (
+          <SummaryChip
+            key={chip.key || "all"}
+            label={chip.label}
+            value={chip.value}
+            active={statusFilter === chip.key}
+            onClick={() => setStatusFilter(chip.key)}
+          />
+        ))}
       </div>
+      <p className="text-[10px] text-[var(--muted)]">
+        Counts are real pipeline totals (not Archived). Tap a chip to filter —
+        not a forecast or AI score.
+      </p>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative min-w-0 flex-1">
@@ -274,7 +323,9 @@ export function ShiProspectsView() {
               <button
                 type="button"
                 onClick={() =>
-                  router.replace("/portal/intelligence", { scroll: false })
+                  onOpenResearch
+                    ? onOpenResearch()
+                    : router.replace("/portal/intelligence", { scroll: false })
                 }
                 className="mt-4 inline-flex h-10 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy"
               >
@@ -363,7 +414,7 @@ export function ShiProspectsView() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-labelledby="shi-prospect-dossier-title"
+            aria-labelledby="archie-prospect-dossier-title"
             className="relative z-10 flex max-h-[88vh] w-full flex-col rounded-t-2xl border border-hairline bg-[var(--surface)] shadow-xl"
           >
             <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
@@ -400,6 +451,8 @@ function ProspectDossier({
   onRefreshList,
   onReloadDetail,
   onResearch,
+  onDiscover,
+  onOpenFarms,
 }: {
   detail: ShiProspectDetail;
   busy: string;
@@ -413,6 +466,8 @@ function ProspectDossier({
   onRefreshList: () => void;
   onReloadDetail: () => Promise<void>;
   onResearch: () => void;
+  onDiscover: () => void;
+  onOpenFarms?: () => void;
 }) {
   void onClose;
 
@@ -435,7 +490,7 @@ function ProspectDossier({
     <div className="space-y-4">
       <div>
         <p
-          id="shi-prospect-dossier-title"
+          id="archie-prospect-dossier-title"
           className="hidden font-mono text-[10px] font-bold tracking-wider text-gold uppercase lg:block"
         >
           Prospect dossier
@@ -580,15 +635,43 @@ function ProspectDossier({
         </div>
       </div>
 
+      <div className="space-y-2 rounded-xl border border-hairline p-3">
+        <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
+          Related intelligence
+        </p>
+        <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+          Stay in Archie&apos;s Intelligence loop — Research this parcel, run
+          Discover, or jump to Farms. No invented market odds here.
+        </p>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onResearch}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold"
+          >
+            <MapPin className="h-4 w-4" />
+            Research property
+          </button>
+          <button
+            type="button"
+            onClick={onDiscover}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-hairline text-sm font-semibold text-ink"
+          >
+            Open Discover
+          </button>
+          {onOpenFarms ? (
+            <button
+              type="button"
+              onClick={onOpenFarms}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-hairline text-sm font-semibold text-ink"
+            >
+              Open Farms
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={onResearch}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold"
-        >
-          <MapPin className="h-4 w-4" />
-          Research property
-        </button>
         {detail.sellerClientId ? (
           <Link
             href="/portal?tab=sellers"
@@ -709,14 +792,33 @@ function ActivityFeed({ notes }: { notes: ShiProspectNote[] }) {
   );
 }
 
-function SummaryChip({ label, value }: { label: string; value: number }) {
+function SummaryChip({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  active?: boolean;
+  onClick?: () => void;
+}) {
   return (
-    <div className="rounded-xl border border-hairline bg-[var(--surface)] px-3 py-2.5">
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-xl border px-3 py-2.5 text-left transition-colors",
+        active
+          ? "border-gold bg-[color-mix(in_srgb,var(--gold)_14%,transparent)]"
+          : "border-hairline bg-[var(--surface)] hover:border-gold/40",
+      )}
+    >
       <p className="font-mono text-[10px] font-bold tracking-wider text-[var(--muted)] uppercase">
         {label}
       </p>
       <p className="mt-1 font-serif text-2xl font-bold text-ink">{value}</p>
-    </div>
+    </button>
   );
 }
 

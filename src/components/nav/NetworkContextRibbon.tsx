@@ -33,7 +33,7 @@ export function NetworkContextRibbon() {
     >
       <div className="mx-auto flex w-full max-w-[90rem] items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:gap-3 [&::-webkit-scrollbar]:hidden">
         <span className="shrink-0 font-mono text-[9px] font-bold tracking-[0.14em] text-gold uppercase sm:text-[10px] sm:tracking-[0.16em]">
-          Archie Intelligence
+          Archie&apos;s Intelligence
         </span>
         <span
           aria-hidden
