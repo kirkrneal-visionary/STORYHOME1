@@ -1,58 +1,38 @@
 # Archie's Intelligence — Build Waves
 
 **Product name:** Archie's Intelligence (menu: logo + **INTELLIGENCE**)  
-**Never show “SHI” in the UI** — that was an internal codename.  
-**Home:** Story Pro → Archie's Intelligence · deep link `/portal/intelligence`  
-**Positioning:** Research your market. Public records. Professional workflow.  
-**Code paths:** APIs/folders may still use `shi` prefixes for stability (plumbing only).
+**Never show “SHI” in the UI** — internal API prefixes only.  
+**Home:** Story Pro → Archie's Intelligence · deep link `/portal/intelligence`
 
-## Boundary (do not blur)
+## Boundary
 
 | Surface | Role |
 |---|---|
-| **Listing upload CAD** | MLS-limited: tract search + pin-drop for the listing form only |
-| **Archie's Intelligence** | Full Property Intelligence product for agents |
+| **Listing upload CAD** | MLS-limited listing form only |
+| **Archie's Intelligence** | Full Property Intelligence for agents |
 
-Do **not** turn listing CAD into market research. Do **not** show internal source keys (`polk_cad`) in UI — use “Polk County”.
-
-## Wave map
-
-Source of truth in code: `src/lib/shi/waves.ts` (`ARCHIE_PRODUCT`, `SHI_WAVES`, `ARCHIE_CURRENT_WAVE`).
-
-### Completed core OS ✅
-- Shell · Search/Map · Relationships/Frames/Vault  
-- Prospects (incl. tags · Activity · mobile sheet)  
-- Farms (since-last-review)  
-- Discover (Similar · Portfolio · act-loop)
-
-### ARCHIE-FOUNDATION — Federated shell · Prospects hub (current)
+## Current: ARCHIE-OWNER-CHURN (4.2 + thin 4.3)
 
 | Front-end | Back-end |
 |---|---|
-| N3 mobile Network menu + Archie node | No new migration |
-| Prospects clickable real-count metrics | Reuse prospect summary counts |
-| Related intelligence → Research / Discover / Farms | Deep links + existing APIs |
-| Brand: Archie's Intelligence everywhere in UI | Internal `shi` API prefixes stay for now |
+| **Ownership Stability Index** (300–850, explainable) on property record | Migration **0027** `first_seen_at` / `last_seen_at` + `county_parcel_change_events` |
+| Observed history includes owner-field changes between CAD pulls | Ingest compares owner id/name before upsert |
 
-### SHI-4.2 / 4.3 — Observation truth (next major, separate)
-- `first_seen_at` / `last_seen_at` + absence on full pulls  
-- Then `county_parcel_change_events` → county change feed  
+**Honesty:** Not a credit score. Not a prediction the owner will sell. Not deed history. Index builds as CAD refreshes run after 0027.
 
-### ARCHIE-TRUTH-MARKET — Future improvement lane (planned, open)
-Archie stays open to grow toward:
-- **Truth vs weak claim** — label what county records support vs what is unknown  
-- **Market projection / analysis** — real estate, financial, geopolitical/war risk, odds and scenario outcomes for **USA market predictability**  
-- Always **honest confidence + assumptions** — never fake certainty or black-box “AI scores”
+### Apply 0027 (click path)
+1. [Supabase SQL editor](https://supabase.com/dashboard/project/ksvllgzsnzyahqsjuove/sql/new)
+2. Paste `supabase/migrations/0027_cad_observation_events.sql` → Run
+3. Refresh CAD so diffs can start: `node scripts/ingest-cad.mjs --source polk_cad --all`
 
-This lane is **not** in the foundation pass. It is reserved so the platform can stay ahead without polluting today’s evidence-first OS.
+## Done
+- Foundation OS (Research · Prospects · Farms · Discover · N3 shell)
+- Farms since-last-review (4.1)
 
-## Out of scope for product waves (unless a dedicated ops wave)
+## Next (separate)
+- **4.3 full** — county change feed · absence on full pulls · more fields  
+- **ARCHIE-TRUTH-MARKET** — broader truth lane + market projection scenarios  
 
-- Fake AI / AVM / seller-probability theater  
-- Plugins / bulk county download  
-- Phone/email scraping  
-- CAD ingest reliability hardening (safe replace, locks) — separate ops track  
-
-## Branch naming
-
-`cursor/archie-<descriptive>-6cf4`
+## Out of scope
+- Fake seller-probability theater / AVM guarantees  
+- Phone/email scraping · bulk county download plugins  

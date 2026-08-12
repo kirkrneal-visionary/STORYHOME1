@@ -1,14 +1,16 @@
+import type { OwnershipChangeEvent } from "@/lib/shi/ownership-churn";
 import type { ShiHistoryEvent, ShiPropertyDetail } from "@/lib/shi/types";
 
 /**
- * Observed CAD history only — tax-year values + last ingest observation.
- * No ownership/deed timeline (that data does not exist in CAD pulls yet).
+ * Observed CAD history — tax-year values, last ingest, owner-field changes.
+ * Never claims deed / sale dates.
  */
 export function buildObservedHistory(
   property: Pick<
     ShiPropertyDetail,
     "values" | "ingestedAt" | "freshness" | "marketValue" | "taxYear"
   >,
+  ownerEvents: OwnershipChangeEvent[] = [],
 ): ShiHistoryEvent[] {
   const events: ShiHistoryEvent[] = [];
 
@@ -18,6 +20,20 @@ export function buildObservedHistory(
       at: property.ingestedAt,
       title: "Last observed in county CAD pull",
       detail: property.freshness.label,
+    });
+  }
+
+  for (const e of ownerEvents) {
+    const fieldLabel =
+      e.field === "cad_owner_id" ? "Owner id" : "Owner name";
+    events.push({
+      kind: "owner_observed_change",
+      at: e.observedAt,
+      title: `${fieldLabel} changed between CAD pulls`,
+      detail: [
+        e.oldValue ? `Was ${e.oldValue}` : "Was empty",
+        e.newValue ? `Now ${e.newValue}` : "Now empty",
+      ].join(" · "),
     });
   }
 
@@ -54,13 +70,8 @@ export function buildObservedHistory(
     });
   }
 
-  // Newest observation first; value years descending.
-  events.sort((a, b) => {
-    if (a.kind !== b.kind) {
-      return a.kind === "ingest_observed" ? -1 : 1;
-    }
-    return b.at.localeCompare(a.at);
-  });
+  // Newest observation first.
+  events.sort((a, b) => b.at.localeCompare(a.at));
 
   return events;
 }

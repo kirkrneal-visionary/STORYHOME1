@@ -24,9 +24,9 @@ export type ShiPropertySummary = {
   centroidLng: number | null;
 };
 
-/** Observed CAD history only (values + ingest). No deed/ownership transfers. */
+/** Observed CAD history only (values + ingest + owner-field changes). Not deeds. */
 export type ShiHistoryEvent = {
-  kind: "value_year" | "ingest_observed";
+  kind: "value_year" | "ingest_observed" | "owner_observed_change";
   at: string;
   title: string;
   detail: string;
@@ -63,6 +63,10 @@ export type ShiPropertyDetail = ShiPropertySummary & {
   };
   /** Observed CAD history only — never deed/ownership transfers. */
   observedHistory: ShiHistoryEvent[];
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  /** Explainable ownership stability signal — not a sale prediction. */
+  ownershipChurn: import("@/lib/shi/ownership-churn").OwnershipChurnSignal | null;
 };
 
 /** Pro-safe county freshness — no internal URLs or raw source keys in UI. */
