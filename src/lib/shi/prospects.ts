@@ -3,6 +3,7 @@ import {
   isShiProspectStatus,
   type ShiProspectStatus,
 } from "@/lib/shi/prospect-statuses";
+import { normalizeProspectTags } from "@/lib/shi/prospect-tags";
 import type {
   ShiProspect,
   ShiProspectDetail,
@@ -152,6 +153,7 @@ export async function listProspects(
         r.prop_id,
         r.county_name,
         r.status,
+        ...(r.tags ?? []),
       ]
         .filter(Boolean)
         .join(" ")
@@ -273,11 +275,64 @@ export async function updateProspectStatus(
   if (!isShiProspectStatus(status)) {
     throw new Error("Invalid prospect status");
   }
+
+  const { data: prev, error: prevError } = await supabase
+    .from("shi_prospects")
+    .select("status")
+    .eq("agent_id", agentId)
+    .eq("id", prospectId)
+    .maybeSingle();
+  if (prevError) throw prevError;
+  if (!prev) throw new Error("Prospect not found");
+
+  const fromStatus = String((prev as { status: string }).status);
+  if (fromStatus === status) {
+    const { data: same, error: sameError } = await supabase
+      .from("shi_prospects")
+      .select("*")
+      .eq("agent_id", agentId)
+      .eq("id", prospectId)
+      .single();
+    if (sameError) throw sameError;
+    return toProspect(same as ProspectRow);
+  }
+
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("shi_prospects")
     .update({
       status,
+      last_activity_at: now,
+      updated_at: now,
+    })
+    .eq("agent_id", agentId)
+    .eq("id", prospectId)
+    .select("*")
+    .single();
+  if (error) throw error;
+
+  // Honest activity: agent status change — not a CAD / AI event.
+  await supabase.from("shi_prospect_notes").insert({
+    prospect_id: prospectId,
+    agent_id: agentId,
+    body: `Status changed: ${fromStatus} → ${status}.`,
+  });
+
+  return toProspect(data as ProspectRow);
+}
+
+export async function updateProspectTags(
+  supabase: SupabaseClient,
+  agentId: string,
+  prospectId: string,
+  tags: string[],
+): Promise<ShiProspect> {
+  const nextTags = normalizeProspectTags(tags);
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("shi_prospects")
+    .update({
+      tags: nextTags,
       last_activity_at: now,
       updated_at: now,
     })

@@ -38,4 +38,41 @@ assert.notEqual(
   parcelKey("a1", "tyler_cad", "123"),
 );
 
+function normalizeProspectTags(input) {
+  if (!Array.isArray(input)) return [];
+  const out = [];
+  const seen = new Set();
+  for (const raw of input) {
+    if (typeof raw !== "string") continue;
+    const t = raw.trim().replace(/\s+/g, " ").slice(0, 24);
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+    if (out.length >= 12) break;
+  }
+  return out;
+}
+
+assert.deepEqual(normalizeProspectTags([" Farm ", "farm", "HOT"]), [
+  "Farm",
+  "HOT",
+]);
+assert.equal(normalizeProspectTags(["a".repeat(40)]).length, 1);
+assert.equal(normalizeProspectTags(["a".repeat(40)])[0].length, 24);
+assert.equal(
+  normalizeProspectTags(Array.from({ length: 20 }, (_, i) => `t${i}`)).length,
+  12,
+);
+
+function isSystemNote(body) {
+  return (
+    body.startsWith("Status changed:") ||
+    body.startsWith("Created Story Pro seller lead")
+  );
+}
+assert.equal(isSystemNote("Status changed: Saved → Watching."), true);
+assert.equal(isSystemNote("Called the owner."), false);
+
 console.log("shi-prospects armor: ok");

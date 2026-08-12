@@ -4,6 +4,7 @@ import {
   convertProspectToSellerLead,
   getProspect,
   updateProspectStatus,
+  updateProspectTags,
 } from "@/lib/shi/prospects";
 
 export const runtime = "nodejs";
@@ -37,7 +38,11 @@ export async function PATCH(request: Request, ctx: Ctx) {
     return NextResponse.json({ error: gate.error }, { status: gate.status });
   }
   const { id } = await ctx.params;
-  let body: { status?: string; convertToSellerLead?: boolean };
+  let body: {
+    status?: string;
+    tags?: string[];
+    convertToSellerLead?: boolean;
+  };
   try {
     body = await request.json();
   } catch {
@@ -53,9 +58,18 @@ export async function PATCH(request: Request, ctx: Ctx) {
       );
       return NextResponse.json(result);
     }
+    if (Array.isArray(body.tags)) {
+      const prospect = await updateProspectTags(
+        gate.supabase,
+        gate.user.id,
+        id,
+        body.tags,
+      );
+      return NextResponse.json({ prospect });
+    }
     if (!body.status) {
       return NextResponse.json(
-        { error: "status or convertToSellerLead is required" },
+        { error: "status, tags, or convertToSellerLead is required" },
         { status: 400 },
       );
     }

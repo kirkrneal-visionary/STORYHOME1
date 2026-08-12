@@ -20,7 +20,7 @@ Deterministic queries against existing indexes (`0024` trgm/centroid).
 
 ## Increments
 1. **SHI-5.1:** Find Similar API+UI · Portfolio API+UI on property record ✅
-2. **SHI-5.2 (this PR):** Portfolio map layer · Discover centroid pins · bulk Add to Prospects · Save selection as Farm
+2. **SHI-5.2:** Portfolio map layer · Discover centroid pins · bulk Add to Prospects · Save selection as Farm ✅
 
 ### SHI-5.2 act-loop (UI labels)
 - **Discover** panel on property record
