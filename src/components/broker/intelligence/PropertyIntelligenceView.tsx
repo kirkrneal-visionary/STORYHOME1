@@ -979,13 +979,50 @@ export function PropertyIntelligenceView({
                 </div>
               ) : null}
 
+              {selected.ownershipChurn ? (
+                <div className="rounded-xl border border-gold/35 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] p-3">
+                  <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
+                    Ownership Stability Index
+                  </p>
+                  <p className="mt-1 text-[10px] leading-relaxed text-[var(--muted)]">
+                    Familiar 300–850 scale for how quiet CAD owner fields look
+                    across Archie&apos;s pulls. Not a credit score. Not a
+                    prediction the owner will sell. Not deed history.
+                  </p>
+                  <div className="mt-2 flex items-end justify-between gap-3">
+                    <div>
+                      <p className="font-serif text-3xl font-bold text-ink">
+                        {selected.ownershipChurn.index ?? "—"}
+                      </p>
+                      <p className="text-xs font-semibold text-ink">
+                        {selected.ownershipChurn.bandLabel}
+                      </p>
+                    </div>
+                    <p className="text-right font-mono text-[10px] text-[var(--muted)]">
+                      {selected.ownershipChurn.ownerChangeCount} owner-field
+                      <br />
+                      change
+                      {selected.ownershipChurn.ownerChangeCount === 1
+                        ? ""
+                        : "s"}{" "}
+                      observed
+                    </p>
+                  </div>
+                  <ul className="mt-2 list-disc space-y-0.5 pl-4 text-[10px] text-[var(--muted)]">
+                    {selected.ownershipChurn.reasons.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
               <div>
                 <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
                   Observed CAD history
                 </p>
                 <p className="mt-1 text-[10px] leading-relaxed text-[var(--muted)]">
-                  Only values and county pull observations — not deed or
-                  ownership transfer history.
+                  Values, county pull observations, and owner-field changes
+                  Archie saw between loads — not deed or sale dates.
                 </p>
                 {(selected.observedHistory ?? []).length === 0 ? (
                   <p className="mt-2 text-xs text-[var(--muted)]">

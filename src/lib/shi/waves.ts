@@ -130,7 +130,6 @@ export const SHI_WAVES: ShiWave[] = [
       "Baseline diff (appeared / disappeared / owner / situs / value / acreage)",
     ],
     outOfScope: [
-      "Full CAD observation event history (4.2+)",
       "Destructive CAD replace logic (separate reliability wave)",
     ],
   },
@@ -157,51 +156,60 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "ARCHIE-FOUNDATION",
     name: "Federated shell · Prospects hub",
-    goal: "One clean OS pass: mobile federated Network menu + Prospects as the decision hub with real metric filters and Research / Discover / Farms hand-offs. Brand is Archie's Intelligence.",
-    status: "current",
+    goal: "Mobile federated Network menu + Prospects decision hub.",
+    status: "done",
     frontend: [
       "N3 mobile Network menu drawer + Archie node",
-      "Prospects clickable pipeline metrics (real counts)",
+      "Prospects clickable pipeline metrics",
       "Related intelligence: Research · Discover · Farms",
-      "User-facing copy: Archie's Intelligence (never SHI)",
+    ],
+    backend: ["No new migration", "Internal /api/shi/* prefixes for stability"],
+    outOfScope: ["Market projection models"],
+  },
+  {
+    id: "ARCHIE-OWNER-CHURN",
+    name: "Ownership Stability Index · CAD observation",
+    goal: "Watch CAD owner fields across pulls and show an explainable 300–850 stability index — evidence of observed churn, not a sale prediction.",
+    status: "current",
+    frontend: [
+      "Ownership Stability Index on property record",
+      "Observed history includes owner-field changes",
+      "Honest copy: not credit score / not will-sell / not deed dates",
     ],
     backend: [
-      "No new migration",
-      "Reuse prospects summary counts + existing deep links",
-      "Internal /api/shi/* prefixes remain for stability",
+      "Migration 0027: first_seen_at / last_seen_at + county_parcel_change_events",
+      "Ingest compare owner id/name before upsert",
+      "getProperty loads events + computeOwnershipChurnSignal",
     ],
     outOfScope: [
-      "Market projection / war-risk / financial odds models",
-      "Truth-vs-false claim engines (future lane)",
-      "SHI-4.2 / 4.3 observation history (separate)",
-      "Full public rename of API folders (optional later)",
+      "Predicting that an owner will sell",
+      "Deed / MLS sale timeline claims",
+      "Full county change feed UI (4.3 full)",
+      "Absence marking on full pulls (follow-up)",
     ],
   },
   {
     id: "ARCHIE-TRUTH-MARKET",
     name: "Truth lane · market projection (future)",
-    goal: "Leave Archie's Intelligence open to improve: separate strong evidence from weak claims, and later project/analyze market scenarios (real estate, financial, geopolitical risk, odds) for USA predictability — always with honest confidence, never fake certainty.",
+    goal: "Broader evidence vs weak claims, plus market scenarios (RE, financial, risk, odds) with honest confidence.",
     status: "planned",
     frontend: [
-      "Evidence strength labels (supported / weak / unknown)",
-      "Scenario views that show assumptions + ranges",
-      "Clear separation: county fact vs model projection",
+      "Evidence strength labels",
+      "Scenario views with assumptions + ranges",
     ],
     backend: [
-      "Server-side evidence engines + model outputs as DTOs",
-      "Never ship proprietary method weights to the browser",
-      "Human-readable reasons; no black-box % theater",
+      "Server-side evidence engines",
+      "Never ship proprietary weights to the browser",
     ],
     outOfScope: [
       "Guaranteed predictions",
       "Seller-probability theater",
-      "Scraping private competitor systems",
     ],
   },
 ];
 
-/** Active foundation wave — N3 + Prospects 3.3 under Archie brand. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-FOUNDATION" as const;
+/** Active wave — CAD ownership observation + Stability Index. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-OWNER-CHURN" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

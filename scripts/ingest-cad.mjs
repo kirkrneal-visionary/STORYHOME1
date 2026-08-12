@@ -28,6 +28,7 @@ import {
   looksLikeMobileHome,
 } from "./lib/mh-serial.mjs";
 import { readShapefile } from "./lib/shapefile.mjs";
+import { ownerFieldsChanged } from "./lib/owner-diff.mjs";
 
 function parseArgs(argv) {
   const a = { emitSqlExplicit: false };
@@ -510,7 +511,10 @@ function normalizePropId(id) {
 }
 
 /** Columns written to county_parcels (avoid unknown keys / trigger side-noise). */
-function toParcelUpsertRow(r) {
+function toParcelUpsertRow(r, prior = null) {
+  const now = r.ingested_at ?? new Date().toISOString();
+  const firstSeen =
+    prior?.first_seen_at || prior?.ingested_at || now;
   return {
     source: r.source,
     county_fips: r.county_fips,
@@ -546,8 +550,68 @@ function toParcelUpsertRow(r) {
     centroid_lat: r.centroid_lat ?? null,
     centroid_lng: r.centroid_lng ?? null,
     source_url: r.source_url ?? null,
-    ingested_at: r.ingested_at ?? new Date().toISOString(),
+    ingested_at: now,
+    first_seen_at: firstSeen,
+    last_seen_at: now,
   };
+}
+
+/**
+ * Load prior owner + first_seen for a chunk so we can emit change events and
+ * preserve first_seen_at (never rewind observation start).
+ */
+async function fetchPriorParcelState(sb, source, propIds) {
+  const map = new Map();
+  if (!propIds.length) return map;
+  const chunkSize = 200;
+  for (let i = 0; i < propIds.length; i += chunkSize) {
+    const ids = propIds.slice(i, i + chunkSize);
+    const { data, error } = await sb
+      .from("county_parcels")
+      .select(
+        "prop_id, cad_owner_id, owner_name, first_seen_at, ingested_at",
+      )
+      .eq("source", source)
+      .in("prop_id", ids);
+    if (error) {
+      // Migration 0027 may not be applied yet — fall back without events.
+      if (/first_seen_at|does not exist/i.test(error.message || "")) {
+        const { data: legacy, error: legacyErr } = await sb
+          .from("county_parcels")
+          .select("prop_id, cad_owner_id, owner_name, ingested_at")
+          .eq("source", source)
+          .in("prop_id", ids);
+        if (legacyErr) throw legacyErr;
+        for (const row of legacy ?? []) {
+          map.set(normalizePropId(row.prop_id), row);
+        }
+        continue;
+      }
+      throw error;
+    }
+    for (const row of data ?? []) {
+      map.set(normalizePropId(row.prop_id), row);
+    }
+  }
+  return map;
+}
+
+async function insertOwnerChangeEvents(sb, events) {
+  if (!events.length) return;
+  const batch = 200;
+  for (let i = 0; i < events.length; i += batch) {
+    const chunk = events.slice(i, i + batch);
+    const { error } = await sb.from("county_parcel_change_events").insert(chunk);
+    if (error) {
+      if (/county_parcel_change_events|does not exist/i.test(error.message || "")) {
+        console.warn(
+          "[live] county_parcel_change_events missing — apply migration 0027 to record owner changes",
+        );
+        return;
+      }
+      throw error;
+    }
+  }
 }
 
 function isConflictDupError(msg) {
@@ -599,33 +663,93 @@ async function upsertLive(rows) {
   // CAD FeatureServers often emit the same prop_id multiple times (multi-part
   // geometry / duplicate features). Postgres rejects ON CONFLICT DO UPDATE when
   // one statement updates the same (source, prop_id) twice.
-  const parcelRows = dedupeByKey(
-    rows.map(toParcelUpsertRow).filter((r) => r.prop_id),
+  const rawParcelRows = dedupeByKey(
+    rows
+      .map((r) => ({ ...r, prop_id: normalizePropId(r.prop_id) }))
+      .filter((r) => r.prop_id),
     (r) => `${r.source}::${r.prop_id}`,
   );
-  if (parcelRows.length !== rows.length) {
+  if (rawParcelRows.length !== rows.length) {
     console.log(
-      `[live] deduped parcels ${rows.length} → ${parcelRows.length}`,
+      `[live] deduped parcels ${rows.length} → ${rawParcelRows.length}`,
     );
   }
 
   // Sequential small batches: large GeoJSON + parallel writes caused timeouts
   // and made "batch 0" errors appear after later progress lines.
   const batch = 100;
-  for (let i = 0; i < parcelRows.length; i += batch) {
-    const chunk = parcelRows.slice(i, i + batch);
-    const n = Math.min(i + chunk.length, parcelRows.length);
-    await upsertChunkWithSplit(
+  let ownerEventsTotal = 0;
+  for (let i = 0; i < rawParcelRows.length; i += batch) {
+    const rawChunk = rawParcelRows.slice(i, i + batch);
+    const source = rawChunk[0]?.source;
+    const prior = await fetchPriorParcelState(
       sb,
-      "county_parcels",
-      chunk,
-      "source,prop_id",
-      `parcel batch ${Math.floor(i / batch)}`,
+      source,
+      rawChunk.map((r) => r.prop_id),
     );
-    if (n % 2000 === 0 || n === parcelRows.length) {
-      console.log(`[live] parcels ${n}/${parcelRows.length}`);
+    const observedAt = new Date().toISOString();
+    const events = [];
+    const chunk = rawChunk.map((r) => {
+      const prev = prior.get(r.prop_id) || null;
+      if (prev) {
+        for (const diff of ownerFieldsChanged(prev, r)) {
+          events.push({
+            source: r.source,
+            prop_id: r.prop_id,
+            field: diff.field,
+            old_value: diff.old_value,
+            new_value: diff.new_value,
+            observed_at: observedAt,
+          });
+        }
+      }
+      return toParcelUpsertRow(r, prev);
+    });
+
+    // Drop first/last_seen if columns missing (pre-0027) so upsert still works.
+    let upsertChunk = chunk;
+    try {
+      await upsertChunkWithSplit(
+        sb,
+        "county_parcels",
+        upsertChunk,
+        "source,prop_id",
+        `parcel batch ${Math.floor(i / batch)}`,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/first_seen_at|last_seen_at/i.test(msg)) {
+        upsertChunk = chunk.map((r) => {
+          const { first_seen_at: _f, last_seen_at: _l, ...rest } = r;
+          return rest;
+        });
+        await upsertChunkWithSplit(
+          sb,
+          "county_parcels",
+          upsertChunk,
+          "source,prop_id",
+          `parcel batch ${Math.floor(i / batch)} (legacy cols)`,
+        );
+      } else {
+        throw e;
+      }
+    }
+
+    if (events.length) {
+      await insertOwnerChangeEvents(sb, events);
+      ownerEventsTotal += events.length;
+    }
+
+    const n = Math.min(i + rawChunk.length, rawParcelRows.length);
+    if (n % 2000 === 0 || n === rawParcelRows.length) {
+      console.log(`[live] parcels ${n}/${rawParcelRows.length}`);
     }
   }
+  if (ownerEventsTotal) {
+    console.log(`[live] owner change events recorded: ${ownerEventsTotal}`);
+  }
+
+  const parcelRows = rawParcelRows;
 
   const valRows = dedupeByKey(
     parcelRows

@@ -2,6 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CadSearchField } from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
 import { buildObservedHistory } from "@/lib/shi/history";
+import {
+  computeOwnershipChurnSignal,
+  type OwnershipChangeEvent,
+} from "@/lib/shi/ownership-churn";
 import type {
   ShiCountyFreshness,
   ShiPropertyDetail,
@@ -20,6 +24,9 @@ const LIST_SELECT =
   "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_zip, legal_description, legal_acreage, market_value, tax_year, property_category, ingested_at, centroid_lat, centroid_lng";
 
 const DETAIL_SELECT =
+  "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, first_seen_at, last_seen_at, geojson, centroid_lat, centroid_lng";
+
+const DETAIL_SELECT_LEGACY =
   "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, geojson, centroid_lat, centroid_lng";
 
 /** Launch counties — keep in sync with parcels AVAILABLE_COUNTIES (no client import). */
@@ -246,17 +253,23 @@ export async function getProperty(
   const propId = opts.propId.trim();
   if (!propId) return null;
 
-  let req = supabase
-    .from("county_parcels")
-    .select(DETAIL_SELECT)
-    .eq("prop_id", propId);
-  if (opts.source) req = req.eq("source", opts.source);
-  if (opts.countyFips) req = req.eq("county_fips", opts.countyFips);
+  async function fetchDetailRows(selectCols: string) {
+    let req = supabase
+      .from("county_parcels")
+      .select(selectCols)
+      .eq("prop_id", propId);
+    if (opts.source) req = req.eq("source", opts.source);
+    if (opts.countyFips) req = req.eq("county_fips", opts.countyFips);
+    return req.limit(opts.source || opts.countyFips ? 1 : 12);
+  }
 
   // Fetch a small candidate set when source is unknown so we can disambiguate.
-  const { data, error } = await req.limit(opts.source || opts.countyFips ? 1 : 12);
+  let { data, error } = await fetchDetailRows(DETAIL_SELECT);
+  if (error && /first_seen_at|last_seen_at/i.test(error.message)) {
+    ({ data, error } = await fetchDetailRows(DETAIL_SELECT_LEGACY));
+  }
   if (error) throw new Error(error.message);
-  const rows = (data ?? []) as Record<string, unknown>[];
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
   if (rows.length === 0) return null;
 
   let row = rows[0];
@@ -296,6 +309,8 @@ export async function getProperty(
 
   const summary = toSummary(row);
   const source = summary.source;
+  const firstSeenAt = (row.first_seen_at as string | null) ?? null;
+  const lastSeenAt = (row.last_seen_at as string | null) ?? null;
 
   const { data: valueRows } = await supabase
     .from("county_parcel_values")
@@ -305,6 +320,12 @@ export async function getProperty(
     .eq("source", source)
     .eq("prop_id", propId)
     .order("tax_year", { ascending: true });
+
+  const ownerEvents = await loadOwnerChangeEvents(
+    supabase,
+    source,
+    propId,
+  );
 
   const schoolCode = (row.school_code as string | null) ?? null;
   const freshness = freshnessFromAge(summary.ingestedAt);
@@ -316,6 +337,12 @@ export async function getProperty(
     appraisedValue: num(r.appraised_value),
     assessedValue: num(r.assessed_value),
   }));
+
+  const ownershipChurn = computeOwnershipChurnSignal({
+    firstSeenAt,
+    lastSeenAt,
+    ownerEvents,
+  });
 
   const detail: ShiPropertyDetail = {
     ...summary,
@@ -334,10 +361,41 @@ export async function getProperty(
     geojson: (row.geojson as ShiPropertyDetail["geojson"]) ?? null,
     values,
     freshness,
+    firstSeenAt,
+    lastSeenAt,
+    ownershipChurn,
     observedHistory: [],
   };
-  detail.observedHistory = buildObservedHistory(detail);
+  detail.observedHistory = buildObservedHistory(detail, ownerEvents);
   return detail;
+}
+
+async function loadOwnerChangeEvents(
+  supabase: SupabaseClient,
+  source: string,
+  propId: string,
+): Promise<OwnershipChangeEvent[]> {
+  const { data, error } = await supabase
+    .from("county_parcel_change_events")
+    .select("field, old_value, new_value, observed_at")
+    .eq("source", source)
+    .eq("prop_id", propId)
+    .in("field", ["cad_owner_id", "owner_name"])
+    .order("observed_at", { ascending: false })
+    .limit(40);
+  if (error) {
+    // Pre-0027 environments — soft empty.
+    if (/does not exist|county_parcel_change_events/i.test(error.message)) {
+      return [];
+    }
+    throw new Error(error.message);
+  }
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    field: String(r.field),
+    oldValue: (r.old_value as string | null) ?? null,
+    newValue: (r.new_value as string | null) ?? null,
+    observedAt: String(r.observed_at),
+  }));
 }
 
 export async function getCountyFreshness(
