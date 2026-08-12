@@ -24,8 +24,33 @@ export function buildObservedHistory(
   }
 
   for (const e of ownerEvents) {
+    if (e.field === "presence") {
+      events.push({
+        kind: "owner_observed_change",
+        at: e.observedAt,
+        title:
+          e.newValue === "absent"
+            ? "Missing from a full-county CAD pull"
+            : "Seen again in a CAD pull",
+        detail:
+          e.newValue === "absent"
+            ? "Archie marked this parcel absent — not a deed sale."
+            : "Cleared absence after Archie saw it again.",
+      });
+      continue;
+    }
     const fieldLabel =
-      e.field === "cad_owner_id" ? "Owner id" : "Owner name";
+      e.field === "cad_owner_id"
+        ? "Owner id"
+        : e.field === "owner_name"
+          ? "Owner name"
+          : e.field === "situs_address"
+            ? "Site address"
+            : e.field === "market_value"
+              ? "Market value"
+              : e.field === "legal_acreage"
+                ? "Acreage"
+                : e.field;
     events.push({
       kind: "owner_observed_change",
       at: e.observedAt,

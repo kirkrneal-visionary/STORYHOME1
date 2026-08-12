@@ -170,7 +170,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-OWNER-CHURN",
     name: "Ownership Stability Index · CAD observation",
     goal: "Watch CAD owner fields across pulls and show an explainable 300–850 stability index — evidence of observed churn, not a sale prediction.",
-    status: "current",
+    status: "done",
     frontend: [
       "Ownership Stability Index on property record",
       "Observed history includes owner-field changes",
@@ -186,6 +186,29 @@ export const SHI_WAVES: ShiWave[] = [
       "Deed / MLS sale timeline claims",
       "Full county change feed UI (4.3 full)",
       "Absence marking on full pulls (follow-up)",
+    ],
+  },
+  {
+    id: "ARCHIE-CHANGE-FEED",
+    name: "County observation change feed",
+    goal: "Show what Archie saw change between CAD pulls across a county — owner, address, value, acreage, and presence — without claiming deed or sale dates.",
+    status: "current",
+    frontend: [
+      "County observation feed on Research + Farms",
+      "Field filter (owner, address, value, acreage, presence)",
+      "Open property from a feed row into Research",
+      "Property history includes presence + expanded fields",
+    ],
+    backend: [
+      "Migration 0028: county_parcels.absent_at (lightweight, no backfill)",
+      "Ingest diffs situs / market_value / legal_acreage + owner fields",
+      "Full-pull (--all) absence marking with cap + reappearance events",
+      "GET /api/shi/changes county feed",
+    ],
+    outOfScope: [
+      "Predicting that an owner will sell",
+      "Deed / MLS sale timeline claims",
+      "Market projection scenarios (ARCHIE-TRUTH-MARKET)",
     ],
   },
   {
@@ -208,8 +231,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — CAD ownership observation + Stability Index. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-OWNER-CHURN" as const;
+/** Active wave — county observation change feed (4.3 full). */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CHANGE-FEED" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

@@ -380,7 +380,14 @@ async function loadOwnerChangeEvents(
     .select("field, old_value, new_value, observed_at")
     .eq("source", source)
     .eq("prop_id", propId)
-    .in("field", ["cad_owner_id", "owner_name"])
+    .in("field", [
+      "cad_owner_id",
+      "owner_name",
+      "situs_address",
+      "market_value",
+      "legal_acreage",
+      "presence",
+    ])
     .order("observed_at", { ascending: false })
     .limit(40);
   if (error) {

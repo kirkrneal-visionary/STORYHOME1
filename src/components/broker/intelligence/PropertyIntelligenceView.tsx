@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
+import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
 import {
@@ -1126,6 +1127,11 @@ export function PropertyIntelligenceView({
           )}
         </section>
       </div>
+
+      <ShiCountyChangeFeed
+        source={source}
+        onOpenProperty={(opts) => void openProperty(opts)}
+      />
 
       {reopening ? (
         <div className="flex items-center gap-2 rounded-xl border border-hairline bg-[var(--surface)] px-3 py-2 text-xs font-semibold text-navy">

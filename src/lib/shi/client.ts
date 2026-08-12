@@ -74,6 +74,23 @@ export async function shiFreshness(): Promise<ShiCountyFreshness[]> {
   return body.counties ?? [];
 }
 
+export async function shiCountyChanges(opts: {
+  source: string;
+  limit?: number;
+  since?: string;
+  field?: string;
+}): Promise<{
+  changes: import("@/lib/shi/county-changes").CountyChangeEvent[];
+  note: string;
+}> {
+  const params = new URLSearchParams();
+  params.set("source", opts.source);
+  if (opts.limit) params.set("limit", String(opts.limit));
+  if (opts.since) params.set("since", opts.since);
+  if (opts.field) params.set("field", opts.field);
+  return shiFetch(`/api/shi/changes?${params.toString()}`);
+}
+
 export async function shiOwnerMatches(opts: {
   source: string;
   propId: string;
