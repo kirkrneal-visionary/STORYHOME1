@@ -104,4 +104,59 @@ for (const k of forbidden) {
   assert.equal(Object.hasOwn({ trajectory: traj, claims }, k), false);
 }
 
+function compareSubjectToLookalikes(subject, values) {
+  const valued = values.filter((v) => v != null && v > 0).sort((a, b) => a - b);
+  if (!subject || !valued.length) return null;
+  const mid = Math.floor(valued.length / 2);
+  const median =
+    valued.length % 2 ? valued[mid] : (valued[mid - 1] + valued[mid]) / 2;
+  const deltaPct = ((subject - median) / median) * 100;
+  const position =
+    Math.abs(deltaPct) <= 8 ? "near" : subject > median ? "above" : "below";
+  return {
+    median,
+    min: valued[0],
+    max: valued[valued.length - 1],
+    position,
+  };
+}
+
+const look = compareSubjectToLookalikes(100000, [80000, 100000, 120000]);
+assert.equal(look.median, 100000);
+assert.equal(look.position, "near");
+assert.equal(look.min, 80000);
+assert.equal(look.max, 120000);
+assert.equal(compareSubjectToLookalikes(100000, []), null);
+
+function buildAssumptionCarryCases({ price, baseRate, baseDown, term, pay }) {
+  const specs = [
+    { id: "rate_low", rate: Math.max(0, baseRate - 1), down: baseDown },
+    { id: "base", rate: baseRate, down: baseDown },
+    { id: "rate_high", rate: baseRate + 1, down: baseDown },
+    { id: "down_10", rate: baseRate, down: 10 },
+    { id: "down_20", rate: baseRate, down: 20 },
+  ];
+  const seen = new Set();
+  const out = [];
+  for (const s of specs) {
+    const key = `${s.rate}|${s.down}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const principal = price * (1 - s.down / 100);
+    out.push({ id: s.id, monthlyPi: pay(principal, s.rate, term) });
+  }
+  return out;
+}
+
+const ranges = buildAssumptionCarryCases({
+  price: 200000,
+  baseRate: 6.5,
+  baseDown: 20,
+  term: 30,
+  pay: (p, r) => p * (r / 100 / 12), // stub — shape only
+});
+assert.ok(ranges.length >= 3);
+assert.ok(ranges.some((c) => c.id === "base"));
+assert.ok(ranges.some((c) => c.id === "rate_high"));
+
 console.log("shi-cad-evidence armor: ok");

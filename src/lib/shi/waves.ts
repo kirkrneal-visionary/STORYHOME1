@@ -215,7 +215,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-TRUTH-MARKET",
     name: "Truth lane · CAD evidence · thin market context",
     goal: "Label evidence strength from county files, surface CAD value trajectory and frame band, plus illustrative carry under explicit user assumptions — never seller probability.",
-    status: "current",
+    status: "done",
     frontend: [
       "CAD evidence · market context on property record",
       "Evidence strength chips (strong / observed / present / weak / absent)",
@@ -233,10 +233,49 @@ export const SHI_WAVES: ShiWave[] = [
       "MLS sale comps as if they were CAD truth",
     ],
   },
+  {
+    id: "ARCHIE-LOOKALIKE-CONTEXT",
+    name: "Lookalike CAD band · assumption ranges",
+    goal: "Compose Find Similar into an honest lookalike CAD appraisal band and show illustrative carry ranges under explicit rate/down assumptions.",
+    status: "current",
+    frontend: [
+      "Lookalike CAD band on evidence panel",
+      "Vs lookalike median / min–max range",
+      "Assumption ranges (rate ±1% and common down payments)",
+    ],
+    backend: [
+      "compareSubjectToLookalikes + buildAssumptionCarryCases (no migration)",
+      "Reuse POST /api/shi/similar from evidence panel",
+    ],
+    outOfScope: [
+      "Seller-probability theater",
+      "Treating lookalikes as MLS sale comps",
+      "Fake similarity percent scores",
+    ],
+  },
+  {
+    id: "ARCHIE-OBS-OPS",
+    name: "Observation health · empty-state honesty",
+    goal: "Make Ownership Stability and County observation feed trustworthy — distinguish migrations pending vs awaiting next pull vs truly quiet.",
+    status: "planned",
+    frontend: [
+      "Observation setup / readiness copy on feed + stability",
+      "County pull status tied to freshness",
+      "Clear Building history vs quiet tracking",
+    ],
+    backend: [
+      "Observation readiness DTO (events table / absent_at / tracking)",
+      "Apply existing 0027/0028 — prefer no new migration",
+    ],
+    outOfScope: [
+      "Inventing backfilled change events",
+      "Deed / MLS sale timeline claims",
+    ],
+  },
 ];
 
-/** Active wave — truth lane + thin market context. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-TRUTH-MARKET" as const;
+/** Active wave — lookalike band + assumption ranges. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-LOOKALIKE-CONTEXT" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
