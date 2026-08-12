@@ -82,6 +82,7 @@ export async function shiCountyChanges(opts: {
 }): Promise<{
   changes: import("@/lib/shi/county-changes").CountyChangeEvent[];
   note: string;
+  readiness?: import("@/lib/shi/observation-readiness").ObservationReadiness;
 }> {
   const params = new URLSearchParams();
   params.set("source", opts.source);

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { listCountyChanges } from "@/lib/shi/county-changes";
+import { getObservationReadiness } from "@/lib/shi/observation-readiness";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 
 export const runtime = "nodejs";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 /**
  * County observation change feed — Archie-detected CAD diffs between pulls.
  * Not deed history. Not seller probability.
+ * Includes observation readiness so empty ≠ “nothing happened in the world.”
  */
 export async function GET(request: Request) {
   const gate = await requireStoryPro();
@@ -22,20 +24,28 @@ export async function GET(request: Request) {
 
   if (!source) {
     return NextResponse.json(
-      { error: "source is required (county CAD key)", changes: [] },
+      {
+        error: "source is required (county CAD key)",
+        changes: [],
+        readiness: await getObservationReadiness(gate.supabase, ""),
+      },
       { status: 400 },
     );
   }
 
   try {
-    const changes = await listCountyChanges(gate.supabase, {
-      source,
-      since,
-      field,
-      limit,
-    });
+    const [changes, readiness] = await Promise.all([
+      listCountyChanges(gate.supabase, {
+        source,
+        since,
+        field,
+        limit,
+      }),
+      getObservationReadiness(gate.supabase, source),
+    ]);
     return NextResponse.json({
       changes,
+      readiness,
       note: "Archie-observed CAD field changes between county file loads — not deed or sale dates.",
     });
   } catch (e) {

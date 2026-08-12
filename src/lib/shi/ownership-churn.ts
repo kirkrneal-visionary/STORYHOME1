@@ -60,7 +60,9 @@ export function computeOwnershipChurnSignal(opts: {
       trackingSince: null,
       lastOwnerChangeAt: null,
       reasons: [
-        "Archie has not started observation tracking for this parcel yet. Apply migration 0027 and refresh CAD.",
+        "Tracking not started for this parcel yet (no first_seen_at).",
+        "That is not a credit score and not a seller signal — Archie simply has not begun pull-to-pull observation here.",
+        "Ops: apply migration 0027 (or its first_seen backfill), then refresh this county’s CAD.",
       ],
       note: NOTE,
     };
