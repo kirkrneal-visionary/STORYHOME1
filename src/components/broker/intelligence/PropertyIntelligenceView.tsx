@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
+import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -1016,6 +1017,11 @@ export function PropertyIntelligenceView({
                   </ul>
                 </div>
               ) : null}
+
+              <ShiCadEvidencePanel
+                property={selected}
+                frameAnalysis={analysis}
+              />
 
               <div>
                 <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">

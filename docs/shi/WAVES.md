@@ -11,39 +11,25 @@
 | **Listing upload CAD** | MLS-limited listing form only |
 | **Archie's Intelligence** | Full Property Intelligence for agents |
 
-## Current: ARCHIE-CHANGE-FEED (4.3 full)
+## Current: ARCHIE-TRUTH-MARKET
 
 | Front-end | Back-end |
 |---|---|
-| **County observation feed** on Research + Farms | Migration **0028** `county_parcels.absent_at` |
-| Filter by field · open property into Research | Ingest diffs owner + situs + value + acreage |
-| Property history includes presence / expanded fields | Full-pull absence marking (capped) + `GET /api/shi/changes` |
+| **CAD evidence · market context** on property record | `buildCadEvidenceLane` (no new migration) |
+| Evidence strength chips · CAD value trajectory | Frame band via existing `analyzeArea` |
+| Vs active Market Frame median · illustrative carry | Finance math under user rate/down/term |
 
-**Honesty:** Not deed history. Not a sale prediction. Events are what Archie saw change between CAD pulls.
-
-### Apply 0028 (click path)
-1. [Supabase SQL editor](https://supabase.com/dashboard/project/ksvllgzsnzyahqsjuove/sql/new)
-2. Paste only this (no giant UPDATE):
-
-```sql
-alter table public.county_parcels
-  add column if not exists absent_at timestamptz;
-
-create index if not exists county_parcels_source_absent_idx
-  on public.county_parcels (source, absent_at)
-  where absent_at is not null;
-```
-
-3. Run
-4. After deploy, full refresh so absences can mark: `node scripts/ingest-cad.mjs --source polk_cad --all`
+**Honesty:** CAD market value ≠ list/sale price. Not an AVM. Not a prediction someone will sell. Carry math is illustrative under your inputs.
 
 ## Done
 - Foundation OS (Research · Prospects · Farms · Discover · N3 shell)
 - Farms since-last-review (4.1)
-- Ownership Stability Index + CAD observation events (4.2 / thin 4.3 · migration **0027**)
+- Ownership Stability Index + CAD observation (4.2 · migration **0027**)
+- County observation feed · absence · more fields (4.3 · migration **0028**)
 
 ## Next (separate)
-- **ARCHIE-TRUTH-MARKET** — broader truth lane + market projection scenarios  
+- Deeper scenario ranges / risk bands still labeled as assumptions  
+- Lookalike CAD band from Find Similar (compose, don’t invent %)
 
 ## Out of scope
 - Fake seller-probability theater / AVM guarantees  
