@@ -67,6 +67,8 @@ export type ShiPropertyDetail = ShiPropertySummary & {
   lastSeenAt: string | null;
   /** Explainable ownership stability signal — not a sale prediction. */
   ownershipChurn: import("@/lib/shi/ownership-churn").OwnershipChurnSignal | null;
+  /** Honest CAD evidence lane — not AVM / not seller probability. */
+  cadEvidence: import("@/lib/shi/cad-evidence").CadEvidenceLane | null;
 };
 
 /** Pro-safe county freshness — no internal URLs or raw source keys in UI. */

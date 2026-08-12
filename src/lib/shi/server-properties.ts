@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CadSearchField } from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
+import { buildCadEvidenceLane } from "@/lib/shi/cad-evidence";
 import { buildObservedHistory } from "@/lib/shi/history";
 import {
   computeOwnershipChurnSignal,
@@ -364,9 +365,26 @@ export async function getProperty(
     firstSeenAt,
     lastSeenAt,
     ownershipChurn,
+    cadEvidence: null,
     observedHistory: [],
   };
   detail.observedHistory = buildObservedHistory(detail, ownerEvents);
+  detail.cadEvidence = buildCadEvidenceLane({
+    values,
+    marketValue: detail.marketValue,
+    taxYear: detail.taxYear,
+    landValue: detail.landValue,
+    improvementValue: detail.improvementValue,
+    legalAcreage: detail.legalAcreage,
+    freshnessStale: freshness.stale,
+    hasCentroid:
+      detail.centroidLat != null &&
+      detail.centroidLng != null &&
+      Number.isFinite(detail.centroidLat) &&
+      Number.isFinite(detail.centroidLng),
+    ownershipChurn,
+    observationEventCount: ownerEvents.length,
+  });
   return detail;
 }
 

@@ -192,7 +192,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CHANGE-FEED",
     name: "County observation change feed",
     goal: "Show what Archie saw change between CAD pulls across a county — owner, address, value, acreage, and presence — without claiming deed or sale dates.",
-    status: "current",
+    status: "done",
     frontend: [
       "County observation feed on Research + Farms",
       "Field filter (owner, address, value, acreage, presence)",
@@ -213,26 +213,30 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-TRUTH-MARKET",
-    name: "Truth lane · market projection (future)",
-    goal: "Broader evidence vs weak claims, plus market scenarios (RE, financial, risk, odds) with honest confidence.",
-    status: "planned",
+    name: "Truth lane · CAD evidence · thin market context",
+    goal: "Label evidence strength from county files, surface CAD value trajectory and frame band, plus illustrative carry under explicit user assumptions — never seller probability.",
+    status: "current",
     frontend: [
-      "Evidence strength labels",
-      "Scenario views with assumptions + ranges",
+      "CAD evidence · market context on property record",
+      "Evidence strength chips (strong / observed / present / weak / absent)",
+      "Vs active Market Frame CAD median when analyzed",
+      "Illustrative carry (rate / down / term) on CAD market value",
     ],
     backend: [
-      "Server-side evidence engines",
-      "Never ship proprietary weights to the browser",
+      "buildCadEvidenceLane + value trajectory (no new migration)",
+      "compareSubjectToFrame from existing area analysis",
+      "Reuse finance monthlyMortgagePayment — assumptions stay client-side",
     ],
     outOfScope: [
-      "Guaranteed predictions",
+      "Guaranteed predictions / AVM true-value claims",
       "Seller-probability theater",
+      "MLS sale comps as if they were CAD truth",
     ],
   },
 ];
 
-/** Active wave — county observation change feed (4.3 full). */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CHANGE-FEED" as const;
+/** Active wave — truth lane + thin market context. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-TRUTH-MARKET" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
