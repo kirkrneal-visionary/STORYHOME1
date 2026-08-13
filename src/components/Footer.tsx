@@ -118,7 +118,7 @@ export default function Footer() {
           <FooterCol title="For Professionals" links={[
             { href: "/portal", label: "Story Pro" },
             { href: "/login", label: "Join as an Agent" },
-            { href: "/referrals", label: "Referral Network" },
+            { href: "/network", label: "Find agents" },
           ]} />
         </div>
 

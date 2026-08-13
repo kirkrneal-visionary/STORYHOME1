@@ -81,10 +81,10 @@ export default function ProfilePage() {
                 Public profile
               </Link>
               <Link
-                href="/referrals"
+                href="/network"
                 className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-ink"
               >
-                Referral board
+                Network
               </Link>
             </>
           )}
@@ -96,12 +96,6 @@ export default function ProfilePage() {
               Seller portal
             </Link>
           )}
-          <Link
-            href="/messages"
-            className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-ink"
-          >
-            Messages
-          </Link>
           <button
             type="button"
             onClick={logout}

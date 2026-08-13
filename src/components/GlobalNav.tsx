@@ -9,7 +9,6 @@ import {
   Home,
   LogIn,
   Menu,
-  MessageSquare,
   Search,
   Settings,
   User,
@@ -41,7 +40,7 @@ function shortKind(kind?: string): string {
 }
 
 export default function GlobalNav() {
-  const { role, setRole, unreadMessages, openReferralCount } = useApp();
+  const { role, setRole } = useApp();
   const { user, isLoggedIn } = useAuth();
   const pathname = usePathname();
   const isProAccount = user?.kind === "pro" || user?.kind === "broker";
@@ -59,7 +58,6 @@ export default function GlobalNav() {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   const isHome = pathname === "/";
-  const showMessages = isLoggedIn;
   const archie = NAVIGATION_NETWORKS.archie;
   const archieActive = isArchiePath(pathname);
   const showArchieNode = isPro && isLoggedIn;
@@ -104,12 +102,6 @@ export default function GlobalNav() {
             label: "Network",
             active: pathname.startsWith("/network"),
           },
-          {
-            href: "/referrals",
-            label: "Referrals",
-            active: pathname.startsWith("/referrals"),
-            unread: openReferralCount > 0,
-          },
         );
       } else {
         links.push(
@@ -130,14 +122,6 @@ export default function GlobalNav() {
           },
         );
       }
-      if (showMessages) {
-        links.push({
-          href: "/messages",
-          label: "Messages",
-          active: pathname.startsWith("/messages"),
-          unread: unreadMessages,
-        });
-      }
     }
     if (isLoggedIn) {
       links.push({
@@ -147,15 +131,7 @@ export default function GlobalNav() {
       });
     }
     return links;
-  }, [
-    isHome,
-    isLoggedIn,
-    isPro,
-    openReferralCount,
-    pathname,
-    showMessages,
-    unreadMessages,
-  ]);
+  }, [isHome, isLoggedIn, isPro, pathname]);
 
   if (isSellerPath) {
     return null;
@@ -222,16 +198,6 @@ export default function GlobalNav() {
                   >
                     Network
                   </NavLink>
-                  <NavLink
-                    href="/referrals"
-                    active={pathname.startsWith("/referrals")}
-                    className="relative"
-                  >
-                    Referrals
-                    {openReferralCount > 0 && (
-                      <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
-                    )}
-                  </NavLink>
                 </>
               ) : (
                 <>
@@ -254,18 +220,6 @@ export default function GlobalNav() {
                     Following
                   </NavLink>
                 </>
-              )}
-              {showMessages && (
-                <NavLink
-                  href="/messages"
-                  active={pathname.startsWith("/messages")}
-                  className="relative"
-                >
-                  Messages
-                  {unreadMessages && (
-                    <span className="absolute -top-1 -right-2 h-2 w-2 rounded-full bg-gold" />
-                  )}
-                </NavLink>
               )}
             </>
           )}
@@ -385,12 +339,7 @@ export default function GlobalNav() {
         />
       </Suspense>
 
-      <div
-        className={cn(
-          "fixed bottom-0 left-0 z-50 grid h-16 w-full items-center justify-items-center border-t border-hairline bg-[var(--nav-surface)]/96 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden",
-          showMessages ? "grid-cols-5" : "grid-cols-4",
-        )}
-      >
+      <div className="fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-4 items-center justify-items-center border-t border-hairline bg-[var(--nav-surface)]/96 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         <MobileTab href="/" label="Home" icon={Home} active={isHome} />
         {isPro && isLoggedIn ? (
           <>
@@ -424,15 +373,6 @@ export default function GlobalNav() {
             />
           </>
         )}
-        {showMessages ? (
-          <MobileTab
-            href="/messages"
-            label="Messages"
-            icon={MessageSquare}
-            active={pathname.startsWith("/messages")}
-            unread={unreadMessages}
-          />
-        ) : null}
         <MobileTab
           href={isLoggedIn ? "/profile" : "/login"}
           label={isLoggedIn ? "Profile" : "Log in"}
@@ -478,14 +418,12 @@ function MobileTab({
   label,
   icon: Icon,
   active,
-  unread,
   mark,
 }: {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   active: boolean;
-  unread?: boolean;
   /** Use Archie brand mark instead of lucide icon */
   mark?: boolean;
 }) {
@@ -516,9 +454,6 @@ function MobileTab({
       ) : (
         <Icon className="h-5 w-5" />
       )}
-      {unread ? (
-        <span className="absolute top-0 right-1 h-1.5 w-1.5 rounded-full bg-gold" />
-      ) : null}
       <span className="text-[10px] font-medium">{label}</span>
     </Link>
   );

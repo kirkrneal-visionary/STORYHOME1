@@ -68,17 +68,17 @@ export default async function AgentProfilePage({ params }: PageProps) {
           </div>
           <div className="flex gap-2">
             <Link
-              href="/messages"
+              href="/marketplace"
               className="flex h-11 items-center rounded-lg bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)]"
             >
-              Message
+              View listings
             </Link>
-            <button
-              type="button"
+            <Link
+              href="/network"
               className="flex h-11 items-center rounded-lg border border-hairline px-5 text-sm font-semibold text-ink"
             >
-              Follow
-            </button>
+              Find agents
+            </Link>
           </div>
         </div>
 

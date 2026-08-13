@@ -227,6 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Shipped coded wave:** `STORY-CONTINUUM-VISIBILITY` — Continuum perceptible on phone + desktop (tokens, peek, study cue, nav direction). Still no brand redesign, no fake predictions.
+**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` (hide theater; honest pause landings).
 
-**Next coded wave (when green-lit):** Messages & Referrals — finish or hide (no shell theater).
+**Next coded wave (when green-lit):** Analytics foundation (privacy-reviewed) — or finish Messages/Referrals only with real end-to-end product.

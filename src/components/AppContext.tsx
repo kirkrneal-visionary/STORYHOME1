@@ -6,7 +6,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useState,
   useSyncExternalStore,
 } from "react";
 
@@ -19,9 +18,6 @@ interface AppContextType {
   role: Role;
   toggleRole: () => void;
   setRole: (role: Role) => void;
-  unreadMessages: boolean;
-  setUnreadMessages: (val: boolean) => void;
-  openReferralCount: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -56,7 +52,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     readStoredRole,
     () => "consumer" as const,
   );
-  const [unreadMessages, setUnreadMessages] = useState(true);
 
   useEffect(() => {
     document.documentElement.dataset.role = role;
@@ -75,11 +70,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       role,
       toggleRole,
       setRole,
-      unreadMessages,
-      setUnreadMessages,
-      openReferralCount: 1,
     }),
-    [role, toggleRole, setRole, unreadMessages],
+    [role, toggleRole, setRole],
   );
 
   return (
