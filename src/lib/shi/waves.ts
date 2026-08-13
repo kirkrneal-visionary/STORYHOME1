@@ -379,7 +379,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-V2",
     name: "Corridors V.2 · compare · save · report",
     goal: "Compare two drawn areas, save studies into Vault, and produce a Development Intelligence Report — still evidence, never guaranteed futures.",
-    status: "current",
+    status: "done",
     frontend: [
       "Compare another area (A/B evidence contrast)",
       "Save study → Study Vault Corridors folder + local reopen",
@@ -394,6 +394,26 @@ export const SHI_WAVES: ShiWave[] = [
       "Fake accuracy / guaranteed appreciation",
       "Full validation backtest harness (next)",
       "New licensed data pretended as live",
+    ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-MAP-TOOLBOX",
+    name: "Corridors · map-native toolbox · draw lock",
+    goal: "Put Navigate/Freehand/Box/Radius/Traffic on the map; hard-lock pan while drawing; near-precision freehand with undo/done.",
+    status: "current",
+    frontend: [
+      "In-map toolbox (Research-class, Corridors-tuned)",
+      "Hard navigation lock for whole draw mode",
+      "Undo / Done / Cancel · Escape discard",
+      "Hero CTAs removed — draw is a map instrument",
+    ],
+    backend: [
+      "nav-lock helper + corridor freehand precision knobs",
+      "No CAD writes · reuse Draw OS",
+    ],
+    outOfScope: [
+      "Vertex drag-edit after seal (later)",
+      "Destructive Research map rewrite",
     ],
   },
   {
@@ -417,8 +437,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors V.2 compare · save · report. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-V2" as const;
+/** Active wave — Corridors map-native toolbox + draw lock. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-MAP-TOOLBOX" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

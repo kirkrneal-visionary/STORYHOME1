@@ -17,15 +17,42 @@ export type FreehandSession = {
   canClose: boolean;
 };
 
+/** Optional precision knobs — Corridors uses tighter step/snap than Research. */
+export type FreehandPrecision = {
+  minStepPx?: number;
+  snapPx?: number;
+};
+
+/** Corridors near-precision defaults (tighter than Research). */
+export const CORRIDOR_FREEHAND_PRECISION: Required<FreehandPrecision> = {
+  minStepPx: 2,
+  snapPx: 11,
+};
+
 export function emptyFreehandSession(): FreehandSession {
   return { active: false, leftStart: false, points: [], canClose: false };
+}
+
+export function freehandUndoLast(session: FreehandSession): FreehandSession {
+  if (session.points.length <= 1) {
+    return emptyFreehandSession();
+  }
+  const points = session.points.slice(0, -1);
+  return {
+    active: false,
+    leftStart: points.length >= 2,
+    points,
+    canClose: false,
+  };
 }
 
 export function freehandPointerDown(
   map: MapLibreMap,
   session: FreehandSession,
   tip: LatLng,
+  precision?: FreehandPrecision,
 ): FreehandSession {
+  const minStep = precision?.minStepPx ?? FREEHAND_MIN_STEP_PX;
   const next: FreehandSession = {
     ...session,
     active: true,
@@ -39,7 +66,7 @@ export function freehandPointerDown(
   }
   const last = next.points[next.points.length - 1]!;
   if (
-    pointsFarEnoughPx(map, last, tip, FREEHAND_MIN_STEP_PX) &&
+    pointsFarEnoughPx(map, last, tip, minStep) &&
     next.points.length < SHI_CAPS.maxFreehandVertices
   ) {
     next.points.push(tip);
@@ -51,8 +78,11 @@ export function freehandPointerMove(
   map: MapLibreMap,
   session: FreehandSession,
   tip: LatLng,
+  precision?: FreehandPrecision,
 ): FreehandSession {
   if (!session.points.length) return session;
+  const minStep = precision?.minStepPx ?? FREEHAND_MIN_STEP_PX;
+  const snapPx = precision?.snapPx ?? FREEHAND_SNAP_PX;
   const next: FreehandSession = {
     ...session,
     points: [...session.points],
@@ -62,14 +92,14 @@ export function freehandPointerMove(
   if (next.active) {
     const last = next.points[next.points.length - 1]!;
     if (
-      pointsFarEnoughPx(map, last, tip, FREEHAND_MIN_STEP_PX) &&
+      pointsFarEnoughPx(map, last, tip, minStep) &&
       next.points.length < SHI_CAPS.maxFreehandVertices
     ) {
       next.points.push(tip);
     }
     if (
       !next.leftStart &&
-      pointsFarEnoughPx(map, start, tip, FREEHAND_SNAP_PX * 2.2)
+      pointsFarEnoughPx(map, start, tip, snapPx * 2.2)
     ) {
       next.leftStart = true;
     }
@@ -78,7 +108,7 @@ export function freehandPointerMove(
   next.canClose =
     next.leftStart &&
     next.points.length >= SHI_CAPS.minFreehandVertices &&
-    isNearStart(map, tip, start, FREEHAND_SNAP_PX);
+    isNearStart(map, tip, start, snapPx);
   return next;
 }
 
