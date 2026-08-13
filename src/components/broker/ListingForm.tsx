@@ -187,8 +187,12 @@ export function ListingForm({
     onSave({ ...form, photos: form.photos.filter((p) => p.trim()) }, tracts);
   }
 
+  const unsaved =
+    JSON.stringify(form) !== JSON.stringify(initial) ||
+    JSON.stringify(tracts) !== JSON.stringify(initialTracts);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-unsaved={unsaved ? "true" : undefined}>
       <div className="flex items-center justify-between gap-4">
         <h3 className="font-serif text-2xl font-bold text-ink">
           {initial.streetAddress ? "Edit listing" : "New listing"}

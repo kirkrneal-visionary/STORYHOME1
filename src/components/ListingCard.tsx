@@ -18,6 +18,8 @@ type ListingCardProps = {
   dense?: boolean;
   selected?: boolean;
   onSelect?: () => void;
+  /** Persist marketplace workspace before drilling into detail. */
+  onNavigate?: () => void;
 };
 
 /** Color-code the status badge like HAR (green active, orange pending, red sold). */
@@ -36,6 +38,7 @@ export function ListingCard({
   dense = false,
   selected = false,
   onSelect,
+  onNavigate,
 }: ListingCardProps) {
   const agent = listing.agent ?? getAgent(listing.agentId);
   const { isListingInAnySuite } = useSuites();
@@ -48,19 +51,26 @@ export function ListingCard({
       id={`listing-card-${listing.id}`}
       onMouseEnter={onSelect}
       className={cn(
-        "group overflow-hidden rounded-xl border bg-[var(--surface)] transition-all duration-300",
-        dense ? "p-3" : "p-4 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]",
+        "story-card group overflow-hidden rounded-xl border bg-[var(--surface)] transition-[transform,box-shadow,border-color] duration-200",
+        dense ? "p-3" : "p-4 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]",
         selected ? "border-gold shadow-[0_0_0_1px_var(--gold)]" : "border-hairline",
       )}
     >
-      <Link href={`/marketplace/${listing.id}`} className="block">
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]">
+      <Link
+        href={`/marketplace/${listing.id}`}
+        className="block"
+        onClick={() => onNavigate?.()}
+      >
+        <div
+          className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]"
+          style={{ viewTransitionName: `listing-photo-${listing.id}` }}
+        >
           {listing.photoUrl ? (
             <Image
               src={listing.photoUrl}
               alt={listing.addressSerif}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
               sizes="(max-width: 768px) 100vw, 480px"
             />
           ) : (
@@ -140,7 +150,7 @@ export function ListingCard({
           type="button"
           onClick={() => setFollowing((v) => !v)}
           className={cn(
-            "h-7 rounded-md border px-3 text-xs font-semibold transition-colors",
+            "story-press h-7 rounded-md border px-3 text-xs font-semibold transition-colors",
             following
               ? "border-teal bg-teal text-paper"
               : "border-gold/50 text-gold hover:bg-gold hover:text-navy",
