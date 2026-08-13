@@ -39,6 +39,8 @@ type Props = {
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
   loading?: boolean;
+  /** Investor-room: bigger labels, taller map, less chrome */
+  presentationMode?: boolean;
 };
 
 function watchPolygon(area: GrowthWatchArea): GeoJSON.Feature {
@@ -101,6 +103,7 @@ export function ShiCorridorsMap({
   selectedStationId,
   onSelectStation,
   loading = false,
+  presentationMode = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -262,6 +265,55 @@ export function ShiCorridorsMap({
           "circle-stroke-color": MAP_GOLD,
         },
       });
+      map.addLayer({
+        id: "traffic-stations-label",
+        type: "symbol",
+        source: "traffic-stations",
+        layout: {
+          "text-field": [
+            "case",
+            ["has", "aadt"],
+            [
+              "concat",
+              ["coalesce", ["get", "onRoad"], ["get", "stationId"]],
+              "\n",
+              ["to-string", ["get", "aadt"]],
+            ],
+            ["coalesce", ["get", "onRoad"], ["get", "stationId"]],
+          ],
+          "text-font": ["Open Sans Semibold", "Arial Unicode MS Regular"],
+          "text-size": 11,
+          "text-offset": [0, 1.35],
+          "text-anchor": "top",
+          "text-max-width": 10,
+          "text-allow-overlap": false,
+          "text-optional": true,
+          visibility: "none",
+        },
+        paint: {
+          "text-color": "#f7f4ec",
+          "text-halo-color": MAP_NAVY,
+          "text-halo-width": 1.4,
+        },
+      });
+      map.addLayer({
+        id: "growth-watch-label",
+        type: "symbol",
+        source: "growth-watch",
+        layout: {
+          "text-field": ["get", "title"],
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Regular"],
+          "text-size": 13,
+          "text-max-width": 12,
+          "text-allow-overlap": false,
+          visibility: "none",
+        },
+        paint: {
+          "text-color": MAP_GOLD,
+          "text-halo-color": MAP_NAVY,
+          "text-halo-width": 1.6,
+        },
+      });
 
       map.addSource("parcels", {
         type: "vector",
@@ -311,6 +363,61 @@ export function ShiCorridorsMap({
     if (!map || !ready) return;
     setBaseLayerVisibility(map, base);
   }, [base, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const showLabels = presentationMode ? "visible" : "none";
+    if (map.getLayer("traffic-stations-label")) {
+      map.setLayoutProperty("traffic-stations-label", "visibility", showLabels);
+      map.setLayoutProperty(
+        "traffic-stations-label",
+        "text-size",
+        presentationMode ? 14 : 11,
+      );
+    }
+    if (map.getLayer("growth-watch-label")) {
+      map.setLayoutProperty(
+        "growth-watch-label",
+        "visibility",
+        presentationMode && showWatchAreas ? "visible" : "none",
+      );
+      map.setLayoutProperty(
+        "growth-watch-label",
+        "text-size",
+        presentationMode ? 16 : 13,
+      );
+    }
+    if (map.getLayer("traffic-stations-circle")) {
+      map.setPaintProperty("traffic-stations-circle", "circle-radius", [
+        "case",
+        ["boolean", ["feature-state", "selected"], false],
+        presentationMode ? 11 : 8,
+        presentationMode ? 7.5 : 5.5,
+      ]);
+    }
+    if (map.getLayer("traffic-stations-halo")) {
+      map.setPaintProperty("traffic-stations-halo", "circle-radius", [
+        "case",
+        ["boolean", ["feature-state", "selected"], false],
+        presentationMode ? 18 : 14,
+        presentationMode ? 12 : 9,
+      ]);
+    }
+    if (map.getLayer("corridor-segments-line")) {
+      map.setPaintProperty("corridor-segments-line", "line-width", [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        8,
+        presentationMode ? 2.2 : 1.2,
+        14,
+        presentationMode ? 6 : 4,
+        18,
+        presentationMode ? 10 : 7,
+      ]);
+    }
+  }, [presentationMode, showWatchAreas, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -496,35 +603,80 @@ export function ShiCorridorsMap({
 
   return (
     <div
-      className="relative h-[min(62vh,560px)] w-full overflow-hidden rounded-xl border border-hairline bg-navy md:h-[640px]"
+      className={cn(
+        "relative w-full overflow-hidden rounded-xl border border-hairline bg-navy",
+        presentationMode
+          ? "h-[min(78vh,820px)] md:h-[760px]"
+          : "h-[min(62vh,560px)] md:h-[640px]",
+      )}
       data-no-swipe-back
       data-shi-map
+      data-presentation={presentationMode ? "on" : "off"}
     >
       <div ref={containerRef} className="absolute inset-0 h-full w-full" />
 
-      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1">
-        {(
-          [
-            ["satellite", "Imagery"],
-            ["street", "Streets"],
-            ["gray", "Gray"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setBase(id)}
-            className={cn(
-              "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
-              base === id
-                ? "bg-gold text-navy"
-                : "bg-navy/85 text-paper hover:bg-white/10",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {presentationMode ? (
+        <div className="pointer-events-none absolute top-3 left-3 z-10 max-w-[min(90%,420px)] rounded-lg border border-gold/35 bg-navy/88 px-4 py-3 shadow-lg">
+          <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-gold uppercase">
+            Archie's Intelligence · Corridors
+          </p>
+          <p className="mt-1 font-serif text-2xl font-bold leading-tight text-paper md:text-3xl">
+            {county.name}
+          </p>
+          <p className="mt-1 text-xs text-paper/80">
+            TxDOT planning AADT · not live congestion
+          </p>
+        </div>
+      ) : null}
+
+      {!presentationMode ? (
+        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1">
+          {(
+            [
+              ["satellite", "Imagery"],
+              ["street", "Streets"],
+              ["gray", "Gray"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setBase(id)}
+              className={cn(
+                "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
+                base === id
+                  ? "bg-gold text-navy"
+                  : "bg-navy/85 text-paper hover:bg-white/10",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-1">
+          {(
+            [
+              ["satellite", "Imagery"],
+              ["street", "Streets"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setBase(id)}
+              className={cn(
+                "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
+                base === id
+                  ? "bg-gold text-navy"
+                  : "bg-navy/85 text-paper hover:bg-white/10",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-navy/55 backdrop-blur-[1px]">
@@ -534,7 +686,7 @@ export function ShiCorridorsMap({
         </div>
       ) : null}
 
-      {trafficToolActive && !loading ? (
+      {trafficToolActive && !loading && !presentationMode ? (
         <div className="absolute bottom-3 left-3 z-10 max-w-[220px] rounded-lg border border-gold/40 bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg">
           <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
             Traffic tool
@@ -545,9 +697,11 @@ export function ShiCorridorsMap({
         </div>
       ) : null}
 
-      <div className="pointer-events-none absolute right-3 bottom-14 z-10 rounded-md bg-navy/80 px-2 py-1 font-mono text-[9px] text-paper/80">
-        AADT {formatAadt(0)} → {formatAadt(40000)}+
-      </div>
+      {!presentationMode ? (
+        <div className="pointer-events-none absolute right-3 bottom-14 z-10 rounded-md bg-navy/80 px-2 py-1 font-mono text-[9px] text-paper/80">
+          AADT {formatAadt(0)} → {formatAadt(40000)}+
+        </div>
+      ) : null}
     </div>
   );
 }

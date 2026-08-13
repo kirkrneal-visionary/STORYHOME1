@@ -28,8 +28,8 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 | **1 (live)** | `ARCHIE-CORRIDORS-TRAFFIC` | Module shell · custom **Traffic** tool · TxDOT AADT stations (≥5 years) · corridor lines · honesty copy |
 | **2 (live)** | `ARCHIE-GROWTH-WATCH` | Evidence-backed watch areas (traffic trend + CAD observation pulse) |
 | **3 (live)** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
-| **B (this)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
-| **C (next)** | Polish + memory | Presentation mode · print map · store our traffic history |
+| **B (live)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
+| **C (this)** | `ARCHIE-CORRIDORS-PRESENTATION` | Presentation mode · print map pack · traffic look memory |
 
 ---
 
@@ -104,6 +104,15 @@ Honesty: your assumptions applied to TxDOT AADT — not a forecast guarantee.
 2. See **TxDOT projects nearby** (cyan lines on map when **TxDOT projects** is on)  
 3. **Study land in Research** — opens that watch box as a Research frame (county locked)  
 4. In Research, run **Analyze** to load parcels inside the box  
+
+## Wave C — Presentation + traffic memory
+
+1. Tap **Presentation** — taller map, big road / watch labels, room-ready chrome  
+2. Tap **Map pack** — print county summary, watch list, top stations, since-last-look  
+3. Open the **Memory** tab — see what changed vs the counts Archie stored last time  
+4. **Remember this look** — overwrite the browser snapshot after you review  
+
+Honesty: memory is stored in this browser only; still planning AADT, not live congestion.
 
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
 
