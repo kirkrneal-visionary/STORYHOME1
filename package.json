@@ -11,6 +11,7 @@
     "test:shi": "node scripts/test-shi-armor.mjs && node scripts/test-shi-backlog.mjs && node scripts/test-shi-prospects.mjs && node scripts/test-shi-farms.mjs && node scripts/test-shi-similar.mjs && node scripts/test-shi-discover-act.mjs && node scripts/test-shi-ownership-churn.mjs && node scripts/test-shi-change-feed.mjs && node scripts/test-shi-cad-evidence.mjs",
     "test:motion": "node scripts/test-motion-routes.mjs",
     "test:corridors": "node scripts/test-corridors.mjs",
+    "smoke:corridors": "node scripts/smoke-corridors-txdot.mjs",
     "cad:list": "node scripts/ingest-cad.mjs --list",
     "cad:ingest": "node scripts/ingest-cad.mjs",
     "cad:refresh": "node scripts/refresh-cad.mjs",

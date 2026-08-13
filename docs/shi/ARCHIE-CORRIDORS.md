@@ -69,3 +69,21 @@ Mapped via FIPS ↔ TxDOT county number / name for queries.
 - Live congestion feeds  
 - Counties beyond the launch 7  
 - Writing CAD from Corridors  
+
+---
+
+## How to test Wave 1 (do not require merge)
+
+Production `storyhome-1-eqmg.vercel.app` will **not** show Corridors until PR merge.
+
+Use the **PR preview** for branch `cursor/archie-corridors-traffic-6cf4` (see PR #68 Vercel comment).  
+If Vercel Deployment Protection asks you to log in, open the preview while signed into the Storyhome Vercel team — or temporarily disable protection on that preview.
+
+Path after login (Pro):
+1. Archie's Intelligence → ribbon **Corridors**  
+2. Or `/portal/intelligence?section=corridors`  
+3. County Polk → Traffic tool on → tap a station / pick from list  
+4. Confirm year chips (cars/day AADT history)  
+
+Smoke (no auth): `node scripts/smoke-corridors-txdot.mjs`  
+

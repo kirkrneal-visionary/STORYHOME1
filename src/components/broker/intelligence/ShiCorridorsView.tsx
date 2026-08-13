@@ -43,7 +43,6 @@ export function ShiCorridorsView({
     try {
       const data = await shiCorridorsTraffic(fips);
       setPayload(data);
-      setCounty(resolveCorridorCounty(data.county.fips));
     } catch (e) {
       setPayload(null);
       setError(
@@ -149,9 +148,16 @@ export function ShiCorridorsView({
       </div>
 
       {error ? (
-        <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-          {error}
-        </p>
+        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => void load(county.fips)}
+            className="mt-2 text-xs font-semibold text-gold underline"
+          >
+            Retry TxDOT load
+          </button>
+        </div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
@@ -162,6 +168,7 @@ export function ShiCorridorsView({
           trafficToolActive={trafficToolActive}
           selectedStationId={selected?.id ?? null}
           onSelectStation={setSelected}
+          loading={loading}
         />
 
         <aside className="flex min-h-0 flex-col gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">

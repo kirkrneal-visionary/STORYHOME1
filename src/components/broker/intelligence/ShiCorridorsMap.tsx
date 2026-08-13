@@ -30,6 +30,7 @@ type Props = {
   trafficToolActive: boolean;
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
+  loading?: boolean;
 };
 
 function aadtColorExpr() {
@@ -61,6 +62,7 @@ export function ShiCorridorsMap({
   trafficToolActive,
   selectedStationId,
   onSelectStation,
+  loading = false,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -257,6 +259,14 @@ export function ShiCorridorsMap({
         { selected: s.id === selectedStationId },
       );
     }
+    const selected = stations.find((s) => s.id === selectedStationId);
+    if (selected) {
+      map.easeTo({
+        center: [selected.lng, selected.lat],
+        zoom: Math.max(map.getZoom(), 12),
+        duration: 550,
+      });
+    }
   }, [selectedStationId, stations, ready]);
 
   useEffect(() => {
@@ -329,13 +339,21 @@ export function ShiCorridorsMap({
         ))}
       </div>
 
-      {trafficToolActive ? (
+      {loading ? (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-navy/55 backdrop-blur-[1px]">
+          <p className="rounded-lg border border-gold/30 bg-navy/90 px-4 py-2 font-mono text-xs font-semibold tracking-wide text-gold uppercase">
+            Loading TxDOT counts…
+          </p>
+        </div>
+      ) : null}
+
+      {trafficToolActive && !loading ? (
         <div className="absolute bottom-3 left-3 z-10 max-w-[220px] rounded-lg border border-gold/40 bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg">
           <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
             Traffic tool
           </p>
           <p className="mt-0.5 text-paper/85">
-            Tap a station for AADT history. Corridor color = current volume.
+            Tap a gold station for cars/day history. Lines = corridor volume.
           </p>
         </div>
       ) : null}

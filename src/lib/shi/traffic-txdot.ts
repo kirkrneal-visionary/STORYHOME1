@@ -1,6 +1,9 @@
 /**
  * TxDOT open-data traffic fetch — Wave 1 Corridors.
  * Free public FeatureServers; no paid plugins.
+ *
+ * Resilience: stations are required; corridor linework is best-effort
+ * so a slow segment query never blanks the whole desk.
  */
 
 import {
@@ -28,6 +31,13 @@ const HIST_FIELDS = [
   "AADT_RPT_HIST_05_QTY",
 ] as const;
 
+/** Keep serverless under Vercel limits — stations first. */
+const STATION_PAGE = 500;
+const STATION_MAX_PAGES = 4;
+const SEGMENT_PAGE = 400;
+const SEGMENT_MAX_PAGES = 3;
+const FETCH_TIMEOUT_MS = 18_000;
+
 type ArcGisFeature = {
   attributes?: Record<string, unknown>;
   geometry?: {
@@ -40,10 +50,12 @@ type ArcGisFeature = {
 async function arcgisQuery(
   url: string,
   params: Record<string, string>,
+  signal?: AbortSignal,
 ): Promise<{ features: ArcGisFeature[] }> {
   const qs = new URLSearchParams({ f: "json", ...params });
   const res = await fetch(`${url}?${qs.toString()}`, {
-    next: { revalidate: 3600 },
+    signal,
+    cache: "no-store",
     headers: { Accept: "application/json" },
   });
   if (!res.ok) {
@@ -59,6 +71,25 @@ async function arcgisQuery(
   return { features: body.features ?? [] };
 }
 
+async function arcgisQueryTimed(
+  url: string,
+  params: Record<string, string>,
+  label: string,
+): Promise<{ features: ArcGisFeature[] }> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await arcgisQuery(url, params, ctrl.signal);
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(`${label} timed out — try Refresh TxDOT`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function num(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   if (typeof v === "string" && v.trim() !== "") {
@@ -68,9 +99,7 @@ function num(v: unknown): number | null {
   return null;
 }
 
-function buildHistory(
-  attrs: Record<string, unknown>,
-): TrafficYearPoint[] {
+function buildHistory(attrs: Record<string, unknown>): TrafficYearPoint[] {
   const latestYear = num(attrs.AADT_RPT_YEAR);
   if (latestYear == null) {
     return HIST_FIELDS.map((field, i) => ({
@@ -92,19 +121,16 @@ function mapStation(
   const stationId = String(a.TRFC_STATN_ID ?? "").trim();
   if (!stationId) return null;
 
-  const lng =
-    num(a.LONGITUDE) ??
-    num(f.geometry?.x) ??
-    null;
-  const lat =
-    num(a.LATITUDE) ??
-    num(f.geometry?.y) ??
-    null;
+  const lng = num(a.LONGITUDE) ?? num(f.geometry?.x) ?? null;
+  const lat = num(a.LATITUDE) ?? num(f.geometry?.y) ?? null;
   if (lng == null || lat == null) return null;
 
   const history = buildHistory(a);
   const latestYear = num(a.AADT_RPT_YEAR);
-  const latestAadt = num(a.AADT_RPT_QTY) ?? history.find((h) => h.aadt != null)?.aadt ?? null;
+  const latestAadt =
+    num(a.AADT_RPT_QTY) ??
+    history.find((h) => h.aadt != null)?.aadt ??
+    null;
 
   return {
     id: `${countyFips}:${stationId}`,
@@ -122,6 +148,17 @@ function mapStation(
   };
 }
 
+/** Thin dense polylines so the JSON payload stays serverless-friendly. */
+function simplifyPath(path: number[][], maxPoints = 48): number[][] {
+  if (path.length <= maxPoints) return path;
+  const step = Math.ceil(path.length / maxPoints);
+  const out: number[][] = [];
+  for (let i = 0; i < path.length; i += step) out.push(path[i]);
+  const last = path[path.length - 1];
+  if (out[out.length - 1] !== last) out.push(last);
+  return out;
+}
+
 function mapSegment(
   f: ArcGisFeature,
   countyFips: string,
@@ -130,11 +167,12 @@ function mapSegment(
   const a = f.attributes ?? {};
   const paths = f.geometry?.paths;
   if (!paths?.length) return null;
+  const simplified = paths.map((p) => simplifyPath(p));
   const routeId = String(a.RIA_RTE_ID ?? a.RTE_NM ?? `seg-${index}`);
   const geometry: GeoJSON.LineString | GeoJSON.MultiLineString =
-    paths.length === 1
-      ? { type: "LineString", coordinates: paths[0] }
-      : { type: "MultiLineString", coordinates: paths };
+    simplified.length === 1
+      ? { type: "LineString", coordinates: simplified[0] }
+      : { type: "MultiLineString", coordinates: simplified };
 
   return {
     id: `${countyFips}:${routeId}:${index}`,
@@ -145,22 +183,26 @@ function mapSegment(
   };
 }
 
-async function fetchAllPages(
+async function fetchPages(
   url: string,
   base: Record<string, string>,
-  pageSize = 1000,
+  opts: { pageSize: number; maxPages: number; label: string },
 ): Promise<ArcGisFeature[]> {
   const out: ArcGisFeature[] = [];
   let offset = 0;
-  for (let guard = 0; guard < 20; guard++) {
-    const page = await arcgisQuery(url, {
-      ...base,
-      resultOffset: String(offset),
-      resultRecordCount: String(pageSize),
-    });
-    out.push(...page.features);
-    if (page.features.length < pageSize) break;
-    offset += pageSize;
+  for (let page = 0; page < opts.maxPages; page++) {
+    const batch = await arcgisQueryTimed(
+      url,
+      {
+        ...base,
+        resultOffset: String(offset),
+        resultRecordCount: String(opts.pageSize),
+      },
+      opts.label,
+    );
+    out.push(...batch.features);
+    if (batch.features.length < opts.pageSize) break;
+    offset += opts.pageSize;
   }
   return out;
 }
@@ -184,20 +226,46 @@ export async function fetchCountyTraffic(
     ...HIST_FIELDS,
   ].join(",");
 
-  const [stationFeatures, segmentFeatures] = await Promise.all([
-    fetchAllPages(STATIONS_URL, {
+  // Stations are the product; segments decorate the map.
+  const stationFeatures = await fetchPages(
+    STATIONS_URL,
+    {
       where: `CNTY_NM='${county.shortName.replace(/'/g, "''")}'`,
       outFields: stationFields,
       returnGeometry: "true",
       outSR: "4326",
-    }),
-    fetchAllPages(SEGMENTS_URL, {
-      where: `CO=${county.txdotCountyNbr}`,
-      outFields: "FID,RIA_RTE_ID,ADT_CUR,CO",
-      returnGeometry: "true",
-      outSR: "4326",
-    }),
-  ]);
+      orderByFields: "AADT_RPT_QTY DESC",
+    },
+    {
+      pageSize: STATION_PAGE,
+      maxPages: STATION_MAX_PAGES,
+      label: "TxDOT station counts",
+    },
+  );
+
+  let segmentFeatures: ArcGisFeature[] = [];
+  let segmentNote: string | null = null;
+  try {
+    segmentFeatures = await fetchPages(
+      SEGMENTS_URL,
+      {
+        where: `CO=${county.txdotCountyNbr}`,
+        outFields: "FID,RIA_RTE_ID,ADT_CUR,CO",
+        returnGeometry: "true",
+        outSR: "4326",
+        orderByFields: "ADT_CUR DESC",
+      },
+      {
+        pageSize: SEGMENT_PAGE,
+        maxPages: SEGMENT_MAX_PAGES,
+        label: "TxDOT corridor lines",
+      },
+    );
+  } catch {
+    segmentNote =
+      "Corridor linework timed out — station AADT history still loaded.";
+    segmentFeatures = [];
+  }
 
   const stations = stationFeatures
     .map((f) => mapStation(f, county.fips))
@@ -207,6 +275,12 @@ export async function fetchCountyTraffic(
   const segments = segmentFeatures
     .map((f, i) => mapSegment(f, county.fips, i))
     .filter((s): s is TrafficCorridorSegment => s != null);
+
+  if (stations.length === 0) {
+    throw new Error(
+      `No TxDOT AADT stations returned for ${county.name}. Try Refresh, or another launch county.`,
+    );
+  }
 
   const yearSet = new Set<number>();
   for (const s of stations) {
@@ -223,8 +297,9 @@ export async function fetchCountyTraffic(
       shortName: county.shortName,
     },
     honesty: CORRIDORS_HONESTY,
-    sourceLabel:
-      "TxDOT Open Data · AADT Annuals (Public View) + 2024 AADT corridor linework",
+    sourceLabel: segmentNote
+      ? `TxDOT Open Data · AADT Annuals (Public View). ${segmentNote}`
+      : "TxDOT Open Data · AADT Annuals (Public View) + 2024 AADT corridor linework",
     stationCount: stations.length,
     segmentCount: segments.length,
     yearsCovered,

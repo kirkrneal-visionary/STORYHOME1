@@ -8,6 +8,8 @@ import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** TxDOT pagination — allow headroom on Pro plan / Fluid. */
+export const maxDuration = 60;
 
 /**
  * ARCHIE-CORRIDORS-TRAFFIC — TxDOT AADT stations + corridor segments
