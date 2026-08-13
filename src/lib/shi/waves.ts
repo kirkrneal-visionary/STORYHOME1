@@ -336,7 +336,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-PRESENTATION",
     name: "Corridors · presentation · traffic memory",
     goal: "Investor-room presentation mode, printable map pack, and browser-stored traffic looks so Archie can show what changed since last time.",
-    status: "current",
+    status: "done",
     frontend: [
       "Presentation mode — big road labels, clean map chrome",
       "Print map pack (county · watch · top stations · memory)",
@@ -356,7 +356,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-OBS-OPS",
     name: "Observation health · empty-state honesty",
     goal: "Make Ownership Stability and County observation feed trustworthy — distinguish migrations pending vs awaiting next pull vs truly quiet.",
-    status: "planned",
+    status: "current",
     frontend: [
       "Observation setup / readiness copy on feed + stability",
       "County pull status tied to freshness",
@@ -373,8 +373,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors presentation + traffic memory. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-PRESENTATION" as const;
+/** Active wave — observation health / empty-state honesty. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-OBS-OPS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
