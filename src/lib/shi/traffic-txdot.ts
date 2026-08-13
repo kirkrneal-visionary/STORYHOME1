@@ -15,6 +15,7 @@ import {
   type TrafficStation,
   type TrafficYearPoint,
 } from "@/lib/shi/corridors";
+import { buildGrowthWatchAreas } from "@/lib/shi/growth-watch";
 
 const STATIONS_URL =
   "https://services.arcgis.com/KTcxiTD9dsQw4r7Z/arcgis/rest/services/TxDOT_AADT_Annuals_(Public_View)/FeatureServer/0/query";
@@ -209,9 +210,11 @@ async function fetchPages(
 
 /**
  * Load stations (5+ year history) + corridor segments for one launch county.
+ * Optionally attach Growth Watch areas (Wave 2) when cadRecentEventCount is passed.
  */
 export async function fetchCountyTraffic(
   countyFips: string,
+  opts?: { cadRecentEventCount?: number },
 ): Promise<CorridorsTrafficPayload> {
   const county = resolveCorridorCounty(countyFips);
 
@@ -290,11 +293,17 @@ export async function fetchCountyTraffic(
   }
   const yearsCovered = [...yearSet].sort((a, b) => b - a);
 
+  const watch = buildGrowthWatchAreas(stations, {
+    countyFips: county.fips,
+    cadRecentEventCount: opts?.cadRecentEventCount,
+  });
+
   return {
     county: {
       fips: county.fips,
       name: county.name,
       shortName: county.shortName,
+      source: county.source,
     },
     honesty: CORRIDORS_HONESTY,
     sourceLabel: segmentNote
@@ -305,5 +314,6 @@ export async function fetchCountyTraffic(
     yearsCovered,
     stations,
     segments,
+    watch,
   };
 }

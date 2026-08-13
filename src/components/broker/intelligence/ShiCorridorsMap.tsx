@@ -16,6 +16,7 @@ import {
   type TrafficCorridorSegment,
   type TrafficStation,
 } from "@/lib/shi/corridors";
+import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
 import { cn } from "@/lib/utils";
 
 const EMPTY_FC: GeoJSON.FeatureCollection = {
@@ -27,11 +28,39 @@ type Props = {
   county: CorridorCounty;
   stations: TrafficStation[];
   segments: TrafficCorridorSegment[];
+  watchAreas?: GrowthWatchArea[];
+  showWatchAreas?: boolean;
+  selectedWatchId?: string | null;
+  onSelectWatch?: (area: GrowthWatchArea | null) => void;
   trafficToolActive: boolean;
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
   loading?: boolean;
 };
+
+function watchPolygon(area: GrowthWatchArea): GeoJSON.Feature {
+  const [minLng, minLat, maxLng, maxLat] = area.bbox;
+  return {
+    type: "Feature",
+    properties: {
+      id: area.id,
+      title: area.title,
+      strength: area.strength,
+    },
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [minLng, minLat],
+          [maxLng, minLat],
+          [maxLng, maxLat],
+          [minLng, maxLat],
+          [minLng, minLat],
+        ],
+      ],
+    },
+  };
+}
 
 function aadtColorExpr() {
   return [
@@ -59,6 +88,10 @@ export function ShiCorridorsMap({
   county,
   stations,
   segments,
+  watchAreas = [],
+  showWatchAreas = true,
+  selectedWatchId = null,
+  onSelectWatch,
   trafficToolActive,
   selectedStationId,
   onSelectStation,
@@ -70,8 +103,12 @@ export function ShiCorridorsMap({
   const [base, setBase] = useState<MapBaseLayer>("satellite");
   const onSelectRef = useRef(onSelectStation);
   onSelectRef.current = onSelectStation;
+  const onWatchRef = useRef(onSelectWatch);
+  onWatchRef.current = onSelectWatch;
   const stationsRef = useRef(stations);
   stationsRef.current = stations;
+  const watchRef = useRef(watchAreas);
+  watchRef.current = watchAreas;
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -98,6 +135,49 @@ export function ShiCorridorsMap({
 
     map.on("load", () => {
       setBaseLayerVisibility(map, "satellite");
+
+      map.addSource("growth-watch", {
+        type: "geojson",
+        data: EMPTY_FC,
+        promoteId: "id",
+      });
+      map.addLayer({
+        id: "growth-watch-fill",
+        type: "fill",
+        source: "growth-watch",
+        paint: {
+          "fill-color": [
+            "match",
+            ["get", "strength"],
+            "strong",
+            "#e07a2f",
+            "notable",
+            MAP_GOLD,
+            "#2a9d8f",
+          ],
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            0.28,
+            0.14,
+          ],
+        },
+      });
+      map.addLayer({
+        id: "growth-watch-line",
+        type: "line",
+        source: "growth-watch",
+        paint: {
+          "line-color": MAP_GOLD,
+          "line-width": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            2.5,
+            1.4,
+          ],
+          "line-opacity": 0.9,
+        },
+      });
 
       map.addSource("corridor-segments", { type: "geojson", data: EMPTY_FC });
       map.addLayer({
@@ -248,7 +328,32 @@ export function ShiCorridorsMap({
         },
       })),
     });
-  }, [stations, segments, ready]);
+
+    const watchSrc = map.getSource(
+      "growth-watch",
+    ) as maplibregl.GeoJSONSource | undefined;
+    watchSrc?.setData({
+      type: "FeatureCollection",
+      features: showWatchAreas ? watchAreas.map(watchPolygon) : [],
+    });
+    for (const a of watchAreas) {
+      try {
+        map.setFeatureState(
+          { source: "growth-watch", id: a.id },
+          { selected: a.id === selectedWatchId },
+        );
+      } catch {
+        /* promoteId not set — selection still works via list */
+      }
+    }
+  }, [
+    stations,
+    segments,
+    watchAreas,
+    showWatchAreas,
+    selectedWatchId,
+    ready,
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -271,41 +376,76 @@ export function ShiCorridorsMap({
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!map || !ready || !selectedWatchId) return;
+    const area = watchAreas.find((a) => a.id === selectedWatchId);
+    if (!area) return;
+    map.fitBounds(
+      [
+        [area.bbox[0], area.bbox[1]],
+        [area.bbox[2], area.bbox[3]],
+      ],
+      { padding: 48, duration: 650, maxZoom: 13 },
+    );
+  }, [selectedWatchId, watchAreas, ready]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || !ready) return;
 
-    const pickStation = (e: maplibregl.MapMouseEvent) => {
-      if (!trafficToolActive) return;
-      const hits = map.queryRenderedFeatures(e.point, {
-        layers: ["traffic-stations-circle", "traffic-stations-halo"],
-      });
-      const id = hits[0]?.properties?.id as string | undefined;
-      if (!id) {
-        onSelectRef.current(null);
-        return;
+    const pick = (e: maplibregl.MapMouseEvent) => {
+      if (trafficToolActive) {
+        const stationHits = map.queryRenderedFeatures(e.point, {
+          layers: ["traffic-stations-circle", "traffic-stations-halo"],
+        });
+        const sid = stationHits[0]?.properties?.id as string | undefined;
+        if (sid) {
+          const station = stationsRef.current.find((s) => s.id === sid) ?? null;
+          onSelectRef.current(station);
+          return;
+        }
       }
-      const station = stationsRef.current.find((s) => s.id === id) ?? null;
-      onSelectRef.current(station);
+      if (showWatchAreas) {
+        const watchHits = map.queryRenderedFeatures(e.point, {
+          layers: ["growth-watch-fill", "growth-watch-line"],
+        });
+        const wid = watchHits[0]?.properties?.id as string | undefined;
+        if (wid) {
+          const area = watchRef.current.find((a) => a.id === wid) ?? null;
+          onWatchRef.current?.(area);
+          return;
+        }
+      }
+      if (trafficToolActive) onSelectRef.current(null);
     };
 
     const onMove = (e: maplibregl.MapMouseEvent) => {
-      if (!trafficToolActive) {
+      const stationHits = trafficToolActive
+        ? map.queryRenderedFeatures(e.point, {
+            layers: ["traffic-stations-circle", "traffic-stations-halo"],
+          })
+        : [];
+      const watchHits = showWatchAreas
+        ? map.queryRenderedFeatures(e.point, {
+            layers: ["growth-watch-fill"],
+          })
+        : [];
+      if (stationHits.length || watchHits.length) {
+        map.getCanvas().style.cursor = "pointer";
+      } else if (trafficToolActive) {
+        map.getCanvas().style.cursor = "crosshair";
+      } else {
         map.getCanvas().style.cursor = "";
-        return;
       }
-      const hits = map.queryRenderedFeatures(e.point, {
-        layers: ["traffic-stations-circle", "traffic-stations-halo"],
-      });
-      map.getCanvas().style.cursor = hits.length ? "pointer" : "crosshair";
     };
 
-    map.on("click", pickStation);
+    map.on("click", pick);
     map.on("mousemove", onMove);
     return () => {
-      map.off("click", pickStation);
+      map.off("click", pick);
       map.off("mousemove", onMove);
       map.getCanvas().style.cursor = "";
     };
-  }, [trafficToolActive, ready]);
+  }, [trafficToolActive, showWatchAreas, ready]);
 
   return (
     <div

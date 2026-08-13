@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, PenLine, Route } from "lucide-react";
+import { Loader2, PenLine, Route, Eye } from "lucide-react";
 import { ShiCorridorsMap } from "@/components/broker/intelligence/ShiCorridorsMap";
 import { shiCorridorsTraffic } from "@/lib/shi/client";
 import {
@@ -15,6 +15,10 @@ import {
   type CorridorsTrafficPayload,
   type TrafficStation,
 } from "@/lib/shi/corridors";
+import {
+  GROWTH_WATCH_HONESTY,
+  type GrowthWatchArea,
+} from "@/lib/shi/growth-watch";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,16 +37,25 @@ export function ShiCorridorsView({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [trafficToolActive, setTrafficToolActive] = useState(true);
+  const [showWatch, setShowWatch] = useState(true);
   const [selected, setSelected] = useState<TrafficStation | null>(null);
+  const [selectedWatch, setSelectedWatch] = useState<GrowthWatchArea | null>(
+    null,
+  );
   const [roadFilter, setRoadFilter] = useState("");
+  const [panel, setPanel] = useState<"station" | "watch">("watch");
 
   const load = useCallback(async (fips: string) => {
     setLoading(true);
     setError("");
     setSelected(null);
+    setSelectedWatch(null);
     try {
       const data = await shiCorridorsTraffic(fips);
       setPayload(data);
+      const first = data.watch?.areas?.[0] ?? null;
+      setSelectedWatch(first);
+      setPanel(first ? "watch" : "station");
     } catch (e) {
       setPayload(null);
       setError(
@@ -77,8 +90,10 @@ export function ShiCorridorsView({
           Access · traffic · growth
         </p>
         <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
-          {CORRIDORS_HONESTY} Growth watch areas and investor scenarios ship in
-          later Corridors waves — this desk is evidence first.
+          {CORRIDORS_HONESTY}
+        </p>
+        <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
+          {GROWTH_WATCH_HONESTY}
         </p>
       </div>
 
@@ -114,6 +129,20 @@ export function ShiCorridorsView({
           >
             <PenLine className="h-4 w-4" />
             Traffic tool
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowWatch((v) => !v)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
+              showWatch
+                ? "bg-gold text-navy"
+                : "border border-hairline text-ink",
+            )}
+            title="Show evidence-backed growth watch areas"
+          >
+            <Eye className="h-4 w-4" />
+            Growth watch
           </button>
           <button
             type="button"
@@ -165,27 +194,75 @@ export function ShiCorridorsView({
           county={county}
           stations={payload?.stations ?? []}
           segments={payload?.segments ?? []}
+          watchAreas={payload?.watch?.areas ?? []}
+          showWatchAreas={showWatch}
+          selectedWatchId={selectedWatch?.id ?? null}
+          onSelectWatch={(area) => {
+            setSelectedWatch(area);
+            if (area) setPanel("watch");
+          }}
           trafficToolActive={trafficToolActive}
           selectedStationId={selected?.id ?? null}
-          onSelectStation={setSelected}
+          onSelectStation={(s) => {
+            setSelected(s);
+            if (s) setPanel("station");
+          }}
           loading={loading}
         />
 
         <aside className="flex min-h-0 flex-col gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">
-          <div>
-            <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-              Station dossier
-            </p>
-            {selected ? (
-              <StationDetail station={selected} />
-            ) : (
-              <p className="mt-2 text-sm text-[var(--muted)]">
-                {trafficToolActive
-                  ? "Activate Traffic tool and tap a station on the map."
-                  : "Turn on Traffic tool, then tap a count station."}
-              </p>
-            )}
+          <div className="flex gap-1 rounded-lg border border-hairline p-0.5">
+            <button
+              type="button"
+              onClick={() => setPanel("watch")}
+              className={cn(
+                "flex-1 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
+                panel === "watch"
+                  ? "bg-gold text-navy"
+                  : "text-[var(--muted)]",
+              )}
+            >
+              Watch areas
+            </button>
+            <button
+              type="button"
+              onClick={() => setPanel("station")}
+              className={cn(
+                "flex-1 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
+                panel === "station"
+                  ? "bg-gold text-navy"
+                  : "text-[var(--muted)]",
+              )}
+            >
+              Station
+            </button>
           </div>
+
+          {panel === "watch" ? (
+            <WatchPanel
+              areas={payload?.watch?.areas ?? []}
+              selected={selectedWatch}
+              onSelect={setSelectedWatch}
+              cadNote={payload?.watch?.cadPulse?.note}
+              onOpenResearch={onOpenResearch}
+              countySource={county.source}
+            />
+          ) : (
+            <div>
+              <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+                Station dossier
+              </p>
+              {selected ? (
+                <StationDetail station={selected} />
+              ) : (
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {trafficToolActive
+                    ? "Tap a station on the map for cars/day history."
+                    : "Turn on Traffic tool, then tap a count station."}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="border-t border-hairline pt-3">
             <div className="flex items-center justify-between gap-2">
@@ -265,6 +342,108 @@ export function ShiCorridorsView({
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function WatchPanel({
+  areas,
+  selected,
+  onSelect,
+  cadNote,
+  onOpenResearch,
+  countySource,
+}: {
+  areas: GrowthWatchArea[];
+  selected: GrowthWatchArea | null;
+  onSelect: (a: GrowthWatchArea) => void;
+  cadNote?: string;
+  onOpenResearch?: () => void;
+  countySource: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
+        Roads that earned attention from published traffic evidence — not a
+        “hot score.”
+      </p>
+      {areas.length === 0 ? (
+        <p className="text-sm text-[var(--muted)]">
+          No watch areas yet for this county (need rising or high-volume TxDOT
+          stations).
+        </p>
+      ) : (
+        <ul className="max-h-40 space-y-1 overflow-y-auto">
+          {areas.map((a) => (
+            <li key={a.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(a)}
+                className={cn(
+                  "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs",
+                  selected?.id === a.id
+                    ? "bg-gold/20 text-ink"
+                    : "hover:bg-[var(--background)] text-[var(--muted)]",
+                )}
+              >
+                <span className="min-w-0 truncate font-semibold text-ink">
+                  {a.title}
+                </span>
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-gold">
+                  {a.strength}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {selected ? (
+        <div className="space-y-2 border-t border-hairline pt-3">
+          <h3 className="font-serif text-xl font-bold text-ink">
+            {selected.title}
+          </h3>
+          <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+            Watch · {selected.strength}
+            {selected.peakAadt != null
+              ? ` · peak ${formatAadt(selected.peakAadt)}/day`
+              : ""}
+          </p>
+          <ul className="space-y-2">
+            {selected.reasons.map((r) => (
+              <li
+                key={`${selected.id}-${r.kind}-${r.label}`}
+                className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2"
+              >
+                <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+                  {r.label}
+                </p>
+                <p className="mt-0.5 text-xs text-ink">{r.detail}</p>
+              </li>
+            ))}
+          </ul>
+          {onOpenResearch ? (
+            <button
+              type="button"
+              onClick={onOpenResearch}
+              className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+            >
+              Study land in Research
+            </button>
+          ) : (
+            <Link
+              href={`/portal/intelligence?source=${encodeURIComponent(countySource)}`}
+              className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+            >
+              Study land in Research
+            </Link>
+          )}
+        </div>
+      ) : null}
+
+      {cadNote ? (
+        <p className="text-[10px] leading-snug text-[var(--muted)]">{cadNote}</p>
+      ) : null}
     </div>
   );
 }

@@ -25,8 +25,8 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 
 | Wave | Id | Ships |
 |---|---|---|
-| **1 (this)** | `ARCHIE-CORRIDORS-TRAFFIC` | Module shell · custom **Traffic** tool · TxDOT AADT stations (≥5 years) · corridor lines · honesty copy |
-| **2** | `ARCHIE-GROWTH-WATCH` | Evidence-backed watch areas (traffic trend + CAD observation + projects) |
+| **1 (live)** | `ARCHIE-CORRIDORS-TRAFFIC` | Module shell · custom **Traffic** tool · TxDOT AADT stations (≥5 years) · corridor lines · honesty copy |
+| **2 (current PR)** | `ARCHIE-GROWTH-WATCH` | Evidence-backed watch areas (traffic trend + CAD observation pulse) |
 | **3** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
 
 ---
@@ -72,18 +72,18 @@ Mapped via FIPS ↔ TxDOT county number / name for queries.
 
 ---
 
-## How to test Wave 1 (do not require merge)
+## How to see Corridors on the live site (Wave 1 — merged)
 
-Production `storyhome-1-eqmg.vercel.app` will **not** show Corridors until PR merge.
+1. Go to https://storyhome-1-eqmg.vercel.app  
+2. Log in as a Pro agent  
+3. Open **Archie's Intelligence**  
+4. Tap **Corridors** in the gold ribbon (or open `/portal/intelligence?section=corridors`)  
+5. Pick a county (start with Polk) → **Traffic tool** → tap a gold station  
+6. Read cars/day history (year chips)  
 
-Use the **PR preview** for branch `cursor/archie-corridors-traffic-6cf4` (see PR #68 Vercel comment).  
-If Vercel Deployment Protection asks you to log in, open the preview while signed into the Storyhome Vercel team — or temporarily disable protection on that preview.
+## Wave 2 — Growth watch
 
-Path after login (Pro):
-1. Archie's Intelligence → ribbon **Corridors**  
-2. Or `/portal/intelligence?section=corridors`  
-3. County Polk → Traffic tool on → tap a station / pick from list  
-4. Confirm year chips (cars/day AADT history)  
+Toggle **Growth watch** on Corridors. Gold/orange boxes on the map = roads with rising or high published traffic. Tap a watch area → see **why** it was flagged (reasons). Not a prediction.
 
-Smoke (no auth): `node scripts/smoke-corridors-txdot.mjs`  
+Smoke: `node scripts/smoke-corridors-txdot.mjs` · `node scripts/test-growth-watch.mjs`  
 

@@ -3,6 +3,7 @@ import {
   isLaunchCorridorFips,
   resolveCorridorCounty,
 } from "@/lib/shi/corridors";
+import { listCountyChanges } from "@/lib/shi/county-changes";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 
@@ -12,8 +13,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * ARCHIE-CORRIDORS-TRAFFIC — TxDOT AADT stations + corridor segments
- * for one launch county (Pro only).
+ * Corridors traffic + Growth Watch (Wave 2) for one launch county (Pro only).
  */
 export async function GET(req: NextRequest) {
   const gate = await requireStoryPro();
@@ -30,14 +30,30 @@ export async function GET(req: NextRequest) {
     const fallback = resolveCorridorCounty(null);
     return NextResponse.json(
       {
-        error: `Corridors Wave 1 supports the launch 7 counties only. Try countyFips=${fallback.fips} (${fallback.name}).`,
+        error: `Corridors supports the launch 7 counties only. Try countyFips=${fallback.fips} (${fallback.name}).`,
       },
       { status: 400 },
     );
   }
 
+  const county = resolveCorridorCounty(fips);
+
   try {
-    const payload = await fetchCountyTraffic(fips);
+    let cadRecentEventCount = 0;
+    try {
+      const since = new Date();
+      since.setDate(since.getDate() - 120);
+      const events = await listCountyChanges(gate.supabase, {
+        source: county.source,
+        limit: 40,
+        since: since.toISOString(),
+      });
+      cadRecentEventCount = events.length;
+    } catch {
+      cadRecentEventCount = 0;
+    }
+
+    const payload = await fetchCountyTraffic(fips, { cadRecentEventCount });
     return NextResponse.json(payload, {
       headers: {
         "Cache-Control": "private, max-age=300",
