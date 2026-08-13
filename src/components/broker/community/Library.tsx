@@ -85,7 +85,7 @@ export function CommunityLibrary({ member }: { member: Member }) {
       </div>
 
       {canCurate && newFolder && (
-        <div className="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-hairline bg-[var(--surface)] p-3">
+        <div className="mb-4 flex flex-wrap items-end gap-2 story-surface p-3">
           <input
             value={folderName}
             onChange={(e) => setFolderName(e.target.value)}
@@ -184,7 +184,7 @@ function ThreadRow({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center justify-between gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4 text-left hover:border-gold/40"
+      className="flex w-full items-center justify-between gap-3 story-surface p-4 text-left hover:border-gold/40"
     >
       <div className="min-w-0">
         <span className="block truncate font-semibold text-ink">
@@ -312,7 +312,7 @@ function LibraryThreadReader({
         ))}
       </ul>
 
-      <div className="mt-5 rounded-xl border border-hairline bg-[var(--surface)] p-4">
+      <div className="mt-5 story-surface p-4">
         <p className="mb-2 text-xs text-[var(--muted)]">
           Keep this living document current — add a note or a law update if
           something changed.

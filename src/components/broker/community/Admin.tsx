@@ -53,7 +53,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
         <h3 className="mb-3 flex items-center gap-2 font-serif text-xl font-bold text-ink">
           <UserCog className="h-5 w-5" /> Roster &amp; team authorization
         </h3>
-        <ul className="divide-y divide-hairline overflow-hidden rounded-xl border border-hairline bg-[var(--surface)]">
+        <ul className="divide-y divide-hairline overflow-hidden story-surface">
           {state.members.map((m) => (
             <li
               key={m.id}
@@ -111,7 +111,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
             return (
               <div
                 key={t.id}
-                className="rounded-xl border border-hairline bg-[var(--surface)] p-4"
+                className="story-surface p-4"
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-serif text-lg font-bold text-ink">
@@ -138,7 +138,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
         </div>
 
         {/* Create team */}
-        <div className="mt-4 space-y-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">
+        <div className="mt-4 space-y-3 story-surface p-4">
           <p className="font-mono text-[11px] font-bold tracking-wider text-[var(--muted)] uppercase">
             Create &amp; authorize a team
           </p>
@@ -147,12 +147,12 @@ export function CommunityAdmin({ member }: { member: Member }) {
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               placeholder="Team name"
-              className="h-10 rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+              className="field-input"
             />
             <select
               value={leaderId}
               onChange={(e) => setLeaderId(e.target.value)}
-              className="h-10 rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+              className="field-input"
             >
               <option value="">Choose team leader…</option>
               {agents.map((a) => (

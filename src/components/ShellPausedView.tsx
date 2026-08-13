@@ -35,7 +35,7 @@ export function ShellPausedView({
         <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
           {eyebrow}
         </p>
-        <div className="mx-auto mt-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-hairline bg-[var(--surface)]">
+        <div className="story-well mx-auto mt-4 flex h-14 w-14 items-center justify-center">
           <Icon className="h-6 w-6 text-[var(--muted)]" />
         </div>
         <h1 className="mt-4 font-serif text-3xl font-bold text-ink">{title}</h1>
@@ -46,7 +46,7 @@ export function ShellPausedView({
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
           <Link
             href={primaryHref}
-            className="inline-flex h-11 items-center rounded-lg bg-gold px-5 text-sm font-bold text-navy"
+            className="story-press inline-flex h-11 items-center rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy"
           >
             {primaryLabel}
           </Link>

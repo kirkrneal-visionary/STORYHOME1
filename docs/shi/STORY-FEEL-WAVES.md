@@ -63,6 +63,7 @@ Pro CRM density, Archie evidence layout polish (Wave 4).
 
 ## Wave 3 — Agent workrooms
 **ID:** `STORY-FEEL-WAVE-3`  
+**Status:** shipping  
 **Rooms:** Story Pro portal, listings tools, CRM surfaces, settings.
 
 ### Process

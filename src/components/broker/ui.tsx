@@ -100,7 +100,7 @@ export function TextField({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+        className="field-input mt-1.5"
       />
       {hint && (
         <span className="mt-1 block text-[11px] text-[var(--muted)]">{hint}</span>
@@ -135,7 +135,7 @@ export function TextAreaField({
         rows={rows}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 w-full rounded-md border border-hairline bg-[var(--background)] px-3 py-2 text-sm text-ink outline-none focus:border-gold"
+        className="field-input mt-1.5 h-auto py-2"
       />
     </label>
   );
@@ -163,7 +163,7 @@ export function SelectField({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+        className="field-input mt-1.5"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -189,7 +189,7 @@ export function CheckboxField({
   return (
     <label
       htmlFor={id}
-      className="flex cursor-pointer items-start gap-3 rounded-md border border-hairline bg-[var(--background)] p-3"
+      className="story-well flex cursor-pointer items-start gap-3 p-3"
     >
       <input
         id={id}

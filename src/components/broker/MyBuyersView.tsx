@@ -145,7 +145,7 @@ function AddBuyerForm({ onSave, onCancel }: { onSave: (b: BuyerInput) => Promise
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof BuyerInput>(k: K, v: BuyerInput[K]) => setF((p) => ({ ...p, [k]: v }));
   return (
-    <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+    <div className="story-surface p-5">
       <div className="grid gap-3 sm:grid-cols-2">
         <TextField id="b-name" label="Name" value={f.name} onChange={(v) => set("name", v)} />
         <SelectField id="b-src" label="Lead source" value={f.source} onChange={(v) => set("source", v)} options={LEAD_SOURCES.map((s) => ({ value: s, label: s }))} />
@@ -198,7 +198,7 @@ function BuyerCard({ buyer, agentId, onChanged }: { buyer: Buyer; agentId: strin
   }, [open, loadActs]);
 
   return (
-    <article className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+    <article className="story-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-bold text-ink">{buyer.name}</p>
@@ -250,7 +250,7 @@ function BuyerCard({ buyer, agentId, onChanged }: { buyer: Buyer; agentId: strin
           ) : (
             <ul className="space-y-1.5">
               {activities.map((a) => (
-                <li key={a.id} className="flex items-start gap-2 rounded-lg border border-hairline bg-[var(--background)] p-2 text-xs">
+                <li key={a.id} className="flex items-start gap-2 story-well p-2 text-xs">
                   {a.kind === "task" && (
                     <input type="checkbox" checked={a.done} onChange={async (e) => { await setActivityDone(a.id, e.target.checked); await loadActs(); }} className="mt-0.5" />
                   )}
@@ -283,7 +283,7 @@ function CampaignPanel({ agentId }: { agentId: string }) {
     `${origin}/?utm_source=${encodeURIComponent(c.utmSource ?? c.channel)}&utm_medium=${encodeURIComponent(c.utmMedium ?? "paid")}&utm_campaign=${encodeURIComponent(c.utmCampaign ?? "")}&ref=${c.id}`;
 
   return (
-    <div className="rounded-2xl border border-hairline bg-[var(--surface)]">
+    <div className="story-surface">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between p-4">
         <span className="inline-flex items-center gap-2 font-serif text-lg font-bold text-ink"><Megaphone className="h-5 w-5 text-[var(--muted)]" /> Lead sources & campaigns</span>
         <ChevronDown className={cn("h-5 w-5 text-[var(--muted)] transition-transform", open && "rotate-180")} />
@@ -302,7 +302,7 @@ function CampaignPanel({ agentId }: { agentId: string }) {
           </div>
           <ul className="mt-3 space-y-2">
             {campaigns.map((c) => (
-              <li key={c.id} className="rounded-lg border border-hairline bg-[var(--background)] p-3">
+              <li key={c.id} className="story-well p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-ink">{c.name} <span className="font-mono text-[10px] uppercase text-[var(--muted)]">· {c.channel}</span></span>
                   <button type="button" onClick={async () => { await deleteCampaign(c.id); await refresh(); }} className="text-xs text-[var(--muted)] hover:text-red-300">Delete</button>
@@ -324,7 +324,7 @@ function CampaignPanel({ agentId }: { agentId: string }) {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] p-2.5">
+    <div className="story-well p-2.5">
       <span className="block font-mono text-[10px] uppercase tracking-wider text-[var(--muted)]">{label}</span>
       <span className="mt-1 block text-xs font-semibold text-ink">{value}</span>
     </div>

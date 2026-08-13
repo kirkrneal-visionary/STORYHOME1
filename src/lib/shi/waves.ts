@@ -617,7 +617,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-FEEL-WAVE-2",
     name: "Feel Wave 2 · consumer rooms calm",
     goal: "Home / Marketplace / Listing wear Wave 1 clothes: hero budget, softer toolbar, sheet filters, full-bleed listing photo, fewer equal boxes.",
-    status: "current",
+    status: "done",
     frontend: [
       "HomeSearchHero first-viewport budget + story-surface search",
       "SearchToolbar story-chrome + field-input; filter sheet on phone",
@@ -630,10 +630,27 @@ export const SHI_WAVES: ShiWave[] = [
       "Brand rewrite",
     ],
   },
+  {
+    id: "STORY-FEEL-WAVE-3",
+    name: "Feel Wave 3 · agent workrooms calm",
+    goal: "Story Pro shell, CRM, listing forms, tools, and settings wear Wave 1 clothes — premium desk density without admin-panel cardboard.",
+    status: "current",
+    frontend: [
+      "BrokerPortal story-chrome tabs",
+      "broker/ui field-input + CRM/listing/tool story-surface/card/well",
+      "Settings + community soft surfaces",
+    ],
+    backend: ["Armor scripts/test-story-feel-wave-3.mjs"],
+    outOfScope: [
+      "Archie Research/Corridors polish (Wave 4)",
+      "New CRM features",
+      "Brand rewrite",
+    ],
+  },
 ];
 
-/** Active wave — consumer rooms clothing. */
-export const ARCHIE_CURRENT_WAVE = "STORY-FEEL-WAVE-2" as const;
+/** Active wave — agent workrooms clothing. */
+export const ARCHIE_CURRENT_WAVE = "STORY-FEEL-WAVE-3" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

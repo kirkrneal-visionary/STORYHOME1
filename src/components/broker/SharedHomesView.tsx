@@ -68,7 +68,7 @@ export function SharedHomesView() {
               key={s.home.id}
               type="button"
               onClick={() => setOpen(s)}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-hairline bg-[var(--surface)] p-4 text-left hover:border-gold/40"
+              className="flex items-center justify-between gap-3 story-surface p-4 text-left hover:border-gold/40"
             >
               <div className="min-w-0">
                 <p className="truncate font-serif text-lg font-bold text-ink">
@@ -129,7 +129,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
       </button>
 
       {/* Profile */}
-      <div className="overflow-hidden rounded-2xl border border-hairline bg-[var(--surface)]">
+      <div className="overflow-hidden story-surface">
         <div className="relative h-44 w-full bg-[var(--nav-surface)]">
           {photoUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -163,7 +163,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
         <Card title="Structures & outbuildings">
           <div className="grid gap-2 sm:grid-cols-2">
             {structures.map((s) => (
-              <div key={s.id} className="rounded-lg border border-hairline bg-[var(--background)] p-3">
+              <div key={s.id} className="story-well p-3">
                 <p className="font-semibold text-ink">{s.name || (s.kind === "Other" ? s.kindOther : s.kind)}</p>
                 <p className="font-mono text-[11px] text-[var(--muted)] uppercase">
                   {s.kind === "Other" ? s.kindOther : s.kind}{s.sizeSqft ? ` · ${s.sizeSqft.toLocaleString()} sqft` : ""}{s.yearBuilt ? ` · built ${s.yearBuilt}` : ""}
@@ -195,7 +195,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
         ) : (
           <ol className="space-y-2">
             {records.map((r) => (
-              <li key={r.id} className="rounded-lg border border-hairline bg-[var(--background)] p-3">
+              <li key={r.id} className="story-well p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-ink">{r.title}</p>
@@ -238,7 +238,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
             ) : (
               <ul className="space-y-2">
                 {docs.map((d) => (
-                  <li key={d.id} className="flex items-center justify-between rounded-lg border border-hairline bg-[var(--background)] p-3">
+                  <li key={d.id} className="flex items-center justify-between story-well p-3">
                     <span className="flex items-center gap-2 text-sm text-ink"><FileText className="h-4 w-4 text-[var(--muted)]" /> {d.title}</span>
                     {d.filePath && (
                       <button type="button" onClick={async () => { const url = await signedUrlFor(d.filePath!); if (url) window.open(url, "_blank"); }} className="text-xs font-semibold text-gold">View</button>
@@ -260,7 +260,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+    <section className="story-surface p-5">
       <h4 className="mb-3 font-serif text-lg font-bold text-ink">{title}</h4>
       {children}
     </section>
@@ -269,7 +269,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+    <div className="story-well px-3 py-2">
       <p className="text-[var(--muted)] uppercase">{label}</p>
       <p className="mt-0.5 text-sm font-semibold text-ink">{value}</p>
     </div>

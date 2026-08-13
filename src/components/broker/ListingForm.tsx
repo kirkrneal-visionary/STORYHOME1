@@ -60,7 +60,7 @@ const ListingCadMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-hairline bg-[var(--surface)] text-sm text-[var(--muted)]">
+      <div className="flex min-h-[320px] items-center justify-center story-surface text-sm text-[var(--muted)]">
         Loading CAD map…
       </div>
     ),
@@ -207,7 +207,7 @@ export function ListingForm({
       </div>
 
       {/* MLS import */}
-      <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+      <section className="story-surface p-4">
         <button
           type="button"
           onClick={() => setImportOpen((o) => !o)}
@@ -223,7 +223,7 @@ export function ListingForm({
               onChange={(e) => setImportText(e.target.value)}
               rows={6}
               placeholder={`Paste MLS detail lines, e.g.\nAddress: 512 Pine Ave\nCity: Lufkin\nCounty: Angelina County\nPrice: $425,000\nBeds: 3\nBaths: 2\nSqFt: 1,850\nYear Built: 2006\nMLS#: ETX2048`}
-              className="w-full rounded-md border border-hairline bg-[var(--background)] px-3 py-2 font-mono text-xs text-ink outline-none focus:border-gold"
+              className="field-input h-auto py-2 font-mono text-xs"
             />
             <div className="mt-2 flex items-center gap-3">
               <button
@@ -455,7 +455,7 @@ export function ListingForm({
                     value={photo}
                     onChange={(e) => updatePhoto(i, e.target.value)}
                     placeholder="https://…/photo.jpg"
-                    className="h-9 flex-1 rounded-md border border-hairline bg-[var(--background)] px-3 font-mono text-xs text-ink outline-none focus:border-gold"
+                    className="field-input h-9 flex-1 font-mono text-xs"
                   />
                   {i === 0 ? (
                     <span className="inline-flex items-center gap-1 rounded bg-gold px-2 py-1 font-mono text-[10px] font-bold text-navy uppercase">
@@ -563,7 +563,7 @@ function CompliancePanel({
   warningCount: number;
 }) {
   return (
-    <div className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+    <div className="story-surface p-4">
       <div className="flex items-center gap-2">
         {canPublish ? (
           <ShieldCheck className="h-5 w-5 text-teal-soft" />
@@ -718,7 +718,7 @@ function TractManager({
   const sum = summarizeTracts(tracts);
 
   return (
-    <section className="flex h-full flex-col rounded-xl border border-hairline bg-[var(--surface)] p-4">
+    <section className="flex h-full flex-col story-surface p-4">
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-gold" />
         <h4 className="text-sm font-semibold text-ink">
@@ -736,7 +736,7 @@ function TractManager({
           value={searchField}
           onChange={(e) => setSearchField(e.target.value as CadSearchField)}
           title="Search field"
-          className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+          className="field-input h-10 w-auto"
         >
           {CAD_SEARCH_FIELDS.map((f) => (
             <option key={f.id} value={f.id}>
@@ -754,13 +754,13 @@ function TractManager({
             }
           }}
           placeholder={cadSearchPlaceholder(searchField)}
-          className="h-10 min-w-[200px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+          className="field-input h-10 min-w-[200px] flex-1"
         />
         <select
           value={countyFilter}
           onChange={(e) => setCountyFilter(e.target.value)}
           title="Optional: narrow to one county"
-          className="h-10 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink"
+          className="field-input h-10 w-auto"
         >
           <option value="">All Texas counties</option>
           {AVAILABLE_COUNTIES.map((c) => (
@@ -797,7 +797,7 @@ function TractManager({
                 key={`${p.source}-${p.propId}`}
                 onMouseEnter={() => onPreview?.(p)}
                 onFocus={() => onPreview?.(p)}
-                className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
+                className="flex items-center justify-between gap-3 story-well p-2.5"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-ink">
@@ -838,7 +838,7 @@ function TractManager({
             return (
               <div
                 key={`${t.source}-${t.propId}`}
-                className="flex items-center justify-between gap-2 rounded-lg border border-hairline bg-[var(--background)] p-2.5"
+                className="flex items-center justify-between gap-2 story-well p-2.5"
               >
                 <div className="flex min-w-0 items-center gap-2">
                   <span
