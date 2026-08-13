@@ -5,6 +5,7 @@ import { isLaunchCorridorFips, resolveCorridorCounty } from "@/lib/shi/corridors
 import { analyzeArea } from "@/lib/shi/area";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
+import { fetchTxdotProjectsNear } from "@/lib/shi/txdot-projects";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -78,6 +79,8 @@ export async function POST(request: Request) {
   let watchAreas: NonNullable<
     Awaited<ReturnType<typeof fetchCountyTraffic>>["watch"]
   >["areas"] = [];
+  let cadPulseAvailable = false;
+  let cadPulseNote: string | null = null;
   let trafficError: string | null = null;
   try {
     const traffic = await fetchCountyTraffic(county.fips, {
@@ -85,9 +88,24 @@ export async function POST(request: Request) {
     });
     stations = traffic.stations;
     watchAreas = traffic.watch?.areas ?? [];
+    cadPulseAvailable = Boolean(traffic.watch?.cadPulse?.available);
+    cadPulseNote = traffic.watch?.cadPulse?.note ?? null;
   } catch (e) {
     trafficError =
       e instanceof Error ? e.message : "Traffic history temporarily unavailable";
+  }
+
+  let projectCount = 0;
+  let projectsAvailable = true;
+  try {
+    const proj = await fetchTxdotProjectsNear({
+      bbox: county.bbox,
+      county,
+      limit: 40,
+    });
+    projectCount = proj.projectCount;
+  } catch {
+    projectsAvailable = false;
   }
 
   const result = composeCorridorAnalysis({
@@ -99,6 +117,10 @@ export async function POST(request: Request) {
     watchAreas,
     trafficAvailable: !trafficError,
     trafficError,
+    projectCount,
+    projectsAvailable,
+    cadPulseAvailable,
+    cadPulseNote,
   });
 
   return NextResponse.json({ analysis: result });

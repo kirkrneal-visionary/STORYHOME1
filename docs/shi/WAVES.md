@@ -4,14 +4,15 @@
 **Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)
 
 ## Current
-### ARCHIE-CORRIDORS-VALIDATION
-Backtest harness · coverage + agreement confidence · no fake accuracy %
+### ARCHIE-CORRIDORS-ADAPTERS
+Pluggable SOURCE adapters · CAD + TxDOT live · planned feeds never faked · private quality feedback
 
 ## Next
-- Optional lawful data adapters  
+- More lawful adapters only when licensed/useful  
 - ARCHIE-OBS-OPS (site-wide observation honesty)
 
 ## Done
+- Validation · honest confidence  
 - Map-native toolbox + draw lock  
 - Corridors V.1 / V.2  
 - Traffic · Watch · Scenarios · Land loop · Presentation/memory  

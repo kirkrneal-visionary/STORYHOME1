@@ -420,7 +420,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-VALIDATION",
     name: "Corridors · validation · honest confidence",
     goal: "Backtest harness + confidence from coverage, agreement, and labeled outcomes — never hard-coded accuracy theater.",
-    status: "current",
+    status: "done",
     frontend: [
       "Validation block on analysis card",
       "Coverage / agreement scores",
@@ -434,6 +434,26 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Fake 87% accuracy claims",
       "Auto-rewrite production algorithms from unchecked AI",
+    ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-ADAPTERS",
+    name: "Corridors · pluggable evidence sources",
+    goal: "SOURCE adapter registry — CAD + TxDOT live; future feeds planned/unavailable never faked; professional feedback channel that does not mutate CAD.",
+    status: "current",
+    frontend: [
+      "Evidence sources strip on analysis card",
+      "Planned adapters listed but not treated as present",
+      "Private quality flags (stale / questionable / missing / incorrect)",
+    ],
+    backend: [
+      "corridor-sources adapter registry + resolveSourcesForAnalysis",
+      "composeCorridorAnalysis includes sources",
+      "corridor-feedback local quality ledger (no CAD writes)",
+    ],
+    outOfScope: [
+      "Pretending permits/zoning/MLS are connected",
+      "Mutating county records from feedback",
     ],
   },
   {
@@ -457,8 +477,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors validation + honest confidence. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-VALIDATION" as const;
+/** Active wave — Corridors pluggable evidence sources. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-ADAPTERS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

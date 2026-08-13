@@ -20,6 +20,11 @@ import {
   readProductionBacktests,
   type ValidatedConfidence,
 } from "@/lib/shi/corridor-validation";
+import {
+  CORRIDOR_SOURCE_HONESTY,
+  resolveSourcesForAnalysis,
+  type CorridorSourceUse,
+} from "@/lib/shi/corridor-sources";
 
 /** Version every scoring methodology — newer ≠ automatically better. */
 export const CORRIDOR_SIGNAL_MODEL = "corridors-v1.0.0" as const;
@@ -80,6 +85,9 @@ export type CorridorAnalysisResult = {
     watchTitles: string[];
     area: ShiAreaAnalysis;
   };
+  /** Pluggable SOURCE strip — live / degraded / unavailable / planned */
+  sources: CorridorSourceUse[];
+  sourceHonesty: string;
   limitations: string[];
 };
 
@@ -131,6 +139,10 @@ export function composeCorridorAnalysis(opts: {
   watchAreas?: GrowthWatchArea[];
   trafficAvailable?: boolean;
   trafficError?: string | null;
+  projectCount?: number;
+  projectsAvailable?: boolean;
+  cadPulseAvailable?: boolean;
+  cadPulseNote?: string | null;
 }): CorridorAnalysisResult {
   const inArea = stationsInBoundary(opts.stations, opts.boundary);
   const watches = watchesOverlappingBoundary(
@@ -376,8 +388,20 @@ export function composeCorridorAnalysis(opts: {
     interpretation += ` Overlaps ${watches.length} growth watch areas.`;
   }
 
+  const sources = resolveSourcesForAnalysis({
+    parcelCount: opts.area.parcelCount,
+    trafficAvailable: trafficOk,
+    trafficError: opts.trafficError,
+    stationCount: inArea.length,
+    projectCount: opts.projectCount ?? 0,
+    projectsAvailable: opts.projectsAvailable,
+    cadPulseAvailable: opts.cadPulseAvailable,
+    cadPulseNote: opts.cadPulseNote,
+  });
+
   const limitations: string[] = [
     CORRIDOR_ANALYSIS_HONESTY,
+    CORRIDOR_SOURCE_HONESTY,
     "CAD market value is not a sale price or appraisal guarantee.",
     "TxDOT AADT is annual planning average — not live congestion.",
     "Fragmentation is inferred from acreage distribution, not recorded deed splits.",
@@ -436,6 +460,8 @@ export function composeCorridorAnalysis(opts: {
       watchTitles: watches.map((w) => w.title),
       area: opts.area,
     },
+    sources,
+    sourceHonesty: CORRIDOR_SOURCE_HONESTY,
     limitations,
   };
 }
