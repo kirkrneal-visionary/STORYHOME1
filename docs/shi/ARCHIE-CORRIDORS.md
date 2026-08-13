@@ -137,5 +137,11 @@ Default map emphasizes corridor lines + growth patterns — not hundreds of stat
 
 Report version: `corridors-report-v1.0.0` · Signal model still `corridors-v1.0.0`
 
+## Map toolbox (precision draw)
+
+Tools live **on the map** (not page chrome): Navigate · Freehand · Box · Radius · Traffic.
+
+While Freehand / Box / Radius is active, map pan/rotate/touch-drag is **hard-locked** so strokes are never stolen. Undo / Done / Cancel on freehand. Escape cancels.
+
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
 

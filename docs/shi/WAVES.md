@@ -4,15 +4,16 @@
 **Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)
 
 ## Current
-### ARCHIE-CORRIDORS-V2
-Compare two areas · Save study (Vault) · Development Intelligence Report
+### ARCHIE-CORRIDORS-MAP-TOOLBOX
+Map-native toolbox · hard draw-mode pan lock · near-precision freehand
 
 ## Next
-- Validation / model backtest (honest confidence)
-- Optional data adapters when licensed
+- Validation / model backtest  
+- Optional data adapters  
 
 ## Done
 - Corridors V.1 Draw → Analyze → Explain  
+- Corridors V.2 Compare · Save · Report  
 - Traffic · Watch · Scenarios · Land loop · Presentation/memory  
 
 ## Out of scope forever

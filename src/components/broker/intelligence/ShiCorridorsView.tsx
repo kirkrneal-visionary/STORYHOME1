@@ -4,15 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2,
-  PenLine,
   Route,
   Eye,
   Presentation,
   Printer,
   BookmarkCheck,
-  Pencil,
-  Square,
-  Compass,
 } from "lucide-react";
 import {
   ShiCorridorsMap,
@@ -435,15 +431,9 @@ export function ShiCorridorsView({
     });
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
-  const startDraw = (mode: "freehand" | "rectangle") => {
-    setTool(mode);
-    setPresentationMode(false);
-    setDrawWarn("");
-  };
-
   return (
-    <div className="space-y-4" data-corridors-version="v1">
-      {/* Hero */}
+    <div className="space-y-4" data-corridors-version="v2-toolbox">
+      {/* Hero — tools live on the map, not here */}
       <div className="rounded-xl border border-hairline bg-[var(--surface)] px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
           Corridor intelligence
@@ -452,53 +442,15 @@ export function ShiCorridorsView({
           See where movement may become opportunity.
         </h2>
         <p className="mt-2 max-w-3xl text-sm text-[var(--muted)]">
-          Explore traffic patterns and property activity together — or draw your
-          own area and let Archie organize the available signals into a clearer
-          picture of change.
+          Explore traffic patterns and property activity together — or use the
+          map toolbox to draw your own area and let Archie organize the signals.
         </p>
         <p className="mt-2 max-w-3xl text-xs text-[var(--muted)]">
           {CORRIDOR_ANALYSIS_HONESTY}
         </p>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => startDraw("freehand")}
-            className={cn(
-              "inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-bold",
-              tool === "freehand"
-                ? "bg-gold text-navy"
-                : "bg-gold text-navy hover:brightness-105",
-            )}
-          >
-            <Pencil className="h-4 w-4" />
-            Draw an area
-          </button>
-          <button
-            type="button"
-            onClick={() => startDraw("rectangle")}
-            className={cn(
-              "inline-flex h-11 items-center gap-2 rounded-lg border px-4 text-sm font-semibold",
-              tool === "rectangle"
-                ? "border-gold bg-gold text-navy"
-                : "border-hairline text-ink",
-            )}
-          >
-            <Square className="h-4 w-4" />
-            Box
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTool("pan");
-              setExploreOpen(true);
-            }}
-            className="inline-flex h-11 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            <Compass className="h-4 w-4" />
-            Explore map
-          </button>
-        </div>
+        <p className="mt-3 font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+          Map toolbox · Freehand · Box · Radius · pan locked while drawing
+        </p>
       </div>
 
       {/* How Archie reads */}
@@ -536,22 +488,6 @@ export function ShiCorridorsView({
         </label>
 
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              setTool((t) => (t === "traffic" ? "pan" : "traffic"))
-            }
-            className={cn(
-              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
-              tool === "traffic"
-                ? "bg-gold text-navy"
-                : "border border-hairline text-ink",
-            )}
-            title="Show and select traffic count stations"
-          >
-            <PenLine className="h-4 w-4" />
-            Traffic evidence
-          </button>
           <button
             type="button"
             onClick={() => setShowWatch((v) => !v)}
@@ -664,6 +600,12 @@ export function ShiCorridorsView({
           projects={projects}
           showProjects={showProjects}
           tool={tool}
+          onToolChange={(t) => {
+            setTool(t);
+            setPresentationMode(false);
+            setDrawWarn("");
+            if (t === "traffic" || t === "pan") setExploreOpen(true);
+          }}
           selectedStationId={selected?.id ?? null}
           onSelectStation={(s) => {
             setSelected(s);

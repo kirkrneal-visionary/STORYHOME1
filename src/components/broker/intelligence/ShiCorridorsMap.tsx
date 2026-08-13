@@ -1,8 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import {
+  Circle,
+  Hand,
+  PenTool,
+  Route,
+  Square,
+  Undo2,
+  Check,
+  X,
+} from "lucide-react";
 import {
   buildStoryMapStyle,
   MAP_GOLD,
@@ -14,13 +24,16 @@ import type { DrawnBoundary, LatLng } from "@/lib/geo";
 import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
 import {
+  CORRIDOR_FREEHAND_PRECISION,
   emptyFreehandSession,
   freehandForceSeal,
   freehandPointerDown,
   freehandPointerMove,
   freehandSealPoints,
+  freehandUndoLast,
   type FreehandSession,
 } from "@/lib/map-draw/freehand-session";
+import { isDrawTool, setMapNavigationLocked } from "@/lib/map-draw/nav-lock";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import {
   formatAadt,
@@ -37,7 +50,12 @@ const EMPTY_FC: GeoJSON.FeatureCollection = {
   features: [],
 };
 
-export type CorridorMapTool = "pan" | "freehand" | "rectangle" | "traffic";
+export type CorridorMapTool =
+  | "pan"
+  | "freehand"
+  | "rectangle"
+  | "radius"
+  | "traffic";
 
 type Props = {
   county: CorridorCounty;
@@ -50,12 +68,11 @@ type Props = {
   projects?: TxdotProject[];
   showProjects?: boolean;
   tool: CorridorMapTool;
-  onToolChange?: (tool: CorridorMapTool) => void;
+  onToolChange: (tool: CorridorMapTool) => void;
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
   onBoundaryDrawn?: (boundary: DrawnBoundary) => void;
   analysisBoundary?: DrawnBoundary | null;
-  /** Force station dots (evidence / traffic tool / zoom handled inside) */
   revealStations?: boolean;
   loading?: boolean;
   presentationMode?: boolean;
@@ -157,7 +174,8 @@ function aadtColorExpr() {
 }
 
 /**
- * Corridors V.1 map — patterns first; stations progressive; Draw an Area.
+ * Corridors map — toolbox lives ON the map.
+ * Draw modes hard-lock pan so strokes never get stolen.
  */
 export function ShiCorridorsMap({
   county,
@@ -170,6 +188,7 @@ export function ShiCorridorsMap({
   projects = [],
   showProjects = true,
   tool,
+  onToolChange,
   selectedStationId,
   onSelectStation,
   onBoundaryDrawn,
@@ -184,12 +203,20 @@ export function ShiCorridorsMap({
   const [ready, setReady] = useState(false);
   const [base, setBase] = useState<MapBaseLayer>("satellite");
   const [zoom, setZoom] = useState(9);
+  const [radiusMiles, setRadiusMiles] = useState(1);
+  const [localWarn, setLocalWarn] = useState("");
+  const [draftActive, setDraftActive] = useState(false);
+  const [canClose, setCanClose] = useState(false);
+  const [vertexCount, setVertexCount] = useState(0);
+
   const onSelectRef = useRef(onSelectStation);
   onSelectRef.current = onSelectStation;
   const onWatchRef = useRef(onSelectWatch);
   onWatchRef.current = onSelectWatch;
   const onBoundaryRef = useRef(onBoundaryDrawn);
   onBoundaryRef.current = onBoundaryDrawn;
+  const onToolRef = useRef(onToolChange);
+  onToolRef.current = onToolChange;
   const stationsRef = useRef(stations);
   stationsRef.current = stations;
   const watchRef = useRef(watchAreas);
@@ -206,6 +233,62 @@ export function ShiCorridorsMap({
     zoom >= 11 ||
     Boolean(selectedStationId);
 
+  const warn = localWarn || drawWarn;
+  const drawing = isDrawTool(tool);
+
+  function clearDrafts(map?: maplibregl.Map | null) {
+    const m = map ?? mapRef.current;
+    freehandRef.current = emptyFreehandSession();
+    boxCornerRef.current = null;
+    setDraftActive(false);
+    setCanClose(false);
+    setVertexCount(0);
+    setLocalWarn("");
+    (m?.getSource("corridor-freehand") as maplibregl.GeoJSONSource | undefined)?.setData(
+      EMPTY_FC,
+    );
+    (m?.getSource("corridor-box") as maplibregl.GeoJSONSource | undefined)?.setData(
+      EMPTY_FC,
+    );
+  }
+
+  function selectTool(next: CorridorMapTool) {
+    const map = mapRef.current;
+    if (drawing && next !== tool && draftActive) {
+      // Switching tools discards unfinished draft — intentional reset.
+      clearDrafts(map);
+    }
+    if (next === "pan" || next === "traffic") {
+      clearDrafts(map);
+    }
+    onToolChange(next);
+  }
+
+  function finishFreehand(force: boolean) {
+    const map = mapRef.current;
+    if (!map) return;
+    const sealed = force
+      ? freehandForceSeal(freehandRef.current)
+      : freehandSealPoints(freehandRef.current);
+    if (!sealed) {
+      setLocalWarn(
+        force
+          ? "Need a few more points — keep tracing, then Done."
+          : "Close near the start point, or tap Done when ready.",
+      );
+      return;
+    }
+    const boundary: DrawnBoundary = { type: "polygon", points: sealed };
+    const cap = validateBoundaryCaps(boundary);
+    if (!cap.ok) {
+      setLocalWarn(cap.error);
+      return;
+    }
+    clearDrafts(map);
+    onBoundaryRef.current?.(boundary);
+    onToolRef.current("pan");
+  }
+
   useEffect(() => {
     if (!containerRef.current) return;
     const map = new maplibregl.Map({
@@ -217,6 +300,8 @@ export function ShiCorridorsMap({
       ],
       fitBoundsOptions: { padding: 36 },
       maxZoom: 22,
+      pitchWithRotate: false,
+      dragRotate: false,
       pixelRatio: Math.min(
         typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
         2,
@@ -285,7 +370,6 @@ export function ShiCorridorsMap({
           "text-font": ["Open Sans Bold", "Arial Unicode MS Regular"],
           "text-size": 13,
           "text-max-width": 12,
-          "text-allow-overlap": false,
         },
         paint: {
           "text-color": MAP_GOLD,
@@ -399,8 +483,8 @@ export function ShiCorridorsMap({
         source: "corridor-freehand",
         paint: {
           "line-color": MAP_GOLD,
-          "line-width": 2.2,
-          "line-opacity": 0.95,
+          "line-width": 2.4,
+          "line-opacity": 0.98,
         },
       });
       map.addLayer({
@@ -409,10 +493,22 @@ export function ShiCorridorsMap({
         source: "corridor-freehand",
         filter: ["==", ["get", "kind"], "vertex"],
         paint: {
-          "circle-radius": 3,
+          "circle-radius": 2.75,
           "circle-color": MAP_GOLD,
           "circle-stroke-width": 1,
           "circle-stroke-color": MAP_NAVY,
+        },
+      });
+      map.addLayer({
+        id: "corridor-freehand-start",
+        type: "circle",
+        source: "corridor-freehand",
+        filter: ["==", ["get", "kind"], "start"],
+        paint: {
+          "circle-radius": 5,
+          "circle-color": "#fff8e7",
+          "circle-stroke-width": 2,
+          "circle-stroke-color": MAP_GOLD,
         },
       });
 
@@ -428,7 +524,7 @@ export function ShiCorridorsMap({
         id: "corridor-box-line",
         type: "line",
         source: "corridor-box",
-        paint: { "line-color": MAP_GOLD, "line-width": 2 },
+        paint: { "line-color": MAP_GOLD, "line-width": 2.2 },
       });
 
       map.addSource("parcels", {
@@ -464,6 +560,22 @@ export function ShiCorridorsMap({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* Hard navigation lock for entire draw mode — not only mid-stroke */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    setMapNavigationLocked(map, drawing);
+    map.getCanvas().style.cursor = drawing
+      ? "crosshair"
+      : tool === "traffic"
+        ? "pointer"
+        : "";
+    return () => {
+      setMapNavigationLocked(map, false);
+      map.getCanvas().style.cursor = "";
+    };
+  }, [drawing, tool, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -611,7 +723,7 @@ export function ShiCorridorsMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (tool === "freehand" || tool === "rectangle") return;
+    if (drawing) return;
 
     const pick = (e: maplibregl.MapMouseEvent) => {
       if (tool === "traffic" && stationsVisible) {
@@ -645,93 +757,122 @@ export function ShiCorridorsMap({
     return () => {
       map.off("click", pick);
     };
-  }, [tool, showWatchAreas, stationsVisible, ready]);
+  }, [tool, showWatchAreas, stationsVisible, ready, drawing]);
 
-  /* Freehand draw */
+  /* Freehand — precision + locked pan for whole mode */
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     const fhSrc = () =>
       map.getSource("corridor-freehand") as maplibregl.GeoJSONSource | undefined;
 
-    if (tool !== "freehand") {
-      freehandRef.current = emptyFreehandSession();
-      fhSrc()?.setData(EMPTY_FC);
-      return;
-    }
+    if (tool !== "freehand") return;
 
     const paint = (points: LatLng[], tip: LatLng | null, close: boolean) => {
       fhSrc()?.setData(buildFreehandGeoJSON(points, tip, close));
+      setVertexCount(points.length);
+      setDraftActive(points.length > 0);
+      setCanClose(close);
+      if (points.length >= 3) {
+        const cap = validateBoundaryCaps({ type: "polygon", points });
+        setLocalWarn(cap.ok ? "" : cap.error);
+      }
     };
 
-    const sealIfReady = (force = false) => {
-      const sealed = force
-        ? freehandForceSeal(freehandRef.current)
-        : freehandSealPoints(freehandRef.current);
-      if (!sealed) return false;
-      const boundary: DrawnBoundary = { type: "polygon", points: sealed };
-      const cap = validateBoundaryCaps(boundary);
-      if (!cap.ok) return false;
-      onBoundaryRef.current?.(boundary);
-      freehandRef.current = emptyFreehandSession();
-      fhSrc()?.setData(EMPTY_FC);
-      return true;
+    const tipFrom = (e: maplibregl.MapMouseEvent | maplibregl.MapTouchEvent) => {
+      const ll = e.lngLat;
+      return { lat: ll.lat, lng: ll.lng } as LatLng;
     };
 
-    const onDown = (e: maplibregl.MapMouseEvent) => {
+    const onDown = (e: maplibregl.MapMouseEvent | maplibregl.MapTouchEvent) => {
       e.preventDefault();
-      map.dragPan.disable();
-      const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-      freehandRef.current = freehandPointerDown(map, freehandRef.current, pt);
+      const pt = tipFrom(e);
+      freehandRef.current = freehandPointerDown(
+        map,
+        freehandRef.current,
+        pt,
+        CORRIDOR_FREEHAND_PRECISION,
+      );
       paint(freehandRef.current.points, null, false);
     };
-    const onMove = (e: maplibregl.MapMouseEvent) => {
+    const onMove = (e: maplibregl.MapMouseEvent | maplibregl.MapTouchEvent) => {
       if (!freehandRef.current.points.length) return;
-      const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-      freehandRef.current = freehandPointerMove(map, freehandRef.current, tip);
-      paint(freehandRef.current.points, tip, freehandRef.current.canClose);
+      const tip = tipFrom(e);
+      freehandRef.current = freehandPointerMove(
+        map,
+        freehandRef.current,
+        tip,
+        CORRIDOR_FREEHAND_PRECISION,
+      );
+      paint(
+        freehandRef.current.points,
+        tip,
+        freehandRef.current.canClose,
+      );
+      // Snap-close only while actively stroking — never enable pan
       if (freehandRef.current.active && freehandRef.current.canClose) {
-        sealIfReady();
+        finishFreehand(false);
       }
     };
     const onUp = () => {
-      const fh = freehandRef.current;
-      if (!fh.active) return;
-      freehandRef.current = { ...fh, active: false };
-      map.dragPan.enable();
-      if (freehandRef.current.canClose) sealIfReady();
+      if (!freehandRef.current.active) return;
+      freehandRef.current = { ...freehandRef.current, active: false };
+      paint(
+        freehandRef.current.points,
+        null,
+        freehandRef.current.canClose,
+      );
+      if (freehandRef.current.canClose) finishFreehand(false);
     };
 
     map.on("mousedown", onDown);
     map.on("mousemove", onMove);
     map.on("mouseup", onUp);
-    map.getCanvas().style.cursor = "crosshair";
+    map.on("touchstart", onDown);
+    map.on("touchmove", onMove);
+    map.on("touchend", onUp);
+
     return () => {
       map.off("mousedown", onDown);
       map.off("mousemove", onMove);
       map.off("mouseup", onUp);
-      map.dragPan.enable();
-      map.getCanvas().style.cursor = "";
+      map.off("touchstart", onDown);
+      map.off("touchmove", onMove);
+      map.off("touchend", onUp);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tool, ready]);
 
-  /* Rectangle draw */
+  /* Rectangle + radius */
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+    if (tool !== "rectangle" && tool !== "radius") return;
+
     const boxSrc = () =>
       map.getSource("corridor-box") as maplibregl.GeoJSONSource | undefined;
 
-    if (tool !== "rectangle") {
-      boxCornerRef.current = null;
-      boxSrc()?.setData(EMPTY_FC);
-      return;
-    }
-
     const onClick = (e: maplibregl.MapMouseEvent) => {
       const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      if (tool === "radius") {
+        const boundary: DrawnBoundary = {
+          type: "circle",
+          center: tip,
+          radiusMiles,
+        };
+        const cap = validateBoundaryCaps(boundary);
+        if (!cap.ok) {
+          setLocalWarn(cap.error);
+          return;
+        }
+        clearDrafts(map);
+        onBoundaryRef.current?.(boundary);
+        onToolRef.current("pan");
+        return;
+      }
       if (!boxCornerRef.current) {
         boxCornerRef.current = tip;
+        setDraftActive(true);
         boxSrc()?.setData(buildBoxDraftGeoJSON(tip, null));
         return;
       }
@@ -744,26 +885,98 @@ export function ShiCorridorsMap({
       };
       const boundary: DrawnBoundary = { type: "rectangle", bounds };
       const cap = validateBoundaryCaps(boundary);
-      boxCornerRef.current = null;
-      boxSrc()?.setData(EMPTY_FC);
-      if (!cap.ok) return;
+      clearDrafts(map);
+      if (!cap.ok) {
+        setLocalWarn(cap.error);
+        return;
+      }
       onBoundaryRef.current?.(boundary);
+      onToolRef.current("pan");
     };
     const onMove = (e: maplibregl.MapMouseEvent) => {
-      if (!boxCornerRef.current) return;
+      if (tool !== "rectangle" || !boxCornerRef.current) return;
       const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
       boxSrc()?.setData(buildBoxDraftGeoJSON(boxCornerRef.current, tip));
+      const corner = boxCornerRef.current;
+      const boundary: DrawnBoundary = {
+        type: "rectangle",
+        bounds: {
+          north: Math.max(corner.lat, tip.lat),
+          south: Math.min(corner.lat, tip.lat),
+          east: Math.max(corner.lng, tip.lng),
+          west: Math.min(corner.lng, tip.lng),
+        },
+      };
+      const cap = validateBoundaryCaps(boundary);
+      setLocalWarn(cap.ok ? "" : cap.error);
     };
 
     map.on("click", onClick);
     map.on("mousemove", onMove);
-    map.getCanvas().style.cursor = "crosshair";
     return () => {
       map.off("click", onClick);
       map.off("mousemove", onMove);
-      map.getCanvas().style.cursor = "";
     };
-  }, [tool, ready]);
+  }, [tool, ready, radiusMiles]);
+
+  /* Escape → discard draft / return to pan */
+  useEffect(() => {
+    if (!drawing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        clearDrafts();
+        onToolRef.current("pan");
+      }
+      if (
+        (e.key === "Backspace" || e.key === "z") &&
+        tool === "freehand" &&
+        !e.metaKey
+      ) {
+        if (e.key === "z" && !e.ctrlKey) return;
+        e.preventDefault();
+        freehandRef.current = freehandUndoLast(freehandRef.current);
+        const map = mapRef.current;
+        const src = map?.getSource("corridor-freehand") as
+          | maplibregl.GeoJSONSource
+          | undefined;
+        src?.setData(
+          buildFreehandGeoJSON(
+            freehandRef.current.points,
+            null,
+            freehandRef.current.canClose,
+          ),
+        );
+        setVertexCount(freehandRef.current.points.length);
+        setDraftActive(freehandRef.current.points.length > 0);
+        setCanClose(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [drawing, tool]);
+
+  const toolBtn = (
+    id: CorridorMapTool,
+    label: string,
+    icon: ReactNode,
+    title: string,
+  ) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => selectTool(id)}
+      title={title}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold",
+        tool === id
+          ? "bg-gold text-navy"
+          : "text-navy hover:bg-navy/10",
+      )}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
 
   return (
     <div
@@ -775,32 +988,175 @@ export function ShiCorridorsMap({
       )}
       data-no-swipe-back
       data-shi-map
-      data-corridors-v1="true"
+      data-corridors-toolbox="map-native"
     >
       <div ref={containerRef} className="absolute inset-0 h-full w-full" />
 
-      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1">
-        {(
-          [
-            ["satellite", "Imagery"],
-            ["street", "Streets"],
-            ["gray", "Gray"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setBase(id)}
-            className={cn(
-              "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
-              base === id
-                ? "bg-gold text-navy"
-                : "bg-navy/85 text-paper hover:bg-white/10",
-            )}
-          >
-            {label}
-          </button>
-        ))}
+      {/* Basemap — top-left on map */}
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,20rem)] flex-wrap gap-1 rounded-xl border border-navy/20 bg-[var(--paper,#f7f4ec)]/95 p-1 shadow-md backdrop-blur">
+          {(
+            [
+              ["satellite", "Imagery"],
+              ["street", "Streets"],
+              ["gray", "Gray"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setBase(id)}
+              className={cn(
+                "rounded-lg px-2 py-1.5 font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                base === id
+                  ? "bg-gold text-navy"
+                  : "bg-transparent text-navy hover:bg-navy/10",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Map-native toolbox — bottom-left (thumb-friendly) */}
+        {!presentationMode ? (
+          <div className="pointer-events-auto absolute bottom-12 left-3 right-3 flex max-w-[min(100%,36rem)] flex-col gap-1.5 sm:right-auto">
+            <div className="flex flex-wrap items-center gap-1 rounded-xl border border-navy/20 bg-[var(--paper,#f7f4ec)]/95 p-1 shadow-md backdrop-blur">
+              {toolBtn(
+                "pan",
+                "Navigate",
+                <Hand className="h-3.5 w-3.5" />,
+                "Pan and zoom the map",
+              )}
+              {toolBtn(
+                "freehand",
+                "Freehand",
+                <PenTool className="h-3.5 w-3.5" />,
+                "Draw a custom area — map pan locked while drawing",
+              )}
+              {toolBtn(
+                "rectangle",
+                "Box",
+                <Square className="h-3.5 w-3.5" />,
+                "Tap two corners — map pan locked",
+              )}
+              {toolBtn(
+                "radius",
+                "Radius",
+                <Circle className="h-3.5 w-3.5" />,
+                "Tap a center for a radius study",
+              )}
+              {tool === "radius" ? (
+                <label className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-navy">
+                  mi
+                  <input
+                    type="number"
+                    min={0.25}
+                    max={10}
+                    step={0.25}
+                    value={radiusMiles}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      setRadiusMiles(Math.min(10, Math.max(0.25, n)));
+                    }}
+                    className="w-12 rounded border border-navy/25 bg-white px-1 py-0.5 font-mono text-[10px] font-bold text-navy"
+                  />
+                </label>
+              ) : null}
+              {toolBtn(
+                "traffic",
+                "Traffic",
+                <Route className="h-3.5 w-3.5" />,
+                "Select traffic count stations",
+              )}
+            </div>
+
+            {drawing ? (
+              <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-gold/50 bg-navy/92 px-3 py-2 text-[11px] text-paper shadow-lg">
+                <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
+                  Drawing · map locked
+                </p>
+                <span className="text-paper/85">
+                  {tool === "freehand"
+                    ? canClose
+                      ? "Snap to start or tap Done"
+                      : `Trace freely${vertexCount ? ` · ${vertexCount} pts` : ""}`
+                    : tool === "rectangle"
+                      ? draftActive
+                        ? "Tap opposite corner"
+                        : "Tap first corner"
+                      : "Tap the center point"}
+                </span>
+                {tool === "freehand" && draftActive ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        freehandRef.current = freehandUndoLast(
+                          freehandRef.current,
+                        );
+                        const src = mapRef.current?.getSource(
+                          "corridor-freehand",
+                        ) as maplibregl.GeoJSONSource | undefined;
+                        src?.setData(
+                          buildFreehandGeoJSON(
+                            freehandRef.current.points,
+                            null,
+                            false,
+                          ),
+                        );
+                        setVertexCount(freehandRef.current.points.length);
+                        setDraftActive(freehandRef.current.points.length > 0);
+                        setCanClose(false);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 font-semibold text-paper"
+                      title="Undo last point"
+                    >
+                      <Undo2 className="h-3 w-3" />
+                      Undo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => finishFreehand(true)}
+                      className="inline-flex items-center gap-1 rounded-md bg-gold px-2 py-1 font-bold text-navy"
+                      title="Seal the outline"
+                    >
+                      <Check className="h-3 w-3" />
+                      Done
+                    </button>
+                  </>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearDrafts();
+                    onToolChange("pan");
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md bg-white/10 px-2 py-1 font-semibold text-paper"
+                  title="Discard draft and navigate"
+                >
+                  <X className="h-3 w-3" />
+                  Cancel
+                </button>
+                {warn ? (
+                  <span className="w-full text-[10px] text-amber-200">{warn}</span>
+                ) : null}
+              </div>
+            ) : null}
+
+            {tool === "traffic" && !loading ? (
+              <div className="rounded-xl border border-gold/40 bg-navy/92 px-3 py-2 text-[11px] text-paper shadow-lg">
+                <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
+                  Traffic evidence
+                </p>
+                <p className="mt-0.5 text-paper/90">
+                  Select a corridor station to explore traffic growth.
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {loading ? (
@@ -811,36 +1167,10 @@ export function ShiCorridorsMap({
         </div>
       ) : null}
 
-      {(tool === "freehand" || tool === "rectangle") && !loading ? (
-        <div className="absolute bottom-3 left-3 z-10 max-w-[260px] rounded-lg border border-gold/40 bg-navy/92 px-3 py-2 text-[11px] text-paper shadow-lg">
-          <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
-            Draw an area
-          </p>
-          <p className="mt-0.5 text-paper/90">
-            {tool === "freehand"
-              ? "Trace a loop and close near the start — Archie will organize the signals inside."
-              : "Tap two corners to outline a rectangle."}
-          </p>
-          {drawWarn ? (
-            <p className="mt-1 text-[10px] text-amber-200">{drawWarn}</p>
-          ) : null}
-        </div>
-      ) : null}
-
-      {tool === "traffic" && stationsVisible && !loading ? (
-        <div className="absolute bottom-3 left-3 z-10 max-w-[240px] rounded-lg border border-gold/40 bg-navy/92 px-3 py-2 text-[11px] text-paper shadow-lg">
-          <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
-            Traffic evidence
-          </p>
-          <p className="mt-0.5 text-paper/90">
-            Select a corridor station to explore traffic growth. Lines show published volume.
-          </p>
-        </div>
-      ) : null}
-
-      {!stationsVisible && !loading && tool === "pan" ? (
-        <div className="pointer-events-none absolute right-3 bottom-14 z-10 max-w-[200px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
-          Zoom in or open evidence to see individual count stations
+      {!stationsVisible && !loading && tool === "pan" && !presentationMode ? (
+        <div className="pointer-events-none absolute top-14 right-3 z-10 max-w-[180px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
+          Zoom in or use Traffic to see count stations · AADT{" "}
+          {formatAadt(0)}→{formatAadt(40000)}+
         </div>
       ) : null}
     </div>
