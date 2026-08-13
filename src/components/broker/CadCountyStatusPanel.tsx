@@ -7,11 +7,13 @@ import {
   fetchCadCountyStatus,
   type CadCountyStatus,
 } from "@/lib/supabase/parcels";
+import { cadCoverageHonesty } from "@/lib/shi/county-ops-scale";
 import { cn } from "@/lib/utils";
 
 /**
  * Shows the 72-hour CAD refresh posture for the launch counties so agents can
  * see which appraisal districts are current vs awaiting a file drop / refresh.
+ * Coverage line uses DB/unique honesty — never ArcGIS feature count as universe.
  */
 export function CadCountyStatusPanel() {
   const [rows, setRows] = useState<CadCountyStatus[]>([]);
@@ -73,6 +75,14 @@ export function CadCountyStatusPanel() {
               r.lastSuccessAt,
               r.refreshIntervalHours,
             );
+            const coverage = cadCoverageHonesty({
+              parcelCount: r.parcelCount,
+              dbParcelCount: r.dbParcelCount,
+              sourceUniquePropIds: r.sourceUniquePropIds,
+              sourceFeatureCount: r.sourceFeatureCount,
+              absenceCapHit: r.absenceCapHit,
+              ingestCapped: r.ingestCapped,
+            });
             return (
               <li
                 key={r.source}
@@ -80,12 +90,15 @@ export function CadCountyStatusPanel() {
               >
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink">{r.countyName}</p>
-                  <p className="truncate font-mono text-[11px] text-[var(--muted)]">
+                  <p className="font-mono text-[11px] text-[var(--muted)]">
                     {r.ingestMode}
-                    {r.parcelCount
-                      ? ` · ${r.parcelCount} parcels`
+                    {coverage.displayCount
+                      ? ` · ${coverage.displayCount.toLocaleString()} parcels`
                       : " · not ingested yet"}
                     {r.mhSerialCount ? ` · ${r.mhSerialCount} MH serials` : ""}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-[var(--muted)]">
+                    {coverage.line}
                   </p>
                   {r.notes && (
                     <p className="mt-0.5 text-[11px] text-[var(--muted)]">

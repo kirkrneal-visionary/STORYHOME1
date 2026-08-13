@@ -72,7 +72,17 @@ export type CadCountyStatus = {
   lastSuccessAt: string | null;
   lastAttemptAt: string | null;
   lastError: string | null;
+  /** Unique prop_ids from last successful ingest (post-dedupe). */
   parcelCount: number;
+  /** Live county_parcels rows when migration 0031 written. */
+  dbParcelCount: number | null;
+  /** Audited CAD unique prop_id universe. */
+  sourceUniquePropIds: number | null;
+  /** Raw CAD feature count (dupes possible). */
+  sourceFeatureCount: number | null;
+  lastAuditAt: string | null;
+  absenceCapHit: boolean;
+  ingestCapped: boolean;
   realCount: number;
   personalCount: number;
   mhSerialCount: number;
@@ -80,6 +90,44 @@ export type CadCountyStatus = {
   sourceUrl: string | null;
   notes: string | null;
 };
+
+const CAD_STATUS_SELECT_FULL =
+  "source, county_fips, county_name, ingest_mode, last_success_at, last_attempt_at, last_error, parcel_count, db_parcel_count, source_unique_prop_ids, source_feature_count, last_audit_at, absence_cap_hit, ingest_capped, real_count, personal_count, mh_serial_count, refresh_interval_hours, source_url, notes";
+
+const CAD_STATUS_SELECT_LEGACY =
+  "source, county_fips, county_name, ingest_mode, last_success_at, last_attempt_at, last_error, parcel_count, real_count, personal_count, mh_serial_count, refresh_interval_hours, source_url, notes";
+
+function mapCadCountyStatusRow(r: Record<string, unknown>): CadCountyStatus {
+  return {
+    source: String(r.source),
+    countyFips: String(r.county_fips),
+    countyName: String(r.county_name),
+    ingestMode: r.ingest_mode as CadCountyStatus["ingestMode"],
+    lastSuccessAt: (r.last_success_at as string | null) ?? null,
+    lastAttemptAt: (r.last_attempt_at as string | null) ?? null,
+    lastError: (r.last_error as string | null) ?? null,
+    parcelCount: Number(r.parcel_count ?? 0),
+    dbParcelCount:
+      r.db_parcel_count == null ? null : Number(r.db_parcel_count),
+    sourceUniquePropIds:
+      r.source_unique_prop_ids == null
+        ? null
+        : Number(r.source_unique_prop_ids),
+    sourceFeatureCount:
+      r.source_feature_count == null
+        ? null
+        : Number(r.source_feature_count),
+    lastAuditAt: (r.last_audit_at as string | null) ?? null,
+    absenceCapHit: Boolean(r.absence_cap_hit),
+    ingestCapped: Boolean(r.ingest_capped),
+    realCount: Number(r.real_count ?? 0),
+    personalCount: Number(r.personal_count ?? 0),
+    mhSerialCount: Number(r.mh_serial_count ?? 0),
+    refreshIntervalHours: Number(r.refresh_interval_hours ?? 72),
+    sourceUrl: (r.source_url as string | null) ?? null,
+    notes: (r.notes as string | null) ?? null,
+  };
+}
 
 /** Human labels for the terse CAD school codes we've ingested so far. */
 const SCHOOL_LABELS: Record<string, string> = {
@@ -444,27 +492,27 @@ export async function fetchParcelValues(
 export async function fetchCadCountyStatus(): Promise<CadCountyStatus[]> {
   const s = getBrowserSupabase();
   if (!s) return [];
-  const { data, error } = await s
+  const full = await s
     .from("cad_county_status")
-    .select(
-      "source, county_fips, county_name, ingest_mode, last_success_at, last_attempt_at, last_error, parcel_count, real_count, personal_count, mh_serial_count, refresh_interval_hours, source_url, notes",
-    )
+    .select(CAD_STATUS_SELECT_FULL)
     .order("county_name");
-  if (error) throw error;
-  return (data ?? []).map((r: any) => ({
-    source: r.source,
-    countyFips: r.county_fips,
-    countyName: r.county_name,
-    ingestMode: r.ingest_mode,
-    lastSuccessAt: r.last_success_at,
-    lastAttemptAt: r.last_attempt_at,
-    lastError: r.last_error,
-    parcelCount: r.parcel_count ?? 0,
-    realCount: r.real_count ?? 0,
-    personalCount: r.personal_count ?? 0,
-    mhSerialCount: r.mh_serial_count ?? 0,
-    refreshIntervalHours: r.refresh_interval_hours ?? 72,
-    sourceUrl: r.source_url,
-    notes: r.notes,
-  }));
+  let rows: Record<string, unknown>[] | null = null;
+  if (
+    full.error &&
+    /db_parcel_count|source_unique_prop_ids|absence_cap_hit|ingest_capped|last_audit_at/i.test(
+      full.error.message || "",
+    )
+  ) {
+    const legacy = await s
+      .from("cad_county_status")
+      .select(CAD_STATUS_SELECT_LEGACY)
+      .order("county_name");
+    if (legacy.error) throw legacy.error;
+    rows = (legacy.data ?? []) as Record<string, unknown>[];
+  } else if (full.error) {
+    throw full.error;
+  } else {
+    rows = (full.data ?? []) as Record<string, unknown>[];
+  }
+  return (rows ?? []).map((r) => mapCadCountyStatusRow(r));
 }
