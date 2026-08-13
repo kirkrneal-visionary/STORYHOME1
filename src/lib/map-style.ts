@@ -30,6 +30,8 @@ const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 export function buildStoryMapStyle(): StyleSpecification {
   return {
     version: 8,
+    /** Required for MapLibre symbol text (Corridors presentation labels). */
+    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
     sources: {
       street: {
         type: "raster",

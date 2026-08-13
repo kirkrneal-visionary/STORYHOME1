@@ -317,7 +317,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-LAND-LOOP",
     name: "Corridors · land loop · TxDOT projects",
     goal: "Open a Growth Watch box as a Research map frame and show nearby TxDOT Project Tracker lines — so traffic thesis meets parcels.",
-    status: "current",
+    status: "done",
     frontend: [
       "Study land in Research queues watch bbox frame",
       "TxDOT projects toggle + cyan linework on Corridors map",
@@ -330,6 +330,26 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Auto Prospect/Farm create without user confirm",
       "Paid live congestion",
+    ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-PRESENTATION",
+    name: "Corridors · presentation · traffic memory",
+    goal: "Investor-room presentation mode, printable map pack, and browser-stored traffic looks so Archie can show what changed since last time.",
+    status: "current",
+    frontend: [
+      "Presentation mode — big road labels, clean map chrome",
+      "Print map pack (county · watch · top stations · memory)",
+      "Memory tab — since we last looked + Remember this look",
+    ],
+    backend: [
+      "Client localStorage traffic snapshots (no new migration)",
+      "Map glyphs for symbol labels",
+    ],
+    outOfScope: [
+      "Paid live congestion feeds",
+      "Server-synced multi-device memory (later)",
+      "Seller-probability theater",
     ],
   },
   {
@@ -353,8 +373,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors land loop + TxDOT projects. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-LAND-LOOP" as const;
+/** Active wave — Corridors presentation + traffic memory. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-PRESENTATION" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
