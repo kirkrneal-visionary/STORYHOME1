@@ -12,6 +12,18 @@ Forward = step into a room.
 Back = return to the room you left (still arranged as you left it).  
 Archie = enter the study — quieter, more precise, never flashier.
 
+## Visibility pass (`STORY-CONTINUUM-VISIBILITY`)
+
+Tuned so Continuum is **noticeable as belonging** (phone + desktop), not invisible CSS:
+
+- Browse room-step: stronger distance + opacity + soft scale  
+- Phone swipe-back: clearer peek underlay (still not a screenshot)  
+- Desktop lateral: softer dissolve across networks  
+- Study: cooler arrival wash — never neon  
+- Shell nav calls `markNavigate` so direction is honest  
+
+Guardrail: desktop travel stays well under slideshow territory (~40px).
+
 ## Principle
 
 Every animation answers: where did I go, where did this come from, what did my action do, can I go back, or is the system working?

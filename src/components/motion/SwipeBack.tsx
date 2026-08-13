@@ -167,7 +167,9 @@ export function SwipeBack() {
         el.style.boxShadow = " -24px 0 48px rgba(0,0,0,0.22)";
         if (peekEl) {
           peekEl.style.transition = `opacity ${motion.duration.settle}s ${settleEase}`;
-          peekEl.style.opacity = "0.28";
+          peekEl.style.opacity = String(
+            Math.min(0.45, motion.swipe.peekMaxOpacity + 0.06),
+          );
         }
         window.setTimeout(() => {
           clearSurface(el);

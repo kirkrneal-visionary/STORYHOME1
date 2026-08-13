@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useMotionOptional } from "@/components/motion/MotionProvider";
 import { ARCHIE_MARK_SRC } from "@/lib/navigation/networks";
 import { cn } from "@/lib/utils";
 
@@ -26,10 +27,12 @@ export function NetworkNode({
   size = "md",
   className,
 }: NetworkNodeProps) {
+  const motion = useMotionOptional();
   const iconOnly = size === "icon";
   return (
     <Link
       href={href}
+      onClick={() => motion?.markNavigate(href)}
       aria-label="Archie's Intelligence"
       title="Archie's Intelligence"
       aria-current={active ? "page" : undefined}

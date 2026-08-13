@@ -460,7 +460,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-OBS-OPS",
     name: "Observation health · empty-state honesty",
     goal: "Make Ownership Stability and County observation feed trustworthy — distinguish migrations pending vs awaiting next pull vs truly quiet.",
-    status: "current",
+    status: "done",
     frontend: [
       "Observation setup banner on County observation feed",
       "County pull status · presence marking readiness",
@@ -477,10 +477,30 @@ export const SHI_WAVES: ShiWave[] = [
       "Deed / MLS sale timeline claims",
     ],
   },
+  {
+    id: "STORY-CONTINUUM-VISIBILITY",
+    name: "Story Continuum · visibility pass",
+    goal: "Make Continuum perceptible on phone + desktop — room-step, swipe belonging, study cue, lateral dissolve — without brand redesign or slideshow.",
+    status: "current",
+    frontend: [
+      "Tuned browse / social / study temperatures",
+      "Stronger swipe peek underlay",
+      "Nav markNavigate for honest direction",
+      "Cool study arrival cue (CSS, not neon)",
+    ],
+    backend: [
+      "Token + physics only — no CAD / Archie logic changes",
+    ],
+    outOfScope: [
+      "Brand / layout redesign",
+      "Desktop full-width slideshow",
+      "Stealing map gestures",
+    ],
+  },
 ];
 
-/** Active wave — observation health / empty-state honesty. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-OBS-OPS" as const;
+/** Active wave — Continuum visibility on phone + desktop. */
+export const ARCHIE_CURRENT_WAVE = "STORY-CONTINUUM-VISIBILITY" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

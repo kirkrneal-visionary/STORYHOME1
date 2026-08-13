@@ -227,4 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Next coded wave (when green-lit):** Continuum visibility + any OS wiring that makes temperatures/surfaces enforceable in UI — still no brand redesign, no fake predictions.
+**Shipped coded wave:** `STORY-CONTINUUM-VISIBILITY` — Continuum perceptible on phone + desktop (tokens, peek, study cue, nav direction). Still no brand redesign, no fake predictions.
+
+**Next coded wave (when green-lit):** Messages & Referrals — finish or hide (no shell theater).

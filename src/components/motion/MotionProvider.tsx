@@ -43,6 +43,8 @@ type MotionContextValue = {
   temperature: ContinuumTemperature;
   markBack: () => void;
   markForward: () => void;
+  /** Mark direction from current path → href before the route changes. */
+  markNavigate: (to: string) => void;
   pathname: string;
   previousPathname: string;
 };
@@ -103,6 +105,16 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   const markForward = useCallback(() => {
     pendingDirRef.current = "forward";
   }, []);
+  const markNavigate = useCallback(
+    (to: string) => {
+      pendingDirRef.current = inferDirection(
+        normalizePath(pathname),
+        normalizePath(to),
+        null,
+      );
+    },
+    [pathname],
+  );
 
   useEffect(() => {
     const onPop = () => {
@@ -155,6 +167,7 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       temperature,
       markBack,
       markForward,
+      markNavigate,
       pathname,
       previousPathname,
     }),
@@ -166,6 +179,7 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       temperature,
       markBack,
       markForward,
+      markNavigate,
       pathname,
       previousPathname,
     ],

@@ -113,4 +113,36 @@ assert.equal(
   false,
 );
 
+// Visibility pass guardrails (keep in sync with src/lib/motion/tokens.ts)
+const MOTION_DISTANCE = { desktop: 22, tablet: 30, mobile: 40 };
+const MOTION_OPACITY = { lateralFrom: 0.78, studyFrom: 0.9 };
+const SWIPE_BACK = { peekMaxOpacity: 0.38 };
+const BROWSE = { distanceScale: 1.25, opacityFrom: 0.88 };
+
+assert.ok(MOTION_DISTANCE.desktop < 40, "desktop travel must not be slideshow");
+assert.ok(MOTION_DISTANCE.desktop >= 18, "desktop room-step must be perceptible");
+assert.ok(MOTION_OPACITY.lateralFrom <= 0.82, "lateral dissolve must read");
+assert.ok(SWIPE_BACK.peekMaxOpacity >= 0.3, "swipe peek must be visible");
+assert.ok(BROWSE.distanceScale >= 1.15);
+assert.ok(BROWSE.opacityFrom <= 0.92);
+
+const browseDesktop = Math.round(
+  MOTION_DISTANCE.desktop * BROWSE.distanceScale,
+);
+assert.ok(browseDesktop >= 24 && browseDesktop < 48);
+
+assert.equal(temperatureForPath("/home"), "home");
+assert.equal(temperatureForPath("/referrals"), "social");
+assert.equal(inferDirection("/portal", "/portal/intelligence"), "forward");
+
+function peekOpacityForDrag(dragPx, viewportWidth, peekMax = 0.38) {
+  const max = viewportWidth * 0.82;
+  if (max <= 0) return 0;
+  const t = Math.min(1, Math.max(0, dragPx / max));
+  const curved = t * t * (3 - 2 * t);
+  return curved * peekMax;
+}
+assert.ok(peekOpacityForDrag(200, 390) > 0.15);
+assert.ok(peekOpacityForDrag(10, 390) < 0.05);
+
 console.log("motion-routes armor: ok");
