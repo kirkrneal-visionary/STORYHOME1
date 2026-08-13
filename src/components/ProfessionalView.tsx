@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Award, Layers, Plus } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SurfaceHonestyBanner } from "@/components/SurfaceHonestyBanner";
 
 const FILTERS = [
   "Open in my market",
@@ -18,23 +19,32 @@ export default function ProfessionalView() {
 
   return (
     <div className="min-h-dvh pb-16 pt-[72px] md:pb-0">
-      <section className="border-b border-hairline bg-[var(--surface)] px-4 py-6 md:px-6">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-          <MetricCard
-            icon={<Award className="h-6 w-6" />}
-            label="Reputation Score"
-            value="—"
-          />
-          <MetricCard
-            icon={<Layers className="h-6 w-6" />}
-            label="Open Network Leads"
-            value="0"
-          />
-          <MetricCard
-            icon={<Plus className="h-6 w-6" />}
-            label="Active Listings"
-            value="0"
-          />
+      <SurfaceHonestyBanner
+        surface="Referrals"
+        later="the B2B board will host real open / claimed / closed collaborations. Metrics below are layout placeholders, not live network stats."
+        primaryHref="/portal"
+        primaryLabel="Open Story Pro"
+        secondaryHref="/marketplace"
+        secondaryLabel="Browse listings"
+      />
+
+      <section className="border-b border-hairline bg-[var(--surface)] px-4 py-5 md:px-6">
+        <div className="mx-auto max-w-7xl">
+          <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+            Preview layout · not live
+          </p>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+            <PreviewSlot
+              icon={<Layers className="h-5 w-5" />}
+              label="Open network leads"
+              hint="Will count real open referrals"
+            />
+            <PreviewSlot
+              icon={<Plus className="h-5 w-5" />}
+              label="Board activity"
+              hint="Will reflect posts you claim or close"
+            />
+          </div>
         </div>
       </section>
 
@@ -45,12 +55,15 @@ export default function ProfessionalView() {
               Referral Board
             </h1>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              B2B client distribution — claim, close, and rate collaborations.
+              Reserved room for B2B client distribution — claim, close, and rate
+              collaborations when this network goes live.
             </p>
           </div>
           <button
             type="button"
-            className="inline-flex h-11 items-center gap-2 self-start rounded-lg bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] transition-opacity hover:opacity-90 md:self-auto"
+            disabled
+            title="Referrals are not live yet"
+            className="inline-flex h-11 cursor-not-allowed items-center gap-2 self-start rounded-lg bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] opacity-50 md:self-auto"
           >
             <Plus className="h-4 w-4" /> Post a referral
           </button>
@@ -76,15 +89,15 @@ export default function ProfessionalView() {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <BoardColumn title="Open" count={0} tone="gold">
-            <EmptyState text="No open referrals yet — post one to share a client." />
+            <EmptyState text="No live referrals yet — this column fills when the board ships." />
           </BoardColumn>
 
           <BoardColumn title="Claimed" count={0} tone="teal">
-            <EmptyState text="No leads currently in escrow" />
+            <EmptyState text="Claimed collaborations will land here." />
           </BoardColumn>
 
           <BoardColumn title="Closed" count={0} tone="slate">
-            <EmptyState text="Archive is empty" />
+            <EmptyState text="Closed archive stays empty until the network is live." />
           </BoardColumn>
         </div>
       </main>
@@ -92,25 +105,25 @@ export default function ProfessionalView() {
   );
 }
 
-function MetricCard({
+function PreviewSlot({
   icon,
   label,
-  value,
+  hint,
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  hint: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-hairline bg-[var(--background)] p-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)]">
+    <div className="flex items-center gap-3 rounded-xl border border-dashed border-hairline bg-[var(--background)] p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline text-[var(--muted)]">
         {icon}
       </div>
       <div>
         <span className="block font-mono text-[11px] font-medium tracking-wider text-[var(--muted)] uppercase">
           {label}
         </span>
-        <span className="font-serif text-3xl font-bold text-ink">{value}</span>
+        <span className="text-sm text-ink">{hint}</span>
       </div>
     </div>
   );

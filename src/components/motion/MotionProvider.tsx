@@ -142,6 +142,17 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
 
   const distancePx = Math.round(baseDistance * profile.distanceScale);
 
+  // Global Continuum cue for CSS (nav/chrome can key off temperature)
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.continuumTemp = temperature;
+    root.dataset.navDirection = direction;
+    return () => {
+      delete root.dataset.continuumTemp;
+      delete root.dataset.navDirection;
+    };
+  }, [temperature, direction]);
+
   const value = useMemo<MotionContextValue>(
     () => ({
       direction,

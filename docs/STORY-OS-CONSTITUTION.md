@@ -5,8 +5,7 @@
 **Brand:** Story Home (marketplace + agent OS). Intelligence brand: **Archie’s Intelligence** (never “SHI” in UI).  
 **Live app:** https://storyhome-1-eqmg.vercel.app  
 
-Companion research: [`STORY-OS-COMPETITION.md`](./STORY-OS-COMPETITION.md)  
-Motion physics: [`MOTION.md`](./MOTION.md)
+**Package:** [`STORY-OS-PLAYBOOK.md`](./STORY-OS-PLAYBOOK.md) · [`STORY-OS-NETWORKS.md`](./STORY-OS-NETWORKS.md) · [`STORY-OS-SECURITY.md`](./STORY-OS-SECURITY.md) · [`STORY-OS-COMPETITION.md`](./STORY-OS-COMPETITION.md) · [`MOTION.md`](./MOTION.md)
 
 ---
 
@@ -61,7 +60,7 @@ Every PR must name: **Network · Object · Surface type · RLS impact · Map imp
 - **social / home** — soft lateral dissolve between peers.  
 - **still** — opacity only.
 
-**Visibility goal (approved):** Continuum must be *noticeable as belonging* on phone and desktop — not invisible CSS. Still not a slideshow. (Implementation = separate coded wave after this constitution.)
+**Visibility goal (approved + shipping in STORY-OS-MASSIVE):** Continuum must be *noticeable as belonging* on phone and desktop — not invisible CSS. Still not a slideshow.
 
 ---
 
@@ -198,10 +197,10 @@ Future: audit “who viewed what” only with explicit analytics design — we d
 
 ## 11. Round-out order (finish the site without breaking OS)
 
-Approved sequencing for build waves (after Continuum visibility):
+Approved sequencing for build waves:
 
-1. **Continuum visibility pass** — feel belonging on eqmg phone + desktop  
-2. **Messages & Referrals** — finish or hide (no more shell theater)  
+1. **Continuum visibility + shell honesty** — STORY-OS-MASSIVE (this package)  
+2. **Messages & Referrals backends** — finish when product-ready (shells already labeled)  
 3. **Analytics foundation** — funnel + Archie usage (privacy-reviewed)  
 4. **Intelligence scenarios board** — rung 8–10 only with honesty gates  
 5. **County/ops scale** — storage + refresh reliability for expansion  
@@ -226,5 +225,6 @@ Waves may merge, but **never skip honesty or RLS**.
 | Version | Note |
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
+| 2026-08-13b | Full package + Continuum visibility + Messages/Referrals honesty (STORY-OS-MASSIVE) |
 
-**Next coded wave (when green-lit):** Continuum visibility + any OS wiring that makes temperatures/surfaces enforceable in UI — still no brand redesign, no fake predictions.
+**Next after this package:** ARCHIE-OBS-OPS · analytics (T3) · live social backends — still no brand redesign, no fake predictions.

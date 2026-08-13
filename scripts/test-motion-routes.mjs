@@ -66,17 +66,17 @@ function temperatureForPath(pathname) {
 
 function continuumDragPx(dx, viewportWidth) {
   if (dx <= 0) return 0;
-  const maxDrag = viewportWidth * 0.82;
-  const after = 120;
-  const factor = 0.38;
+  const maxDrag = viewportWidth * 0.85;
+  const after = 110;
+  const factor = 0.4;
   let visual = dx <= after ? dx : after + (dx - after) * factor;
   return Math.min(visual, maxDrag);
 }
 
 function shouldCommitSwipe({ dx, velocityPxPerMs, viewportWidth }) {
-  const threshold = Math.max(110, viewportWidth * 0.28);
+  const threshold = Math.max(100, viewportWidth * 0.26);
   if (dx >= threshold) return true;
-  if (dx >= 42 && velocityPxPerMs >= 0.55) return true;
+  if (dx >= 36 && velocityPxPerMs >= 0.5) return true;
   return false;
 }
 

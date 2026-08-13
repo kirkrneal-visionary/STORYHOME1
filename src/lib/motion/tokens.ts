@@ -2,6 +2,7 @@
  * Story Home — Story Continuum motion tokens.
  *
  * Metaphor: walk rooms of one house / market — not flip TV channels.
+ * Visibility goal: noticeable belonging on phone + desktop — not invisible CSS.
  * Adjust globally here; do not scatter ms values across pages.
  */
 
@@ -9,13 +10,13 @@
 export const MOTION_DURATION = {
   instant: 0,
   micro: 0.14,
-  fast: 0.22,
-  standard: 0.38,
-  surface: 0.48,
-  gesture: 0.52,
+  fast: 0.24,
+  standard: 0.42,
+  surface: 0.52,
+  gesture: 0.56,
   /** Soft settle after swipe commit / cancel */
-  settle: 0.44,
-  cancel: 0.36,
+  settle: 0.48,
+  cancel: 0.38,
 } as const;
 
 /**
@@ -36,20 +37,24 @@ export const MOTION_EASE = {
   gesture: { type: "spring" as const, stiffness: 260, damping: 36, mass: 1 },
 };
 
-/** Desktop/tablet/mobile translation (px) — enough to feel space, not a slideshow. */
+/**
+ * Desktop/tablet/mobile translation (px).
+ * Raised so room-step reads as belonging, not a 1% opacity blink.
+ */
 export const MOTION_DISTANCE = {
-  desktop: 14,
-  tablet: 24,
-  mobile: 32,
+  desktop: 32,
+  tablet: 44,
+  mobile: 56,
 } as const;
 
 export const MOTION_OPACITY = {
-  enterFrom: 0.94,
-  exitTo: 0.97,
-  reducedEnter: 0.9,
+  enterFrom: 0.86,
+  exitTo: 0.94,
+  reducedEnter: 0.88,
   reducedExit: 1,
-  lateralFrom: 0.88,
-  studyFrom: 0.96,
+  /** Lateral network hops — clearer dissolve */
+  lateralFrom: 0.72,
+  studyFrom: 0.9,
 } as const;
 
 /**
@@ -57,24 +62,25 @@ export const MOTION_OPACITY = {
  * Follow is ~1:1 until rubber band; commit uses velocity OR distance.
  */
 export const SWIPE_BACK = {
-  edgeWidthPx: 28,
-  /** Distance commit (px) — slightly higher so casual flicks don’t teleport */
-  thresholdPx: 110,
+  /** Slightly wider so the gesture is discoverable without stealing maps */
+  edgeWidthPx: 36,
+  /** Distance commit (px) */
+  thresholdPx: 100,
   /** Fraction of viewport width that also counts as commit */
-  thresholdViewport: 0.28,
+  thresholdViewport: 0.26,
   /** px/ms — committed if moving decisively past minDx */
-  velocityCommit: 0.55,
-  minDxForVelocity: 42,
+  velocityCommit: 0.5,
+  minDxForVelocity: 36,
   /** Vertical cancel */
   verticalCancelPx: 56,
   /** Rubber-band starts after this drag (px) */
-  rubberAfterPx: 120,
+  rubberAfterPx: 110,
   /** Resistance after rubberAfter (0–1, lower = more resistance) */
-  rubberFactor: 0.38,
+  rubberFactor: 0.4,
   /** Max visual drag as fraction of viewport */
-  maxDragViewport: 0.82,
-  /** Underlay peek opacity at full drag */
-  peekMaxOpacity: 0.22,
+  maxDragViewport: 0.85,
+  /** Underlay peek opacity at full drag — must be obvious */
+  peekMaxOpacity: 0.42,
 } as const;
 
 /**
@@ -91,40 +97,40 @@ export type ContinuumTemperature =
 
 export const CONTINUUM_TEMPERATURE = {
   browse: {
-    distanceScale: 1.15,
+    distanceScale: 1.2,
     durationKey: "surface" as const,
     easeKey: "enterBrowse" as const,
-    opacityFrom: 0.95,
+    opacityFrom: 0.82,
   },
   social: {
-    distanceScale: 0.85,
+    distanceScale: 0.95,
     durationKey: "standard" as const,
     easeKey: "enterContinuum" as const,
-    opacityFrom: 0.92,
+    opacityFrom: 0.84,
   },
   home: {
-    distanceScale: 0.9,
+    distanceScale: 1,
     durationKey: "standard" as const,
     easeKey: "enterContinuum" as const,
-    opacityFrom: 0.93,
+    opacityFrom: 0.86,
   },
   work: {
-    distanceScale: 0.45,
+    distanceScale: 0.55,
     durationKey: "fast" as const,
     easeKey: "enter" as const,
-    opacityFrom: 0.96,
+    opacityFrom: 0.9,
   },
   study: {
-    distanceScale: 0.55,
+    distanceScale: 0.7,
     durationKey: "standard" as const,
     easeKey: "enterStudy" as const,
-    opacityFrom: 0.97,
+    opacityFrom: 0.88,
   },
   still: {
     distanceScale: 0,
     durationKey: "micro" as const,
     easeKey: "enter" as const,
-    opacityFrom: 0.94,
+    opacityFrom: 0.92,
   },
 } as const;
 
