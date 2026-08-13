@@ -45,6 +45,7 @@ Per-room content redesign, new modules, Messages E2E, Corridors adapters.
 
 ## Wave 2 — Consumer rooms
 **ID:** `STORY-FEEL-WAVE-2`  
+**Status:** shipping  
 **Rooms:** Home hero → Marketplace → Listing → Inquire / Suites / Belong.
 
 ### Process

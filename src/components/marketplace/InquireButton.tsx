@@ -39,7 +39,7 @@ export function InquireButton({
 
   if (sent) {
     return (
-      <div className="rounded-lg border border-teal-soft/40 bg-teal-soft/10 p-3 text-sm text-ink">
+      <div className="story-well border-teal-soft/30 bg-teal-soft/10 p-3 text-sm text-ink">
         Message sent — the agent has 15 minutes to respond before the lead opens
         to other agents.
       </div>
@@ -51,7 +51,7 @@ export function InquireButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]"
+        className="story-press flex h-11 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]"
       >
         <MessageCircle className="h-4 w-4" /> Contact agent
       </button>
@@ -59,13 +59,13 @@ export function InquireButton({
   }
 
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] p-3">
+    <div className="story-well p-3">
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={3}
         placeholder={`Ask about ${listingLabel}…`}
-        className="w-full rounded-lg border border-hairline bg-[var(--surface)] p-2.5 text-sm text-ink outline-none focus:border-gold"
+        className="field-input h-auto min-h-[5.5rem] py-2.5"
       />
       {err && <p className="mt-1 text-xs text-red-300">{err}</p>}
       <div className="mt-2 flex gap-2">
@@ -85,11 +85,11 @@ export function InquireButton({
               setBusy(false);
             }
           }}
-          className="h-10 flex-1 rounded-lg bg-gold text-sm font-bold text-navy disabled:opacity-60"
+          className="story-press h-10 flex-1 rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy disabled:opacity-60"
         >
           {busy ? "Sending…" : "Send message"}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className="h-10 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink">
+        <button type="button" onClick={() => setOpen(false)} className="story-press h-10 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink">
           Cancel
         </button>
       </div>

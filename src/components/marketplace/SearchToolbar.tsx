@@ -33,7 +33,7 @@ export function SearchToolbar({
   }
 
   return (
-    <div className="border-b border-hairline bg-[var(--nav-surface)]/95 px-3 py-3 backdrop-blur md:px-4">
+    <div className="story-chrome border-b px-3 py-3 md:px-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -41,7 +41,7 @@ export function SearchToolbar({
             value={filters.query}
             onChange={(e) => patch({ query: e.target.value })}
             placeholder="City, county, ZIP, address…"
-            className="h-10 min-w-[180px] flex-1 rounded-lg border border-hairline bg-[var(--surface)] px-3 text-sm text-ink outline-none focus:border-gold md:max-w-sm"
+            className="field-input h-10 min-w-[180px] flex-1 md:max-w-sm"
           />
 
           <FilterSelect
@@ -106,7 +106,7 @@ export function SearchToolbar({
           <button
             type="button"
             onClick={onOpenMore}
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-hairline bg-[var(--surface)] px-3 text-sm font-semibold text-ink"
+            className="story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-3 text-sm font-semibold text-ink"
           >
             <SlidersHorizontal className="h-4 w-4 text-gold" />
             More
@@ -128,7 +128,7 @@ export function SearchToolbar({
                 onChange={(e) =>
                   patch({ sort: e.target.value as SortOption })
                 }
-                className="h-10 rounded-lg border border-hairline bg-[var(--surface)] px-2 text-sm text-ink"
+                className="field-input h-10 w-auto"
               >
                 <option value="recommended">Homes for You</option>
                 <option value="price_asc">Price (Low–High)</option>
@@ -139,7 +139,7 @@ export function SearchToolbar({
               </select>
             </label>
 
-            <div className="flex rounded-lg border border-hairline p-0.5 md:hidden">
+            <div className="story-well flex p-0.5 md:hidden">
               {(
                 [
                   ["list", List, "List"],
@@ -151,7 +151,7 @@ export function SearchToolbar({
                   type="button"
                   onClick={() => onMobileView(id)}
                   className={cn(
-                    "inline-flex h-9 items-center gap-1 rounded-md px-2.5 text-xs font-semibold",
+                    "story-press inline-flex h-9 items-center gap-1 rounded-[var(--radius-sm)] px-2.5 text-xs font-semibold",
                     mobileView === id
                       ? "bg-gold text-navy"
                       : "text-[var(--muted)]",
@@ -170,8 +170,7 @@ export function SearchToolbar({
             {resultCount} results · East Texas map search
           </p>
           <p className="hidden text-xs text-[var(--muted)] lg:block">
-            Freehand / Box on the map or pan + “Search this area” — same flow as Zillow /
-            Realtor.com
+            Draw on the map or pan + “Search this area”
           </p>
         </div>
       </div>
@@ -196,7 +195,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-10 appearance-none rounded-lg border border-hairline bg-[var(--surface)] py-2 pr-8 pl-3 text-sm font-semibold text-ink"
+        className="field-input h-10 appearance-none py-2 pr-8 pl-3 font-semibold"
       >
         {options.map(([v, text]) => (
           <option key={`${label}-${v}`} value={v}>

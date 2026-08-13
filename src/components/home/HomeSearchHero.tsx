@@ -60,7 +60,8 @@ export function HomeSearchHero() {
   }
 
   return (
-    <div className="bg-navy-deep text-ink">
+    <div className="bg-transparent text-ink">
+      {/* Hero budget: brand + headline + support + one CTA group on full-bleed photo */}
       <section className="relative min-h-[78vh] overflow-hidden md:min-h-[85vh]">
         <Image
           src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80"
@@ -70,21 +71,21 @@ export function HomeSearchHero() {
           className="object-cover"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,21,37,0.72)_0%,rgba(14,30,56,0.78)_45%,rgba(9,21,37,0.94)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,21,37,0.68)_0%,rgba(14,30,56,0.72)_48%,rgba(9,21,37,0.92)_100%)]" />
 
         <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-28 md:min-h-[85vh] md:px-6 md:pt-32">
-          <p className="font-mono text-xs font-semibold tracking-[0.18em] text-gold uppercase">
-            {REGION.label} · Built by a realtor, for realtors
+          <p className="font-serif text-3xl font-bold tracking-[-0.03em] text-paper md:text-4xl">
+            <span className="text-[var(--brand-word)]">STORY</span>
+            <span className="text-[var(--brand-home)]">HOME</span>
           </p>
-          <h1 className="mt-3 max-w-3xl font-serif text-4xl font-semibold tracking-[-0.03em] text-paper md:text-6xl">
+          <h1 className="mt-4 max-w-3xl font-serif text-4xl font-semibold tracking-[-0.03em] text-paper md:text-6xl">
             Find your next home in East Texas.
           </h1>
-          <p className="mt-3 max-w-2xl text-base text-paper/80 md:text-lg">
-            Search homes across Polk, Trinity, Angelina, Tyler, San Jacinto,
-            Liberty, and Walker counties — then grow with Story Home.
+          <p className="mt-3 max-w-xl text-base text-paper/80 md:text-lg">
+            Search across seven launch counties — then grow with Story Home.
           </p>
 
-          <div className="mt-8 overflow-hidden rounded-2xl border border-white/15 bg-navy/80 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
+          <div className="story-surface mt-8 overflow-hidden border-white/12 bg-[color-mix(in_srgb,var(--navy)_78%,transparent)] backdrop-blur-md">
             <div className="flex border-b border-white/10">
               {(
                 [
@@ -98,7 +99,7 @@ export function HomeSearchHero() {
                   type="button"
                   onClick={() => setIntent(key)}
                   className={cn(
-                    "flex-1 px-3 py-3 text-sm font-semibold transition-colors md:px-4",
+                    "story-press flex-1 px-3 py-3 text-sm font-semibold transition-colors md:px-4",
                     intent === key
                       ? "bg-gold text-navy"
                       : "text-paper/75 hover:text-paper",
@@ -113,7 +114,7 @@ export function HomeSearchHero() {
               onSubmit={onSearch}
               className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:p-4"
             >
-              <div className="flex flex-1 items-center gap-3 rounded-xl bg-navy-deep px-4 py-3">
+              <div className="story-well flex flex-1 items-center gap-3 border-white/10 px-4 py-3">
                 <MapPin className="h-5 w-5 shrink-0 text-gold" />
                 <input
                   value={query}
@@ -125,34 +126,12 @@ export function HomeSearchHero() {
               </div>
               <button
                 type="submit"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gold px-6 text-sm font-bold text-navy transition-transform hover:scale-[1.02]"
+                className="story-press inline-flex h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gold px-6 text-sm font-bold text-navy"
               >
                 <Search className="h-4 w-4" />
                 Search
               </button>
             </form>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-            <Link href="/home" className="font-semibold text-paper/85 hover:text-gold">
-              Home Values →
-            </Link>
-            <span className="text-paper/40" title="Coming soon">
-              Schools (coming soon)
-            </span>
-          </div>
-
-          <div className="mt-5 flex flex-wrap gap-2">
-            {REGION_CITIES.slice(0, 6).map((area) => (
-              <button
-                key={area}
-                type="button"
-                onClick={() => searchArea(area)}
-                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-medium text-paper/85 hover:border-gold/50 hover:text-gold"
-              >
-                {area}
-              </button>
-            ))}
           </div>
         </div>
       </section>
@@ -181,7 +160,7 @@ export function HomeSearchHero() {
               key={county.fips}
               type="button"
               onClick={() => searchArea(county.hubCity)}
-              className="rounded-xl border border-hairline bg-navy-soft px-3 py-4 text-left transition-colors hover:border-gold/40"
+              className="story-well story-press px-3 py-4 text-left transition-colors hover:border-[var(--hairline-interactive)]"
             >
               <p className="font-semibold text-paper">
                 {county.name.replace(" County", "")}
@@ -192,9 +171,22 @@ export function HomeSearchHero() {
             </button>
           ))}
         </div>
+
+        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
+          {REGION_CITIES.slice(0, 6).map((area) => (
+            <button
+              key={area}
+              type="button"
+              onClick={() => searchArea(area)}
+              className="story-press text-sm font-medium text-paper/75 hover:text-gold"
+            >
+              {area}
+            </button>
+          ))}
+        </div>
       </section>
 
-      <section className="border-t border-hairline bg-navy/40">
+      <section className="border-t border-hairline">
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <div className="mb-6 flex items-end justify-between">
             <div>
@@ -213,7 +205,7 @@ export function HomeSearchHero() {
             </Link>
           </div>
           {featuredLoaded && featured.length === 0 ? (
-            <div className="rounded-2xl border border-hairline bg-navy-soft p-10 text-center">
+            <div className="story-well p-10 text-center">
               <p className="font-serif text-xl font-bold text-paper">
                 No listings yet
               </p>
@@ -267,10 +259,7 @@ function ToolCard({
   cta: string;
 }) {
   return (
-    <Link
-      href={href}
-      className="rounded-2xl border border-hairline bg-navy-soft p-6 transition-transform hover:-translate-y-0.5"
-    >
+    <Link href={href} className="story-card story-press block p-6">
       <h3 className="font-serif text-xl font-bold text-paper">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-paper/65">{body}</p>
       <span className="mt-5 inline-block text-sm font-semibold text-gold">

@@ -42,7 +42,7 @@ export function SavedSearchControl({
     return (
       <Link
         href="/login?next=/marketplace"
-        className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-hairline bg-[var(--surface)] px-3 text-sm font-semibold text-ink"
+        className="story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline px-3 text-sm font-semibold text-ink"
       >
         <Bookmark className="h-4 w-4 text-gold" /> Save search
       </Link>
@@ -63,7 +63,7 @@ export function SavedSearchControl({
         <button
           type="button"
           onClick={onSave}
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-hairline bg-[var(--surface)] px-3 text-sm font-semibold text-ink"
+          className="story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline px-3 text-sm font-semibold text-ink"
         >
           <Bookmark className="h-4 w-4 text-gold" /> {note || "Save search"}
         </button>
@@ -71,7 +71,7 @@ export function SavedSearchControl({
           type="button"
           onClick={() => setOpen((v) => !v)}
           className={cn(
-            "inline-flex h-10 items-center rounded-lg border border-hairline px-2 text-xs font-semibold text-[var(--muted)]",
+            "story-press inline-flex h-10 items-center rounded-[var(--radius-md)] border border-hairline px-2 text-xs font-semibold text-[var(--muted)]",
             open && "text-ink",
           )}
         >
@@ -79,7 +79,7 @@ export function SavedSearchControl({
         </button>
       </div>
       {open && (
-        <div className="absolute right-0 z-[60] mt-1 w-72 rounded-xl border border-hairline bg-[var(--surface)] p-2 shadow-xl">
+        <div className="story-surface absolute right-0 z-[60] mt-1 w-72 p-2">
           {items.length === 0 ? (
             <p className="px-2 py-3 text-xs text-[var(--muted)]">No saved searches yet.</p>
           ) : (

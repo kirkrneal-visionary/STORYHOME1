@@ -90,7 +90,7 @@ export function SuitesLibrary() {
 
       {creating && (
         <form
-          className="mt-6 flex flex-col gap-3 rounded-2xl border border-hairline bg-[var(--surface)] p-4 sm:flex-row"
+          className="story-surface mt-6 flex flex-col gap-3 p-4 sm:flex-row"
           onSubmit={(e) => {
             e.preventDefault();
             const suite = createSuite(name);
@@ -104,18 +104,18 @@ export function SuitesLibrary() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Lake Houses, Investment, For Mom"
-            className="h-11 flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+            className="field-input h-11 flex-1"
           />
           <button
             type="submit"
-            className="h-11 rounded-lg bg-gold px-5 text-sm font-bold text-navy"
+            className="story-press h-11 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy"
           >
             Create album
           </button>
           <button
             type="button"
             onClick={() => setCreating(false)}
-            className="h-11 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+            className="story-press h-11 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink"
           >
             Cancel
           </button>

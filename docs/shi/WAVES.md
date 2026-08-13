@@ -11,20 +11,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-FEEL-WAVE-1
-Site-wide shell & material — atmosphere, wells, chrome, sheets, display type
+### STORY-FEEL-WAVE-2
+Consumer rooms — Home / Marketplace / Listing calm clothing
 
 ## Next
-- Feel Wave 2 — consumer rooms (Home / Marketplace / Listing)  
 - Feel Wave 3 — agent workrooms  
 - Feel Wave 4 — Archie study  
 - Optional models / Messages E2E / licensed Corridors when ready  
 
 ## Done
+- STORY-FEEL-WAVE-1 (shell & material)  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
-- Analytics destination · foundation  
-- Messages/Referrals hide theater · Continuum visibility  
-- ARCHIE-OBS-OPS · Corridors adapters  
+- Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

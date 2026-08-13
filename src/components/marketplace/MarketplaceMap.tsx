@@ -724,7 +724,7 @@ export function MarketplaceMap({
       {/* Basemap gallery + CAD overlays + fullscreen (top-right) */}
       <div className="absolute top-3 right-3 z-[500] flex flex-col items-end gap-1.5">
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <div className="flex max-w-[min(100vw-2rem,420px)] flex-wrap overflow-hidden rounded-2xl border border-hairline bg-navy/90 shadow-lg backdrop-blur">
+          <div className="story-chrome flex max-w-[min(100vw-2rem,420px)] flex-wrap overflow-hidden rounded-[var(--radius-md)] border">
             <span className="flex items-center pl-3 pr-1 text-paper/70">
               <Layers className="h-3.5 w-3.5" />
             </span>
@@ -802,7 +802,7 @@ export function MarketplaceMap({
       )}
 
       {/* Info / measure readout (bottom-left) */}
-      <div className="absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-xl border border-hairline bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg backdrop-blur">
+      <div className="story-chrome absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-[var(--radius-md)] border px-3 py-2 text-[11px] text-paper">
         {tool === "measure" ? (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">

@@ -243,7 +243,7 @@ export function SearchFiltersPanel({
         </div>
       </Field>
 
-      <p className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2 font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">
+      <p className="font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">
         {resultCount} matching {resultCount === 1 ? "home" : "homes"}
       </p>
     </div>
@@ -302,10 +302,10 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "h-9 rounded-md border text-xs font-medium transition-colors",
+        "h-9 rounded-[var(--radius-sm)] text-xs font-medium transition-colors",
         active
-          ? "border-gold bg-gold text-navy"
-          : "border-hairline text-ink hover:border-gold/40",
+          ? "bg-gold text-navy"
+          : "text-[var(--muted)] hover:text-ink",
       )}
     >
       {label}
@@ -327,10 +327,10 @@ function Toggle({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-md border px-3 py-2 text-left text-xs font-semibold transition-colors",
+        "story-press rounded-[var(--radius-sm)] px-3 py-2 text-left text-xs font-semibold transition-colors",
         active
-          ? "border-gold bg-gold text-navy"
-          : "border-hairline text-ink hover:border-gold/40",
+          ? "bg-gold text-navy"
+          : "text-[var(--muted)] hover:text-ink",
       )}
     >
       {label}

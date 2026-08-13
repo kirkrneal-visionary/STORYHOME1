@@ -40,17 +40,15 @@ export default async function ListingDetailPage({ params }: PageProps) {
   const agent = listing.agent ?? getAgent(listing.agentId);
 
   return (
-    <div className="min-h-dvh pb-24 pt-[72px] md:pb-10">
+    <div className="min-h-dvh pb-24 md:pb-10">
       <AnalyticsPageBeacon
         event="listing_opened"
         props={{ listing_id: listing.id }}
       />
-      <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <BackToMarketplace />
-      </div>
 
+      {/* Full-bleed photo plane — back control overlays, not a separate chrome row */}
       <div
-        className="relative mt-4 aspect-[16/9] w-full bg-[var(--nav-surface)] md:aspect-[21/9]"
+        className="relative aspect-[4/3] w-full bg-[var(--nav-surface)] pt-[72px] md:aspect-[21/9] md:pt-0"
         style={{ viewTransitionName: `listing-photo-${listing.id}` }}
       >
         {listing.photoUrl ? (
@@ -67,9 +65,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
             No photo provided
           </div>
         )}
+        <div className="absolute inset-x-0 top-[72px] z-10 bg-gradient-to-b from-navy-deep/70 to-transparent px-4 pb-10 pt-3 md:top-0 md:pt-[84px]">
+          <BackToMarketplace overlay />
+        </div>
       </div>
 
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-8 md:grid-cols-[1fr_320px] md:px-6">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-8 md:grid-cols-[1fr_300px] md:px-6">
         <div>
           <p className="font-mono text-sm font-semibold text-gold">
             {formatUsd(listing.price)}
@@ -90,7 +91,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             {listing.description}
           </p>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 border-t border-hairline pt-6 font-mono text-xs sm:grid-cols-4">
+          <div className="story-well mt-8 grid grid-cols-2 gap-x-4 gap-y-0 sm:grid-cols-4">
             <Spec label="Beds" value={String(listing.beds)} />
             <Spec label="Baths" value={String(listing.baths)} />
             <Spec label="Sqft" value={listing.sqft.toLocaleString()} />
@@ -102,7 +103,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        <aside className="h-fit rounded-xl border border-hairline bg-[var(--surface)] p-5 md:sticky md:top-24">
+        <aside className="story-surface h-fit p-5 md:sticky md:top-24">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] font-bold text-navy">
               {agent.initials}
@@ -129,7 +130,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             />
             <Link
               href={`/agents/${agent.id}`}
-              className="flex h-11 items-center justify-center rounded-lg border border-hairline text-sm font-semibold text-ink"
+              className="story-press flex h-11 items-center justify-center rounded-[var(--radius-md)] border border-hairline text-sm font-semibold text-ink"
             >
               View profile
             </Link>
@@ -142,8 +143,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
 function Spec({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--surface)] px-3 py-3">
-      <p className="text-[var(--muted)] uppercase">{label}</p>
+    <div className="border-b border-hairline px-3 py-3 last:border-b-0 sm:[&:nth-child(4)]:border-b-0">
+      <p className="font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
+        {label}
+      </p>
       <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
     </div>
   );
