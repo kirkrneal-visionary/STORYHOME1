@@ -14,6 +14,12 @@ import {
 import { formatAadt, type TrafficStation } from "@/lib/shi/corridors";
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
 import type { ShiAreaAnalysis } from "@/lib/shi/types";
+import {
+  allValidationCases,
+  computeValidatedConfidence,
+  readProductionBacktests,
+  type ValidatedConfidence,
+} from "@/lib/shi/corridor-validation";
 
 /** Version every scoring methodology — newer ≠ automatically better. */
 export const CORRIDOR_SIGNAL_MODEL = "corridors-v1.0.0" as const;
@@ -62,7 +68,7 @@ export type CorridorAnalysisResult = {
   observed: ObservedFact[];
   signals: DerivedSignal[];
   interpretation: string;
-  confidence: CorridorConfidence;
+  confidence: ValidatedConfidence;
   freshness: {
     trafficYears: number[];
     parcelNote: string;
@@ -370,38 +376,12 @@ export function composeCorridorAnalysis(opts: {
     interpretation += ` Overlaps ${watches.length} growth watch areas.`;
   }
 
-  const factors: string[] = [];
-  if (opts.area.parcelCount >= 40 && inArea.length >= 3 && trendPcts.length >= 2) {
-    factors.push("Solid parcel count and multi-year traffic history");
-  }
-  if (opts.area.parcelCount < 10) factors.push("Few parcels in outline");
-  if (inArea.length === 0) factors.push("No traffic stations in outline");
-  if (trendPcts.length < 2) factors.push("Thin multi-year traffic history");
-  if (opts.area.capped) factors.push("Parcel scan hit safety limit");
-  if (!trafficOk) factors.push("Traffic provider unavailable");
-
-  let confidenceLabel: CorridorConfidence["label"] = "MODERATE";
-  if (
-    opts.area.parcelCount >= 40 &&
-    inArea.length >= 3 &&
-    trendPcts.length >= 2 &&
-    trafficOk
-  ) {
-    confidenceLabel = "HIGH";
-  }
-  if (
-    opts.area.parcelCount < 8 ||
-    (!trafficOk && opts.area.parcelCount < 20) ||
-    (inArea.length === 0 && opts.area.parcelCount < 15)
-  ) {
-    confidenceLabel = "LIMITED EVIDENCE";
-  }
-
   const limitations: string[] = [
     CORRIDOR_ANALYSIS_HONESTY,
     "CAD market value is not a sale price or appraisal guarantee.",
     "TxDOT AADT is annual planning average — not live congestion.",
     "Fragmentation is inferred from acreage distribution, not recorded deed splits.",
+    "No hard-coded accuracy percent — hit rates publish only with enough labeled backtests.",
   ];
   if (opts.area.capped) {
     limitations.push("Parcel count may be incomplete because the area hit Archie’s safety limit.");
@@ -409,6 +389,27 @@ export function composeCorridorAnalysis(opts: {
   if (!trafficOk) {
     limitations.push("Traffic history temporarily unavailable — other evidence still shown.");
   }
+
+  let productionCases: ReturnType<typeof readProductionBacktests> = [];
+  try {
+    productionCases = readProductionBacktests();
+  } catch {
+    productionCases = [];
+  }
+
+  const confidence = computeValidatedConfidence(
+    {
+      parcelCount: opts.area.parcelCount,
+      stationCount: inArea.length,
+      trendSampleCount: trendPcts.length,
+      trafficAvailable: trafficOk,
+      capped: Boolean(opts.area.capped),
+      trafficYearCount: years.length,
+    },
+    signals,
+    allValidationCases(productionCases),
+    CORRIDOR_SIGNAL_MODEL,
+  );
 
   return {
     modelVersion: CORRIDOR_SIGNAL_MODEL,
@@ -423,16 +424,7 @@ export function composeCorridorAnalysis(opts: {
     observed,
     signals,
     interpretation,
-    confidence: {
-      label: confidenceLabel,
-      detail:
-        confidenceLabel === "HIGH"
-          ? "Enough independent evidence layers agree for a clear professional read."
-          : confidenceLabel === "LIMITED EVIDENCE"
-            ? "Thin coverage — treat this as a starting point, not a firm conclusion."
-            : "Useful signal with gaps — inspect evidence before acting.",
-      factors,
-    },
+    confidence,
     freshness: {
       trafficYears: years.slice(0, 8),
       parcelNote: opts.area.note || "County parcel file as of last successful refresh.",

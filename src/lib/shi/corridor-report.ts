@@ -108,6 +108,15 @@ export function buildDevelopmentIntelligenceReportHtml(
 <h2>Executive summary</h2>
 <div class="interpret"><p>${escapeHtml(a.interpretation)}</p></div>
 <p><strong>Confidence:</strong> ${escapeHtml(a.confidence.label)} — ${escapeHtml(a.confidence.detail)}</p>
+${
+  "validation" in a.confidence && a.confidence.validation
+    ? `<p class="muted">${escapeHtml(a.confidence.validation.headline)}${
+        a.confidence.publishedAccuracy
+          ? ` · Measured hit rate ${Math.round(a.confidence.publishedAccuracy.rate * 100)}% (n=${a.confidence.publishedAccuracy.n})`
+          : " · No hard-coded accuracy percent"
+      }</p>`
+    : ""
+}
 <p class="muted">${escapeHtml(a.statusLine)}</p>
 
 <h2>Observed facts</h2>

@@ -153,6 +153,35 @@ export function ShiCorridorsAnalysisPanel({
             {result.confidence.detail}
           </p>
         </div>
+        {"validation" in result.confidence && result.confidence.validation ? (
+          <div className="mt-3 rounded-md border border-hairline bg-[var(--background)]/60 px-3 py-2">
+            <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+              Validation · {result.confidence.validation.modelVersion}
+            </p>
+            <p className="mt-1 text-[11px] text-ink">
+              {result.confidence.validation.headline}
+            </p>
+            <p className="mt-1 text-[10px] text-[var(--muted)]">
+              Coverage {Math.round(result.confidence.coverageScore * 100)}% ·
+              Agreement {Math.round(result.confidence.agreementScore * 100)}%
+              {result.confidence.publishedAccuracy
+                ? ` · Measured hit rate ${Math.round(result.confidence.publishedAccuracy.rate * 100)}% (n=${result.confidence.publishedAccuracy.n})`
+                : " · No published accuracy percent yet"}
+            </p>
+            <p className="mt-1 text-[10px] text-[var(--muted)]">
+              {result.confidence.validation.honesty}
+            </p>
+          </div>
+        ) : null}
+        {result.confidence.factors?.length ? (
+          <ul className="mt-2 space-y-0.5">
+            {result.confidence.factors.slice(0, 6).map((f) => (
+              <li key={f} className="text-[10px] text-[var(--muted)]">
+                · {f}
+              </li>
+            ))}
+          </ul>
+        ) : null}
         {result.freshness.trafficYears.length ? (
           <p className="mt-2 text-[10px] text-[var(--muted)]">
             Traffic years in evidence:{" "}

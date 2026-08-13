@@ -400,7 +400,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-MAP-TOOLBOX",
     name: "Corridors · map-native toolbox · draw lock",
     goal: "Put Navigate/Freehand/Box/Radius/Traffic on the map; hard-lock pan while drawing; near-precision freehand with undo/done.",
-    status: "current",
+    status: "done",
     frontend: [
       "In-map toolbox (Research-class, Corridors-tuned)",
       "Hard navigation lock for whole draw mode",
@@ -414,6 +414,26 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Vertex drag-edit after seal (later)",
       "Destructive Research map rewrite",
+    ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-VALIDATION",
+    name: "Corridors · validation · honest confidence",
+    goal: "Backtest harness + confidence from coverage, agreement, and labeled outcomes — never hard-coded accuracy theater.",
+    status: "current",
+    frontend: [
+      "Validation block on analysis card",
+      "Coverage / agreement scores",
+      "Publish hit rate only when sample qualifies",
+    ],
+    backend: [
+      "corridor-validation backtest ledger + fixture corpus",
+      "computeValidatedConfidence wired into compose",
+      "Production ledger ready for labeled outcomes",
+    ],
+    outOfScope: [
+      "Fake 87% accuracy claims",
+      "Auto-rewrite production algorithms from unchecked AI",
     ],
   },
   {
@@ -437,8 +457,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors map-native toolbox + draw lock. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-MAP-TOOLBOX" as const;
+/** Active wave — Corridors validation + honest confidence. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-VALIDATION" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
