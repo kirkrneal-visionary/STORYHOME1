@@ -127,15 +127,15 @@ export function SwipeBack() {
       surfaceRef.current.style.transition = "none";
       surfaceRef.current.style.transform = `translate3d(${drag}px,0,0)`;
       surfaceRef.current.style.boxShadow =
-        " -12px 0 40px rgba(0,0,0,0.18)";
-      surfaceRef.current.style.borderRadius = drag > 24 ? "12px 0 0 12px" : "";
+        " -16px 0 48px rgba(0,0,0,0.28)";
+      surfaceRef.current.style.borderRadius = drag > 20 ? "14px 0 0 14px" : "";
 
       const peekEl = document.querySelector(
         ".story-continuum-peek",
       ) as HTMLElement | null;
       if (peekEl) {
         peekEl.style.transition = "none";
-        peekEl.style.opacity = String(peek);
+        peekEl.style.opacity = String(Math.max(peek, drag > 8 ? 0.12 : 0));
       }
     };
 
@@ -167,7 +167,7 @@ export function SwipeBack() {
         el.style.boxShadow = " -24px 0 48px rgba(0,0,0,0.22)";
         if (peekEl) {
           peekEl.style.transition = `opacity ${motion.duration.settle}s ${settleEase}`;
-          peekEl.style.opacity = "0.28";
+          peekEl.style.opacity = "0.5";
         }
         window.setTimeout(() => {
           clearSurface(el);

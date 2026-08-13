@@ -144,14 +144,48 @@ html[data-role="professional"] {
 :root {
   /* Story Continuum — aligned with src/lib/motion/tokens.ts */
   --motion-micro: 140ms;
-  --motion-fast: 220ms;
-  --motion-standard: 380ms;
-  --motion-surface: 480ms;
-  --motion-settle: 440ms;
+  --motion-fast: 240ms;
+  --motion-standard: 420ms;
+  --motion-surface: 520ms;
+  --motion-settle: 480ms;
   --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-ease-enter: cubic-bezier(0.18, 0.9, 0.2, 1);
   --motion-ease-browse: cubic-bezier(0.16, 0.95, 0.18, 1);
   --motion-ease-study: cubic-bezier(0.25, 0.85, 0.2, 1);
+  --continuum-rail: transparent;
+}
+
+/* Global temperature cue — thin belonging rail under the nav */
+html[data-continuum-temp="browse"] {
+  --continuum-rail: color-mix(in srgb, var(--gold) 55%, transparent);
+}
+html[data-continuum-temp="study"] {
+  --continuum-rail: color-mix(in srgb, var(--gold) 35%, var(--navy-deep));
+}
+html[data-continuum-temp="work"] {
+  --continuum-rail: color-mix(in srgb, var(--teal-soft, #2a9d8f) 40%, transparent);
+}
+html[data-continuum-temp="social"] {
+  --continuum-rail: color-mix(in srgb, var(--gold) 28%, var(--navy-soft));
+}
+html[data-continuum-temp="home"] {
+  --continuum-rail: color-mix(in srgb, var(--gold) 40%, transparent);
+}
+html[data-continuum-temp="still"] {
+  --continuum-rail: transparent;
+}
+
+.story-app-shell::before {
+  content: "";
+  pointer-events: none;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: var(--continuum-rail);
+  transition: background var(--motion-standard) var(--motion-ease-enter);
 }
 
 @keyframes storyDrawerIn {
@@ -205,14 +239,15 @@ html[data-role="professional"] {
   animation: storySkeletonPulse 1.35s ease-in-out infinite;
 }
 
-/* Previous-room peek during Continuum swipe-back */
+/* Previous-room peek during Continuum swipe-back — must be obvious */
 .story-continuum-peek {
   opacity: 0;
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--navy-deep) 55%, transparent) 0%,
-      color-mix(in srgb, var(--navy) 28%, transparent) 55%,
+      color-mix(in srgb, var(--navy-deep) 72%, transparent) 0%,
+      color-mix(in srgb, var(--navy) 42%, transparent) 45%,
+      color-mix(in srgb, var(--gold) 12%, transparent) 78%,
       transparent 100%
     ),
     var(--background);
@@ -223,9 +258,14 @@ html[data-role="professional"] {
   overflow: clip;
 }
 
+.story-route-page[data-continuum-temp="browse"] {
+  --story-room-tint: color-mix(in srgb, var(--gold) 4%, transparent);
+}
 .story-route-page[data-continuum-temp="study"] {
-  /* Cooler workspace cue — no flash, just identity */
-  --story-room-tint: transparent;
+  --story-room-tint: color-mix(in srgb, var(--navy-deep) 6%, transparent);
+}
+.story-route-page[data-continuum-temp="social"] {
+  --story-room-tint: color-mix(in srgb, var(--gold) 3%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {

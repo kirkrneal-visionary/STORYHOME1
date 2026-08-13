@@ -45,26 +45,29 @@ export function RouteTransition({ children }: { children: React.ReactNode }) {
   const isLateral = direction === "lateral";
 
   // Lateral = soft dissolve (belonging across networks), not a shove.
+  // Forward/back use enough travel that desktop + phone both feel a room-step.
   const xEnter =
     skipSpatial || isLateral
       ? 0
       : direction === "back"
-        ? -distance * 0.55
+        ? -distance * 0.7
         : distance;
 
   const opacityFrom = reduced
-    ? (motionCtx?.opacity.reducedEnter ?? 0.9)
+    ? (motionCtx?.opacity.reducedEnter ?? 0.88)
     : isLateral
-      ? (motionCtx?.opacity.lateralFrom ?? 0.88)
+      ? (motionCtx?.opacity.lateralFrom ?? 0.72)
       : profile.opacityFrom;
 
-  // Tiny scale on browse forward — “step into the room”
+  // Browse forward — clear “step into the room” (still not a zoom gimmick)
   const scaleFrom =
-    reduced || skipSpatial || isLateral || temperature !== "browse"
+    reduced || skipSpatial || isLateral
       ? 1
-      : direction === "forward"
-        ? 0.992
-        : 1;
+      : temperature === "browse" && direction === "forward"
+        ? 0.97
+        : temperature === "study" && direction === "forward"
+          ? 0.985
+          : 1;
 
   const key = normalizePath(pathname);
 

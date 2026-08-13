@@ -237,7 +237,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-LOOKALIKE-CONTEXT",
     name: "Lookalike CAD band · assumption ranges",
     goal: "Compose Find Similar into an honest lookalike CAD appraisal band and show illustrative carry ranges under explicit rate/down assumptions.",
-    status: "current",
+    status: "done",
     frontend: [
       "Lookalike CAD band on evidence panel",
       "Vs lookalike median / min–max range",
@@ -251,6 +251,25 @@ export const SHI_WAVES: ShiWave[] = [
       "Seller-probability theater",
       "Treating lookalikes as MLS sale comps",
       "Fake similarity percent scores",
+    ],
+  },
+  {
+    id: "STORY-OS-MASSIVE",
+    name: "Story OS package · Continuum visibility · shell honesty",
+    goal: "Ship the full Story OS doc package and make Continuum belonging feelable — plus honest Messages/Referrals shells — without brand redesign or fake predictions.",
+    status: "current",
+    frontend: [
+      "Continuum visibility retune (distance, opacity, browse scale, swipe peek)",
+      "html[data-continuum-temp] + temperature rail cue",
+      "Messages + Referrals Not live yet banners",
+      "Story OS playbook / networks / security docs",
+    ],
+    backend: ["No migration — presentation + honesty only"],
+    outOfScope: [
+      "Brand redesign",
+      "Seller-probability theater",
+      "Live messaging / referral backend",
+      "Product analytics wiring (T3)",
     ],
   },
   {
@@ -274,8 +293,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — lookalike band + assumption ranges. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-LOOKALIKE-CONTEXT" as const;
+/** Active wave — Story OS massive package + Continuum visibility. */
+export const ARCHIE_CURRENT_WAVE = "STORY-OS-MASSIVE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
