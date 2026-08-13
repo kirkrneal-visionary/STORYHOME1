@@ -30,8 +30,9 @@ export default function PrivacyPage() {
                 Basic usage/technical data needed to operate the service.
                 Product usage events (for example marketplace views, Archie
                 module opens) use a first-party catalog with limited properties —
-                no owner names, addresses, passcodes, or message bodies. Default
-                collection sink is off until a reviewed destination is enabled.
+                no owner names, addresses, passcodes, or message bodies. Events
+                may be stored in our own database for product improvement; we do
+                not sell them or load third-party marketing trackers for this.
               </li>
             </ul>
           </Section>

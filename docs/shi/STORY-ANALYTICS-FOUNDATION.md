@@ -6,10 +6,12 @@ Named product events for funnel + Archie usage — **privacy-reviewed props only
 ## Sink
 | Value | Behavior |
 |---|---|
-| `noop` (default) | Silent — safe for production until a reviewed destination exists |
+| `noop` | Silent |
 | `console` | Dev: `console.info("[story-analytics]", event, props)` |
+| `remote` (default after destination wave) | `POST /api/analytics` → `product_analytics_events` |
 
-Env: `NEXT_PUBLIC_ANALYTICS_SINK=noop|console`
+Env: `NEXT_PUBLIC_ANALYTICS_SINK=noop|console|remote`  
+See [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md).
 
 ## Catalog
 - `marketplace_viewed`
@@ -33,4 +35,4 @@ Forbidden: email, name, owner, address, notes, message body, passcodes, CAD prop
 - Fake engagement dashboards  
 
 ## Later
-First-party ingest endpoint or reviewed vendor — only after privacy + consent design.
+Reviewed vendor only with consent UX. Destination wave: first-party ingest + table.

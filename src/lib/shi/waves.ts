@@ -520,7 +520,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-ANALYTICS-FOUNDATION",
     name: "Analytics foundation · privacy-reviewed events",
     goal: "First-party event catalog + noop/console sink for funnel and Archie usage — no PII props, no third-party SDK, no fake dashboards.",
-    status: "current",
+    status: "done",
     frontend: [
       "track() on marketplace, listing, inquire, login, portal tabs, Archie modules",
       "Parcel open with county FIPS only",
@@ -528,7 +528,7 @@ export const SHI_WAVES: ShiWave[] = [
     ],
     backend: [
       "src/lib/analytics catalog + scrubber",
-      "NEXT_PUBLIC_ANALYTICS_SINK=noop|console",
+      "NEXT_PUBLIC_ANALYTICS_SINK=noop|console|remote",
     ],
     outOfScope: [
       "PostHog / Segment / session replay",
@@ -536,10 +536,29 @@ export const SHI_WAVES: ShiWave[] = [
       "Fake product analytics dashboard",
     ],
   },
+  {
+    id: "STORY-ANALYTICS-DESTINATION",
+    name: "Analytics destination · first-party ingest",
+    goal: "Store catalog events in product_analytics_events via POST /api/analytics — soft-fail if migration pending; no third-party; no public event feed.",
+    status: "current",
+    frontend: [
+      "Default sink remote (fire-and-forget)",
+      "console/noop still available via env",
+    ],
+    backend: [
+      "Migration 0029 product_analytics_events + RLS",
+      "POST /api/analytics catalog gate + server scrub",
+    ],
+    outOfScope: [
+      "Admin cross-user analytics UI",
+      "IP / fingerprint storage",
+      "Vendor SDKs",
+    ],
+  },
 ];
 
-/** Active wave — privacy-reviewed product analytics foundation. */
-export const ARCHIE_CURRENT_WAVE = "STORY-ANALYTICS-FOUNDATION" as const;
+/** Active wave — first-party analytics destination. */
+export const ARCHIE_CURRENT_WAVE = "STORY-ANALYTICS-DESTINATION" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

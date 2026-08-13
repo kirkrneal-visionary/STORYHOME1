@@ -7,4 +7,10 @@ export {
   type ArchieModuleProp,
   type PortalTabProp,
 } from "@/lib/analytics/events";
+export { scrubAnalyticsProps } from "@/lib/analytics/scrub";
+export {
+  ingestProductAnalyticsEvent,
+  isCatalogEvent,
+  type IngestResult,
+} from "@/lib/analytics/ingest";
 export { track, type AnalyticsSink } from "@/lib/analytics/track";
