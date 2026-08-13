@@ -17,6 +17,7 @@ import {
   type TrafficStation,
 } from "@/lib/shi/corridors";
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
+import type { TxdotProject } from "@/lib/shi/txdot-projects";
 import { cn } from "@/lib/utils";
 
 const EMPTY_FC: GeoJSON.FeatureCollection = {
@@ -32,6 +33,8 @@ type Props = {
   showWatchAreas?: boolean;
   selectedWatchId?: string | null;
   onSelectWatch?: (area: GrowthWatchArea | null) => void;
+  projects?: TxdotProject[];
+  showProjects?: boolean;
   trafficToolActive: boolean;
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
@@ -92,6 +95,8 @@ export function ShiCorridorsMap({
   showWatchAreas = true,
   selectedWatchId = null,
   onSelectWatch,
+  projects = [],
+  showProjects = true,
   trafficToolActive,
   selectedStationId,
   onSelectStation,
@@ -176,6 +181,26 @@ export function ShiCorridorsMap({
             1.4,
           ],
           "line-opacity": 0.9,
+        },
+      });
+
+      map.addSource("txdot-projects", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: "txdot-projects-line",
+        type: "line",
+        source: "txdot-projects",
+        paint: {
+          "line-color": "#5ec8ff",
+          "line-width": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            8,
+            1.5,
+            14,
+            4,
+          ],
+          "line-opacity": 0.85,
         },
       });
 
@@ -346,12 +371,34 @@ export function ShiCorridorsMap({
         /* promoteId not set — selection still works via list */
       }
     }
+
+    const projSrc = map.getSource(
+      "txdot-projects",
+    ) as maplibregl.GeoJSONSource | undefined;
+    projSrc?.setData({
+      type: "FeatureCollection",
+      features: showProjects
+        ? projects
+            .filter((p) => p.geometry)
+            .map((p) => ({
+              type: "Feature" as const,
+              properties: {
+                id: p.id,
+                highway: p.highway,
+                phase: p.phase,
+              },
+              geometry: p.geometry!,
+            }))
+        : [],
+    });
   }, [
     stations,
     segments,
     watchAreas,
     showWatchAreas,
     selectedWatchId,
+    projects,
+    showProjects,
     ready,
   ]);
 

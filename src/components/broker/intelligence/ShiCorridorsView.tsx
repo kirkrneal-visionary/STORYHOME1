@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Loader2, PenLine, Route, Eye } from "lucide-react";
 import { ShiCorridorsMap } from "@/components/broker/intelligence/ShiCorridorsMap";
 import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
-import { shiCorridorsTraffic } from "@/lib/shi/client";
+import { shiCorridorsProjects, shiCorridorsTraffic } from "@/lib/shi/client";
+import { openWatchInResearch } from "@/lib/shi/corridor-handoff";
+import { writeLastArchieModule } from "@/lib/navigation/archieMemory";
 import {
   CORRIDOR_COUNTIES,
   CORRIDORS_HONESTY,
@@ -20,16 +22,21 @@ import {
   GROWTH_WATCH_HONESTY,
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
+import {
+  TXDOT_PROJECTS_HONESTY,
+  type TxdotProject,
+} from "@/lib/shi/txdot-projects";
 import { cn } from "@/lib/utils";
 
 /**
- * Archie Corridors — traffic · growth watch · scenario board.
+ * Archie Corridors — traffic · growth watch · scenarios · land loop.
  */
 export function ShiCorridorsView({
   onOpenResearch,
 }: {
   onOpenResearch?: () => void;
 }) {
+  const router = useRouter();
   const [county, setCounty] = useState<CorridorCounty>(() =>
     defaultCorridorCounty(),
   );
@@ -44,12 +51,18 @@ export function ShiCorridorsView({
   );
   const [roadFilter, setRoadFilter] = useState("");
   const [panel, setPanel] = useState<"station" | "watch">("watch");
+  const [projects, setProjects] = useState<TxdotProject[]>([]);
+  const [projectsNote, setProjectsNote] = useState("");
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [showProjects, setShowProjects] = useState(true);
 
   const load = useCallback(async (fips: string) => {
     setLoading(true);
     setError("");
     setSelected(null);
     setSelectedWatch(null);
+    setProjects([]);
+    setProjectsNote("");
     try {
       const data = await shiCorridorsTraffic(fips);
       setPayload(data);
@@ -71,6 +84,54 @@ export function ShiCorridorsView({
   useEffect(() => {
     void load(county.fips);
   }, [county.fips, load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const bbox = selectedWatch?.bbox ?? county.bbox;
+    setProjectsLoading(true);
+    void shiCorridorsProjects({ countyFips: county.fips, bbox })
+      .then((data) => {
+        if (cancelled) return;
+        setProjects(data.projects);
+        setProjectsNote(
+          data.projectCount
+            ? `${data.projectCount} TxDOT project${data.projectCount === 1 ? "" : "s"} in view · ${data.honesty}`
+            : `No TxDOT projects returned in this view · ${data.honesty}`,
+        );
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setProjects([]);
+        setProjectsNote(
+          e instanceof Error
+            ? e.message
+            : "Could not load TxDOT projects for this area.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setProjectsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [county.fips, county.bbox, selectedWatch?.id, selectedWatch?.bbox]);
+
+  const studyWatchLand = useCallback(
+    (area: GrowthWatchArea) => {
+      openWatchInResearch({
+        area,
+        countySource: county.source,
+        countyName: county.name,
+      });
+      writeLastArchieModule("research");
+      // Navigate without selectSection — preserves handoff query for keep-alive Research.
+      router.replace(
+        `/portal/intelligence?handoff=corridor&t=${Date.now()}`,
+        { scroll: false },
+      );
+    },
+    [county.source, county.name, router],
+  );
 
   const filteredStations = useMemo(() => {
     const list = payload?.stations ?? [];
@@ -146,6 +207,20 @@ export function ShiCorridorsView({
           </button>
           <button
             type="button"
+            onClick={() => setShowProjects((v) => !v)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
+              showProjects
+                ? "bg-gold text-navy"
+                : "border border-hairline text-ink",
+            )}
+            title="Show TxDOT Project Tracker lines"
+          >
+            <Route className="h-4 w-4" />
+            TxDOT projects
+          </button>
+          <button
+            type="button"
             onClick={() => void load(county.fips)}
             disabled={loading}
             className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-50"
@@ -157,22 +232,19 @@ export function ShiCorridorsView({
             )}
             Refresh TxDOT
           </button>
-          {onOpenResearch ? (
-            <button
-              type="button"
-              onClick={onOpenResearch}
-              className="inline-flex h-10 items-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-            >
-              Open Research
-            </button>
-          ) : (
-            <Link
-              href="/portal/intelligence"
-              className="inline-flex h-10 items-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-            >
-              Open Research
-            </Link>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              if (onOpenResearch) onOpenResearch();
+              else {
+                writeLastArchieModule("research");
+                router.replace("/portal/intelligence", { scroll: false });
+              }
+            }}
+            className="inline-flex h-10 items-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Open Research
+          </button>
         </div>
       </div>
 
@@ -201,6 +273,8 @@ export function ShiCorridorsView({
             setSelectedWatch(area);
             if (area) setPanel("watch");
           }}
+          projects={projects}
+          showProjects={showProjects}
           trafficToolActive={trafficToolActive}
           selectedStationId={selected?.id ?? null}
           onSelectStation={(s) => {
@@ -244,8 +318,10 @@ export function ShiCorridorsView({
               selected={selectedWatch}
               onSelect={setSelectedWatch}
               cadNote={payload?.watch?.cadPulse?.note}
-              onOpenResearch={onOpenResearch}
-              countySource={county.source}
+              projects={projects}
+              projectsLoading={projectsLoading}
+              projectsNote={projectsNote}
+              onStudyLand={studyWatchLand}
             />
           ) : (
             <div>
@@ -359,15 +435,19 @@ function WatchPanel({
   selected,
   onSelect,
   cadNote,
-  onOpenResearch,
-  countySource,
+  projects,
+  projectsLoading,
+  projectsNote,
+  onStudyLand,
 }: {
   areas: GrowthWatchArea[];
   selected: GrowthWatchArea | null;
   onSelect: (a: GrowthWatchArea) => void;
   cadNote?: string;
-  onOpenResearch?: () => void;
-  countySource: string;
+  projects: TxdotProject[];
+  projectsLoading: boolean;
+  projectsNote: string;
+  onStudyLand: (area: GrowthWatchArea) => void;
 }) {
   return (
     <div className="space-y-3">
@@ -430,22 +510,48 @@ function WatchPanel({
               </li>
             ))}
           </ul>
-          {onOpenResearch ? (
-            <button
-              type="button"
-              onClick={onOpenResearch}
-              className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
-            >
-              Study land in Research
-            </button>
-          ) : (
-            <Link
-              href={`/portal/intelligence?source=${encodeURIComponent(countySource)}`}
-              className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
-            >
-              Study land in Research
-            </Link>
-          )}
+
+          <div className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+            <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+              TxDOT projects nearby
+              {projectsLoading ? " · loading" : ""}
+            </p>
+            {projects.length === 0 ? (
+              <p className="mt-1 text-[11px] text-[var(--muted)]">
+                {projectsNote || TXDOT_PROJECTS_HONESTY}
+              </p>
+            ) : (
+              <ul className="mt-1 max-h-28 space-y-1 overflow-y-auto">
+                {projects.slice(0, 8).map((p) => (
+                  <li key={p.id} className="text-[11px] text-ink">
+                    <span className="font-semibold">
+                      {p.highway || "Highway"}
+                    </span>
+                    {p.phase ? (
+                      <span className="text-[var(--muted)]"> · {p.phase}</span>
+                    ) : null}
+                    {p.typeOfWork ? (
+                      <span className="block text-[var(--muted)]">
+                        {p.typeOfWork}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onStudyLand(selected)}
+            className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+          >
+            Study land in Research
+          </button>
+          <p className="text-[10px] text-[var(--muted)]">
+            Opens this watch box as a Research map frame (county locked). Run
+            Analyze there to load parcels.
+          </p>
         </div>
       ) : null}
 

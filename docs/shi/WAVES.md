@@ -1,19 +1,20 @@
 # Archie's Intelligence — Build Waves
 
 **Live:** https://storyhome-1-eqmg.vercel.app  
-**Corridors plan:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)
+**Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)
 
 ## Current
-### ARCHIE-GROWTH-SCENARIOS
-Scenario board on Corridors — your growth assumptions → conservative / base / upside AADT ranges + meeting pack. For land developers / master-plan sit-downs. Not a guarantee.
+### ARCHIE-CORRIDORS-LAND-LOOP
+Watch area → Research land frame · TxDOT Project Tracker lines on Corridors.
 
-## Next (Corridors finish)
-- **B** Watch → Research land handoff + TxDOT projects  
-- **C** Presentation mode + store our traffic history  
+## Next
+### Presentation + traffic memory (Wave C)
+Presentation mode · print map · store our own traffic history.
 
 ## Done
-- Corridors + Traffic tool + TxDOT AADT  
-- Growth watch areas  
+- Corridors Traffic tool + TxDOT AADT  
+- Growth watch  
+- Scenario board + meeting pack  
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

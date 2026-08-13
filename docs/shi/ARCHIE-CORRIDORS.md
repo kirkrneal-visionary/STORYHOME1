@@ -27,8 +27,8 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 |---|---|---|
 | **1 (live)** | `ARCHIE-CORRIDORS-TRAFFIC` | Module shell · custom **Traffic** tool · TxDOT AADT stations (≥5 years) · corridor lines · honesty copy |
 | **2 (live)** | `ARCHIE-GROWTH-WATCH` | Evidence-backed watch areas (traffic trend + CAD observation pulse) |
-| **3 (this)** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
-| **B (next)** | Land loop | Watch → Research parcels · TxDOT projects · Prospect/Farm |
+| **3 (live)** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
+| **B (this)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
 | **C (next)** | Polish + memory | Presentation mode · print map · store our traffic history |
 
 ---
@@ -97,6 +97,13 @@ On Corridors (below the map):
 5. **Meeting pack** — print for investor / developer sit-down  
 
 Honesty: your assumptions applied to TxDOT AADT — not a forecast guarantee.
+
+## Wave B — Land loop + TxDOT projects
+
+1. Select a **Growth watch** area  
+2. See **TxDOT projects nearby** (cyan lines on map when **TxDOT projects** is on)  
+3. **Study land in Research** — opens that watch box as a Research frame (county locked)  
+4. In Research, run **Analyze** to load parcels inside the box  
 
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
 

@@ -532,9 +532,18 @@ export function PropertyIntelligenceView({
 
   function clearOpenFrameParams() {
     const params = new URLSearchParams(searchParams.toString());
-    if (!params.has("openFrame") && !params.has("folderId")) return;
+    if (
+      !params.has("openFrame") &&
+      !params.has("folderId") &&
+      !params.has("handoff") &&
+      !params.has("t")
+    ) {
+      return;
+    }
     params.delete("openFrame");
     params.delete("folderId");
+    params.delete("handoff");
+    params.delete("t");
     const q = params.toString();
     const base = pathname?.includes("/intelligence")
       ? "/portal/intelligence"
@@ -580,7 +589,7 @@ export function PropertyIntelligenceView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Study Vault → Research hand-off: sessionStorage (same tab) + durable ?openFrame=.
+  // Study Vault / Corridors → Research hand-off: sessionStorage + ?openFrame= / ?handoff=
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
@@ -616,6 +625,16 @@ export function PropertyIntelligenceView({
       setReopening(true);
       applyFrame(queued);
       clearOpenFrameParams();
+      // Drop Corridors handoff query noise after consume.
+      const params = new URLSearchParams(searchParams.toString());
+      if (params.has("handoff") || params.has("t")) {
+        params.delete("handoff");
+        params.delete("t");
+        const q = params.toString();
+        router.replace(q ? `/portal/intelligence?${q}` : "/portal/intelligence", {
+          scroll: false,
+        });
+      }
       return () => {
         cancelled = true;
         if (timer) window.clearTimeout(timer);

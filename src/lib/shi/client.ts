@@ -456,3 +456,15 @@ export async function shiCorridorsTraffic(countyFips: string) {
     `/api/shi/corridors/traffic?${params.toString()}`,
   );
 }
+
+export async function shiCorridorsProjects(opts: {
+  countyFips: string;
+  bbox?: readonly [number, number, number, number];
+}) {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  if (opts.bbox) params.set("bbox", opts.bbox.join(","));
+  return shiFetch<import("@/lib/shi/txdot-projects").TxdotProjectsPayload>(
+    `/api/shi/corridors/projects?${params.toString()}`,
+  );
+}
