@@ -181,7 +181,7 @@ If a feature needs a third visual language, **reject or escalate** — don’t f
 | Unsaved `data-unsaved` on meaningful forms | Continuum must not destroy work |
 | Deep links work logged-out → login → `next=` | Don’t break share URLs |
 
-Future: audit “who viewed what” only with explicit analytics design — we do **not** have product telemetry today.
+Product usage events: first-party catalog via `track()` (`STORY-ANALYTICS-FOUNDATION`) — default sink noop; no PII props. Audit “who viewed what” still needs a separate design.
 
 ---
 
@@ -227,6 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` (hide theater; honest pause landings).
+**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` (catalog + noop/console; no third-party).
 
-**Next coded wave (when green-lit):** Analytics foundation (privacy-reviewed) — or finish Messages/Referrals only with real end-to-end product.
+**Next coded wave (when green-lit):** Reviewed analytics destination — or finish Messages/Referrals only with real end-to-end product.

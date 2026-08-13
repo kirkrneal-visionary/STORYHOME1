@@ -21,6 +21,7 @@ import { MySellersView } from "@/components/broker/MySellersView";
 import { SharedHomesView } from "@/components/broker/SharedHomesView";
 import { CommunityView } from "@/components/broker/CommunityView";
 import { ShiWorkspace } from "@/components/broker/intelligence/ShiWorkspace";
+import { track, type PortalTabProp } from "@/lib/analytics";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +81,16 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
     initialTab ?? resolveInitialTab(pathname, searchParams.get("tab"));
 
   function selectTab(next: PortalTab) {
+    const tabProp: PortalTabProp =
+      next === "tools" ||
+      next === "listings" ||
+      next === "buyers" ||
+      next === "sellers" ||
+      next === "intelligence" ||
+      next === "community"
+        ? next
+        : "other";
+    track("portal_tab_opened", { tab: tabProp });
     if (next === "intelligence") {
       router.replace("/portal/intelligence", { scroll: false });
       return;

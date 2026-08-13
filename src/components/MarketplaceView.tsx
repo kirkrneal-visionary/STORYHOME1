@@ -17,6 +17,7 @@ import {
 } from "@/lib/listing-filters";
 import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
 import { DEFAULT_MARKET } from "@/lib/markets";
+import { track } from "@/lib/analytics";
 import {
   marketplaceCacheFresh,
   readMarketplaceCache,
@@ -67,6 +68,10 @@ export default function MarketplaceView() {
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [allListings, setAllListings] = useState<DemoListing[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    track("marketplace_viewed", { network: "marketplace" });
+  }, []);
 
   // Restore marketplace workspace after detail → back (session cache).
   useEffect(() => {

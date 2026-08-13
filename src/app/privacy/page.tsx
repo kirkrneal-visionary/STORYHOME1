@@ -26,7 +26,13 @@ export default function PrivacyPage() {
                 renovation and maintenance history, expenses, uploaded documents
                 and receipts, and an informational property disclosure.
               </li>
-              <li>Basic usage/technical data needed to operate the service.</li>
+              <li>
+                Basic usage/technical data needed to operate the service.
+                Product usage events (for example marketplace views, Archie
+                module opens) use a first-party catalog with limited properties —
+                no owner names, addresses, passcodes, or message bodies. Default
+                collection sink is off until a reviewed destination is enabled.
+              </li>
             </ul>
           </Section>
 
