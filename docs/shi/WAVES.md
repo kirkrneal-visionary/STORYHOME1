@@ -1,24 +1,19 @@
 # Archie's Intelligence — Build Waves
 
-**Product name:** Archie's Intelligence  
-**Never show “SHI” in the UI**  
-**Home:** `/portal/intelligence`  
 **Live:** https://storyhome-1-eqmg.vercel.app  
-
 **Corridors plan:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)
 
 ## Current
-### ARCHIE-GROWTH-WATCH
-Growth watch areas on Corridors — roads that earned attention from TxDOT traffic trends (+ optional CAD observation pulse). Explainable reasons only.
-
-## Next
 ### ARCHIE-GROWTH-SCENARIOS
-Investor projection board with explicit assumptions.
+Scenario board on Corridors — your growth assumptions → conservative / base / upside AADT ranges + meeting pack. For land developers / master-plan sit-downs. Not a guarantee.
+
+## Next (Corridors finish)
+- **B** Watch → Research land handoff + TxDOT projects  
+- **C** Presentation mode + store our traffic history  
 
 ## Done
-- Corridors module + Traffic tool + TxDOT AADT (7 counties)  
-- CAD evidence · lookalike · observation foundation  
+- Corridors + Traffic tool + TxDOT AADT  
+- Growth watch areas  
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  
-- Phone/email scraping  
