@@ -106,6 +106,7 @@ export function ShiCorridorsView({
   const [projects, setProjects] = useState<TxdotProject[]>([]);
   const [projectsNote, setProjectsNote] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(false);
+  const [projectsAvailable, setProjectsAvailable] = useState(true);
   const [showProjects, setShowProjects] = useState(true);
   const [presentationMode, setPresentationMode] = useState(false);
   const [memoryDiff, setMemoryDiff] = useState<TrafficMemoryDiff | null>(null);
@@ -200,6 +201,7 @@ export function ShiCorridorsView({
     void shiCorridorsProjects({ countyFips: county.fips, bbox })
       .then((data) => {
         if (cancelled) return;
+        setProjectsAvailable(true);
         setProjects(data.projects);
         setProjectsNote(
           data.projectCount
@@ -209,6 +211,7 @@ export function ShiCorridorsView({
       })
       .catch((e) => {
         if (cancelled) return;
+        setProjectsAvailable(false);
         setProjects([]);
         setProjectsNote(
           e instanceof Error
@@ -249,6 +252,7 @@ export function ShiCorridorsView({
         setAnalyzeStatus(
           `Found ${area.parcelCount.toLocaleString("en-US")} parcels — organizing traffic signals…`,
         );
+        const cadPulse = payload?.watch?.cadPulse;
         const result = composeCorridorAnalysis({
           countyName: county.name,
           countyFips: county.fips,
@@ -258,6 +262,10 @@ export function ShiCorridorsView({
           watchAreas: payload?.watch?.areas ?? [],
           trafficAvailable: Boolean(payload),
           trafficError: payload ? null : error || "Traffic not loaded",
+          projectCount: projects.length,
+          projectsAvailable,
+          cadPulseAvailable: Boolean(cadPulse?.available),
+          cadPulseNote: cadPulse?.note ?? null,
         });
         if (compareMode && analysis) {
           setAnalysisB(result);
@@ -286,7 +294,15 @@ export function ShiCorridorsView({
         setAnalyzing(false);
       }
     },
-    [county, payload, error, compareMode, analysis],
+    [
+      county,
+      payload,
+      error,
+      compareMode,
+      analysis,
+      projects.length,
+      projectsAvailable,
+    ],
   );
 
   const saveStudy = useCallback(async () => {

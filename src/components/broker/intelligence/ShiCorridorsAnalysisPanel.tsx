@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Columns2,
   FileText,
+  Flag,
   Loader2,
 } from "lucide-react";
 import {
@@ -14,6 +15,13 @@ import {
   type TrafficStation,
 } from "@/lib/shi/corridors";
 import type { CorridorAnalysisResult } from "@/lib/shi/corridor-analysis";
+import {
+  CORRIDOR_FEEDBACK_HONESTY,
+  CORRIDOR_FEEDBACK_LABELS,
+  submitCorridorFeedback,
+  type CorridorFeedbackKind,
+} from "@/lib/shi/corridor-feedback";
+import type { CorridorSourceUse, SourceStatus } from "@/lib/shi/corridor-sources";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -35,6 +43,88 @@ function levelClass(level: string) {
   if (level === "LIMITED" || level === "UNAVAILABLE" || level === "LOW")
     return "text-[var(--muted)]";
   return "text-ink";
+}
+
+function sourceStatusClass(status: SourceStatus) {
+  if (status === "live") return "text-navy";
+  if (status === "degraded") return "text-gold";
+  return "text-[var(--muted)]";
+}
+
+function SourceStrip({ sources }: { sources: CorridorSourceUse[] }) {
+  const connected = sources.filter((s) => s.status !== "planned");
+  const planned = sources.filter((s) => s.status === "planned");
+  return (
+    <div className="mt-4 rounded-lg border border-hairline bg-[var(--background)] px-3 py-3">
+      <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-gold uppercase">
+        Evidence sources
+      </p>
+      <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
+        {connected.map((s) => (
+          <li key={s.id} className="min-w-0">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="truncate text-xs font-semibold text-ink">{s.label}</p>
+              <p
+                className={cn(
+                  "shrink-0 font-mono text-[9px] font-bold tracking-wide uppercase",
+                  sourceStatusClass(s.status),
+                )}
+              >
+                {s.status}
+              </p>
+            </div>
+            <p className="truncate text-[10px] text-[var(--muted)]">{s.note}</p>
+          </li>
+        ))}
+      </ul>
+      {planned.length ? (
+        <p className="mt-2 text-[10px] text-[var(--muted)]">
+          Planned (not used): {planned.map((s) => s.label).join(" · ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function FeedbackControls({ result }: { result: CorridorAnalysisResult }) {
+  const [sent, setSent] = useState<string | null>(null);
+  const kinds = Object.keys(CORRIDOR_FEEDBACK_LABELS) as CorridorFeedbackKind[];
+
+  return (
+    <div className="mt-3 border-t border-hairline/80 pt-3">
+      <div className="flex items-center gap-1.5 text-[10px] text-[var(--muted)]">
+        <Flag className="h-3 w-3" />
+        <span>Flag quality (private — does not change county records)</span>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {kinds.map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            onClick={() => {
+              submitCorridorFeedback({
+                kind,
+                modelVersion: result.modelVersion,
+                countyFips: result.countyFips,
+                analysisAt: result.analyzedAt,
+              });
+              setSent(CORRIDOR_FEEDBACK_LABELS[kind]);
+            }}
+            className="rounded-md border border-hairline px-2 py-1 text-[10px] font-semibold text-ink hover:border-gold/50"
+          >
+            {CORRIDOR_FEEDBACK_LABELS[kind]}
+          </button>
+        ))}
+      </div>
+      {sent ? (
+        <p className="mt-1.5 text-[10px] text-gold">Saved: {sent}</p>
+      ) : (
+        <p className="mt-1.5 text-[10px] text-[var(--muted)]">
+          {CORRIDOR_FEEDBACK_HONESTY}
+        </p>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -84,6 +174,8 @@ export function ShiCorridorsAnalysisPanel({
         What Archie found
       </h3>
       <p className="mt-1 text-sm text-[var(--muted)]">{result.statusLine}</p>
+
+      {result.sources?.length ? <SourceStrip sources={result.sources} /> : null}
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div>
@@ -191,6 +283,7 @@ export function ShiCorridorsAnalysisPanel({
         <p className="mt-1 text-[10px] text-[var(--muted)]">
           {result.freshness.parcelNote}
         </p>
+        <FeedbackControls result={result} />
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -258,6 +351,9 @@ export function ShiCorridorsAnalysisPanel({
       {showEvidence ? (
         <div className="mt-4 space-y-3 border-t border-hairline pt-3">
           <p className="text-xs text-[var(--muted)]">{result.honesty}</p>
+          {result.sourceHonesty ? (
+            <p className="text-xs text-[var(--muted)]">{result.sourceHonesty}</p>
+          ) : null}
           <p className="font-mono text-[10px] font-semibold tracking-wide text-[var(--muted)] uppercase">
             Model {result.modelVersion}
           </p>

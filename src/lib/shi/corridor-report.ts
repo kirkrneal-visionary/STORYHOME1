@@ -137,8 +137,26 @@ ${compareBlock}
 
 <h2>Sources & freshness</h2>
 <ul>
-<li>County CAD / parcel file — ${escapeHtml(a.freshness.parcelNote)}</li>
-<li>TxDOT published AADT (planning averages, not live congestion)</li>
+${
+  a.sources?.length
+    ? a.sources
+        .filter((s) => s.status !== "planned")
+        .map(
+          (s) =>
+            `<li>${escapeHtml(s.label)} · <span class="mono">${escapeHtml(s.status)}</span> — ${escapeHtml(s.note)}</li>`,
+        )
+        .join("") +
+      (a.sources.some((s) => s.status === "planned")
+        ? `<li class="muted">Planned (not used): ${escapeHtml(
+            a.sources
+              .filter((s) => s.status === "planned")
+              .map((s) => s.label)
+              .join(" · "),
+          )}</li>`
+        : "")
+    : `<li>County CAD / parcel file — ${escapeHtml(a.freshness.parcelNote)}</li>
+<li>TxDOT published AADT (planning averages, not live congestion)</li>`
+}
 <li>Signal model ${escapeHtml(a.modelVersion)} · Report ${escapeHtml(CORRIDOR_REPORT_VERSION)}</li>
 </ul>
 

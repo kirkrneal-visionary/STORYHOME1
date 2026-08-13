@@ -31,7 +31,10 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 | **B (live)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
 | **C (live)** | `ARCHIE-CORRIDORS-PRESENTATION` | Presentation mode · print map pack · traffic look memory |
 | **V.1 (live)** | `ARCHIE-CORRIDORS-V1` | Draw an Area · analysis contract · calm map · explain layers |
-| **V.2 (this)** | `ARCHIE-CORRIDORS-V2` | Compare A/B · Save study · Development Intelligence Report |
+| **V.2 (live)** | `ARCHIE-CORRIDORS-V2` | Compare A/B · Save study · Development Intelligence Report |
+| **Toolbox (live)** | `ARCHIE-CORRIDORS-MAP-TOOLBOX` | In-map draw tools · hard pan-lock · undo/done |
+| **Validation (live)** | `ARCHIE-CORRIDORS-VALIDATION` | Backtest harness · coverage + agreement · no fake % |
+| **Adapters (this)** | `ARCHIE-CORRIDORS-ADAPTERS` | Pluggable SOURCE registry · live CAD/TxDOT · planned never faked · quality flags |
 
 ---
 
@@ -151,6 +154,22 @@ Confidence = **coverage + signal agreement + validation ledger**.
 - A numeric hit rate publishes only when ≥20 scored **production** labeled backtests exist.  
 - Until then: “Sample too small / No published accuracy percent yet.”  
 - Never hard-code “87% accurate.”
+
+## Adapters (evidence sources)
+
+CONNECT → NORMALIZE → features/signals.
+
+| Status | Meaning |
+|---|---|
+| **Live** | Connected and contributed to this analysis |
+| **Degraded** | Connected but thin / empty for this outline |
+| **Unavailable** | Expected live source failed this pass |
+| **Planned** | Reserved slot — never treated as present |
+
+Live today: county property records · TxDOT AADT · TxDOT projects · CAD observation pulse.  
+Planned (listed, unused): permits · plats · zoning · utilities · flood · licensed MLS.
+
+Professional **quality flags** (stale / questionable / missing / incorrect) are a private ledger — they never mutate CAD.
 
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
 
