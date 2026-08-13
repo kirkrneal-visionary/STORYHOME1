@@ -29,7 +29,7 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 | **2 (live)** | `ARCHIE-GROWTH-WATCH` | Evidence-backed watch areas (traffic trend + CAD observation pulse) |
 | **3 (live)** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
 | **B (live)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
-| **C (this)** | `ARCHIE-CORRIDORS-PRESENTATION` | Presentation mode · print map pack · traffic look memory |
+| **C (live)** | `ARCHIE-CORRIDORS-PRESENTATION` | Presentation mode · print map pack · traffic look memory |
 
 ---
 
