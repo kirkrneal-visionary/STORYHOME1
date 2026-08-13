@@ -134,6 +134,7 @@ export type CorridorsTrafficPayload = {
     fips: string;
     name: string;
     shortName: string;
+    source: string;
   };
   honesty: string;
   sourceLabel: string;
@@ -142,6 +143,8 @@ export type CorridorsTrafficPayload = {
   yearsCovered: number[];
   stations: TrafficStation[];
   segments: TrafficCorridorSegment[];
+  /** Wave 2 — evidence watch areas (may be empty) */
+  watch?: import("@/lib/shi/growth-watch").GrowthWatchPayload;
 };
 
 export function trendFromHistory(

@@ -257,7 +257,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-TRAFFIC",
     name: "Corridors · custom Traffic tool · TxDOT AADT",
     goal: "Give Story Pro a dedicated Corridors room with a custom Traffic tool and ≥5 years of TxDOT AADT for the launch 7 counties — planning counts, not live congestion.",
-    status: "current",
+    status: "done",
     frontend: [
       "Archie module Corridors (after Research)",
       "Custom Traffic tool (tap stations)",
@@ -279,15 +279,18 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "ARCHIE-GROWTH-WATCH",
     name: "Corridors · growth watch areas",
-    goal: "Evidence-backed developmental watch zones from traffic trends + CAD observation + public project signals.",
-    status: "planned",
+    goal: "Evidence-backed developmental watch zones from traffic trends + CAD observation pulse — explainable reasons, no fake heat scores.",
+    status: "current",
     frontend: [
-      "Watch area layer on Corridors map",
-      "Explainable reason chips per zone",
-      "Handoff into Research / Prospects",
+      "Growth watch toggle + map polygons",
+      "Watch area list with reason chips",
+      "Handoff into Research",
     ],
-    backend: ["Compose watch features — prefer no fake scores"],
-    outOfScope: ["Unnamed heat scores", "Deed/sale oracles"],
+    backend: [
+      "buildGrowthWatchAreas from TxDOT stations",
+      "Optional CAD change pulse via county_parcel_change_events",
+    ],
+    outOfScope: ["Unnamed heat scores", "Deed/sale oracles", "Scenario board"],
   },
   {
     id: "ARCHIE-GROWTH-SCENARIOS",
@@ -323,8 +326,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors traffic desk. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-TRAFFIC" as const;
+/** Active wave — Corridors growth watch areas. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-GROWTH-WATCH" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
