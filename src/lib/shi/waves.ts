@@ -600,7 +600,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-FEEL-WAVE-1",
     name: "Feel Wave 1 · shell & material site-wide",
     goal: "One material language everywhere: atmosphere, debossed wells, soft chrome, sheets, display type — expensive clothes without feature creep or brand rewrite.",
-    status: "current",
+    status: "done",
     frontend: [
       "globals tokens: radius, elev-deboss/raise, atmosphere, story-well/sheet/chrome",
       "Fraunces display + Poppins UI; GlobalNav/tabs story-chrome",
@@ -613,10 +613,27 @@ export const SHI_WAVES: ShiWave[] = [
       "New product features",
     ],
   },
+  {
+    id: "STORY-FEEL-WAVE-2",
+    name: "Feel Wave 2 · consumer rooms calm",
+    goal: "Home / Marketplace / Listing wear Wave 1 clothes: hero budget, softer toolbar, sheet filters, full-bleed listing photo, fewer equal boxes.",
+    status: "current",
+    frontend: [
+      "HomeSearchHero first-viewport budget + story-surface search",
+      "SearchToolbar story-chrome + field-input; filter sheet on phone",
+      "Listing detail overlay back + story-well specs + story-surface agent",
+    ],
+    backend: ["Armor scripts/test-story-feel-wave-2.mjs"],
+    outOfScope: [
+      "Pro / Archie room polish (Waves 3–4)",
+      "New marketplace features",
+      "Brand rewrite",
+    ],
+  },
 ];
 
-/** Active wave — site-wide clothing / material system. */
-export const ARCHIE_CURRENT_WAVE = "STORY-FEEL-WAVE-1" as const;
+/** Active wave — consumer rooms clothing. */
+export const ARCHIE_CURRENT_WAVE = "STORY-FEEL-WAVE-2" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

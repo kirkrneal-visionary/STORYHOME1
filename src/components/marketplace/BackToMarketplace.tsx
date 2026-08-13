@@ -9,7 +9,12 @@ import { useMotionOptional } from "@/components/motion/MotionProvider";
  * Returns to Marketplace with directional back + cache restore on remount.
  * Prefers history.back when the previous entry is Marketplace.
  */
-export function BackToMarketplace() {
+export function BackToMarketplace({
+  overlay = false,
+}: {
+  /** When true, sits on photo plane — light text, no top padding. */
+  overlay?: boolean;
+} = {}) {
   const router = useRouter();
   const motion = useMotionOptional();
 
@@ -24,7 +29,11 @@ export function BackToMarketplace() {
         }
         router.push("/marketplace");
       }}
-      className="story-press inline-flex items-center gap-2 pt-6 text-sm text-[var(--muted)] hover:text-ink"
+      className={
+        overlay
+          ? "story-press inline-flex items-center gap-2 rounded-full border border-white/20 bg-navy/45 px-3 py-1.5 text-sm text-paper backdrop-blur-md hover:border-gold/50 hover:text-gold"
+          : "story-press inline-flex items-center gap-2 pt-6 text-sm text-[var(--muted)] hover:text-ink"
+      }
     >
       <ArrowLeft className="h-4 w-4" /> Back to Marketplace
     </button>
