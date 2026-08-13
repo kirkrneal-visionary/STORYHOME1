@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
+import { ShiCorridorsView } from "@/components/broker/intelligence/ShiCorridorsView";
 import { ShiFarmsView } from "@/components/broker/intelligence/ShiFarmsView";
 import { ShiProspectsView } from "@/components/broker/intelligence/ShiProspectsView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
@@ -27,6 +28,11 @@ const MODULE_COPY: Record<
     blurb:
       "Search · map · property record. Define a market area, analyze parcels, and save Map Memory or Farms.",
   },
+  corridors: {
+    title: "Corridors",
+    blurb:
+      "Access · traffic · growth. Custom Traffic tool on TxDOT AADT for your launch counties — planning counts, not live congestion.",
+  },
   prospects: {
     title: "Prospects",
     blurb:
@@ -46,7 +52,7 @@ const MODULE_COPY: Record<
 
 /**
  * Archie's Intelligence shell.
- * Modules: Research · Prospects · Farms · Study Vault.
+ * Modules: Research · Corridors · Prospects · Farms · Study Vault.
  */
 export function ShiWorkspace() {
   const router = useRouter();
@@ -135,6 +141,14 @@ export function ShiWorkspace() {
             <PropertyIntelligenceView
               onOpenVault={() => selectSection("vault")}
               onOpenFarms={() => selectSection("farms")}
+            />
+          </div>
+        ) : null}
+
+        {section === "corridors" ? (
+          <div className="motion-safe:animate-[archieModuleIn_180ms_ease-out]">
+            <ShiCorridorsView
+              onOpenResearch={() => selectSection("research")}
             />
           </div>
         ) : null}

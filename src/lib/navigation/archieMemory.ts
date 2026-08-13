@@ -3,7 +3,12 @@
  * sessionStorage only — no server state.
  */
 
-export type ArchieModule = "research" | "vault" | "prospects" | "farms";
+export type ArchieModule =
+  | "research"
+  | "corridors"
+  | "vault"
+  | "prospects"
+  | "farms";
 
 const STORAGE_KEY = "archie-last-module";
 
@@ -26,6 +31,7 @@ export function parseArchieModule(
   if (section === "vault") return "vault";
   if (section === "prospects") return "prospects";
   if (section === "farms") return "farms";
+  if (section === "corridors") return "corridors";
   return "research";
 }
 
@@ -33,6 +39,7 @@ export function archieHrefForModule(module: ArchieModule): string {
   if (module === "vault") return "/portal/intelligence?section=vault";
   if (module === "prospects") return "/portal/intelligence?section=prospects";
   if (module === "farms") return "/portal/intelligence?section=farms";
+  if (module === "corridors") return "/portal/intelligence?section=corridors";
   return "/portal/intelligence";
 }
 
