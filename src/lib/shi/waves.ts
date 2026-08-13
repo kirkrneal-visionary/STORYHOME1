@@ -296,7 +296,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-GROWTH-SCENARIOS",
     name: "Corridors · growth scenarios",
     goal: "Assumption-first projection board for land developers / investor sit-downs with coverage confidence and meeting pack.",
-    status: "current",
+    status: "done",
     frontend: [
       "Scenario knobs (horizon + low/base/high annual growth %)",
       "Optional illustrative absorption",
@@ -311,6 +311,25 @@ export const SHI_WAVES: ShiWave[] = [
       "Guaranteed returns",
       "Live congestion cosplay",
       "Seller-probability theater",
+    ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-LAND-LOOP",
+    name: "Corridors · land loop · TxDOT projects",
+    goal: "Open a Growth Watch box as a Research map frame and show nearby TxDOT Project Tracker lines — so traffic thesis meets parcels.",
+    status: "current",
+    frontend: [
+      "Study land in Research queues watch bbox frame",
+      "TxDOT projects toggle + cyan linework on Corridors map",
+      "Project list on selected watch dossier",
+    ],
+    backend: [
+      "GET /api/shi/corridors/projects (Pro gate)",
+      "TxDOT_Projects public FeatureServer by county + bbox",
+    ],
+    outOfScope: [
+      "Auto Prospect/Farm create without user confirm",
+      "Paid live congestion",
     ],
   },
   {
@@ -334,8 +353,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors growth scenarios. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-GROWTH-SCENARIOS" as const;
+/** Active wave — Corridors land loop + TxDOT projects. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-LAND-LOOP" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
