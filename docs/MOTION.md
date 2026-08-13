@@ -2,6 +2,8 @@
 
 Presentation-layer only. Does not change branding, CAD, Archie business logic, auth, or RLS.
 
+**Product rules:** [`STORY-OS-CONSTITUTION.md`](./STORY-OS-CONSTITUTION.md) · **Competition lens:** [`STORY-OS-COMPETITION.md`](./STORY-OS-COMPETITION.md)
+
 ## Metaphor
 
 **Walk rooms of one house / market — don’t flip channels.**
