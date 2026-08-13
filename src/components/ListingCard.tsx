@@ -51,9 +51,11 @@ export function ListingCard({
       id={`listing-card-${listing.id}`}
       onMouseEnter={onSelect}
       className={cn(
-        "story-card group overflow-hidden rounded-xl border bg-[var(--surface)] transition-[transform,box-shadow,border-color] duration-200",
-        dense ? "p-3" : "p-4 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(14,30,56,0.12)]",
-        selected ? "border-gold shadow-[0_0_0_1px_var(--gold)]" : "border-hairline",
+        "story-card group overflow-hidden",
+        dense ? "p-3" : "p-4 hover:-translate-y-0.5",
+        selected
+          ? "border-[color-mix(in_srgb,var(--gold)_70%,var(--hairline))] shadow-[var(--elev-raise),var(--ring-focus)]"
+          : "",
       )}
     >
       <Link

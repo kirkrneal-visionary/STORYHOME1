@@ -75,14 +75,14 @@ export function FederatedNavDrawer({
       <button
         type="button"
         aria-label="Close menu"
-        className="absolute inset-0 bg-black/55 backdrop-blur-[2px] motion-safe:animate-[archieDrawerScrim_180ms_ease-out]"
+        className="story-scrim absolute inset-0 motion-safe:animate-[archieDrawerScrim_180ms_ease-out]"
         onClick={onClose}
       />
       <aside
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute top-0 right-0 flex h-full w-[min(100%,22rem)] flex-col border-l border-hairline bg-[var(--nav-surface)] shadow-[-18px_0_40px_-24px_rgba(0,0,0,0.65)] motion-safe:animate-[archieDrawerIn_220ms_ease-out]"
+        className="story-chrome absolute top-0 right-0 flex h-full w-[min(100%,22rem)] flex-col border-l shadow-[-18px_0_40px_-24px_rgba(0,0,0,0.65)] motion-safe:animate-[archieDrawerIn_220ms_ease-out]"
       >
         <div className="flex h-[72px] items-center justify-between border-b border-hairline px-4">
           <div>

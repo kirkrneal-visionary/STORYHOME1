@@ -10,19 +10,55 @@
   --teal-soft: #1b5a50;
   --paper: #f7f4ec;
   --ink: #f4f1e8;
-  --hairline: rgba(247, 244, 236, 0.14);
+  /* Softer edge language — next-gen border, not cardboard */
+  --hairline: rgba(247, 244, 236, 0.11);
+  --hairline-strong: rgba(247, 244, 236, 0.2);
+  --hairline-interactive: rgba(245, 183, 30, 0.45);
 
   /* Site-wide brand navy (the logo blue) */
   --background: var(--navy);
   --foreground: #f4f1e8;
   --surface: var(--navy-soft);
-  --nav-surface: color-mix(in srgb, var(--navy) 90%, black);
+  --nav-surface: color-mix(in srgb, var(--navy) 88%, black);
   --muted: color-mix(in srgb, #f7f4ec 64%, transparent);
   --accent: var(--gold);
   --accent-contrast: var(--navy);
   --brand-mark: var(--teal);
   --brand-home: var(--gold);
   --brand-word: #f7f4ec;
+
+  /* STORY-FEEL-WAVE-1 — material system */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-sheet: 1.35rem;
+
+  /* Deboss / soft raise — jewelry tray, not multi-shadow glow */
+  --elev-deboss: inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22), inset 0 8px 24px rgba(0, 0, 0, 0.18);
+  --elev-raise: 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 28px rgba(8, 18, 36, 0.28);
+  --elev-chrome: 0 1px 0 rgba(255, 255, 255, 0.04);
+  --ring-focus: 0 0 0 1px color-mix(in srgb, var(--gold) 70%, transparent);
+
+  --atmosphere:
+    radial-gradient(
+      120% 80% at 50% -10%,
+      color-mix(in srgb, var(--navy-soft) 55%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      90% 60% at 100% 0%,
+      color-mix(in srgb, var(--gold) 6%, transparent) 0%,
+      transparent 45%
+    ),
+    linear-gradient(
+      180deg,
+      var(--navy-deep) 0%,
+      var(--navy) 42%,
+      color-mix(in srgb, var(--navy) 92%, var(--teal)) 100%
+    );
 }
 
 html[data-role="professional"] {
@@ -45,13 +81,29 @@ html[data-role="professional"] {
   --color-surface: var(--surface);
   --color-muted: var(--muted);
   --font-sans: var(--font-poppins);
-  --font-serif: var(--font-poppins);
+  --font-serif: var(--font-fraunces);
   --font-mono: var(--font-ibm-plex-mono);
 }
 
 @layer components {
   .field-input {
-    @apply h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold;
+    height: 2.75rem;
+    width: 100%;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--hairline);
+    background: color-mix(in srgb, var(--navy-deep) 72%, var(--background));
+    box-shadow: var(--elev-deboss);
+    padding: 0 0.85rem;
+    font-size: 0.875rem;
+    color: var(--ink);
+    outline: none;
+    transition:
+      border-color var(--motion-fast) linear,
+      box-shadow var(--motion-fast) var(--motion-ease-standard);
+  }
+  .field-input:focus {
+    border-color: color-mix(in srgb, var(--gold) 65%, var(--hairline));
+    box-shadow: var(--elev-deboss), var(--ring-focus);
   }
 }
 
@@ -115,20 +167,23 @@ html[data-role="professional"] {
   }
 
   body {
-    background: var(--background);
+    background-color: var(--background);
+    background-image: var(--atmosphere);
+    background-attachment: fixed;
     color: var(--foreground);
     font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
+    min-height: 100%;
   }
 
-  /* Headings — will switch to "Now" once its font files are added. */
+  /* Display — expressive serif; UI chrome stays Poppins */
   h1,
   h2,
   h3,
   .font-serif {
-    font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-fraunces), ui-serif, Georgia, serif;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 
   .font-mono {
@@ -174,6 +229,17 @@ html[data-role="professional"] {
   }
 }
 
+@keyframes storySheetIn {
+  from {
+    opacity: 0.92;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes storySkeletonPulse {
   0%,
   100% {
@@ -188,17 +254,108 @@ html[data-role="professional"] {
 .story-press {
   transition:
     transform var(--motion-micro) var(--motion-ease-standard),
-    opacity var(--motion-micro) linear;
+    opacity var(--motion-micro) linear,
+    border-color var(--motion-fast) linear;
 }
 .story-press:active {
   transform: scale(0.985);
 }
 
+/* Soft surface card — raise on interact, not hard box identity */
 .story-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--surface) 88%, var(--navy-deep));
+  box-shadow: var(--elev-raise);
   transition:
     transform var(--motion-fast) var(--motion-ease-browse),
     box-shadow var(--motion-fast) var(--motion-ease-browse),
     border-color var(--motion-fast) linear;
+}
+.story-card:hover {
+  border-color: var(--hairline-strong);
+}
+
+/* Debossed well — information belongs here without a popup-box costume */
+.story-well {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--navy-deep) 55%, var(--surface));
+  box-shadow: var(--elev-deboss);
+}
+
+/* Soft raised surface for interactive clusters */
+.story-surface {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--surface) 92%, white 2%);
+  box-shadow: var(--elev-raise);
+}
+
+/* App chrome (nav / tabs) — one continuous shell edge */
+.story-chrome {
+  background: color-mix(in srgb, var(--nav-surface) 92%, transparent);
+  border-color: var(--hairline);
+  box-shadow: var(--elev-chrome);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Outer content frame — slight recess so rooms feel placed */
+.story-app-shell {
+  position: relative;
+}
+.story-app-shell::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 72px 0 0 0;
+  z-index: 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    inset 0 0 0 1px rgba(247, 244, 236, 0.04);
+}
+@media (max-width: 767px) {
+  .story-app-shell::before {
+    inset: 72px 0 64px 0;
+  }
+}
+
+/* Scrim + sheet — phone sheet / desktop soft panel */
+.story-scrim {
+  background: color-mix(in srgb, #050b14 72%, transparent);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: storyScrimIn var(--motion-fast) var(--motion-ease-standard) both;
+}
+
+.story-sheet {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  border: 1px solid var(--hairline-strong);
+  background: color-mix(in srgb, var(--navy-soft) 94%, var(--navy-deep));
+  box-shadow: var(--elev-raise), 0 -8px 40px rgba(0, 0, 0, 0.35);
+  color: var(--paper);
+  animation: storySheetIn var(--motion-surface) var(--motion-ease-enter) both;
+}
+@media (min-width: 640px) {
+  .story-sheet {
+    border-radius: var(--radius-xl);
+  }
+}
+
+.story-sheet-handle {
+  margin: 0.35rem auto 0.75rem;
+  height: 0.25rem;
+  width: 2.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 22%, transparent);
+}
+@media (min-width: 640px) {
+  .story-sheet-handle {
+    display: none;
+  }
 }
 
 .story-skeleton {
@@ -222,15 +379,17 @@ html[data-role="professional"] {
 .story-route-surface {
   isolation: isolate;
   overflow: clip;
+  position: relative;
+  z-index: 1;
 }
 
 /* Archie study — cooler arrival cue, never neon */
 .story-route-page[data-continuum-temp="study"] {
-  --story-room-tint: color-mix(in srgb, var(--navy) 5%, transparent);
+  --story-room-tint: color-mix(in srgb, var(--teal) 8%, transparent);
   background-image: linear-gradient(
     180deg,
     var(--story-room-tint) 0%,
-    transparent 140px
+    transparent 160px
   );
 }
 
@@ -239,7 +398,9 @@ html[data-role="professional"] {
   .story-card,
   .story-skeleton,
   .story-route-page,
-  .story-continuum-peek {
+  .story-continuum-peek,
+  .story-sheet,
+  .story-scrim {
     transition: none !important;
     animation: none !important;
     transform: none !important;

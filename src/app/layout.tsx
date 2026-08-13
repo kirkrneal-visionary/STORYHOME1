@@ -1,18 +1,24 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Poppins } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Poppins } from "next/font/google";
 import GlobalNav from "@/components/GlobalNav";
 import Footer from "@/components/Footer";
 import { AppShell } from "@/components/motion/AppShell";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
-// Body font (Light / Regular / Medium / SemiBold). Headings temporarily use
-// Poppins too until the licensed "Now" (Now Trial, Book + Medium) files are
-// added and self-hosted via next/font/local.
+// UI chrome — Poppins. Display headlines — Fraunces (expressive, not Inter).
+// Licensed "Now" can replace Fraunces later via next/font/local.
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -47,7 +53,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${poppins.variable} ${ibmPlexMono.variable} antialiased`}
+        className={`${poppins.variable} ${fraunces.variable} ${ibmPlexMono.variable} antialiased`}
       >
         <Providers>
           <GlobalNav />

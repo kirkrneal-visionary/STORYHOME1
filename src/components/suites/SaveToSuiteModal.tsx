@@ -25,8 +25,15 @@ export function SaveToSuiteModal({
 
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
-        <div className="w-full max-w-md rounded-2xl border border-hairline bg-navy-soft p-6 text-paper">
+      <div className="fixed inset-0 z-[1200] flex items-end justify-center p-0 sm:items-center sm:p-4">
+        <button
+          type="button"
+          aria-label="Close"
+          className="story-scrim absolute inset-0"
+          onClick={onClose}
+        />
+        <div className="story-sheet relative z-[1] p-5 sm:p-6">
+          <div className="story-sheet-handle" />
           <h3 className="font-serif text-2xl font-bold">Save to a Suite</h3>
           <p className="mt-2 text-sm text-paper/70">
             Log in as a buyer to add homes to album-style collections.
@@ -35,13 +42,13 @@ export function SaveToSuiteModal({
             <button
               type="button"
               onClick={onClose}
-              className="h-11 flex-1 rounded-lg border border-hairline text-sm font-semibold"
+              className="story-press h-11 flex-1 rounded-[var(--radius-md)] border border-hairline text-sm font-semibold"
             >
               Cancel
             </button>
             <Link
               href={`/login?next=/marketplace`}
-              className="flex h-11 flex-1 items-center justify-center rounded-lg bg-gold text-sm font-bold text-navy"
+              className="story-press flex h-11 flex-1 items-center justify-center rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy"
             >
               Log in
             </Link>
@@ -52,8 +59,15 @@ export function SaveToSuiteModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
-      <div className="w-full max-w-md rounded-2xl border border-hairline bg-navy-soft p-5 text-paper shadow-xl">
+    <div className="fixed inset-0 z-[1200] flex items-end justify-center p-0 sm:items-center sm:p-4">
+      <button
+        type="button"
+        aria-label="Close"
+        className="story-scrim absolute inset-0"
+        onClick={onClose}
+      />
+      <div className="story-sheet relative z-[1] p-5">
+        <div className="story-sheet-handle" />
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="font-serif text-2xl font-bold">Add to Suite</h3>
@@ -62,13 +76,13 @@ export function SaveToSuiteModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline"
+            className="story-press flex h-9 w-9 items-center justify-center rounded-full border border-hairline"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="mt-5 max-h-64 space-y-2 overflow-y-auto">
+        <div className="story-well mt-5 max-h-64 space-y-2 overflow-y-auto p-2">
           {suites.map((suite) => {
             const inSuite = suite.listingIds.includes(listingId);
             return (
@@ -80,10 +94,10 @@ export function SaveToSuiteModal({
                   else addListingToSuite(suite.id, listingId);
                 }}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-xl border px-3 py-3 text-left transition-colors",
+                  "story-press flex w-full items-center justify-between rounded-[var(--radius-md)] border px-3 py-3 text-left transition-colors",
                   inSuite
                     ? "border-gold bg-gold/10"
-                    : "border-hairline hover:border-gold/40",
+                    : "border-hairline bg-[color-mix(in_srgb,var(--background)_40%,transparent)] hover:border-[var(--hairline-interactive)]",
                 )}
               >
                 <div>
@@ -116,11 +130,11 @@ export function SaveToSuiteModal({
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="New suite name"
-            className="h-11 flex-1 rounded-lg border border-hairline bg-navy-deep px-3 text-sm outline-none focus:border-gold"
+            className="field-input h-11 flex-1"
           />
           <button
             type="submit"
-            className="h-11 rounded-lg bg-gold px-4 text-sm font-bold text-navy"
+            className="story-press h-11 rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
           >
             Create
           </button>

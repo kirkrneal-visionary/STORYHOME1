@@ -227,6 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` · `ARCHIE-COUNTY-OPS-SCALE` (status honesty + caps + indexes; apply migrations 0030/0031 on live).
+**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` · `ARCHIE-COUNTY-OPS-SCALE` · `STORY-FEEL-WAVE-1` (site-wide material / shell clothing).
 
-**Next coded wave (when green-lit):** Optional models only on observation history — or finish Messages/Referrals with real E2E — or lawful Corridors adapters when licensed.
+**Next coded wave (when green-lit):** `STORY-FEEL-WAVE-2` consumer rooms — then agent workrooms — then Archie study. See [`shi/STORY-FEEL-WAVES.md`](./shi/STORY-FEEL-WAVES.md).
