@@ -143,5 +143,14 @@ Tools live **on the map** (not page chrome): Navigate · Freehand · Box · Radi
 
 While Freehand / Box / Radius is active, map pan/rotate/touch-drag is **hard-locked** so strokes are never stolen. Undo / Done / Cancel on freehand. Escape cancels.
 
+## Validation (honest confidence)
+
+Confidence = **coverage + signal agreement + validation ledger**.
+
+- Fixture corpus exercises the harness (not a marketing accuracy claim).  
+- A numeric hit rate publishes only when ≥20 scored **production** labeled backtests exist.  
+- Until then: “Sample too small / No published accuracy percent yet.”  
+- Never hard-code “87% accurate.”
+
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
 
