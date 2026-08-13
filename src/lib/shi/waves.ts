@@ -540,7 +540,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-ANALYTICS-DESTINATION",
     name: "Analytics destination · first-party ingest",
     goal: "Store catalog events in product_analytics_events via POST /api/analytics — soft-fail if migration pending; no third-party; no public event feed.",
-    status: "current",
+    status: "done",
     frontend: [
       "Default sink remote (fire-and-forget)",
       "console/noop still available via env",
@@ -548,6 +548,7 @@ export const SHI_WAVES: ShiWave[] = [
     backend: [
       "Migration 0029 product_analytics_events + RLS",
       "POST /api/analytics catalog gate + server scrub",
+      "Migration 0030 table grants for anon/authenticated/service_role",
     ],
     outOfScope: [
       "Admin cross-user analytics UI",
@@ -555,10 +556,30 @@ export const SHI_WAVES: ShiWave[] = [
       "Vendor SDKs",
     ],
   },
+  {
+    id: "ARCHIE-INTELLIGENCE-SCENARIOS",
+    name: "Intelligence scenarios · CAD value stress board",
+    goal: "Research property scenario board (rungs 8–10): assumption-first CAD value stress + carry ranges, coverage from tax years/lookalikes — never sale forecast or seller probability.",
+    status: "current",
+    frontend: [
+      "ShiIntelligenceScenarioBoard on CAD evidence panel",
+      "Low/mid/high value stress knobs + rate/down/term",
+      "Coverage chip + meeting-pack print",
+    ],
+    backend: [
+      "runIntelligenceScenario pure compose (no CAD mutation)",
+      "Armor scripts/test-intelligence-scenarios.mjs",
+    ],
+    outOfScope: [
+      "Seller probability / AVM true value",
+      "Corridors traffic growth scenarios (separate)",
+      "Optional predictive models",
+    ],
+  },
 ];
 
-/** Active wave — first-party analytics destination. */
-export const ARCHIE_CURRENT_WAVE = "STORY-ANALYTICS-DESTINATION" as const;
+/** Active wave — Research CAD scenario board. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE-SCENARIOS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

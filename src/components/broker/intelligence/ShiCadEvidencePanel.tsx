@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Scale } from "lucide-react";
 import {
-  buildAssumptionCarryCases,
   compareSubjectToFrame,
   compareSubjectToLookalikes,
   type CadEvidenceClaim,
@@ -11,9 +10,9 @@ import {
   type EvidenceStrength,
 } from "@/lib/shi/cad-evidence";
 import { shiFindSimilar } from "@/lib/shi/client";
-import { monthlyMortgagePayment, roundCents } from "@/lib/finance";
 import type { ShiAreaAnalysis, ShiPropertyDetail } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
+import { ShiIntelligenceScenarioBoard } from "@/components/broker/intelligence/ShiIntelligenceScenarioBoard";
 
 function money(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -70,9 +69,6 @@ type Props = {
  */
 export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
   const evidence = property.cadEvidence;
-  const [ratePct, setRatePct] = useState("6.5");
-  const [downPct, setDownPct] = useState("20");
-  const [termYears, setTermYears] = useState("30");
   const [lookalike, setLookalike] = useState<CadLookalikeBand | null>(null);
   const [lookalikeLoading, setLookalikeLoading] = useState(false);
   const [lookalikeError, setLookalikeError] = useState("");
@@ -141,40 +137,11 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
     return () => window.clearTimeout(t);
   }, [loadLookalikes]);
 
-  const scenario = useMemo(() => {
-    const price = property.marketValue;
-    if (price == null || !Number.isFinite(price) || price <= 0) return null;
-    const rate = Number(ratePct);
-    const down = Number(downPct);
-    const term = Number(termYears);
-    if (
-      !Number.isFinite(rate) ||
-      !Number.isFinite(down) ||
-      !Number.isFinite(term) ||
-      rate < 0 ||
-      down < 0 ||
-      down > 100 ||
-      term <= 0
-    ) {
-      return null;
-    }
-    const downPayment = roundCents((price * down) / 100);
-    const principal = roundCents(price - downPayment);
-    const pi = roundCents(monthlyMortgagePayment(principal, rate, term));
-    const ranges = buildAssumptionCarryCases({
-      price,
-      baseRatePct: rate,
-      baseDownPct: down,
-      termYears: term,
-      monthlyPi: (p, r, y) => monthlyMortgagePayment(p, r, y),
-    });
-    return { price, downPayment, principal, pi, rate, down, term, ranges };
-  }, [property.marketValue, ratePct, downPct, termYears]);
-
   if (!evidence) return null;
 
   const claims = evidence.claims;
   const traj = evidence.trajectory;
+  const taxYearCount = traj.points.length;
 
   return (
     <div className="rounded-xl border border-hairline bg-[var(--background)]/60 p-3">
@@ -318,82 +285,11 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
         </p>
       )}
 
-      <div className="mt-3 border-t border-hairline pt-3">
-        <p className="font-mono text-[9px] font-bold uppercase text-[var(--muted)]">
-          Illustrative carry (your assumptions)
-        </p>
-        <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
-          Payment math if someone financed the CAD market value. Not a quote.
-          Not what the property will sell for. Ranges only vary your rate/down.
-        </p>
-        {scenario ? (
-          <>
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              <label className="block text-[9px] font-semibold text-[var(--muted)]">
-                Rate %
-                <input
-                  value={ratePct}
-                  onChange={(e) => setRatePct(e.target.value)}
-                  className="mt-0.5 w-full rounded-lg border border-hairline bg-[var(--surface)] px-2 py-1.5 text-xs text-ink"
-                  inputMode="decimal"
-                />
-              </label>
-              <label className="block text-[9px] font-semibold text-[var(--muted)]">
-                Down %
-                <input
-                  value={downPct}
-                  onChange={(e) => setDownPct(e.target.value)}
-                  className="mt-0.5 w-full rounded-lg border border-hairline bg-[var(--surface)] px-2 py-1.5 text-xs text-ink"
-                  inputMode="decimal"
-                />
-              </label>
-              <label className="block text-[9px] font-semibold text-[var(--muted)]">
-                Years
-                <input
-                  value={termYears}
-                  onChange={(e) => setTermYears(e.target.value)}
-                  className="mt-0.5 w-full rounded-lg border border-hairline bg-[var(--surface)] px-2 py-1.5 text-xs text-ink"
-                  inputMode="numeric"
-                />
-              </label>
-            </div>
-            <p className="mt-2 text-xs text-ink">
-              P&amp;I ≈{" "}
-              <span className="font-serif text-lg font-bold">
-                {money(scenario.pi)}
-              </span>
-              <span className="text-[var(--muted)]"> / mo</span>
-            </p>
-            <p className="text-[10px] text-[var(--muted)]">
-              On {money(scenario.price)} CAD value · {money(scenario.downPayment)}{" "}
-              down · {money(scenario.principal)} loan · {scenario.rate}% ·{" "}
-              {scenario.term} yr
-            </p>
-
-            <p className="mt-3 font-mono text-[9px] font-bold uppercase text-gold">
-              Assumption ranges
-            </p>
-            <ul className="mt-1 space-y-1">
-              {scenario.ranges.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex items-center justify-between gap-2 rounded-md border border-hairline px-2 py-1.5 text-[11px]"
-                >
-                  <span className="text-[var(--muted)]">{c.label}</span>
-                  <span className="font-semibold text-ink">
-                    {money(c.monthlyPi)}
-                    <span className="font-normal text-[var(--muted)]"> /mo</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p className="mt-2 text-[10px] text-[var(--muted)]">
-            Needs a CAD market value and valid rate / down / term inputs.
-          </p>
-        )}
-      </div>
+      <ShiIntelligenceScenarioBoard
+        subjectCadValue={property.marketValue}
+        taxYearCount={taxYearCount}
+        lookalike={lookalike}
+      />
 
       <p className="mt-2 text-[9px] leading-relaxed text-[var(--muted)]">
         {evidence.note}

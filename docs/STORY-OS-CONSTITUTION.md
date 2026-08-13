@@ -227,6 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` (first-party ingest; apply migration 0029).
+**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` (Research CAD scenario board; apply migration 0030 grants if analytics inserts 403).
 
-**Next coded wave (when green-lit):** Finish Messages/Referrals with real E2E product — or lawful Corridors adapters when licensed.
+**Next coded wave (when green-lit):** County/ops scale — or finish Messages/Referrals with real E2E — or lawful Corridors adapters when licensed.

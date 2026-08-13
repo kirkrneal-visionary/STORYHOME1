@@ -5,19 +5,21 @@
 **Observation:** [`ARCHIE-OBS-OPS.md`](./ARCHIE-OBS-OPS.md)  
 **Shell:** [`STORY-MESSAGES-REFERRALS.md`](./STORY-MESSAGES-REFERRALS.md)  
 **Analytics:** [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md) · [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md)  
+**Scenarios:** [`ARCHIE-INTELLIGENCE-SCENARIOS.md`](./ARCHIE-INTELLIGENCE-SCENARIOS.md)  
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-ANALYTICS-DESTINATION
-First-party `POST /api/analytics` + `product_analytics_events` · remote sink · no third-party
+### ARCHIE-INTELLIGENCE-SCENARIOS
+Research CAD scenario board · value stress + carry · coverage labels · meeting pack
 
 ## Next
-- Apply migration **0029** on live Supabase if not auto-applied  
+- Apply migration **0030** grants on live Supabase if analytics inserts still 403  
+- County/ops scale (constitution §11.5)  
 - Lawful Corridors adapters when licensed  
 - Finish Messages/Referrals only with real E2E product  
 
 ## Done
-- Analytics foundation (catalog)  
+- STORY-ANALYTICS-DESTINATION · foundation  
 - Messages/Referrals hide theater · Continuum visibility  
 - ARCHIE-OBS-OPS · Corridors adapters · validation · toolbox · V.1/V.2  
 

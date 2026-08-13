@@ -16,6 +16,10 @@ assert.match(migration, /for insert/);
 assert.match(migration, /to anon, authenticated/);
 assert.doesNotMatch(migration, /for select\s+to anon/i);
 
+const grants = read("supabase/migrations/0030_product_analytics_grants.sql");
+assert.match(grants, /grant insert on public\.product_analytics_events/i);
+assert.match(grants, /anon, authenticated, service_role/);
+
 const route = read("src/app/api/analytics/route.ts");
 assert.match(route, /ingestProductAnalyticsEvent/);
 assert.match(route, /table_missing/);
