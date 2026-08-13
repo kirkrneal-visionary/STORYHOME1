@@ -446,3 +446,13 @@ export async function shiOwnerPortfolio(opts: {
   );
   return body.portfolio;
 }
+
+/* --------------------- Corridors · Traffic (Wave 1) --------------------- */
+
+export async function shiCorridorsTraffic(countyFips: string) {
+  const params = new URLSearchParams();
+  params.set("countyFips", countyFips);
+  return shiFetch<import("@/lib/shi/corridors").CorridorsTrafficPayload>(
+    `/api/shi/corridors/traffic?${params.toString()}`,
+  );
+}

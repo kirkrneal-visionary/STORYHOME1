@@ -237,7 +237,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-LOOKALIKE-CONTEXT",
     name: "Lookalike CAD band · assumption ranges",
     goal: "Compose Find Similar into an honest lookalike CAD appraisal band and show illustrative carry ranges under explicit rate/down assumptions.",
-    status: "current",
+    status: "done",
     frontend: [
       "Lookalike CAD band on evidence panel",
       "Vs lookalike median / min–max range",
@@ -252,6 +252,55 @@ export const SHI_WAVES: ShiWave[] = [
       "Treating lookalikes as MLS sale comps",
       "Fake similarity percent scores",
     ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-TRAFFIC",
+    name: "Corridors · custom Traffic tool · TxDOT AADT",
+    goal: "Give Story Pro a dedicated Corridors room with a custom Traffic tool and ≥5 years of TxDOT AADT for the launch 7 counties — planning counts, not live congestion.",
+    status: "current",
+    frontend: [
+      "Archie module Corridors (after Research)",
+      "Custom Traffic tool (tap stations)",
+      "Station dossier with year chips + trend label",
+      "Corridor linework colored by current AADT",
+    ],
+    backend: [
+      "GET /api/shi/corridors/traffic (Pro gate)",
+      "TxDOT Open Data proxy — AADT Annuals + 2024 corridor lines",
+      "Launch-county FIPS lock — no paid traffic plugin",
+    ],
+    outOfScope: [
+      "Growth watch heatmaps (Wave 2)",
+      "Investor scenario board (Wave 3)",
+      "Live congestion feeds",
+      "Seller-probability theater",
+    ],
+  },
+  {
+    id: "ARCHIE-GROWTH-WATCH",
+    name: "Corridors · growth watch areas",
+    goal: "Evidence-backed developmental watch zones from traffic trends + CAD observation + public project signals.",
+    status: "planned",
+    frontend: [
+      "Watch area layer on Corridors map",
+      "Explainable reason chips per zone",
+      "Handoff into Research / Prospects",
+    ],
+    backend: ["Compose watch features — prefer no fake scores"],
+    outOfScope: ["Unnamed heat scores", "Deed/sale oracles"],
+  },
+  {
+    id: "ARCHIE-GROWTH-SCENARIOS",
+    name: "Corridors · growth scenarios",
+    goal: "Assumption-first projection board for investor sit-downs with coverage confidence.",
+    status: "planned",
+    frontend: [
+      "Scenario knobs (traffic growth %, hold, rate)",
+      "Ranges + coverage confidence",
+      "Meeting pack export",
+    ],
+    backend: ["Server-side scenario compose — no secret browser weights"],
+    outOfScope: ["Guaranteed returns", "Live congestion cosplay"],
   },
   {
     id: "ARCHIE-OBS-OPS",
@@ -274,8 +323,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — lookalike band + assumption ranges. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-LOOKALIKE-CONTEXT" as const;
+/** Active wave — Corridors traffic desk. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-TRAFFIC" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
