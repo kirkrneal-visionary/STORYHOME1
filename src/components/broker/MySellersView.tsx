@@ -115,7 +115,7 @@ function SellerCard({ seller, agentId, onChanged }: { seller: SellerClient; agen
   useEffect(() => { if (open) void loadActs(); }, [open, loadActs]);
 
   return (
-    <article className="story-surface p-5">
+    <article className="story-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-serif text-lg font-bold text-ink">{seller.name}</p>
