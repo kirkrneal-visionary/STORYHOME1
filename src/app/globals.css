@@ -135,3 +135,79 @@ html[data-role="professional"] {
     font-family: var(--font-ibm-plex-mono), ui-monospace, monospace;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Story Home — site-wide motion language (presentation only)                 */
+/* Tokens live in src/lib/motion/tokens.ts — keep CSS durations aligned.      */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --motion-micro: 120ms;
+  --motion-fast: 180ms;
+  --motion-standard: 280ms;
+  --motion-surface: 360ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes storyDrawerIn {
+  from {
+    opacity: 0.9;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes storyScrimIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes storySkeletonPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+/* Immediate press acknowledgment — micro, not theatrical */
+.story-press {
+  transition:
+    transform var(--motion-micro) var(--motion-ease-standard),
+    opacity var(--motion-micro) linear;
+}
+.story-press:active {
+  transform: scale(0.98);
+}
+
+.story-card {
+  transition:
+    transform var(--motion-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-fast) var(--motion-ease-standard),
+    border-color var(--motion-fast) linear;
+}
+
+.story-skeleton {
+  animation: storySkeletonPulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-press,
+  .story-card,
+  .story-skeleton,
+  .story-route-page {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}

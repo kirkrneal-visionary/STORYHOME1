@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
@@ -17,6 +17,11 @@ import {
 } from "@/lib/listing-filters";
 import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
 import { DEFAULT_MARKET } from "@/lib/markets";
+import {
+  marketplaceCacheFresh,
+  readMarketplaceCache,
+  saveMarketplaceCache,
+} from "@/lib/motion/navigation-cache";
 
 const MarketplaceMap = dynamic(
   () =>
@@ -33,27 +38,74 @@ const MarketplaceMap = dynamic(
   },
 );
 
-export default function MarketplaceView() {
-  const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || DEFAULT_MARKET.label;
-  const intent = searchParams.get("intent") || "sale";
-
-  const [filters, setFilters] = useState<SearchFilters>(() => ({
+function initialFiltersFromUrl(q: string, intent: string): SearchFilters {
+  return {
     ...DEFAULT_SEARCH_FILTERS,
-    query: initialQuery,
+    query: q,
     statuses:
       intent === "sold"
         ? ["Sold"]
         : intent === "rent"
           ? ["Active"]
           : ["Active", "Option Pending Continue to Show"],
-  }));
+  };
+}
+
+export default function MarketplaceView() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") || DEFAULT_MARKET.label;
+  const intent = searchParams.get("intent") || "sale";
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const restoredRef = useRef(false);
+
+  const [filters, setFilters] = useState<SearchFilters>(() =>
+    initialFiltersFromUrl(initialQuery, intent),
+  );
   const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
   const [allListings, setAllListings] = useState<DemoListing[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Restore marketplace workspace after detail → back (session cache).
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const cached = readMarketplaceCache();
+    if (!cached || !marketplaceCacheFresh(cached)) return;
+    // Fresh URL search from home hero wins over stale cache query when q/intent present.
+    const hasFreshQuery =
+      searchParams.has("q") || searchParams.has("intent");
+    if (!hasFreshQuery) {
+      setFilters(cached.filters);
+    }
+    setBoundary(cached.boundary);
+    setSelectedId(cached.selectedId);
+    setMobileView(cached.mobileView);
+    requestAnimationFrame(() => {
+      if (listRef.current && cached.listScrollTop > 0) {
+        listRef.current.scrollTop = cached.listScrollTop;
+      }
+    });
+  }, [searchParams]);
+
+  // Persist workspace so property detail → back restores filters/map/scroll.
+  useEffect(() => {
+    const persist = () => {
+      saveMarketplaceCache({
+        filters,
+        boundary,
+        selectedId,
+        mobileView,
+        listScrollTop: listRef.current?.scrollTop ?? 0,
+        mapCenter: null,
+        mapZoom: null,
+      });
+    };
+    persist();
+    return persist;
+  }, [filters, boundary, selectedId, mobileView]);
 
   useEffect(() => {
     let active = true;
@@ -119,9 +171,12 @@ export default function MarketplaceView() {
               : "flex w-full min-h-0 flex-col border-r border-hairline md:flex md:w-[44%] lg:w-[40%]"
           }
         >
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-20 md:pb-3">
+          <div
+            ref={listRef}
+            className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-20 md:pb-3"
+          >
             {loading ? (
-              <div className="rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center text-sm text-[var(--muted)]">
+              <div className="story-skeleton rounded-xl border border-hairline bg-[var(--surface)] px-5 py-12 text-center text-sm text-[var(--muted)]">
                 Loading listings…
               </div>
             ) : allListings.length === 0 ? (
@@ -158,7 +213,7 @@ export default function MarketplaceView() {
                       ],
                     });
                   }}
-                  className="mt-5 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-navy"
+                  className="story-press mt-5 rounded-lg bg-gold px-4 py-2 text-sm font-bold text-navy"
                 >
                   Reset map & filters
                 </button>
@@ -172,6 +227,17 @@ export default function MarketplaceView() {
                     dense
                     selected={listing.id === selectedId}
                     onSelect={() => setSelectedId(listing.id)}
+                    onNavigate={() =>
+                      saveMarketplaceCache({
+                        filters,
+                        boundary,
+                        selectedId: listing.id,
+                        mobileView,
+                        listScrollTop: listRef.current?.scrollTop ?? 0,
+                        mapCenter: null,
+                        mapZoom: null,
+                      })
+                    }
                   />
                 ))}
               </div>
@@ -200,14 +266,14 @@ export default function MarketplaceView() {
 
       {/* More filters drawer */}
       {moreOpen && (
-        <div className="fixed inset-0 z-[80]">
+        <div className="story-drawer-root fixed inset-0 z-[80]">
           <button
             type="button"
             aria-label="Close filters"
-            className="absolute inset-0 bg-black/70"
+            className="absolute inset-0 bg-black/70 motion-safe:animate-[storyScrimIn_180ms_ease-out]"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="absolute top-0 right-0 flex h-full w-full max-w-md flex-col border-l border-hairline bg-[var(--surface)] shadow-2xl">
+          <div className="absolute top-0 right-0 flex h-full w-full max-w-md flex-col border-l border-hairline bg-[var(--surface)] shadow-2xl motion-safe:animate-[storyDrawerIn_220ms_cubic-bezier(0.16,1,0.3,1)]">
             <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
               <p className="font-serif text-xl font-bold text-ink">
                 More filters
@@ -215,7 +281,7 @@ export default function MarketplaceView() {
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline"
+                className="story-press flex h-9 w-9 items-center justify-center rounded-full border border-hairline"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -231,7 +297,7 @@ export default function MarketplaceView() {
               <button
                 type="button"
                 onClick={() => setMoreOpen(false)}
-                className="h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
+                className="story-press h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
               >
                 See {listings.length} homes
               </button>

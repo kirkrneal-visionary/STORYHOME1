@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/navigation/archieMemory";
 import type { ShiSavedFrame } from "@/lib/shi/types";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
+import { cn } from "@/lib/utils";
 
 export type ShiSection = ArchieModule;
 
@@ -52,9 +53,14 @@ export function ShiWorkspace() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const section: ShiSection = parseArchieModule(searchParams.get("section"));
+  /** Keep Research (and its MapLibre map) mounted after first visit. */
+  const [researchVisited, setResearchVisited] = useState(
+    () => section === "research",
+  );
 
   useEffect(() => {
     writeLastArchieModule(section);
+    if (section === "research") setResearchVisited(true);
   }, [section]);
 
   const selectSection = useCallback(
@@ -116,25 +122,43 @@ export function ShiWorkspace() {
         </div>
       </header>
 
-      <div
-        key={section}
-        className="motion-safe:animate-[archieModuleIn_200ms_ease-out]"
-      >
-        {section === "research" ? (
-          <PropertyIntelligenceView
-            onOpenVault={() => selectSection("vault")}
-            onOpenFarms={() => selectSection("farms")}
-          />
-        ) : section === "prospects" ? (
-          <ShiProspectsView
-            onOpenFarms={() => selectSection("farms")}
-            onOpenResearch={() => selectSection("research")}
-          />
-        ) : section === "farms" ? (
-          <ShiFarmsView />
-        ) : (
-          <ShiStudyVaultView onOpenInResearch={openFrameInResearch} />
-        )}
+      <div className="relative">
+        {researchVisited ? (
+          <div
+            className={cn(
+              section === "research"
+                ? "motion-safe:animate-[archieModuleIn_180ms_ease-out]"
+                : "hidden",
+            )}
+            aria-hidden={section !== "research"}
+          >
+            <PropertyIntelligenceView
+              onOpenVault={() => selectSection("vault")}
+              onOpenFarms={() => selectSection("farms")}
+            />
+          </div>
+        ) : null}
+
+        {section === "prospects" ? (
+          <div className="motion-safe:animate-[archieModuleIn_180ms_ease-out]">
+            <ShiProspectsView
+              onOpenFarms={() => selectSection("farms")}
+              onOpenResearch={() => selectSection("research")}
+            />
+          </div>
+        ) : null}
+
+        {section === "farms" ? (
+          <div className="motion-safe:animate-[archieModuleIn_180ms_ease-out]">
+            <ShiFarmsView />
+          </div>
+        ) : null}
+
+        {section === "vault" ? (
+          <div className="motion-safe:animate-[archieModuleIn_180ms_ease-out]">
+            <ShiStudyVaultView onOpenInResearch={openFrameInResearch} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

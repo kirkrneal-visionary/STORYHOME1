@@ -664,6 +664,8 @@ export function MarketplaceMap({
 
   return (
     <div
+      data-marketplace-map
+      data-no-swipe-back
       className={cn(
         "relative isolate h-full min-h-[360px] w-full",
         expanded && "fixed inset-0 z-[1200] h-dvh",

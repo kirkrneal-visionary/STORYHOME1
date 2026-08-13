@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Poppins } from "next/font/google";
 import GlobalNav from "@/components/GlobalNav";
 import Footer from "@/components/Footer";
+import { AppShell } from "@/components/motion/AppShell";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
@@ -50,7 +51,7 @@ export default function RootLayout({
       >
         <Providers>
           <GlobalNav />
-          {children}
+          <AppShell>{children}</AppShell>
           <Footer />
         </Providers>
       </body>

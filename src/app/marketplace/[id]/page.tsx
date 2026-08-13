@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { formatUsd, getAgent } from "@/lib/demo-data";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { LISTING_SELECT, rowToListing } from "@/lib/listings-map";
+import { BackToMarketplace } from "@/components/marketplace/BackToMarketplace";
 import { InquireButton } from "@/components/marketplace/InquireButton";
 
 type PageProps = {
@@ -40,15 +41,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
   return (
     <div className="min-h-dvh pb-24 pt-[72px] md:pb-10">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <Link
-          href="/marketplace"
-          className="inline-flex items-center gap-2 pt-6 text-sm text-[var(--muted)] hover:text-ink"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Marketplace
-        </Link>
+        <BackToMarketplace />
       </div>
 
-      <div className="relative mt-4 aspect-[16/9] w-full bg-[var(--nav-surface)] md:aspect-[21/9]">
+      <div
+        className="relative mt-4 aspect-[16/9] w-full bg-[var(--nav-surface)] md:aspect-[21/9]"
+        style={{ viewTransitionName: `listing-photo-${listing.id}` }}
+      >
         {listing.photoUrl ? (
           <Image
             src={listing.photoUrl}

@@ -333,6 +333,7 @@ export function ListingCadMap({
 
   return (
     <section
+      data-no-swipe-back
       className={cn(
         "flex min-h-[320px] flex-col overflow-hidden rounded-xl border border-hairline bg-[var(--surface)]",
         className,
