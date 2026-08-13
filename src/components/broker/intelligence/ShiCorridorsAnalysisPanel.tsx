@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import {
+  BookmarkPlus,
+  ChevronDown,
+  ChevronUp,
+  Columns2,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import {
   formatAadt,
   type TrafficStation,
@@ -13,9 +20,14 @@ type Props = {
   result: CorridorAnalysisResult | null;
   statusLine?: string;
   analyzing?: boolean;
+  slotLabel?: string;
+  saving?: boolean;
   onRevealStations?: () => void;
   onStudyInResearch?: () => void;
   onSelectStation?: (s: TrafficStation) => void;
+  onSaveStudy?: () => void;
+  onHoldForCompare?: () => void;
+  onReport?: () => void;
 };
 
 function levelClass(level: string) {
@@ -26,15 +38,20 @@ function levelClass(level: string) {
 }
 
 /**
- * Corridors V.1 — Observed → Signals → Interpretation + evidence.
+ * Corridors — Observed → Signals → Interpretation + evidence · save/compare/report.
  */
 export function ShiCorridorsAnalysisPanel({
   result,
   statusLine,
   analyzing,
+  slotLabel,
+  saving,
   onRevealStations,
   onStudyInResearch,
   onSelectStation,
+  onSaveStudy,
+  onHoldForCompare,
+  onReport,
 }: Props) {
   const [showEvidence, setShowEvidence] = useState(false);
 
@@ -61,7 +78,7 @@ export function ShiCorridorsAnalysisPanel({
       data-corridor-analysis
     >
       <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
-        Corridor intelligence
+        Corridor intelligence{slotLabel ? ` · ${slotLabel}` : ""}
       </p>
       <h3 className="mt-1 font-serif text-2xl font-bold text-ink">
         What Archie found
@@ -163,6 +180,41 @@ export function ShiCorridorsAnalysisPanel({
           )}
           View the evidence
         </button>
+        {onSaveStudy ? (
+          <button
+            type="button"
+            onClick={onSaveStudy}
+            disabled={saving}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-40"
+          >
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <BookmarkPlus className="h-4 w-4" />
+            )}
+            Save study
+          </button>
+        ) : null}
+        {onHoldForCompare ? (
+          <button
+            type="button"
+            onClick={onHoldForCompare}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            <Columns2 className="h-4 w-4" />
+            Compare another area
+          </button>
+        ) : null}
+        {onReport ? (
+          <button
+            type="button"
+            onClick={onReport}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            <FileText className="h-4 w-4" />
+            Development report
+          </button>
+        ) : null}
         {onStudyInResearch ? (
           <button
             type="button"
