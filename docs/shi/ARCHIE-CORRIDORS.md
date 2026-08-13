@@ -30,7 +30,8 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 | **3 (live)** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
 | **B (live)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
 | **C (live)** | `ARCHIE-CORRIDORS-PRESENTATION` | Presentation mode · print map pack · traffic look memory |
-| **V.1 (this)** | `ARCHIE-CORRIDORS-V1` | Draw an Area · analysis contract · calm map · explain layers |
+| **V.1 (live)** | `ARCHIE-CORRIDORS-V1` | Draw an Area · analysis contract · calm map · explain layers |
+| **V.2 (this)** | `ARCHIE-CORRIDORS-V2` | Compare A/B · Save study · Development Intelligence Report |
 
 ---
 
@@ -127,6 +128,14 @@ Product moment: circle any area → Archie organizes property + traffic evidence
 
 Default map emphasizes corridor lines + growth patterns — not hundreds of station dots.
 
+## Corridors V.2 — Compare · Save · Report
+
+1. After an analysis: **Compare another area** → draw area B  
+2. Read evidence contrast (not a winner prediction)  
+3. **Save study** → Study Vault “Corridors” folder + reopen list  
+4. **Development report** → professional print pack with limitations  
+
+Report version: `corridors-report-v1.0.0` · Signal model still `corridors-v1.0.0`
+
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
-Model: `corridors-v1.0.0`  
 

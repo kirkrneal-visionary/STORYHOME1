@@ -356,7 +356,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-V1",
     name: "Corridors V.1 · geographic development intelligence",
     goal: "Draw an area → analyze → explain. Stations become evidence; patterns and interpretation lead. Complexity behind the glass.",
-    status: "current",
+    status: "done",
     frontend: [
       "Corridor Intelligence hero + Draw an Area primary CTA",
       "Calm map — progressive station disclosure",
@@ -373,6 +373,27 @@ export const SHI_WAVES: ShiWave[] = [
       "Development Intelligence Report (next ship)",
       "Server-synced study baselines (next ship)",
       "New data licenses pretended as live",
+    ],
+  },
+  {
+    id: "ARCHIE-CORRIDORS-V2",
+    name: "Corridors V.2 · compare · save · report",
+    goal: "Compare two drawn areas, save studies into Vault, and produce a Development Intelligence Report — still evidence, never guaranteed futures.",
+    status: "current",
+    frontend: [
+      "Compare another area (A/B evidence contrast)",
+      "Save study → Study Vault Corridors folder + local reopen",
+      "Development Intelligence Report print product",
+    ],
+    backend: [
+      "compareCorridorAnalyses + corridor-report HTML",
+      "Reuse shiSaveFrame / folders (RLS) — no CAD writes",
+      "Browser corridor study memory linked to vaultFrameId",
+    ],
+    outOfScope: [
+      "Fake accuracy / guaranteed appreciation",
+      "Full validation backtest harness (next)",
+      "New licensed data pretended as live",
     ],
   },
   {
@@ -396,8 +417,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors V.1 geographic development intelligence. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-V1" as const;
+/** Active wave — Corridors V.2 compare · save · report. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-V2" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

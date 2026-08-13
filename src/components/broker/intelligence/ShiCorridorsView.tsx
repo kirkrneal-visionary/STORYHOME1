@@ -19,11 +19,15 @@ import {
   type CorridorMapTool,
 } from "@/components/broker/intelligence/ShiCorridorsMap";
 import { ShiCorridorsAnalysisPanel } from "@/components/broker/intelligence/ShiCorridorsAnalysisPanel";
+import { ShiCorridorsComparePanel } from "@/components/broker/intelligence/ShiCorridorsComparePanel";
 import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
 import {
   shiAnalyzeArea,
   shiCorridorsProjects,
   shiCorridorsTraffic,
+  shiCreateFolder,
+  shiListFolders,
+  shiSaveFrame,
 } from "@/lib/shi/client";
 import {
   openBoundaryInResearch,
@@ -38,6 +42,16 @@ import {
   CORRIDOR_ANALYSIS_HONESTY,
   type CorridorAnalysisResult,
 } from "@/lib/shi/corridor-analysis";
+import {
+  compareCorridorAnalyses,
+  type CorridorCompareResult,
+} from "@/lib/shi/corridor-compare";
+import { openDevelopmentIntelligenceReport } from "@/lib/shi/corridor-report";
+import {
+  listCorridorStudies,
+  saveCorridorStudy,
+  type CorridorSavedStudy,
+} from "@/lib/shi/corridor-studies";
 import { writeLastArchieModule } from "@/lib/navigation/archieMemory";
 import type { DrawnBoundary } from "@/lib/geo";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
@@ -103,11 +117,23 @@ export function ShiCorridorsView({
   const [analysisBoundary, setAnalysisBoundary] =
     useState<DrawnBoundary | null>(null);
   const [analysis, setAnalysis] = useState<CorridorAnalysisResult | null>(null);
+  const [analysisB, setAnalysisB] = useState<CorridorAnalysisResult | null>(
+    null,
+  );
+  const [compareMode, setCompareMode] = useState(false);
+  const [compare, setCompare] = useState<CorridorCompareResult | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeStatus, setAnalyzeStatus] = useState("");
   const [drawWarn, setDrawWarn] = useState("");
   const [revealStations, setRevealStations] = useState(false);
   const [exploreOpen, setExploreOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveNote, setSaveNote] = useState("");
+  const [savedStudies, setSavedStudies] = useState<CorridorSavedStudy[]>([]);
+
+  useEffect(() => {
+    setSavedStudies(listCorridorStudies(county.fips));
+  }, [county.fips, analysis?.analyzedAt, analysisB?.analyzedAt]);
 
   const applyMemory = useCallback(
     (fips: string, name: string, stations: TrafficStation[]) => {
@@ -212,7 +238,11 @@ export function ShiCorridorsView({
       setDrawWarn("");
       setAnalysisBoundary(boundary);
       setAnalyzing(true);
-      setAnalyzeStatus("Reading property activity in the area…");
+      setAnalyzeStatus(
+        compareMode
+          ? "Reading property activity for comparison area B…"
+          : "Reading property activity in the area…",
+      );
       setTool("pan");
       setRevealStations(false);
       try {
@@ -233,10 +263,24 @@ export function ShiCorridorsView({
           trafficAvailable: Boolean(payload),
           trafficError: payload ? null : error || "Traffic not loaded",
         });
-        setAnalysis(result);
-        setAnalyzeStatus(result.statusLine);
+        if (compareMode && analysis) {
+          setAnalysisB(result);
+          setCompare(
+            compareCorridorAnalyses(analysis, result, {
+              left: "Area A",
+              right: "Area B",
+            }),
+          );
+          setCompareMode(false);
+          setAnalyzeStatus(result.statusLine);
+        } else {
+          setAnalysis(result);
+          setAnalysisB(null);
+          setCompare(null);
+          setAnalyzeStatus(result.statusLine);
+        }
       } catch (e) {
-        setAnalysis(null);
+        if (!compareMode) setAnalysis(null);
         setDrawWarn(
           e instanceof Error
             ? e.message
@@ -246,8 +290,73 @@ export function ShiCorridorsView({
         setAnalyzing(false);
       }
     },
-    [county, payload, error],
+    [county, payload, error, compareMode, analysis],
   );
+
+  const saveStudy = useCallback(async () => {
+    if (!analysis || !analysisBoundary) return;
+    setSaving(true);
+    setSaveNote("");
+    try {
+      let folders = await shiListFolders(county.source);
+      let folder = folders.find((f) =>
+        f.name.toLowerCase().includes("corridor"),
+      );
+      if (!folder) {
+        folder = await shiCreateFolder({
+          name: "Corridors",
+          countySource: county.source,
+        });
+      }
+      const frame = await shiSaveFrame({
+        folderId: folder.id,
+        name: `Corridor · ${county.shortName} · ${new Date().toLocaleDateString("en-US")}`,
+        color: "#f5b71e",
+        boundary: analysisBoundary,
+        analysis: analysis.evidence.area,
+      });
+      const study = saveCorridorStudy({
+        name: frame.name,
+        analysis,
+        vaultFrameId: frame.id,
+      });
+      setSavedStudies(listCorridorStudies(county.fips));
+      setSaveNote(
+        `Saved “${study.name}” to Study Vault (Corridors folder) and your corridor studies.`,
+      );
+    } catch (e) {
+      // Still keep private browser study if Vault fails
+      try {
+        const study = saveCorridorStudy({
+          name: `Corridor · ${county.shortName}`,
+          analysis,
+          vaultFrameId: null,
+        });
+        setSavedStudies(listCorridorStudies(county.fips));
+        setSaveNote(
+          e instanceof Error
+            ? `Saved locally (“${study.name}”). Vault: ${e.message}`
+            : `Saved locally (“${study.name}”).`,
+        );
+      } catch {
+        setSaveNote(
+          e instanceof Error ? e.message : "Could not save this study.",
+        );
+      }
+    } finally {
+      setSaving(false);
+    }
+  }, [analysis, analysisBoundary, county]);
+
+  const openReport = useCallback(() => {
+    if (!analysis) return;
+    openDevelopmentIntelligenceReport({
+      studyName: `Development Intelligence · ${county.shortName}`,
+      primary: analysis,
+      secondary: analysisB,
+      compare,
+    });
+  }, [analysis, analysisB, compare, county.shortName]);
 
   const studyAnalysisInResearch = useCallback(() => {
     if (!analysisBoundary) return;
@@ -696,11 +805,32 @@ export function ShiCorridorsView({
         ) : null}
       </div>
 
+      {compareMode && !analyzing ? (
+        <div className="rounded-lg border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+          Draw area <strong>B</strong> to compare with the current analysis.
+          <button
+            type="button"
+            onClick={() => setCompareMode(false)}
+            className="ml-3 text-xs font-semibold text-gold underline"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : null}
+
       {(analyzing || analysis) && !presentationMode ? (
         <ShiCorridorsAnalysisPanel
           result={analysis}
           statusLine={analyzeStatus}
           analyzing={analyzing}
+          slotLabel={
+            compareMode || analysisB
+              ? analyzing && compareMode
+                ? "Comparing · Area B"
+                : "Area A"
+              : undefined
+          }
+          saving={saving}
           onRevealStations={() => {
             setRevealStations(true);
             setTool("traffic");
@@ -714,7 +844,69 @@ export function ShiCorridorsView({
             setPanel("station");
             setExploreOpen(true);
           }}
+          onSaveStudy={analysis ? () => void saveStudy() : undefined}
+          onHoldForCompare={
+            analysis
+              ? () => {
+                  setCompareMode(true);
+                  setTool("freehand");
+                  setSaveNote("");
+                }
+              : undefined
+          }
+          onReport={analysis ? openReport : undefined}
         />
+      ) : null}
+
+      {saveNote ? (
+        <p className="text-sm text-[var(--muted)]">{saveNote}</p>
+      ) : null}
+
+      {compare && !presentationMode ? (
+        <ShiCorridorsComparePanel
+          compare={compare}
+          onClear={() => {
+            setAnalysisB(null);
+            setCompare(null);
+          }}
+        />
+      ) : null}
+
+      {savedStudies.length > 0 && !presentationMode ? (
+        <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+          <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+            Saved corridor studies
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Reopen a prior analysis in this browser. Vault-linked studies also
+            appear under Study Vault → Corridors.
+          </p>
+          <ul className="mt-3 space-y-1">
+            {savedStudies.slice(0, 8).map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAnalysis(s.analysis);
+                    setAnalysisBoundary(s.analysis.boundary);
+                    setAnalysisB(null);
+                    setCompare(null);
+                    setSaveNote(`Reopened “${s.name}”.`);
+                  }}
+                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-[var(--background)]"
+                >
+                  <span className="truncate font-semibold text-ink">
+                    {s.name}
+                  </span>
+                  <span className="shrink-0 font-mono text-[10px] text-[var(--muted)]">
+                    {s.vaultFrameId ? "Vault · " : ""}
+                    {new Date(s.savedAt).toLocaleDateString("en-US")}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {presentationMode ? (
