@@ -560,7 +560,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-INTELLIGENCE-SCENARIOS",
     name: "Intelligence scenarios · CAD value stress board",
     goal: "Research property scenario board (rungs 8–10): assumption-first CAD value stress + carry ranges, coverage from tax years/lookalikes — never sale forecast or seller probability.",
-    status: "current",
+    status: "done",
     frontend: [
       "ShiIntelligenceScenarioBoard on CAD evidence panel",
       "Low/mid/high value stress knobs + rate/down/term",
@@ -576,10 +576,30 @@ export const SHI_WAVES: ShiWave[] = [
       "Optional predictive models",
     ],
   },
+  {
+    id: "ARCHIE-COUNTY-OPS-SCALE",
+    name: "County/ops scale · status honesty + refresh readiness",
+    goal: "Truthful CAD coverage counts, ingest/absence caps, feed indexes, and refresh force-gates so multi-county expansion cannot silently lie or backfill giants.",
+    status: "current",
+    frontend: [
+      "CadCountyStatusPanel coverage honesty line (DB/unique, not features)",
+      "/api/cad/status coverage + displayParcelCount",
+    ],
+    backend: [
+      "Migration 0031 ops-scale status columns + observed_at index",
+      "ingest post-dedupe counts + CAD_MAX_INGEST_ROWS soft cap",
+      "cad:audit persist + refresh --force gate for empty optional/giant",
+    ],
+    outOfScope: [
+      "38-county / Montgomery full load in this wave",
+      "Fake admin ops dashboard",
+      "Invented storage GB without Query A–C paste",
+    ],
+  },
 ];
 
-/** Active wave — Research CAD scenario board. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE-SCENARIOS" as const;
+/** Active wave — county/ops scale honesty. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-COUNTY-OPS-SCALE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

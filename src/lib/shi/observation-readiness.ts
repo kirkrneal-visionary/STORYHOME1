@@ -154,19 +154,40 @@ export async function getObservationReadiness(
   let parcelCount: number | null = null;
   let pullStale: boolean | null = null;
   {
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from("cad_county_status")
       .select(
-        "county_name, last_success_at, parcel_count, refresh_interval_hours",
+        "county_name, last_success_at, parcel_count, db_parcel_count, refresh_interval_hours",
       )
       .eq("source", src)
       .maybeSingle();
+    if (error && /db_parcel_count/i.test(error.message || "")) {
+      ({ data, error } = await supabase
+        .from("cad_county_status")
+        .select(
+          "county_name, last_success_at, parcel_count, refresh_interval_hours",
+        )
+        .eq("source", src)
+        .maybeSingle());
+    }
     if (data) {
       countyName = (data.county_name as string | null) ?? null;
       lastPullAt = (data.last_success_at as string | null) ?? null;
+      // Prefer live DB unique count when ops-scale columns exist.
+      const row = data as {
+        parcel_count?: number | null;
+        db_parcel_count?: number | null;
+        refresh_interval_hours?: number | null;
+      };
+      const dbN =
+        row.db_parcel_count == null ? null : Number(row.db_parcel_count);
       parcelCount =
-        data.parcel_count == null ? null : Number(data.parcel_count);
-      const windowH = Number(data.refresh_interval_hours ?? 168) || 168;
+        dbN != null
+          ? dbN
+          : row.parcel_count == null
+            ? null
+            : Number(row.parcel_count);
+      const windowH = Number(row.refresh_interval_hours ?? 168) || 168;
       pullStale = freshnessStale(lastPullAt, windowH);
     }
   }

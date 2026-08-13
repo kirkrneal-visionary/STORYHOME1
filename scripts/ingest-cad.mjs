@@ -624,15 +624,31 @@ async function insertChangeEvents(sb, events) {
 const MAX_ABSENCE_MARKS = 5000;
 
 /**
+ * Soft row budget for expansion safety (env CAD_MAX_INGEST_ROWS).
+ * When hit, ingest stops early and status.ingest_capped = true — not COMPLETE.
+ */
+function softIngestLimit(argsLimit) {
+  if (argsLimit != null && Number.isFinite(argsLimit) && argsLimit > 0) {
+    return Math.floor(argsLimit);
+  }
+  const env = Number(process.env.CAD_MAX_INGEST_ROWS || "");
+  if (Number.isFinite(env) && env > 0) return Math.floor(env);
+  return null;
+}
+
+/**
  * After a full-county pull (--all), mark parcels not seen in this run as absent.
  * Emits presence events. Never claims deed/sale — only "missing from this pull".
+ * @returns {{ marked: number, capHit: boolean }}
  */
 async function markAbsencesForFullPull(sb, source, seenPropIds, observedAt) {
   let marked = 0;
+  let capHit = false;
   let from = 0;
   const pageSize = 1000;
   for (;;) {
     if (marked >= MAX_ABSENCE_MARKS) {
+      capHit = true;
       console.warn(
         `[live] absence cap ${MAX_ABSENCE_MARKS} reached for ${source} — remaining unmarked this run`,
       );
@@ -649,7 +665,7 @@ async function markAbsencesForFullPull(sb, source, seenPropIds, observedAt) {
         console.warn(
           "[live] absent_at missing — apply migration 0028 to mark absences",
         );
-        return 0;
+        return { marked: 0, capHit: false };
       }
       throw error;
     }
@@ -686,7 +702,7 @@ async function markAbsencesForFullPull(sb, source, seenPropIds, observedAt) {
     from += rows.length;
     if (rows.length < pageSize) break;
   }
-  return marked;
+  return { marked, capHit };
 }
 
 function isConflictDupError(msg) {
@@ -733,7 +749,15 @@ async function upsertChunkWithSplit(sb, table, chunk, onConflict, label) {
 
 async function upsertLive(rows, opts = {}) {
   const sb = await getSupabase();
-  if (!sb) return false;
+  if (!sb) {
+    return {
+      ok: false,
+      uniqueCount: 0,
+      featureMappedCount: rows.length,
+      absenceCapHit: false,
+      dbParcelCount: null,
+    };
+  }
   const markAbsent = Boolean(opts.markAbsent);
 
   // CAD FeatureServers often emit the same prop_id multiple times (multi-part
@@ -841,19 +865,23 @@ async function upsertLive(rows, opts = {}) {
     console.log(`[live] field change events recorded: ${ownerEventsTotal}`);
   }
 
+  let absenceCapHit = false;
   if (markAbsent && rawParcelRows.length) {
     const source = rawParcelRows[0].source;
     const seen = new Set(rawParcelRows.map((r) => r.prop_id));
     const observedAt = new Date().toISOString();
-    const marked = await markAbsencesForFullPull(
+    const abs = await markAbsencesForFullPull(
       sb,
       source,
       seen,
       observedAt,
     );
-    if (marked) {
+    absenceCapHit = Boolean(abs.capHit);
+    if (abs.marked) {
       console.log(
-        `[live] marked ${marked} parcels absent (missing from this full pull)`,
+        `[live] marked ${abs.marked} parcels absent (missing from this full pull)${
+          absenceCapHit ? " · ABSENCE CAP HIT" : ""
+        }`,
       );
     }
   }
@@ -883,13 +911,59 @@ async function upsertLive(rows, opts = {}) {
       `values batch ${Math.floor(i / batch)}`,
     );
   }
-  return true;
+
+  let dbParcelCount = null;
+  if (rawParcelRows.length) {
+    const source = rawParcelRows[0].source;
+    const { count, error: cErr } = await sb
+      .from("county_parcels")
+      .select("id", { count: "exact", head: true })
+      .eq("source", source);
+    if (!cErr) dbParcelCount = count ?? 0;
+  }
+
+  return {
+    ok: true,
+    uniqueCount: rawParcelRows.length,
+    featureMappedCount: rows.length,
+    absenceCapHit,
+    dbParcelCount,
+  };
 }
 
-async function recordStatus(src, { ok, error, rows }) {
+async function countDbParcels(source) {
+  const sb = await getSupabase();
+  if (!sb) return null;
+  const { count, error } = await sb
+    .from("county_parcels")
+    .select("id", { count: "exact", head: true })
+    .eq("source", source);
+  if (error) return null;
+  return count ?? 0;
+}
+
+async function recordStatus(
+  src,
+  {
+    ok,
+    error,
+    rows,
+    uniqueCount,
+    dbParcelCount,
+    absenceCapHit,
+    ingestCapped,
+  },
+) {
   const sb = await getSupabase();
   if (!sb) return;
   const now = new Date().toISOString();
+  const deduped = dedupeByKey(
+    (rows || [])
+      .map((r) => ({ ...r, prop_id: normalizePropId(r.prop_id) }))
+      .filter((r) => r.prop_id),
+    (r) => `${r.source}::${r.prop_id}`,
+  );
+  const unique = uniqueCount != null ? uniqueCount : deduped.length;
   const payload = {
     source: src.source,
     county_fips: src.countyFips,
@@ -903,17 +977,44 @@ async function recordStatus(src, { ok, error, rows }) {
   };
   if (ok) {
     payload.last_success_at = now;
-    payload.parcel_count = rows.length;
-    payload.real_count = rows.filter((r) => r.property_category === "real").length;
-    payload.personal_count = rows.filter(
+    // Post-dedupe unique prop_ids — never raw ArcGIS feature length.
+    payload.parcel_count = unique;
+    payload.real_count = deduped.filter(
+      (r) => r.property_category === "real",
+    ).length;
+    payload.personal_count = deduped.filter(
       (r) => r.property_category === "personal",
     ).length;
-    payload.mh_serial_count = rows.filter((r) => r.mh_serial_number).length;
+    payload.mh_serial_count = deduped.filter((r) => r.mh_serial_number).length;
+    const dbN =
+      dbParcelCount != null ? dbParcelCount : await countDbParcels(src.source);
+    if (dbN != null) payload.db_parcel_count = dbN;
+    payload.absence_cap_hit = Boolean(absenceCapHit);
+    payload.ingest_capped = Boolean(ingestCapped);
   }
   const { error: e } = await sb
     .from("cad_county_status")
     .upsert(payload, { onConflict: "source" });
-  if (e) console.error(`[${src.source}] status upsert failed: ${e.message}`);
+  if (e) {
+    // Soft-fail when migration 0031 columns are missing — retry core fields.
+    if (/db_parcel_count|absence_cap_hit|ingest_capped/i.test(e.message || "")) {
+      const legacy = { ...payload };
+      delete legacy.db_parcel_count;
+      delete legacy.absence_cap_hit;
+      delete legacy.ingest_capped;
+      const { error: e2 } = await sb
+        .from("cad_county_status")
+        .upsert(legacy, { onConflict: "source" });
+      if (e2)
+        console.error(`[${src.source}] status upsert failed: ${e2.message}`);
+      else
+        console.warn(
+          `[${src.source}] status wrote without ops-scale columns — apply migration 0031`,
+        );
+      return;
+    }
+    console.error(`[${src.source}] status upsert failed: ${e.message}`);
+  }
 }
 
 async function fetchArcgisRows(src, where, limit) {
@@ -978,18 +1079,35 @@ async function main() {
   const src = getSource(args.source);
   console.log(`[${src.source}] ${src.countyName} — mode=${src.mode}`);
 
+  const rowBudget = softIngestLimit(args.limit);
+  let ingestCapped = false;
   let rows = [];
   try {
     if (src.mode === "arcgis") {
       if (!src.serviceUrl) throw new Error("Missing serviceUrl");
       const where = buildWhere(args, src);
       console.log(`[${src.source}] querying: ${where}`);
-      rows = await fetchArcgisRows(src, where, args.limit);
+      if (rowBudget != null) {
+        console.log(
+          `[${src.source}] soft ingest budget ${rowBudget} rows (CAD_MAX_INGEST_ROWS / --limit)`,
+        );
+      }
+      rows = await fetchArcgisRows(src, where, rowBudget);
+      if (rowBudget != null && rows.length >= rowBudget) ingestCapped = true;
     } else if (src.mode === "file") {
-      rows = await fetchFileRows(src, args);
+      const fileArgs =
+        rowBudget != null ? { ...args, limit: rowBudget } : args;
+      rows = await fetchFileRows(src, fileArgs);
+      if (rowBudget != null && rows.length >= rowBudget) ingestCapped = true;
     } else {
       throw new Error(
         `${src.source} is manual-only — agents enter details in the listing UI. Nothing to bulk-ingest.`,
+      );
+    }
+
+    if (ingestCapped) {
+      console.warn(
+        `[${src.source}] INGEST CAPPED at ${rows.length} mapped rows — not a full-county COMPLETE load`,
       );
     }
 
@@ -1022,29 +1140,60 @@ async function main() {
       );
     }
 
+    let liveStats = {
+      uniqueCount: null,
+      dbParcelCount: null,
+      absenceCapHit: false,
+    };
     if (!args.noLive) {
       try {
-        const live = await upsertLive(rows, {
-          // Only full-county pulls may mark absence — partial queries would false-flag.
-          markAbsent: Boolean(args.all) && !args.limit && !args.where && !args.propIds,
-        });
+        // Cap / targeted pulls must not mark absence — would false-flag the county.
+        const markAbsent =
+          Boolean(args.all) &&
+          !ingestCapped &&
+          !args.limit &&
+          !args.where &&
+          !args.propIds;
+        const live = await upsertLive(rows, { markAbsent });
+        liveStats = {
+          uniqueCount: live.uniqueCount,
+          dbParcelCount: live.dbParcelCount,
+          absenceCapHit: live.absenceCapHit,
+        };
         console.log(
-          live
-            ? `[${src.source}] live upsert OK (${rows.length} parcels)`
+          live.ok
+            ? `[${src.source}] live upsert OK (unique ${live.uniqueCount} · db ${live.dbParcelCount ?? "?"} · mapped ${rows.length})`
             : `[${src.source}] no service-role creds; skipped live upsert`,
         );
       } catch (e) {
         console.error(`[${src.source}] live upsert failed: ${e.message}`);
-        await recordStatus(src, { ok: false, error: e.message, rows });
+        await recordStatus(src, {
+          ok: false,
+          error: e.message,
+          rows,
+          ingestCapped,
+        });
         process.exitCode = 1;
         return;
       }
     }
 
-    await recordStatus(src, { ok: true, rows });
+    await recordStatus(src, {
+      ok: true,
+      rows,
+      uniqueCount: liveStats.uniqueCount,
+      dbParcelCount: liveStats.dbParcelCount,
+      absenceCapHit: liveStats.absenceCapHit,
+      ingestCapped,
+    });
   } catch (e) {
     console.error(`[${src.source}] FAILED: ${e.message}`);
-    await recordStatus(src, { ok: false, error: e.message, rows });
+    await recordStatus(src, {
+      ok: false,
+      error: e.message,
+      rows,
+      ingestCapped,
+    });
     process.exitCode = 1;
   }
 }
