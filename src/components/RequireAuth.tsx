@@ -20,7 +20,7 @@ export function RequireAuth({
         <h1 className="font-serif text-3xl font-bold text-ink">{title}</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">{description}</p>
         <Link
-          href="/login?next=/messages"
+          href="/login?next=/profile"
           className="mt-8 inline-flex h-12 items-center rounded-xl bg-gold px-6 text-sm font-bold text-navy"
         >
           Log in to continue

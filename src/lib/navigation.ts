@@ -2,8 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   Briefcase,
   Building2,
-  GitBranch,
-  MessageSquare,
   Store,
   UserRound,
   Users,
@@ -16,10 +14,9 @@ export type NavItem = {
   icon: LucideIcon;
   /** When set, link only shows for these roles */
   roles?: UserRole[];
-  showUnread?: boolean;
 };
 
-/** Primary destinations shared by desktop and mobile navigation */
+/** Primary destinations — Messages/Referrals hidden until real product ships. */
 export const PRIMARY_NAV: NavItem[] = [
   {
     href: "/marketplace",
@@ -37,18 +34,6 @@ export const PRIMARY_NAV: NavItem[] = [
     label: "Network",
     icon: Users,
     roles: ["professional"],
-  },
-  {
-    href: "/referrals",
-    label: "Referrals",
-    icon: GitBranch,
-    roles: ["professional"],
-  },
-  {
-    href: "/messages",
-    label: "Messages",
-    icon: MessageSquare,
-    showUnread: true,
   },
 ];
 

@@ -481,7 +481,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-CONTINUUM-VISIBILITY",
     name: "Story Continuum · visibility pass",
     goal: "Make Continuum perceptible on phone + desktop — room-step, swipe belonging, study cue, lateral dissolve — without brand redesign or slideshow.",
-    status: "current",
+    status: "done",
     frontend: [
       "Tuned browse / social / study temperatures",
       "Stronger swipe peek underlay",
@@ -497,10 +497,29 @@ export const SHI_WAVES: ShiWave[] = [
       "Stealing map gestures",
     ],
   },
+  {
+    id: "STORY-MESSAGES-REFERRALS",
+    name: "Messages & Referrals · hide shell theater",
+    goal: "Remove fake inbox/board and unread badges until real product ships — deep links stay honest, listing inquire still goes to Story Pro leads.",
+    status: "current",
+    frontend: [
+      "Nav / footer / profile / agent CTAs no longer promise live Messages or Referrals",
+      "Honest pause landings on /messages and /referrals",
+      "Hard-coded unreadMessages / openReferralCount removed",
+    ],
+    backend: [
+      "No schema delete — tables may remain for a future finish wave",
+      "Inquire → Story Pro leads unchanged",
+    ],
+    outOfScope: [
+      "Building a real DM inbox this wave",
+      "Fake kanban or reputation theater",
+    ],
+  },
 ];
 
-/** Active wave — Continuum visibility on phone + desktop. */
-export const ARCHIE_CURRENT_WAVE = "STORY-CONTINUUM-VISIBILITY" as const;
+/** Active wave — hide Messages/Referrals shell theater. */
+export const ARCHIE_CURRENT_WAVE = "STORY-MESSAGES-REFERRALS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
