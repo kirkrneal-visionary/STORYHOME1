@@ -353,10 +353,33 @@ export const SHI_WAVES: ShiWave[] = [
     ],
   },
   {
+    id: "ARCHIE-CORRIDORS-V1",
+    name: "Corridors V.1 · geographic development intelligence",
+    goal: "Draw an area → analyze → explain. Stations become evidence; patterns and interpretation lead. Complexity behind the glass.",
+    status: "current",
+    frontend: [
+      "Corridor Intelligence hero + Draw an Area primary CTA",
+      "Calm map — progressive station disclosure",
+      "Observed facts · derived signals · Archie interpretation",
+      "Gold selection contrast · evidence drawer",
+    ],
+    backend: [
+      "composeCorridorAnalysis + POST /api/shi/corridors/analyze",
+      "Reuse analyzeArea + TxDOT (no CAD writes)",
+      "Model version corridors-v1.0.0",
+    ],
+    outOfScope: [
+      "Fake accuracy percentages",
+      "Development Intelligence Report (next ship)",
+      "Server-synced study baselines (next ship)",
+      "New data licenses pretended as live",
+    ],
+  },
+  {
     id: "ARCHIE-OBS-OPS",
     name: "Observation health · empty-state honesty",
     goal: "Make Ownership Stability and County observation feed trustworthy — distinguish migrations pending vs awaiting next pull vs truly quiet.",
-    status: "current",
+    status: "planned",
     frontend: [
       "Observation setup / readiness copy on feed + stability",
       "County pull status tied to freshness",
@@ -373,8 +396,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — observation health / empty-state honesty. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-OBS-OPS" as const;
+/** Active wave — Corridors V.1 geographic development intelligence. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-V1" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

@@ -10,6 +10,18 @@ import {
   setBaseLayerVisibility,
   type MapBaseLayer,
 } from "@/lib/map-style";
+import type { DrawnBoundary, LatLng } from "@/lib/geo";
+import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
+import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
+import {
+  emptyFreehandSession,
+  freehandForceSeal,
+  freehandPointerDown,
+  freehandPointerMove,
+  freehandSealPoints,
+  type FreehandSession,
+} from "@/lib/map-draw/freehand-session";
+import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import {
   formatAadt,
   type CorridorCounty,
@@ -25,6 +37,8 @@ const EMPTY_FC: GeoJSON.FeatureCollection = {
   features: [],
 };
 
+export type CorridorMapTool = "pan" | "freehand" | "rectangle" | "traffic";
+
 type Props = {
   county: CorridorCounty;
   stations: TrafficStation[];
@@ -35,12 +49,17 @@ type Props = {
   onSelectWatch?: (area: GrowthWatchArea | null) => void;
   projects?: TxdotProject[];
   showProjects?: boolean;
-  trafficToolActive: boolean;
+  tool: CorridorMapTool;
+  onToolChange?: (tool: CorridorMapTool) => void;
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
+  onBoundaryDrawn?: (boundary: DrawnBoundary) => void;
+  analysisBoundary?: DrawnBoundary | null;
+  /** Force station dots (evidence / traffic tool / zoom handled inside) */
+  revealStations?: boolean;
   loading?: boolean;
-  /** Investor-room: bigger labels, taller map, less chrome */
   presentationMode?: boolean;
+  drawWarn?: string;
 };
 
 function watchPolygon(area: GrowthWatchArea): GeoJSON.Feature {
@@ -67,6 +86,58 @@ function watchPolygon(area: GrowthWatchArea): GeoJSON.Feature {
   };
 }
 
+function boundaryToFeature(boundary: DrawnBoundary): GeoJSON.Feature | null {
+  if (boundary.type === "polygon" && boundary.points.length >= 3) {
+    const ring = boundary.points.map((p) => [p.lng, p.lat]);
+    ring.push(ring[0]!);
+    return {
+      type: "Feature",
+      properties: { kind: "analysis" },
+      geometry: { type: "Polygon", coordinates: [ring] },
+    };
+  }
+  if (boundary.type === "rectangle" || boundary.type === "viewport") {
+    const { west, south, east, north } = boundary.bounds;
+    return {
+      type: "Feature",
+      properties: { kind: "analysis" },
+      geometry: {
+        type: "Polygon",
+        coordinates: [
+          [
+            [west, north],
+            [east, north],
+            [east, south],
+            [west, south],
+            [west, north],
+          ],
+        ],
+      },
+    };
+  }
+  if (boundary.type === "circle") {
+    const pts: number[][] = [];
+    const n = 48;
+    const latR = boundary.radiusMiles / 69;
+    const lngR =
+      boundary.radiusMiles /
+      (69 * Math.max(0.2, Math.cos((boundary.center.lat * Math.PI) / 180)));
+    for (let i = 0; i <= n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      pts.push([
+        boundary.center.lng + lngR * Math.cos(a),
+        boundary.center.lat + latR * Math.sin(a),
+      ]);
+    }
+    return {
+      type: "Feature",
+      properties: { kind: "analysis" },
+      geometry: { type: "Polygon", coordinates: [pts] },
+    };
+  }
+  return null;
+}
+
 function aadtColorExpr() {
   return [
     "interpolate",
@@ -86,8 +157,7 @@ function aadtColorExpr() {
 }
 
 /**
- * Corridors map — custom Traffic tool (tap stations / segments).
- * Maps stay sacred: no swipe-back hijack (data-no-swipe-back).
+ * Corridors V.1 map — patterns first; stations progressive; Draw an Area.
  */
 export function ShiCorridorsMap({
   county,
@@ -99,24 +169,42 @@ export function ShiCorridorsMap({
   onSelectWatch,
   projects = [],
   showProjects = true,
-  trafficToolActive,
+  tool,
   selectedStationId,
   onSelectStation,
+  onBoundaryDrawn,
+  analysisBoundary = null,
+  revealStations = false,
   loading = false,
   presentationMode = false,
+  drawWarn = "",
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
   const [base, setBase] = useState<MapBaseLayer>("satellite");
+  const [zoom, setZoom] = useState(9);
   const onSelectRef = useRef(onSelectStation);
   onSelectRef.current = onSelectStation;
   const onWatchRef = useRef(onSelectWatch);
   onWatchRef.current = onSelectWatch;
+  const onBoundaryRef = useRef(onBoundaryDrawn);
+  onBoundaryRef.current = onBoundaryDrawn;
   const stationsRef = useRef(stations);
   stationsRef.current = stations;
   const watchRef = useRef(watchAreas);
   watchRef.current = watchAreas;
+  const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
+  const boxCornerRef = useRef<LatLng | null>(null);
+  const toolRef = useRef(tool);
+  toolRef.current = tool;
+
+  const stationsVisible =
+    revealStations ||
+    tool === "traffic" ||
+    presentationMode ||
+    zoom >= 11 ||
+    Boolean(selectedStationId);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -143,6 +231,7 @@ export function ShiCorridorsMap({
 
     map.on("load", () => {
       setBaseLayerVisibility(map, "satellite");
+      setZoom(map.getZoom());
 
       map.addSource("growth-watch", {
         type: "geojson",
@@ -167,7 +256,7 @@ export function ShiCorridorsMap({
             "case",
             ["boolean", ["feature-state", "selected"], false],
             0.28,
-            0.14,
+            0.16,
           ],
         },
       });
@@ -181,9 +270,27 @@ export function ShiCorridorsMap({
             "case",
             ["boolean", ["feature-state", "selected"], false],
             2.5,
-            1.4,
+            1.6,
           ],
-          "line-opacity": 0.9,
+          "line-opacity": 0.95,
+        },
+      });
+      map.addLayer({
+        id: "growth-watch-label",
+        type: "symbol",
+        source: "growth-watch",
+        minzoom: 9,
+        layout: {
+          "text-field": ["get", "title"],
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Regular"],
+          "text-size": 13,
+          "text-max-width": 12,
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": MAP_GOLD,
+          "text-halo-color": MAP_NAVY,
+          "text-halo-width": 1.6,
         },
       });
 
@@ -194,15 +301,7 @@ export function ShiCorridorsMap({
         source: "txdot-projects",
         paint: {
           "line-color": "#5ec8ff",
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            8,
-            1.5,
-            14,
-            4,
-          ],
+          "line-width": ["interpolate", ["linear"], ["zoom"], 8, 1.5, 14, 4],
           "line-opacity": 0.85,
         },
       });
@@ -219,13 +318,13 @@ export function ShiCorridorsMap({
             ["linear"],
             ["zoom"],
             8,
-            1.2,
+            2,
             14,
-            4,
+            5,
             18,
-            7,
+            8,
           ],
-          "line-opacity": 0.88,
+          "line-opacity": 0.9,
         },
       });
 
@@ -238,6 +337,7 @@ export function ShiCorridorsMap({
         id: "traffic-stations-halo",
         type: "circle",
         source: "traffic-stations",
+        layout: { visibility: "none" },
         paint: {
           "circle-radius": [
             "case",
@@ -253,6 +353,7 @@ export function ShiCorridorsMap({
         id: "traffic-stations-circle",
         type: "circle",
         source: "traffic-stations",
+        layout: { visibility: "none" },
         paint: {
           "circle-radius": [
             "case",
@@ -265,54 +366,69 @@ export function ShiCorridorsMap({
           "circle-stroke-color": MAP_GOLD,
         },
       });
+
+      map.addSource("analysis-area", { type: "geojson", data: EMPTY_FC });
       map.addLayer({
-        id: "traffic-stations-label",
-        type: "symbol",
-        source: "traffic-stations",
-        layout: {
-          "text-field": [
-            "case",
-            ["has", "aadt"],
-            [
-              "concat",
-              ["coalesce", ["get", "onRoad"], ["get", "stationId"]],
-              "\n",
-              ["to-string", ["get", "aadt"]],
-            ],
-            ["coalesce", ["get", "onRoad"], ["get", "stationId"]],
-          ],
-          "text-font": ["Open Sans Semibold", "Arial Unicode MS Regular"],
-          "text-size": 11,
-          "text-offset": [0, 1.35],
-          "text-anchor": "top",
-          "text-max-width": 10,
-          "text-allow-overlap": false,
-          "text-optional": true,
-          visibility: "none",
-        },
+        id: "analysis-area-fill",
+        type: "fill",
+        source: "analysis-area",
+        paint: { "fill-color": MAP_GOLD, "fill-opacity": 0.12 },
+      });
+      map.addLayer({
+        id: "analysis-area-line",
+        type: "line",
+        source: "analysis-area",
         paint: {
-          "text-color": "#f7f4ec",
-          "text-halo-color": MAP_NAVY,
-          "text-halo-width": 1.4,
+          "line-color": MAP_GOLD,
+          "line-width": 2.5,
+          "line-opacity": 0.95,
+        },
+      });
+
+      map.addSource("corridor-freehand", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: "corridor-freehand-fill",
+        type: "fill",
+        source: "corridor-freehand",
+        paint: { "fill-color": MAP_GOLD, "fill-opacity": 0.14 },
+        filter: ["==", ["get", "kind"], "poly"],
+      });
+      map.addLayer({
+        id: "corridor-freehand-line",
+        type: "line",
+        source: "corridor-freehand",
+        paint: {
+          "line-color": MAP_GOLD,
+          "line-width": 2.2,
+          "line-opacity": 0.95,
         },
       });
       map.addLayer({
-        id: "growth-watch-label",
-        type: "symbol",
-        source: "growth-watch",
-        layout: {
-          "text-field": ["get", "title"],
-          "text-font": ["Open Sans Bold", "Arial Unicode MS Regular"],
-          "text-size": 13,
-          "text-max-width": 12,
-          "text-allow-overlap": false,
-          visibility: "none",
-        },
+        id: "corridor-freehand-vertices",
+        type: "circle",
+        source: "corridor-freehand",
+        filter: ["==", ["get", "kind"], "vertex"],
         paint: {
-          "text-color": MAP_GOLD,
-          "text-halo-color": MAP_NAVY,
-          "text-halo-width": 1.6,
+          "circle-radius": 3,
+          "circle-color": MAP_GOLD,
+          "circle-stroke-width": 1,
+          "circle-stroke-color": MAP_NAVY,
         },
+      });
+
+      map.addSource("corridor-box", { type: "geojson", data: EMPTY_FC });
+      map.addLayer({
+        id: "corridor-box-fill",
+        type: "fill",
+        source: "corridor-box",
+        paint: { "fill-color": MAP_GOLD, "fill-opacity": 0.12 },
+        filter: ["==", ["get", "kind"], "poly"],
+      });
+      map.addLayer({
+        id: "corridor-box-line",
+        type: "line",
+        source: "corridor-box",
+        paint: { "line-color": MAP_GOLD, "line-width": 2 },
       });
 
       map.addSource("parcels", {
@@ -329,7 +445,7 @@ export function ShiCorridorsMap({
         minzoom: 13,
         paint: {
           "line-color": MAP_GOLD,
-          "line-opacity": 0.55,
+          "line-opacity": 0.45,
           "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.3, 16, 1],
         },
       });
@@ -337,12 +453,15 @@ export function ShiCorridorsMap({
       setReady(true);
     });
 
+    const onZoom = () => setZoom(map.getZoom());
+    map.on("zoom", onZoom);
+
     return () => {
+      map.off("zoom", onZoom);
       map.remove();
       mapRef.current = null;
       setReady(false);
     };
-    // County identity for initial camera only — refit handled below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -367,57 +486,12 @@ export function ShiCorridorsMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const showLabels = presentationMode ? "visible" : "none";
-    if (map.getLayer("traffic-stations-label")) {
-      map.setLayoutProperty("traffic-stations-label", "visibility", showLabels);
-      map.setLayoutProperty(
-        "traffic-stations-label",
-        "text-size",
-        presentationMode ? 14 : 11,
-      );
-    }
-    if (map.getLayer("growth-watch-label")) {
-      map.setLayoutProperty(
-        "growth-watch-label",
-        "visibility",
-        presentationMode && showWatchAreas ? "visible" : "none",
-      );
-      map.setLayoutProperty(
-        "growth-watch-label",
-        "text-size",
-        presentationMode ? 16 : 13,
-      );
-    }
+    const vis = stationsVisible ? "visible" : "none";
     if (map.getLayer("traffic-stations-circle")) {
-      map.setPaintProperty("traffic-stations-circle", "circle-radius", [
-        "case",
-        ["boolean", ["feature-state", "selected"], false],
-        presentationMode ? 11 : 8,
-        presentationMode ? 7.5 : 5.5,
-      ]);
+      map.setLayoutProperty("traffic-stations-circle", "visibility", vis);
+      map.setLayoutProperty("traffic-stations-halo", "visibility", vis);
     }
-    if (map.getLayer("traffic-stations-halo")) {
-      map.setPaintProperty("traffic-stations-halo", "circle-radius", [
-        "case",
-        ["boolean", ["feature-state", "selected"], false],
-        presentationMode ? 18 : 14,
-        presentationMode ? 12 : 9,
-      ]);
-    }
-    if (map.getLayer("corridor-segments-line")) {
-      map.setPaintProperty("corridor-segments-line", "line-width", [
-        "interpolate",
-        ["linear"],
-        ["zoom"],
-        8,
-        presentationMode ? 2.2 : 1.2,
-        14,
-        presentationMode ? 6 : 4,
-        18,
-        presentationMode ? 10 : 7,
-      ]);
-    }
-  }, [presentationMode, showWatchAreas, ready]);
+  }, [stationsVisible, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -429,11 +503,7 @@ export function ShiCorridorsMap({
       type: "FeatureCollection",
       features: segments.map((s) => ({
         type: "Feature",
-        properties: {
-          id: s.id,
-          routeId: s.routeId,
-          aadt: s.aadt,
-        },
+        properties: { id: s.id, routeId: s.routeId, aadt: s.aadt },
         geometry: s.geometry,
       })),
     });
@@ -454,10 +524,7 @@ export function ShiCorridorsMap({
           year: s.latestYear,
           trend: s.trendLabel,
         },
-        geometry: {
-          type: "Point",
-          coordinates: [s.lng, s.lat],
-        },
+        geometry: { type: "Point", coordinates: [s.lng, s.lat] },
       })),
     });
 
@@ -475,7 +542,7 @@ export function ShiCorridorsMap({
           { selected: a.id === selectedWatchId },
         );
       } catch {
-        /* promoteId not set — selection still works via list */
+        /* ignore */
       }
     }
 
@@ -489,14 +556,19 @@ export function ShiCorridorsMap({
             .filter((p) => p.geometry)
             .map((p) => ({
               type: "Feature" as const,
-              properties: {
-                id: p.id,
-                highway: p.highway,
-                phase: p.phase,
-              },
+              properties: { id: p.id, highway: p.highway, phase: p.phase },
               geometry: p.geometry!,
             }))
         : [],
+    });
+
+    const aSrc = map.getSource(
+      "analysis-area",
+    ) as maplibregl.GeoJSONSource | undefined;
+    const feat = analysisBoundary ? boundaryToFeature(analysisBoundary) : null;
+    aSrc?.setData({
+      type: "FeatureCollection",
+      features: feat ? [feat] : [],
     });
   }, [
     stations,
@@ -506,6 +578,7 @@ export function ShiCorridorsMap({
     selectedWatchId,
     projects,
     showProjects,
+    analysisBoundary,
     ready,
   ]);
 
@@ -518,19 +591,11 @@ export function ShiCorridorsMap({
         { selected: s.id === selectedStationId },
       );
     }
-    const selected = stations.find((s) => s.id === selectedStationId);
-    if (selected) {
-      map.easeTo({
-        center: [selected.lng, selected.lat],
-        zoom: Math.max(map.getZoom(), 12),
-        duration: 550,
-      });
-    }
   }, [selectedStationId, stations, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready || !selectedWatchId) return;
+    if (!map || !ready || !selectedWatchId || tool !== "pan") return;
     const area = watchAreas.find((a) => a.id === selectedWatchId);
     if (!area) return;
     map.fitBounds(
@@ -540,21 +605,24 @@ export function ShiCorridorsMap({
       ],
       { padding: 48, duration: 650, maxZoom: 13 },
     );
-  }, [selectedWatchId, watchAreas, ready]);
+  }, [selectedWatchId, watchAreas, ready, tool]);
 
+  /* Pick stations / watch when not drawing */
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+    if (tool === "freehand" || tool === "rectangle") return;
 
     const pick = (e: maplibregl.MapMouseEvent) => {
-      if (trafficToolActive) {
+      if (tool === "traffic" && stationsVisible) {
         const stationHits = map.queryRenderedFeatures(e.point, {
           layers: ["traffic-stations-circle", "traffic-stations-halo"],
         });
         const sid = stationHits[0]?.properties?.id as string | undefined;
         if (sid) {
-          const station = stationsRef.current.find((s) => s.id === sid) ?? null;
-          onSelectRef.current(station);
+          onSelectRef.current(
+            stationsRef.current.find((s) => s.id === sid) ?? null,
+          );
           return;
         }
       }
@@ -564,42 +632,138 @@ export function ShiCorridorsMap({
         });
         const wid = watchHits[0]?.properties?.id as string | undefined;
         if (wid) {
-          const area = watchRef.current.find((a) => a.id === wid) ?? null;
-          onWatchRef.current?.(area);
+          onWatchRef.current?.(
+            watchRef.current.find((a) => a.id === wid) ?? null,
+          );
           return;
         }
       }
-      if (trafficToolActive) onSelectRef.current(null);
-    };
-
-    const onMove = (e: maplibregl.MapMouseEvent) => {
-      const stationHits = trafficToolActive
-        ? map.queryRenderedFeatures(e.point, {
-            layers: ["traffic-stations-circle", "traffic-stations-halo"],
-          })
-        : [];
-      const watchHits = showWatchAreas
-        ? map.queryRenderedFeatures(e.point, {
-            layers: ["growth-watch-fill"],
-          })
-        : [];
-      if (stationHits.length || watchHits.length) {
-        map.getCanvas().style.cursor = "pointer";
-      } else if (trafficToolActive) {
-        map.getCanvas().style.cursor = "crosshair";
-      } else {
-        map.getCanvas().style.cursor = "";
-      }
+      if (tool === "traffic") onSelectRef.current(null);
     };
 
     map.on("click", pick);
-    map.on("mousemove", onMove);
     return () => {
       map.off("click", pick);
+    };
+  }, [tool, showWatchAreas, stationsVisible, ready]);
+
+  /* Freehand draw */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const fhSrc = () =>
+      map.getSource("corridor-freehand") as maplibregl.GeoJSONSource | undefined;
+
+    if (tool !== "freehand") {
+      freehandRef.current = emptyFreehandSession();
+      fhSrc()?.setData(EMPTY_FC);
+      return;
+    }
+
+    const paint = (points: LatLng[], tip: LatLng | null, close: boolean) => {
+      fhSrc()?.setData(buildFreehandGeoJSON(points, tip, close));
+    };
+
+    const sealIfReady = (force = false) => {
+      const sealed = force
+        ? freehandForceSeal(freehandRef.current)
+        : freehandSealPoints(freehandRef.current);
+      if (!sealed) return false;
+      const boundary: DrawnBoundary = { type: "polygon", points: sealed };
+      const cap = validateBoundaryCaps(boundary);
+      if (!cap.ok) return false;
+      onBoundaryRef.current?.(boundary);
+      freehandRef.current = emptyFreehandSession();
+      fhSrc()?.setData(EMPTY_FC);
+      return true;
+    };
+
+    const onDown = (e: maplibregl.MapMouseEvent) => {
+      e.preventDefault();
+      map.dragPan.disable();
+      const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      freehandRef.current = freehandPointerDown(map, freehandRef.current, pt);
+      paint(freehandRef.current.points, null, false);
+    };
+    const onMove = (e: maplibregl.MapMouseEvent) => {
+      if (!freehandRef.current.points.length) return;
+      const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      freehandRef.current = freehandPointerMove(map, freehandRef.current, tip);
+      paint(freehandRef.current.points, tip, freehandRef.current.canClose);
+      if (freehandRef.current.active && freehandRef.current.canClose) {
+        sealIfReady();
+      }
+    };
+    const onUp = () => {
+      const fh = freehandRef.current;
+      if (!fh.active) return;
+      freehandRef.current = { ...fh, active: false };
+      map.dragPan.enable();
+      if (freehandRef.current.canClose) sealIfReady();
+    };
+
+    map.on("mousedown", onDown);
+    map.on("mousemove", onMove);
+    map.on("mouseup", onUp);
+    map.getCanvas().style.cursor = "crosshair";
+    return () => {
+      map.off("mousedown", onDown);
+      map.off("mousemove", onMove);
+      map.off("mouseup", onUp);
+      map.dragPan.enable();
+      map.getCanvas().style.cursor = "";
+    };
+  }, [tool, ready]);
+
+  /* Rectangle draw */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const boxSrc = () =>
+      map.getSource("corridor-box") as maplibregl.GeoJSONSource | undefined;
+
+    if (tool !== "rectangle") {
+      boxCornerRef.current = null;
+      boxSrc()?.setData(EMPTY_FC);
+      return;
+    }
+
+    const onClick = (e: maplibregl.MapMouseEvent) => {
+      const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      if (!boxCornerRef.current) {
+        boxCornerRef.current = tip;
+        boxSrc()?.setData(buildBoxDraftGeoJSON(tip, null));
+        return;
+      }
+      const corner = boxCornerRef.current;
+      const bounds = {
+        north: Math.max(corner.lat, tip.lat),
+        south: Math.min(corner.lat, tip.lat),
+        east: Math.max(corner.lng, tip.lng),
+        west: Math.min(corner.lng, tip.lng),
+      };
+      const boundary: DrawnBoundary = { type: "rectangle", bounds };
+      const cap = validateBoundaryCaps(boundary);
+      boxCornerRef.current = null;
+      boxSrc()?.setData(EMPTY_FC);
+      if (!cap.ok) return;
+      onBoundaryRef.current?.(boundary);
+    };
+    const onMove = (e: maplibregl.MapMouseEvent) => {
+      if (!boxCornerRef.current) return;
+      const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+      boxSrc()?.setData(buildBoxDraftGeoJSON(boxCornerRef.current, tip));
+    };
+
+    map.on("click", onClick);
+    map.on("mousemove", onMove);
+    map.getCanvas().style.cursor = "crosshair";
+    return () => {
+      map.off("click", onClick);
       map.off("mousemove", onMove);
       map.getCanvas().style.cursor = "";
     };
-  }, [trafficToolActive, showWatchAreas, ready]);
+  }, [tool, ready]);
 
   return (
     <div
@@ -607,99 +771,76 @@ export function ShiCorridorsMap({
         "relative w-full overflow-hidden rounded-xl border border-hairline bg-navy",
         presentationMode
           ? "h-[min(78vh,820px)] md:h-[760px]"
-          : "h-[min(62vh,560px)] md:h-[640px]",
+          : "h-[min(68vh,620px)] md:h-[680px]",
       )}
       data-no-swipe-back
       data-shi-map
-      data-presentation={presentationMode ? "on" : "off"}
+      data-corridors-v1="true"
     >
       <div ref={containerRef} className="absolute inset-0 h-full w-full" />
 
-      {presentationMode ? (
-        <div className="pointer-events-none absolute top-3 left-3 z-10 max-w-[min(90%,420px)] rounded-lg border border-gold/35 bg-navy/88 px-4 py-3 shadow-lg">
-          <p className="font-mono text-[10px] font-bold tracking-[0.16em] text-gold uppercase">
-            Archie's Intelligence · Corridors
-          </p>
-          <p className="mt-1 font-serif text-2xl font-bold leading-tight text-paper md:text-3xl">
-            {county.name}
-          </p>
-          <p className="mt-1 text-xs text-paper/80">
-            TxDOT planning AADT · not live congestion
-          </p>
-        </div>
-      ) : null}
-
-      {!presentationMode ? (
-        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1">
-          {(
-            [
-              ["satellite", "Imagery"],
-              ["street", "Streets"],
-              ["gray", "Gray"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setBase(id)}
-              className={cn(
-                "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
-                base === id
-                  ? "bg-gold text-navy"
-                  : "bg-navy/85 text-paper hover:bg-white/10",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-1">
-          {(
-            [
-              ["satellite", "Imagery"],
-              ["street", "Streets"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setBase(id)}
-              className={cn(
-                "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
-                base === id
-                  ? "bg-gold text-navy"
-                  : "bg-navy/85 text-paper hover:bg-white/10",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1">
+        {(
+          [
+            ["satellite", "Imagery"],
+            ["street", "Streets"],
+            ["gray", "Gray"],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setBase(id)}
+            className={cn(
+              "rounded-md px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide",
+              base === id
+                ? "bg-gold text-navy"
+                : "bg-navy/85 text-paper hover:bg-white/10",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-navy/55 backdrop-blur-[1px]">
           <p className="rounded-lg border border-gold/30 bg-navy/90 px-4 py-2 font-mono text-xs font-semibold tracking-wide text-gold uppercase">
-            Loading TxDOT counts…
+            Loading corridor evidence…
           </p>
         </div>
       ) : null}
 
-      {trafficToolActive && !loading && !presentationMode ? (
-        <div className="absolute bottom-3 left-3 z-10 max-w-[220px] rounded-lg border border-gold/40 bg-navy/90 px-3 py-2 text-[11px] text-paper shadow-lg">
+      {(tool === "freehand" || tool === "rectangle") && !loading ? (
+        <div className="absolute bottom-3 left-3 z-10 max-w-[260px] rounded-lg border border-gold/40 bg-navy/92 px-3 py-2 text-[11px] text-paper shadow-lg">
           <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
-            Traffic tool
+            Draw an area
           </p>
-          <p className="mt-0.5 text-paper/85">
-            Tap a gold station for cars/day history. Lines = corridor volume.
+          <p className="mt-0.5 text-paper/90">
+            {tool === "freehand"
+              ? "Trace a loop and close near the start — Archie will organize the signals inside."
+              : "Tap two corners to outline a rectangle."}
+          </p>
+          {drawWarn ? (
+            <p className="mt-1 text-[10px] text-amber-200">{drawWarn}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {tool === "traffic" && stationsVisible && !loading ? (
+        <div className="absolute bottom-3 left-3 z-10 max-w-[240px] rounded-lg border border-gold/40 bg-navy/92 px-3 py-2 text-[11px] text-paper shadow-lg">
+          <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
+            Traffic evidence
+          </p>
+          <p className="mt-0.5 text-paper/90">
+            Select a corridor station to explore traffic growth. Lines show published volume.
           </p>
         </div>
       ) : null}
 
-      {!presentationMode ? (
-        <div className="pointer-events-none absolute right-3 bottom-14 z-10 rounded-md bg-navy/80 px-2 py-1 font-mono text-[9px] text-paper/80">
-          AADT {formatAadt(0)} → {formatAadt(40000)}+
+      {!stationsVisible && !loading && tool === "pan" ? (
+        <div className="pointer-events-none absolute right-3 bottom-14 z-10 max-w-[200px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
+          Zoom in or open evidence to see individual count stations
         </div>
       ) : null}
     </div>

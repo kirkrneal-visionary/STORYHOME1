@@ -468,3 +468,18 @@ export async function shiCorridorsProjects(opts: {
     `/api/shi/corridors/projects?${params.toString()}`,
   );
 }
+
+/** Corridors V.1 — draw an area → development intelligence (server compose). */
+export async function shiCorridorsAnalyze(opts: {
+  boundary: import("@/lib/geo").DrawnBoundary;
+  countyFips: string;
+}) {
+  const body = await shiFetch<{
+    analysis: import("@/lib/shi/corridor-analysis").CorridorAnalysisResult;
+  }>("/api/shi/corridors/analyze", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+  return body.analysis;
+}
