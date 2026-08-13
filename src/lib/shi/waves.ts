@@ -580,7 +580,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-COUNTY-OPS-SCALE",
     name: "County/ops scale · status honesty + refresh readiness",
     goal: "Truthful CAD coverage counts, ingest/absence caps, feed indexes, and refresh force-gates so multi-county expansion cannot silently lie or backfill giants.",
-    status: "current",
+    status: "done",
     frontend: [
       "CadCountyStatusPanel coverage honesty line (DB/unique, not features)",
       "/api/cad/status coverage + displayParcelCount",
@@ -596,10 +596,27 @@ export const SHI_WAVES: ShiWave[] = [
       "Invented storage GB without Query A–C paste",
     ],
   },
+  {
+    id: "STORY-FEEL-WAVE-1",
+    name: "Feel Wave 1 · shell & material site-wide",
+    goal: "One material language everywhere: atmosphere, debossed wells, soft chrome, sheets, display type — expensive clothes without feature creep or brand rewrite.",
+    status: "current",
+    frontend: [
+      "globals tokens: radius, elev-deboss/raise, atmosphere, story-well/sheet/chrome",
+      "Fraunces display + Poppins UI; GlobalNav/tabs story-chrome",
+      "ListingCard + SaveToSuiteModal sheet language",
+    ],
+    backend: ["Armor scripts/test-story-feel-wave-1.mjs"],
+    outOfScope: [
+      "Per-room content redesign (Waves 2–4)",
+      "Brand color rewrite",
+      "New product features",
+    ],
+  },
 ];
 
-/** Active wave — county/ops scale honesty. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-COUNTY-OPS-SCALE" as const;
+/** Active wave — site-wide clothing / material system. */
+export const ARCHIE_CURRENT_WAVE = "STORY-FEEL-WAVE-1" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

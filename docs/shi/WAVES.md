@@ -1,6 +1,7 @@
 # Archie's Intelligence — Build Waves
 
 **Live:** https://storyhome-1-eqmg.vercel.app  
+**Feel:** [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md)  
 **Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)  
 **Observation:** [`ARCHIE-OBS-OPS.md`](./ARCHIE-OBS-OPS.md)  
 **Shell:** [`STORY-MESSAGES-REFERRALS.md`](./STORY-MESSAGES-REFERRALS.md)  
@@ -10,21 +11,20 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-COUNTY-OPS-SCALE
-Status honesty · audit persist · ingest/absence caps · feed indexes · refresh force-gate
+### STORY-FEEL-WAVE-1
+Site-wide shell & material — atmosphere, wells, chrome, sheets, display type
 
 ## Next
-- Apply migrations **0030** (analytics grants) + **0031** (ops scale columns) on live Supabase  
-- Run `npm run cad:audit` after 0031  
-- Optional models only on observation history + labeled confidence  
-- Lawful Corridors adapters when licensed  
-- Finish Messages/Referrals only with real E2E product  
+- Feel Wave 2 — consumer rooms (Home / Marketplace / Listing)  
+- Feel Wave 3 — agent workrooms  
+- Feel Wave 4 — Archie study  
+- Optional models / Messages E2E / licensed Corridors when ready  
 
 ## Done
-- ARCHIE-INTELLIGENCE-SCENARIOS  
-- STORY-ANALYTICS-DESTINATION · foundation  
+- ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
+- Analytics destination · foundation  
 - Messages/Referrals hide theater · Continuum visibility  
-- ARCHIE-OBS-OPS · Corridors adapters · validation · toolbox · V.1/V.2  
+- ARCHIE-OBS-OPS · Corridors adapters  
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

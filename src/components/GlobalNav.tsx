@@ -139,13 +139,13 @@ export default function GlobalNav() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b border-hairline bg-[var(--nav-surface)]/95 px-4 backdrop-blur-md md:px-6">
+      <nav className="story-chrome fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b px-4 md:px-6">
         <Link href="/" className="flex min-w-0 select-none flex-col">
           <div className="flex items-center gap-0.5 tracking-tighter">
-            <span className="font-sans text-2xl font-extrabold text-[var(--brand-word)]">
+            <span className="font-serif text-[1.65rem] font-bold tracking-[-0.03em] text-[var(--brand-word)]">
               STORY
             </span>
-            <span className="font-sans text-2xl font-extrabold text-[var(--brand-home)]">
+            <span className="font-serif text-[1.65rem] font-bold tracking-[-0.03em] text-[var(--brand-home)]">
               HOME
             </span>
             <span className="mt-1 self-start text-[8px] font-bold text-[var(--brand-home)]">
@@ -339,7 +339,7 @@ export default function GlobalNav() {
         />
       </Suspense>
 
-      <div className="fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-4 items-center justify-items-center border-t border-hairline bg-[var(--nav-surface)]/96 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+      <div className="story-chrome fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-4 items-center justify-items-center border-t px-2 pb-[env(safe-area-inset-bottom)] md:hidden">
         <MobileTab href="/" label="Home" icon={Home} active={isHome} />
         {isPro && isLoggedIn ? (
           <>

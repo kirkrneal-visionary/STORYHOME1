@@ -49,7 +49,7 @@ export function NumberField({
       <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
         {label}
       </span>
-      <span className="mt-1.5 flex items-center rounded-md border border-hairline bg-[var(--background)] focus-within:border-gold">
+      <span className="mt-1.5 flex items-center rounded-[var(--radius-md)] border border-hairline bg-[color-mix(in_srgb,var(--navy-deep)_70%,var(--background))] shadow-[var(--elev-deboss)] focus-within:border-gold focus-within:shadow-[var(--elev-deboss),var(--ring-focus)]">
         {prefix && (
           <span className="pl-3 text-sm text-[var(--muted)]">{prefix}</span>
         )}
