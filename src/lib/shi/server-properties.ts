@@ -25,7 +25,7 @@ const LIST_SELECT =
   "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_zip, legal_description, legal_acreage, market_value, tax_year, property_category, ingested_at, centroid_lat, centroid_lng";
 
 const DETAIL_SELECT =
-  "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, first_seen_at, last_seen_at, geojson, centroid_lat, centroid_lng";
+  "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, first_seen_at, last_seen_at, absent_at, geojson, centroid_lat, centroid_lng";
 
 const DETAIL_SELECT_LEGACY =
   "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, geojson, centroid_lat, centroid_lng";
@@ -266,6 +266,10 @@ export async function getProperty(
 
   // Fetch a small candidate set when source is unknown so we can disambiguate.
   let { data, error } = await fetchDetailRows(DETAIL_SELECT);
+  if (error && /absent_at/i.test(error.message)) {
+    const withoutAbsent = DETAIL_SELECT.replace(", absent_at", "");
+    ({ data, error } = await fetchDetailRows(withoutAbsent));
+  }
   if (error && /first_seen_at|last_seen_at/i.test(error.message)) {
     ({ data, error } = await fetchDetailRows(DETAIL_SELECT_LEGACY));
   }
@@ -312,6 +316,8 @@ export async function getProperty(
   const source = summary.source;
   const firstSeenAt = (row.first_seen_at as string | null) ?? null;
   const lastSeenAt = (row.last_seen_at as string | null) ?? null;
+  const absentAt =
+    "absent_at" in row ? ((row.absent_at as string | null) ?? null) : null;
 
   const { data: valueRows } = await supabase
     .from("county_parcel_values")
@@ -364,6 +370,7 @@ export async function getProperty(
     freshness,
     firstSeenAt,
     lastSeenAt,
+    absentAt,
     ownershipChurn,
     cadEvidence: null,
     observedHistory: [],

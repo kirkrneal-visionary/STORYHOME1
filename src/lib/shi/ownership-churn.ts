@@ -32,6 +32,18 @@ export type OwnershipChurnSignal = {
 const NOTE =
   "Ownership Stability Index reflects how often Archie saw CAD owner fields change between county file loads. It is not a credit score, not deed history, and not a prediction the owner will sell.";
 
+/** True when last_seen is meaningfully after first_seen — evidence of a later pull. */
+export function hasSuccessiveObservation(
+  firstSeenAt: string | null,
+  lastSeenAt: string | null,
+): boolean {
+  if (!firstSeenAt || !lastSeenAt) return false;
+  const a = new Date(firstSeenAt).getTime();
+  const b = new Date(lastSeenAt).getTime();
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
+  return b - a >= 12 * 3600 * 1000;
+}
+
 export function computeOwnershipChurnSignal(opts: {
   firstSeenAt: string | null;
   lastSeenAt: string | null;
@@ -60,7 +72,32 @@ export function computeOwnershipChurnSignal(opts: {
       trackingSince: null,
       lastOwnerChangeAt: null,
       reasons: [
-        "Archie has not started observation tracking for this parcel yet. Apply migration 0027 and refresh CAD.",
+        "Tracking not started for this parcel yet (no first_seen_at).",
+        "That is not a credit score and not a seller signal — Archie simply has not begun pull-to-pull observation here.",
+        "Ops: apply migration 0027 (or its first_seen backfill), then refresh this county’s CAD.",
+      ],
+      note: NOTE,
+    };
+  }
+
+  // Tracking stamp exists but Archie has not compared a later pull yet.
+  if (
+    changeCount === 0 &&
+    !hasSuccessiveObservation(opts.firstSeenAt, opts.lastSeenAt)
+  ) {
+    return {
+      index: null,
+      band: "building",
+      bandLabel: "Awaiting next CAD pull",
+      ownerChangeCount: 0,
+      trackingSince: opts.firstSeenAt,
+      lastOwnerChangeAt: null,
+      reasons: [
+        "Observation tracking is on, but Archie has not compared a later county pull for this parcel yet.",
+        "Empty history here is not “quiet market” and not a seller signal — it means successive pulls have not been compared.",
+        opts.firstSeenAt
+          ? `Tracking since ${formatDay(opts.firstSeenAt)}.`
+          : "Tracking stamp present.",
       ],
       note: NOTE,
     };

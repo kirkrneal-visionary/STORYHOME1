@@ -4,10 +4,23 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, Radio } from "lucide-react";
 import { shiCountyChanges } from "@/lib/shi/client";
 import type { CountyChangeEvent } from "@/lib/shi/county-changes";
+import {
+  readinessEmptyCopy,
+  type ObservationReadiness,
+} from "@/lib/shi/observation-readiness";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import { cn } from "@/lib/utils";
 
 function when(iso: string) {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
+}
+
+function pullWhen(iso: string | null) {
+  if (!iso) return "never";
   try {
     return new Date(iso).toLocaleString();
   } catch {
@@ -39,6 +52,7 @@ export function ShiCountyChangeFeed({
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
   const [changes, setChanges] = useState<CountyChangeEvent[]>([]);
+  const [readiness, setReadiness] = useState<ObservationReadiness | null>(null);
 
   useEffect(() => {
     if (sourceProp) setSource(sourceProp);
@@ -47,6 +61,7 @@ export function ShiCountyChangeFeed({
   const load = useCallback(async () => {
     if (!source) {
       setChanges([]);
+      setReadiness(null);
       return;
     }
     setLoading(true);
@@ -59,8 +74,10 @@ export function ShiCountyChangeFeed({
       });
       setChanges(body.changes);
       setNote(body.note);
+      setReadiness(body.readiness ?? null);
     } catch (e) {
       setChanges([]);
+      setReadiness(null);
       setError(e instanceof Error ? e.message : "Could not load change feed");
     } finally {
       setLoading(false);
@@ -125,6 +142,42 @@ export function ShiCountyChangeFeed({
         {error ? (
           <p className="text-xs font-semibold text-red-300">{error}</p>
         ) : null}
+
+        {source && readiness ? (
+          <div
+            className={cn(
+              "mb-3 rounded-lg border px-2.5 py-2",
+              readiness.status === "active"
+                ? "border-emerald-700/30 bg-emerald-600/10"
+                : readiness.status === "migrations_needed"
+                  ? "border-amber-700/35 bg-amber-500/10"
+                  : "border-hairline bg-[var(--background)]",
+            )}
+          >
+            <p className="font-mono text-[9px] font-bold uppercase text-gold">
+              Observation setup · {readiness.statusLabel}
+            </p>
+            <p className="mt-1 text-[11px] font-semibold text-ink">
+              {readiness.detail}
+            </p>
+            <p className="mt-1 font-mono text-[10px] text-[var(--muted)]">
+              Last county pull {pullWhen(readiness.lastPullAt)}
+              {readiness.parcelCount != null
+                ? ` · ${readiness.parcelCount.toLocaleString("en-US")} parcels`
+                : ""}
+              {readiness.pullStale ? " · stale" : ""}
+              {readiness.absentColumnAvailable
+                ? " · presence marking ready"
+                : " · presence marking needs 0028"}
+            </p>
+            {readiness.nextStep ? (
+              <p className="mt-1 text-[10px] text-[var(--muted)]">
+                Next: {readiness.nextStep}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         {!source ? (
           <p className="text-xs text-[var(--muted)]">
             Select a county to load observation events.
@@ -135,8 +188,9 @@ export function ShiCountyChangeFeed({
           </div>
         ) : changes.length === 0 ? (
           <p className="text-xs text-[var(--muted)]">
-            No observation events yet for this county. They appear after CAD
-            refreshes compare successive pulls (apply migrations 0027/0028).
+            {readiness
+              ? readinessEmptyCopy(readiness)
+              : "No observation events yet for this county."}
           </p>
         ) : (
           <ul className="max-h-72 space-y-2 overflow-y-auto">
