@@ -42,7 +42,9 @@ for (const bad of [
 assert.match(trackSrc, /NEXT_PUBLIC_ANALYTICS_SINK/);
 assert.match(trackSrc, /noop/);
 assert.match(trackSrc, /console/);
-assert.match(trackSrc, /scrubProps|FORBIDDEN/);
+assert.match(trackSrc, /remote/);
+assert.match(trackSrc, /scrubAnalyticsProps|\/api\/analytics/);
+assert.match(read("src/lib/analytics/scrub.ts"), /ANALYTICS_FORBIDDEN_PROP_KEYS/);
 
 // No invasive third-party deps in this foundation wave
 assert.doesNotMatch(pkg, /posthog|segment|mixpanel|@vercel\/analytics|gtag/i);
