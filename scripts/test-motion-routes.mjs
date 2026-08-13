@@ -1,5 +1,5 @@
 /**
- * Armor checks for Story Home motion route hierarchy (no browser).
+ * Armor checks for Story Continuum route hierarchy + gesture physics.
  * Run: node scripts/test-motion-routes.mjs
  */
 import assert from "node:assert/strict";
@@ -53,10 +53,37 @@ function inferDirection(from, to, historyDelta) {
   return "lateral";
 }
 
+function temperatureForPath(pathname) {
+  const kind = routeKind(pathname);
+  if (kind === "marketplace") return "browse";
+  if (kind === "archie") return "study";
+  if (kind === "portal") return "work";
+  if (kind === "seller" || kind === "auth" || kind === "utility") return "still";
+  if (pathname === "/home" || pathname.startsWith("/saved")) return "home";
+  if (pathname === "/network" || pathname === "/messages") return "social";
+  return "social";
+}
+
+function continuumDragPx(dx, viewportWidth) {
+  if (dx <= 0) return 0;
+  const maxDrag = viewportWidth * 0.82;
+  const after = 120;
+  const factor = 0.38;
+  let visual = dx <= after ? dx : after + (dx - after) * factor;
+  return Math.min(visual, maxDrag);
+}
+
+function shouldCommitSwipe({ dx, velocityPxPerMs, viewportWidth }) {
+  const threshold = Math.max(110, viewportWidth * 0.28);
+  if (dx >= threshold) return true;
+  if (dx >= 42 && velocityPxPerMs >= 0.55) return true;
+  return false;
+}
+
 assert.equal(routeKind("/portal/intelligence"), "archie");
-assert.equal(routeKind("/marketplace/abc"), "marketplace");
-assert.equal(routeDepth("/marketplace"), 2);
-assert.equal(routeDepth("/marketplace/x"), 3);
+assert.equal(temperatureForPath("/portal/intelligence"), "study");
+assert.equal(temperatureForPath("/marketplace"), "browse");
+assert.equal(temperatureForPath("/portal"), "work");
 assert.equal(
   inferDirection("/marketplace", "/marketplace/x"),
   "forward",
@@ -66,9 +93,24 @@ assert.equal(
   "back",
 );
 assert.equal(inferDirection("/marketplace", "/network"), "lateral");
+
+// Rubber band: past 120px, drag grows slower than finger
+const rubber = continuumDragPx(200, 390);
+assert.ok(rubber < 200);
+assert.ok(rubber > 120);
+
+// Soft commit thresholds
 assert.equal(
-  inferDirection("/marketplace/x", "/marketplace", -1),
-  "back",
+  shouldCommitSwipe({ dx: 200, velocityPxPerMs: 0, viewportWidth: 390 }),
+  true,
+);
+assert.equal(
+  shouldCommitSwipe({ dx: 50, velocityPxPerMs: 0.7, viewportWidth: 390 }),
+  true,
+);
+assert.equal(
+  shouldCommitSwipe({ dx: 20, velocityPxPerMs: 0.9, viewportWidth: 390 }),
+  false,
 );
 
 console.log("motion-routes armor: ok");

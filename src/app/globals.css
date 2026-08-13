@@ -142,12 +142,16 @@ html[data-role="professional"] {
 /* -------------------------------------------------------------------------- */
 
 :root {
-  --motion-micro: 120ms;
-  --motion-fast: 180ms;
-  --motion-standard: 280ms;
-  --motion-surface: 360ms;
+  /* Story Continuum — aligned with src/lib/motion/tokens.ts */
+  --motion-micro: 140ms;
+  --motion-fast: 220ms;
+  --motion-standard: 380ms;
+  --motion-surface: 480ms;
+  --motion-settle: 440ms;
   --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
-  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-enter: cubic-bezier(0.18, 0.9, 0.2, 1);
+  --motion-ease-browse: cubic-bezier(0.16, 0.95, 0.18, 1);
+  --motion-ease-study: cubic-bezier(0.25, 0.85, 0.2, 1);
 }
 
 @keyframes storyDrawerIn {
@@ -187,27 +191,54 @@ html[data-role="professional"] {
     opacity var(--motion-micro) linear;
 }
 .story-press:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
 .story-card {
   transition:
-    transform var(--motion-fast) var(--motion-ease-standard),
-    box-shadow var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-browse),
+    box-shadow var(--motion-fast) var(--motion-ease-browse),
     border-color var(--motion-fast) linear;
 }
 
 .story-skeleton {
-  animation: storySkeletonPulse 1.2s ease-in-out infinite;
+  animation: storySkeletonPulse 1.35s ease-in-out infinite;
+}
+
+/* Previous-room peek during Continuum swipe-back */
+.story-continuum-peek {
+  opacity: 0;
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--navy-deep) 55%, transparent) 0%,
+      color-mix(in srgb, var(--navy) 28%, transparent) 55%,
+      transparent 100%
+    ),
+    var(--background);
+}
+
+.story-route-surface {
+  isolation: isolate;
+  overflow: clip;
+}
+
+.story-route-page[data-continuum-temp="study"] {
+  /* Cooler workspace cue — no flash, just identity */
+  --story-room-tint: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .story-press,
   .story-card,
   .story-skeleton,
-  .story-route-page {
+  .story-route-page,
+  .story-continuum-peek {
     transition: none !important;
     animation: none !important;
     transform: none !important;
+  }
+  .story-continuum-peek {
+    opacity: 0 !important;
   }
 }

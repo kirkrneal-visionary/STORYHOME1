@@ -3,18 +3,16 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useMotionOptional } from "@/components/motion/MotionProvider";
+import { continuumProfile, temperatureForPath } from "@/lib/motion/continuum";
 import {
   excludeSpatialTransition,
-  isArchieRoute,
   normalizePath,
 } from "@/lib/motion/routes";
+import { MOTION_DURATION, MOTION_EASE } from "@/lib/motion/tokens";
 
 /**
- * Content-surface enter transition.
- *
- * App Router replaces `children` immediately on navigation, so exit animations
- * are unreliable and can leave overlays. We animate ENTER only — still reads as
- * spatial forward/back — and keep GlobalNav/Footer outside this wrapper.
+ * Story Continuum content enter — temperature-aware, soft settle.
+ * Enter-only (App Router swaps children immediately).
  */
 export function RouteTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
@@ -23,43 +21,76 @@ export function RouteTransition({ children }: { children: React.ReactNode }) {
   const reduced = Boolean(prefersReduced || motionCtx?.reducedMotion);
 
   const direction = motionCtx?.direction ?? "forward";
-  const distance = motionCtx?.distancePx ?? 18;
+  const temperature = motionCtx?.temperature ?? temperatureForPath(pathname);
+  const profile = continuumProfile(temperature);
+
+  const durationKey = profile.durationKey;
   const duration = reduced
-    ? (motionCtx?.duration.micro ?? 0.12)
-    : isArchieRoute(pathname)
-      ? (motionCtx?.duration.fast ?? 0.18)
-      : (motionCtx?.duration.standard ?? 0.28);
-  const ease = motionCtx?.ease.enter ?? [0.16, 1, 0.3, 1];
+    ? MOTION_DURATION.micro
+    : MOTION_DURATION[durationKey];
+
+  const easeKey = profile.easeKey;
+  const ease = MOTION_EASE[easeKey];
+  const easeTuple = Array.isArray(ease) ? ease : MOTION_EASE.enterContinuum;
+
+  const distance = motionCtx?.distancePx ?? 24;
 
   const skipSpatial =
     reduced ||
     excludeSpatialTransition(pathname) ||
     direction === "none" ||
-    direction === "lateral";
+    temperature === "still" ||
+    profile.distanceScale === 0;
 
-  const xEnter = skipSpatial
-    ? 0
-    : direction === "back"
-      ? -distance * 0.65
-      : distance;
+  const isLateral = direction === "lateral";
+
+  // Lateral = soft dissolve (belonging across networks), not a shove.
+  const xEnter =
+    skipSpatial || isLateral
+      ? 0
+      : direction === "back"
+        ? -distance * 0.55
+        : distance;
+
+  const opacityFrom = reduced
+    ? (motionCtx?.opacity.reducedEnter ?? 0.9)
+    : isLateral
+      ? (motionCtx?.opacity.lateralFrom ?? 0.88)
+      : profile.opacityFrom;
+
+  // Tiny scale on browse forward — “step into the room”
+  const scaleFrom =
+    reduced || skipSpatial || isLateral || temperature !== "browse"
+      ? 1
+      : direction === "forward"
+        ? 0.992
+        : 1;
 
   const key = normalizePath(pathname);
 
   return (
     <div className="story-route-surface relative min-h-0 w-full flex-1">
+      {/* Continuum underlay — peeks during swipe-back */}
+      <div
+        className="story-continuum-peek pointer-events-none absolute inset-0 z-0"
+        aria-hidden
+      />
       <motion.div
         key={key}
         initial={{
-          opacity: reduced ? (motionCtx?.opacity.reducedEnter ?? 0.9) : 0.98,
+          opacity: opacityFrom,
           x: xEnter,
+          scale: scaleFrom,
         }}
-        animate={{ opacity: 1, x: 0 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
         transition={{
           duration,
-          ease: reduced ? "linear" : ease,
+          ease: reduced ? "linear" : easeTuple,
         }}
-        className="story-route-page w-full will-change-transform"
+        className="story-route-page relative z-[1] w-full will-change-transform"
         style={{ backfaceVisibility: "hidden" }}
+        data-continuum-temp={temperature}
+        data-nav-direction={direction}
       >
         {children}
       </motion.div>
