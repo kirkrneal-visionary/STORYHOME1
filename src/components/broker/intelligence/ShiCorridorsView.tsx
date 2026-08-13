@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2, PenLine, Route, Eye } from "lucide-react";
 import { ShiCorridorsMap } from "@/components/broker/intelligence/ShiCorridorsMap";
+import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
 import { shiCorridorsTraffic } from "@/lib/shi/client";
 import {
   CORRIDOR_COUNTIES,
@@ -22,8 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Archie Corridors — Wave 1 traffic desk.
- * Custom Traffic tool + TxDOT AADT (≥5 years) for launch counties.
+ * Archie Corridors — traffic · growth watch · scenario board.
  */
 export function ShiCorridorsView({
   onOpenResearch,
@@ -342,6 +342,14 @@ export function ShiCorridorsView({
           </div>
         </aside>
       </div>
+
+      <ShiCorridorsScenarioBoard
+        countyName={county.name}
+        countyFips={county.fips}
+        stations={payload?.stations ?? []}
+        watch={selectedWatch}
+        station={selected}
+      />
     </div>
   );
 }

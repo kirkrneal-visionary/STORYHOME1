@@ -280,7 +280,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-GROWTH-WATCH",
     name: "Corridors · growth watch areas",
     goal: "Evidence-backed developmental watch zones from traffic trends + CAD observation pulse — explainable reasons, no fake heat scores.",
-    status: "current",
+    status: "done",
     frontend: [
       "Growth watch toggle + map polygons",
       "Watch area list with reason chips",
@@ -295,15 +295,23 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "ARCHIE-GROWTH-SCENARIOS",
     name: "Corridors · growth scenarios",
-    goal: "Assumption-first projection board for investor sit-downs with coverage confidence.",
-    status: "planned",
+    goal: "Assumption-first projection board for land developers / investor sit-downs with coverage confidence and meeting pack.",
+    status: "current",
     frontend: [
-      "Scenario knobs (traffic growth %, hold, rate)",
-      "Ranges + coverage confidence",
-      "Meeting pack export",
+      "Scenario knobs (horizon + low/base/high annual growth %)",
+      "Optional illustrative absorption",
+      "Conservative / base / upside AADT ranges",
+      "Coverage confidence + Meeting pack print",
     ],
-    backend: ["Server-side scenario compose — no secret browser weights"],
-    outOfScope: ["Guaranteed returns", "Live congestion cosplay"],
+    backend: [
+      "Client compose runGrowthScenario — assumptions stay explicit",
+      "No secret weights; no guaranteed returns",
+    ],
+    outOfScope: [
+      "Guaranteed returns",
+      "Live congestion cosplay",
+      "Seller-probability theater",
+    ],
   },
   {
     id: "ARCHIE-OBS-OPS",
@@ -326,8 +334,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Active wave — Corridors growth watch areas. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-GROWTH-WATCH" as const;
+/** Active wave — Corridors growth scenarios. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-GROWTH-SCENARIOS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
