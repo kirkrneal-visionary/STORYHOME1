@@ -58,12 +58,12 @@ export function RouteTransition({ children }: { children: React.ReactNode }) {
       ? (motionCtx?.opacity.lateralFrom ?? 0.88)
       : profile.opacityFrom;
 
-  // Tiny scale on browse forward — “step into the room”
+  // Browse forward — soft room-step (noticeable, not zoom theater)
   const scaleFrom =
     reduced || skipSpatial || isLateral || temperature !== "browse"
       ? 1
       : direction === "forward"
-        ? 0.992
+        ? 0.985
         : 1;
 
   const key = normalizePath(pathname);

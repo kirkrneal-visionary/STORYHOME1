@@ -23,6 +23,7 @@ import {
 import { NetworkContextRibbon } from "@/components/nav/NetworkContextRibbon";
 import { NetworkDivider } from "@/components/nav/NetworkDivider";
 import { NetworkNode } from "@/components/nav/NetworkNode";
+import { useMotionOptional } from "@/components/motion/MotionProvider";
 import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
 import { accountLabel } from "@/lib/auth";
 import {
@@ -456,9 +457,11 @@ function NavLink({
   children: React.ReactNode;
   className?: string;
 }) {
+  const motion = useMotionOptional();
   return (
     <Link
       href={href}
+      onClick={() => motion?.markNavigate(href)}
       className={cn(
         "transition-colors",
         active ? "text-ink" : "text-[var(--muted)] hover:text-ink",
@@ -486,9 +489,11 @@ function MobileTab({
   /** Use Archie brand mark instead of lucide icon */
   mark?: boolean;
 }) {
+  const motion = useMotionOptional();
   return (
     <Link
       href={href}
+      onClick={() => motion?.markNavigate(href)}
       className={cn(
         "relative flex flex-col items-center gap-0.5",
         active ? "text-gold" : "text-[var(--muted)]",

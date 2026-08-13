@@ -205,14 +205,15 @@ html[data-role="professional"] {
   animation: storySkeletonPulse 1.35s ease-in-out infinite;
 }
 
-/* Previous-room peek during Continuum swipe-back */
+/* Previous-room peek during Continuum swipe-back — belonging, not a screenshot */
 .story-continuum-peek {
   opacity: 0;
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--navy-deep) 55%, transparent) 0%,
-      color-mix(in srgb, var(--navy) 28%, transparent) 55%,
+      color-mix(in srgb, var(--navy-deep) 72%, var(--paper)) 0%,
+      color-mix(in srgb, var(--navy) 42%, var(--paper)) 42%,
+      color-mix(in srgb, var(--paper) 88%, transparent) 78%,
       transparent 100%
     ),
     var(--background);
@@ -223,9 +224,14 @@ html[data-role="professional"] {
   overflow: clip;
 }
 
+/* Archie study — cooler arrival cue, never neon */
 .story-route-page[data-continuum-temp="study"] {
-  /* Cooler workspace cue — no flash, just identity */
-  --story-room-tint: transparent;
+  --story-room-tint: color-mix(in srgb, var(--navy) 5%, transparent);
+  background-image: linear-gradient(
+    180deg,
+    var(--story-room-tint) 0%,
+    transparent 140px
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {

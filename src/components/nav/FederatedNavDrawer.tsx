@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
+import { useMotionOptional } from "@/components/motion/MotionProvider";
 import {
   writeLastArchieModule,
   type ArchieModule,
@@ -45,6 +46,7 @@ export function FederatedNavDrawer({
 }: FederatedNavDrawerProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const motion = useMotionOptional();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const archie = NAVIGATION_NETWORKS.archie;
@@ -114,7 +116,10 @@ export function FederatedNavDrawer({
               <Link
                 key={`${link.href}-${link.label}`}
                 href={link.href}
-                onClick={onClose}
+                onClick={() => {
+                  motion?.markNavigate(link.href);
+                  onClose();
+                }}
                 className={cn(
                   "relative flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
                   link.active
@@ -141,7 +146,10 @@ export function FederatedNavDrawer({
               </p>
               <Link
                 href={archieEntryHref}
-                onClick={onClose}
+                onClick={() => {
+                  motion?.markNavigate(archieEntryHref);
+                  onClose();
+                }}
                 aria-current={archieActive ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-2xl border px-3 py-3 transition-[border-color,background-color] duration-200",
@@ -184,6 +192,7 @@ export function FederatedNavDrawer({
                       key={id}
                       href={mod.href}
                       onClick={() => {
+                        motion?.markNavigate(mod.href);
                         writeLastArchieModule(id);
                         onClose();
                       }}

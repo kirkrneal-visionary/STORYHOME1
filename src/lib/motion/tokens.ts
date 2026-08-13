@@ -36,20 +36,24 @@ export const MOTION_EASE = {
   gesture: { type: "spring" as const, stiffness: 260, damping: 36, mass: 1 },
 };
 
-/** Desktop/tablet/mobile translation (px) — enough to feel space, not a slideshow. */
+/**
+ * Desktop/tablet/mobile translation (px).
+ * Visibility pass: perceptible room-step without desktop slideshow (< ~40px).
+ */
 export const MOTION_DISTANCE = {
-  desktop: 14,
-  tablet: 24,
-  mobile: 32,
+  desktop: 22,
+  tablet: 30,
+  mobile: 40,
 } as const;
 
 export const MOTION_OPACITY = {
-  enterFrom: 0.94,
+  enterFrom: 0.9,
   exitTo: 0.97,
   reducedEnter: 0.9,
   reducedExit: 1,
-  lateralFrom: 0.88,
-  studyFrom: 0.96,
+  /** Soft dissolve across networks — must read on desktop */
+  lateralFrom: 0.78,
+  studyFrom: 0.9,
 } as const;
 
 /**
@@ -73,8 +77,8 @@ export const SWIPE_BACK = {
   rubberFactor: 0.38,
   /** Max visual drag as fraction of viewport */
   maxDragViewport: 0.82,
-  /** Underlay peek opacity at full drag */
-  peekMaxOpacity: 0.22,
+  /** Underlay peek opacity at full drag — belonging cue, not a screenshot */
+  peekMaxOpacity: 0.38,
 } as const;
 
 /**
@@ -91,34 +95,34 @@ export type ContinuumTemperature =
 
 export const CONTINUUM_TEMPERATURE = {
   browse: {
-    distanceScale: 1.15,
+    distanceScale: 1.25,
     durationKey: "surface" as const,
     easeKey: "enterBrowse" as const,
-    opacityFrom: 0.95,
+    opacityFrom: 0.88,
   },
   social: {
-    distanceScale: 0.85,
-    durationKey: "standard" as const,
+    distanceScale: 0.75,
+    durationKey: "surface" as const,
     easeKey: "enterContinuum" as const,
-    opacityFrom: 0.92,
+    opacityFrom: 0.82,
   },
   home: {
     distanceScale: 0.9,
     durationKey: "standard" as const,
     easeKey: "enterContinuum" as const,
-    opacityFrom: 0.93,
+    opacityFrom: 0.9,
   },
   work: {
     distanceScale: 0.45,
     durationKey: "fast" as const,
     easeKey: "enter" as const,
-    opacityFrom: 0.96,
+    opacityFrom: 0.94,
   },
   study: {
-    distanceScale: 0.55,
+    distanceScale: 0.5,
     durationKey: "standard" as const,
     easeKey: "enterStudy" as const,
-    opacityFrom: 0.97,
+    opacityFrom: 0.9,
   },
   still: {
     distanceScale: 0,
