@@ -13,6 +13,7 @@ import {
   writeLastArchieModule,
   type ArchieModule,
 } from "@/lib/navigation/archieMemory";
+import { track, type ArchieModuleProp } from "@/lib/analytics";
 import type { ShiSavedFrame } from "@/lib/shi/types";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import { cn } from "@/lib/utils";
@@ -65,8 +66,14 @@ export function ShiWorkspace() {
   );
 
   useEffect(() => {
+    track("archie_opened", { network: "archie" });
+  }, []);
+
+  useEffect(() => {
     writeLastArchieModule(section);
     if (section === "research") setResearchVisited(true);
+    const moduleProp: ArchieModuleProp = section;
+    track("archie_module_selected", { module: moduleProp });
   }, [section]);
 
   const selectSection = useCallback(
@@ -90,6 +97,7 @@ export function ShiWorkspace() {
 
   const openFrameInResearch = useCallback(
     (frame: ShiSavedFrame) => {
+      track("archie_study_reopened", { has_folder: Boolean(frame.folderId) });
       writeLastArchieModule("research");
       const params = new URLSearchParams();
       params.set("openFrame", frame.id);

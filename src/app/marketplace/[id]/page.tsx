@@ -6,6 +6,7 @@ import { Star } from "lucide-react";
 import { formatUsd, getAgent } from "@/lib/demo-data";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { LISTING_SELECT, rowToListing } from "@/lib/listings-map";
+import { AnalyticsPageBeacon } from "@/components/analytics/AnalyticsPageBeacon";
 import { BackToMarketplace } from "@/components/marketplace/BackToMarketplace";
 import { InquireButton } from "@/components/marketplace/InquireButton";
 
@@ -40,6 +41,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-dvh pb-24 pt-[72px] md:pb-10">
+      <AnalyticsPageBeacon
+        event="listing_opened"
+        props={{ listing_id: listing.id }}
+      />
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <BackToMarketplace />
       </div>

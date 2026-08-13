@@ -18,6 +18,7 @@ import {
   type CadSearchField,
 } from "@/lib/cad-layers";
 import type { DrawnBoundary } from "@/lib/geo";
+import { track } from "@/lib/analytics";
 import { makeShiAcronym } from "@/lib/shi/acronym";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
@@ -205,6 +206,9 @@ export function PropertyIntelligenceView({
         }
         setSelected(property);
         setDiscoverPins([]);
+        if (property.countyFips) {
+          track("archie_parcel_opened", { county_fips: property.countyFips });
+        }
         // Keep search / frames county aligned with the opened parcel.
         if (property.source && property.source !== countyLockRef.current.filterSource) {
           setSource(property.source);

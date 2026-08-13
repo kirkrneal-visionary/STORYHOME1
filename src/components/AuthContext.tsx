@@ -18,10 +18,19 @@ import {
 import { TERMINAL_STATUSES } from "@/lib/seller-portal";
 import { fetchSellerPortalByCode } from "@/lib/supabase/listings";
 import { useApp } from "@/components/AppContext";
+import { track, type AccountKindProp } from "@/lib/analytics";
 import {
   getBrowserSupabase,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
+
+function accountKindForAnalytics(user: AuthUser): AccountKindProp {
+  if (user.kind === "broker") return "broker";
+  if (user.kind === "pro") return "agent";
+  if (user.kind === "seller") return "seller";
+  if (user.kind === "consumer") return "consumer";
+  return "unknown";
+}
 
 type AuthResult = { ok: true } | { ok: false; error: string };
 
@@ -169,6 +178,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ? "professional"
           : "consumer",
       );
+      track("auth_login_succeeded", {
+        account_kind: accountKindForAnalytics(next),
+      });
     },
     [setRole],
   );

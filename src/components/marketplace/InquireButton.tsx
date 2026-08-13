@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { track } from "@/lib/analytics";
 import { createInquiry } from "@/lib/supabase/leads";
 
 export function InquireButton({
@@ -76,6 +77,7 @@ export function InquireButton({
             setErr("");
             try {
               await createInquiry(user.id, listingId, agentId, message.trim() || "I'm interested in this home.");
+              track("listing_inquire_submitted", { listing_id: listingId });
               setSent(true);
             } catch {
               setErr("Couldn't send right now. Please try again.");
