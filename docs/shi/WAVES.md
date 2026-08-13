@@ -1,18 +1,19 @@
 # Archie's Intelligence — Build Waves
 
 **Live:** https://storyhome-1-eqmg.vercel.app  
-**Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md) — finish set live (Traffic → Watch → Scenarios → Land loop → Presentation)
+**Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)
 
 ## Current
-### ARCHIE-OBS-OPS
-Observation health · empty-state honesty (Ownership Stability + county feed readiness).
+### ARCHIE-CORRIDORS-V1
+Corridor Intelligence — Draw an Area → analyze → explain. Stations are evidence.
 
-## Done (Corridors)
-- Traffic tool + TxDOT AADT  
-- Growth watch  
-- Scenario board + meeting pack  
-- Land loop + TxDOT projects  
-- Presentation mode + map pack + traffic memory  
+## Next (Corridors ships)
+- Intelligence visualization + compare  
+- Validation / model backtest  
+- Save + Development Intelligence Report  
+
+## Done
+- Corridors Traffic · Growth watch · Scenarios · Land loop · Presentation/memory  
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

@@ -30,6 +30,7 @@ Corridors is a **study** room: same Pro gate, county-first, map-sacred.
 | **3 (live)** | `ARCHIE-GROWTH-SCENARIOS` | Assumption-first projection board + meeting pack |
 | **B (live)** | `ARCHIE-CORRIDORS-LAND-LOOP` | Watch → Research frame · TxDOT projects on map |
 | **C (live)** | `ARCHIE-CORRIDORS-PRESENTATION` | Presentation mode · print map pack · traffic look memory |
+| **V.1 (this)** | `ARCHIE-CORRIDORS-V1` | Draw an Area · analysis contract · calm map · explain layers |
 
 ---
 
@@ -114,5 +115,18 @@ Honesty: your assumptions applied to TxDOT AADT — not a forecast guarantee.
 
 Honesty: memory is stored in this browser only; still planning AADT, not live congestion.
 
+## Corridors V.1 — Corridor Intelligence
+
+Product moment: circle any area → Archie organizes property + traffic evidence.
+
+1. Open **Corridors** → read **Corridor Intelligence** hero  
+2. **Draw an area** (freehand) or **Box**  
+3. See progressive status → **Observed facts · Derived signals · Archie interpretation**  
+4. **View the evidence** reveals stations (also on zoom / Traffic evidence)  
+5. Explore map still has growth patterns, scenarios, presentation, memory  
+
+Default map emphasizes corridor lines + growth patterns — not hundreds of station dots.
+
 Smoke: `npm run test:corridors` · `npm run smoke:corridors`  
+Model: `corridors-v1.0.0`  
 

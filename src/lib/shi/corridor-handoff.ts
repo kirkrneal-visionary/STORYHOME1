@@ -75,3 +75,66 @@ export function openWatchInResearch(opts: {
   const frame = buildWatchHandoffFrame(opts);
   queueOpenSavedFrame(frame);
 }
+
+/** Corridors V.1 — hand off a drawn analysis outline into Research. */
+export function openBoundaryInResearch(opts: {
+  boundary: DrawnBoundary;
+  countySource: string;
+  countyName: string;
+  label?: string;
+  areaMetrics?: ShiSavedFrame["snapshot"];
+}): void {
+  const now = new Date().toISOString();
+  const bounds =
+    opts.boundary.type === "rectangle" || opts.boundary.type === "viewport"
+      ? opts.boundary.bounds
+      : null;
+  const centerLat = bounds
+    ? (bounds.north + bounds.south) / 2
+    : opts.boundary.type === "circle"
+      ? opts.boundary.center.lat
+      : opts.boundary.type === "polygon" && opts.boundary.points[0]
+        ? opts.boundary.points.reduce((s, p) => s + p.lat, 0) /
+          opts.boundary.points.length
+        : null;
+  const centerLng = bounds
+    ? (bounds.east + bounds.west) / 2
+    : opts.boundary.type === "circle"
+      ? opts.boundary.center.lng
+      : opts.boundary.type === "polygon" && opts.boundary.points[0]
+        ? opts.boundary.points.reduce((s, p) => s + p.lng, 0) /
+          opts.boundary.points.length
+        : null;
+
+  const frame: ShiSavedFrame = {
+    id: `corridor-v1:${Date.now()}`,
+    folderId: "",
+    name: opts.label || `Corridors · drawn area · ${opts.countyName}`,
+    acronym: "COR",
+    color: "#f5b71e",
+    boundary: opts.boundary,
+    mapCenterLat: centerLat,
+    mapCenterLng: centerLng,
+    mapZoom: 12,
+    updatedAt: now,
+    snapshot: opts.areaMetrics ?? {
+      metrics: {
+        parcelCount: 0,
+        realCount: 0,
+        personalCount: 0,
+        totalAcres: 0,
+        medianAcres: null,
+        medianMarketValue: null,
+        estimatedTotalMarketValue: 0,
+        valuedParcelCount: 0,
+        method: "centroid_in_boundary",
+        countySource: opts.countySource,
+        note: `Opened from Corridors V.1 drawn area in ${opts.countyName}.`,
+        parcels: [],
+      },
+      thumbnailPath: null,
+      analyzedAt: now,
+    },
+  };
+  queueOpenSavedFrame(frame);
+}

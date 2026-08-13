@@ -10,19 +10,39 @@ import {
   Presentation,
   Printer,
   BookmarkCheck,
+  Pencil,
+  Square,
+  Compass,
 } from "lucide-react";
-import { ShiCorridorsMap } from "@/components/broker/intelligence/ShiCorridorsMap";
+import {
+  ShiCorridorsMap,
+  type CorridorMapTool,
+} from "@/components/broker/intelligence/ShiCorridorsMap";
+import { ShiCorridorsAnalysisPanel } from "@/components/broker/intelligence/ShiCorridorsAnalysisPanel";
 import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
-import { shiCorridorsProjects, shiCorridorsTraffic } from "@/lib/shi/client";
-import { openWatchInResearch } from "@/lib/shi/corridor-handoff";
+import {
+  shiAnalyzeArea,
+  shiCorridorsProjects,
+  shiCorridorsTraffic,
+} from "@/lib/shi/client";
+import {
+  openBoundaryInResearch,
+  openWatchInResearch,
+} from "@/lib/shi/corridor-handoff";
 import {
   openMapPackPrint,
   PRESENTATION_HONESTY,
 } from "@/lib/shi/corridor-presentation";
+import {
+  composeCorridorAnalysis,
+  CORRIDOR_ANALYSIS_HONESTY,
+  type CorridorAnalysisResult,
+} from "@/lib/shi/corridor-analysis";
 import { writeLastArchieModule } from "@/lib/navigation/archieMemory";
+import type { DrawnBoundary } from "@/lib/geo";
+import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import {
   CORRIDOR_COUNTIES,
-  CORRIDORS_HONESTY,
   defaultCorridorCounty,
   formatAadt,
   resolveCorridorCounty,
@@ -31,7 +51,6 @@ import {
   type TrafficStation,
 } from "@/lib/shi/corridors";
 import {
-  GROWTH_WATCH_HONESTY,
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
 import {
@@ -51,7 +70,8 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * Archie Corridors — traffic · growth watch · scenarios · land loop · presentation.
+ * Corridors V.1 — Corridor Intelligence
+ * Draw / select → analyze → explain (stations are evidence, not the product).
  */
 export function ShiCorridorsView({
   onOpenResearch,
@@ -65,7 +85,7 @@ export function ShiCorridorsView({
   const [payload, setPayload] = useState<CorridorsTrafficPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [trafficToolActive, setTrafficToolActive] = useState(true);
+  const [tool, setTool] = useState<CorridorMapTool>("pan");
   const [showWatch, setShowWatch] = useState(true);
   const [selected, setSelected] = useState<TrafficStation | null>(null);
   const [selectedWatch, setSelectedWatch] = useState<GrowthWatchArea | null>(
@@ -80,6 +100,14 @@ export function ShiCorridorsView({
   const [presentationMode, setPresentationMode] = useState(false);
   const [memoryDiff, setMemoryDiff] = useState<TrafficMemoryDiff | null>(null);
   const [memoryAt, setMemoryAt] = useState<string | null>(null);
+  const [analysisBoundary, setAnalysisBoundary] =
+    useState<DrawnBoundary | null>(null);
+  const [analysis, setAnalysis] = useState<CorridorAnalysisResult | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeStatus, setAnalyzeStatus] = useState("");
+  const [drawWarn, setDrawWarn] = useState("");
+  const [revealStations, setRevealStations] = useState(false);
+  const [exploreOpen, setExploreOpen] = useState(false);
 
   const applyMemory = useCallback(
     (fips: string, name: string, stations: TrafficStation[]) => {
@@ -108,33 +136,36 @@ export function ShiCorridorsView({
     [],
   );
 
-  const load = useCallback(async (fips: string) => {
-    setLoading(true);
-    setError("");
-    setSelected(null);
-    setSelectedWatch(null);
-    setProjects([]);
-    setProjectsNote("");
-    try {
-      const data = await shiCorridorsTraffic(fips);
-      setPayload(data);
-      const first = data.watch?.areas?.[0] ?? null;
-      setSelectedWatch(first);
-      setPanel(first ? "watch" : "station");
-      applyMemory(data.county.fips, data.county.name, data.stations);
-    } catch (e) {
-      setPayload(null);
-      setMemoryDiff(null);
-      setMemoryAt(null);
-      setError(
-        e instanceof Error
-          ? e.message
-          : "Could not load corridor traffic for this county.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [applyMemory]);
+  const load = useCallback(
+    async (fips: string) => {
+      setLoading(true);
+      setError("");
+      setSelected(null);
+      setSelectedWatch(null);
+      setProjects([]);
+      setProjectsNote("");
+      try {
+        const data = await shiCorridorsTraffic(fips);
+        setPayload(data);
+        const first = data.watch?.areas?.[0] ?? null;
+        setSelectedWatch(first);
+        setPanel(first ? "watch" : "station");
+        applyMemory(data.county.fips, data.county.name, data.stations);
+      } catch (e) {
+        setPayload(null);
+        setMemoryDiff(null);
+        setMemoryAt(null);
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Could not load corridor evidence for this county.",
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [applyMemory],
+  );
 
   useEffect(() => {
     void load(county.fips);
@@ -150,8 +181,8 @@ export function ShiCorridorsView({
         setProjects(data.projects);
         setProjectsNote(
           data.projectCount
-            ? `${data.projectCount} TxDOT project${data.projectCount === 1 ? "" : "s"} in view · ${data.honesty}`
-            : `No TxDOT projects returned in this view · ${data.honesty}`,
+            ? `${data.projectCount} TxDOT project${data.projectCount === 1 ? "" : "s"} in view`
+            : "No TxDOT projects returned in this view",
         );
       })
       .catch((e) => {
@@ -171,6 +202,76 @@ export function ShiCorridorsView({
     };
   }, [county.fips, county.bbox, selectedWatch?.id, selectedWatch?.bbox]);
 
+  const runAnalysis = useCallback(
+    async (boundary: DrawnBoundary) => {
+      const cap = validateBoundaryCaps(boundary);
+      if (!cap.ok) {
+        setDrawWarn(cap.error);
+        return;
+      }
+      setDrawWarn("");
+      setAnalysisBoundary(boundary);
+      setAnalyzing(true);
+      setAnalyzeStatus("Reading property activity in the area…");
+      setTool("pan");
+      setRevealStations(false);
+      try {
+        const area = await shiAnalyzeArea({
+          boundary,
+          source: county.source,
+        });
+        setAnalyzeStatus(
+          `Found ${area.parcelCount.toLocaleString("en-US")} parcels — organizing traffic signals…`,
+        );
+        const result = composeCorridorAnalysis({
+          countyName: county.name,
+          countyFips: county.fips,
+          boundary,
+          area,
+          stations: payload?.stations ?? [],
+          watchAreas: payload?.watch?.areas ?? [],
+          trafficAvailable: Boolean(payload),
+          trafficError: payload ? null : error || "Traffic not loaded",
+        });
+        setAnalysis(result);
+        setAnalyzeStatus(result.statusLine);
+      } catch (e) {
+        setAnalysis(null);
+        setDrawWarn(
+          e instanceof Error
+            ? e.message
+            : "Could not analyze this area. Try a smaller outline.",
+        );
+      } finally {
+        setAnalyzing(false);
+      }
+    },
+    [county, payload, error],
+  );
+
+  const studyAnalysisInResearch = useCallback(() => {
+    if (!analysisBoundary) return;
+    const area = analysis?.evidence.area;
+    openBoundaryInResearch({
+      boundary: analysisBoundary,
+      countySource: county.source,
+      countyName: county.name,
+      label: `Corridors · ${county.shortName}`,
+      areaMetrics: area
+        ? {
+            metrics: { ...area, parcels: area.parcels.slice(0, 40) },
+            thumbnailPath: null,
+            analyzedAt: analysis?.analyzedAt ?? new Date().toISOString(),
+          }
+        : undefined,
+    });
+    writeLastArchieModule("research");
+    router.replace(
+      `/portal/intelligence?handoff=corridor&t=${Date.now()}`,
+      { scroll: false },
+    );
+  }, [analysisBoundary, analysis, county, router]);
+
   const studyWatchLand = useCallback(
     (area: GrowthWatchArea) => {
       openWatchInResearch({
@@ -179,7 +280,6 @@ export function ShiCorridorsView({
         countyName: county.name,
       });
       writeLastArchieModule("research");
-      // Navigate without selectSection — preserves handoff query for keep-alive Research.
       router.replace(
         `/portal/intelligence?handoff=corridor&t=${Date.now()}`,
         { scroll: false },
@@ -226,30 +326,83 @@ export function ShiCorridorsView({
     });
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
+  const startDraw = (mode: "freehand" | "rectangle") => {
+    setTool(mode);
+    setPresentationMode(false);
+    setDrawWarn("");
+  };
+
   return (
-    <div className="space-y-4" data-presentation={presentationMode ? "on" : "off"}>
-      {!presentationMode ? (
-        <div className="rounded-xl border border-hairline bg-[var(--surface)] px-4 py-3 md:px-5">
-          <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
-            Access · traffic · growth
-          </p>
-          <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
-            {CORRIDORS_HONESTY}
-          </p>
-          <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
-            {GROWTH_WATCH_HONESTY}
-          </p>
+    <div className="space-y-4" data-corridors-version="v1">
+      {/* Hero */}
+      <div className="rounded-xl border border-hairline bg-[var(--surface)] px-4 py-4 md:px-6 md:py-5">
+        <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
+          Corridor intelligence
+        </p>
+        <h2 className="mt-1 font-serif text-2xl font-bold text-ink md:text-3xl">
+          See where movement may become opportunity.
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm text-[var(--muted)]">
+          Explore traffic patterns and property activity together — or draw your
+          own area and let Archie organize the available signals into a clearer
+          picture of change.
+        </p>
+        <p className="mt-2 max-w-3xl text-xs text-[var(--muted)]">
+          {CORRIDOR_ANALYSIS_HONESTY}
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => startDraw("freehand")}
+            className={cn(
+              "inline-flex h-11 items-center gap-2 rounded-lg px-5 text-sm font-bold",
+              tool === "freehand"
+                ? "bg-gold text-navy"
+                : "bg-gold text-navy hover:brightness-105",
+            )}
+          >
+            <Pencil className="h-4 w-4" />
+            Draw an area
+          </button>
+          <button
+            type="button"
+            onClick={() => startDraw("rectangle")}
+            className={cn(
+              "inline-flex h-11 items-center gap-2 rounded-lg border px-4 text-sm font-semibold",
+              tool === "rectangle"
+                ? "border-gold bg-gold text-navy"
+                : "border-hairline text-ink",
+            )}
+          >
+            <Square className="h-4 w-4" />
+            Box
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setTool("pan");
+              setExploreOpen(true);
+            }}
+            className="inline-flex h-11 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            <Compass className="h-4 w-4" />
+            Explore map
+          </button>
         </div>
-      ) : (
-        <div className="rounded-xl border border-gold/40 bg-[var(--surface)] px-4 py-3 md:px-5">
-          <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
-            Presentation mode
-          </p>
-          <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
-            {PRESENTATION_HONESTY}
-          </p>
-        </div>
-      )}
+      </div>
+
+      {/* How Archie reads */}
+      <div className="rounded-xl border border-hairline px-4 py-3 md:px-5">
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+          How Archie reads a corridor
+        </p>
+        <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
+          Traffic alone doesn&apos;t tell the whole story. Archie combines
+          available transportation patterns with property and parcel evidence to
+          help surface areas showing meaningful change.
+        </p>
+      </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <label className="block min-w-[200px]">
@@ -258,7 +411,11 @@ export function ShiCorridorsView({
           </span>
           <select
             value={county.fips}
-            onChange={(e) => setCounty(resolveCorridorCounty(e.target.value))}
+            onChange={(e) => {
+              setCounty(resolveCorridorCounty(e.target.value));
+              setAnalysis(null);
+              setAnalysisBoundary(null);
+            }}
             className="mt-1 flex h-10 w-full rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
           >
             {CORRIDOR_COUNTIES.map((c) => (
@@ -272,6 +429,48 @@ export function ShiCorridorsView({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
+            onClick={() =>
+              setTool((t) => (t === "traffic" ? "pan" : "traffic"))
+            }
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
+              tool === "traffic"
+                ? "bg-gold text-navy"
+                : "border border-hairline text-ink",
+            )}
+            title="Show and select traffic count stations"
+          >
+            <PenLine className="h-4 w-4" />
+            Traffic evidence
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowWatch((v) => !v)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
+              showWatch
+                ? "bg-gold text-navy"
+                : "border border-hairline text-ink",
+            )}
+          >
+            <Eye className="h-4 w-4" />
+            Growth patterns
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowProjects((v) => !v)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
+              showProjects
+                ? "bg-gold text-navy"
+                : "border border-hairline text-ink",
+            )}
+          >
+            <Route className="h-4 w-4" />
+            TxDOT projects
+          </button>
+          <button
+            type="button"
             onClick={() => setPresentationMode((v) => !v)}
             className={cn(
               "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
@@ -279,7 +478,6 @@ export function ShiCorridorsView({
                 ? "bg-gold text-navy"
                 : "border border-hairline text-ink",
             )}
-            title="Big labels for investor / developer rooms"
           >
             <Presentation className="h-4 w-4" />
             Presentation
@@ -289,57 +487,10 @@ export function ShiCorridorsView({
             onClick={printMapPack}
             disabled={!payload || loading}
             className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-40"
-            title="Print corridor map pack"
           >
             <Printer className="h-4 w-4" />
             Map pack
           </button>
-          {!presentationMode ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setTrafficToolActive((v) => !v)}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
-                  trafficToolActive
-                    ? "bg-gold text-navy"
-                    : "border border-hairline text-ink",
-                )}
-                title="Custom traffic tool — tap stations on the map"
-              >
-                <PenLine className="h-4 w-4" />
-                Traffic tool
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowWatch((v) => !v)}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
-                  showWatch
-                    ? "bg-gold text-navy"
-                    : "border border-hairline text-ink",
-                )}
-                title="Show evidence-backed growth watch areas"
-              >
-                <Eye className="h-4 w-4" />
-                Growth watch
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowProjects((v) => !v)}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
-                  showProjects
-                    ? "bg-gold text-navy"
-                    : "border border-hairline text-ink",
-                )}
-                title="Show TxDOT Project Tracker lines"
-              >
-                <Route className="h-4 w-4" />
-                TxDOT projects
-              </button>
-            </>
-          ) : null}
           <button
             type="button"
             onClick={() => void load(county.fips)}
@@ -351,43 +502,40 @@ export function ShiCorridorsView({
             ) : (
               <Route className="h-4 w-4" />
             )}
-            Refresh TxDOT
+            Refresh
           </button>
-          {!presentationMode ? (
-            <button
-              type="button"
-              onClick={() => {
-                if (onOpenResearch) onOpenResearch();
-                else {
-                  writeLastArchieModule("research");
-                  router.replace("/portal/intelligence", { scroll: false });
-                }
-              }}
-              className="inline-flex h-10 items-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-            >
-              Open Research
-            </button>
-          ) : null}
         </div>
       </div>
 
       {error ? (
         <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           <p>{error}</p>
+          <p className="mt-1 text-xs opacity-80">
+            You can still draw an area — property evidence may load without
+            traffic.
+          </p>
           <button
             type="button"
             onClick={() => void load(county.fips)}
             className="mt-2 text-xs font-semibold text-gold underline"
           >
-            Retry TxDOT load
+            Retry
           </button>
+        </div>
+      ) : null}
+
+      {drawWarn ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100">
+          {drawWarn}
         </div>
       ) : null}
 
       <div
         className={cn(
           "grid grid-cols-1 gap-4",
-          presentationMode ? "lg:grid-cols-1" : "lg:grid-cols-[1fr_320px]",
+          presentationMode || !exploreOpen
+            ? "lg:grid-cols-1"
+            : "lg:grid-cols-[1fr_320px]",
         )}
       >
         <ShiCorridorsMap
@@ -399,59 +547,55 @@ export function ShiCorridorsView({
           selectedWatchId={selectedWatch?.id ?? null}
           onSelectWatch={(area) => {
             setSelectedWatch(area);
-            if (area) setPanel("watch");
+            if (area) {
+              setPanel("watch");
+              setExploreOpen(true);
+            }
           }}
           projects={projects}
           showProjects={showProjects}
-          trafficToolActive={trafficToolActive}
+          tool={tool}
           selectedStationId={selected?.id ?? null}
           onSelectStation={(s) => {
             setSelected(s);
-            if (s) setPanel("station");
+            if (s) {
+              setPanel("station");
+              setExploreOpen(true);
+              setRevealStations(true);
+            }
           }}
+          onBoundaryDrawn={(b) => void runAnalysis(b)}
+          analysisBoundary={analysisBoundary}
+          revealStations={revealStations || tool === "traffic"}
           loading={loading}
           presentationMode={presentationMode}
+          drawWarn={drawWarn}
         />
 
-        {!presentationMode ? (
+        {exploreOpen && !presentationMode ? (
           <aside className="flex min-h-0 flex-col gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">
             <div className="flex gap-1 rounded-lg border border-hairline p-0.5">
-              <button
-                type="button"
-                onClick={() => setPanel("watch")}
-                className={cn(
-                  "flex-1 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
-                  panel === "watch"
-                    ? "bg-gold text-navy"
-                    : "text-[var(--muted)]",
-                )}
-              >
-                Watch
-              </button>
-              <button
-                type="button"
-                onClick={() => setPanel("station")}
-                className={cn(
-                  "flex-1 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
-                  panel === "station"
-                    ? "bg-gold text-navy"
-                    : "text-[var(--muted)]",
-                )}
-              >
-                Station
-              </button>
-              <button
-                type="button"
-                onClick={() => setPanel("memory")}
-                className={cn(
-                  "flex-1 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
-                  panel === "memory"
-                    ? "bg-gold text-navy"
-                    : "text-[var(--muted)]",
-                )}
-              >
-                Memory
-              </button>
+              {(
+                [
+                  ["watch", "Patterns"],
+                  ["station", "Station"],
+                  ["memory", "Memory"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPanel(id)}
+                  className={cn(
+                    "flex-1 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-wide",
+                    panel === id
+                      ? "bg-gold text-navy"
+                      : "text-[var(--muted)] hover:text-ink",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             {panel === "watch" ? (
@@ -475,9 +619,8 @@ export function ShiCorridorsView({
                   <StationDetail station={selected} />
                 ) : (
                   <p className="mt-2 text-sm text-[var(--muted)]">
-                    {trafficToolActive
-                      ? "Tap a station on the map for cars/day history."
-                      : "Turn on Traffic tool, then tap a count station."}
+                    Select a corridor to explore traffic growth — or zoom in to
+                    reveal count stations.
                   </p>
                 )}
               </div>
@@ -492,15 +635,7 @@ export function ShiCorridorsView({
             ) : null}
 
             <div className="border-t border-hairline pt-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-                  County summary
-                </p>
-                {loading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--muted)]" />
-                ) : null}
-              </div>
-              <dl className="mt-2 grid grid-cols-2 gap-2 text-sm">
+              <dl className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <dt className="text-[11px] text-[var(--muted)]">Stations</dt>
                   <dd className="font-serif text-xl font-bold text-ink">
@@ -514,57 +649,39 @@ export function ShiCorridorsView({
                   </dd>
                 </div>
               </dl>
-              {payload?.yearsCovered?.length ? (
-                <p className="mt-2 text-[11px] text-[var(--muted)]">
-                  Years in feed: {payload.yearsCovered.slice(0, 8).join(" · ")}
-                  {payload.yearsCovered.length > 8 ? "…" : ""}
-                </p>
-              ) : null}
-              {memoryDiff ? (
-                <p className="mt-2 text-[11px] text-[var(--muted)]">
-                  {memoryDiff.aadtChanged.length +
-                    memoryDiff.appeared.length +
-                    memoryDiff.disappeared.length >
-                  0
-                    ? `${memoryDiff.aadtChanged.length + memoryDiff.appeared.length + memoryDiff.disappeared.length} change(s) since last look`
-                    : "Matches last remembered look"}
-                </p>
-              ) : null}
-              <p className="mt-2 text-[10px] leading-snug text-[var(--muted)]">
-                {payload?.sourceLabel ??
-                  "TxDOT Open Data — free public planning counts"}
-              </p>
             </div>
 
             <div className="min-h-0 flex-1 border-t border-hairline pt-3">
               <label className="block">
                 <span className="font-mono text-[10px] font-semibold tracking-wide text-[var(--muted)] uppercase">
-                  Filter road / station
+                  Filter road
                 </span>
                 <input
                   value={roadFilter}
                   onChange={(e) => setRoadFilter(e.target.value)}
-                  placeholder="e.g. US0059"
+                  placeholder="e.g. US 59"
                   className="mt-1 h-9 w-full rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
                 />
               </label>
-              <ul className="mt-2 max-h-56 space-y-1 overflow-y-auto pr-1">
-                {filteredStations.slice(0, 80).map((s) => (
+              <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto pr-1">
+                {filteredStations.slice(0, 60).map((s) => (
                   <li key={s.id}>
                     <button
                       type="button"
                       onClick={() => {
                         setSelected(s);
                         setPanel("station");
+                        setRevealStations(true);
+                        setTool("traffic");
                       }}
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs",
                         selected?.id === s.id
-                          ? "bg-gold/20 text-ink"
+                          ? "bg-gold text-navy"
                           : "hover:bg-[var(--background)] text-[var(--muted)]",
                       )}
                     >
-                      <span className="min-w-0 truncate font-semibold text-ink">
+                      <span className="min-w-0 truncate font-semibold">
                         {s.onRoad || s.stationId}
                       </span>
                       <span className="shrink-0 font-mono tabular-nums">
@@ -573,16 +690,36 @@ export function ShiCorridorsView({
                     </button>
                   </li>
                 ))}
-                {!loading && filteredStations.length === 0 ? (
-                  <li className="px-2 py-3 text-xs text-[var(--muted)]">
-                    No stations match this filter.
-                  </li>
-                ) : null}
               </ul>
             </div>
           </aside>
         ) : null}
       </div>
+
+      {(analyzing || analysis) && !presentationMode ? (
+        <ShiCorridorsAnalysisPanel
+          result={analysis}
+          statusLine={analyzeStatus}
+          analyzing={analyzing}
+          onRevealStations={() => {
+            setRevealStations(true);
+            setTool("traffic");
+            setExploreOpen(true);
+          }}
+          onStudyInResearch={
+            analysisBoundary ? studyAnalysisInResearch : undefined
+          }
+          onSelectStation={(s) => {
+            setSelected(s);
+            setPanel("station");
+            setExploreOpen(true);
+          }}
+        />
+      ) : null}
+
+      {presentationMode ? (
+        <p className="text-sm text-[var(--muted)]">{PRESENTATION_HONESTY}</p>
+      ) : null}
 
       {!presentationMode ? (
         <ShiCorridorsScenarioBoard
@@ -593,81 +730,16 @@ export function ShiCorridorsView({
           station={selected}
         />
       ) : null}
-    </div>
-  );
-}
 
-function MemoryPanel({
-  diff,
-  memoryAt,
-  onRemember,
-  disabled,
-}: {
-  diff: TrafficMemoryDiff | null;
-  memoryAt: string | null;
-  onRemember: () => void;
-  disabled?: boolean;
-}) {
-  const changes = diff
-    ? [...diff.aadtChanged, ...diff.appeared, ...diff.disappeared]
-    : [];
-
-  return (
-    <div className="space-y-3">
-      <p className="text-[11px] leading-snug text-[var(--muted)]">
-        {TRAFFIC_MEMORY_HONESTY}
-      </p>
-      <p className="text-sm text-ink">
-        {diff?.note ?? "Load a county to start traffic memory."}
-      </p>
-      {memoryAt ? (
-        <p className="font-mono text-[10px] text-[var(--muted)]">
-          Remembered · {whenShort(memoryAt)}
-        </p>
+      {!exploreOpen && !presentationMode ? (
+        <button
+          type="button"
+          onClick={() => setExploreOpen(true)}
+          className="text-xs font-semibold text-gold underline"
+        >
+          Open patterns & station evidence panel
+        </button>
       ) : null}
-      {diff && changes.length > 0 ? (
-        <ul className="max-h-40 space-y-1 overflow-y-auto">
-          {diff.aadtChanged.slice(0, 12).map((c) => (
-            <li
-              key={`chg-${c.stationId}`}
-              className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1.5 text-xs"
-            >
-              <span className="font-semibold text-ink">
-                {c.onRoad || c.stationId}
-              </span>
-              <span className="mt-0.5 block font-mono tabular-nums text-[var(--muted)]">
-                {formatAadt(c.previousAadt)} → {formatAadt(c.currentAadt)} (
-                {formatTrafficDelta(c.delta)})
-              </span>
-            </li>
-          ))}
-          {diff.appeared.slice(0, 4).map((c) => (
-            <li
-              key={`new-${c.stationId}`}
-              className="rounded-md border border-hairline px-2 py-1.5 text-xs text-ink"
-            >
-              New in feed · {c.onRoad || c.stationId}
-            </li>
-          ))}
-          {diff.disappeared.slice(0, 4).map((c) => (
-            <li
-              key={`gone-${c.stationId}`}
-              className="rounded-md border border-dashed border-hairline px-2 py-1.5 text-xs text-[var(--muted)]"
-            >
-              Missing vs last look · {c.onRoad || c.stationId}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <button
-        type="button"
-        onClick={onRemember}
-        disabled={disabled}
-        className="inline-flex h-9 items-center gap-2 rounded-lg bg-gold px-3 text-xs font-bold text-navy disabled:opacity-40"
-      >
-        <BookmarkCheck className="h-3.5 w-3.5" />
-        Remember this look
-      </button>
     </div>
   );
 }
@@ -694,13 +766,11 @@ function WatchPanel({
   return (
     <div className="space-y-3">
       <p className="text-[11px] leading-snug text-[var(--muted)]">
-        Roads that earned attention from published traffic evidence — not a
-        “hot score.”
+        Find the roads gaining momentum — evidence patterns, not a hot score.
       </p>
       {areas.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">
-          No watch areas yet for this county (need rising or high-volume TxDOT
-          stations).
+          No growth patterns yet for this county.
         </p>
       ) : (
         <ul className="max-h-40 space-y-1 overflow-y-auto">
@@ -712,14 +782,14 @@ function WatchPanel({
                 className={cn(
                   "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs",
                   selected?.id === a.id
-                    ? "bg-gold/20 text-ink"
+                    ? "bg-gold text-navy"
                     : "hover:bg-[var(--background)] text-[var(--muted)]",
                 )}
               >
-                <span className="min-w-0 truncate font-semibold text-ink">
+                <span className="min-w-0 truncate font-semibold">
                   {a.title}
                 </span>
-                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-gold">
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide">
                   {a.strength}
                 </span>
               </button>
@@ -733,12 +803,6 @@ function WatchPanel({
           <h3 className="font-serif text-xl font-bold text-ink">
             {selected.title}
           </h3>
-          <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
-            Watch · {selected.strength}
-            {selected.peakAadt != null
-              ? ` · peak ${formatAadt(selected.peakAadt)}/day`
-              : ""}
-          </p>
           <ul className="space-y-2">
             {selected.reasons.map((r) => (
               <li
@@ -752,7 +816,6 @@ function WatchPanel({
               </li>
             ))}
           </ul>
-
           <div className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
             <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
               TxDOT projects nearby
@@ -772,17 +835,11 @@ function WatchPanel({
                     {p.phase ? (
                       <span className="text-[var(--muted)]"> · {p.phase}</span>
                     ) : null}
-                    {p.typeOfWork ? (
-                      <span className="block text-[var(--muted)]">
-                        {p.typeOfWork}
-                      </span>
-                    ) : null}
                   </li>
                 ))}
               </ul>
             )}
           </div>
-
           <button
             type="button"
             onClick={() => onStudyLand(selected)}
@@ -790,13 +847,8 @@ function WatchPanel({
           >
             Study land in Research
           </button>
-          <p className="text-[10px] text-[var(--muted)]">
-            Opens this watch box as a Research map frame (county locked). Run
-            Analyze there to load parcels.
-          </p>
         </div>
       ) : null}
-
       {cadNote ? (
         <p className="text-[10px] leading-snug text-[var(--muted)]">{cadNote}</p>
       ) : null}
@@ -810,12 +862,8 @@ function StationDetail({ station }: { station: TrafficStation }) {
       <h3 className="font-serif text-xl font-bold text-ink">
         {station.onRoad || "Unnamed corridor"}
       </h3>
-      <p className="font-mono text-[11px] text-[var(--muted)]">
-        Station {station.stationId}
-        {station.category ? ` · ${station.category}` : ""}
-      </p>
       <p className="text-sm text-ink">
-        Latest AADT{" "}
+        Latest published volume{" "}
         <span className="font-serif text-2xl font-bold">
           {formatAadt(station.latestAadt)}
         </span>
@@ -828,30 +876,76 @@ function StationDetail({ station }: { station: TrafficStation }) {
           Trend · {station.trendLabel}
         </p>
       ) : null}
-      <div>
-        <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-[var(--muted)] uppercase">
-          History (newest → older)
-        </p>
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {station.history.map((h) => (
-            <span
-              key={`${station.id}-${h.year}`}
-              className={cn(
-                "rounded-md border px-2 py-1 font-mono text-[11px]",
-                h.aadt != null
-                  ? "border-hairline bg-[var(--background)] text-ink"
-                  : "border-dashed border-hairline text-[var(--muted)]",
-              )}
-              title={h.aadt == null ? "No published count this year" : undefined}
-            >
-              {h.year > 1900 ? h.year : "—"} · {formatAadt(h.aadt)}
-            </span>
-          ))}
-        </div>
-        <p className="mt-1.5 text-[10px] text-[var(--muted)]">
-          Dashed chips = no published count that year (gap, not zero).
-        </p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {station.history.map((h) => (
+          <span
+            key={`${station.id}-${h.year}`}
+            className={cn(
+              "rounded-md border px-2 py-1 font-mono text-[11px]",
+              h.aadt != null
+                ? "border-hairline bg-[var(--background)] text-ink"
+                : "border-dashed border-hairline text-[var(--muted)]",
+            )}
+          >
+            {h.year > 1900 ? h.year : "—"} · {formatAadt(h.aadt)}
+          </span>
+        ))}
       </div>
+    </div>
+  );
+}
+
+function MemoryPanel({
+  diff,
+  memoryAt,
+  onRemember,
+  disabled,
+}: {
+  diff: TrafficMemoryDiff | null;
+  memoryAt: string | null;
+  onRemember: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
+        {TRAFFIC_MEMORY_HONESTY}
+      </p>
+      <p className="text-sm text-ink">
+        {diff?.note ?? "Load a county to start traffic memory."}
+      </p>
+      {memoryAt ? (
+        <p className="font-mono text-[10px] text-[var(--muted)]">
+          Remembered · {whenShort(memoryAt)}
+        </p>
+      ) : null}
+      {diff && diff.aadtChanged.length > 0 ? (
+        <ul className="max-h-40 space-y-1 overflow-y-auto">
+          {diff.aadtChanged.slice(0, 12).map((c) => (
+            <li
+              key={`chg-${c.stationId}`}
+              className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1.5 text-xs"
+            >
+              <span className="font-semibold text-ink">
+                {c.onRoad || c.stationId}
+              </span>
+              <span className="mt-0.5 block font-mono tabular-nums text-[var(--muted)]">
+                {formatAadt(c.previousAadt)} → {formatAadt(c.currentAadt)} (
+                {formatTrafficDelta(c.delta)})
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <button
+        type="button"
+        onClick={onRemember}
+        disabled={disabled}
+        className="inline-flex h-9 items-center gap-2 rounded-lg bg-gold px-3 text-xs font-bold text-navy disabled:opacity-40"
+      >
+        <BookmarkCheck className="h-3.5 w-3.5" />
+        Remember this look
+      </button>
     </div>
   );
 }
