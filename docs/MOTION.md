@@ -1,6 +1,14 @@
-# Story Home — Native Motion System
+# Story Home — Story Continuum Motion System
 
 Presentation-layer only. Does not change branding, CAD, Archie business logic, auth, or RLS.
+
+## Metaphor
+
+**Walk rooms of one house / market — don’t flip channels.**
+
+Forward = step into a room.  
+Back = return to the room you left (still arranged as you left it).  
+Archie = enter the study — quieter, more precise, never flashier.
 
 ## Principle
 
@@ -10,49 +18,45 @@ Every animation answers: where did I go, where did this come from, what did my a
 
 | Piece | Path |
 |---|---|
-| Tokens | `src/lib/motion/tokens.ts` |
+| Tokens + temperatures | `src/lib/motion/tokens.ts` |
+| Continuum physics | `src/lib/motion/continuum.ts` |
 | Route hierarchy | `src/lib/motion/routes.ts` |
 | Marketplace cache | `src/lib/motion/navigation-cache.ts` |
-| Unsaved guard helper | `src/lib/motion/unsaved.ts` |
 | MotionProvider | `src/components/motion/MotionProvider.tsx` |
-| AppShell + RouteTransition + SwipeBack | `src/components/motion/*` |
-| CSS micro-interactions | `src/app/globals.css` (`.story-press`, `.story-card`, …) |
+| RouteTransition / SwipeBack / AppShell | `src/components/motion/*` |
 
-Root layout keeps **GlobalNav** and **Footer** outside `AppShell` so chrome persists while the content surface transitions.
+GlobalNav + Footer stay outside `AppShell`.
 
-## Tokens
+## Network temperatures
 
-Durations: `instant` · `micro` · `fast` · `standard` · `surface` · `gesture`  
-Easing: `standard` · `enter` · `exit` · `spring` · `gesture`  
-Distances: desktop 18px · tablet 28px · mobile 40px  
+| Temperature | Surfaces | Feel |
+|---|---|---|
+| **browse** | Marketplace | Most physical; soft room-step |
+| **social** | Network, Messages, Referrals | Light lateral dissolve |
+| **home** | My Home, Saved, Following | Calm belonging |
+| **work** | Story Pro CRM / listings | Minimal spatial motion |
+| **study** | Archie Intelligence | Cooler, tighter, precise |
+| **still** | Auth, seller, legal | Opacity only |
 
-## Route hierarchy
+## Gesture physics (mobile swipe-back)
 
-Depth drives forward/back. Same-depth network switches use lateral (opacity-only).  
-Excluded from spatial slides: auth, seller, legal/utility.
+- Wider edge hit (~28px)
+- ~1:1 finger follow, then rubber-band resistance
+- Commit by **distance or velocity**
+- Soft settle (~440ms) — no hard teleport
+- Cancel breathes home (~360ms)
+- Previous-room peek underlay during drag
+- Blocked on maps, sliders, `[data-unsaved='true']`
 
 ## State preservation
 
-Marketplace filters / boundary / selected listing / list scroll → `sessionStorage` cache restored on remount (45 min freshness). Fresh `?q=` / `?intent=` from home search still wins.
-
-Archie Research map stays mounted after first visit when switching modules (hidden, not destroyed).
-
-## Maps
-
-`data-no-swipe-back` + map container selectors block edge swipe-back over MapLibre canvases.
-
-## Mobile swipe-back
-
-Left-edge gesture (~22px). Completes `router.back()` past threshold; cancels otherwise. Blocked by maps, sliders, and `[data-unsaved='true']`.
-
-## Shared element
-
-Optional View Transitions name `listing-photo-{id}` on card image → detail hero (progressive enhancement).
+Marketplace workspace cache (filters, boundary, scroll).  
+Archie Research keep-alive across module switches.
 
 ## Accessibility
 
-`prefers-reduced-motion` → opacity-only / no spatial travel. Focus and keyboard routes unchanged.
+`prefers-reduced-motion` → no spatial travel, no peek, no press scale.
 
 ## Native parity later
 
-Replicate tokens + hierarchy + swipe-back + workspace cache on iOS/Android; keep business state client-agnostic.
+Replicate temperatures + gesture physics + workspace memory on iOS/Android. Business state stays client-agnostic.

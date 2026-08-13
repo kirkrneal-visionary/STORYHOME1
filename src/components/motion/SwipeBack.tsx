@@ -3,6 +3,11 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMotionOptional } from "@/components/motion/MotionProvider";
+import {
+  continuumDragPx,
+  peekOpacityForDrag,
+  shouldCommitSwipe,
+} from "@/lib/motion/continuum";
 import { routeDepth } from "@/lib/motion/routes";
 
 function isInteractiveTarget(target: EventTarget | null): boolean {
@@ -11,7 +16,11 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   if (target.closest(".maplibregl-map, .mapboxgl-map, .leaflet-container")) {
     return true;
   }
-  if (target.closest("[data-map-canvas], [data-shi-map], [data-marketplace-map]")) {
+  if (
+    target.closest(
+      "[data-map-canvas], [data-shi-map], [data-marketplace-map]",
+    )
+  ) {
     return true;
   }
   if (target.closest('[role="slider"], input, textarea, select')) return true;
@@ -21,16 +30,37 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   return false;
 }
 
+function clearSurface(el: HTMLElement | null) {
+  if (!el) return;
+  el.style.transform = "";
+  el.style.transition = "";
+  el.style.boxShadow = "";
+  el.style.borderRadius = "";
+}
+
+function clearPeek() {
+  const peek = document.querySelector(
+    ".story-continuum-peek",
+  ) as HTMLElement | null;
+  if (!peek) return;
+  peek.style.opacity = "0";
+  peek.style.transition = "";
+}
+
 /**
- * Left-edge swipe-back for touch devices. Does not hijack maps / sliders.
- * Completes with router.back() when threshold crossed.
+ * Story Continuum swipe-back — hand-honest, rubber-banded, soft settle.
+ * Maps / sliders / unsaved forms are never hijacked.
  */
 export function SwipeBack() {
   const router = useRouter();
   const motion = useMotionOptional();
   const startX = useRef(0);
   const startY = useRef(0);
+  const lastX = useRef(0);
+  const lastT = useRef(0);
+  const velocity = useRef(0);
   const tracking = useRef(false);
+  const locked = useRef(false);
   const surfaceRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -38,20 +68,25 @@ export function SwipeBack() {
     if (motion.viewport === "desktop") return;
 
     const edge = motion.swipe.edgeWidthPx;
-    const threshold = motion.swipe.thresholdPx;
+    const settleMs = motion.duration.settle * 1000;
+    const cancelMs = motion.duration.cancel * 1000;
+    const settleEase = "cubic-bezier(0.18, 0.9, 0.2, 1)";
+    const cancelEase = "cubic-bezier(0.22, 1, 0.36, 1)";
 
     const onStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
+      if (locked.current || e.touches.length !== 1) return;
       const t = e.touches[0];
       if (!t || t.clientX > edge) return;
       if (isInteractiveTarget(e.target)) return;
       if (routeDepth(motion.pathname) <= 1) return;
-      // Unsaved form guard
       if (document.querySelector("[data-unsaved='true']")) return;
 
       tracking.current = true;
       startX.current = t.clientX;
       startY.current = t.clientY;
+      lastX.current = t.clientX;
+      lastT.current = performance.now();
+      velocity.current = 0;
       surfaceRef.current = document.querySelector(
         ".story-route-page",
       ) as HTMLElement | null;
@@ -61,21 +96,47 @@ export function SwipeBack() {
       if (!tracking.current || !surfaceRef.current) return;
       const t = e.touches[0];
       if (!t) return;
-      const dx = t.clientX - startX.current;
+
+      const now = performance.now();
+      const dt = Math.max(1, now - lastT.current);
+      const rawDx = t.clientX - startX.current;
       const dy = Math.abs(t.clientY - startY.current);
-      if (dy > 48 && dy > Math.abs(dx)) {
+
+      // Velocity sample (px/ms)
+      velocity.current = (t.clientX - lastX.current) / dt;
+      lastX.current = t.clientX;
+      lastT.current = now;
+
+      if (dy > motion.swipe.verticalCancelPx && dy > Math.abs(rawDx)) {
         tracking.current = false;
-        surfaceRef.current.style.transform = "";
-        surfaceRef.current.style.transition = "";
+        clearSurface(surfaceRef.current);
+        clearPeek();
         return;
       }
-      if (dx <= 0) {
-        surfaceRef.current.style.transform = "";
+
+      if (rawDx <= 0) {
+        surfaceRef.current.style.transform = "translate3d(0,0,0)";
+        clearPeek();
         return;
       }
-      const drag = Math.min(dx, threshold * 1.4);
+
+      const vw = window.innerWidth || 375;
+      const drag = continuumDragPx(rawDx, vw);
+      const peek = peekOpacityForDrag(drag, vw);
+
       surfaceRef.current.style.transition = "none";
       surfaceRef.current.style.transform = `translate3d(${drag}px,0,0)`;
+      surfaceRef.current.style.boxShadow =
+        " -12px 0 40px rgba(0,0,0,0.18)";
+      surfaceRef.current.style.borderRadius = drag > 24 ? "12px 0 0 12px" : "";
+
+      const peekEl = document.querySelector(
+        ".story-continuum-peek",
+      ) as HTMLElement | null;
+      if (peekEl) {
+        peekEl.style.transition = "none";
+        peekEl.style.opacity = String(peek);
+      }
     };
 
     const onEnd = (e: TouchEvent) => {
@@ -86,23 +147,47 @@ export function SwipeBack() {
       if (!el) return;
 
       const t = e.changedTouches[0];
-      const dx = t ? t.clientX - startX.current : 0;
-      el.style.transition = `transform ${motion.duration.fast}s cubic-bezier(0.22,1,0.36,1)`;
+      const rawDx = t ? t.clientX - startX.current : 0;
+      const vw = window.innerWidth || 375;
+      const commit = shouldCommitSwipe({
+        dx: rawDx,
+        velocityPxPerMs: Math.max(0, velocity.current),
+        viewportWidth: vw,
+      });
 
-      if (dx >= threshold) {
+      const peekEl = document.querySelector(
+        ".story-continuum-peek",
+      ) as HTMLElement | null;
+
+      if (commit) {
+        locked.current = true;
         motion.markBack();
+        el.style.transition = `transform ${motion.duration.settle}s ${settleEase}, box-shadow ${motion.duration.settle}s ${settleEase}`;
         el.style.transform = `translate3d(100%,0,0)`;
+        el.style.boxShadow = " -24px 0 48px rgba(0,0,0,0.22)";
+        if (peekEl) {
+          peekEl.style.transition = `opacity ${motion.duration.settle}s ${settleEase}`;
+          peekEl.style.opacity = "0.28";
+        }
         window.setTimeout(() => {
-          el.style.transform = "";
-          el.style.transition = "";
+          clearSurface(el);
+          clearPeek();
+          locked.current = false;
           router.back();
-        }, motion.duration.fast * 1000);
+        }, settleMs);
       } else {
+        // Breathe home — cancel
+        el.style.transition = `transform ${motion.duration.cancel}s ${cancelEase}, box-shadow ${motion.duration.cancel}s ${cancelEase}`;
         el.style.transform = "translate3d(0,0,0)";
+        el.style.boxShadow = "none";
+        if (peekEl) {
+          peekEl.style.transition = `opacity ${motion.duration.cancel}s ${cancelEase}`;
+          peekEl.style.opacity = "0";
+        }
         window.setTimeout(() => {
-          el.style.transform = "";
-          el.style.transition = "";
-        }, motion.duration.fast * 1000);
+          clearSurface(el);
+          clearPeek();
+        }, cancelMs);
       }
     };
 

@@ -12,6 +12,10 @@ import {
 } from "react";
 import { usePathname } from "next/navigation";
 import {
+  continuumProfile,
+  temperatureForPath,
+} from "@/lib/motion/continuum";
+import {
   inferDirection,
   normalizePath,
   type NavDirection,
@@ -22,6 +26,7 @@ import {
   MOTION_EASE,
   MOTION_OPACITY,
   SWIPE_BACK,
+  type ContinuumTemperature,
 } from "@/lib/motion/tokens";
 
 type Viewport = "mobile" | "tablet" | "desktop";
@@ -35,10 +40,11 @@ type MotionContextValue = {
   ease: typeof MOTION_EASE;
   opacity: typeof MOTION_OPACITY;
   swipe: typeof SWIPE_BACK;
-  /** Mark next navigation as explicit back (e.g. swipe / back button). */
+  temperature: ContinuumTemperature;
   markBack: () => void;
   markForward: () => void;
   pathname: string;
+  previousPathname: string;
 };
 
 const MotionContext = createContext<MotionContextValue | null>(null);
@@ -76,6 +82,7 @@ function getViewport(): Viewport {
 export function MotionProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
   const prevPathRef = useRef(pathname);
+  const [previousPathname, setPreviousPathname] = useState(pathname);
   const pendingDirRef = useRef<NavDirection | null>(null);
   const [direction, setDirection] = useState<NavDirection>("none");
 
@@ -113,17 +120,27 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
     pendingDirRef.current = null;
     const next =
       pending ??
-      inferDirection(from, to, pending === "back" ? -1 : pending === "forward" ? 1 : null);
+      inferDirection(
+        from,
+        to,
+        pending === "back" ? -1 : pending === "forward" ? 1 : null,
+      );
     setDirection(next);
+    setPreviousPathname(from);
     prevPathRef.current = pathname;
   }, [pathname]);
 
-  const distancePx =
+  const temperature = temperatureForPath(pathname);
+  const profile = continuumProfile(temperature);
+
+  const baseDistance =
     viewport === "mobile"
       ? MOTION_DISTANCE.mobile
       : viewport === "tablet"
         ? MOTION_DISTANCE.tablet
         : MOTION_DISTANCE.desktop;
+
+  const distancePx = Math.round(baseDistance * profile.distanceScale);
 
   const value = useMemo<MotionContextValue>(
     () => ({
@@ -135,18 +152,22 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       ease: MOTION_EASE,
       opacity: MOTION_OPACITY,
       swipe: SWIPE_BACK,
+      temperature,
       markBack,
       markForward,
       pathname,
+      previousPathname,
     }),
     [
       direction,
       reducedMotion,
       viewport,
       distancePx,
+      temperature,
       markBack,
       markForward,
       pathname,
+      previousPathname,
     ],
   );
 
