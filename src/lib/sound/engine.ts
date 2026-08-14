@@ -1,5 +1,9 @@
 /**
  * Story Glass Web Audio engine — synthesized, unlock-on-gesture, sparse.
+ *
+ * ORIGINAL STORY HOME SYNTHESIS — proprietary presentation IP.
+ * Oscillator + envelope only. No sample files. No stock libraries.
+ * See docs/shi/STORY-GLASS-SOUND.md
  */
 
 import {

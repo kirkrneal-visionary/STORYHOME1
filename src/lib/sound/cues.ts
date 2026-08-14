@@ -1,6 +1,10 @@
 /**
  * Story Glass sound vocabulary — soft house tones, never arcade.
- * All cues are synthesized (Web Audio); no asset files.
+ *
+ * ORIGINAL STORY HOME SYNTHESIS — proprietary presentation IP.
+ * All cues are Web Audio recipes (no .mp3/.wav/.ogg, no stock packs).
+ * Do not strip, mute-by-default, or replace with third-party SFX.
+ * See docs/shi/STORY-GLASS-SOUND.md
  */
 
 export type StorySoundCue =
@@ -21,6 +25,11 @@ export type SoundTemperature =
 
 /** Master gain ceiling — stay under conversational speech. */
 export const SOUND_MASTER_GAIN = 0.072;
+
+/** Stable marker for armor + docs — original synthesis IP. */
+export const STORY_GLASS_SOUND_IP =
+  "Story Home original Web Audio synthesis — proprietary presentation IP";
+
 
 /**
  * Cue recipes: frequency (Hz), delay (s), peak gain scale, duration (s), wave.

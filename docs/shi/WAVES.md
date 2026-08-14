@@ -1,7 +1,7 @@
 # Archie's Intelligence — Build Waves
 
 **Live:** https://storyhome-1-eqmg.vercel.app  
-**Feel:** [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · **Glass:** [`STORY-GLASS.md`](./STORY-GLASS.md)  
+**Feel:** [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · **Glass:** [`STORY-GLASS.md`](./STORY-GLASS.md) · **Sound:** [`STORY-GLASS-SOUND.md`](./STORY-GLASS-SOUND.md)  
 **Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)  
 **Observation:** [`ARCHIE-OBS-OPS.md`](./ARCHIE-OBS-OPS.md)  
 **Shell:** [`STORY-MESSAGES-REFERRALS.md`](./STORY-MESSAGES-REFERRALS.md)  

@@ -124,6 +124,9 @@ function SoundBridge({
 /**
  * Story Glass sound — always on as part of the experience.
  * Only silent under prefers-reduced-motion (accessibility). No mute toggle.
+ *
+ * ORIGINAL STORY HOME SYNTHESIS — proprietary presentation IP.
+ * See docs/shi/STORY-GLASS-SOUND.md
  */
 export function SoundProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useSyncExternalStore(

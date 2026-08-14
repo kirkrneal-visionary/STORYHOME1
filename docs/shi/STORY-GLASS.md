@@ -2,7 +2,7 @@
 
 **Status:** Phase G (Feedback · sound) shipping · A–F live  
 **Live:** https://storyhome-1-eqmg.vercel.app  
-Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`../MOTION.md`](../MOTION.md)
+Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`STORY-GLASS-SOUND.md`](./STORY-GLASS-SOUND.md) · [`../MOTION.md`](../MOTION.md)
 
 ## Goal
 
@@ -14,8 +14,9 @@ Elevate StoryHome from “responsive website” toward a premium app shell — w
 2. Clothing + shell only — no GRPT, no feature creep.  
 3. Readability beats blur. Glass is selective.  
 4. Continuum belonging stays sacred.  
-5. Sound is sparse, warm, synthesized — always on; silent only for reduced motion.  
+5. Sound is sparse, warm, **original synthesized IP** — always on; silent only for reduced motion. Protect: [`STORY-GLASS-SOUND.md`](./STORY-GLASS-SOUND.md).  
 6. Haptics = facade later; web must work without them.
+7. **Do not** strip Story Glass sound, add a product mute toggle, or replace synthesis with stock SFX packs.
 
 ## Phase A — Tokens
 
