@@ -16,7 +16,7 @@ export function RequireAuth({
 
   if (!isLoggedIn) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-24 pt-[96px] text-center md:px-6">
+      <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] text-center md:px-6">
         <h1 className="font-serif text-3xl font-bold text-ink">{title}</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">{description}</p>
         <Link

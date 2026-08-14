@@ -1,6 +1,6 @@
 # Story Glass — Application Surface System
 
-**Status:** Phase C (browse) shipping · A/B live  
+**Status:** Phase D (Home / social) shipping · A–C live  
 **Live:** https://storyhome-1-eqmg.vercel.app  
 Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`../MOTION.md`](../MOTION.md)
 
@@ -50,10 +50,20 @@ Rooms: **Marketplace + Listing**.
 4. Listing detail → living-header tokens, glass back control, bottom-nav clearance.  
 5. Continuum marketplace cache untouched.
 
+## Phase D — Home / social
+
+Rooms: **Home, Suites, Following, Network, Profile, Agents**.
+
+1. Home search cluster → `story-glass` + living-header-aware hero padding.  
+2. Social rooms drop hardcoded `pt-[72|96px]` / `pb-24` for shell tokens.  
+3. Empty states / directories → `story-well` / `story-surface` (no cardboard).  
+4. Agent banner → env charcoal, not navy wall.  
+5. No follow/Messages feature work.
+
 ## Later phases
 
-D Home/social · E Work · F Study · G Feedback (sound only if approved)
+E Work · F Study · G Feedback (sound only if approved)
 
 ## Armor
 
-`npm run test:glass` → `test-story-glass-ab.mjs` + `test-story-glass-c.mjs`
+`npm run test:glass` → `test-story-glass-ab.mjs` + `c` + `d`

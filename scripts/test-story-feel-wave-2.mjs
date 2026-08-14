@@ -13,7 +13,7 @@ const hero = read("src/components/home/HomeSearchHero.tsx");
 assert.match(hero, /brand-word/);
 assert.match(hero, />STORY</);
 assert.match(hero, />HOME</);
-assert.match(hero, /story-surface/);
+assert.match(hero, /story-surface|story-glass/);
 assert.match(hero, /story-well/);
 assert.doesNotMatch(hero, /Home Values →/);
 assert.doesNotMatch(hero, /border-white\/15 bg-white\/5/);

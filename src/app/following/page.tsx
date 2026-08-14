@@ -5,14 +5,14 @@ export const metadata: Metadata = { title: "Following" };
 
 export default function FollowingPage() {
   return (
-    <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6 md:pb-10">
+    <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] md:px-6 md:pb-10">
       <div className="mx-auto max-w-5xl">
         <h1 className="font-serif text-3xl font-bold text-ink">Following</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           Homes from agents you follow.
         </p>
 
-        <div className="mt-8 rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-10 text-center">
+        <div className="story-well mt-8 border-dashed p-10 text-center">
           <p className="font-serif text-xl font-bold text-ink">
             You&rsquo;re not following anyone yet
           </p>
