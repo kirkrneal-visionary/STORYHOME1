@@ -51,6 +51,6 @@ assert.match(plan, /Story Glass/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /STORY-GLASS-AB/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"STORY-GLASS-AB"/);
+assert.match(waves, /id:\s*"STORY-GLASS-AB"/);
 
 console.log("story-glass-ab armor: ok");

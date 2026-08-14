@@ -51,8 +51,8 @@ export function ListingCard({
       id={`listing-card-${listing.id}`}
       onMouseEnter={onSelect}
       className={cn(
-        "story-card group overflow-hidden",
-        dense ? "p-3" : "p-4 hover:-translate-y-0.5",
+        "group overflow-hidden story-surface",
+        dense ? "rounded-[var(--radius-md)] p-0" : "p-4 hover:-translate-y-0.5",
         selected
           ? "border-[color-mix(in_srgb,var(--gold)_70%,var(--hairline))] shadow-[var(--elev-raise),var(--ring-focus)]"
           : "",
@@ -64,7 +64,10 @@ export function ListingCard({
         onClick={() => onNavigate?.()}
       >
         <div
-          className="relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--nav-surface)]"
+          className={cn(
+            "relative aspect-video w-full overflow-hidden bg-[var(--env-1)]",
+            dense ? "rounded-none" : "rounded-lg",
+          )}
           style={{ viewTransitionName: `listing-photo-${listing.id}` }}
         >
           {listing.photoUrl ? (
@@ -80,7 +83,7 @@ export function ListingCard({
               No photo
             </div>
           )}
-          <span className="absolute bottom-3 left-3 rounded bg-navy px-2.5 py-1 font-mono text-sm font-semibold text-paper shadow-md">
+          <span className="story-glass absolute bottom-3 left-3 rounded-[var(--radius-sm)] px-2.5 py-1 font-mono text-sm font-semibold text-paper">
             {formatUsd(listing.price)}
           </span>
           <span
@@ -107,7 +110,7 @@ export function ListingCard({
           </button>
         </div>
 
-        <div className="mt-4">
+        <div className={cn("mt-3", dense ? "px-3 pb-3" : "mt-4")}>
           <h3 className="font-serif text-xl font-bold text-ink">
             {listing.addressSerif}
           </h3>
@@ -125,7 +128,12 @@ export function ListingCard({
         </div>
       </Link>
 
-      <div className="my-4 flex items-center justify-between border-t border-hairline pt-3">
+      <div
+        className={cn(
+          "flex items-center justify-between border-t border-hairline",
+          dense ? "mx-3 my-0 py-2.5" : "my-4 pt-3",
+        )}
+      >
         <Link
           href={`/agents/${agent.id}`}
           className="flex min-w-0 items-center gap-3"

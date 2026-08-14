@@ -676,7 +676,7 @@ export function MarketplaceMap({
 
       {/* Tool toolbar (top-left) */}
       <div className="absolute top-3 left-3 z-[500] flex max-w-[min(100%,460px)] flex-wrap items-center gap-1.5">
-        <div className="flex overflow-hidden rounded-full border border-hairline bg-navy/90 shadow-lg backdrop-blur">
+        <div className="story-glass flex overflow-hidden rounded-[var(--radius-pill)]">
           {TOOLS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -698,7 +698,7 @@ export function MarketplaceMap({
           <select
             value={radiusMiles}
             onChange={(e) => setRadiusMiles(Number(e.target.value))}
-            className="rounded-full border border-hairline bg-navy/90 px-3 py-2 text-[11px] font-semibold text-paper shadow-lg"
+            className="story-glass rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-semibold text-paper"
           >
             {[5, 10, 15, 25, 50].map((m) => (
               <option key={m} value={m}>
@@ -714,7 +714,7 @@ export function MarketplaceMap({
           <button
             type="button"
             onClick={clearBoundary}
-            className="flex items-center gap-1 rounded-full border border-hairline bg-navy/90 px-3 py-2 text-[11px] font-bold text-paper shadow-lg"
+            className="story-glass flex items-center gap-1 rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-bold text-paper"
           >
             <X className="h-3.5 w-3.5" /> Clear
           </button>
@@ -724,7 +724,7 @@ export function MarketplaceMap({
       {/* Basemap gallery + CAD overlays + fullscreen (top-right) */}
       <div className="absolute top-3 right-3 z-[500] flex flex-col items-end gap-1.5">
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <div className="story-chrome flex max-w-[min(100vw-2rem,420px)] flex-wrap overflow-hidden rounded-[var(--radius-md)] border">
+          <div className="story-glass flex max-w-[min(100vw-2rem,420px)] flex-wrap overflow-hidden rounded-[var(--radius-md)]">
             <span className="flex items-center pl-3 pr-1 text-paper/70">
               <Layers className="h-3.5 w-3.5" />
             </span>
@@ -749,10 +749,10 @@ export function MarketplaceMap({
             onClick={() => overlays.setPanelOpen((v) => !v)}
             title="BIS CAD layers"
             className={cn(
-              "flex items-center gap-1.5 rounded-full border border-hairline px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur",
+              "story-press flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-bold",
               overlays.panelOpen
                 ? "bg-gold text-navy"
-                : "bg-navy/90 text-paper hover:bg-white/10",
+                : "story-glass text-paper hover:bg-white/10",
             )}
           >
             <Grid3x3 className="h-3.5 w-3.5" />
@@ -763,8 +763,8 @@ export function MarketplaceMap({
             onClick={() => setShowParcels((v) => !v)}
             title="Toggle parcel grid (CAD lot lines at zoom)"
             className={cn(
-              "flex items-center gap-1.5 rounded-full border border-hairline px-3 py-2 text-[11px] font-bold shadow-lg backdrop-blur",
-              showParcels ? "bg-gold text-navy" : "bg-navy/90 text-paper hover:bg-white/10",
+              "story-press flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-bold",
+              showParcels ? "bg-gold text-navy" : "story-glass text-paper hover:bg-white/10",
             )}
           >
             <Grid3x3 className="h-3.5 w-3.5" />
@@ -774,7 +774,7 @@ export function MarketplaceMap({
             type="button"
             onClick={() => setExpanded((v) => !v)}
             title={expanded ? "Exit fullscreen" : "Expand map"}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-navy/90 text-paper shadow-lg hover:bg-white/10"
+            className="story-glass story-press flex h-9 w-9 items-center justify-center rounded-[var(--radius-pill)] text-paper hover:bg-white/10"
           >
             {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
@@ -802,7 +802,7 @@ export function MarketplaceMap({
       )}
 
       {/* Info / measure readout (bottom-left) */}
-      <div className="story-chrome absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-[var(--radius-md)] border px-3 py-2 text-[11px] text-paper">
+      <div className="story-glass absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-[var(--radius-md)] px-3 py-2 text-[11px] text-paper">
         {tool === "measure" ? (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
@@ -814,7 +814,7 @@ export function MarketplaceMap({
                   value={distUnit}
                   onChange={(e) => setDistUnit(e.target.value as DistanceUnit)}
                   title="Distance unit"
-                  className="rounded border border-hairline bg-navy px-1 py-0.5 text-[10px] font-semibold text-paper"
+                  className="rounded border border-hairline bg-[var(--env-1)] px-1 py-0.5 text-[10px] font-semibold text-paper"
                 >
                   {DISTANCE_UNITS.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -826,7 +826,7 @@ export function MarketplaceMap({
                   value={areaUnit}
                   onChange={(e) => setAreaUnit(e.target.value as AreaUnit)}
                   title="Area unit"
-                  className="rounded border border-hairline bg-navy px-1 py-0.5 text-[10px] font-semibold text-paper"
+                  className="rounded border border-hairline bg-[var(--env-1)] px-1 py-0.5 text-[10px] font-semibold text-paper"
                 >
                   {AREA_UNITS.map((u) => (
                     <option key={u.id} value={u.id}>

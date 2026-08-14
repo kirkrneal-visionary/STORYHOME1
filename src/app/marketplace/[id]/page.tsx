@@ -40,7 +40,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
   const agent = listing.agent ?? getAgent(listing.agentId);
 
   return (
-    <div className="min-h-dvh pb-24 md:pb-10">
+    <div className="min-h-dvh pb-[var(--story-bottom-clearance)] md:pb-10">
       <AnalyticsPageBeacon
         event="listing_opened"
         props={{ listing_id: listing.id }}
@@ -48,7 +48,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
 
       {/* Full-bleed photo plane — back control overlays, not a separate chrome row */}
       <div
-        className="relative aspect-[4/3] w-full bg-[var(--nav-surface)] pt-[72px] md:aspect-[21/9] md:pt-0"
+        className="relative aspect-[4/3] w-full bg-[var(--env-1)] pt-[var(--story-header-h)] md:aspect-[21/9] md:pt-0"
         style={{ viewTransitionName: `listing-photo-${listing.id}` }}
       >
         {listing.photoUrl ? (
@@ -65,12 +65,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
             No photo provided
           </div>
         )}
-        <div className="absolute inset-x-0 top-[72px] z-10 bg-gradient-to-b from-navy-deep/70 to-transparent px-4 pb-10 pt-3 md:top-0 md:pt-[84px]">
+        <div className="absolute inset-x-0 top-[var(--story-header-h)] z-10 bg-gradient-to-b from-[color-mix(in_srgb,var(--env-0)_75%,transparent)] to-transparent px-4 pb-10 pt-3 md:top-0 md:pt-[calc(var(--story-header-h)+0.75rem)]">
           <BackToMarketplace overlay />
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-8 md:grid-cols-[1fr_300px] md:px-6">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-7 md:grid-cols-[1fr_300px] md:gap-10 md:px-6 md:py-8">
         <div>
           <p className="font-mono text-sm font-semibold text-gold">
             {formatUsd(listing.price)}
@@ -79,7 +79,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             {listing.status} · {listing.propertyType}
             {listing.hasHoa ? " · HOA" : " · No HOA"}
           </p>
-          <h1 className="mt-2 font-serif text-3xl font-bold tracking-[-0.02em] text-ink md:text-4xl">
+          <h1 className="mt-2 font-serif text-[length:var(--type-property)] font-bold tracking-[-0.02em] text-ink md:text-4xl">
             {listing.addressSerif}
           </h1>
           <p className="mt-2 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
@@ -103,7 +103,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        <aside className="story-surface h-fit p-5 md:sticky md:top-24">
+        <aside className="story-surface h-fit p-5 md:sticky md:top-[calc(var(--story-header-h)+0.75rem)]">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] font-bold text-navy">
               {agent.initials}

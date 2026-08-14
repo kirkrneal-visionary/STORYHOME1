@@ -19,7 +19,7 @@ assert.doesNotMatch(hero, /Home Values →/);
 assert.doesNotMatch(hero, /border-white\/15 bg-white\/5/);
 
 const toolbar = read("src/components/marketplace/SearchToolbar.tsx");
-assert.match(toolbar, /story-chrome/);
+assert.match(toolbar, /story-glass|story-chrome/);
 assert.match(toolbar, /field-input/);
 
 const market = read("src/components/MarketplaceView.tsx");
