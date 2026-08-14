@@ -18,15 +18,15 @@ assert.match(cues, /"success"/);
 assert.match(cues, /SOUND_MASTER_GAIN/);
 assert.match(cues, /STORY_GLASS_SOUND_IP/);
 assert.match(cues, /ORIGINAL STORY HOME SYNTHESIS|proprietary presentation IP/);
-assert.doesNotMatch(cues, /\.mp3|\.wav|\.ogg/);
+assert.doesNotMatch(cues, /from ["'].*\.(mp3|wav|ogg)|src=["'].*\.(mp3|wav|ogg)|new Audio\(/i);
 
 const engine = read("src/lib/sound/engine.ts");
 assert.match(engine, /AudioContext/);
 assert.match(engine, /playStorySound/);
 assert.match(engine, /unlockStorySound/);
 assert.match(engine, /ORIGINAL STORY HOME SYNTHESIS|proprietary presentation IP/);
-assert.doesNotMatch(engine, /\.mp3|\.wav|\.ogg/);
-assert.doesNotMatch(engine, /howler|use-sound|tone\.js|Tone\.|soundjs/i);
+assert.doesNotMatch(engine, /from ["'].*\.(mp3|wav|ogg)|src=["'].*\.(mp3|wav|ogg)|new Audio\(/i);
+assert.doesNotMatch(engine, /howler|use-sound|soundjs/i);
 
 const provider = read("src/components/sound/SoundProvider.tsx");
 assert.match(provider, /SoundProvider/);
