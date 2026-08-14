@@ -30,8 +30,6 @@ import {
   type PendingInvite,
 } from "@/lib/supabase/roster";
 import { accountLabel } from "@/lib/auth";
-import { useStorySoundOptional } from "@/components/sound/SoundProvider";
-import { Volume2, VolumeX } from "lucide-react";
 
 const toList = (s: string) =>
   s.split(",").map((x) => x.trim()).filter(Boolean);
@@ -39,7 +37,6 @@ const fromList = (a: string[]) => a.join(", ");
 
 export function SettingsView() {
   const { user, isLoggedIn } = useAuth();
-  const sound = useStorySoundOptional();
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [brokerage, setBrokerage] = useState<Brokerage | null>(null);
   const [pending, setPending] = useState<PendingInvite | null>(null);
@@ -69,41 +66,6 @@ export function SettingsView() {
         <h1 className="font-serif text-3xl font-bold text-ink">Settings</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">Log in to manage your account.</p>
         <Link href="/login?next=/settings" className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy">Log in</Link>
-        {sound ? (
-          <div className="story-surface mt-8 p-5 text-left">
-            <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-gold uppercase">
-              Experience
-            </p>
-            <h2 className="mt-1 font-serif text-lg font-bold text-ink">
-              Story Glass sound
-            </h2>
-            <p className="mt-1 text-sm text-[var(--muted)]">
-              Soft room tones — sparse and warm. You can change this anytime.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={sound.enabled}
-                onClick={() => sound.setEnabled(!sound.enabled)}
-                className={
-                  sound.enabled
-                    ? "story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
-                    : "story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink"
-                }
-              >
-                {sound.enabled ? "On" : "Off"}
-              </button>
-              <button
-                type="button"
-                onClick={() => sound.preview()}
-                className="story-press inline-flex h-10 items-center rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink"
-              >
-                Preview
-              </button>
-            </div>
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -128,57 +90,6 @@ export function SettingsView() {
         <p className="mt-8 text-sm text-[var(--muted)]">Loading your settings…</p>
       ) : (
         <div className="mt-8 space-y-6">
-          {sound ? (
-            <section className="story-surface p-5 md:p-6" data-story-sound-settings>
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-gold uppercase">
-                    Experience
-                  </p>
-                  <h2 className="mt-1 font-serif text-xl font-bold text-ink">
-                    Story Glass sound
-                  </h2>
-                  <p className="mt-1 max-w-xl text-sm text-[var(--muted)]">
-                    Soft room tones when you move through Story Home — sparse,
-                    warm, never arcade. Off when you prefer silence or reduced
-                    motion.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={sound.enabled}
-                    aria-label={
-                      sound.enabled
-                        ? "Turn Story Glass sound off"
-                        : "Turn Story Glass sound on"
-                    }
-                    onClick={() => sound.setEnabled(!sound.enabled)}
-                    className={
-                      sound.enabled
-                        ? "story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
-                        : "story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink"
-                    }
-                  >
-                    {sound.enabled ? (
-                      <Volume2 className="h-4 w-4" />
-                    ) : (
-                      <VolumeX className="h-4 w-4" />
-                    )}
-                    {sound.enabled ? "On" : "Off"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => sound.preview()}
-                    className="story-press inline-flex h-10 items-center rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink"
-                  >
-                    Preview
-                  </button>
-                </div>
-              </div>
-            </section>
-          ) : null}
           {pending && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}

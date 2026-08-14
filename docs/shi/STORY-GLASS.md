@@ -14,7 +14,7 @@ Elevate StoryHome from “responsive website” toward a premium app shell — w
 2. Clothing + shell only — no GRPT, no feature creep.  
 3. Readability beats blur. Glass is selective.  
 4. Continuum belonging stays sacred.  
-5. Sound is sparse, warm, synthesized — mute anytime; respect reduced motion.  
+5. Sound is sparse, warm, synthesized — always on; silent only for reduced motion.  
 6. Haptics = facade later; web must work without them.
 
 ## Phase A — Tokens
@@ -81,13 +81,13 @@ Rooms: **Research, Corridors, evidence panels, map chrome, Archie ribbon**.
 
 ## Phase G — Feedback · sound
 
-Sparse, beautiful Web Audio feedback — **approved**.
+Sparse, beautiful Web Audio feedback — **approved** · **always on**.
 
 1. Synthesized cues only (`src/lib/sound/*`) — no MP3 packs, no arcade.  
 2. Room travel: soft enter / back; Archie arrival: cooler study chord.  
 3. Module select + gold primary tap + inquire success — intentional moments only.  
-4. Settings → Experience mute + Preview; `localStorage` `story-sound`.  
-5. Default off when `prefers-reduced-motion`; unlock AudioContext on first gesture.  
+4. Sound is permanent experience — no Settings mute toggle; unlock on first gesture.  
+5. Silent only under `prefers-reduced-motion` (accessibility). Clears legacy `story-sound` prefs.  
 6. No haptics shipping; no GRPT.
 
 ## Later

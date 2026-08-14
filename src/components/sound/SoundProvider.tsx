@@ -20,32 +20,18 @@ import {
 } from "@/lib/sound/cues";
 import {
   playStorySound,
-  previewStorySoundSuite,
   unlockStorySound,
 } from "@/lib/sound/engine";
 import { isArchiePath } from "@/lib/navigation/networks";
 
 type SoundContextValue = {
+  /** Always true unless prefers-reduced-motion. Sound is the experience — no mute toggle. */
   enabled: boolean;
-  setEnabled: (next: boolean) => void;
   play: (cue: StorySoundCue, temperature?: SoundTemperature) => void;
-  preview: () => void;
   reducedMotion: boolean;
 };
 
 const SoundContext = createContext<SoundContextValue | null>(null);
-
-function readStoredEnabled(reducedMotion: boolean): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const raw = window.localStorage.getItem(SOUND_STORAGE_KEY);
-    if (raw === "on") return true;
-    if (raw === "off") return false;
-  } catch {
-    /* ignore */
-  }
-  return !reducedMotion;
-}
 
 function subscribeReducedMotion(onChange: () => void) {
   if (typeof window === "undefined" || !window.matchMedia) return () => {};
@@ -76,14 +62,12 @@ function SoundBridge({
   const sectionPrimed = useRef(false);
 
   useEffect(() => {
-    // Arm after first paint so hydration path pairs never chirp.
     const id = window.requestAnimationFrame(() => {
       armedRef.current = true;
     });
     return () => window.cancelAnimationFrame(id);
   }, []);
 
-  // Room travel — Continuum direction + temperature.
   useEffect(() => {
     if (!motion || !enabled || !armedRef.current) return;
     const from = motion.previousPathname;
@@ -115,7 +99,6 @@ function SoundBridge({
     play,
   ]);
 
-  // Archie module select (query-only).
   useEffect(() => {
     if (!enabled) return;
     if (!isArchiePath(pathname)) {
@@ -139,8 +122,8 @@ function SoundBridge({
 }
 
 /**
- * Story Glass sound — sparse room / success feedback.
- * Mute lives in Settings · Experience. Unlock on first gesture.
+ * Story Glass sound — always on as part of the experience.
+ * Only silent under prefers-reduced-motion (accessibility). No mute toggle.
  */
 export function SoundProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useSyncExternalStore(
@@ -148,22 +131,17 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     getReducedMotion,
     () => false,
   );
-  const [enabled, setEnabledState] = useState(false);
+  const enabled = !reducedMotion;
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setEnabledState(readStoredEnabled(reducedMotion));
     setHydrated(true);
-  }, [reducedMotion]);
-
-  const setEnabled = useCallback((next: boolean) => {
-    setEnabledState(next);
+    // Retire the old Phase G mute preference — sound is permanent now.
     try {
-      window.localStorage.setItem(SOUND_STORAGE_KEY, next ? "on" : "off");
+      window.localStorage.removeItem(SOUND_STORAGE_KEY);
     } catch {
       /* ignore */
     }
-    if (next) void unlockStorySound();
   }, []);
 
   useEffect(() => {
@@ -205,14 +183,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     [enabled],
   );
 
-  const preview = useCallback(() => {
-    setEnabled(true);
-    previewStorySoundSuite("home");
-  }, [setEnabled]);
-
   const value = useMemo(
-    () => ({ enabled, setEnabled, play, preview, reducedMotion }),
-    [enabled, setEnabled, play, preview, reducedMotion],
+    () => ({ enabled, play, reducedMotion }),
+    [enabled, play, reducedMotion],
   );
 
   return (

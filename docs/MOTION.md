@@ -76,8 +76,8 @@ Archie Research keep-alive across module switches.
 Sparse Web Audio cues (`src/lib/sound/*` + `SoundProvider`):
 
 - Room enter / back · cooler Archie study · soft select · gold tap · success  
-- Mute + Preview in Settings → Experience  
-- Default off when reduced-motion; unlock on first gesture  
+- **Always on** as the experience — no mute toggle  
+- Silent only under `prefers-reduced-motion`; unlock on first gesture  
 - Never arcade; never every press  
 
 ## Native parity later

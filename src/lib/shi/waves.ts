@@ -753,12 +753,12 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "STORY-GLASS-G",
     name: "Story Glass · Phase G Feedback sound",
-    goal: "Sparse, warm Web Audio room/success cues with mute + reduced-motion respect — beautiful feedback, never arcade.",
-    status: "current",
+    goal: "Sparse, warm Web Audio room/success cues — always on as the experience; silent only under reduced motion.",
+    status: "done",
     frontend: [
       "Synthesized cue vocabulary + Web Audio engine",
-      "SoundProvider: unlock, mute, route/module bridges",
-      "Settings Experience toggle + Preview",
+      "SoundProvider: always-on unlock + route/module bridges",
+      "No Settings mute — sound is permanent clothing",
       "Inquire success + gold primary tap cues",
     ],
     backend: ["Armor scripts/test-story-glass-g.mjs"],
