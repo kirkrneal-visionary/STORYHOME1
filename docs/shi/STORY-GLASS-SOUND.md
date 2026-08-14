@@ -29,6 +29,7 @@ You may evolve the tones (gain, pitch, sparse new cues) — you may **not**:
 3. Ship arcade spam on every `story-press`  
 4. Pretend these tones are a third-party brand’s sonic identity  
 
+**Do not** remove Story Glass sound from the Continuum. It is permanent clothing.
 ## Product rules
 
 | Rule | Why |
