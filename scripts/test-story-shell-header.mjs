@@ -14,6 +14,16 @@ assert.match(css, /--story-safe-top/);
 assert.match(css, /\.story-overlay-header/);
 assert.match(css, /\.story-room-pad/);
 assert.match(css, /story-app-shell::before[\s\S]*content:\s*none/);
+/* No reserved black rule under overlay header (all platforms) */
+assert.match(css, /\.story-overlay-header\s*\{[\s\S]*?border-bottom:\s*none/);
+assert.doesNotMatch(
+  css,
+  /\.story-overlay-header[\s\S]{0,400}border-bottom:\s*1px/,
+);
+assert.doesNotMatch(
+  css,
+  /data-header-state="compact"[\s\S]{0,280}border-bottom-color/,
+);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /story-overlay-header/);
