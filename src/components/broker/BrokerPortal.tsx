@@ -130,8 +130,10 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
     <div
       className={cn(
         "min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6 md:pb-12",
-        /* 72 nav + 40 Archie ribbon when in Intelligence */
-        inArchie ? "pt-[128px]" : "pt-[calc(var(--story-header-h)+1.5rem)]",
+        /* Living header + Archie ribbon when in Intelligence */
+        inArchie
+          ? "pt-[calc(var(--story-header-h)+var(--story-archie-ribbon-h)+0.75rem)]"
+          : "pt-[calc(var(--story-header-h)+1.5rem)]",
       )}
     >
       <div

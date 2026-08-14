@@ -14,7 +14,7 @@ type Props = {
 export function ShiCorridorsComparePanel({ compare, onClear }: Props) {
   return (
     <section
-      className="rounded-xl border border-gold/35 bg-[var(--surface)] p-4 md:p-5"
+      className="story-surface border-gold/35 p-4 md:p-5"
       data-corridor-compare
     >
       <div className="flex flex-wrap items-start justify-between gap-2">

@@ -808,10 +808,10 @@ function SummaryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-xl border px-3 py-2.5 text-left transition-colors",
+        "px-3 py-2.5 text-left transition-colors",
         active
-          ? "border-gold bg-[color-mix(in_srgb,var(--gold)_14%,transparent)]"
-          : "border-hairline bg-[var(--surface)] hover:border-gold/40",
+          ? "rounded-xl border border-gold bg-[color-mix(in_srgb,var(--gold)_14%,transparent)]"
+          : "story-well hover:border-gold/40",
       )}
     >
       <p className="font-mono text-[10px] font-bold tracking-wider text-[var(--muted)] uppercase">

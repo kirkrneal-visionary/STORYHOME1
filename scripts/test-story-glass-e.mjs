@@ -14,7 +14,8 @@ assert.match(portal, /story-chrome/);
 assert.match(portal, /--story-header-h/);
 assert.match(portal, /--story-bottom-clearance/);
 assert.doesNotMatch(portal, /: "pt-\[96px\]"/);
-assert.match(portal, /pt-\[128px\]/); // Archie ribbon — Phase F
+assert.match(portal, /--story-archie-ribbon-h/); // Archie living inset — Phase F
+assert.doesNotMatch(portal, /pt-\[128px\]/);
 
 const settings = read("src/components/settings/SettingsView.tsx");
 assert.match(settings, /--story-header-h/);
@@ -56,6 +57,6 @@ assert.match(plan, /Phase E/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /STORY-GLASS-E/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"STORY-GLASS-E"/);
+assert.match(waves, /id:\s*"STORY-GLASS-E"/);
 
 console.log("story-glass-e armor: ok");

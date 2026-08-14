@@ -27,7 +27,7 @@ export function CadOverlayControl({
   return (
     <div
       className={cn(
-        "w-[220px] story-chrome rounded-[var(--radius-md)] border p-3 text-paper",
+        "w-[220px] story-glass rounded-[var(--radius-md)] p-3 text-paper",
         className,
       )}
     >
