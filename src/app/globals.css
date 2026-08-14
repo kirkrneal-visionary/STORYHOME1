@@ -348,7 +348,7 @@ html[data-role="professional"] {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-/* Floating phone bottom nav — pill above content */
+/* Floating bottom nav — glass pill above the world (phone + desktop) */
 .story-glass-nav {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -356,6 +356,24 @@ html[data-role="professional"] {
   box-shadow: var(--glass-elev);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Dock placement — edge inset on phone; centered floating dock on desktop */
+.story-bottom-dock {
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+  height: var(--story-bottom-nav-h);
+  padding-inline: 0.35rem;
+}
+@media (min-width: 768px) {
+  .story-bottom-dock {
+    left: 50%;
+    right: auto;
+    width: min(32rem, calc(100vw - 2.5rem));
+    transform: translateX(-50%);
+    bottom: 1.1rem;
+  }
 }
 
 /*

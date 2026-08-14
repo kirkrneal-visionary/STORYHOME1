@@ -395,7 +395,7 @@ async function fetchGrantsSafe(id: string) { try { return await fetchGrants(id);
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6 md:pb-12">{children}</div>
+    <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">{children}</div>
   );
 }
 

@@ -40,7 +40,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
   const agent = listing.agent ?? getAgent(listing.agentId);
 
   return (
-    <div className="min-h-dvh pb-[var(--story-bottom-clearance)] md:pb-10">
+    <div className="min-h-dvh pb-[var(--story-bottom-clearance)]">
       <AnalyticsPageBeacon
         event="listing_opened"
         props={{ listing_id: listing.id }}

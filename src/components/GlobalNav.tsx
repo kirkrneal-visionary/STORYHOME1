@@ -361,16 +361,11 @@ export default function GlobalNav() {
         />
       </Suspense>
 
+      {/* Same glass pill language phone → desktop (centered dock on md+) */}
       <nav
         aria-label="Primary"
-        className="story-glass-nav fixed z-50 grid grid-cols-4 items-center justify-items-center md:hidden"
-        style={{
-          left: "max(0.75rem, env(safe-area-inset-left))",
-          right: "max(0.75rem, env(safe-area-inset-right))",
-          bottom: "max(0.65rem, env(safe-area-inset-bottom))",
-          height: "var(--story-bottom-nav-h)",
-          paddingInline: "0.35rem",
-        }}
+        data-story-bottom-dock
+        className="story-glass-nav story-bottom-dock fixed z-50 grid grid-cols-4 items-center justify-items-center"
       >
         <MobileTab href="/" label="Home" icon={Home} active={isHome} />
         {isPro && isLoggedIn ? (

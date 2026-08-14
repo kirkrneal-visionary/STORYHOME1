@@ -59,7 +59,7 @@ export function SuitesLibrary() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-[var(--story-bottom-clearance)] pt-6 md:px-6 md:pb-10">
+    <div className="mx-auto max-w-6xl px-4 pb-[var(--story-bottom-clearance)] pt-6 md:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">

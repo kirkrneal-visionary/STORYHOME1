@@ -60,7 +60,7 @@ export function HomeSearchHero() {
   }
 
   return (
-    <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink md:pb-0">
+    <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
       {/* Hero budget: brand + headline + support + one CTA group on full-bleed photo */}
       <section className="relative min-h-[78vh] overflow-hidden md:min-h-[85vh]">
         <Image

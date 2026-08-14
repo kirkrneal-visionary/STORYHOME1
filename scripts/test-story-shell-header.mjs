@@ -51,6 +51,6 @@ assert.match(market, /--story-safe-top/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /STORY-SHELL-HEADER/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"STORY-SHELL-HEADER"/);
+assert.match(waves, /id:\s*"STORY-SHELL-HEADER"/);
 
 console.log("story-shell-header armor: ok");
