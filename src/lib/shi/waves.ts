@@ -765,6 +765,7 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Haptics shipping / GRPT / MP3 asset packs",
       "Sound on every story-press",
+      "Mute toggle / stripping always-on sound",
       "CAD / Continuum logic changes",
     ],
   },

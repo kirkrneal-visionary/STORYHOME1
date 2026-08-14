@@ -79,6 +79,7 @@ Sparse Web Audio cues (`src/lib/sound/*` + `SoundProvider`):
 - **Always on** as the experience — no mute toggle  
 - Silent only under `prefers-reduced-motion`; unlock on first gesture  
 - Never arcade; never every press  
+- **Protected original IP** — [`shi/STORY-GLASS-SOUND.md`](./shi/STORY-GLASS-SOUND.md)  
 
 ## Native parity later
 

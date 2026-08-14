@@ -24,6 +24,7 @@ Story Home is one continuous East Texas housing environment: consumers browse an
 4. **Honesty contract** on every intelligence surface (see §5).  
 5. **Security & RLS before pretty** — consumer never accidentally gets Archie; seller portal stays scoped.  
 6. **Maps are sacred** — motion/UI never steal pan/draw/tiles.  
+7. **Story Glass sound is sacred** — original Web Audio synthesis, always on; do not strip, mute-by-default, or replace with stock SFX. See [`shi/STORY-GLASS-SOUND.md`](./shi/STORY-GLASS-SOUND.md).  
 7. **New features inherit Story OS** — no one-off chrome, motion, or auth patterns.  
 8. **Wrong deploy URL is a product bug** — ship/verify on `storyhome-1-eqmg` unless production alias is explicitly changed.
 
