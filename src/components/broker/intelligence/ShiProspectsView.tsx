@@ -293,13 +293,13 @@ export function ShiProspectsView({
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-hairline bg-[var(--surface)] px-3 py-2 text-sm text-ink">
+        <p className="story-well px-3 py-2 text-sm text-ink">
           {error}
         </p>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
-        <section className="min-h-[28rem] rounded-2xl border border-hairline bg-[var(--surface)]">
+        <section className="min-h-[28rem] story-surface">
           <div className="border-b border-hairline px-4 py-3">
             <h3 className="text-sm font-bold text-ink">Pipeline</h3>
             <p className="mt-0.5 text-xs text-[var(--muted)]">
@@ -391,7 +391,7 @@ export function ShiProspectsView({
         </section>
 
         {/* Desktop dossier */}
-        <aside className="hidden min-h-[28rem] rounded-2xl border border-hairline bg-[var(--surface)] p-4 lg:block">
+        <aside className="hidden min-h-[28rem] story-surface p-4 lg:block">
           {!selectedId ? (
             <p className="mt-10 text-center text-sm text-[var(--muted)]">
               Select a prospect to open the dossier.
@@ -404,7 +404,7 @@ export function ShiProspectsView({
 
       {/* Mobile bottom sheet */}
       {selectedId ? (
-        <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-0 lg:hidden">
+        <div className="fixed inset-0 z-[1200] flex items-end justify-center story-scrim p-0 lg:hidden">
           <button
             type="button"
             aria-label="Close dossier"
@@ -415,7 +415,7 @@ export function ShiProspectsView({
             role="dialog"
             aria-modal="true"
             aria-labelledby="archie-prospect-dossier-title"
-            className="relative z-10 flex max-h-[88vh] w-full flex-col rounded-t-2xl border border-hairline bg-[var(--surface)] shadow-xl"
+            className="relative z-10 flex max-h-[88vh] w-full flex-col story-sheet rounded-b-none shadow-xl"
           >
             <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
               <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
@@ -506,7 +506,7 @@ function ProspectDossier({
         </p>
       </div>
 
-      <div className="rounded-xl border border-hairline bg-[var(--background)]/40 p-3">
+      <div className="story-well p-3">
         <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
           Public property data
         </p>
@@ -635,7 +635,7 @@ function ProspectDossier({
         </div>
       </div>
 
-      <div className="space-y-2 rounded-xl border border-hairline p-3">
+      <div className="space-y-2 story-well p-3">
         <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
           Related intelligence
         </p>

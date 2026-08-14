@@ -27,7 +27,7 @@ export function CadOverlayControl({
   return (
     <div
       className={cn(
-        "w-[220px] rounded-xl border border-hairline bg-navy/92 p-3 text-paper shadow-lg backdrop-blur",
+        "w-[220px] story-chrome rounded-[var(--radius-md)] border p-3 text-paper",
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function CadOverlayControl({
         <select
           value={activeCounty}
           onChange={(e) => onCountyChange(e.target.value)}
-          className="mt-1 w-full rounded-lg border border-hairline bg-navy px-2 py-1.5 text-[11px] font-semibold text-paper"
+          className="mt-1 w-full rounded-[var(--radius-sm)] border border-paper/20 bg-navy/80 px-2 py-1.5 text-[11px] font-semibold text-paper"
         >
           {BIS_CAD_COUNTY_OPTIONS.map((c) => (
             <option key={c.source} value={c.source}>

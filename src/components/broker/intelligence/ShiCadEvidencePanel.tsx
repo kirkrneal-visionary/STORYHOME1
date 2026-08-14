@@ -144,7 +144,7 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
   const taxYearCount = traj.points.length;
 
   return (
-    <div className="rounded-xl border border-hairline bg-[var(--background)]/60 p-3">
+    <div className="story-well p-3">
       <p className="flex items-center gap-2 font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
         <Scale className="h-3.5 w-3.5" />
         CAD evidence · market context
@@ -224,7 +224,7 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
         ) : null}
       </div>
 
-      <div className="mt-3 rounded-lg border border-hairline px-2.5 py-2">
+      <div className="mt-3 story-well px-2.5 py-2">
         <div className="flex items-center justify-between gap-2">
           <p className="font-mono text-[9px] font-bold uppercase text-gold">
             Lookalike CAD band
@@ -268,7 +268,7 @@ export function ShiCadEvidencePanel({ property, frameAnalysis }: Props) {
       </div>
 
       {frameBand ? (
-        <div className="mt-3 rounded-lg border border-hairline px-2.5 py-2">
+        <div className="mt-3 story-well px-2.5 py-2">
           <p className="font-mono text-[9px] font-bold uppercase text-gold">
             Vs active market frame
           </p>

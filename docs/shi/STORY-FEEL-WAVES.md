@@ -45,7 +45,7 @@ Per-room content redesign, new modules, Messages E2E, Corridors adapters.
 
 ## Wave 2 — Consumer rooms
 **ID:** `STORY-FEEL-WAVE-2`  
-**Status:** shipping  
+**Status:** done  
 **Rooms:** Home hero → Marketplace → Listing → Inquire / Suites / Belong.
 
 ### Process
@@ -63,7 +63,7 @@ Pro CRM density, Archie evidence layout polish (Wave 4).
 
 ## Wave 3 — Agent workrooms
 **ID:** `STORY-FEEL-WAVE-3`  
-**Status:** shipping  
+**Status:** done  
 **Rooms:** Story Pro portal, listings tools, CRM surfaces, settings.
 
 ### Process
@@ -80,6 +80,7 @@ New CRM features, Messages product finish.
 
 ## Wave 4 — Archie study
 **ID:** `STORY-FEEL-WAVE-4`  
+**Status:** shipping  
 **Rooms:** Research, evidence, scenarios, Corridors, CAD status, observation.
 
 ### Process

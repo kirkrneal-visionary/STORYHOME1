@@ -1203,7 +1203,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-shi-map
         data-no-swipe-back
         className={cn(
-          "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden rounded-2xl border border-hairline bg-[var(--background)] xl:h-[540px]",
+          "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
           className,
         )}
       >
@@ -1213,7 +1213,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         />
 
         <div className="pointer-events-none absolute inset-0 z-10">
-          <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 rounded-xl border border-navy/20 bg-[var(--paper,#f7f4ec)]/95 p-1 shadow-md backdrop-blur">
+          <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-chrome rounded-[var(--radius-md)] border p-1">
             {MAP_BASE_OPTIONS.map((opt) => (
               <button
                 key={opt.id}
@@ -1232,7 +1232,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             ))}
           </div>
 
-          <div className="pointer-events-auto absolute bottom-12 left-3 flex flex-wrap items-center gap-1.5 rounded-xl border border-navy/20 bg-[var(--paper,#f7f4ec)]/95 p-1 shadow-md backdrop-blur">
+          <div className="pointer-events-auto absolute bottom-12 left-3 flex flex-wrap items-center gap-1.5 story-chrome rounded-[var(--radius-md)] border p-1">
             <button
               type="button"
               onClick={() => {
@@ -1373,7 +1373,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               type="button"
               onClick={() => setShowParcels((v) => !v)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold shadow-md backdrop-blur",
+                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
                 showParcels
                   ? "bg-navy text-gold"
                   : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
@@ -1386,7 +1386,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               type="button"
               onClick={() => overlays.setPanelOpen((v) => !v)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold shadow-md backdrop-blur",
+                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
                 overlays.panelOpen
                   ? "bg-navy text-gold"
                   : "bg-[var(--paper,#f7f4ec)]/95 text-navy",

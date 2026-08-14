@@ -94,7 +94,7 @@ export function ShiCountyChangeFeed({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-hairline bg-[var(--surface)]",
+        "story-surface",
         className,
       )}
     >
@@ -146,12 +146,12 @@ export function ShiCountyChangeFeed({
         {source && readiness ? (
           <div
             className={cn(
-              "mb-3 rounded-lg border px-2.5 py-2",
+              "mb-3 story-well px-2.5 py-2",
               readiness.status === "active"
                 ? "border-emerald-700/30 bg-emerald-600/10"
                 : readiness.status === "migrations_needed"
                   ? "border-amber-700/35 bg-amber-500/10"
-                  : "border-hairline bg-[var(--background)]",
+                  : "",
             )}
           >
             <p className="font-mono text-[9px] font-bold uppercase text-gold">
@@ -197,7 +197,7 @@ export function ShiCountyChangeFeed({
             {changes.map((c) => (
               <li
                 key={c.id}
-                className="rounded-lg border border-hairline px-2.5 py-2"
+                className="story-well px-2.5 py-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-xs font-semibold text-ink">{c.summary}</p>

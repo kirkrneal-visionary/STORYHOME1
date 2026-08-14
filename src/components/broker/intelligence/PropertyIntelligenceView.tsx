@@ -716,7 +716,7 @@ export function PropertyIntelligenceView({
 
       {/* Classic 3-split: Search | Map | Property — equal height, bottoms aligned */}
       <div className="grid gap-3 xl:h-[540px] xl:grid-cols-[280px_minmax(0,1fr)_340px] xl:items-stretch">
-        <section className="flex min-h-[420px] flex-col rounded-2xl border border-hairline bg-[var(--surface)] p-4 xl:min-h-0 xl:h-full">
+        <section className="flex min-h-[420px] flex-col story-surface p-4 xl:min-h-0 xl:h-full">
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
             <Search className="h-4 w-4 text-gold" />
             Search
@@ -727,7 +727,7 @@ export function PropertyIntelligenceView({
               <select
                 value={source}
                 onChange={(e) => onCountyChange(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
+                className="field-input mt-1 h-auto py-2"
               >
                 <option value="">Select county (required for frames)</option>
                 {AVAILABLE_COUNTIES.map((c) => (
@@ -742,7 +742,7 @@ export function PropertyIntelligenceView({
               <select
                 value={field}
                 onChange={(e) => setField(e.target.value as CadSearchField)}
-                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink"
+                className="field-input mt-1 h-auto py-2"
               >
                 {CAD_SEARCH_FIELDS.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -757,7 +757,7 @@ export function PropertyIntelligenceView({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={cadSearchPlaceholder(field)}
-                className="mt-1 w-full rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2 text-sm text-ink outline-none focus:border-gold"
+                className="field-input mt-1 h-auto py-2"
               />
             </label>
             <button
@@ -844,7 +844,7 @@ export function PropertyIntelligenceView({
           className="h-[420px] min-h-[400px] xl:h-full xl:min-h-0"
         />
 
-        <section className="flex min-h-[420px] flex-col overflow-y-auto rounded-2xl border border-hairline bg-[var(--surface)] p-4 xl:h-full xl:min-h-0">
+        <section className="flex min-h-[420px] flex-col overflow-y-auto story-surface p-4 xl:h-full xl:min-h-0">
           <h3 className="shrink-0 text-sm font-bold text-ink">Property record</h3>
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
@@ -1017,7 +1017,7 @@ export function PropertyIntelligenceView({
               ) : null}
 
               {selected.ownershipChurn ? (
-                <div className="rounded-xl border border-gold/35 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] p-3">
+                <div className="story-well border-gold/35 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] p-3">
                   <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
                     Ownership Stability Index
                   </p>
@@ -1175,7 +1175,7 @@ export function PropertyIntelligenceView({
       />
 
       {reopening ? (
-        <div className="flex items-center gap-2 rounded-xl border border-hairline bg-[var(--surface)] px-3 py-2 text-xs font-semibold text-navy">
+        <div className="flex items-center gap-2 story-well px-3 py-2 text-xs font-semibold text-navy">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Opening Map Memory from Study Vault…
         </div>
