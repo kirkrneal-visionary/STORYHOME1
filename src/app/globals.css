@@ -363,17 +363,22 @@ html[data-role="professional"] {
  * content may extend underneath. Not a reserved website header band.
  */
 .story-overlay-header {
+  /* Instagram-class: light scrim only — never a solid black header band */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--env-0) 72%, transparent) 0%,
-    color-mix(in srgb, var(--env-0) 36%, transparent) 55%,
+    color-mix(in srgb, var(--env-0) 28%, transparent) 0%,
+    color-mix(in srgb, var(--env-0) 10%, transparent) 55%,
     transparent 100%
   );
-  /* No hairline / black rule — Instagram-class overlay, edge fades out */
+  border: none;
   border-bottom: none;
   box-shadow: none;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  outline: none;
+  /* Soft blur without a hard frosted bar edge */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
   transition:
     height var(--motion-fast) var(--motion-ease-standard),
     background var(--motion-fast) linear,
@@ -381,13 +386,13 @@ html[data-role="professional"] {
 }
 html[data-header-state="compact"] .story-overlay-header,
 html[data-header-state="minimal"] .story-overlay-header {
-  /* Soft frosted fade only — never a hard black band or bottom rule */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--glass-bg) 88%, var(--env-0)) 0%,
-    color-mix(in srgb, var(--glass-bg) 55%, transparent) 70%,
+    color-mix(in srgb, var(--env-0) 42%, transparent) 0%,
+    color-mix(in srgb, var(--env-0) 14%, transparent) 65%,
     transparent 100%
   );
+  border: none;
   border-bottom: none;
   box-shadow: none;
 }
