@@ -1,6 +1,6 @@
 # Story Glass — Application Surface System
 
-**Status:** Phase F (Archie study) shipping · A–E live  
+**Status:** Phase G (Feedback · sound) shipping · A–F live  
 **Live:** https://storyhome-1-eqmg.vercel.app  
 Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`../MOTION.md`](../MOTION.md)
 
@@ -14,7 +14,7 @@ Elevate StoryHome from “responsive website” toward a premium app shell — w
 2. Clothing + shell only — no GRPT, no feature creep.  
 3. Readability beats blur. Glass is selective.  
 4. Continuum belonging stays sacred.  
-5. Sound stays design-only until separately approved.  
+5. Sound is sparse, warm, synthesized — mute anytime; respect reduced motion.  
 6. Haptics = facade later; web must work without them.
 
 ## Phase A — Tokens
@@ -79,10 +79,21 @@ Rooms: **Research, Corridors, evidence panels, map chrome, Archie ribbon**.
 4. Corridor analysis/compare + Archie mark → `story-surface` / wells (no cardboard panels).  
 5. No CAD math, honesty copy, Continuum cache, or GRPT.
 
-## Later phases
+## Phase G — Feedback · sound
 
-G Feedback (sound only if approved)
+Sparse, beautiful Web Audio feedback — **approved**.
+
+1. Synthesized cues only (`src/lib/sound/*`) — no MP3 packs, no arcade.  
+2. Room travel: soft enter / back; Archie arrival: cooler study chord.  
+3. Module select + gold primary tap + inquire success — intentional moments only.  
+4. Settings → Experience mute + Preview; `localStorage` `story-sound`.  
+5. Default off when `prefers-reduced-motion`; unlock AudioContext on first gesture.  
+6. No haptics shipping; no GRPT.
+
+## Later
+
+Story Glass clothing program complete. Optional future: native haptics facade.
 
 ## Armor
 
-`npm run test:glass` → `ab` + `c` + `d` + `e` + `f`
+`npm run test:glass` → `ab` + `c` + `d` + `e` + `f` + `g`

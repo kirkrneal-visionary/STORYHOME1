@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { useStorySoundOptional } from "@/components/sound/SoundProvider";
 import { track } from "@/lib/analytics";
 import { createInquiry } from "@/lib/supabase/leads";
 
@@ -17,6 +18,7 @@ export function InquireButton({
   listingLabel: string;
 }) {
   const { user, isLoggedIn } = useAuth();
+  const sound = useStorySoundOptional();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -78,6 +80,7 @@ export function InquireButton({
             try {
               await createInquiry(user.id, listingId, agentId, message.trim() || "I'm interested in this home.");
               track("listing_inquire_submitted", { listing_id: listingId });
+              sound?.play("success", "browse");
               setSent(true);
             } catch {
               setErr("Couldn't send right now. Please try again.");
@@ -86,6 +89,7 @@ export function InquireButton({
             }
           }}
           className="story-press h-10 flex-1 rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy disabled:opacity-60"
+          data-story-sound="tap"
         >
           {busy ? "Sending…" : "Send message"}
         </button>
