@@ -11,15 +11,13 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-GLASS-G
-Story Glass Phase G — Feedback · sparse beautiful sound
+Story Glass clothing + sound complete (A–G). Sound is always on.
 
 ## Next
-- Story Glass clothing complete  
 - Optional models / Messages E2E / licensed Corridors / native haptics when ready  
 
 ## Done
-- STORY-GLASS-F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
+- STORY-GLASS-G (always-on sound) · F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
 - Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  
 
