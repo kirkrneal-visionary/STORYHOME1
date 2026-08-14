@@ -10,7 +10,6 @@ import {
   MAP_BASE_OPTIONS,
   MAP_GOLD,
   MAP_NAVY,
-  MAP_PAPER,
   MAP_TEAL,
   setBaseLayerVisibility,
   type MapBaseLayer,
@@ -353,7 +352,7 @@ export function ListingCadMap({
         </div>
         <div className="flex flex-wrap items-center gap-1">
           <div
-            className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-hairline bg-[var(--background)] p-0.5"
+            className="story-glass inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-[var(--radius-md)] p-0.5"
             title="Basemap"
           >
             <Layers className="ml-1 h-3.5 w-3.5 text-[var(--muted)]" />
@@ -379,10 +378,10 @@ export function ListingCadMap({
             onClick={() => overlays.setPanelOpen((v) => !v)}
             title="BIS CAD layers"
             className={cn(
-              "inline-flex items-center gap-1 rounded-lg border border-hairline px-2 py-1 font-mono text-[10px] font-bold uppercase",
+              "story-press inline-flex items-center gap-1 rounded-[var(--radius-md)] px-2 py-1 font-mono text-[10px] font-bold uppercase",
               overlays.panelOpen
-                ? "border-gold bg-gold text-navy"
-                : "bg-[var(--background)] text-[var(--muted)] hover:text-ink",
+                ? "bg-gold text-navy"
+                : "story-glass text-[var(--muted)] hover:text-ink",
             )}
           >
             <Grid3x3 className="h-3.5 w-3.5" /> CAD
@@ -402,10 +401,7 @@ export function ListingCadMap({
           </div>
         ) : null}
         {!tracts.length && !previewParcel && (
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-3 z-10 mx-auto max-w-[90%] rounded-lg border border-hairline px-3 py-2 text-center text-xs text-ink"
-            style={{ background: MAP_PAPER }}
-          >
+          <div className="story-glass pointer-events-none absolute inset-x-0 bottom-3 z-10 mx-auto max-w-[90%] rounded-[var(--radius-md)] px-3 py-2 text-center text-xs text-paper">
             Link a CAD parcel on the left — the lot outline and pin drop here
             automatically.
           </div>

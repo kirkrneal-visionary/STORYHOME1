@@ -84,7 +84,7 @@ export function CommunityView() {
         {!state.loaded ? (
           <p className="text-sm text-[var(--muted)]">Loading community…</p>
         ) : !member.brokerageId && section !== "qa" ? (
-          <div className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
+          <div className="story-well border-dashed p-8 text-center text-sm text-[var(--muted)]">
             Join a brokerage to access channels and the knowledge library. (Pro
             Q&amp;A is open to everyone.)
           </div>

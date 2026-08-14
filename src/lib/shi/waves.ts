@@ -703,7 +703,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-GLASS-D",
     name: "Story Glass · Phase D Home / social",
     goal: "Home, Suites, Following, Network, Profile, and agent rooms wear living-header insets + Story Glass wells — no cardboard social empty states.",
-    status: "current",
+    status: "done",
     frontend: [
       "HomeSearchHero story-glass search + header/bottom tokens",
       "Saved/Suites/Following/Network/Profile inset tokens",
@@ -716,10 +716,27 @@ export const SHI_WAVES: ShiWave[] = [
       "Sound / GRPT",
     ],
   },
+  {
+    id: "STORY-GLASS-E",
+    name: "Story Glass · Phase E Story Pro work",
+    goal: "Story Pro portal, CRM empties, community, settings, and listing CAD map chrome wear living-header insets + Story Glass — Archie left for Phase F.",
+    status: "current",
+    frontend: [
+      "BrokerPortal/Settings/ShellPaused shell tokens",
+      "CRM/community empty states story-well",
+      "ListingCadMap floating story-glass chrome",
+    ],
+    backend: ["Armor scripts/test-story-glass-e.mjs"],
+    outOfScope: [
+      "Archie Research/Corridors glass (Phase F)",
+      "CRM feature work / GRPT",
+      "Sound",
+    ],
+  },
 ];
 
-/** Active wave — Story Glass Home/social Phase D. */
-export const ARCHIE_CURRENT_WAVE = "STORY-GLASS-D" as const;
+/** Active wave — Story Glass Story Pro Phase E. */
+export const ARCHIE_CURRENT_WAVE = "STORY-GLASS-E" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

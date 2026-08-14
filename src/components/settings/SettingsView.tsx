@@ -62,7 +62,7 @@ export function SettingsView() {
 
   if (!isLoggedIn || !user) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-24 pt-[120px] text-center md:px-6">
+      <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+2rem)] text-center md:px-6">
         <h1 className="font-serif text-3xl font-bold text-ink">Settings</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">Log in to manage your account.</p>
         <Link href="/login?next=/settings" className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy">Log in</Link>
@@ -74,7 +74,7 @@ export function SettingsView() {
   const isBroker = profile?.accountKind === "broker";
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-24 pt-[96px] md:px-6">
+    <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] md:px-6">
       <header>
         <p className="font-mono text-[11px] tracking-[0.16em] text-gold uppercase">Account settings</p>
         <h1 className="mt-2 font-serif text-3xl font-bold text-ink md:text-4xl">Settings</h1>

@@ -237,7 +237,7 @@ function QuestionDetail({
                 "rounded-xl border p-4",
                 accepted
                   ? "border-teal-soft/50 bg-teal-soft/10"
-                  : "border-hairline bg-[var(--surface)]",
+                  : "story-surface",
               )}
             >
               <p className="text-sm leading-relaxed text-ink">{a.body}</p>
