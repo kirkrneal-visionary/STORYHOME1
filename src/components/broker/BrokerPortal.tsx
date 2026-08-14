@@ -129,9 +129,9 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
   return (
     <div
       className={cn(
-        "min-h-dvh px-4 pb-24 md:px-6 md:pb-12",
+        "min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6 md:pb-12",
         /* 72 nav + 40 Archie ribbon when in Intelligence */
-        inArchie ? "pt-[128px]" : "pt-[96px]",
+        inArchie ? "pt-[128px]" : "pt-[calc(var(--story-header-h)+1.5rem)]",
       )}
     >
       <div
@@ -225,7 +225,7 @@ function Gate({
   cta: { href: string; label: string };
 }) {
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 pb-24 pt-[96px] text-center">
+    <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] text-center">
       <h1 className="font-serif text-3xl font-bold text-ink">{title}</h1>
       <p className="mt-3 text-sm text-[var(--muted)]">{description}</p>
       <Link

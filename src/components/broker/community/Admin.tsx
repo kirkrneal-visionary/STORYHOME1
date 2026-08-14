@@ -43,7 +43,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
 
   return (
     <div className="space-y-8">
-      <p className="rounded-lg border border-hairline bg-[var(--surface)] px-4 py-2.5 text-sm text-[var(--muted)]">
+      <p className="story-well px-4 py-2.5 text-sm text-[var(--muted)]">
         Broker Admin · {member.name}. Your authority here applies across the whole
         community — roster, teams, channels, and the library.
       </p>

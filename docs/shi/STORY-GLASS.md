@@ -1,6 +1,6 @@
 # Story Glass — Application Surface System
 
-**Status:** Phase D (Home / social) shipping · A–C live  
+**Status:** Phase E (Story Pro work) shipping · A–D live  
 **Live:** https://storyhome-1-eqmg.vercel.app  
 Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`../MOTION.md`](../MOTION.md)
 
@@ -60,10 +60,19 @@ Rooms: **Home, Suites, Following, Network, Profile, Agents**.
 4. Agent banner → env charcoal, not navy wall.  
 5. No follow/Messages feature work.
 
+## Phase E — Story Pro work
+
+Rooms: **Portal, CRM, community, settings, listing CAD map**.
+
+1. BrokerPortal / Settings / ShellPaused → living-header insets (Archie `pt-[128px]` left for F).  
+2. CRM / community dashed empties → `story-well`.  
+3. ListingCadMap floating chrome → `story-glass`.  
+4. No CRM feature work; CAD math untouched.
+
 ## Later phases
 
-E Work · F Study · G Feedback (sound only if approved)
+F Study (Archie) · G Feedback (sound only if approved)
 
 ## Armor
 
-`npm run test:glass` → `test-story-glass-ab.mjs` + `c` + `d`
+`npm run test:glass` → `ab` + `c` + `d` + `e`

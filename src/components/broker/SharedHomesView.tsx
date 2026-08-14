@@ -250,7 +250,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
           </Card>
         </>
       ) : (
-        <div className="flex items-center gap-2 rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-4 text-sm text-[var(--muted)]">
+        <div className="flex items-center gap-2 story-well border-dashed p-4 text-sm text-[var(--muted)]">
           <Lock className="h-4 w-4" /> The owner shared an improvement report only. Expenses and documents are not included in this grant.
         </div>
       )}
@@ -278,7 +278,7 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Empty({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-10 text-center text-sm text-[var(--muted)]">
+    <div className="story-well border-dashed p-10 text-center text-sm text-[var(--muted)]">
       {text}
     </div>
   );

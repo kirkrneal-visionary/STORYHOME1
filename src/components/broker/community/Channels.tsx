@@ -211,7 +211,7 @@ function ChannelThreadList({
       )}
 
       {threads.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
+        <p className="story-well border-dashed p-8 text-center text-sm text-[var(--muted)]">
           No threads yet. Start one.
         </p>
       ) : (
@@ -341,7 +341,7 @@ function ThreadDetail({
 
       {/* Broker: publish to library */}
       {canPublish && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-hairline bg-[var(--surface)] p-3">
+        <div className="story-well mt-3 flex flex-wrap items-center gap-2 p-3">
           <span className="font-mono text-[10px] font-bold tracking-wider text-[var(--muted)] uppercase">
             Knowledge Library
           </span>
@@ -406,7 +406,7 @@ function ThreadDetail({
               "rounded-xl border p-4",
               p.kind === "update"
                 ? "border-gold/50 bg-gold/10"
-                : "border-hairline bg-[var(--surface)]",
+                : "story-surface",
             )}
           >
             <div className="flex items-center justify-between gap-2">
@@ -424,7 +424,7 @@ function ThreadDetail({
           </li>
         ))}
         {posts.length === 0 && (
-          <li className="rounded-xl border border-dashed border-hairline p-6 text-center text-sm text-[var(--muted)]">
+          <li className="story-well border-dashed p-6 text-center text-sm text-[var(--muted)]">
             No posts match “{query}”.
           </li>
         )}

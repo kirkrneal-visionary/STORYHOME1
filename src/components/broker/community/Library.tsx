@@ -293,7 +293,7 @@ function LibraryThreadReader({
               "rounded-xl border p-4",
               p.kind === "update"
                 ? "border-gold/50 bg-gold/10"
-                : "border-hairline bg-[var(--surface)]",
+                : "story-surface",
             )}
           >
             <div className="flex items-center justify-between gap-2">

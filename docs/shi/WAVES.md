@@ -11,15 +11,15 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-GLASS-D
-Story Glass Phase D — Home / Suites / Following / Network / Profile clothing
+### STORY-GLASS-E
+Story Glass Phase E — Story Pro portal / CRM / settings / listing CAD glass
 
 ## Next
-- Story Glass Phase E — Work (Story Pro)  
+- Story Glass Phase F — Archie study  
 - Optional models / Messages E2E / licensed Corridors when ready  
 
 ## Done
-- STORY-GLASS-C · GLASS-AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
+- STORY-GLASS-D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
 - Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  
 

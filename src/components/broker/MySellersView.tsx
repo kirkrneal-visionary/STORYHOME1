@@ -163,5 +163,5 @@ function SellerCard({ seller, agentId, onChanged }: { seller: SellerClient; agen
 }
 
 function Empty({ text }: { text: string }) {
-  return (<div className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-10 text-center text-sm font-medium text-[var(--muted)]">{text}</div>);
+  return (<div className="story-well border-dashed p-10 text-center text-sm font-medium text-[var(--muted)]">{text}</div>);
 }

@@ -294,8 +294,8 @@ function CampaignPanel({ agentId }: { agentId: string }) {
             Create a trackable link for your Google/Facebook/Instagram ads. Leads who arrive through it are tagged to the campaign so you can see what's working. (Automated ad‑buying &amp; drip messaging connect later via provider APIs.)
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Campaign name (e.g. Livingston Buyers Q3)" className="h-9 min-w-[220px] flex-1 rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold" />
-            <select value={channel} onChange={(e) => setChannel(e.target.value)} className="h-9 rounded-lg border border-hairline bg-[var(--background)] px-2 text-sm text-ink">
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Campaign name (e.g. Livingston Buyers Q3)" className="field-input h-9 min-w-[220px] flex-1" />
+            <select value={channel} onChange={(e) => setChannel(e.target.value)} className="field-input h-9 w-auto">
               {["google", "facebook", "instagram", "zillow", "referral", "other"].map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
             <button type="button" onClick={async () => { if (!name.trim()) return; await addCampaign(agentId, { name: name.trim(), channel }); setName(""); await refresh(); }} className="h-9 rounded-lg bg-gold px-4 text-sm font-bold text-navy">Create</button>
@@ -333,7 +333,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 function Empty({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-10 text-center text-sm font-medium text-[var(--muted)]">
+    <div className="story-well border-dashed p-10 text-center text-sm font-medium text-[var(--muted)]">
       {text}
     </div>
   );
