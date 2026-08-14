@@ -56,7 +56,7 @@ export function CapRateCalculator() {
         : "text-[var(--muted)]";
 
   return (
-    <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5 md:p-6">
+    <section className="story-surface p-5 md:p-6">
       <header className="mb-5 flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)]">
           <TrendingUp className="h-5 w-5" />
@@ -174,7 +174,7 @@ export function CapRateCalculator() {
         </div>
 
         <div className="flex flex-col">
-          <div className="rounded-xl border border-hairline bg-[var(--background)] p-5">
+          <div className="story-well p-5">
             <span className="font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
               Capitalization rate
             </span>
@@ -233,7 +233,7 @@ export function CapRateCalculator() {
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] p-3">
+    <div className="story-well p-3">
       <span className="block font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
         {label}
       </span>

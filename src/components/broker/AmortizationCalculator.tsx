@@ -38,7 +38,7 @@ export function AmortizationCalculator() {
   );
 
   return (
-    <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5 md:p-6">
+    <section className="story-surface p-5 md:p-6">
       <header className="mb-5 flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent)] text-[var(--accent-contrast)]">
           <Calculator className="h-5 w-5" />
@@ -89,7 +89,7 @@ export function AmortizationCalculator() {
                 id="amort-term"
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                className="mt-1.5 h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+                className="field-input mt-1.5"
               >
                 {TERMS.map((t) => (
                   <option key={t} value={t}>
@@ -139,7 +139,7 @@ export function AmortizationCalculator() {
         </div>
 
         <div className="flex flex-col">
-          <div className="rounded-xl border border-hairline bg-[var(--background)] p-5">
+          <div className="story-well p-5">
             <span className="font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
               Estimated monthly payment
             </span>
@@ -195,7 +195,7 @@ export function AmortizationCalculator() {
       </div>
 
       {showSchedule && result.schedule.length > 0 && (
-        <div className="mt-5 overflow-x-auto rounded-xl border border-hairline">
+        <div className="story-well mt-5 overflow-x-auto">
           <table className="w-full min-w-[420px] text-left text-sm">
             <thead>
               <tr className="border-b border-hairline bg-[var(--background)] font-mono text-[11px] uppercase text-[var(--muted)]">
@@ -235,7 +235,7 @@ export function AmortizationCalculator() {
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] p-3">
+    <div className="story-well p-3">
       <span className="block font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
         {label}
       </span>

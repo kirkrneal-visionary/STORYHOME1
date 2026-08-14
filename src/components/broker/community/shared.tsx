@@ -60,7 +60,7 @@ export function GuardrailComposer({
         disabled={disabled}
         placeholder={placeholder}
         onChange={(e) => setBody(e.target.value)}
-        className="w-full rounded-md border border-hairline bg-[var(--background)] px-3 py-2 text-sm text-ink outline-none focus:border-gold disabled:opacity-60"
+        className="field-input h-auto py-2 disabled:opacity-60"
       />
       <GuardrailNotice hits={scan.hits} />
       <div className="mt-2 flex items-center justify-between gap-2">

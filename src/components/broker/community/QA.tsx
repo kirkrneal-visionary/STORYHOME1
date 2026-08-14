@@ -86,18 +86,18 @@ export function CommunityQA({ member }: { member: Member }) {
       </div>
 
       {asking && (
-        <div className="mb-4 space-y-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">
+        <div className="mb-4 space-y-3 story-surface p-4">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Your question, in one line"
-            className="h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+            className="field-input"
           />
           <div className="grid grid-cols-2 gap-3">
             <select
               value={askCat}
               onChange={(e) => setAskCat(e.target.value)}
-              className="h-10 rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+              className="field-input"
             >
               {COMMUNITY_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -109,7 +109,7 @@ export function CommunityQA({ member }: { member: Member }) {
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="tags, comma, separated"
-              className="h-10 rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+              className="field-input"
             />
           </div>
           <GuardrailComposer
@@ -148,7 +148,7 @@ export function CommunityQA({ member }: { member: Member }) {
               <button
                 type="button"
                 onClick={() => setOpenId(q.id)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4 text-left hover:border-gold/40"
+                className="flex w-full items-center justify-between gap-3 story-surface p-4 text-left hover:border-gold/40"
               >
                 <div className="min-w-0">
                   <span className="block truncate font-semibold text-ink">
@@ -209,7 +209,7 @@ function QuestionDetail({
         <ArrowLeft className="h-4 w-4" /> Back to Q&amp;A
       </button>
 
-      <div className="mt-3 rounded-xl border border-hairline bg-[var(--surface)] p-5">
+      <div className="mt-3 story-surface p-5">
         <p className="font-mono text-[11px] text-[var(--muted)] uppercase">
           {question.category}
           {question.tags.length > 0 && ` · ${question.tags.join(", ")}`}
@@ -267,7 +267,7 @@ function QuestionDetail({
         })}
       </ul>
 
-      <div className="mt-5 rounded-xl border border-hairline bg-[var(--surface)] p-4">
+      <div className="mt-5 story-surface p-4">
         <GuardrailComposer
           placeholder="Share your expertise…"
           submitLabel="Post answer"

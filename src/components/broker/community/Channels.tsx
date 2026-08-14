@@ -176,18 +176,18 @@ function ChannelThreadList({
       </div>
 
       {composing && (
-        <div className="mb-4 space-y-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">
+        <div className="mb-4 space-y-3 story-surface p-4">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Thread title"
-            className="h-10 w-full rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+            className="field-input"
           />
           <div className="grid grid-cols-2 gap-3">
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-10 rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+              className="field-input"
             >
               {COMMUNITY_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -199,7 +199,7 @@ function ChannelThreadList({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="tags, comma, separated"
-              className="h-10 rounded-md border border-hairline bg-[var(--background)] px-3 text-sm text-ink outline-none focus:border-gold"
+              className="field-input"
             />
           </div>
           <GuardrailComposer
@@ -221,7 +221,7 @@ function ChannelThreadList({
               <button
                 type="button"
                 onClick={() => onOpen(t.id)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4 text-left hover:border-gold/40"
+                className="flex w-full items-center justify-between gap-3 story-surface p-4 text-left hover:border-gold/40"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -431,7 +431,7 @@ function ThreadDetail({
       </ul>
 
       {/* Reply composer */}
-      <div className="mt-5 rounded-xl border border-hairline bg-[var(--surface)] p-4">
+      <div className="mt-5 story-surface p-4">
         {thread.locked && !canModerate ? (
           <p className="text-sm text-[var(--muted)]">
             This thread is locked. Only moderators can reply.

@@ -163,7 +163,7 @@ export function MyListingsView() {
       </div>
 
       {scanNote && (
-        <p className="rounded-lg border border-hairline bg-[var(--surface)] px-4 py-2.5 text-sm text-ink">
+        <p className="story-well px-4 py-2.5 text-sm text-ink">
           {scanNote}
         </p>
       )}
@@ -265,12 +265,12 @@ function ListingCard({
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-2xl border border-hairline bg-[var(--surface)]",
+        "story-card overflow-hidden",
         dimmed && "opacity-70",
       )}
     >
       <div className="flex gap-4 p-4">
-        <div className="relative hidden h-24 w-32 shrink-0 overflow-hidden rounded-lg border border-hairline bg-[var(--background)] sm:block">
+        <div className="story-well relative hidden h-24 w-32 shrink-0 overflow-hidden sm:block">
           {primaryPhoto ? (
             <Image
               src={primaryPhoto}
@@ -332,7 +332,7 @@ function ListingCard({
           <select
             value={listing.status}
             onChange={(e) => onStatus(e.target.value as ListingStatus)}
-            className="h-8 rounded-md border border-hairline bg-[var(--surface)] px-2 text-xs text-ink outline-none focus:border-gold"
+            className="field-input h-8 w-auto text-xs"
           >
             {LISTING_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -474,7 +474,7 @@ function SellerShare({ listingId }: { listingId: string }) {
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-10 text-center text-sm font-medium text-[var(--muted)]">
+    <div className="story-well border-dashed p-10 text-center text-sm font-medium text-[var(--muted)]">
       {text}
     </div>
   );

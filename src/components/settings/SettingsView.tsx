@@ -114,7 +114,7 @@ function Card({ icon: Icon, title, subtitle, children }: {
   icon: typeof UserRound; title: string; subtitle?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
+    <section className="story-surface p-5">
       <div className="flex items-center gap-2">
         <Icon className="h-5 w-5 text-[var(--muted)]" />
         <div>
@@ -130,7 +130,7 @@ function Card({ icon: Icon, title, subtitle, children }: {
 function SaveButton({ busy, note }: { busy: boolean; note: string }) {
   return (
     <div className="mt-4 flex items-center gap-3">
-      <button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-lg bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60">
+      <button type="submit" disabled={busy} className="story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60">
         <Save className="h-4 w-4" /> {busy ? "Saving…" : "Save"}
       </button>
       {note && <span className="text-sm text-teal-soft">{note}</span>}
@@ -375,7 +375,7 @@ function RosterManager({ brokerageId, brokerId, brokerTrecLicense }: {
           onChange={(e) => setLicense(e.target.value)}
           placeholder="Agent TREC license # (e.g. 724479)"
           inputMode="numeric"
-          className="h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold"
+          className="h-11 w-full story-surface px-4 text-sm text-ink outline-none focus:border-gold"
         />
         <button
           type="button"
@@ -411,7 +411,7 @@ function RosterManager({ brokerageId, brokerId, brokerTrecLicense }: {
         ) : (
           <ul className="mt-2 space-y-2">
             {agents.map((a) => (
-              <li key={a.id} className="flex items-center justify-between rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+              <li key={a.id} className="flex items-center justify-between story-well px-3 py-2">
                 <span className="text-sm text-ink">{a.fullName}{a.primaryMarketCity ? <span className="text-[var(--muted)]"> · {a.primaryMarketCity}</span> : null}</span>
                 <button
                   type="button"
@@ -432,7 +432,7 @@ function RosterManager({ brokerageId, brokerId, brokerTrecLicense }: {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+    <div className="story-well px-3 py-2">
       <p className="text-[10px] uppercase text-[var(--muted)]">{label}</p>
       <p className="mt-0.5 text-sm text-ink">{value}</p>
     </div>

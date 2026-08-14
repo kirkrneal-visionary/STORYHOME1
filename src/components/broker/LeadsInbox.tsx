@@ -111,7 +111,7 @@ export function LeadsInbox() {
           const claimable = canAgentClaim(r, me);
           const wonByMe = r.winnerAgentId === me;
           return (
-            <div key={r.consumerId} className="rounded-xl border border-hairline bg-[var(--background)] p-4">
+            <div key={r.consumerId} className="story-well p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-serif text-base font-bold text-ink">{r.consumerName}</p>
@@ -172,5 +172,5 @@ function Badge({ tone, children }: { tone: "win" | "active" | "muted"; children:
 }
 
 function Panel({ children }: { children: React.ReactNode }) {
-  return <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">{children}</section>;
+  return <section className="story-surface p-5">{children}</section>;
 }

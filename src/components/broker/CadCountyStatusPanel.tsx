@@ -43,7 +43,7 @@ export function CadCountyStatusPanel() {
   ).length;
 
   return (
-    <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+    <section className="story-surface p-4">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

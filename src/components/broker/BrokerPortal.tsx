@@ -166,7 +166,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
             <div
               role="tablist"
               aria-label="Broker portal sections"
-              className="mt-6 flex items-center gap-2 overflow-x-auto rounded-2xl border border-hairline/80 bg-[color-mix(in_srgb,var(--surface)_88%,var(--paper))]/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] backdrop-blur-md"
+              className="story-chrome mt-6 flex items-center gap-2 overflow-x-auto rounded-[var(--radius-lg)] border p-1.5"
             >
               {TABS.map(({ id, label, icon: Icon }) => {
                 const active = tab === id;
@@ -179,10 +179,10 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
                     aria-label={label}
                     onClick={() => selectTab(id)}
                     className={cn(
-                      "inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold transition-colors",
+                      "story-press inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3.5 text-sm font-semibold transition-colors",
                       active
-                        ? "bg-navy text-gold shadow-sm"
-                        : "text-[var(--muted)] hover:bg-white/70 hover:text-ink",
+                        ? "bg-navy text-gold"
+                        : "text-[var(--muted)] hover:bg-white/10 hover:text-ink",
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -192,7 +192,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
               })}
               <Link
                 href={`/agents/${user.id}`}
-                className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/70 hover:text-ink"
+                className="story-press inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/10 hover:text-ink"
               >
                 <UserRound className="h-4 w-4" />
                 Public Profile
@@ -230,7 +230,7 @@ function Gate({
       <p className="mt-3 text-sm text-[var(--muted)]">{description}</p>
       <Link
         href={cta.href}
-        className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-navy px-5 text-sm font-bold text-gold"
+        className="story-press mt-6 inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-navy px-5 text-sm font-bold text-gold"
       >
         {cta.label}
       </Link>
