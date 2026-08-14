@@ -156,7 +156,7 @@ export default function MarketplaceView() {
   const activeFilterCount = countActiveFilters(filters);
 
   return (
-    <div className="flex h-dvh flex-col pt-[var(--story-header-h)]">
+    <div className="flex h-dvh flex-col pt-[var(--story-safe-top)]">
       <SearchToolbar
         filters={filters}
         onChange={setFilters}

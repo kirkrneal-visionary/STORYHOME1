@@ -61,7 +61,7 @@ export function NetworkView() {
   }, [pros, role]);
 
   return (
-    <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] md:px-6 md:pb-10">
+    <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6 md:pb-10">
       <div className="mx-auto max-w-4xl">
         <h1 className="font-serif text-3xl font-bold text-ink">Network</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">

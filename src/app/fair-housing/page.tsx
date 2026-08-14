@@ -4,7 +4,7 @@ export const metadata: Metadata = { title: "Fair Housing" };
 
 export default function FairHousingPage() {
   return (
-    <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6">
+    <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">
       <div className="mx-auto max-w-3xl">
         <h1 className="font-serif text-4xl font-bold text-ink">
           Fair Housing Commitment

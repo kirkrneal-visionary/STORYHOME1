@@ -84,7 +84,10 @@ export function FederatedNavDrawer({
         aria-labelledby={titleId}
         className="story-chrome absolute top-0 right-0 flex h-full w-[min(100%,22rem)] flex-col border-l shadow-[-18px_0_40px_-24px_rgba(0,0,0,0.65)] motion-safe:animate-[archieDrawerIn_220ms_ease-out]"
       >
-        <div className="flex h-[72px] items-center justify-between border-b border-hairline px-4">
+        <div
+          className="flex items-center justify-between border-b border-hairline px-4"
+          style={{ height: "var(--story-header-h)" }}
+        >
           <div>
             <p
               id={titleId}

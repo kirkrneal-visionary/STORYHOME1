@@ -4,7 +4,7 @@ export const metadata: Metadata = { title: "Contact" };
 
 export default function ContactPage() {
   return (
-    <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6">
+    <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">
       <div className="mx-auto max-w-3xl">
         <h1 className="font-serif text-4xl font-bold text-ink">Contact</h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">

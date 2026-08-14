@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, IBM_Plex_Mono, Poppins } from "next/font/google";
 import GlobalNav from "@/components/GlobalNav";
 import Footer from "@/components/Footer";
@@ -36,6 +36,13 @@ export const metadata: Metadata = {
   },
   description:
     "Every home has a story. East Texas real estate marketplace and professional network — built by a realtor, for realtors. Launching across Polk, Trinity, Angelina, Tyler, San Jacinto, Liberty, and Walker counties.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0b1220",
 };
 
 export default function RootLayout({

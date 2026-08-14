@@ -143,12 +143,27 @@ export default function GlobalNav() {
     <>
       <nav
         data-header-state={headerState}
-        className="story-chrome fixed top-0 left-0 z-50 flex w-full items-center justify-between border-b px-4 md:px-6"
-        style={{ height: "var(--story-header-h)" }}
+        data-story-overlay-header
+        className="story-overlay-header fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 md:px-6"
+        style={{
+          height: "var(--story-safe-top)",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+        }}
       >
+        {/* Mobile: menu left · brand center · actions right (Instagram placement) */}
+        <button
+          type="button"
+          className="story-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold md:hidden"
+          aria-label="Open network menu"
+          aria-expanded={drawerOpen}
+          onClick={() => setDrawerOpen(true)}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+
         <Link
           href="/"
-          className="story-living-brand flex min-w-0 select-none items-center"
+          className="story-living-brand absolute left-1/2 flex min-w-0 -translate-x-1/2 select-none items-center md:static md:translate-x-0"
           aria-label="StoryHome — Every home has a story"
         >
           <span className="story-living-mark h-9 w-9 items-center justify-center rounded-full bg-navy ring-1 ring-gold/50">
@@ -264,16 +279,6 @@ export default function GlobalNav() {
             />
           ) : null}
 
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:text-gold md:hidden"
-            aria-label="Open network menu"
-            aria-expanded={drawerOpen}
-            onClick={() => setDrawerOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-
           {isLoggedIn &&
             isProAccount &&
             (role === "professional" ? (
@@ -303,7 +308,7 @@ export default function GlobalNav() {
                 aria-label="Settings"
                 title="Settings"
                 className={cn(
-                  "hidden h-10 w-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:text-gold sm:flex",
+                  "hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:text-gold sm:flex",
                   pathname.startsWith("/settings") && "text-gold",
                 )}
               >
@@ -311,11 +316,11 @@ export default function GlobalNav() {
               </Link>
               <Link
                 href="/profile"
-                className="flex h-10 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] pl-1 pr-2 font-bold text-navy sm:pr-3"
+                className="flex h-10 items-center gap-2 rounded-full pl-1 pr-1 font-bold text-navy sm:border sm:border-hairline sm:bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] sm:pr-3"
                 aria-label="Profile"
                 title={accountLabel(user)}
               >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs text-paper">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs text-paper ring-1 ring-gold/40">
                   {user.initials}
                 </span>
                 <span className="hidden flex-col leading-tight sm:flex">

@@ -14,12 +14,12 @@ assert.match(css, /--story-archie-ribbon-h:\s*40px/);
 
 const portal = read("src/components/broker/BrokerPortal.tsx");
 assert.match(portal, /--story-archie-ribbon-h/);
-assert.match(portal, /--story-header-h/);
+assert.match(portal, /--story-header-h|--story-safe-top/);
 assert.doesNotMatch(portal, /pt-\[128px\]/);
 
 const ribbon = read("src/components/nav/NetworkContextRibbon.tsx");
 assert.match(ribbon, /story-glass/);
-assert.match(ribbon, /--story-header-h/);
+assert.match(ribbon, /--story-header-h|--story-safe-top/);
 assert.match(ribbon, /--story-archie-ribbon-h/);
 assert.doesNotMatch(ribbon, /top-\[72px\]/);
 assert.doesNotMatch(ribbon, /navy-deep\)_92%/);

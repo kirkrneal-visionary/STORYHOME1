@@ -29,7 +29,7 @@ export function NetworkContextRibbon() {
     <div
       role="navigation"
       aria-label={`${archie.label} modules`}
-      className="story-glass fixed top-[var(--story-header-h)] left-0 z-40 flex w-full items-center border-b border-[color-mix(in_srgb,var(--gold)_28%,var(--glass-border))] px-3 motion-safe:animate-[archieRibbonIn_220ms_ease-out] md:px-6"
+      className="story-glass fixed top-[var(--story-safe-top)] left-0 z-40 flex w-full items-center border-b border-[color-mix(in_srgb,var(--gold)_28%,var(--glass-border))] px-3 motion-safe:animate-[archieRibbonIn_220ms_ease-out] md:px-6"
       style={{ height: "var(--story-archie-ribbon-h)" }}
     >
       <div className="mx-auto flex w-full max-w-[90rem] items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:gap-3 [&::-webkit-scrollbar]:hidden">

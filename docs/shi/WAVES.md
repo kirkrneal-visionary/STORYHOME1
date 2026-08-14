@@ -11,9 +11,11 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-Story Glass clothing + sound complete (A–G). Sound is always on.
+### STORY-SHELL-HEADER
+Overlay living header across platforms (Instagram-class). Rest of shell deferred.
 
 ## Next
+- Decide next shell pieces after header review (nav language / maps / wordmark)  
 - Optional models / Messages E2E / licensed Corridors / native haptics when ready  
 
 ## Done

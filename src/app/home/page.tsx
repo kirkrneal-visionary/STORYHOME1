@@ -9,7 +9,7 @@ export default function MyHomePage() {
 
   if (!isLoggedIn) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-24 pt-[120px] text-center md:px-6">
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-[calc(var(--story-safe-top)+2rem)] text-center md:px-6">
         <h1 className="font-serif text-3xl font-bold text-ink">My Home</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
           Your private homeowner vault — renovation history, expenses, documents,

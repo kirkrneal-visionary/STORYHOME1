@@ -4,7 +4,7 @@ export const metadata: Metadata = { title: "Terms of Use (Draft)" };
 
 export default function TermsPage() {
   return (
-    <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6">
+    <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-xl border border-gold/50 bg-gold/10 p-4 text-sm text-ink">
           <strong>DRAFT — pending legal review.</strong> This outline describes the

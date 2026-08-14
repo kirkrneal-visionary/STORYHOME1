@@ -62,7 +62,7 @@ export function LoginClient() {
 
   if (isLoggedIn && user) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-24 pt-[96px] md:px-6">
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
         <h1 className="font-serif text-3xl font-bold text-ink">
           You’re signed in
         </h1>
@@ -90,7 +90,7 @@ export function LoginClient() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-[96px] md:px-6">
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
       <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
         Story Home access
       </p>

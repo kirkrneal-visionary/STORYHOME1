@@ -25,7 +25,7 @@ assert.match(layout, /Fraunces/);
 assert.match(layout, /--font-fraunces/);
 
 const nav = read("src/components/GlobalNav.tsx");
-assert.match(nav, /story-chrome/);
+assert.match(nav, /story-chrome|story-overlay-header/);
 assert.match(nav, /font-serif/);
 
 const modal = read("src/components/suites/SaveToSuiteModal.tsx");
