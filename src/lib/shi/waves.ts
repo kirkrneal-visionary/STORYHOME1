@@ -776,6 +776,7 @@ export const SHI_WAVES: ShiWave[] = [
     status: "current",
     frontend: [
       "story-overlay-header + --story-safe-top + viewport-fit cover",
+      "no bottom hairline / black rule under overlay header (all states)",
       "Mobile menu · centered brand · actions; desktop brand + links",
       "Media heroes under header; rooms use safe-top pads",
       "Archie ribbon tracks safe-top",
