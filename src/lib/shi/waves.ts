@@ -669,7 +669,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-GLASS-AB",
     name: "Story Glass · Phase A/B shell",
     goal: "Graphite operating environment + Story Glass tokens; living header and floating phone bottom nav — prototype room Marketplace.",
-    status: "current",
+    status: "done",
     frontend: [
       "globals env/glass/type tokens; navy as brand not wall",
       "useLivingHeader Full→Compact→Minimal with hysteresis",
@@ -682,10 +682,27 @@ export const SHI_WAVES: ShiWave[] = [
       "New product features / GRPT",
     ],
   },
+  {
+    id: "STORY-GLASS-C",
+    name: "Story Glass · Phase C browse",
+    goal: "Marketplace + Listing wear Story Glass — map canvas chrome, denser content-owns-screen list, living-header listing photo plane.",
+    status: "current",
+    frontend: [
+      "MarketplaceMap tool/CAD/parcels story-glass (no navy/90)",
+      "SearchToolbar story-glass; denser ListingCard story-surface",
+      "Listing detail header tokens + glass back + bottom clearance",
+    ],
+    backend: ["Armor scripts/test-story-glass-c.mjs"],
+    outOfScope: [
+      "CAD/Continuum cache logic changes",
+      "Home/social/Pro/Archie migration (D–F)",
+      "Sound / new features",
+    ],
+  },
 ];
 
-/** Active wave — Story Glass shell Phase A/B. */
-export const ARCHIE_CURRENT_WAVE = "STORY-GLASS-AB" as const;
+/** Active wave — Story Glass browse Phase C. */
+export const ARCHIE_CURRENT_WAVE = "STORY-GLASS-C" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

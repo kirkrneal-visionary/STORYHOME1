@@ -32,7 +32,7 @@ const MarketplaceMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-full items-center justify-center bg-navy-deep text-sm text-paper/60">
+      <div className="flex h-full items-center justify-center bg-[var(--env-0)] text-sm text-paper/60">
         Loading map…
       </div>
     ),
@@ -173,12 +173,12 @@ export default function MarketplaceView() {
           className={
             mobileView === "map"
               ? "hidden"
-              : "flex w-full min-h-0 flex-col border-r border-hairline md:flex md:w-[44%] lg:w-[40%]"
+              : "flex w-full min-h-0 flex-col md:flex md:w-[44%] md:border-r md:border-hairline/40 lg:w-[40%]"
           }
         >
           <div
             ref={listRef}
-            className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-[var(--story-bottom-clearance)] md:pb-3"
+            className="min-h-0 flex-1 overflow-y-auto px-2 py-2 pb-[var(--story-bottom-clearance)] md:px-3 md:pb-3"
           >
             {loading ? (
               <div className="story-skeleton story-well px-5 py-12 text-center text-sm text-[var(--muted)]">
@@ -224,7 +224,7 @@ export default function MarketplaceView() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-2">
                 {listings.map((listing) => (
                   <ListingCard
                     key={listing.id}

@@ -227,6 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` · `ARCHIE-COUNTY-OPS-SCALE` · `STORY-FEEL-WAVE-1` · `STORY-FEEL-WAVE-2` · `STORY-FEEL-WAVE-3` · `STORY-FEEL-WAVE-4` · `STORY-GLASS-AB` (graphite env + floating glass nav prototype).
+**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` · `ARCHIE-COUNTY-OPS-SCALE` · `STORY-FEEL-WAVE-1` · `STORY-FEEL-WAVE-2` · `STORY-FEEL-WAVE-3` · `STORY-FEEL-WAVE-4` · `STORY-GLASS-AB` · `STORY-GLASS-C` (Marketplace/Listing browse glass).
 
-**Next coded wave (when green-lit):** Story Glass Phase C (browse) · optional models / Messages E2E. See [`shi/STORY-GLASS.md`](./shi/STORY-GLASS.md).
+**Next coded wave (when green-lit):** Story Glass Phase D (Home/social) · optional models / Messages E2E. See [`shi/STORY-GLASS.md`](./shi/STORY-GLASS.md).

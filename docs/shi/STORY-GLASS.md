@@ -1,6 +1,6 @@
-# Story Glass — Application Surface System (Phase A / B)
+# Story Glass — Application Surface System
 
-**Status:** Phase A (tokens) + Phase B (shell prototype) shipping  
+**Status:** Phase C (browse) shipping · A/B live  
 **Live:** https://storyhome-1-eqmg.vercel.app  
 Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`../MOTION.md`](../MOTION.md)
 
@@ -40,10 +40,20 @@ Primary validation room: **Marketplace (phone)**.
 3. Gold only for **active** / important — not every icon.  
 4. Desktop top bar keeps glass tokens; pill nav remains phone-only.
 
-## Later phases (not this PR)
+## Phase C — Browse migration
 
-C Browse migration · D Home/social · E Work · F Study · G Feedback (sound only if approved)
+Rooms: **Marketplace + Listing**.
+
+1. Map tool chrome → `story-glass` (map stays canvas; no navy/90 pills).  
+2. Search toolbar → glass strip; denser edge-to-edge listing stack.  
+3. Listing cards → `story-surface` + glass price chip.  
+4. Listing detail → living-header tokens, glass back control, bottom-nav clearance.  
+5. Continuum marketplace cache untouched.
+
+## Later phases
+
+D Home/social · E Work · F Study · G Feedback (sound only if approved)
 
 ## Armor
 
-`npm run test:glass` → `scripts/test-story-glass-ab.mjs`
+`npm run test:glass` → `test-story-glass-ab.mjs` + `test-story-glass-c.mjs`

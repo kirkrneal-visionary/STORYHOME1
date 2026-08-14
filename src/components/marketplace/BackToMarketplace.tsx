@@ -31,7 +31,7 @@ export function BackToMarketplace({
       }}
       className={
         overlay
-          ? "story-press inline-flex items-center gap-2 rounded-full border border-white/20 bg-navy/45 px-3 py-1.5 text-sm text-paper backdrop-blur-md hover:border-gold/50 hover:text-gold"
+          ? "story-press story-glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm text-paper hover:border-gold/50 hover:text-gold"
           : "story-press inline-flex items-center gap-2 pt-6 text-sm text-[var(--muted)] hover:text-ink"
       }
     >

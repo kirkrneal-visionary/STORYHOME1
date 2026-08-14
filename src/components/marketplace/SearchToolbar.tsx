@@ -33,8 +33,8 @@ export function SearchToolbar({
   }
 
   return (
-    <div className="story-chrome border-b px-3 py-3 md:px-4">
-      <div className="flex flex-col gap-3">
+    <div className="story-glass border-b-0 px-3 py-2.5 md:px-4 md:py-3">
+      <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="search"
@@ -106,9 +106,19 @@ export function SearchToolbar({
           <button
             type="button"
             onClick={onOpenMore}
-            className="story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border border-hairline bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] px-3 text-sm font-semibold text-ink"
+            className={cn(
+              "story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-semibold",
+              activeFilterCount > 0
+                ? "border-gold/50 bg-gold/15 text-ink"
+                : "border-hairline bg-[color-mix(in_srgb,var(--glass-bg)_80%,transparent)] text-ink",
+            )}
           >
-            <SlidersHorizontal className="h-4 w-4 text-gold" />
+            <SlidersHorizontal
+              className={cn(
+                "h-4 w-4",
+                activeFilterCount > 0 ? "text-gold" : "text-[var(--muted)]",
+              )}
+            />
             More
             {activeFilterCount > 0 && (
               <span className="rounded-full bg-gold px-1.5 py-0.5 font-mono text-[10px] font-bold text-navy">

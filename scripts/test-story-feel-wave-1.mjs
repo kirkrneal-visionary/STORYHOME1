@@ -34,7 +34,7 @@ assert.match(modal, /story-scrim/);
 assert.match(modal, /story-well/);
 
 const card = read("src/components/ListingCard.tsx");
-assert.match(card, /story-card/);
+assert.match(card, /story-card|story-surface/);
 
 const plan = read("docs/shi/STORY-FEEL-WAVES.md");
 assert.match(plan, /STORY-FEEL-WAVE-1/);

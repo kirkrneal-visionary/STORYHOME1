@@ -11,15 +11,15 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-GLASS-AB
-Story Glass Phase A/B — graphite env tokens + living header + floating phone nav (Marketplace prototype)
+### STORY-GLASS-C
+Story Glass Phase C — Marketplace + Listing content-owns-screen browse clothing
 
 ## Next
-- Story Glass Phase C — browse migration (Marketplace/Listing polish)  
+- Story Glass Phase D — Home / social  
 - Optional models / Messages E2E / licensed Corridors when ready  
 
 ## Done
-- STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
+- STORY-GLASS-AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
 - Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  
 
