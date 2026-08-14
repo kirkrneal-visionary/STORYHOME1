@@ -10,20 +10,20 @@ const root = process.cwd();
 const read = (rel) => readFileSync(join(root, rel), "utf8");
 
 const portal = read("src/components/broker/BrokerPortal.tsx");
-assert.match(portal, /story-chrome/);
-assert.match(portal, /--story-header-h/);
+assert.match(portal, /story-chrome|story-overlay-header/);
+assert.match(portal, /--story-header-h|--story-safe-top/);
 assert.match(portal, /--story-bottom-clearance/);
 assert.doesNotMatch(portal, /: "pt-\[96px\]"/);
 assert.match(portal, /--story-archie-ribbon-h/); // Archie living inset — Phase F
 assert.doesNotMatch(portal, /pt-\[128px\]/);
 
 const settings = read("src/components/settings/SettingsView.tsx");
-assert.match(settings, /--story-header-h/);
+assert.match(settings, /--story-header-h|--story-safe-top/);
 assert.match(settings, /--story-bottom-clearance/);
 assert.doesNotMatch(settings, /pt-\[96px\]|pt-\[120px\]|pb-24/);
 
 const paused = read("src/components/ShellPausedView.tsx");
-assert.match(paused, /--story-header-h/);
+assert.match(paused, /--story-header-h|--story-safe-top/);
 assert.doesNotMatch(paused, /pt-\[88px\]/);
 
 const buyers = read("src/components/broker/MyBuyersView.tsx");

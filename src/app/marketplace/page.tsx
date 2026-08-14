@@ -10,7 +10,7 @@ export default function MarketplacePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-dvh items-center justify-center pt-[72px] text-sm text-[var(--muted)]">
+        <div className="flex min-h-dvh items-center justify-center pt-[var(--story-safe-top)] text-sm text-[var(--muted)]">
           Loading East Texas listings…
         </div>
       }

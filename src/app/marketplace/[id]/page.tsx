@@ -46,9 +46,9 @@ export default async function ListingDetailPage({ params }: PageProps) {
         props={{ listing_id: listing.id }}
       />
 
-      {/* Full-bleed photo plane — back control overlays, not a separate chrome row */}
+      {/* Full-bleed photo — overlays under living header (Instagram-class) */}
       <div
-        className="relative aspect-[4/3] w-full bg-[var(--env-1)] pt-[var(--story-header-h)] md:aspect-[21/9] md:pt-0"
+        className="relative aspect-[4/3] w-full bg-[var(--env-1)] md:aspect-[21/9]"
         style={{ viewTransitionName: `listing-photo-${listing.id}` }}
       >
         {listing.photoUrl ? (
@@ -65,7 +65,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             No photo provided
           </div>
         )}
-        <div className="absolute inset-x-0 top-[var(--story-header-h)] z-10 bg-gradient-to-b from-[color-mix(in_srgb,var(--env-0)_75%,transparent)] to-transparent px-4 pb-10 pt-3 md:top-0 md:pt-[calc(var(--story-header-h)+0.75rem)]">
+        <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-[color-mix(in_srgb,var(--env-0)_75%,transparent)] to-transparent px-4 pb-10 pt-[calc(var(--story-safe-top)+0.35rem)]">
           <BackToMarketplace overlay />
         </div>
       </div>
@@ -103,7 +103,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
           </div>
         </div>
 
-        <aside className="story-surface h-fit p-5 md:sticky md:top-[calc(var(--story-header-h)+0.75rem)]">
+        <aside className="story-surface h-fit p-5 md:sticky md:top-[calc(var(--story-safe-top)+0.75rem)]">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] font-bold text-navy">
               {agent.initials}

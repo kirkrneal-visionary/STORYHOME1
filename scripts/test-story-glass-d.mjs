@@ -18,11 +18,11 @@ assert.match(home, /--story-header-h|--story-bottom-clearance/);
 assert.doesNotMatch(home, /navy\)_78%/);
 
 const saved = read("src/app/saved/page.tsx");
-assert.match(saved, /--story-header-h/);
+assert.match(saved, /--story-header-h|--story-safe-top/);
 assert.doesNotMatch(saved, /pt-\[72px\]/);
 
 const suite = read("src/app/saved/[suiteId]/page.tsx");
-assert.match(suite, /--story-header-h/);
+assert.match(suite, /--story-header-h|--story-safe-top/);
 assert.doesNotMatch(suite, /pt-\[72px\]/);
 
 const player = read("src/components/suites/SuitePlayer.tsx");
@@ -31,24 +31,24 @@ assert.match(player, /--story-bottom-clearance/);
 assert.doesNotMatch(player, /rounded-2xl border border-hairline bg-\[var\(--surface\)\]/);
 
 const following = read("src/app/following/page.tsx");
-assert.match(following, /--story-header-h/);
+assert.match(following, /--story-header-h|--story-safe-top/);
 assert.match(following, /--story-bottom-clearance/);
 assert.match(following, /story-well|story-surface/);
 assert.doesNotMatch(following, /pt-\[96px\]/);
 
 const network = read("src/components/NetworkView.tsx");
-assert.match(network, /--story-header-h/);
+assert.match(network, /--story-header-h|--story-safe-top/);
 assert.match(network, /--story-bottom-clearance/);
 assert.match(network, /story-glass|story-surface|story-well/);
 assert.doesNotMatch(network, /pt-\[96px\]/);
 
 const agents = read("src/app/agents/[id]/page.tsx");
-assert.match(agents, /--story-header-h/);
+assert.match(agents, /--story-header-h|--story-safe-top/);
 assert.match(agents, /env-1|story-well/);
 assert.doesNotMatch(agents, /bg-navy md:h-52|pt-\[72px\]/);
 
 const profile = read("src/app/profile/page.tsx");
-assert.match(profile, /--story-header-h/);
+assert.match(profile, /--story-header-h|--story-safe-top/);
 assert.doesNotMatch(profile, /pt-\[96px\]/);
 
 const plan = read("docs/shi/STORY-GLASS.md");

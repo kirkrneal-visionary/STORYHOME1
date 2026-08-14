@@ -73,7 +73,7 @@ export function HomeSearchHero() {
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,21,37,0.68)_0%,rgba(14,30,56,0.72)_48%,rgba(9,21,37,0.92)_100%)]" />
 
-        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-[calc(var(--story-header-h)+4rem)] md:min-h-[85vh] md:px-6 md:pt-[calc(var(--story-header-h)+5rem)]">
+        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-[calc(var(--story-safe-top)+3rem)] md:min-h-[85vh] md:px-6 md:pt-[calc(var(--story-safe-top)+4rem)]">
           <p className="font-serif text-3xl font-bold tracking-[-0.03em] text-paper md:text-4xl">
             <span className="text-[var(--brand-word)]">STORY</span>
             <span className="text-[var(--brand-home)]">HOME</span>

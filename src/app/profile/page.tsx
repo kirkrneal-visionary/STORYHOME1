@@ -9,7 +9,7 @@ export default function ProfilePage() {
 
   if (!isLoggedIn || !user) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] text-center md:px-6">
+      <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] text-center md:px-6">
         <h1 className="font-serif text-3xl font-bold text-ink">Profile</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
           Log in to manage your Story Home account, suites, and messages.
@@ -25,7 +25,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] md:px-6 md:pb-10">
+    <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6 md:pb-10">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center gap-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] text-lg font-bold text-navy">

@@ -34,11 +34,11 @@ export function BrokeragePublicView({ slug }: { slug: string }) {
   }, [slug]);
 
   if (loading) {
-    return <div className="mx-auto max-w-4xl px-4 pt-[120px] text-sm text-[var(--muted)]">Loading brokerage…</div>;
+    return <div className="mx-auto max-w-4xl px-4 pt-[calc(var(--story-safe-top)+2rem)] text-sm text-[var(--muted)]">Loading brokerage…</div>;
   }
   if (!brokerage) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-24 pt-[120px] text-center">
+      <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] text-center">
         <h1 className="font-serif text-3xl font-bold text-ink">Brokerage not found</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">This brokerage page doesn&apos;t exist yet.</p>
         <Link href="/marketplace" className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy">Browse listings</Link>
@@ -51,7 +51,7 @@ export function BrokeragePublicView({ slug }: { slug: string }) {
     .join(", ");
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-24 pt-[96px] md:px-6">
+    <div className="mx-auto max-w-4xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
       <div className="flex items-start gap-4">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-hairline bg-[var(--surface)]">
           {brokerage.logoUrl ? (

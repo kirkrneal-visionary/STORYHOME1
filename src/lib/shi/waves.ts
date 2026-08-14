@@ -769,10 +769,28 @@ export const SHI_WAVES: ShiWave[] = [
       "CAD / Continuum logic changes",
     ],
   },
+  {
+    id: "STORY-SHELL-HEADER",
+    name: "Unified shell · overlay header",
+    goal: "Instagram-class overlay living header across phone/tablet/desktop — content under chrome; nav language deferred.",
+    status: "current",
+    frontend: [
+      "story-overlay-header + --story-safe-top + viewport-fit cover",
+      "Mobile menu · centered brand · actions; desktop brand + links",
+      "Media heroes under header; rooms use safe-top pads",
+      "Archie ribbon tracks safe-top",
+    ],
+    backend: ["Armor scripts/test-story-shell-header.mjs"],
+    outOfScope: [
+      "Primary nav unification (pill↔desktop cluster)",
+      "MapStage / wordmark asset / room memory",
+      "GRPT / CAD / sound changes",
+    ],
+  },
 ];
 
-/** Active wave — Story Glass Feedback Phase G. */
-export const ARCHIE_CURRENT_WAVE = "STORY-GLASS-G" as const;
+/** Active wave — Unified overlay header. */
+export const ARCHIE_CURRENT_WAVE = "STORY-SHELL-HEADER" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

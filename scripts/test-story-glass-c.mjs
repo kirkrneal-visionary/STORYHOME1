@@ -18,7 +18,7 @@ assert.match(toolbar, /story-glass/);
 assert.match(toolbar, /field-input/);
 
 const market = read("src/components/MarketplaceView.tsx");
-assert.match(market, /--story-header-h/);
+assert.match(market, /--story-header-h|--story-safe-top/);
 assert.match(market, /--story-bottom-clearance/);
 assert.match(market, /readMarketplaceCache|saveMarketplaceCache/);
 assert.doesNotMatch(market, /bg-navy-deep/);
@@ -29,7 +29,7 @@ assert.match(card, /story-surface|story-card/);
 assert.match(card, /story-glass/);
 
 const listing = read("src/app/marketplace/[id]/page.tsx");
-assert.match(listing, /--story-header-h/);
+assert.match(listing, /--story-header-h|--story-safe-top/);
 assert.match(listing, /--story-bottom-clearance/);
 assert.match(listing, /story-well/);
 assert.match(listing, /story-surface/);

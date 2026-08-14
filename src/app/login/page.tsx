@@ -5,7 +5,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="px-4 pt-[96px] text-sm text-[var(--muted)]">
+        <div className="px-4 pt-[calc(var(--story-safe-top)+1.5rem)] text-sm text-[var(--muted)]">
           Loading sign-in…
         </div>
       }

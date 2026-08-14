@@ -33,7 +33,7 @@ assert.match(nav, /useLivingHeader/);
 assert.match(nav, /story-glass-nav/);
 assert.match(nav, /story-living-tagline/);
 assert.match(nav, /story-living-mark/);
-assert.match(nav, /--story-header-h/);
+assert.match(nav, /--story-header-h|--story-safe-top/);
 assert.match(nav, /--story-bottom-nav-h/);
 
 const hook = read("src/hooks/useLivingHeader.ts");
@@ -41,7 +41,7 @@ assert.match(hook, /hysteresis|LivingHeaderState/);
 assert.match(hook, /capture:\s*true/);
 
 const market = read("src/components/MarketplaceView.tsx");
-assert.match(market, /--story-header-h/);
+assert.match(market, /--story-header-h|--story-safe-top/);
 assert.match(market, /--story-bottom-clearance/);
 
 const plan = read("docs/shi/STORY-GLASS.md");

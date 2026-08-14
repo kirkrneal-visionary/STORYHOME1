@@ -12,7 +12,7 @@ export default function SuiteDetailPage({ params }: PageProps) {
   const { suiteId } = use(params);
 
   return (
-    <div className="min-h-dvh pt-[var(--story-header-h)]">
+    <div className="min-h-dvh pt-[var(--story-safe-top)]">
       <RequireAuth
         title="Suites need an account"
         description="Log in as a buyer to open and share your Story Home Suite albums."
