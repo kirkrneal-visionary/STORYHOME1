@@ -61,7 +61,7 @@ export function NetworkView() {
   }, [pros, role]);
 
   return (
-    <div className="min-h-dvh px-4 pb-24 pt-[96px] md:px-6 md:pb-10">
+    <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-header-h)+1.5rem)] md:px-6 md:pb-10">
       <div className="mx-auto max-w-4xl">
         <h1 className="font-serif text-3xl font-bold text-ink">Network</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
@@ -75,10 +75,10 @@ export function NetworkView() {
               type="button"
               onClick={() => setRole(r)}
               className={cn(
-                "h-8 rounded-full border px-3 font-mono text-[11px] font-semibold uppercase",
+                "story-press h-8 rounded-full px-3 font-mono text-[11px] font-semibold uppercase",
                 role === r
-                  ? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"
-                  : "border-hairline text-[var(--muted)] hover:text-ink",
+                  ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                  : "story-glass text-[var(--muted)] hover:text-ink",
               )}
             >
               {r === "All" ? "All" : r === "realtor_broker" ? "Realtor" : r}
@@ -89,7 +89,7 @@ export function NetworkView() {
         {loading ? (
           <p className="mt-8 text-sm text-[var(--muted)]">Loading professionals…</p>
         ) : filtered.length === 0 ? (
-          <div className="mt-8 flex flex-col items-center gap-3 rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-12 text-center">
+          <div className="story-well mt-8 flex flex-col items-center gap-3 border-dashed p-12 text-center">
             <Users className="h-8 w-8 text-[var(--muted)]" />
             <p className="text-sm font-semibold text-ink">No professionals yet</p>
             <p className="text-xs text-[var(--muted)]">
@@ -97,7 +97,7 @@ export function NetworkView() {
             </p>
           </div>
         ) : (
-          <ul className="mt-8 divide-y divide-hairline rounded-xl border border-hairline bg-[var(--surface)]">
+          <ul className="story-surface mt-8 divide-y divide-hairline">
             {filtered.map((p) => (
               <li key={p.id} className="flex items-center justify-between gap-4 px-4 py-4">
                 <div className="flex min-w-0 items-center gap-3">

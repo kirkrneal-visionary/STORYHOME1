@@ -46,8 +46,8 @@ export default async function AgentProfilePage({ params }: PageProps) {
   const { agent, listings } = result;
 
   return (
-    <div className="min-h-dvh pb-24 pt-[72px] md:pb-10">
-      <div className="relative h-40 bg-navy md:h-52">
+    <div className="min-h-dvh pb-[var(--story-bottom-clearance)] pt-[var(--story-header-h)] md:pb-10">
+      <div className="relative h-40 bg-[var(--env-1)] md:h-52">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(240,185,59,0.18),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(27,90,80,0.35),transparent_40%)]" />
       </div>
 
@@ -108,7 +108,7 @@ export default async function AgentProfilePage({ params }: PageProps) {
           Listings
         </h2>
         {listings.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-dashed border-hairline bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted)]">
+          <p className="story-well mt-4 border-dashed p-8 text-center text-sm text-[var(--muted)]">
             No active listings yet.
           </p>
         ) : (

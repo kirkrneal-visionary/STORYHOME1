@@ -85,7 +85,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-24 pt-6 md:px-6 md:pb-10">
+    <div className="mx-auto max-w-5xl px-4 pb-[var(--story-bottom-clearance)] pt-6 md:px-6 md:pb-10">
       <Link
         href="/saved"
         className="inline-flex items-center gap-2 text-sm text-[var(--muted)] hover:text-ink"
@@ -108,7 +108,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
         <button
           type="button"
           onClick={share}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-hairline px-4 text-sm font-semibold text-ink hover:border-gold/50"
+          className="story-glass story-press inline-flex h-11 items-center gap-2 rounded-[var(--radius-md)] px-4 text-sm font-semibold text-ink hover:border-gold/50"
         >
           <Share2 className="h-4 w-4 text-gold" /> Share suite
         </button>
@@ -119,7 +119,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
       )}
 
       {listings.length === 0 ? (
-        <div className="mt-12 rounded-2xl border border-hairline bg-[var(--surface)] px-6 py-16 text-center">
+        <div className="story-well mt-12 px-6 py-16 text-center">
           <p className="font-serif text-2xl font-bold text-ink">Empty album</p>
           <p className="mt-2 text-sm text-[var(--muted)]">
             Save homes from the marketplace into this suite.
@@ -133,7 +133,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
         </div>
       ) : (
         <>
-          <div className="relative mt-8 overflow-hidden rounded-3xl border border-hairline bg-[var(--surface)]">
+          <div className="story-surface relative mt-8 overflow-hidden">
             {current && (
               <div className="grid md:grid-cols-[1.2fr_0.8fr]">
                 <div className="relative aspect-[4/3] bg-[var(--nav-surface)] md:aspect-auto md:min-h-[420px]">
@@ -181,7 +181,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                         removeListingFromSuite(suite.id, current.id);
                         setIndex((i) => Math.max(0, Math.min(i, listings.length - 2)));
                       }}
-                      className="inline-flex h-11 items-center gap-2 rounded-xl border border-hairline px-4 text-sm font-semibold text-[var(--muted)]"
+                      className="story-press inline-flex h-11 items-center gap-2 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-[var(--muted)]"
                     >
                       <Trash2 className="h-4 w-4" /> Remove
                     </button>
@@ -222,7 +222,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                 type="button"
                 onClick={() => setIndex(i)}
                 className={cn(
-                  "relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border bg-[var(--nav-surface)]",
+                  "relative h-20 w-28 shrink-0 overflow-hidden rounded-[var(--radius-md)] border bg-[var(--env-1)]",
                   i === index ? "border-gold" : "border-hairline opacity-70",
                 )}
               >
