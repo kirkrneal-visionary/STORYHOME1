@@ -35,10 +35,4 @@ assert.match(tools, /story-well/);
 const settings = read("src/components/settings/SettingsView.tsx");
 assert.match(settings, /story-surface/);
 
-// Wave 4 territory must remain for later (not required clothed here)
-const research = read(
-  "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
-);
-assert.match(research, /rounded-2xl border border-hairline/);
-
 console.log("story-feel-wave-3 armor: ok");

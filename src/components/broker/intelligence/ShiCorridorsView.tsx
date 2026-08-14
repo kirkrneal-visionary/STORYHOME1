@@ -450,7 +450,7 @@ export function ShiCorridorsView({
   return (
     <div className="space-y-4" data-corridors-version="v2-toolbox">
       {/* Hero — tools live on the map, not here */}
-      <div className="rounded-xl border border-hairline bg-[var(--surface)] px-4 py-4 md:px-6 md:py-5">
+      <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
           Corridor intelligence
         </p>
@@ -470,7 +470,7 @@ export function ShiCorridorsView({
       </div>
 
       {/* How Archie reads */}
-      <div className="rounded-xl border border-hairline px-4 py-3 md:px-5">
+      <div className="story-well px-4 py-3 md:px-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
           How Archie reads a corridor
         </p>
@@ -493,7 +493,7 @@ export function ShiCorridorsView({
               setAnalysis(null);
               setAnalysisBoundary(null);
             }}
-            className="mt-1 flex h-10 w-full rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
+            className="field-input mt-1 h-10"
           >
             {CORRIDOR_COUNTIES.map((c) => (
               <option key={c.fips} value={c.fips}>
@@ -640,8 +640,8 @@ export function ShiCorridorsView({
         />
 
         {exploreOpen && !presentationMode ? (
-          <aside className="flex min-h-0 flex-col gap-3 rounded-xl border border-hairline bg-[var(--surface)] p-4">
-            <div className="flex gap-1 rounded-lg border border-hairline p-0.5">
+          <aside className="flex min-h-0 flex-col gap-3 story-surface p-4">
+            <div className="flex gap-1 story-chrome rounded-[var(--radius-md)] border p-0.5">
               {(
                 [
                   ["watch", "Patterns"],
@@ -727,7 +727,7 @@ export function ShiCorridorsView({
                   value={roadFilter}
                   onChange={(e) => setRoadFilter(e.target.value)}
                   placeholder="e.g. US 59"
-                  className="mt-1 h-9 w-full rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
+                  className="field-input mt-1 h-9"
                 />
               </label>
               <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto pr-1">
@@ -831,7 +831,7 @@ export function ShiCorridorsView({
       ) : null}
 
       {savedStudies.length > 0 && !presentationMode ? (
-        <section className="rounded-xl border border-hairline bg-[var(--surface)] p-4">
+        <section className="story-surface p-4">
           <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
             Saved corridor studies
           </p>
@@ -957,7 +957,7 @@ function WatchPanel({
             {selected.reasons.map((r) => (
               <li
                 key={`${selected.id}-${r.kind}-${r.label}`}
-                className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2"
+                className="story-well px-3 py-2"
               >
                 <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
                   {r.label}
@@ -966,7 +966,7 @@ function WatchPanel({
               </li>
             ))}
           </ul>
-          <div className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+          <div className="story-well px-3 py-2">
             <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
               TxDOT projects nearby
               {projectsLoading ? " · loading" : ""}

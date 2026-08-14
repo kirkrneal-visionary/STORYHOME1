@@ -85,7 +85,7 @@ export function ShiMarketFramesPanel({
   }, [frameCounty, activeFrameId]);
 
   return (
-    <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+    <div className="story-surface p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
@@ -251,7 +251,7 @@ export function ShiMarketFramesPanel({
 
           {showSave && active && analysis ? (
             <form
-              className="space-y-2 rounded-xl border border-hairline bg-[var(--background)] p-3"
+              className="space-y-2 story-well p-3"
               onSubmit={(e) => {
                 e.preventDefault();
                 const name = frameName.trim() || active.name;
@@ -343,7 +343,7 @@ export function ShiMarketFramesPanel({
         </div>
 
         {/* Right: market data fills the void */}
-        <div className="min-h-[140px] rounded-xl border border-hairline bg-[var(--background)] p-3">
+        <div className="min-h-[140px] story-well p-3">
           {analyzing ? (
             <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin text-navy" />

@@ -55,7 +55,7 @@ function SourceStrip({ sources }: { sources: CorridorSourceUse[] }) {
   const connected = sources.filter((s) => s.status !== "planned");
   const planned = sources.filter((s) => s.status === "planned");
   return (
-    <div className="mt-4 rounded-lg border border-hairline bg-[var(--background)] px-3 py-3">
+    <div className="mt-4 story-well px-3 py-3">
       <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-gold uppercase">
         Evidence sources
       </p>
@@ -186,7 +186,7 @@ export function ShiCorridorsAnalysisPanel({
             {result.observed.map((f) => (
               <li
                 key={f.id}
-                className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2"
+                className="story-well px-3 py-2"
               >
                 <p className="text-[11px] text-[var(--muted)]">{f.label}</p>
                 <p className="font-serif text-lg font-bold text-ink">{f.value}</p>
@@ -208,7 +208,7 @@ export function ShiCorridorsAnalysisPanel({
             {result.signals.map((s) => (
               <li
                 key={s.id}
-                className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2"
+                className="story-well px-3 py-2"
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="text-sm font-semibold text-ink">{s.label}</p>
@@ -246,7 +246,7 @@ export function ShiCorridorsAnalysisPanel({
           </p>
         </div>
         {"validation" in result.confidence && result.confidence.validation ? (
-          <div className="mt-3 rounded-md border border-hairline bg-[var(--background)]/60 px-3 py-2">
+          <div className="mt-3 story-well px-3 py-2">
             <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
               Validation · {result.confidence.validation.modelVersion}
             </p>

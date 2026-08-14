@@ -161,7 +161,7 @@ export function ShiIntelligenceScenarioBoard({
                 onChange={(e) =>
                   patch({ ratePct: Number(e.target.value) || 0 })
                 }
-                className="mt-0.5 w-full rounded-lg border border-hairline bg-[var(--surface)] px-2 py-1.5 text-xs text-ink"
+                className="field-input mt-0.5 h-auto py-1.5 text-xs"
               />
             </label>
             <label className="block text-[9px] font-semibold text-[var(--muted)]">
@@ -175,7 +175,7 @@ export function ShiIntelligenceScenarioBoard({
                 onChange={(e) =>
                   patch({ downPct: Number(e.target.value) || 0 })
                 }
-                className="mt-0.5 w-full rounded-lg border border-hairline bg-[var(--surface)] px-2 py-1.5 text-xs text-ink"
+                className="field-input mt-0.5 h-auto py-1.5 text-xs"
               />
             </label>
             <label className="block text-[9px] font-semibold text-[var(--muted)]">
@@ -189,7 +189,7 @@ export function ShiIntelligenceScenarioBoard({
                 onChange={(e) =>
                   patch({ termYears: Number(e.target.value) || 30 })
                 }
-                className="mt-0.5 w-full rounded-lg border border-hairline bg-[var(--surface)] px-2 py-1.5 text-xs text-ink"
+                className="field-input mt-0.5 h-auto py-1.5 text-xs"
               />
             </label>
           </div>
@@ -199,10 +199,10 @@ export function ShiIntelligenceScenarioBoard({
               <div
                 key={b.id}
                 className={cn(
-                  "rounded-lg border px-2.5 py-2",
+                  "story-well px-2.5 py-2",
                   b.id === "mid"
                     ? "border-gold/50 bg-gold/10"
-                    : "border-hairline bg-[var(--background)]",
+                    : "",
                 )}
               >
                 <p className="font-mono text-[9px] font-bold uppercase text-gold">
@@ -232,7 +232,7 @@ export function ShiIntelligenceScenarioBoard({
                 {result.carryCases.map((c) => (
                   <li
                     key={c.id}
-                    className="flex items-center justify-between gap-2 rounded-md border border-hairline px-2 py-1.5 text-[11px]"
+                    className="flex items-center justify-between gap-2 story-well px-2 py-1.5 text-[11px]"
                   >
                     <span className="text-[var(--muted)]">{c.label}</span>
                     <span className="font-semibold text-ink">
@@ -250,7 +250,7 @@ export function ShiIntelligenceScenarioBoard({
         </>
       )}
 
-      <div className="mt-3 rounded-lg border border-hairline bg-[var(--background)] px-2.5 py-2">
+      <div className="mt-3 story-well px-2.5 py-2">
         <p className="font-mono text-[9px] font-bold uppercase text-gold">
           Coverage · {result.coverage.confidence}
         </p>

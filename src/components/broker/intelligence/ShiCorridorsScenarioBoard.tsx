@@ -83,7 +83,7 @@ export function ShiCorridorsScenarioBoard({
 
   return (
     <section
-      className="rounded-xl border border-hairline bg-[var(--surface)] p-4 md:p-5"
+      className="story-surface p-4 md:p-5"
       data-scenario-board
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -181,7 +181,7 @@ export function ShiCorridorsScenarioBoard({
               absorptionPerYear: Number.isFinite(n) && n >= 0 ? n : null,
             });
           }}
-          className="mt-1 h-10 w-full rounded-lg border border-hairline bg-[var(--background)] px-3 text-sm text-ink"
+          className="mt-1 h-10 w-full story-well px-3 text-sm text-ink"
         />
       </label>
 
@@ -218,7 +218,7 @@ export function ShiCorridorsScenarioBoard({
         </div>
       )}
 
-      <div className="mt-4 rounded-lg border border-hairline bg-[var(--background)] px-3 py-2">
+      <div className="mt-4 story-well px-3 py-2">
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
           Coverage · {result.coverage.confidence}
         </p>

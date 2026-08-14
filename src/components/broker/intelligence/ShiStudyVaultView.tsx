@@ -244,7 +244,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+        <section className="story-surface p-4">
           <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
             Folders · {countyName}
           </p>
@@ -352,7 +352,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
           )}
         </section>
 
-        <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+        <section className="story-surface p-4">
           {!activeFolder ? (
             <p className="py-16 text-center text-sm text-[var(--muted)]">
               Open a folder to browse saved Market Frames.
@@ -378,7 +378,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
                   return (
                     <li
                       key={f.id}
-                      className="group overflow-hidden rounded-2xl border border-hairline bg-[var(--background)] shadow-sm transition-shadow hover:shadow-md"
+                      className="group overflow-hidden story-well transition-shadow"
                     >
                       <button
                         type="button"
@@ -471,12 +471,12 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       </div>
 
       {dialog ? (
-        <div className="fixed inset-0 z-[1200] flex items-end justify-center bg-black/70 p-4 sm:items-center">
+        <div className="fixed inset-0 z-[1200] flex items-end justify-center story-scrim p-4 sm:items-center">
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="shi-vault-dialog-title"
-            className="w-full max-w-md rounded-2xl border border-hairline bg-[var(--surface)] p-5 shadow-xl"
+            className="w-full max-w-md story-sheet p-5"
           >
             <div className="flex items-start justify-between gap-3">
               <h3

@@ -67,7 +67,7 @@ export function ShiCorridorsComparePanel({ compare, onClear }: Props) {
         {compare.signals.map((s) => (
           <div
             key={s.id}
-            className="rounded-lg border border-hairline bg-[var(--background)] px-3 py-2"
+            className="story-well px-3 py-2"
           >
             <p className="text-xs font-semibold text-ink">{s.label}</p>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-wide">

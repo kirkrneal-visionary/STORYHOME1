@@ -69,7 +69,7 @@ export function CadCountyStatusPanel() {
       </button>
 
       {open && (
-        <ul className="mt-3 divide-y divide-hairline rounded-lg border border-hairline">
+        <ul className="mt-3 divide-y divide-hairline overflow-hidden story-well">
           {rows.map((r) => {
             const fresh = cadFreshnessLabel(
               r.lastSuccessAt,

@@ -98,7 +98,7 @@ export function ShiFarmsView() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-hairline bg-[var(--surface)] px-4 py-3">
+      <div className="story-surface px-4 py-3">
         <p className="text-sm text-[var(--muted)]">
           Draw a market area in{" "}
           <button
@@ -117,7 +117,7 @@ export function ShiFarmsView() {
       </div>
 
       {error ? (
-        <p className="rounded-xl border border-hairline bg-[var(--surface)] px-3 py-2 text-sm text-ink">
+        <p className="story-well px-3 py-2 text-sm text-ink">
           {error}
         </p>
       ) : null}
@@ -135,7 +135,7 @@ export function ShiFarmsView() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
-        <section className="min-h-[28rem] rounded-2xl border border-hairline bg-[var(--surface)]">
+        <section className="min-h-[28rem] story-surface">
           <div className="border-b border-hairline px-4 py-3">
             <h3 className="text-sm font-bold text-ink">Your farms</h3>
             <p className="mt-0.5 text-xs text-[var(--muted)]">
@@ -191,7 +191,7 @@ export function ShiFarmsView() {
           )}
         </section>
 
-        <aside className="min-h-[28rem] rounded-2xl border border-hairline bg-[var(--surface)] p-4">
+        <aside className="min-h-[28rem] story-surface p-4">
           {!selectedId ? (
             <p className="mt-10 text-center text-sm text-[var(--muted)]">
               Select a farm to review territory intelligence.
