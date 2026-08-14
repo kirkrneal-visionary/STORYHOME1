@@ -363,16 +363,22 @@ html[data-role="professional"] {
  * content may extend underneath. Not a reserved website header band.
  */
 .story-overlay-header {
+  /* Instagram-class: light scrim only — never a solid black header band */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--env-0) 82%, transparent) 0%,
-    color-mix(in srgb, var(--env-0) 48%, transparent) 55%,
+    color-mix(in srgb, var(--env-0) 28%, transparent) 0%,
+    color-mix(in srgb, var(--env-0) 10%, transparent) 55%,
     transparent 100%
   );
-  border-bottom: 1px solid transparent;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border: none;
+  border-bottom: none;
   box-shadow: none;
+  outline: none;
+  /* Soft blur without a hard frosted bar edge */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
   transition:
     height var(--motion-fast) var(--motion-ease-standard),
     background var(--motion-fast) linear,
@@ -380,9 +386,15 @@ html[data-role="professional"] {
 }
 html[data-header-state="compact"] .story-overlay-header,
 html[data-header-state="minimal"] .story-overlay-header {
-  background: color-mix(in srgb, var(--glass-bg) 92%, var(--env-0));
-  border-bottom-color: var(--glass-border);
-  box-shadow: var(--elev-chrome);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--env-0) 42%, transparent) 0%,
+    color-mix(in srgb, var(--env-0) 14%, transparent) 65%,
+    transparent 100%
+  );
+  border: none;
+  border-bottom: none;
+  box-shadow: none;
 }
 
 /* Text/control rooms that need clearance under overlay chrome */
@@ -515,7 +527,8 @@ html[data-header-state="minimal"] .story-living-mark {
     background: var(--env-1);
   }
   .story-overlay-header {
-    border-bottom-color: var(--hairline);
+    border-bottom: none;
+    box-shadow: none;
   }
 }
 
