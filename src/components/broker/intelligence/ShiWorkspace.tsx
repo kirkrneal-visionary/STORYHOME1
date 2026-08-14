@@ -115,7 +115,7 @@ export function ShiWorkspace() {
   return (
     <div className="space-y-5">
       <header className="flex flex-wrap items-start gap-3">
-        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[18px] bg-white ring-1 ring-hairline shadow-sm">
+        <div className="story-surface flex h-12 w-12 items-center justify-center overflow-hidden rounded-[18px]">
           <Image
             src={SHI_PRODUCT.markSrc}
             alt=""

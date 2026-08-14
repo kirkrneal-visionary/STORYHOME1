@@ -994,7 +994,7 @@ export function ShiCorridorsMap({
 
       {/* Basemap — top-left on map */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,20rem)] flex-wrap gap-1 story-chrome rounded-[var(--radius-md)] border p-1">
+        <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,20rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1">
           {(
             [
               ["satellite", "Imagery"],
@@ -1021,7 +1021,7 @@ export function ShiCorridorsMap({
         {/* Map-native toolbox — bottom-left (thumb-friendly) */}
         {!presentationMode ? (
           <div className="pointer-events-auto absolute bottom-12 left-3 right-3 flex max-w-[min(100%,36rem)] flex-col gap-1.5 sm:right-auto">
-            <div className="flex flex-wrap items-center gap-1 story-chrome rounded-[var(--radius-md)] border p-1">
+            <div className="flex flex-wrap items-center gap-1 story-glass rounded-[var(--radius-md)] p-1">
               {toolBtn(
                 "pan",
                 "Navigate",
@@ -1073,7 +1073,7 @@ export function ShiCorridorsMap({
             </div>
 
             {drawing ? (
-              <div className="flex flex-wrap items-center gap-1.5 story-chrome rounded-[var(--radius-md)] border border-gold/50 px-3 py-2 text-[11px] text-paper">
+              <div className="flex flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] border border-gold/50 px-3 py-2 text-[11px] text-paper">
                 <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
                   Drawing · map locked
                 </p>
@@ -1146,7 +1146,7 @@ export function ShiCorridorsMap({
             ) : null}
 
             {tool === "traffic" && !loading ? (
-              <div className="story-chrome rounded-[var(--radius-md)] border border-gold/40 px-3 py-2 text-[11px] text-paper">
+              <div className="story-glass rounded-[var(--radius-md)] border border-gold/40 px-3 py-2 text-[11px] text-paper">
                 <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
                   Traffic evidence
                 </p>

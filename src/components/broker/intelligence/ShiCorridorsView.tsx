@@ -641,7 +641,7 @@ export function ShiCorridorsView({
 
         {exploreOpen && !presentationMode ? (
           <aside className="flex min-h-0 flex-col gap-3 story-surface p-4">
-            <div className="flex gap-1 story-chrome rounded-[var(--radius-md)] border p-0.5">
+            <div className="flex gap-1 story-glass rounded-[var(--radius-md)] p-0.5">
               {(
                 [
                   ["watch", "Patterns"],

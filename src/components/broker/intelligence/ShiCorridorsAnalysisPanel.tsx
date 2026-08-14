@@ -147,7 +147,7 @@ export function ShiCorridorsAnalysisPanel({
 
   if (analyzing) {
     return (
-      <section className="rounded-xl border border-gold/40 bg-[var(--surface)] p-4 md:p-5">
+      <section className="story-surface border-gold/40 p-4 md:p-5">
         <div className="flex items-center gap-2 text-sm text-ink">
           <Loader2 className="h-4 w-4 animate-spin text-gold" />
           <span>{statusLine || "Analyzing the area you drew…"}</span>
@@ -164,7 +164,7 @@ export function ShiCorridorsAnalysisPanel({
 
   return (
     <section
-      className="rounded-xl border border-gold/35 bg-[var(--surface)] p-4 md:p-5"
+      className="story-surface border-gold/35 p-4 md:p-5"
       data-corridor-analysis
     >
       <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">

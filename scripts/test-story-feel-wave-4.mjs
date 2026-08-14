@@ -44,7 +44,7 @@ assert.match(frames, /story-well/);
 const researchMap = read(
   "src/components/broker/intelligence/ShiResearchMap.tsx",
 );
-assert.match(researchMap, /story-surface|story-chrome/);
+assert.match(researchMap, /story-surface|story-chrome|story-glass/);
 assert.doesNotMatch(
   researchMap,
   /bg-\[var\(--paper,#f7f4ec\)\]\/95 p-1 shadow-md/,
@@ -59,14 +59,14 @@ assert.match(corridors, /field-input/);
 const corridorsMap = read(
   "src/components/broker/intelligence/ShiCorridorsMap.tsx",
 );
-assert.match(corridorsMap, /story-chrome/);
+assert.match(corridorsMap, /story-chrome|story-glass/);
 
 const cadStatus = read("src/components/broker/CadCountyStatusPanel.tsx");
 assert.match(cadStatus, /story-surface|story-well/);
 assert.match(cadStatus, /cadCoverageHonesty/);
 
 const overlay = read("src/components/map/CadOverlayControl.tsx");
-assert.match(overlay, /story-chrome/);
+assert.match(overlay, /story-chrome|story-glass/);
 
 const plan = read("docs/shi/STORY-FEEL-WAVES.md");
 assert.match(plan, /STORY-FEEL-WAVE-4/);

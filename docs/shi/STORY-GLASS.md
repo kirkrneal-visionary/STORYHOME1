@@ -1,6 +1,6 @@
 # Story Glass — Application Surface System
 
-**Status:** Phase E (Story Pro work) shipping · A–D live  
+**Status:** Phase F (Archie study) shipping · A–E live  
 **Live:** https://storyhome-1-eqmg.vercel.app  
 Companion: [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · [`../MOTION.md`](../MOTION.md)
 
@@ -27,7 +27,7 @@ Centralized in `src/app/globals.css`:
 | `--background` / `--surface` | Env-based (navy reserved for brand/active) |
 | `--glass-*` | Story Glass blur / border / elevation |
 | `--type-*` | Brand → page → property → primary → meta → data |
-| `--story-header-h` / `--story-bottom-clearance` | Shell insets |
+| `--story-header-h` / `--story-archie-ribbon-h` / `--story-bottom-clearance` | Shell insets |
 
 Classes: `.story-glass`, `.story-glass-nav` (floating pill), living-header data states.
 
@@ -64,15 +64,25 @@ Rooms: **Home, Suites, Following, Network, Profile, Agents**.
 
 Rooms: **Portal, CRM, community, settings, listing CAD map**.
 
-1. BrokerPortal / Settings / ShellPaused → living-header insets (Archie `pt-[128px]` left for F).  
+1. BrokerPortal / Settings / ShellPaused → living-header insets (Archie ribbon left for F).  
 2. CRM / community dashed empties → `story-well`.  
 3. ListingCadMap floating chrome → `story-glass`.  
 4. No CRM feature work; CAD math untouched.
 
+## Phase F — Archie study
+
+Rooms: **Research, Corridors, evidence panels, map chrome, Archie ribbon**.
+
+1. `--story-archie-ribbon-h` + BrokerPortal Archie inset tracks living header + ribbon.  
+2. NetworkContextRibbon → `story-glass` under `top: var(--story-header-h)` (no navy wall / fixed 72).  
+3. Research / Corridors map toolboxes + CAD overlay → floating `story-glass`.  
+4. Corridor analysis/compare + Archie mark → `story-surface` / wells (no cardboard panels).  
+5. No CAD math, honesty copy, Continuum cache, or GRPT.
+
 ## Later phases
 
-F Study (Archie) · G Feedback (sound only if approved)
+G Feedback (sound only if approved)
 
 ## Armor
 
-`npm run test:glass` → `ab` + `c` + `d` + `e`
+`npm run test:glass` → `ab` + `c` + `d` + `e` + `f`

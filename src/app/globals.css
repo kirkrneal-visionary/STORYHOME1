@@ -50,8 +50,9 @@
   --type-meta: 0.6875rem;
   --type-data: 0.75rem;
 
-  /* Shell insets — living header + floating bottom nav */
+  /* Shell insets — living header + floating bottom nav + Archie ribbon */
   --story-header-h: 72px;
+  --story-archie-ribbon-h: 40px;
   --story-bottom-clearance: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   --story-bottom-nav-h: 3.35rem;
 

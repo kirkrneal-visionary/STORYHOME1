@@ -695,7 +695,7 @@ export function PropertyIntelligenceView({
                 "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-[10px] font-bold uppercase",
                 c.stale
                   ? "border-gold/40 bg-gold/10 text-navy"
-                  : "border-hairline bg-[var(--surface)] text-[var(--muted)]",
+                  : "story-well text-[var(--muted)]",
               )}
               title={c.label}
             >
