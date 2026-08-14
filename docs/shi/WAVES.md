@@ -1,7 +1,7 @@
 # Archie's Intelligence — Build Waves
 
 **Live:** https://storyhome-1-eqmg.vercel.app  
-**Feel:** [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md)  
+**Feel:** [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · **Glass:** [`STORY-GLASS.md`](./STORY-GLASS.md)  
 **Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)  
 **Observation:** [`ARCHIE-OBS-OPS.md`](./ARCHIE-OBS-OPS.md)  
 **Shell:** [`STORY-MESSAGES-REFERRALS.md`](./STORY-MESSAGES-REFERRALS.md)  
@@ -11,14 +11,15 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-FEEL-WAVE-4
-Archie study — Research / evidence / scenarios / Corridors / observation clothing
+### STORY-GLASS-AB
+Story Glass Phase A/B — graphite env tokens + living header + floating phone nav (Marketplace prototype)
 
 ## Next
+- Story Glass Phase C — browse migration (Marketplace/Listing polish)  
 - Optional models / Messages E2E / licensed Corridors when ready  
 
 ## Done
-- STORY-FEEL-WAVE-3 · WAVE-2 · WAVE-1  
+- STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
 - Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  
 

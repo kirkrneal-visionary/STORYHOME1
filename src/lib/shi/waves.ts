@@ -651,7 +651,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-FEEL-WAVE-4",
     name: "Feel Wave 4 · Archie study calm",
     goal: "Research, evidence, scenarios, Corridors, CAD status, and observation wear Wave 1 clothes — quieter study room, map sacred, toolbox secondary.",
-    status: "current",
+    status: "done",
     frontend: [
       "PropertyIntelligenceView story-surface + field-input",
       "Evidence/scenario/change-feed/frames story-well",
@@ -665,10 +665,27 @@ export const SHI_WAVES: ShiWave[] = [
       "Brand rewrite",
     ],
   },
+  {
+    id: "STORY-GLASS-AB",
+    name: "Story Glass · Phase A/B shell",
+    goal: "Graphite operating environment + Story Glass tokens; living header and floating phone bottom nav — prototype room Marketplace.",
+    status: "current",
+    frontend: [
+      "globals env/glass/type tokens; navy as brand not wall",
+      "useLivingHeader Full→Compact→Minimal with hysteresis",
+      "story-glass-nav floating pill; Marketplace shell insets",
+    ],
+    backend: ["Armor scripts/test-story-glass-ab.mjs"],
+    outOfScope: [
+      "Global page redesign (Phases C–F)",
+      "Sound / haptics shipping",
+      "New product features / GRPT",
+    ],
+  },
 ];
 
-/** Active wave — Archie study clothing. */
-export const ARCHIE_CURRENT_WAVE = "STORY-FEEL-WAVE-4" as const;
+/** Active wave — Story Glass shell Phase A/B. */
+export const ARCHIE_CURRENT_WAVE = "STORY-GLASS-AB" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

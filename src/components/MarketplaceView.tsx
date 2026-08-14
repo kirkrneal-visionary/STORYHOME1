@@ -156,7 +156,7 @@ export default function MarketplaceView() {
   const activeFilterCount = countActiveFilters(filters);
 
   return (
-    <div className="flex h-dvh flex-col pt-[72px]">
+    <div className="flex h-dvh flex-col pt-[var(--story-header-h)]">
       <SearchToolbar
         filters={filters}
         onChange={setFilters}
@@ -178,7 +178,7 @@ export default function MarketplaceView() {
         >
           <div
             ref={listRef}
-            className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-20 md:pb-3"
+            className="min-h-0 flex-1 overflow-y-auto px-3 py-3 pb-[var(--story-bottom-clearance)] md:pb-3"
           >
             {loading ? (
               <div className="story-skeleton story-well px-5 py-12 text-center text-sm text-[var(--muted)]">

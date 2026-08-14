@@ -80,7 +80,7 @@ New CRM features, Messages product finish.
 
 ## Wave 4 — Archie study
 **ID:** `STORY-FEEL-WAVE-4`  
-**Status:** shipping  
+**Status:** done  
 **Rooms:** Research, evidence, scenarios, Corridors, CAD status, observation.
 
 ### Process
