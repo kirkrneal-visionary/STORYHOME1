@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand navy — matches the Story Home logo background (rich, not too dark). */
+  /* Brand — STORYHOME™ identity (deliberate, not the wall paint) */
   --navy: #17335e;
   --navy-soft: #21467a;
   --navy-deep: #10294c;
@@ -15,11 +15,17 @@
   --hairline-strong: rgba(247, 244, 236, 0.2);
   --hairline-interactive: rgba(245, 183, 30, 0.45);
 
-  /* Site-wide brand navy (the logo blue) */
-  --background: var(--navy);
+  /* STORY GLASS Phase A — graphite operating environment */
+  --env-0: #0b0d11;
+  --env-1: #12151c;
+  --env-2: #1a1f29;
+  --env-navy-whisper: color-mix(in srgb, var(--navy) 28%, var(--env-1));
+
+  /* OS surfaces — navy reserved for brand / active / intelligence */
+  --background: var(--env-0);
   --foreground: #f4f1e8;
-  --surface: var(--navy-soft);
-  --nav-surface: color-mix(in srgb, var(--navy) 88%, black);
+  --surface: var(--env-2);
+  --nav-surface: color-mix(in srgb, var(--env-1) 82%, transparent);
   --muted: color-mix(in srgb, #f7f4ec 64%, transparent);
   --accent: var(--gold);
   --accent-contrast: var(--navy);
@@ -27,12 +33,35 @@
   --brand-home: var(--gold);
   --brand-word: #f7f4ec;
 
+  /* Story Glass material */
+  --glass-bg: color-mix(in srgb, var(--env-1) 72%, transparent);
+  --glass-bg-strong: color-mix(in srgb, var(--env-1) 88%, transparent);
+  --glass-border: rgba(247, 244, 236, 0.14);
+  --glass-blur: 16px;
+  --glass-elev: 0 10px 36px rgba(0, 0, 0, 0.42),
+    0 0 0 1px var(--glass-border);
+
+  /* Typography scale */
+  --type-brand: clamp(1.35rem, 2.4vw, 1.65rem);
+  --type-page: clamp(1.25rem, 2vw, 1.5rem);
+  --type-property: clamp(1.15rem, 1.8vw, 1.35rem);
+  --type-primary: 0.9375rem;
+  --type-secondary: 0.8125rem;
+  --type-meta: 0.6875rem;
+  --type-data: 0.75rem;
+
+  /* Shell insets — living header + floating bottom nav */
+  --story-header-h: 72px;
+  --story-bottom-clearance: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+  --story-bottom-nav-h: 3.35rem;
+
   /* STORY-FEEL-WAVE-1 — material system */
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-sheet: 1.35rem;
+  --radius-pill: 999px;
 
   /* Deboss / soft raise — jewelry tray, not multi-shadow glow */
   --elev-deboss: inset 0 1px 0 rgba(255, 255, 255, 0.04),
@@ -45,20 +74,27 @@
   --atmosphere:
     radial-gradient(
       120% 80% at 50% -10%,
-      color-mix(in srgb, var(--navy-soft) 55%, transparent) 0%,
+      color-mix(in srgb, var(--navy) 22%, transparent) 0%,
       transparent 55%
     ),
     radial-gradient(
       90% 60% at 100% 0%,
-      color-mix(in srgb, var(--gold) 6%, transparent) 0%,
+      color-mix(in srgb, var(--gold) 5%, transparent) 0%,
       transparent 45%
     ),
     linear-gradient(
       180deg,
-      var(--navy-deep) 0%,
-      var(--navy) 42%,
-      color-mix(in srgb, var(--navy) 92%, var(--teal)) 100%
+      var(--env-0) 0%,
+      var(--env-1) 48%,
+      color-mix(in srgb, var(--env-1) 88%, var(--teal)) 100%
     );
+}
+
+html[data-header-state="compact"] {
+  --story-header-h: 56px;
+}
+html[data-header-state="minimal"] {
+  --story-header-h: 48px;
 }
 
 html[data-role="professional"] {
@@ -91,7 +127,7 @@ html[data-role="professional"] {
     width: 100%;
     border-radius: var(--radius-md);
     border: 1px solid var(--hairline);
-    background: color-mix(in srgb, var(--navy-deep) 72%, var(--background));
+    background: color-mix(in srgb, var(--env-1) 78%, var(--navy-deep));
     box-shadow: var(--elev-deboss);
     padding: 0 0.85rem;
     font-size: 0.875rem;
@@ -265,7 +301,7 @@ html[data-role="professional"] {
 .story-card {
   border-radius: var(--radius-lg);
   border: 1px solid var(--hairline);
-  background: color-mix(in srgb, var(--surface) 88%, var(--navy-deep));
+  background: color-mix(in srgb, var(--surface) 88%, var(--env-1));
   box-shadow: var(--elev-raise);
   transition:
     transform var(--motion-fast) var(--motion-ease-browse),
@@ -280,7 +316,7 @@ html[data-role="professional"] {
 .story-well {
   border-radius: var(--radius-lg);
   border: 1px solid var(--hairline);
-  background: color-mix(in srgb, var(--navy-deep) 55%, var(--surface));
+  background: color-mix(in srgb, var(--env-1) 70%, var(--surface));
   box-shadow: var(--elev-deboss);
 }
 
@@ -292,13 +328,32 @@ html[data-role="professional"] {
   box-shadow: var(--elev-raise);
 }
 
-/* App chrome (nav / tabs) — one continuous shell edge */
+/* Story Glass — floating translucent chrome (selective blur) */
+.story-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-elev);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* App chrome (nav / tabs) — Story Glass shell edge */
 .story-chrome {
-  background: color-mix(in srgb, var(--nav-surface) 92%, transparent);
-  border-color: var(--hairline);
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border);
   box-shadow: var(--elev-chrome);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* Floating phone bottom nav — pill above content */
+.story-glass-nav {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--glass-elev);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
 /* Outer content frame — slight recess so rooms feel placed */
@@ -309,15 +364,16 @@ html[data-role="professional"] {
   content: "";
   pointer-events: none;
   position: fixed;
-  inset: 72px 0 0 0;
+  inset: var(--story-header-h) 0 0 0;
   z-index: 0;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045),
     inset 0 0 0 1px rgba(247, 244, 236, 0.04);
+  transition: inset var(--motion-fast) var(--motion-ease-standard);
 }
 @media (max-width: 767px) {
   .story-app-shell::before {
-    inset: 72px 0 64px 0;
+    inset: var(--story-header-h) 0 var(--story-bottom-clearance) 0;
   }
 }
 
@@ -334,7 +390,7 @@ html[data-role="professional"] {
   max-width: 28rem;
   border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   border: 1px solid var(--hairline-strong);
-  background: color-mix(in srgb, var(--navy-soft) 94%, var(--navy-deep));
+  background: color-mix(in srgb, var(--env-2) 94%, var(--navy-deep));
   box-shadow: var(--elev-raise), 0 -8px 40px rgba(0, 0, 0, 0.35);
   color: var(--paper);
   animation: storySheetIn var(--motion-surface) var(--motion-ease-enter) both;
@@ -368,8 +424,8 @@ html[data-role="professional"] {
   background:
     linear-gradient(
       90deg,
-      color-mix(in srgb, var(--navy-deep) 72%, var(--paper)) 0%,
-      color-mix(in srgb, var(--navy) 42%, var(--paper)) 42%,
+      color-mix(in srgb, var(--env-1) 72%, var(--paper)) 0%,
+      color-mix(in srgb, var(--navy) 28%, var(--env-1)) 42%,
       color-mix(in srgb, var(--paper) 88%, transparent) 78%,
       transparent 100%
     ),
@@ -393,6 +449,51 @@ html[data-role="professional"] {
   );
 }
 
+/* Living header brand morph */
+.story-living-brand {
+  transition:
+    transform var(--motion-fast) var(--motion-ease-standard),
+    opacity var(--motion-fast) linear;
+}
+.story-living-tagline {
+  display: block;
+  max-height: 1.25rem;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    max-height var(--motion-fast) var(--motion-ease-standard),
+    opacity var(--motion-fast) linear,
+    margin var(--motion-fast) linear;
+}
+html[data-header-state="compact"] .story-living-tagline,
+html[data-header-state="minimal"] .story-living-tagline {
+  max-height: 0;
+  margin: 0;
+  opacity: 0;
+}
+html[data-header-state="compact"] .story-living-word {
+  font-size: 1.35rem;
+}
+html[data-header-state="minimal"] .story-living-full {
+  display: none;
+}
+html[data-header-state="minimal"] .story-living-mark {
+  display: flex;
+}
+.story-living-mark {
+  display: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .story-glass,
+  .story-glass-nav,
+  .story-chrome {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--env-1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .story-press,
   .story-card,
@@ -400,7 +501,10 @@ html[data-role="professional"] {
   .story-route-page,
   .story-continuum-peek,
   .story-sheet,
-  .story-scrim {
+  .story-scrim,
+  .story-living-brand,
+  .story-living-tagline,
+  .story-app-shell::before {
     transition: none !important;
     animation: none !important;
     transform: none !important;

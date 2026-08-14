@@ -24,6 +24,7 @@ import { NetworkDivider } from "@/components/nav/NetworkDivider";
 import { NetworkNode } from "@/components/nav/NetworkNode";
 import { useMotionOptional } from "@/components/motion/MotionProvider";
 import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
+import { useLivingHeader } from "@/hooks/useLivingHeader";
 import { accountLabel } from "@/lib/auth";
 import {
   isArchiePath,
@@ -48,6 +49,7 @@ export default function GlobalNav() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerPath, setDrawerPath] = useState(pathname);
   const archieEntryHref = useArchieEntryHref();
+  const headerState = useLivingHeader(true);
 
   // Close the mobile drawer when the route changes (render-time adjust).
   if (drawerPath !== pathname) {
@@ -139,21 +141,36 @@ export default function GlobalNav() {
 
   return (
     <>
-      <nav className="story-chrome fixed top-0 left-0 z-50 flex h-[72px] w-full items-center justify-between border-b px-4 md:px-6">
-        <Link href="/" className="flex min-w-0 select-none flex-col">
-          <div className="flex items-center gap-0.5 tracking-tighter">
-            <span className="font-serif text-[1.65rem] font-bold tracking-[-0.03em] text-[var(--brand-word)]">
-              STORY
+      <nav
+        data-header-state={headerState}
+        className="story-chrome fixed top-0 left-0 z-50 flex w-full items-center justify-between border-b px-4 md:px-6"
+        style={{ height: "var(--story-header-h)" }}
+      >
+        <Link
+          href="/"
+          className="story-living-brand flex min-w-0 select-none items-center"
+          aria-label="StoryHome — Every home has a story"
+        >
+          <span className="story-living-mark h-9 w-9 items-center justify-center rounded-full bg-navy ring-1 ring-gold/50">
+            <span className="font-serif text-[10px] font-bold leading-none tracking-tighter text-paper">
+              SH
             </span>
-            <span className="font-serif text-[1.65rem] font-bold tracking-[-0.03em] text-[var(--brand-home)]">
-              HOME
+          </span>
+          <span className="story-living-full flex min-w-0 flex-col">
+            <span className="flex items-center gap-0.5 tracking-tighter">
+              <span className="story-living-word font-serif text-[var(--type-brand)] font-bold tracking-[-0.03em] text-[var(--brand-word)]">
+                STORY
+              </span>
+              <span className="story-living-word font-serif text-[var(--type-brand)] font-bold tracking-[-0.03em] text-[var(--brand-home)]">
+                HOME
+              </span>
+              <span className="mt-1 self-start text-[8px] font-bold text-[var(--brand-home)]">
+                TM
+              </span>
             </span>
-            <span className="mt-1 self-start text-[8px] font-bold text-[var(--brand-home)]">
-              TM
+            <span className="story-living-tagline -mt-1 font-mono text-[9px] font-bold tracking-[0.12em] text-[var(--brand-word)]">
+              EVERY HOME HAS A STORY
             </span>
-          </div>
-          <span className="-mt-1 font-mono text-[9px] font-bold tracking-[0.12em] text-[var(--brand-word)]">
-            EVERY HOME HAS A STORY
           </span>
         </Link>
 
@@ -339,7 +356,17 @@ export default function GlobalNav() {
         />
       </Suspense>
 
-      <div className="story-chrome fixed bottom-0 left-0 z-50 grid h-16 w-full grid-cols-4 items-center justify-items-center border-t px-2 pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav
+        aria-label="Primary"
+        className="story-glass-nav fixed z-50 grid grid-cols-4 items-center justify-items-center md:hidden"
+        style={{
+          left: "max(0.75rem, env(safe-area-inset-left))",
+          right: "max(0.75rem, env(safe-area-inset-right))",
+          bottom: "max(0.65rem, env(safe-area-inset-bottom))",
+          height: "var(--story-bottom-nav-h)",
+          paddingInline: "0.35rem",
+        }}
+      >
         <MobileTab href="/" label="Home" icon={Home} active={isHome} />
         {isPro && isLoggedIn ? (
           <>
@@ -381,7 +408,7 @@ export default function GlobalNav() {
             pathname.startsWith("/profile") || pathname.startsWith("/login")
           }
         />
-      </div>
+      </nav>
     </>
   );
 }
@@ -432,29 +459,41 @@ function MobileTab({
     <Link
       href={href}
       onClick={() => motion?.markNavigate(href)}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex flex-col items-center gap-0.5",
-        active ? "text-gold" : "text-[var(--muted)]",
+        "story-press relative flex h-11 w-full max-w-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-full",
+        active ? "text-ink" : "text-[var(--muted)]",
       )}
     >
-      {mark ? (
+      {active ? (
         <span
-          className={cn(
-            "relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white ring-1",
-            active ? "ring-gold" : "ring-black/10",
-          )}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/brand/archie-intelligence-sm.png"
-            alt=""
-            className="h-full w-full object-cover"
+          aria-hidden
+          className="absolute inset-y-1 inset-x-1 rounded-full bg-[color-mix(in_srgb,var(--navy)_55%,transparent)] ring-1 ring-gold/40"
+        />
+      ) : null}
+      <span className="relative z-[1] flex flex-col items-center gap-0.5">
+        {mark ? (
+          <span
+            className={cn(
+              "relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-white ring-1",
+              active ? "ring-gold" : "ring-black/10",
+            )}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/archie-intelligence-sm.png"
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </span>
+        ) : (
+          <Icon
+            className={cn("h-5 w-5", active && "text-gold")}
+            aria-hidden
           />
-        </span>
-      ) : (
-        <Icon className="h-5 w-5" />
-      )}
-      <span className="text-[10px] font-medium">{label}</span>
+        )}
+        <span className="text-[9px] font-semibold tracking-wide">{label}</span>
+      </span>
     </Link>
   );
 }

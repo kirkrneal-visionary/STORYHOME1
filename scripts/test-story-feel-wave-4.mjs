@@ -73,6 +73,6 @@ assert.match(plan, /STORY-FEEL-WAVE-4/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /STORY-FEEL-WAVE-4/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"STORY-FEEL-WAVE-4"/);
+assert.match(waves, /id:\s*"STORY-FEEL-WAVE-4"/);
 
 console.log("story-feel-wave-4 armor: ok");

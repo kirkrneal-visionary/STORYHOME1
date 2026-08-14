@@ -27,8 +27,11 @@ export type NetworkDefinition = {
   modules: NetworkLink[];
 };
 
-/** Top bar height (px) — keep in sync with GlobalNav. */
+/** Top bar height (px) — keep in sync with --story-header-h (full state). */
 export const GLOBAL_NAV_HEIGHT_PX = 72;
+
+/** Floating phone bottom nav clearance — keep in sync with --story-bottom-clearance. */
+export const STORY_BOTTOM_CLEARANCE_PX = 76;
 
 /** Archie context ribbon height (px) — Wave N2. */
 export const ARCHIE_RIBBON_HEIGHT_PX = 40;
