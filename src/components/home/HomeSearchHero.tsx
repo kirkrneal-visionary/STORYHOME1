@@ -126,6 +126,7 @@ export function HomeSearchHero() {
               </div>
               <button
                 type="submit"
+                data-story-sound="tap"
                 className="story-press inline-flex h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gold px-6 text-sm font-bold text-navy"
               >
                 <Search className="h-4 w-4" />

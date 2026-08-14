@@ -12,7 +12,7 @@
     "test:intelligence-scenarios": "node scripts/test-intelligence-scenarios.mjs",
     "test:shi-county-ops": "node scripts/test-shi-county-ops.mjs",
     "test:feel": "node scripts/test-story-feel-wave-1.mjs && node scripts/test-story-feel-wave-2.mjs && node scripts/test-story-feel-wave-3.mjs && node scripts/test-story-feel-wave-4.mjs",
-    "test:glass": "node scripts/test-story-glass-ab.mjs && node scripts/test-story-glass-c.mjs && node scripts/test-story-glass-d.mjs && node scripts/test-story-glass-e.mjs && node scripts/test-story-glass-f.mjs",
+    "test:glass": "node scripts/test-story-glass-ab.mjs && node scripts/test-story-glass-c.mjs && node scripts/test-story-glass-d.mjs && node scripts/test-story-glass-e.mjs && node scripts/test-story-glass-f.mjs && node scripts/test-story-glass-g.mjs",
     "test:motion": "node scripts/test-motion-routes.mjs",
     "test:shell": "node scripts/test-story-messages-referrals.mjs",
     "test:analytics": "node scripts/test-story-analytics-foundation.mjs && node scripts/test-story-analytics-destination.mjs",

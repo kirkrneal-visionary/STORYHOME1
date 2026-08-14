@@ -227,6 +227,6 @@ Waves may merge, but **never skip honesty or RLS**.
 |---|---|
 | 2026-08-13 | Initial constitution approved for implementation waves |
 
-**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` · `ARCHIE-COUNTY-OPS-SCALE` · `STORY-FEEL-WAVE-1` · `STORY-FEEL-WAVE-2` · `STORY-FEEL-WAVE-3` · `STORY-FEEL-WAVE-4` · `STORY-GLASS-AB` · `STORY-GLASS-C` · `STORY-GLASS-D` · `STORY-GLASS-E` · `STORY-GLASS-F` (Archie study glass).
+**Shipped coded waves:** `STORY-CONTINUUM-VISIBILITY` · `STORY-MESSAGES-REFERRALS` · `STORY-ANALYTICS-FOUNDATION` · `STORY-ANALYTICS-DESTINATION` · `ARCHIE-INTELLIGENCE-SCENARIOS` · `ARCHIE-COUNTY-OPS-SCALE` · `STORY-FEEL-WAVE-1` · `STORY-FEEL-WAVE-2` · `STORY-FEEL-WAVE-3` · `STORY-FEEL-WAVE-4` · `STORY-GLASS-AB` · `STORY-GLASS-C` · `STORY-GLASS-D` · `STORY-GLASS-E` · `STORY-GLASS-F` · `STORY-GLASS-G` (Feedback · sound).
 
-**Next coded wave (when green-lit):** Story Glass Phase G (Feedback / sound if approved) · optional models / Messages E2E. See [`shi/STORY-GLASS.md`](./shi/STORY-GLASS.md).
+**Next coded wave (when green-lit):** Story Glass clothing complete · optional models / Messages E2E / native haptics. See [`shi/STORY-GLASS.md`](./shi/STORY-GLASS.md).

@@ -71,6 +71,15 @@ Archie Research keep-alive across module switches.
 
 `prefers-reduced-motion` → no spatial travel, no peek, no press scale.
 
+## Story Glass sound (Phase G)
+
+Sparse Web Audio cues (`src/lib/sound/*` + `SoundProvider`):
+
+- Room enter / back · cooler Archie study · soft select · gold tap · success  
+- Mute + Preview in Settings → Experience  
+- Default off when reduced-motion; unlock on first gesture  
+- Never arcade; never every press  
+
 ## Native parity later
 
 Replicate temperatures + gesture physics + workspace memory on iOS/Android. Business state stays client-agnostic.
