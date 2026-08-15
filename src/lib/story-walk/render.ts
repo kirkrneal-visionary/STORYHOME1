@@ -1,5 +1,5 @@
 /**
- * STORY-WALK SW-7 — Canvas compositor.
+ * STORY-WALK SW-7/SW-8 — Canvas compositor.
  * Feels like a walkthrough; is a renderer (not OS screen-grab).
  * Master: 1920×1080 WebM (shareable marketing quality for social).
  */
@@ -17,6 +17,42 @@ import {
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Preflight — call before starting a long compose so UX can fail fast. */
+export function storyWalkRecordSupport(): {
+  ok: boolean;
+  mime: string;
+  reason?: string;
+} {
+  if (typeof window === "undefined") {
+    return { ok: false, mime: "", reason: "Export needs a browser window." };
+  }
+  if (typeof MediaRecorder === "undefined") {
+    return {
+      ok: false,
+      mime: "",
+      reason: "This browser can’t record Story Walk yet. Try Chrome or Edge.",
+    };
+  }
+  if (typeof HTMLCanvasElement === "undefined") {
+    return { ok: false, mime: "", reason: "Canvas unavailable." };
+  }
+  const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
+    ? "video/webm;codecs=vp9"
+    : MediaRecorder.isTypeSupported("video/webm;codecs=vp8")
+      ? "video/webm;codecs=vp8"
+      : MediaRecorder.isTypeSupported("video/webm")
+        ? "video/webm"
+        : "";
+  if (!mime) {
+    return {
+      ok: false,
+      mime: "",
+      reason: "WebM recording isn’t supported here. Try Chrome or Edge on desktop.",
+    };
+  }
+  return { ok: true, mime };
 }
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
@@ -159,31 +195,34 @@ export async function renderStoryWalkFilm(
   const report = (partial: StoryWalkProgress) => onProgress?.(partial);
   report({ phase: "prepare", progress: 0.02, message: "Preparing Story Walk…" });
 
-  const stream = canvas.captureStream(STORY_WALK_FPS);
-  const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9")
-    ? "video/webm;codecs=vp9"
-    : MediaRecorder.isTypeSupported("video/webm")
-      ? "video/webm"
-      : "";
-  if (!mime) throw new Error("Recording not supported in this browser");
+  const support = storyWalkRecordSupport();
+  if (!support.ok) throw new Error(support.reason || "Recording unavailable");
+  const mime = support.mime;
 
+  const stream = canvas.captureStream(STORY_WALK_FPS);
   const chunks: BlobPart[] = [];
-  const recorder = new MediaRecorder(stream, {
-    mimeType: mime,
-    videoBitsPerSecond: 8_000_000,
-  });
+  let recorder: MediaRecorder;
+  try {
+    recorder = new MediaRecorder(stream, {
+      mimeType: mime,
+      videoBitsPerSecond: 8_000_000,
+    });
+  } catch {
+    recorder = new MediaRecorder(stream, { mimeType: mime });
+  }
   recorder.ondataavailable = (e) => {
     if (e.data.size > 0) chunks.push(e.data);
   };
   const stopped = new Promise<void>((resolve) => {
     recorder.onstop = () => resolve();
   });
-  recorder.start(200);
+  recorder.start(250);
 
   const tick = () => {
     /* MediaRecorder pulls from captureStream */
   };
 
+  try {
   // 1) Opening title
   report({ phase: "render", progress: 0.08, message: "Opening title…" });
   for (let i = 0; i < STORY_WALK_FPS * 2; i++) {
@@ -301,13 +340,32 @@ export async function renderStoryWalkFilm(
   }
 
   report({ phase: "encode", progress: 0.96, message: "Encoding download…" });
-  recorder.stop();
+  try {
+    recorder.requestData();
+  } catch {
+    /* older browsers */
+  }
+  if (recorder.state !== "inactive") recorder.stop();
   await stopped;
-  stream.getTracks().forEach((t) => t.stop());
 
-  const blob = new Blob(chunks, { type: mime.includes("webm") ? "video/webm" : mime });
+  const blob = new Blob(chunks, {
+    type: mime.includes("webm") ? "video/webm" : mime,
+  });
+  if (blob.size < 256) {
+    throw new Error("Story Walk encode produced an empty file. Try again.");
+  }
   report({ phase: "done", progress: 1, message: "Story Walk ready" });
   return blob;
+  } finally {
+    stream.getTracks().forEach((t) => t.stop());
+    if (recorder.state !== "inactive") {
+      try {
+        recorder.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+  }
 }
 
 export function downloadBlob(blob: Blob, filename: string) {

@@ -6,11 +6,16 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, Download, Film, Loader2 } from "lucide-react";
+import { Check, Download, Film, Loader2, Share2 } from "lucide-react";
 import { track } from "@/lib/analytics";
 import { formatUsd, type DemoListing } from "@/lib/demo-data";
 import { loadLivingMark } from "@/lib/living-mark/library";
-import { downloadBlob, renderStoryWalkFilm } from "@/lib/story-walk/render";
+import {
+  downloadBlob,
+  renderStoryWalkFilm,
+  storyWalkRecordSupport,
+} from "@/lib/story-walk/render";
+import { shareStoryWalkFilm } from "@/lib/story-walk/share";
 import { demoStillDataUrl } from "@/lib/story-walk/demo-assets";
 import {
   STORY_WALK_DEFAULT_LISTING_COUNT,
@@ -27,6 +32,7 @@ type Props = {
   agentId: string;
   agentName: string;
   marketCity: string;
+  roleLabel?: string;
   photoUrl?: string | null;
   livingMarkVideoUrl?: string | null;
   listings: DemoListing[];
@@ -63,6 +69,7 @@ export function StoryWalkComposer({
   agentId,
   agentName,
   marketCity,
+  roleLabel,
   photoUrl,
   livingMarkVideoUrl,
   listings,
@@ -74,8 +81,14 @@ export function StoryWalkComposer({
   const [selected, setSelected] = useState<string[]>([]);
   const [selectionReady, setSelectionReady] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [progress, setProgress] = useState<StoryWalkProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastFilm, setLastFilm] = useState<{
+    blob: Blob;
+    filename: string;
+  } | null>(null);
+  const [shareNote, setShareNote] = useState("");
 
   useEffect(() => {
     if (selectionReady) {
@@ -121,12 +134,18 @@ export function StoryWalkComposer({
   const onExport = useCallback(async () => {
     setExporting(true);
     setError(null);
+    setShareNote("");
     setProgress({
       phase: "prepare",
       progress: 0,
       message: "Loading Living Mark…",
     });
     try {
+      const support = storyWalkRecordSupport();
+      if (!support.ok) {
+        throw new Error(support.reason || "Recording unavailable");
+      }
+
       const mark = await loadLivingMark(
         agentId,
         photoUrl,
@@ -161,7 +180,9 @@ export function StoryWalkComposer({
       );
 
       const slug = agentName.replace(/\s+/g, "-").toLowerCase() || "agent";
-      downloadBlob(blob, `story-walk-${slug}.webm`);
+      const filename = `story-walk-${slug}.webm`;
+      downloadBlob(blob, filename);
+      setLastFilm({ blob, filename });
 
       track("story_walk_exported", {
         agent_id: agentId,
@@ -191,6 +212,42 @@ export function StoryWalkComposer({
     orderedPicks,
     photoUrl,
   ]);
+
+  const onShare = useCallback(async () => {
+    if (!lastFilm || sharing) return;
+    setSharing(true);
+    setShareNote("");
+    try {
+      const result = await shareStoryWalkFilm({
+        agentId,
+        agentName,
+        marketCity,
+        roleLabel,
+        blob: lastFilm.blob,
+        filename: lastFilm.filename,
+      });
+      if (result.ok) {
+        track("story_walk_shared", {
+          agent_id: agentId,
+          method: result.method,
+        });
+        setShareNote(
+          result.method === "native-file"
+            ? "Share sheet opened with your film"
+            : result.method === "native-link"
+              ? "Share sheet opened — film also downloaded"
+              : "Share text + Agent World link copied",
+        );
+      } else if (result.reason === "cancelled") {
+        setShareNote("");
+      } else {
+        setShareNote("Couldn’t share — your download is still saved.");
+      }
+      window.setTimeout(() => setShareNote(""), 3200);
+    } finally {
+      setSharing(false);
+    }
+  }, [agentId, agentName, lastFilm, marketCity, roleLabel, sharing]);
 
   return (
     <section
@@ -326,25 +383,54 @@ export function StoryWalkComposer({
         </p>
       ) : null}
 
-      <button
-        type="button"
-        data-story-walk-export
-        disabled={exporting}
-        onClick={() => void onExport()}
-        className="story-press mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] disabled:opacity-60"
-      >
-        {exporting ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            Exporting…
-          </>
-        ) : (
-          <>
-            <Download className="h-4 w-4" aria-hidden />
-            Export Story Walk
-          </>
-        )}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          data-story-walk-export
+          disabled={exporting}
+          onClick={() => void onExport()}
+          className="story-press inline-flex h-11 items-center gap-2 rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] disabled:opacity-60"
+        >
+          {exporting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Exporting…
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" aria-hidden />
+              Export Story Walk
+            </>
+          )}
+        </button>
+        {lastFilm ? (
+          <button
+            type="button"
+            data-story-walk-share
+            disabled={sharing || exporting}
+            onClick={() => void onShare()}
+            className="story-press inline-flex h-11 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-5 text-sm font-semibold text-ink backdrop-blur-sm hover:border-gold/40 disabled:opacity-60"
+          >
+            {sharing ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : shareNote ? (
+              <Check className="h-4 w-4 text-gold" aria-hidden />
+            ) : (
+              <Share2 className="h-4 w-4 text-gold" aria-hidden />
+            )}
+            Share film
+          </button>
+        ) : null}
+      </div>
+      {shareNote ? (
+        <p
+          data-story-walk-share-note
+          role="status"
+          className="mt-2 text-xs text-[var(--muted)]"
+        >
+          {shareNote}
+        </p>
+      ) : null}
     </section>
   );
 }

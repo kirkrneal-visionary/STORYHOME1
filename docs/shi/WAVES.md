@@ -12,17 +12,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK · SW-7 (preview) — Story Walk compositor
-Agent picks listings → Living Mark + listing photo walk → downloadable 1080p WebM. Renderer, not OS screen-grab.
+### STORY-WALK · SW-8 (preview) — Social share of Story Walk + harden
+Share film via native file share (when supported) or Agent World link; encode reliability harden. Completes the original SW-0…SW-8 plan on preview.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- SW-8 social share of Story Walk + harden → owner live gate  
+- Owner live gate for SW-7 + SW-8 on `storyhome-1-eqmg`  
 - Parallel: public Agent World polish  
 
 ## Done (recent)
+- STORY-WALK SW-7 preview — Story Walk compositor + WebM export  
 - STORY-WALK SW-6 live — Share Agent World link  
 - STORY-WALK SW-5 live — plain-English analytics + learning insights  
 - STORY-WALK SW-1…SW-4 live (Agent World · library · presence · play respect)  

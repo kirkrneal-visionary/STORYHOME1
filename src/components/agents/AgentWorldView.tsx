@@ -24,7 +24,7 @@ type AgentWorldViewProps = {
 };
 
 /**
- * STORY-WALK SW-1…SW-7 — Agent World + Living Mark + analytics + share + Story Walk film.
+ * STORY-WALK SW-1…SW-8 — Agent World + Living Mark + analytics + share + Story Walk film.
  */
 export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   const { user } = useAuth();
@@ -169,6 +169,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
             agentId={agent.id}
             agentName={agent.fullName}
             marketCity={agent.primaryMarketCity}
+            roleLabel={roleLabel}
             photoUrl={agent.photoUrl}
             livingMarkVideoUrl={agent.livingMarkVideoUrl}
             listings={listings}

@@ -22,6 +22,7 @@ export const ANALYTICS_EVENTS = [
   "agent_world_cta_clicked",
   "agent_world_shared",
   "story_walk_exported",
+  "story_walk_shared",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
@@ -91,6 +92,10 @@ export type AnalyticsPropsMap = {
   story_walk_exported: {
     agent_id: string;
     listing_count: number;
+  };
+  story_walk_shared: {
+    agent_id: string;
+    method: "native-file" | "native-link" | "clipboard";
   };
 };
 

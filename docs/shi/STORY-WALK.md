@@ -1,6 +1,6 @@
 # Story Walk — Agent World & Living Mark
 
-**Status:** SW-1…SW-6 **live on main**. SW-7 compositor on preview; SW-8 next.  
+**Status:** SW-1…SW-6 **live on main**. SW-7 + SW-8 on preview — owner live gate next.  
 **Product name:** **Story Walk**  
 **Scope:** Realtor/agent profile as a StoryHome world — Living Mark presence + Story Walk marketing export + agent analytics  
 **Live verify (when built):** `storyhome-1-eqmg` preview first — never surprise production  
