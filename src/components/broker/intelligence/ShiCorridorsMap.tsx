@@ -42,6 +42,7 @@ import {
 } from "@/lib/shi/corridors";
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
 import type { TxdotProject } from "@/lib/shi/txdot-projects";
+import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
 import { cn } from "@/lib/utils";
 
 const EMPTY_FC: GeoJSON.FeatureCollection = {
@@ -70,6 +71,9 @@ type Props = {
   onToolChange: (tool: CorridorMapTool) => void;
   selectedStationId: string | null;
   onSelectStation: (station: TrafficStation | null) => void;
+  /** C2.0-B — selected CAD parcel on the Corridors map */
+  selectedParcelId?: string | null;
+  onSelectParcel?: (parcel: CorridorParcelPick | null) => void;
   onBoundaryDrawn?: (boundary: DrawnBoundary) => void;
   analysisBoundary?: DrawnBoundary | null;
   revealStations?: boolean;
@@ -187,6 +191,8 @@ export function ShiCorridorsMap({
   onToolChange,
   selectedStationId,
   onSelectStation,
+  selectedParcelId = null,
+  onSelectParcel,
   onBoundaryDrawn,
   analysisBoundary = null,
   revealStations = false,
@@ -207,6 +213,8 @@ export function ShiCorridorsMap({
 
   const onSelectRef = useRef(onSelectStation);
   onSelectRef.current = onSelectStation;
+  const onParcelRef = useRef(onSelectParcel);
+  onParcelRef.current = onSelectParcel;
   const onWatchRef = useRef(onSelectWatch);
   onWatchRef.current = onSelectWatch;
   const onBoundaryRef = useRef(onBoundaryDrawn);
@@ -528,6 +536,23 @@ export function ShiCorridorsMap({
         tiles: [`${window.location.origin}/api/parcels/{z}/{x}/{y}`],
         minzoom: 13,
         maxzoom: 16,
+        promoteId: "prop_id",
+      });
+      map.addLayer({
+        id: "parcels-fill",
+        type: "fill",
+        source: "parcels",
+        "source-layer": "parcels",
+        minzoom: 13,
+        paint: {
+          "fill-color": MAP_GOLD,
+          "fill-opacity": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            0.35,
+            0.04,
+          ],
+        },
       });
       map.addLayer({
         id: "parcels-line",
@@ -537,8 +562,18 @@ export function ShiCorridorsMap({
         minzoom: 13,
         paint: {
           "line-color": MAP_GOLD,
-          "line-opacity": 0.45,
-          "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.3, 16, 1],
+          "line-opacity": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            0.95,
+            0.45,
+          ],
+          "line-width": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            2.2,
+            ["interpolate", ["linear"], ["zoom"], 13, 0.3, 16, 1],
+          ],
         },
       });
 
@@ -566,12 +601,14 @@ export function ShiCorridorsMap({
       ? "crosshair"
       : tool === "traffic"
         ? "pointer"
-        : "";
+        : tool === "pan" && zoom >= 13
+          ? "pointer"
+          : "";
     return () => {
       setMapNavigationLocked(map, false);
       map.getCanvas().style.cursor = "";
     };
-  }, [drawing, tool, ready]);
+  }, [drawing, tool, ready, zoom]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -715,7 +752,7 @@ export function ShiCorridorsMap({
     );
   }, [selectedWatchId, watchAreas, ready, tool]);
 
-  /* Pick stations / watch when not drawing */
+  /* Pick stations / parcels / watch when not drawing */
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -728,18 +765,71 @@ export function ShiCorridorsMap({
         });
         const sid = stationHits[0]?.properties?.id as string | undefined;
         if (sid) {
+          onParcelRef.current?.(null);
           onSelectRef.current(
             stationsRef.current.find((s) => s.id === sid) ?? null,
           );
           return;
         }
       }
+
+      /* C2.0-B — parcel select (pan, parcel zoom) */
+      if (tool === "pan" && map.getZoom() >= 13 && map.getLayer("parcels-fill")) {
+        const parcelHits = map.queryRenderedFeatures(e.point, {
+          layers: ["parcels-fill", "parcels-line"],
+        });
+        const f = parcelHits[0];
+        const propId = f?.properties?.prop_id;
+        if (typeof propId === "string" && propId) {
+          const acresRaw = f?.properties?.legal_acreage;
+          const acres =
+            typeof acresRaw === "number"
+              ? acresRaw
+              : acresRaw != null && Number.isFinite(Number(acresRaw))
+                ? Number(acresRaw)
+                : null;
+          const mvRaw = f?.properties?.market_value;
+          const marketValue =
+            typeof mvRaw === "number"
+              ? mvRaw
+              : mvRaw != null && Number.isFinite(Number(mvRaw))
+                ? Number(mvRaw)
+                : null;
+          onSelectRef.current(null);
+          onParcelRef.current?.({
+            propId,
+            source:
+              typeof f?.properties?.source === "string"
+                ? f.properties.source
+                : undefined,
+            countyFips:
+              typeof f?.properties?.county_fips === "string"
+                ? f.properties.county_fips
+                : undefined,
+            situsAddress:
+              typeof f?.properties?.situs_address === "string"
+                ? f.properties.situs_address
+                : null,
+            ownerName:
+              typeof f?.properties?.owner_name === "string"
+                ? f.properties.owner_name
+                : null,
+            legalAcreage: acres,
+            marketValue,
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng,
+          });
+          return;
+        }
+      }
+
       if (showWatchAreas) {
         const watchHits = map.queryRenderedFeatures(e.point, {
           layers: ["growth-watch-fill", "growth-watch-line"],
         });
         const wid = watchHits[0]?.properties?.id as string | undefined;
         if (wid) {
+          onParcelRef.current?.(null);
           onWatchRef.current?.(
             watchRef.current.find((a) => a.id === wid) ?? null,
           );
@@ -747,6 +837,7 @@ export function ShiCorridorsMap({
         }
       }
       if (tool === "traffic") onSelectRef.current(null);
+      if (tool === "pan") onParcelRef.current?.(null);
     };
 
     map.on("click", pick);
@@ -754,6 +845,40 @@ export function ShiCorridorsMap({
       map.off("click", pick);
     };
   }, [tool, showWatchAreas, stationsVisible, ready, drawing]);
+
+  /* Selected parcel highlight via feature-state */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !map.getSource("parcels")) return;
+    const prev = (map as maplibregl.Map & { __shiSelectedParcel?: string })
+      .__shiSelectedParcel;
+    if (prev) {
+      try {
+        map.setFeatureState(
+          { source: "parcels", sourceLayer: "parcels", id: prev },
+          { selected: false },
+        );
+      } catch {
+        /* tile may have unloaded */
+      }
+    }
+    if (selectedParcelId) {
+      try {
+        map.setFeatureState(
+          {
+            source: "parcels",
+            sourceLayer: "parcels",
+            id: selectedParcelId,
+          },
+          { selected: true },
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+    (map as maplibregl.Map & { __shiSelectedParcel?: string }).__shiSelectedParcel =
+      selectedParcelId ?? undefined;
+  }, [selectedParcelId, ready, zoom]);
 
   /* Freehand — precision + locked pan for whole mode */
   useEffect(() => {
@@ -1165,8 +1290,10 @@ export function ShiCorridorsMap({
       ) : null}
 
       {!stationsVisible && !loading && tool === "pan" && !presentationMode ? (
-        <div className="pointer-events-none absolute top-14 right-3 z-10 max-w-[200px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
-          Zoom in or use Traffic · intensity: lower → very high vehicles/day
+        <div className="pointer-events-none absolute top-14 right-3 z-10 max-w-[210px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
+          {zoom >= 13
+            ? "Tap a parcel for location intelligence · Traffic tool for counts"
+            : "Zoom in for parcels · Traffic for counts · intensity: lower → very high"}
         </div>
       ) : null}
     </div>

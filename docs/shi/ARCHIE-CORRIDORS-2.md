@@ -148,11 +148,14 @@ Shown under “What does this mean?” — never as the headline.
 
 **Acceptance**
 
-- [ ] Parcel hit-test works at parcel zoom.  
-- [ ] Panel is location-relevant (not full CAD dump).  
-- [ ] Traffic association labeled measured vs estimated when inferring.  
-- [ ] Existing draw-analyze path still works.  
-- [ ] Armor for B.
+- [x] Parcel hit-test works at parcel zoom (≥13).  
+- [x] Panel is location-relevant (not full CAD dump).  
+- [x] Traffic association labeled estimated (never “measured at property” without segments).  
+- [x] Existing draw-analyze path still works.  
+- [x] Armor `npm run test:corridors-2b`.  
+- [ ] Preview on eqmg before live.
+
+**Out of B:** surveyed frontage, Find Strongest Sites, exposure score, Ask Archie.
 
 ---
 
@@ -230,4 +233,4 @@ Shown under “What does this mean?” — never as the headline.
 
 ---
 
-*Locked for Corridors 2.0. First implementation wave: **C2.0-A**. Preview before live.*
+*Locked for Corridors 2.0. Current implementation wave: **C2.0-B** (on C2.0-A). Preview before live.*

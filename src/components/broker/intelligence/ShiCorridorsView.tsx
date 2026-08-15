@@ -27,6 +27,7 @@ import {
 } from "@/lib/shi/client";
 import {
   openBoundaryInResearch,
+  openParcelInResearch,
   openWatchInResearch,
 } from "@/lib/shi/corridor-handoff";
 import {
@@ -72,6 +73,12 @@ import {
   vehiclesPerDayCaption,
 } from "@/lib/shi/corridor-language";
 import {
+  associateParcelTraffic,
+  formatAcres,
+  parcelTrafficSummary,
+  type CorridorParcelPick,
+} from "@/lib/shi/corridor-parcel-traffic";
+import {
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
 import {
@@ -109,11 +116,15 @@ export function ShiCorridorsView({
   const [tool, setTool] = useState<CorridorMapTool>("pan");
   const [showWatch, setShowWatch] = useState(true);
   const [selected, setSelected] = useState<TrafficStation | null>(null);
+  const [selectedParcel, setSelectedParcel] =
+    useState<CorridorParcelPick | null>(null);
   const [selectedWatch, setSelectedWatch] = useState<GrowthWatchArea | null>(
     null,
   );
   const [roadFilter, setRoadFilter] = useState("");
-  const [panel, setPanel] = useState<"station" | "watch" | "memory">("watch");
+  const [panel, setPanel] = useState<"watch" | "station" | "site" | "memory">(
+    "watch",
+  );
   const [projects, setProjects] = useState<TxdotProject[]>([]);
   const [projectsNote, setProjectsNote] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(false);
@@ -175,6 +186,7 @@ export function ShiCorridorsView({
       setLoading(true);
       setError("");
       setSelected(null);
+      setSelectedParcel(null);
       setSelectedWatch(null);
       setProjects([]);
       setProjectsNote("");
@@ -459,7 +471,7 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-a">
+    <div className="space-y-4" data-corridors-version="c2-0-b">
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -637,9 +649,19 @@ export function ShiCorridorsView({
           onSelectStation={(s) => {
             setSelected(s);
             if (s) {
+              setSelectedParcel(null);
               setPanel("station");
               setExploreOpen(true);
               setRevealStations(true);
+            }
+          }}
+          selectedParcelId={selectedParcel?.propId ?? null}
+          onSelectParcel={(p) => {
+            setSelectedParcel(p);
+            if (p) {
+              setSelected(null);
+              setPanel("site");
+              setExploreOpen(true);
             }
           }}
           onBoundaryDrawn={(b) => void runAnalysis(b)}
@@ -656,6 +678,7 @@ export function ShiCorridorsView({
               {(
                 [
                   ["watch", "Patterns"],
+                  ["site", "Site"],
                   ["station", "Traffic"],
                   ["memory", "Memory"],
                 ] as const
@@ -686,6 +709,27 @@ export function ShiCorridorsView({
                 projectsLoading={projectsLoading}
                 projectsNote={projectsNote}
                 onStudyLand={studyWatchLand}
+              />
+            ) : null}
+            {panel === "site" ? (
+              <ParcelSitePanel
+                parcel={selectedParcel}
+                stations={payload?.stations ?? []}
+                county={county}
+                onStudyLand={() => {
+                  if (!selectedParcel) return;
+                  openParcelInResearch({
+                    propId: selectedParcel.propId,
+                    lat: selectedParcel.lat,
+                    lng: selectedParcel.lng,
+                    countySource: county.source,
+                    countyName: county.name,
+                    situsAddress: selectedParcel.situsAddress,
+                  });
+                  writeLastArchieModule("research");
+                  if (onOpenResearch) onOpenResearch();
+                  else router.push("/portal/intelligence?section=research&handoff=corridor");
+                }}
               />
             ) : null}
             {panel === "station" ? (
@@ -1013,6 +1057,111 @@ function WatchPanel({
       {cadNote ? (
         <p className="text-[10px] leading-snug text-[var(--muted)]">{cadNote}</p>
       ) : null}
+    </div>
+  );
+}
+
+function ParcelSitePanel({
+  parcel,
+  stations,
+  county,
+  onStudyLand,
+}: {
+  parcel: CorridorParcelPick | null;
+  stations: TrafficStation[];
+  county: CorridorCounty;
+  onStudyLand: () => void;
+}) {
+  if (!parcel) {
+    return (
+      <div data-corridor-parcel-empty>
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+          Location · parcel
+        </p>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Zoom in until parcel lines appear, then tap a parcel. Archie connects
+          land to nearby published traffic — labeled estimated until road-segment
+          frontage ships.
+        </p>
+      </div>
+    );
+  }
+
+  const assoc = associateParcelTraffic(parcel, stations);
+  const summary = parcelTrafficSummary(assoc);
+
+  return (
+    <div className="space-y-3" data-corridor-parcel-panel>
+      <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+        Location · parcel
+      </p>
+      <h3 className="font-serif text-xl font-bold text-ink">
+        {formatAcres(parcel.legalAcreage)}
+      </h3>
+      <p className="text-sm text-ink">
+        {parcel.situsAddress?.trim() ||
+          `${county.shortName} County · CAD #${parcel.propId}`}
+      </p>
+      {parcel.situsAddress ? (
+        <p className="text-xs text-[var(--muted)]">CAD #{parcel.propId}</p>
+      ) : null}
+
+      <div className="story-well px-3 py-2.5">
+        <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+          Traffic exposure
+        </p>
+        <p className="mt-1 font-serif text-3xl font-bold tabular-nums text-ink">
+          {summary.vehiclesLabel}
+        </p>
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+          Vehicles / day
+        </p>
+        <p className="mt-1 text-xs text-[var(--muted)]">{summary.caption}</p>
+        <p
+          className="mt-2 font-mono text-[10px] font-semibold tracking-wide uppercase text-ink"
+          data-parcel-traffic-kind
+        >
+          {assoc.kind === "estimated"
+            ? `${assoc.label} · ${assoc.confidence} confidence`
+            : assoc.label}
+        </p>
+        <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
+          {assoc.detail}
+        </p>
+        {summary.intensity || summary.status ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {summary.intensity ? (
+              <span className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1 font-mono text-[10px] font-semibold uppercase">
+                {summary.intensity}
+              </span>
+            ) : null}
+            {summary.status ? (
+              <span className="rounded-md border border-gold/35 bg-gold/10 px-2 py-1 font-mono text-[10px] font-semibold text-gold uppercase">
+                {summary.status}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        {summary.statusWhy ? (
+          <p className="mt-1.5 text-[11px] text-[var(--muted)]">
+            {summary.statusWhy}
+          </p>
+        ) : null}
+      </div>
+
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
+        Full CAD research stays in Research. This panel is location intelligence
+        only — frontage and intersection distance arrive in later Corridors waves.
+      </p>
+
+      <button
+        type="button"
+        onClick={onStudyLand}
+        data-corridor-parcel-research
+        className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+      >
+        Open in Research
+      </button>
     </div>
   );
 }

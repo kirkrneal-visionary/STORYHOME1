@@ -138,3 +138,56 @@ export function openBoundaryInResearch(opts: {
   };
   queueOpenSavedFrame(frame);
 }
+
+/** C2.0-B — open a small Research frame centered on a selected parcel. */
+export function openParcelInResearch(opts: {
+  propId: string;
+  lat: number;
+  lng: number;
+  countySource: string;
+  countyName: string;
+  situsAddress?: string | null;
+}): void {
+  const pad = 0.004;
+  const now = new Date().toISOString();
+  const label = opts.situsAddress?.trim() || `CAD #${opts.propId}`;
+  const frame: ShiSavedFrame = {
+    id: `corridor-parcel:${opts.propId}:${Date.now()}`,
+    folderId: "",
+    name: `Corridors · ${label}`,
+    acronym: "COR",
+    color: "#f5b71e",
+    boundary: {
+      type: "rectangle",
+      bounds: {
+        west: opts.lng - pad,
+        south: opts.lat - pad,
+        east: opts.lng + pad,
+        north: opts.lat + pad,
+      },
+    },
+    mapCenterLat: opts.lat,
+    mapCenterLng: opts.lng,
+    mapZoom: 16,
+    updatedAt: now,
+    snapshot: {
+      metrics: {
+        parcelCount: 0,
+        realCount: 0,
+        personalCount: 0,
+        totalAcres: 0,
+        medianAcres: null,
+        medianMarketValue: null,
+        estimatedTotalMarketValue: 0,
+        valuedParcelCount: 0,
+        method: "centroid_in_boundary",
+        countySource: opts.countySource,
+        note: `Opened from Corridors parcel ${opts.propId} in ${opts.countyName}. Run Analyze / open the property record for full CAD research.`,
+        parcels: [],
+      },
+      thumbnailPath: null,
+      analyzedAt: now,
+    },
+  };
+  queueOpenSavedFrame(frame);
+}

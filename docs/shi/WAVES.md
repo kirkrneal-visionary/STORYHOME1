@@ -12,17 +12,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-CORRIDORS-2 · C2.0-A (preview) — Language + hierarchy
-Corridors 2.0 lock doc + vehicles/day primary, intensity classes, corridor-status labels. Parcel-first waves next.
+### ARCHIE-CORRIDORS-2 · C2.0-B (preview) — Parcel select
+Parcel hit-test + location panel (estimated nearby traffic). Builds on C2.0-A language.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- C2.0-B Parcel select → C2.0-C frontage → D Exposure/Sites → E Compare/workflow → F Ask Archie  
+- C2.0-C frontage / segments → D Exposure/Sites → E Compare/workflow → F Ask Archie  
 - Parallel: public Agent World polish  
 
 ## Done (recent)
+- ARCHIE-CORRIDORS-2 C2.0-A preview — language + hierarchy  
 - STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  
 - ARCHIE Corridors v1 waves live (traffic · growth · scenarios · land loop · toolbox)  
 - STORY-SHELL-NAV · HEADER · GLASS · FEEL waves  
