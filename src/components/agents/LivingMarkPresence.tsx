@@ -9,6 +9,11 @@ import {
   markLivingMarkNudgeShown,
   shouldShowLivingMarkNudge,
 } from "@/lib/living-mark/nudge";
+import {
+  decideLivingMarkPlay,
+  recordLivingMarkPlay,
+  type PlayAudience,
+} from "@/lib/living-mark/play-respect";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -24,9 +29,9 @@ type Props = {
 type MarkMode = "still" | "playing" | "frozen";
 
 /**
- * SW-3 Living Mark presence — circle video, no player chrome.
- * Autoplays once per visit (caps arrive in SW-4); freezes to headshot still.
- * Agent-only weekly nudge when still is temporary (no video).
+ * SW-3/SW-4 Living Mark presence — circle video, no player chrome.
+ * SW-4: guest 4/session (sessionStorage) · logged-in 4/lifetime/agent · own always.
+ * Same in-session feel until a cap freezes the mark.
  */
 export function LivingMarkPresence({
   agentId,
@@ -37,12 +42,17 @@ export function LivingMarkPresence({
   tone,
 }: Props) {
   const { user } = useAuth();
-  const isOwn = Boolean(user?.id && user.id === agentId);
+  const visitorUserId = user?.id ?? null;
+  const isOwn = Boolean(visitorUserId && visitorUserId === agentId);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const recordedPlayRef = useRef(false);
 
   const [still, setStill] = useState(photoUrl ?? null);
   const [videoUrl, setVideoUrl] = useState(videoUrlProp ?? null);
   const [mode, setMode] = useState<MarkMode>("still");
+  const [audience, setAudience] = useState<PlayAudience>(
+    isOwn ? "own" : visitorUserId ? "account" : "guest",
+  );
   const [showNudge, setShowNudge] = useState(false);
 
   useEffect(() => {
@@ -66,12 +76,21 @@ export function LivingMarkPresence({
   }, [agentId, photoUrl, videoUrlProp]);
 
   useEffect(() => {
+    recordedPlayRef.current = false;
     if (!videoUrl) {
       setMode("still");
+      setAudience(isOwn ? "own" : visitorUserId ? "account" : "guest");
       return;
     }
-    setMode("playing");
-  }, [videoUrl]);
+    const decision = decideLivingMarkPlay(agentId, visitorUserId);
+    setAudience(decision.audience);
+    if (decision.allowed) {
+      setMode("playing");
+    } else {
+      // Cap exhausted — frozen headshot for remainder of session / lifetime.
+      setMode("frozen");
+    }
+  }, [videoUrl, agentId, visitorUserId, isOwn]);
 
   useEffect(() => {
     if (mode !== "playing" || !videoUrl) return;
@@ -79,43 +98,55 @@ export function LivingMarkPresence({
     if (!el) return;
     el.muted = true;
     const play = el.play();
-    if (play && typeof play.catch === "function") {
-      play.catch(() => setMode("still"));
+    if (play && typeof play.then === "function") {
+      play
+        .then(() => {
+          if (recordedPlayRef.current) return;
+          recordedPlayRef.current = true;
+          recordLivingMarkPlay(agentId, visitorUserId);
+        })
+        .catch(() => setMode("still"));
     }
-  }, [mode, videoUrl]);
+  }, [mode, videoUrl, agentId, visitorUserId]);
 
   useEffect(() => {
-    if (!isOwn || !user?.id) {
+    if (!isOwn || !visitorUserId) {
       setShowNudge(false);
       return;
     }
     const hasVideo = Boolean(videoUrl);
-    if (!shouldShowLivingMarkNudge(user.id, hasVideo)) {
+    if (!shouldShowLivingMarkNudge(visitorUserId, hasVideo)) {
       setShowNudge(false);
       return;
     }
     setShowNudge(true);
-    markLivingMarkNudgeShown(user.id);
-  }, [isOwn, user?.id, videoUrl]);
+    markLivingMarkNudgeShown(visitorUserId);
+  }, [isOwn, visitorUserId, videoUrl]);
 
   function onEnded() {
     setMode("frozen");
   }
 
   function onNudgeDismiss() {
-    if (!user?.id) return;
-    dismissLivingMarkNudge(user.id);
+    if (!visitorUserId) return;
+    dismissLivingMarkNudge(visitorUserId);
     setShowNudge(false);
   }
 
   const playing = mode === "playing" && Boolean(videoUrl);
+  const capState =
+    mode === "frozen" && videoUrl && audience !== "own" ? "exhausted" : "open";
 
   return (
     <div className="relative shrink-0">
       <div
         data-living-mark
-        data-living-mark-mode={playing ? "playing" : mode === "frozen" ? "frozen" : "still"}
+        data-living-mark-mode={
+          playing ? "playing" : mode === "frozen" ? "frozen" : "still"
+        }
         data-living-mark-video-ready={videoUrl ? "true" : "false"}
+        data-living-mark-audience={audience}
+        data-living-mark-cap={capState}
         className="relative h-24 w-24 md:h-28 md:w-28"
         aria-label={`${name} Living Mark`}
       >

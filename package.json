@@ -18,6 +18,7 @@
     "test:story-walk-sw1": "node scripts/test-story-walk-sw1.mjs",
     "test:story-walk-sw2": "node scripts/test-story-walk-sw2.mjs",
     "test:story-walk-sw3": "node scripts/test-story-walk-sw3.mjs",
+    "test:story-walk-sw4": "node scripts/test-story-walk-sw4.mjs",
     "test:motion": "node scripts/test-motion-routes.mjs",
     "test:shell": "node scripts/test-story-messages-referrals.mjs",
     "test:analytics": "node scripts/test-story-analytics-foundation.mjs && node scripts/test-story-analytics-destination.mjs",
