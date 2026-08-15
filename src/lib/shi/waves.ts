@@ -808,21 +808,20 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "STORY-WALK",
     name: "Story Walk · Agent World · Living Mark",
-    goal: "Agent World under StoryHome OS; share link live next; Story Walk film later.",
+    goal: "Agent World live through share; Story Walk film compositor on preview; SW-8 share harden next.",
     status: "current",
     frontend: [
-      "SW-1…SW-5 LIVE: Agent World, library, presence, play caps, plain-English analytics",
-      "SW-6: Share Agent World — native share + clipboard, OG meta, share button on world",
+      "SW-1…SW-6 LIVE: Agent World, library, presence, play caps, analytics, share link",
+      "SW-7 (preview): Story Walk compositor — pick listings → Living Mark + photo walk → WebM download",
       "REMINDER: public Agent World visitor polish still owed",
     ],
     backend: [
-      "Armor scripts/test-story-walk-sw1…sw6.mjs",
+      "Armor scripts/test-story-walk-sw1…sw7.mjs",
       "Migration 0032_living_marks.sql",
       "Migration 0033_agent_world_engagement.sql",
     ],
     outOfScope: [
-      "Story Walk compositor / film download (SW-7)",
-      "Social auto-post of film (SW-8)",
+      "Social auto-post / share of film (SW-8)",
       "Permanent guest fingerprinting",
       "GRPT / CAD / map theater",
     ],

@@ -7,6 +7,7 @@ import { useAuth } from "@/components/AuthContext";
 import { LivingMarkPresence } from "@/components/agents/LivingMarkPresence";
 import { AgentWorldAnalyticsCard } from "@/components/agents/AgentWorldAnalyticsCard";
 import { AgentWorldShareButton } from "@/components/agents/AgentWorldShareButton";
+import { StoryWalkComposer } from "@/components/agents/StoryWalkComposer";
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
 import { ListingCard } from "@/components/ListingCard";
 import {
@@ -23,7 +24,7 @@ type AgentWorldViewProps = {
 };
 
 /**
- * STORY-WALK SW-1…SW-6 — Agent World + Living Mark + analytics + share link.
+ * STORY-WALK SW-1…SW-7 — Agent World + Living Mark + analytics + share + Story Walk film.
  */
 export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   const { user } = useAuth();
@@ -162,6 +163,17 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
         </div>
 
         {isOwn ? <AgentWorldAnalyticsCard summary={summary} /> : null}
+
+        {isOwn ? (
+          <StoryWalkComposer
+            agentId={agent.id}
+            agentName={agent.fullName}
+            marketCity={agent.primaryMarketCity}
+            photoUrl={agent.photoUrl}
+            livingMarkVideoUrl={agent.livingMarkVideoUrl}
+            listings={listings}
+          />
+        ) : null}
 
         {agent.bio ? (
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted)]">
