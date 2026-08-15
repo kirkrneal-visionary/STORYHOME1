@@ -1,13 +1,13 @@
 # Story Walk — Agent World & Living Mark
 
-**Status:** SW-1…SW-4 **live on main**. SW-5+ builds on preview first.  
+**Status:** SW-1…SW-5 **live on main**. SW-6 kickoff ready — start tomorrow.  
 **Product name:** **Story Walk**  
 **Scope:** Realtor/agent profile as a StoryHome world — Living Mark presence + Story Walk marketing export + agent analytics  
 **Live verify (when built):** `storyhome-1-eqmg` preview first — never surprise production  
-**Companion:** [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md) · [`STORY-GLASS.md`](./STORY-GLASS.md) · [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md)
+**Companion:** [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md) · [`STORY-GLASS.md`](./STORY-GLASS.md) · [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md) · [`STORY-WALK-SW6-READY.md`](./STORY-WALK-SW6-READY.md)
 
 This file locks the **intended plan**. Do not dilute, rename, or swap the product shape in later waves without owner order.  
-Preview branch for new waves until owner green-lights live.
+**Sticky:** Public Agent World visitor polish is still owed — do not forget.
 
 ---
 
