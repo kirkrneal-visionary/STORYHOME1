@@ -15,6 +15,7 @@
     "test:glass": "node scripts/test-story-glass-ab.mjs && node scripts/test-story-glass-c.mjs && node scripts/test-story-glass-d.mjs && node scripts/test-story-glass-e.mjs && node scripts/test-story-glass-f.mjs && node scripts/test-story-glass-g.mjs",
     "test:shell-header": "node scripts/test-story-shell-header.mjs",
     "test:shell-nav": "node scripts/test-story-shell-nav.mjs",
+    "test:story-walk-sw1": "node scripts/test-story-walk-sw1.mjs",
     "test:motion": "node scripts/test-motion-routes.mjs",
     "test:shell": "node scripts/test-story-messages-referrals.mjs",
     "test:analytics": "node scripts/test-story-analytics-foundation.mjs && node scripts/test-story-analytics-destination.mjs",

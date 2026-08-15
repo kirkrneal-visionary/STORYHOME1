@@ -14,6 +14,8 @@ export type DemoAgent = {
   professionalRole: string;
   bio: string;
   avatarTone: string;
+  /** Still Living Mark (photo). Video arrives in SW-3. */
+  photoUrl?: string | null;
 };
 
 export type DemoListing = {
@@ -62,6 +64,7 @@ export const DEMO_AGENT: DemoAgent = {
   professionalRole: "agent",
   bio: "",
   avatarTone: "bg-[color-mix(in_srgb,var(--gold)_35%,var(--navy))]",
+  photoUrl: null,
 };
 
 /** No seeded/demo listings — the marketplace shows only real DB listings. */

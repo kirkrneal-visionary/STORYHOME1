@@ -791,7 +791,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-SHELL-NAV",
     name: "Unified shell · floating bottom dock",
     goal: "Bring the mobile Story Glass floating pill nav to tablet/desktop as a centered dock — same visual language, preview-first.",
-    status: "current",
+    status: "done",
     frontend: [
       "story-bottom-dock + story-glass-nav on all breakpoints",
       "Desktop: centered floating pill (max ~32rem), not full-bleed",
@@ -805,10 +805,27 @@ export const SHI_WAVES: ShiWave[] = [
       "Replacing desktop header utility cluster",
     ],
   },
+  {
+    id: "STORY-WALK",
+    name: "Story Walk · Agent World · Living Mark",
+    goal: "Agent World public profile under StoryHome OS; Living Mark still in SW-1; video + Story Walk export in later SW waves.",
+    status: "current",
+    frontend: [
+      "SW-1: AgentWorldView on /agents/[id] — Living Mark circle (still), identity, trust, listings",
+      "photo_url / avatar_url still into Living Mark",
+      "StoryHome chrome insets (safe-top + bottom clearance)",
+    ],
+    backend: ["Armor scripts/test-story-walk-sw1.mjs"],
+    outOfScope: [
+      "SW-2+ media library / Living Mark video / Story Walk compositor (later waves)",
+      "Guest fingerprinting",
+      "GRPT / CAD / map theater",
+    ],
+  },
 ];
 
-/** Active wave — floating bottom dock across platforms. */
-export const ARCHIE_CURRENT_WAVE = "STORY-SHELL-NAV" as const;
+/** Active wave — Story Walk / Agent World. */
+export const ARCHIE_CURRENT_WAVE = "STORY-WALK" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
