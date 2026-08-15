@@ -35,8 +35,22 @@ assert.match(demo, /sessionStorage/);
 
 const card = read("src/components/agents/AgentWorldAnalyticsCard.tsx");
 assert.match(card, /data-agent-world-analytics/);
-assert.match(card, /Guest sessions/);
-assert.match(card, /Account visitors/);
+assert.match(card, /data-agent-world-insights/);
+assert.match(card, /How people meet you here/);
+assert.match(card, /AGENT_WORLD_METRIC_COPY/);
+assert.match(card, /buildAgentWorldInsights/);
+
+const insights = read("src/lib/living-mark/insights.ts");
+assert.match(insights, /AGENT_WORLD_METRIC_COPY/);
+assert.match(insights, /INSIGHT_RULES/);
+assert.match(insights, /buildAgentWorldInsights/);
+assert.match(insights, /Welcome started/);
+assert.match(insights, /Opened your listings/);
+assert.match(insights, /Guest visits/);
+assert.match(insights, /Signed-in visitors/);
+assert.match(insights, /means:/);
+/* Learning model is rule-extensible */
+assert.match(insights, /Extensible insight rules|add rules/i);
 
 const world = read("src/components/agents/AgentWorldView.tsx");
 assert.match(world, /AgentWorldAnalyticsCard/);
