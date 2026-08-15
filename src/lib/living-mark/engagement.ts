@@ -49,9 +49,17 @@ export async function recordAgentWorldEngagement(opts: {
     markGuestViewCounted(opts.agentId);
   }
 
-  // Own-profile previews don't inflate visitor metrics (except own mark plays for agent QA).
-  if (audience === "own" && opts.event === "world_viewed") {
-    return;
+  // Own-profile previews don't inflate visitor metrics.
+  if (audience === "own") {
+    if (
+      opts.event === "world_viewed" ||
+      opts.event === "mark_play_started" ||
+      opts.event === "mark_play_completed" ||
+      opts.event === "mark_play_dropped" ||
+      opts.event === "cta_clicked"
+    ) {
+      return;
+    }
   }
 
   appendDemoRow(opts.agentId, opts.event, audience, visitorUserId, opts.cta ?? null);

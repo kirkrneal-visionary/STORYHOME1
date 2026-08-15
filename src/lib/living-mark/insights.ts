@@ -167,10 +167,10 @@ export const INSIGHT_RULES: InsightRule[] = [
     id: "high-drop",
     minSignals: 8,
     when: (s, r) => s.markPlays >= 4 && r.dropPct >= 45,
-    build: (_s, r) => ({
+    build: (s, r) => ({
       tone: "watch",
       title: "Many leave mid-welcome",
-      body: `${r.dropPct}% start watching but leave early. Try a shorter ~20–30s Living Mark, lead with your face and market, and cut slow openings.`,
+      body: `${r.dropPct}% of welcomes that started were left early (${s.markDropoffs} of ${s.markPlays}). Try a shorter ~20–30s Living Mark, lead with your face and market, and cut slow openings.`,
     }),
   },
   {
