@@ -808,12 +808,12 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "STORY-WALK",
     name: "Story Walk · Agent World · Living Mark",
-    goal: "Agent World live through share; Story Walk film + social share on preview — owner live gate next.",
-    status: "current",
+    goal: "SW-1…SW-8 LIVE — Agent World, Living Mark, analytics, share, Story Walk film + social share.",
+    status: "done",
     frontend: [
-      "SW-1…SW-6 LIVE: Agent World, library, presence, play caps, analytics, share link",
-      "SW-7 (preview): Story Walk compositor — pick listings → Living Mark + photo walk → WebM",
-      "SW-8 (preview): Share film (native file/link/clipboard) + encode harden",
+      "SW-1…SW-8 LIVE: Agent World, library, presence, play caps, analytics, share link",
+      "SW-7 LIVE: Story Walk compositor — pick listings → Living Mark + photo walk → WebM",
+      "SW-8 LIVE: Share film (native file/link/clipboard) + encode harden",
       "REMINDER: public Agent World visitor polish still owed",
     ],
     backend: [
