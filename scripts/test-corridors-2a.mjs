@@ -89,7 +89,7 @@ assert.match(view, /Vehicles \/ day/);
 assert.match(view, /What does this mean/);
 assert.match(view, /AADT_EXPLAINER_V1/);
 assert.match(view, /corridorStatusFromHistory/);
-assert.match(view, /data-corridors-version="c2-0-[abc]"/);
+assert.match(view, /data-corridors-version="c2-0-[abcd]"/);
 
 const map = read("src/components/broker/intelligence/ShiCorridorsMap.tsx");
 assert.match(map, /traffic-intensity-v1/);

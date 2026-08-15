@@ -479,6 +479,24 @@ export async function shiCorridorsParcelLocation(opts: {
   }>(`/api/shi/corridors/parcel-location?${params.toString()}`);
 }
 
+/** C2.0-D — Find Strongest Sites in a drawn area (commercial-exposure-v1). */
+export async function shiCorridorsStrongestSites(opts: {
+  countyFips: string;
+  boundary: import("@/lib/geo").DrawnBoundary;
+  limit?: number;
+}) {
+  return shiFetch<{
+    sites: import("@/lib/shi/corridor-exposure").RankedSite[];
+    parcelCount: number;
+    capped: boolean;
+    honesty: string;
+  }>("/api/shi/corridors/strongest-sites", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
 export async function shiCorridorsProjects(opts: {
   countyFips: string;
   bbox?: readonly [number, number, number, number];

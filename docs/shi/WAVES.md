@@ -12,17 +12,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-CORRIDORS-2 · C2.0-C (preview) — Segment store + frontage
-Approx frontage · dual-road / corner · data-confidence chips · soft segment cache. Builds on C2.0-A/B.
+### ARCHIE-CORRIDORS-2 · C2.0-D (preview) — Exposure + Sites
+Traffic / Commercial Exposure scores (WHY?) · Find Strongest Sites · land-first map mode.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- C2.0-D Exposure/Sites → E Compare/workflow → F Ask Archie  
+- C2.0-E Compare/workflow → F Ask Archie  
 - Parallel: public Agent World polish  
 
 ## Done (recent)
+- ARCHIE-CORRIDORS-2 C2.0-C preview — approx frontage · segment cache  
 - ARCHIE-CORRIDORS-2 C2.0-B preview — parcel select + estimated traffic  
 - ARCHIE-CORRIDORS-2 C2.0-A preview — language + hierarchy  
 - STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  

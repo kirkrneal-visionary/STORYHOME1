@@ -71,7 +71,7 @@ Corridors helps a real-estate professional answer: **which property has the best
 | History | Up to ~6 TxDOT published years per station |
 | Parcel↔road / frontage | Approx frontage (PostGIS RPC or JS) — never surveyed |
 | Intersection proximity | Corner-likely heuristic when dual-road (C2.0-C); distance TBD |
-| Exposure score | **Not implemented** (C2.0-D) |
+| Exposure score | Traffic + Commercial Exposure v1 (C2.0-D) |
 | Parcel click on Corridors | Live (C2.0-B) |
 | Direct Prospects / Farms CTA | **Not implemented** (C2.0-E) |
 
@@ -129,6 +129,21 @@ Approx frontage = parcel exterior edges whose midpoint lies within **35 m** of a
 | HIGH | PostGIS frontage + recent observation year (≤2 years old) |
 | MODERATE | Client/JS approx frontage with mapped roads, or recent counts |
 | LIMITED | Station-only nearby estimate, thin geometry, or no road tie |
+
+### `traffic-exposure-v1`
+
+Transparent sum (max 85) — always show **WHY?** breakdown:
+
+| Factor | Max | Rule sketch |
+|---|---|---|
+| Vehicles / day | 35 | Intensity class from `traffic-intensity-v1` |
+| Corridor status | 20 | From `corridor-status-v1` |
+| Approx. frontage | 20 | Feet bands + dual-road/corner bonus |
+| Data confidence | 10 | HIGH / MODERATE / LIMITED |
+
+### `commercial-exposure-v1`
+
+Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only roads. Never zoning / sale / investment advice.
 
 ---
 
@@ -191,10 +206,10 @@ Approx frontage = parcel exterior edges whose midpoint lies within **35 m** of a
 
 **Acceptance**
 
-- [ ] Score only with versioned factor breakdown (“WHY?”).  
-- [ ] Commercial Exposure emphasizes **land**, not only roads.  
-- [ ] Find Strongest Sites returns ranked parcels + map highlight.  
-- [ ] No mysterious AI scores.
+- [x] Score only with versioned factor breakdown (“WHY?”).  
+- [x] Commercial Exposure emphasizes **land**, not only roads.  
+- [x] Find Strongest Sites returns ranked parcels + map highlight.  
+- [x] No mysterious AI scores.
 
 ---
 
@@ -245,4 +260,4 @@ Approx frontage = parcel exterior edges whose midpoint lies within **35 m** of a
 
 ---
 
-*Locked for Corridors 2.0. Current implementation wave: **C2.0-B** (on C2.0-A). Preview before live.*
+*Locked for Corridors 2.0. Current implementation wave: **C2.0-D** (on C2.0-A…C). Preview before live.*

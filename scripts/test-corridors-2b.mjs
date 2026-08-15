@@ -46,7 +46,7 @@ assert.match(map, /selectedParcelId/);
 assert.match(map, /prop_id/);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-[abc]"/);
+assert.match(view, /data-corridors-version="c2-0-[abcd]"/);
 assert.match(view, /ParcelSitePanel|data-corridor-parcel-panel/);
 assert.match(view, /associateParcelTraffic/);
 assert.match(view, /Open in Research/);

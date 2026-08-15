@@ -21,6 +21,7 @@ import {
   shiAnalyzeArea,
   shiCorridorsParcelLocation,
   shiCorridorsProjects,
+  shiCorridorsStrongestSites,
   shiCorridorsTraffic,
   shiCreateFolder,
   shiListFolders,
@@ -86,6 +87,11 @@ import {
   formatApproxFrontageFt,
   type ParcelLocationIntel,
 } from "@/lib/shi/corridor-frontage";
+import {
+  exposureBandLabel,
+  scoreCommercialExposure,
+  type RankedSite,
+} from "@/lib/shi/corridor-exposure";
 import {
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
@@ -157,6 +163,10 @@ export function ShiCorridorsView({
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState("");
   const [savedStudies, setSavedStudies] = useState<CorridorSavedStudy[]>([]);
+  const [commercialExposureMode, setCommercialExposureMode] = useState(false);
+  const [rankedSites, setRankedSites] = useState<RankedSite[]>([]);
+  const [strongestLoading, setStrongestLoading] = useState(false);
+  const [strongestNote, setStrongestNote] = useState("");
 
   useEffect(() => {
     setSavedStudies(listCorridorStudies(county.fips));
@@ -198,6 +208,9 @@ export function ShiCorridorsView({
       setSelectedWatch(null);
       setProjects([]);
       setProjectsNote("");
+      setRankedSites([]);
+      setStrongestNote("");
+      setCommercialExposureMode(false);
       try {
         const data = await shiCorridorsTraffic(fips);
         setPayload(data);
@@ -313,6 +326,8 @@ export function ShiCorridorsView({
           setAnalysisB(null);
           setCompare(null);
           setAnalyzeStatus(result.statusLine);
+          setRankedSites([]);
+          setStrongestNote("");
         }
       } catch (e) {
         if (!compareMode) setAnalysis(null);
@@ -335,6 +350,40 @@ export function ShiCorridorsView({
       projectsAvailable,
     ],
   );
+
+  const findStrongestSites = useCallback(async () => {
+    if (!analysisBoundary) {
+      setStrongestNote("Draw an area first, then Find Strongest Sites.");
+      return;
+    }
+    setStrongestLoading(true);
+    setStrongestNote("Ranking parcels by commercial exposure…");
+    setCommercialExposureMode(true);
+    try {
+      const body = await shiCorridorsStrongestSites({
+        countyFips: county.fips,
+        boundary: analysisBoundary,
+        limit: 12,
+      });
+      setRankedSites(body.sites);
+      setStrongestNote(
+        body.sites.length
+          ? `Top ${body.sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — ${body.honesty}`
+          : "No parcels to rank in this outline.",
+      );
+      setPanel("site");
+      setExploreOpen(true);
+    } catch (e) {
+      setRankedSites([]);
+      setStrongestNote(
+        e instanceof Error
+          ? e.message
+          : "Could not rank strongest sites for this area.",
+      );
+    } finally {
+      setStrongestLoading(false);
+    }
+  }, [analysisBoundary, county.fips]);
 
   const saveStudy = useCallback(async () => {
     if (!analysis || !analysisBoundary) return;
@@ -479,7 +528,7 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-c">
+    <div className="space-y-4" data-corridors-version="c2-0-d">
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -523,6 +572,8 @@ export function ShiCorridorsView({
               setCounty(resolveCorridorCounty(e.target.value));
               setAnalysis(null);
               setAnalysisBoundary(null);
+              setRankedSites([]);
+              setStrongestNote("");
             }}
             className="field-input mt-1 h-10"
           >
@@ -560,6 +611,31 @@ export function ShiCorridorsView({
           >
             <Route className="h-4 w-4" />
             TxDOT projects
+          </button>
+          <button
+            type="button"
+            data-commercial-exposure-toggle
+            onClick={() => setCommercialExposureMode((v) => !v)}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold",
+              commercialExposureMode
+                ? "bg-gold text-navy"
+                : "border border-hairline text-ink",
+            )}
+          >
+            Commercial Exposure
+          </button>
+          <button
+            type="button"
+            data-find-strongest-sites
+            onClick={() => void findStrongestSites()}
+            disabled={strongestLoading || !analysisBoundary}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-40"
+          >
+            {strongestLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : null}
+            Find Strongest Sites
           </button>
           <button
             type="button"
@@ -671,6 +747,23 @@ export function ShiCorridorsView({
               setPanel("site");
               setExploreOpen(true);
             }
+          }}
+          commercialExposureMode={commercialExposureMode}
+          rankedSites={rankedSites}
+          onSelectRankedSite={(site) => {
+            setSelectedParcel({
+              propId: site.propId,
+              source: site.source,
+              lat: site.lat,
+              lng: site.lng,
+              situsAddress: site.situsAddress,
+              ownerName: site.ownerName,
+              legalAcreage: site.legalAcreage,
+              marketValue: site.marketValue,
+            });
+            setSelected(null);
+            setPanel("site");
+            setExploreOpen(true);
           }}
           onBoundaryDrawn={(b) => void runAnalysis(b)}
           analysisBoundary={analysisBoundary}
@@ -878,6 +971,67 @@ export function ShiCorridorsView({
           }
           onReport={analysis ? openReport : undefined}
         />
+      ) : null}
+
+      {strongestNote && !presentationMode ? (
+        <p
+          className="text-sm text-[var(--muted)]"
+          data-strongest-sites-note
+        >
+          {strongestNote}
+        </p>
+      ) : null}
+
+      {rankedSites.length > 0 && !presentationMode ? (
+        <section
+          className="story-surface p-4"
+          data-strongest-sites-list
+        >
+          <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+            Strongest sites · commercial exposure
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Ranked land parcels — transparent factors, not an AI mystery score.
+          </p>
+          <ul className="mt-3 space-y-1">
+            {rankedSites.map((s) => (
+              <li key={s.propId}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedParcel({
+                      propId: s.propId,
+                      source: s.source,
+                      lat: s.lat,
+                      lng: s.lng,
+                      situsAddress: s.situsAddress,
+                      ownerName: s.ownerName,
+                      legalAcreage: s.legalAcreage,
+                      marketValue: s.marketValue,
+                    });
+                    setSelected(null);
+                    setPanel("site");
+                    setExploreOpen(true);
+                  }}
+                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-[var(--background)]"
+                >
+                  <span className="min-w-0 truncate">
+                    <span className="font-mono text-[10px] text-gold">
+                      #{s.rank}
+                    </span>{" "}
+                    <span className="font-semibold text-ink">
+                      {s.situsAddress?.trim() || `CAD #${s.propId}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--muted)]">
+                    {s.commercial.score}/{s.commercial.maxScore} ·{" "}
+                    {exposureBandLabel(s.commercial.band)}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {saveNote ? (
@@ -1163,6 +1317,12 @@ function ParcelSitePanel({
   const assoc = associateParcelTraffic(parcel, stations);
   const summary = parcelTrafficSummary(assoc);
   const confidenceLabel = (intel?.confidence ?? assoc.confidence).toUpperCase();
+  const commercial = scoreCommercialExposure({
+    pick: parcel,
+    stations,
+    intel,
+    legalAcreage: parcel.legalAcreage,
+  });
 
   return (
     <div className="space-y-3" data-corridor-parcel-panel>
@@ -1179,6 +1339,37 @@ function ParcelSitePanel({
       {parcel.situsAddress ? (
         <p className="text-xs text-[var(--muted)]">CAD #{parcel.propId}</p>
       ) : null}
+
+      <div className="story-well px-3 py-2.5" data-corridor-exposure-score>
+        <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+          Commercial exposure
+        </p>
+        <p className="mt-1 font-serif text-3xl font-bold tabular-nums text-ink">
+          {commercial.score}
+          <span className="text-lg text-[var(--muted)]">
+            /{commercial.maxScore}
+          </span>
+        </p>
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+          {exposureBandLabel(commercial.band)}
+        </p>
+        <details className="mt-2" data-corridor-exposure-why>
+          <summary className="cursor-pointer text-[11px] font-semibold text-gold">
+            WHY?
+          </summary>
+          <ul className="mt-2 space-y-1.5">
+            {commercial.factors.map((f) => (
+              <li key={f.id} className="text-[11px] leading-snug text-[var(--muted)]">
+                <span className="font-semibold text-ink">
+                  {f.label} · {f.points}/{f.maxPoints}
+                </span>
+                <br />
+                {f.detail}
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
 
       <div className="story-well px-3 py-2.5" data-corridor-frontage-block>
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">

@@ -43,6 +43,8 @@ import {
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
 import type { TxdotProject } from "@/lib/shi/txdot-projects";
 import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
+import type { RankedSite } from "@/lib/shi/corridor-exposure";
+import { exposureScoreColor } from "@/lib/shi/corridor-exposure";
 import { cn } from "@/lib/utils";
 
 const EMPTY_FC: GeoJSON.FeatureCollection = {
@@ -74,6 +76,10 @@ type Props = {
   /** C2.0-B — selected CAD parcel on the Corridors map */
   selectedParcelId?: string | null;
   onSelectParcel?: (parcel: CorridorParcelPick | null) => void;
+  /** C2.0-D — Commercial Exposure mode (land-first) */
+  commercialExposureMode?: boolean;
+  rankedSites?: RankedSite[];
+  onSelectRankedSite?: (site: RankedSite) => void;
   onBoundaryDrawn?: (boundary: DrawnBoundary) => void;
   analysisBoundary?: DrawnBoundary | null;
   revealStations?: boolean;
@@ -193,6 +199,9 @@ export function ShiCorridorsMap({
   onSelectStation,
   selectedParcelId = null,
   onSelectParcel,
+  commercialExposureMode = false,
+  rankedSites = [],
+  onSelectRankedSite,
   onBoundaryDrawn,
   analysisBoundary = null,
   revealStations = false,
@@ -215,6 +224,10 @@ export function ShiCorridorsMap({
   onSelectRef.current = onSelectStation;
   const onParcelRef = useRef(onSelectParcel);
   onParcelRef.current = onSelectParcel;
+  const onRankedRef = useRef(onSelectRankedSite);
+  onRankedRef.current = onSelectRankedSite;
+  const rankedRef = useRef(rankedSites);
+  rankedRef.current = rankedSites;
   const onWatchRef = useRef(onSelectWatch);
   onWatchRef.current = onSelectWatch;
   const onBoundaryRef = useRef(onBoundaryDrawn);
@@ -577,6 +590,49 @@ export function ShiCorridorsMap({
         },
       });
 
+      map.addSource("strongest-sites", {
+        type: "geojson",
+        data: EMPTY_FC,
+      });
+      map.addLayer({
+        id: "strongest-sites-halo",
+        type: "circle",
+        source: "strongest-sites",
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            10,
+            10,
+            15,
+            18,
+          ],
+          "circle-color": ["get", "color"],
+          "circle-opacity": 0.28,
+        },
+      });
+      map.addLayer({
+        id: "strongest-sites-circle",
+        type: "circle",
+        source: "strongest-sites",
+        paint: {
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            10,
+            5,
+            15,
+            9,
+          ],
+          "circle-color": ["get", "color"],
+          "circle-stroke-width": 1.5,
+          "circle-stroke-color": "#F5F0E6",
+          "circle-opacity": 0.95,
+        },
+      });
+
       setReady(true);
     });
 
@@ -637,6 +693,62 @@ export function ShiCorridorsMap({
       map.setLayoutProperty("traffic-stations-halo", "visibility", vis);
     }
   }, [stationsVisible, ready]);
+
+  /* C2.0-D — ranked land sites + Commercial Exposure land emphasis */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const src = map.getSource("strongest-sites") as
+      | maplibregl.GeoJSONSource
+      | undefined;
+    src?.setData({
+      type: "FeatureCollection",
+      features: rankedSites.map((s) => ({
+        type: "Feature" as const,
+        properties: {
+          propId: s.propId,
+          rank: s.rank,
+          score: s.commercial.score,
+          color: exposureScoreColor(s.commercial.score, s.commercial.maxScore),
+        },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [s.lng, s.lat],
+        },
+      })),
+    });
+    const siteVis = rankedSites.length > 0 ? "visible" : "none";
+    if (map.getLayer("strongest-sites-circle")) {
+      map.setLayoutProperty("strongest-sites-circle", "visibility", siteVis);
+      map.setLayoutProperty("strongest-sites-halo", "visibility", siteVis);
+    }
+    if (map.getLayer("parcels-fill")) {
+      map.setPaintProperty(
+        "parcels-fill",
+        "fill-opacity",
+        commercialExposureMode
+          ? [
+              "case",
+              ["boolean", ["feature-state", "selected"], false],
+              0.42,
+              0.14,
+            ]
+          : [
+              "case",
+              ["boolean", ["feature-state", "selected"], false],
+              0.35,
+              0.04,
+            ],
+      );
+    }
+    if (map.getLayer("corridor-segments-line")) {
+      map.setPaintProperty(
+        "corridor-segments-line",
+        "line-opacity",
+        commercialExposureMode ? 0.35 : 0.9,
+      );
+    }
+  }, [rankedSites, commercialExposureMode, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -770,6 +882,22 @@ export function ShiCorridorsMap({
             stationsRef.current.find((s) => s.id === sid) ?? null,
           );
           return;
+        }
+      }
+
+      /* C2.0-D — ranked strongest sites (land) */
+      if (map.getLayer("strongest-sites-circle")) {
+        const siteHits = map.queryRenderedFeatures(e.point, {
+          layers: ["strongest-sites-circle", "strongest-sites-halo"],
+        });
+        const propId = siteHits[0]?.properties?.propId as string | undefined;
+        if (propId) {
+          const site = rankedRef.current.find((s) => s.propId === propId);
+          if (site) {
+            onSelectRef.current(null);
+            onRankedRef.current?.(site);
+            return;
+          }
         }
       }
 
@@ -1205,6 +1333,18 @@ export function ShiCorridorsMap({
                 "Select traffic count stations",
               )}
             </div>
+
+            {commercialExposureMode ? (
+              <p
+                className="story-glass rounded-[var(--radius-md)] px-3 py-1.5 font-mono text-[10px] font-semibold tracking-wide text-gold uppercase"
+                data-commercial-exposure-banner
+              >
+                Commercial Exposure · land first
+                {rankedSites.length
+                  ? ` · ${rankedSites.length} ranked sites`
+                  : " · draw an area, then Find Strongest Sites"}
+              </p>
+            ) : null}
 
             {drawing ? (
               <div className="flex flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] border border-gold/50 px-3 py-2 text-[11px] text-paper">
