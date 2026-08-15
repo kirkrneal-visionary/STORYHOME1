@@ -11,14 +11,15 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-SHELL-HEADER
-Overlay living header across platforms (Instagram-class). Rest of shell deferred.
+### STORY-SHELL-NAV
+Floating bottom dock — mobile glass pill brought to desktop (centered). **Preview only until owner green-lights live.**
 
 ## Next
-- Decide next shell pieces after header review (nav language / maps / wordmark)  
-- Optional models / Messages E2E / licensed Corridors / native haptics when ready  
+- Owner review desktop dock look on eqmg preview  
+- Optional: wordmark / MapStage / collapse mark  
 
 ## Done
+- STORY-SHELL-HEADER (overlay living header + no black rule)  
 - STORY-GLASS-G (always-on sound) · F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
 - Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  

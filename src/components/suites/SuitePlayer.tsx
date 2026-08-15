@@ -85,7 +85,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-[var(--story-bottom-clearance)] pt-6 md:px-6 md:pb-10">
+    <div className="mx-auto max-w-5xl px-4 pb-[var(--story-bottom-clearance)] pt-6 md:px-6">
       <Link
         href="/saved"
         className="inline-flex items-center gap-2 text-sm text-[var(--muted)] hover:text-ink"

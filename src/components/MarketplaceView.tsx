@@ -178,7 +178,7 @@ export default function MarketplaceView() {
         >
           <div
             ref={listRef}
-            className="min-h-0 flex-1 overflow-y-auto px-2 py-2 pb-[var(--story-bottom-clearance)] md:px-3 md:pb-3"
+            className="min-h-0 flex-1 overflow-y-auto px-2 py-2 pb-[var(--story-bottom-clearance)] md:px-3"
           >
             {loading ? (
               <div className="story-skeleton story-well px-5 py-12 text-center text-sm text-[var(--muted)]">

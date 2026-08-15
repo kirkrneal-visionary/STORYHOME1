@@ -773,7 +773,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-SHELL-HEADER",
     name: "Unified shell · overlay header",
     goal: "Instagram-class overlay living header across phone/tablet/desktop — content under chrome; nav language deferred.",
-    status: "current",
+    status: "done",
     frontend: [
       "story-overlay-header + --story-safe-top + viewport-fit cover",
       "no bottom hairline / black rule under overlay header (all states)",
@@ -783,15 +783,32 @@ export const SHI_WAVES: ShiWave[] = [
     ],
     backend: ["Armor scripts/test-story-shell-header.mjs"],
     outOfScope: [
-      "Primary nav unification (pill↔desktop cluster)",
       "MapStage / wordmark asset / room memory",
       "GRPT / CAD / sound changes",
     ],
   },
+  {
+    id: "STORY-SHELL-NAV",
+    name: "Unified shell · floating bottom dock",
+    goal: "Bring the mobile Story Glass floating pill nav to tablet/desktop as a centered dock — same visual language, preview-first.",
+    status: "current",
+    frontend: [
+      "story-bottom-dock + story-glass-nav on all breakpoints",
+      "Desktop: centered floating pill (max ~32rem), not full-bleed",
+      "Rooms keep --story-bottom-clearance under the dock on md+",
+    ],
+    backend: ["Armor scripts/test-story-shell-nav.mjs"],
+    outOfScope: [
+      "Merging to production without owner review",
+      "Wordmark / MapStage / scroll-hide brand",
+      "GRPT / CAD / sound changes",
+      "Replacing desktop header utility cluster",
+    ],
+  },
 ];
 
-/** Active wave — Unified overlay header. */
-export const ARCHIE_CURRENT_WAVE = "STORY-SHELL-HEADER" as const;
+/** Active wave — floating bottom dock across platforms. */
+export const ARCHIE_CURRENT_WAVE = "STORY-SHELL-NAV" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

@@ -30,7 +30,7 @@ export function ShellPausedView({
   secondaryLabel,
 }: Props) {
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1rem)] md:pb-10">
+    <div className="flex min-h-dvh items-center justify-center px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1rem)]">
       <section className="w-full max-w-lg text-center">
         <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
           {eyebrow}
