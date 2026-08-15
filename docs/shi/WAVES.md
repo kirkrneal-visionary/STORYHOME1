@@ -12,17 +12,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK · SW-6 (preview) — Share Agent World
-Native share + clipboard of canonical `/agents/[id]`; OG meta for link cards. **Not the film.**
+### STORY-WALK · SW-1…SW-8 **LIVE** — plan complete
+Agent World, Living Mark, analytics, share link, Story Walk film export + social share. Preview verified on `storyhome-1-eqmg`; owner green-lit live.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- SW-7 Story Walk compositor → SW-8 social share harden  
 - Parallel: public Agent World polish  
 
 ## Done (recent)
+- STORY-WALK SW-7 + SW-8 live — compositor + Share film + encode harden  
+- STORY-WALK SW-6 live — Share Agent World link  
 - STORY-WALK SW-5 live — plain-English analytics + learning insights  
 - STORY-WALK SW-1…SW-4 live (Agent World · library · presence · play respect)  
 - STORY-SHELL-NAV · HEADER · GLASS · FEEL waves  
