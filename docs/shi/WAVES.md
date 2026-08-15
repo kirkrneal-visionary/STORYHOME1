@@ -17,6 +17,7 @@ Overlay living header across platforms (Instagram-class). Rest of shell deferred
 ## Next
 - Decide next shell pieces after header review (nav language / maps / wordmark)  
 - Optional models / Messages E2E / licensed Corridors / native haptics when ready  
+- **Future (blueprint only):** [`STORY-MAP-THEATER.md`](./STORY-MAP-THEATER.md) — map immersion · explore/build · exit memory · optional Google  
 
 ## Done
 - STORY-GLASS-G (always-on sound) · F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
