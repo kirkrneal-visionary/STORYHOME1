@@ -28,6 +28,7 @@ assert.doesNotMatch(presence, /PlayCircle|PauseCircle/);
 const page = read("src/app/agents/[id]/page.tsx");
 assert.match(page, /AgentWorldView/);
 assert.match(page, /photo_url/);
+assert.match(page, /demoAgentForId|DEMO_AGENT/);
 
 const map = read("src/lib/listings-map.ts");
 assert.match(map, /photo_url/);
