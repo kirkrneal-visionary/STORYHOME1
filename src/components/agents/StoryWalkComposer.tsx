@@ -243,7 +243,7 @@ export function StoryWalkComposer({
       } else {
         setShareNote("Couldn’t share — your download is still saved.");
       }
-      window.setTimeout(() => setShareNote(""), 3200);
+      window.setTimeout(() => setShareNote(""), 5200);
     } finally {
       setSharing(false);
     }
@@ -426,8 +426,9 @@ export function StoryWalkComposer({
         <p
           data-story-walk-share-note
           role="status"
-          className="mt-2 text-xs text-[var(--muted)]"
+          className="mt-3 flex max-w-md items-start gap-1.5 rounded-xl border border-hairline bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-3 py-2 text-[11px] leading-snug text-[var(--muted)] shadow-[0_8px_24px_rgba(18,40,32,0.12)] backdrop-blur-md"
         >
+          <Check className="mt-0.5 h-3 w-3 shrink-0 text-gold" aria-hidden />
           {shareNote}
         </p>
       ) : null}
