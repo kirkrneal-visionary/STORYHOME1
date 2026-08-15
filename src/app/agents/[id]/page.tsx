@@ -10,7 +10,7 @@ type PageProps = {
 
 /** Prefer photo_url (Settings); fall back to avatar_url for Living Mark still. */
 const PROFILE_SELECT =
-  "id, full_name, initials, professional_role, primary_market_city, reputation_score, star_rating, review_count, bio, avatar_url, photo_url";
+  "id, full_name, initials, professional_role, primary_market_city, reputation_score, star_rating, review_count, bio, avatar_url, photo_url, living_mark_video_url";
 
 async function loadAgent(id: string) {
   const supabase = await getServerSupabase();

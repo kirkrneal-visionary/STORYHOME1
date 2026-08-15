@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ListingCard } from "@/components/ListingCard";
-import { useAuth } from "@/components/AuthContext";
-import { loadLivingMark } from "@/lib/living-mark/library";
+import { LivingMarkPresence } from "@/components/agents/LivingMarkPresence";
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
-import { cn } from "@/lib/utils";
+import { ListingCard } from "@/components/ListingCard";
 
 type AgentWorldViewProps = {
   agent: DemoAgent;
@@ -15,9 +12,9 @@ type AgentWorldViewProps = {
 };
 
 /**
- * STORY-WALK SW-1 — Agent World shell.
- * Living Mark circle is still-photo ready (video in SW-3).
+ * STORY-WALK SW-1…SW-3 — Agent World shell + Living Mark presence.
  * Clothed in StoryHome OS — not a social-network clone.
+ * Play caps land in SW-4.
  */
 export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   const roleLabel =
@@ -39,9 +36,10 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
         {/* Living Mark + identity */}
         <div className="-mt-14 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
           <div className="flex items-end gap-4 md:gap-5">
-            <LivingMarkStill
+            <LivingMarkPresence
               agentId={agent.id}
               photoUrl={agent.photoUrl}
+              videoUrl={agent.livingMarkVideoUrl}
               initials={agent.initials}
               name={agent.fullName}
               tone={agent.avatarTone}
@@ -146,67 +144,6 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
           )}
         </section>
       </div>
-    </div>
-  );
-}
-
-/** Living Mark circle — still for SW-1/SW-2; video presence arrives in SW-3. */
-function LivingMarkStill({
-  agentId,
-  photoUrl,
-  initials,
-  name,
-  tone,
-}: {
-  agentId: string;
-  photoUrl?: string | null;
-  initials: string;
-  name: string;
-  tone: string;
-}) {
-  const { user } = useAuth();
-  const [still, setStill] = useState(photoUrl ?? null);
-  const [hasVideo, setHasVideo] = useState(false);
-
-  useEffect(() => {
-    setStill(photoUrl ?? null);
-  }, [photoUrl]);
-
-  useEffect(() => {
-    if (!user?.id || user.id !== agentId) return;
-    void loadLivingMark(agentId, photoUrl, null).then((m) => {
-      if (m.stillUrl) setStill(m.stillUrl);
-      setHasVideo(Boolean(m.videoUrl));
-    });
-  }, [user?.id, agentId, photoUrl]);
-
-  return (
-    <div
-      data-living-mark
-      data-living-mark-mode="still"
-      data-living-mark-video-ready={hasVideo ? "true" : "false"}
-      className="relative h-24 w-24 shrink-0 md:h-28 md:w-28"
-      aria-label={`${name} profile mark`}
-    >
-      <div
-        className={cn(
-          "flex h-full w-full items-center justify-center overflow-hidden rounded-full ring-2 ring-gold/45 ring-offset-2 ring-offset-[var(--background)]",
-          !still && tone,
-        )}
-      >
-        {still ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={still} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <span className="font-serif text-2xl font-bold text-navy md:text-3xl">
-            {initials || "SH"}
-          </span>
-        )}
-      </div>
-      <span className="sr-only">
-        Living Mark still
-        {hasVideo ? " — welcome video ready for presence wave" : ""}
-      </span>
     </div>
   );
 }

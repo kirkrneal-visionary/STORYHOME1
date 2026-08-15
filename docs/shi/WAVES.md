@@ -12,11 +12,11 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK · SW-1 + SW-2 (preview / demo track)
-Agent World shell + Living Mark **library upload** in Settings. **Not merged to live** until owner green-lights.
+### STORY-WALK · SW-1…SW-3 (preview / demo track)
+Agent World + Living Mark library + **circle video presence** (no chrome, freeze, agent nudge). **Not merged to live** until owner green-lights.
 
 ## Next
-- SW-3 Living Mark video presence → SW-4…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
+- SW-4 play respect (guest 4/session · logged-in 4/lifetime) → SW-5…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
 - Keep building on preview branch — clean main until finalize  
 
 ## Done

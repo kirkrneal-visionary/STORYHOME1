@@ -808,20 +808,22 @@ export const SHI_WAVES: ShiWave[] = [
   {
     id: "STORY-WALK",
     name: "Story Walk · Agent World · Living Mark",
-    goal: "Agent World public profile under StoryHome OS; Living Mark still in SW-1; video + Story Walk export in later SW waves.",
+    goal: "Agent World public profile under StoryHome OS; Living Mark presence in circle; Story Walk export in later SW waves.",
     status: "current",
     frontend: [
-      "SW-1: AgentWorldView on /agents/[id] — Living Mark circle (still), identity, trust, listings",
+      "SW-1: AgentWorldView on /agents/[id] — identity, trust, listings",
       "SW-2: Settings Living Mark library — image/video upload (demo localStorage + Supabase bucket)",
+      "SW-3: LivingMarkPresence — circle video autoplay (no chrome), freeze to still, agent weekly nudge",
       "photo_url / living_mark_video_url + poster freeze from video frame",
       "StoryHome chrome insets (safe-top + bottom clearance)",
     ],
     backend: [
-      "Armor scripts/test-story-walk-sw1.mjs + test-story-walk-sw2.mjs",
+      "Armor scripts/test-story-walk-sw1.mjs + sw2 + sw3",
       "Migration 0032_living_marks.sql (bucket + living_mark_video_url)",
     ],
     outOfScope: [
-      "SW-3+ Living Mark autoplay presence / Story Walk compositor (later waves)",
+      "SW-4 play caps / guest session rules (next)",
+      "Story Walk compositor (SW-7)",
       "Guest fingerprinting",
       "Merging to production without owner review",
       "GRPT / CAD / map theater",

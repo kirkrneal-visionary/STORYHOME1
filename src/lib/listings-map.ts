@@ -26,6 +26,7 @@ type AgentRow = {
   bio: string | null;
   avatar_url: string | null;
   photo_url?: string | null;
+  living_mark_video_url?: string | null;
 };
 
 type ListingRow = Record<string, any>;
@@ -61,6 +62,7 @@ export function rowToAgent(row: AgentRow | null | undefined): DemoAgent | undefi
     bio: row.bio || "",
     avatarTone: AVATAR_TONE,
     photoUrl,
+    livingMarkVideoUrl: row.living_mark_video_url ?? null,
   };
 }
 

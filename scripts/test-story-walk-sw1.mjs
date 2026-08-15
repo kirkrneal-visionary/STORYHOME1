@@ -16,13 +16,14 @@ assert.match(doc, /SW-1/);
 
 const view = read("src/components/agents/AgentWorldView.tsx");
 assert.match(view, /data-story-agent-world/);
-assert.match(view, /data-living-mark/);
-assert.match(view, /data-living-mark-mode="still"/);
+assert.match(view, /LivingMarkPresence|data-living-mark/);
 assert.match(view, /story-bottom-clearance/);
 assert.match(view, /story-safe-top/);
-/* No visitor media-player chrome on the mark */
-assert.doesNotMatch(view, /<video[\s\S]*controls/);
-assert.doesNotMatch(view, /LivingMarkStill[\s\S]{0,400}play-pause|PlayCircle|PauseCircle/);
+/* No visitor media-player chrome on the mark (presence component owns video) */
+const presence = read("src/components/agents/LivingMarkPresence.tsx");
+assert.match(presence, /data-living-mark/);
+assert.doesNotMatch(presence, /\bcontrols[={\s]/);
+assert.doesNotMatch(presence, /PlayCircle|PauseCircle/);
 
 const page = read("src/app/agents/[id]/page.tsx");
 assert.match(page, /AgentWorldView/);

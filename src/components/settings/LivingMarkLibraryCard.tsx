@@ -53,7 +53,7 @@ export function LivingMarkLibraryCard({
       setMark(next);
       setNote(
         file.type.startsWith("video/")
-          ? "Welcome video saved. Still frozen from a frame — presence plays in SW-3."
+          ? "Welcome video saved. Agent World plays it in the circle — freezes to your still when done."
           : "Still saved as temporary Living Mark. Add a ~30s welcome video when ready.",
       );
       onChanged?.();
