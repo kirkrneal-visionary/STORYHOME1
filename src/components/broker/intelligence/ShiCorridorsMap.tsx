@@ -36,7 +36,6 @@ import {
 import { isDrawTool, setMapNavigationLocked } from "@/lib/map-draw/nav-lock";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import {
-  formatAadt,
   type CorridorCounty,
   type TrafficCorridorSegment,
   type TrafficStation,
@@ -156,19 +155,16 @@ function boundaryToFeature(boundary: DrawnBoundary): GeoJSON.Feature | null {
 }
 
 function aadtColorExpr() {
+  // traffic-intensity-v1 stepped classes (Corridors 2.0-A)
   return [
-    "interpolate",
-    ["linear"],
+    "step",
     ["coalesce", ["get", "aadt"], 0],
-    0,
     "#5a7a8a",
-    2000,
+    5000,
     "#2a9d8f",
-    8000,
-    MAP_GOLD,
-    20000,
-    "#e07a2f",
-    40000,
+    15000,
+    "#c9a227",
+    30000,
     "#c0392b",
   ] as maplibregl.ExpressionSpecification;
 }
@@ -1148,10 +1144,11 @@ export function ShiCorridorsMap({
             {tool === "traffic" && !loading ? (
               <div className="story-glass rounded-[var(--radius-md)] border border-gold/40 px-3 py-2 text-[11px] text-paper">
                 <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
-                  Traffic evidence
+                  Traffic at this location
                 </p>
                 <p className="mt-0.5 text-paper/90">
-                  Select a corridor station to explore traffic growth.
+                  Tap a count station — Archie shows vehicles per day, growth,
+                  and source.
                 </p>
               </div>
             ) : null}
@@ -1168,9 +1165,8 @@ export function ShiCorridorsMap({
       ) : null}
 
       {!stationsVisible && !loading && tool === "pan" && !presentationMode ? (
-        <div className="pointer-events-none absolute top-14 right-3 z-10 max-w-[180px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
-          Zoom in or use Traffic to see count stations · AADT{" "}
-          {formatAadt(0)}→{formatAadt(40000)}+
+        <div className="pointer-events-none absolute top-14 right-3 z-10 max-w-[200px] rounded-md bg-navy/85 px-2 py-1.5 text-[10px] text-paper/85">
+          Zoom in or use Traffic · intensity: lower → very high vehicles/day
         </div>
       ) : null}
     </div>

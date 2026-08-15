@@ -89,13 +89,14 @@ export function ShiCorridorsScenarioBoard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
-            Scenario board
+            Current traffic → scenario
           </p>
           <h3 className="font-serif text-xl font-bold text-ink">
-            Growth under your assumptions
+            If recent movement continues
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
-            {GROWTH_SCENARIO_HONESTY}
+            {GROWTH_SCENARIO_HONESTY} Conservative / Base / Upside are{" "}
+            <span className="font-semibold text-ink">scenarios, not forecasts</span>.
           </p>
         </div>
         <button
@@ -110,13 +111,13 @@ export function ShiCorridorsScenarioBoard({
       </div>
 
       <p className="mt-3 text-xs text-[var(--muted)]">
-        Base:{" "}
+        Current:{" "}
         <span className="font-semibold text-ink">
-          {formatAadt(result.coverage.baseAadt)} AADT
+          {formatAadt(result.coverage.baseAadt)} vehicles / day
         </span>
         {result.coverage.baseYear != null
-          ? ` (${result.coverage.baseYear})`
-          : ""}{" "}
+          ? ` · ${result.coverage.baseYear} AADT · TxDOT`
+          : " · AADT · TxDOT"}{" "}
         · {result.coverage.baseLabel}
         {result.watchTitle ? ` · Watch ${result.watchTitle}` : ""}
       </p>
@@ -209,8 +210,8 @@ export function ShiCorridorsScenarioBoard({
                 {formatAadt(b.projectedAadt)}
               </p>
               <p className="text-xs text-[var(--muted)]">
-                projected AADT in {assumptions.horizonYears} yr ·{" "}
-                {formatScenarioPct(b.deltaPct)} vs base (
+                vehicles / day in {assumptions.horizonYears} yr ·{" "}
+                {formatScenarioPct(b.deltaPct)} vs current (
                 {formatAadt(b.deltaAadt)} vehicles/day)
               </p>
             </div>

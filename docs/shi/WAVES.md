@@ -2,7 +2,7 @@
 
 **Live:** https://storyhome-1-eqmg.vercel.app  
 **Feel:** [`STORY-FEEL-WAVES.md`](./STORY-FEEL-WAVES.md) · **Glass:** [`STORY-GLASS.md`](./STORY-GLASS.md) · **Sound:** [`STORY-GLASS-SOUND.md`](./STORY-GLASS-SOUND.md)  
-**Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md)  
+**Corridors:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md) · [`ARCHIE-CORRIDORS-2.md`](./ARCHIE-CORRIDORS-2.md)  
 **Observation:** [`ARCHIE-OBS-OPS.md`](./ARCHIE-OBS-OPS.md)  
 **Shell:** [`STORY-MESSAGES-REFERRALS.md`](./STORY-MESSAGES-REFERRALS.md)  
 **Analytics:** [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md) · [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md)  
@@ -12,22 +12,21 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK · SW-1…SW-8 **LIVE** — plan complete
-Agent World, Living Mark, analytics, share link, Story Walk film export + social share. Preview verified on `storyhome-1-eqmg`; owner green-lit live.
+### ARCHIE-CORRIDORS-2 · C2.0-A (preview) — Language + hierarchy
+Corridors 2.0 lock doc + vehicles/day primary, intensity classes, corridor-status labels. Parcel-first waves next.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
+- C2.0-B Parcel select → C2.0-C frontage → D Exposure/Sites → E Compare/workflow → F Ask Archie  
 - Parallel: public Agent World polish  
 
 ## Done (recent)
-- STORY-WALK SW-7 + SW-8 live — compositor + Share film + encode harden  
-- STORY-WALK SW-6 live — Share Agent World link  
-- STORY-WALK SW-5 live — plain-English analytics + learning insights  
-- STORY-WALK SW-1…SW-4 live (Agent World · library · presence · play respect)  
+- STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  
+- ARCHIE Corridors v1 waves live (traffic · growth · scenarios · land loop · toolbox)  
 - STORY-SHELL-NAV · HEADER · GLASS · FEEL waves  
-- ARCHIE county ops · corridors · analytics foundation  
+- ARCHIE county ops · analytics foundation  
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

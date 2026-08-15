@@ -61,6 +61,17 @@ import {
   type TrafficStation,
 } from "@/lib/shi/corridors";
 import {
+  AADT_EXPLAINER_V1,
+  CORRIDOR_STATUS_LABEL,
+  CORRIDORS_2_HERO,
+  CORRIDORS_2_PURPOSE,
+  CORRIDORS_2_SUPPORT,
+  TRAFFIC_INTENSITY_LABEL,
+  corridorStatusFromHistory,
+  trafficIntensityClass,
+  vehiclesPerDayCaption,
+} from "@/lib/shi/corridor-language";
+import {
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
 import {
@@ -448,24 +459,24 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="v2-toolbox">
+    <div className="space-y-4" data-corridors-version="c2-0-a">
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
-          Corridor intelligence
+          Corridors
         </p>
         <h2 className="mt-1 font-serif text-2xl font-bold text-ink md:text-3xl">
-          See where movement may become opportunity.
+          {CORRIDORS_2_PURPOSE}
         </h2>
         <p className="mt-2 max-w-3xl text-sm text-[var(--muted)]">
-          Explore traffic patterns and property activity together — or use the
-          map toolbox to draw your own area and let Archie organize the signals.
+          {CORRIDORS_2_HERO} {CORRIDORS_2_SUPPORT}
         </p>
         <p className="mt-2 max-w-3xl text-xs text-[var(--muted)]">
           {CORRIDOR_ANALYSIS_HONESTY}
         </p>
         <p className="mt-3 font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
-          Map toolbox · Freehand · Box · Radius · pan locked while drawing
+          Map toolbox · Freehand · Box · Radius · Traffic · pan locked while
+          drawing
         </p>
       </div>
 
@@ -475,9 +486,9 @@ export function ShiCorridorsView({
           How Archie reads a corridor
         </p>
         <p className="mt-1 max-w-3xl text-sm text-[var(--muted)]">
-          Traffic alone doesn&apos;t tell the whole story. Archie combines
-          available transportation patterns with property and parcel evidence to
-          help surface areas showing meaningful change.
+          The road tells Archie where movement is concentrated. The goal is the
+          land: which parcels sit in that flow, whether traffic is growing, and
+          what deserves a closer look — without traffic-engineering jargon.
         </p>
       </div>
 
@@ -645,7 +656,7 @@ export function ShiCorridorsView({
               {(
                 [
                   ["watch", "Patterns"],
-                  ["station", "Station"],
+                  ["station", "Traffic"],
                   ["memory", "Memory"],
                 ] as const
               ).map(([id, label]) => (
@@ -680,14 +691,14 @@ export function ShiCorridorsView({
             {panel === "station" ? (
               <div>
                 <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-                  Station dossier
+                  Traffic at this location
                 </p>
                 {selected ? (
                   <StationDetail station={selected} />
                 ) : (
                   <p className="mt-2 text-sm text-[var(--muted)]">
-                    Select a corridor to explore traffic growth — or zoom in to
-                    reveal count stations.
+                    Tap Traffic on the map, then a count station — or zoom in to
+                    reveal stations along the corridor.
                   </p>
                 )}
               </div>
@@ -1007,39 +1018,79 @@ function WatchPanel({
 }
 
 function StationDetail({ station }: { station: TrafficStation }) {
+  const [showExplainer, setShowExplainer] = useState(false);
+  const status = corridorStatusFromHistory(station.history);
+  const intensity = trafficIntensityClass(station.latestAadt);
+
   return (
-    <div className="mt-2 space-y-2">
+    <div className="mt-2 space-y-3" data-corridor-traffic-dossier>
       <h3 className="font-serif text-xl font-bold text-ink">
         {station.onRoad || "Unnamed corridor"}
       </h3>
-      <p className="text-sm text-ink">
-        Latest published volume{" "}
-        <span className="font-serif text-2xl font-bold">
+
+      <div>
+        <p className="font-serif text-3xl font-bold tabular-nums text-ink">
           {formatAadt(station.latestAadt)}
-        </span>
-        {station.latestYear != null ? (
-          <span className="text-[var(--muted)]"> ({station.latestYear})</span>
+        </p>
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+          Vehicles / day
+        </p>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          {vehiclesPerDayCaption(station.latestYear)}
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowExplainer((v) => !v)}
+          className="mt-1 text-[11px] font-semibold text-gold underline-offset-2 hover:underline"
+          data-aadt-explainer-toggle
+        >
+          What does this mean?
+        </button>
+        {showExplainer ? (
+          <p
+            className="mt-1.5 text-xs leading-relaxed text-[var(--muted)]"
+            data-aadt-explainer
+          >
+            {AADT_EXPLAINER_V1}
+          </p>
         ) : null}
-      </p>
-      {station.trendLabel ? (
-        <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
-          Trend · {station.trendLabel}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1 font-mono text-[10px] font-semibold tracking-wide text-ink uppercase">
+          {TRAFFIC_INTENSITY_LABEL[intensity]}
+        </span>
+        <span className="rounded-md border border-gold/35 bg-gold/10 px-2 py-1 font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+          {CORRIDOR_STATUS_LABEL[status.status]}
+        </span>
+      </div>
+      <p className="text-[11px] leading-snug text-[var(--muted)]">{status.why}</p>
+      {status.changePct != null ? (
+        <p className="font-mono text-[11px] tabular-nums text-ink">
+          {status.changePct >= 0 ? "↑" : "↓"}{" "}
+          {Math.abs(status.changePct).toFixed(1)}% across published years
         </p>
       ) : null}
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        {station.history.map((h) => (
-          <span
-            key={`${station.id}-${h.year}`}
-            className={cn(
-              "rounded-md border px-2 py-1 font-mono text-[11px]",
-              h.aadt != null
-                ? "border-hairline bg-[var(--background)] text-ink"
-                : "border-dashed border-hairline text-[var(--muted)]",
-            )}
-          >
-            {h.year > 1900 ? h.year : "—"} · {formatAadt(h.aadt)}
-          </span>
-        ))}
+
+      <div>
+        <p className="font-mono text-[10px] font-semibold tracking-wide text-[var(--muted)] uppercase">
+          View history
+        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {station.history.map((h) => (
+            <span
+              key={`${station.id}-${h.year}`}
+              className={cn(
+                "rounded-md border px-2 py-1 font-mono text-[11px]",
+                h.aadt != null
+                  ? "border-hairline bg-[var(--background)] text-ink"
+                  : "border-dashed border-hairline text-[var(--muted)]",
+              )}
+            >
+              {h.year > 1900 ? h.year : "—"} · {formatAadt(h.aadt)}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );

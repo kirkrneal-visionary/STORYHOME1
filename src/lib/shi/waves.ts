@@ -827,10 +827,31 @@ export const SHI_WAVES: ShiWave[] = [
       "Fake engagement metrics",
     ],
   },
+  {
+    id: "ARCHIE-CORRIDORS-2",
+    name: "Corridors 2.0 · parcel traffic + commercial location",
+    goal: "Help pros answer which property has the best traffic exposure — land-first, plain language, no Corridors rewrite.",
+    status: "current",
+    frontend: [
+      "C2.0-A (preview): vehicles/day primary · intensity classes · corridor-status labels · AADT explainer",
+      "Locked plan: ARCHIE-CORRIDORS-2.md (A→F acceptance bars)",
+      "Preserve v1 toolbox · growth watch · scenarios · analyze · compare",
+    ],
+    backend: [
+      "Armor scripts/test-corridors-2a.mjs",
+      "No new schema in A — language + map hierarchy only",
+    ],
+    outOfScope: [
+      "Rebuild Corridors from scratch",
+      "Parcel click / frontage / exposure score (B–D)",
+      "LLM-invented traffic counts",
+      "Live congestion / seller probability",
+    ],
+  },
 ];
 
-/** Active wave — Story Walk / Agent World. */
-export const ARCHIE_CURRENT_WAVE = "STORY-WALK" as const;
+/** Active wave — Corridors 2.0. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

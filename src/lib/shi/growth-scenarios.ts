@@ -9,7 +9,7 @@ import { formatAadt, type TrafficStation } from "@/lib/shi/corridors";
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
 
 export const GROWTH_SCENARIO_HONESTY =
-  "Scenarios apply your growth assumptions to published TxDOT AADT. Results are illustrative ranges for planning conversation — not forecasts, entitlements, or investment advice.";
+  "Scenarios apply your growth assumptions to published vehicles/day (TxDOT AADT). Results are illustrative ranges for planning conversation — not forecasts, entitlements, or investment advice.";
 
 export type ScenarioAssumptions = {
   /** Annual traffic growth — conservative (% per year) */

@@ -69,7 +69,7 @@ export const CORRIDOR_COUNTIES = [
 export type CorridorCounty = (typeof CORRIDOR_COUNTIES)[number];
 
 export const CORRIDORS_HONESTY =
-  "TxDOT published annual average daily traffic (AADT) — planning counts, not live congestion. Missing years are gaps in the public record, not zeros.";
+  "Published vehicles per day from TxDOT (AADT) — planning averages, not live congestion. Missing years are gaps in the public record, not zeros.";
 
 export function corridorCountyByFips(
   fips: string | null | undefined,

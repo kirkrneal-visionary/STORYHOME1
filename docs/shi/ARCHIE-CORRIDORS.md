@@ -5,7 +5,7 @@
 **Scope:** Launch 7 counties only  
 **Live verify:** https://storyhome-1-eqmg.vercel.app/portal/intelligence?section=corridors  
 
-Companion: [`WAVES.md`](./WAVES.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
+Companion: [`WAVES.md`](./WAVES.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md) · **Corridors 2.0:** [`ARCHIE-CORRIDORS-2.md`](./ARCHIE-CORRIDORS-2.md)
 
 ---
 
