@@ -1,10 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
+import { useAuth } from "@/components/AuthContext";
 import { LivingMarkPresence } from "@/components/agents/LivingMarkPresence";
+import { AgentWorldAnalyticsCard } from "@/components/agents/AgentWorldAnalyticsCard";
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
 import { ListingCard } from "@/components/ListingCard";
+import {
+  emptyAgentWorldSummary,
+  loadAgentWorldSummary,
+  recordAgentWorldEngagement,
+} from "@/lib/living-mark/engagement";
+import type { AgentWorldSummary } from "@/lib/living-mark/engagement-types";
+import type { EngagementCta } from "@/lib/living-mark/engagement-types";
 
 type AgentWorldViewProps = {
   agent: DemoAgent;
@@ -12,14 +22,46 @@ type AgentWorldViewProps = {
 };
 
 /**
- * STORY-WALK SW-1…SW-3 — Agent World shell + Living Mark presence.
- * Clothed in StoryHome OS — not a social-network clone.
- * Play caps land in SW-4.
+ * STORY-WALK SW-1…SW-5 — Agent World + Living Mark + agent analytics slice.
  */
 export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
+  const { user } = useAuth();
+  const visitorUserId = user?.id ?? null;
+  const isOwn = Boolean(visitorUserId && visitorUserId === agent.id);
   const roleLabel =
     agent.professionalRole.replace(/_/g, " ").trim() || "Agent";
   const listingsHref = `/marketplace?agent=${encodeURIComponent(agent.id)}`;
+  const [summary, setSummary] = useState<AgentWorldSummary>(
+    emptyAgentWorldSummary(),
+  );
+
+  useEffect(() => {
+    void recordAgentWorldEngagement({
+      agentId: agent.id,
+      event: "world_viewed",
+      visitorUserId,
+    });
+  }, [agent.id, visitorUserId]);
+
+  useEffect(() => {
+    if (!isOwn) return;
+    void loadAgentWorldSummary(agent.id).then(setSummary);
+    const t = window.setInterval(() => {
+      void loadAgentWorldSummary(agent.id).then(setSummary);
+    }, 2500);
+    return () => window.clearInterval(t);
+  }, [isOwn, agent.id]);
+
+  function onCta(cta: EngagementCta) {
+    void recordAgentWorldEngagement({
+      agentId: agent.id,
+      event: "cta_clicked",
+      visitorUserId,
+      cta,
+    }).then(() => {
+      if (isOwn) void loadAgentWorldSummary(agent.id).then(setSummary);
+    });
+  }
 
   return (
     <div
@@ -67,18 +109,21 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
           <div className="flex flex-wrap gap-2">
             <Link
               href={listingsHref}
+              onClick={() => onCta("listings")}
               className="story-press inline-flex h-11 items-center rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)]"
             >
               View listings
             </Link>
             <a
               href="#agent-listings"
+              onClick={() => onCta("inventory")}
               className="story-press inline-flex h-11 items-center rounded-full border border-hairline bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-5 text-sm font-semibold text-ink backdrop-blur-sm"
             >
               Inventory
             </a>
             <Link
               href="/network"
+              onClick={() => onCta("find_agents")}
               className="story-press inline-flex h-11 items-center rounded-full border border-hairline px-5 text-sm font-semibold text-[var(--muted)] hover:text-ink"
             >
               Find agents
@@ -108,6 +153,8 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
           </div>
         </div>
 
+        {isOwn ? <AgentWorldAnalyticsCard summary={summary} /> : null}
+
         {agent.bio ? (
           <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted)]">
             {agent.bio}
@@ -125,6 +172,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
             {listings.length > 0 ? (
               <Link
                 href={listingsHref}
+                onClick={() => onCta("listings")}
                 className="text-sm font-semibold text-gold hover:underline"
               >
                 Open in marketplace

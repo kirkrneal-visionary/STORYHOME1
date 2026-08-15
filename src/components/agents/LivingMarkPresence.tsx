@@ -14,6 +14,7 @@ import {
   recordLivingMarkPlay,
   type PlayAudience,
 } from "@/lib/living-mark/play-respect";
+import { recordAgentWorldEngagement } from "@/lib/living-mark/engagement";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -46,6 +47,7 @@ export function LivingMarkPresence({
   const isOwn = Boolean(visitorUserId && visitorUserId === agentId);
   const videoRef = useRef<HTMLVideoElement>(null);
   const recordedPlayRef = useRef(false);
+  const completedPlayRef = useRef(false);
 
   const [still, setStill] = useState(photoUrl ?? null);
   const [videoUrl, setVideoUrl] = useState(videoUrlProp ?? null);
@@ -77,6 +79,7 @@ export function LivingMarkPresence({
 
   useEffect(() => {
     recordedPlayRef.current = false;
+    completedPlayRef.current = false;
     if (!videoUrl) {
       setMode("still");
       setAudience(isOwn ? "own" : visitorUserId ? "account" : "guest");
@@ -104,10 +107,29 @@ export function LivingMarkPresence({
           if (recordedPlayRef.current) return;
           recordedPlayRef.current = true;
           recordLivingMarkPlay(agentId, visitorUserId);
+          void recordAgentWorldEngagement({
+            agentId,
+            event: "mark_play_started",
+            visitorUserId,
+          });
         })
         .catch(() => setMode("still"));
     }
   }, [mode, videoUrl, agentId, visitorUserId]);
+
+  // Drop-off only when leaving the world mid-play (component unmount).
+  useEffect(() => {
+    return () => {
+      if (recordedPlayRef.current && !completedPlayRef.current) {
+        void recordAgentWorldEngagement({
+          agentId,
+          event: "mark_play_dropped",
+          visitorUserId,
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only
+  }, []);
 
   useEffect(() => {
     if (!isOwn || !visitorUserId) {
@@ -124,7 +146,13 @@ export function LivingMarkPresence({
   }, [isOwn, visitorUserId, videoUrl]);
 
   function onEnded() {
+    completedPlayRef.current = true;
     setMode("frozen");
+    void recordAgentWorldEngagement({
+      agentId,
+      event: "mark_play_completed",
+      visitorUserId,
+    });
   }
 
   function onNudgeDismiss() {

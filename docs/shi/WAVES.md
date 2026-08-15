@@ -12,19 +12,16 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK · SW-1…SW-4 (preview / demo track)
-Agent World + Living Mark library + presence + **play respect** (guest 4/session · account 4/lifetime). **Not merged to live** until owner green-lights.
+### STORY-WALK · SW-5 (preview) — agent analytics
+Agent-facing Living Mark / visit slice on own Agent World. **SW-1…SW-4 are live on main.**
 
 ## Next
-- SW-5 agent analytics → SW-6…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
-- Keep building on preview branch — clean main until finalize  
+- SW-6 share profile link → SW-7 compositor → SW-8 harden per [`STORY-WALK.md`](./STORY-WALK.md)  
 
-## Done
-- STORY-SHELL-NAV (desktop floating glass pill dock) — live  
-- STORY-SHELL-HEADER (overlay living header + no black rule)  
-- STORY-GLASS-G (always-on sound) · F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
-- ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
-- Analytics · Continuum · Messages hide theater · OBS-OPS · Corridors  
+## Done (recent)
+- STORY-WALK SW-1…SW-4 live (Agent World · library · presence · play respect)
+- STORY-SHELL-NAV · HEADER · GLASS · FEEL waves
+- ARCHIE county ops · corridors · analytics foundation 
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

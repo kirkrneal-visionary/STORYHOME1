@@ -15,6 +15,11 @@ export const ANALYTICS_EVENTS = [
   "archie_module_selected",
   "archie_parcel_opened",
   "archie_study_reopened",
+  "living_mark_play_started",
+  "living_mark_play_completed",
+  "living_mark_play_dropped",
+  "agent_world_viewed",
+  "agent_world_cta_clicked",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
@@ -42,6 +47,10 @@ export type PortalTabProp =
   | "community"
   | "other";
 
+export type LivingMarkAudienceProp = "guest" | "account" | "own";
+
+export type AgentWorldCtaProp = "listings" | "inventory" | "find_agents";
+
 /** Allowed props per event — keep narrow for privacy review. */
 export type AnalyticsPropsMap = {
   marketplace_viewed: { network: "marketplace" };
@@ -53,6 +62,26 @@ export type AnalyticsPropsMap = {
   archie_module_selected: { module: ArchieModuleProp };
   archie_parcel_opened: { county_fips: string };
   archie_study_reopened: { has_folder: boolean };
+  living_mark_play_started: {
+    agent_id: string;
+    audience: LivingMarkAudienceProp;
+  };
+  living_mark_play_completed: {
+    agent_id: string;
+    audience: LivingMarkAudienceProp;
+  };
+  living_mark_play_dropped: {
+    agent_id: string;
+    audience: LivingMarkAudienceProp;
+  };
+  agent_world_viewed: {
+    agent_id: string;
+    audience: LivingMarkAudienceProp;
+  };
+  agent_world_cta_clicked: {
+    agent_id: string;
+    cta: AgentWorldCtaProp;
+  };
 };
 
 /** Keys that must never appear on any event payload. */
