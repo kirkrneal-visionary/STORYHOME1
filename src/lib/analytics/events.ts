@@ -20,6 +20,7 @@ export const ANALYTICS_EVENTS = [
   "living_mark_play_dropped",
   "agent_world_viewed",
   "agent_world_cta_clicked",
+  "agent_world_shared",
 ] as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
@@ -81,6 +82,10 @@ export type AnalyticsPropsMap = {
   agent_world_cta_clicked: {
     agent_id: string;
     cta: AgentWorldCtaProp;
+  };
+  agent_world_shared: {
+    agent_id: string;
+    method: "native" | "clipboard";
   };
 };
 

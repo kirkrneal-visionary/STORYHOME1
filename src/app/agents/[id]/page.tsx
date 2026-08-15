@@ -76,7 +76,34 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const result = await loadAgent(id);
-  return { title: result?.agent?.fullName ?? "Agent" };
+  const agent = result?.agent;
+  if (!agent) {
+    return { title: "Agent World" };
+  }
+  const role = agent.professionalRole.replace(/_/g, " ").trim() || "Agent";
+  const place = agent.primaryMarketCity || "East Texas";
+  const title = `${agent.fullName} · Agent World`;
+  const description =
+    agent.bio?.trim() ||
+    `Meet ${agent.fullName} (${role}) in ${place} on Story Home — Living Mark welcome and listings.`;
+  const images = agent.photoUrl ? [{ url: agent.photoUrl }] : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      images,
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+      images: agent.photoUrl ? [agent.photoUrl] : undefined,
+    },
+  };
 }
 
 export default async function AgentProfilePage({ params }: PageProps) {
