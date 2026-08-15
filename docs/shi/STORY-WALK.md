@@ -1,13 +1,13 @@
 # Story Walk — Agent World & Living Mark
 
-**Status:** Blueprint only — **no implementation until green-lit**  
+**Status:** Building on **preview / demo track** — not merged to live until owner green-lights  
 **Product name:** **Story Walk**  
 **Scope:** Realtor/agent profile as a StoryHome world — Living Mark presence + Story Walk marketing export + agent analytics  
 **Live verify (when built):** `storyhome-1-eqmg` preview first — never surprise production  
 **Companion:** [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md) · [`STORY-GLASS.md`](./STORY-GLASS.md) · [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md)
 
 This file locks the **intended plan**. Do not dilute, rename, or swap the product shape in later waves without owner order.  
-It does not authorize coding by itself.
+Keep a clean main history — iterate on the preview branch until finalize.
 
 ---
 
@@ -173,4 +173,4 @@ Share-to-social paths, queue/encode reliability, phone/desktop QA, preview on eq
 
 ---
 
-*Saved under the intended name: **Story Walk**. Build only when the owner says go.*
+*Saved under the intended name: **Story Walk**. Preview branch first — live only on owner green-light.*

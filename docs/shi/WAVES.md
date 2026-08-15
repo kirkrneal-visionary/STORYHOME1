@@ -12,12 +12,12 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK · SW-1
-Agent World shell on `/agents/[id]` — Living Mark still circle; video + Story Walk export later.
+### STORY-WALK · SW-1 + SW-2 (preview / demo track)
+Agent World shell + Living Mark **library upload** in Settings. **Not merged to live** until owner green-lights.
 
 ## Next
-- SW-2 media library → SW-3 Living Mark video → … → SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
-- Optional: wordmark / MapStage / Map Theater when green-lit  
+- SW-3 Living Mark video presence → SW-4…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
+- Keep building on preview branch — clean main until finalize  
 
 ## Done
 - STORY-SHELL-NAV (desktop floating glass pill dock) — live  

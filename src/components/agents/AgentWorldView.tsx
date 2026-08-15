@@ -1,6 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
+import { useEffect, useState } from "react";
 import { ListingCard } from "@/components/ListingCard";
+import { useAuth } from "@/components/AuthContext";
+import { loadLivingMark } from "@/lib/living-mark/library";
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +40,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
         <div className="-mt-14 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
           <div className="flex items-end gap-4 md:gap-5">
             <LivingMarkStill
+              agentId={agent.id}
               photoUrl={agent.photoUrl}
               initials={agent.initials}
               name={agent.fullName}
@@ -144,46 +150,63 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   );
 }
 
-/** Living Mark circle — still for SW-1; video presence arrives in SW-3. */
+/** Living Mark circle — still for SW-1/SW-2; video presence arrives in SW-3. */
 function LivingMarkStill({
+  agentId,
   photoUrl,
   initials,
   name,
   tone,
 }: {
+  agentId: string;
   photoUrl?: string | null;
   initials: string;
   name: string;
   tone: string;
 }) {
+  const { user } = useAuth();
+  const [still, setStill] = useState(photoUrl ?? null);
+  const [hasVideo, setHasVideo] = useState(false);
+
+  useEffect(() => {
+    setStill(photoUrl ?? null);
+  }, [photoUrl]);
+
+  useEffect(() => {
+    if (!user?.id || user.id !== agentId) return;
+    void loadLivingMark(agentId, photoUrl, null).then((m) => {
+      if (m.stillUrl) setStill(m.stillUrl);
+      setHasVideo(Boolean(m.videoUrl));
+    });
+  }, [user?.id, agentId, photoUrl]);
+
   return (
     <div
       data-living-mark
       data-living-mark-mode="still"
+      data-living-mark-video-ready={hasVideo ? "true" : "false"}
       className="relative h-24 w-24 shrink-0 md:h-28 md:w-28"
       aria-label={`${name} profile mark`}
     >
       <div
         className={cn(
           "flex h-full w-full items-center justify-center overflow-hidden rounded-full ring-2 ring-gold/45 ring-offset-2 ring-offset-[var(--background)]",
-          !photoUrl && tone,
+          !still && tone,
         )}
       >
-        {photoUrl ? (
+        {still ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photoUrl}
-            alt=""
-            className="h-full w-full object-cover"
-          />
+          <img src={still} alt="" className="h-full w-full object-cover" />
         ) : (
           <span className="font-serif text-2xl font-bold text-navy md:text-3xl">
             {initials || "SH"}
           </span>
         )}
       </div>
-      {/* Slot hint for future Living Mark video — no player chrome */}
-      <span className="sr-only">Living Mark still — video in a later wave</span>
+      <span className="sr-only">
+        Living Mark still
+        {hasVideo ? " — welcome video ready for presence wave" : ""}
+      </span>
     </div>
   );
 }
