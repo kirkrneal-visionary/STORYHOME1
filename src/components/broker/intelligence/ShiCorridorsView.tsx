@@ -19,6 +19,7 @@ import { ShiCorridorsComparePanel } from "@/components/broker/intelligence/ShiCo
 import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
 import {
   shiAnalyzeArea,
+  shiCorridorsParcelLocation,
   shiCorridorsProjects,
   shiCorridorsTraffic,
   shiCreateFolder,
@@ -59,6 +60,7 @@ import {
   resolveCorridorCounty,
   type CorridorCounty,
   type CorridorsTrafficPayload,
+  type TrafficCorridorSegment,
   type TrafficStation,
 } from "@/lib/shi/corridors";
 import {
@@ -78,6 +80,12 @@ import {
   parcelTrafficSummary,
   type CorridorParcelPick,
 } from "@/lib/shi/corridor-parcel-traffic";
+import {
+  approxFrontageFromGeojson,
+  buildParcelLocationIntel,
+  formatApproxFrontageFt,
+  type ParcelLocationIntel,
+} from "@/lib/shi/corridor-frontage";
 import {
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
@@ -471,7 +479,7 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-b">
+    <div className="space-y-4" data-corridors-version="c2-0-c">
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -715,6 +723,7 @@ export function ShiCorridorsView({
               <ParcelSitePanel
                 parcel={selectedParcel}
                 stations={payload?.stations ?? []}
+                segments={payload?.segments ?? []}
                 county={county}
                 onStudyLand={() => {
                   if (!selectedParcel) return;
@@ -1064,14 +1073,78 @@ function WatchPanel({
 function ParcelSitePanel({
   parcel,
   stations,
+  segments,
   county,
   onStudyLand,
 }: {
   parcel: CorridorParcelPick | null;
   stations: TrafficStation[];
+  segments: TrafficCorridorSegment[];
   county: CorridorCounty;
   onStudyLand: () => void;
 }) {
+  const [intel, setIntel] = useState<ParcelLocationIntel | null>(null);
+  const [intelLoading, setIntelLoading] = useState(false);
+
+  useEffect(() => {
+    if (!parcel) {
+      setIntel(null);
+      return;
+    }
+
+    /* Immediate client approx when map gave us a polygon + live segments. */
+    if (parcel.geojson && segments.length > 0) {
+      const roads = approxFrontageFromGeojson({
+        parcelGeojson: parcel.geojson,
+        segments,
+      });
+      setIntel(
+        buildParcelLocationIntel({
+          roads,
+          source: "client_approx",
+          observationYear: new Date().getFullYear(),
+          stationNearby: roads.length > 0,
+        }),
+      );
+    } else {
+      setIntel(null);
+    }
+
+    let cancelled = false;
+    setIntelLoading(true);
+    void shiCorridorsParcelLocation({
+      propId: parcel.propId,
+      source: parcel.source ?? county.source,
+      countyFips: parcel.countyFips ?? county.fips,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled || !body.intel) return;
+        /* Prefer PostGIS; otherwise keep client approx if richer. */
+        setIntel((prev) => {
+          if (body.intel.source === "postgis") return body.intel;
+          if (
+            prev &&
+            prev.totalApproxFrontageFt > body.intel.totalApproxFrontageFt
+          ) {
+            return prev;
+          }
+          return body.intel;
+        });
+      })
+      .catch(() => {
+        /* Soft-fail — station estimate still shows. */
+      })
+      .finally(() => {
+        if (!cancelled) setIntelLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [parcel, segments, county.fips, county.source]);
+
   if (!parcel) {
     return (
       <div data-corridor-parcel-empty>
@@ -1079,9 +1152,9 @@ function ParcelSitePanel({
           Location · parcel
         </p>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Zoom in until parcel lines appear, then tap a parcel. Archie connects
-          land to nearby published traffic — labeled estimated until road-segment
-          frontage ships.
+          Zoom in until parcel lines appear, then tap a parcel. Archie shows
+          approx frontage and nearby published traffic — never surveyed
+          frontage.
         </p>
       </div>
     );
@@ -1089,6 +1162,7 @@ function ParcelSitePanel({
 
   const assoc = associateParcelTraffic(parcel, stations);
   const summary = parcelTrafficSummary(assoc);
+  const confidenceLabel = (intel?.confidence ?? assoc.confidence).toUpperCase();
 
   return (
     <div className="space-y-3" data-corridor-parcel-panel>
@@ -1105,6 +1179,70 @@ function ParcelSitePanel({
       {parcel.situsAddress ? (
         <p className="text-xs text-[var(--muted)]">CAD #{parcel.propId}</p>
       ) : null}
+
+      <div className="story-well px-3 py-2.5" data-corridor-frontage-block>
+        <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+          Approx. frontage
+        </p>
+        <p
+          className="mt-1 font-serif text-2xl font-bold tabular-nums text-ink"
+          data-corridor-frontage-ft
+        >
+          {intelLoading && !intel
+            ? "…"
+            : formatApproxFrontageFt(intel?.totalApproxFrontageFt ?? 0)}
+        </p>
+        <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
+          Mapped-road proximity — not a survey. Label always APPROX.
+        </p>
+        {intel?.roads?.length ? (
+          <ul className="mt-2 space-y-1" data-corridor-frontage-roads>
+            {intel.roads.slice(0, 4).map((r) => (
+              <li
+                key={`${r.routeId}:${r.segmentId}`}
+                className="flex justify-between gap-2 text-xs text-ink"
+              >
+                <span className="truncate">{r.routeId}</span>
+                <span className="shrink-0 tabular-nums text-[var(--muted)]">
+                  ~{r.approxFrontageFt.toLocaleString("en-US")} ft
+                  {r.aadt != null
+                    ? ` · ${Math.round(r.aadt).toLocaleString("en-US")}/day`
+                    : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {intel?.dualRoad ? (
+            <span
+              data-corridor-dual-road
+              className="rounded-md border border-gold/35 bg-gold/10 px-2 py-1 font-mono text-[10px] font-semibold text-gold uppercase"
+            >
+              Dual-road
+            </span>
+          ) : null}
+          {intel?.cornerLikely ? (
+            <span
+              data-corridor-corner
+              className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1 font-mono text-[10px] font-semibold uppercase"
+            >
+              Corner likely
+            </span>
+          ) : null}
+          <span
+            data-corridor-data-confidence
+            className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1 font-mono text-[10px] font-semibold uppercase"
+          >
+            Data {confidenceLabel}
+          </span>
+        </div>
+        {intel?.confidenceWhy ? (
+          <p className="mt-1.5 text-[11px] text-[var(--muted)]">
+            {intel.confidenceWhy}
+          </p>
+        ) : null}
+      </div>
 
       <div className="story-well px-3 py-2.5">
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
@@ -1151,7 +1289,7 @@ function ParcelSitePanel({
 
       <p className="text-[11px] leading-snug text-[var(--muted)]">
         Full CAD research stays in Research. This panel is location intelligence
-        only — frontage and intersection distance arrive in later Corridors waves.
+        — approx frontage and published traffic only.
       </p>
 
       <button

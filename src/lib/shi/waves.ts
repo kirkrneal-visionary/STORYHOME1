@@ -835,16 +835,19 @@ export const SHI_WAVES: ShiWave[] = [
     frontend: [
       "C2.0-A (preview): vehicles/day primary · intensity classes · corridor-status labels · AADT explainer",
       "C2.0-B (preview): parcel click · location panel · estimated nearby traffic · Open in Research",
+      "C2.0-C (preview): approx frontage · dual-road/corner · data-confidence · soft segment cache",
       "Locked plan: ARCHIE-CORRIDORS-2.md (A→F acceptance bars)",
       "Preserve v1 toolbox · growth watch · scenarios · analyze · compare",
     ],
     backend: [
-      "Armor scripts/test-corridors-2a.mjs · test-corridors-2b.mjs",
-      "No new schema in A/B — language + client parcel↔station associate",
+      "Armor scripts/test-corridors-2a.mjs · test-corridors-2b.mjs · test-corridors-2c.mjs",
+      "Migration 0034_corridor_road_segments.sql · RPC corridor_parcel_frontage",
+      "API /api/shi/corridors/parcel-location · softCache on traffic GET",
     ],
     outOfScope: [
       "Rebuild Corridors from scratch",
-      "Parcel click / frontage / exposure score (C–D)",
+      "Survey-grade frontage claims",
+      "Exposure score / Find Strongest Sites (C2.0-D)",
       "LLM-invented traffic counts",
       "Live congestion / seller probability",
     ],

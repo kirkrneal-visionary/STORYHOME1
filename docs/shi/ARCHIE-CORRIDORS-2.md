@@ -66,14 +66,14 @@ Corridors helps a real-estate professional answer: **which property has the best
 
 | Topic | Today |
 |---|---|
-| Traffic storage | **No** Postgres traffic tables — live TxDOT fetch |
-| Road geometry | Live GeoJSON segments (simplified); not PostGIS |
+| Traffic storage | Cached observations table + live TxDOT fetch (C2.0-C) |
+| Road geometry | Cached corridor_road_segments + live GeoJSON segments |
 | History | Up to ~6 TxDOT published years per station |
-| Parcel↔road / frontage | **Not implemented** |
-| Intersection proximity | **Not implemented** |
-| Exposure score | **Not implemented** |
-| Parcel click on Corridors | **Not implemented** |
-| Direct Prospects / Farms CTA | **Not implemented** |
+| Parcel↔road / frontage | Approx frontage (PostGIS RPC or JS) — never surveyed |
+| Intersection proximity | Corner-likely heuristic when dual-road (C2.0-C); distance TBD |
+| Exposure score | **Not implemented** (C2.0-D) |
+| Parcel click on Corridors | Live (C2.0-B) |
+| Direct Prospects / Farms CTA | **Not implemented** (C2.0-E) |
 
 ---
 
@@ -117,6 +117,18 @@ Tap/open explains the rule + % change. Compatible with legacy Rising/Falling/Fla
 > Average Annual Daily Traffic estimates the average number of vehicles traveling this roadway each day across the year.
 
 Shown under “What does this mean?” — never as the headline.
+
+### `corridor-frontage-v1`
+
+Approx frontage = parcel exterior edges whose midpoint lies within **35 m** of a mapped road segment. Edges shorter than 0.5 m ignored. Per-route frontage under **25 ft** dropped. Always labeled **APPROX** — never surveyed.
+
+### `corridor-data-confidence-v1`
+
+| Chip | Rule |
+|---|---|
+| HIGH | PostGIS frontage + recent observation year (≤2 years old) |
+| MODERATE | Client/JS approx frontage with mapped roads, or recent counts |
+| LIMITED | Station-only nearby estimate, thin geometry, or no road tie |
 
 ---
 
@@ -165,11 +177,11 @@ Shown under “What does this mean?” — never as the headline.
 
 **Acceptance**
 
-- [ ] Schema for segments/observations (or durable cache) documented + migrated.  
-- [ ] Approx frontage labeled APPROX.  
-- [ ] Dual-road / corner flagged when geometry supports it.  
-- [ ] Confidence HIGH / MODERATE / LIMITED from explicit rules.  
-- [ ] Live TxDOT path still functions if cache cold.
+- [x] Schema for segments/observations (or durable cache) documented + migrated.  
+- [x] Approx frontage labeled APPROX.  
+- [x] Dual-road / corner flagged when geometry supports it.  
+- [x] Confidence HIGH / MODERATE / LIMITED from explicit rules.  
+- [x] Live TxDOT path still functions if cache cold.
 
 ---
 

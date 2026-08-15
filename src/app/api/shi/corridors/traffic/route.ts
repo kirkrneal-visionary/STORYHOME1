@@ -3,6 +3,7 @@ import {
   isLaunchCorridorFips,
   resolveCorridorCounty,
 } from "@/lib/shi/corridors";
+import { softCacheCountyTraffic } from "@/lib/shi/corridor-segment-cache";
 import { listCountyChanges } from "@/lib/shi/county-changes";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
@@ -54,6 +55,12 @@ export async function GET(req: NextRequest) {
     }
 
     const payload = await fetchCountyTraffic(fips, { cadRecentEventCount });
+    /* C2.0-C — soft-warm segment/obs cache; never block live TxDOT. */
+    void softCacheCountyTraffic({
+      countyFips: fips,
+      segments: payload.segments ?? [],
+      stations: payload.stations ?? [],
+    });
     return NextResponse.json(payload, {
       headers: {
         "Cache-Control": "private, max-age=300",

@@ -795,6 +795,18 @@ export function ShiCorridorsMap({
               : mvRaw != null && Number.isFinite(Number(mvRaw))
                 ? Number(mvRaw)
                 : null;
+          const g = f.geometry;
+          const geojson =
+            g &&
+            (g.type === "Polygon" || g.type === "MultiPolygon") &&
+            Array.isArray(g.coordinates)
+              ? {
+                  type: g.type as "Polygon" | "MultiPolygon",
+                  coordinates: g.coordinates as
+                    | number[][][]
+                    | number[][][][],
+                }
+              : null;
           onSelectRef.current(null);
           onParcelRef.current?.({
             propId,
@@ -818,6 +830,7 @@ export function ShiCorridorsMap({
             marketValue,
             lat: e.lngLat.lat,
             lng: e.lngLat.lng,
+            geojson,
           });
           return;
         }

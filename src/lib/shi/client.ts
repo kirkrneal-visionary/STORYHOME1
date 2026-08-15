@@ -458,6 +458,27 @@ export async function shiCorridorsTraffic(countyFips: string) {
   );
 }
 
+/** C2.0-C — approx frontage + dual-road + data confidence for a parcel. */
+export async function shiCorridorsParcelLocation(opts: {
+  propId: string;
+  source?: string;
+  countyFips: string;
+  lat?: number;
+  lng?: number;
+}) {
+  const params = new URLSearchParams();
+  params.set("propId", opts.propId);
+  params.set("countyFips", opts.countyFips);
+  if (opts.source) params.set("source", opts.source);
+  if (opts.lat != null) params.set("lat", String(opts.lat));
+  if (opts.lng != null) params.set("lng", String(opts.lng));
+  return shiFetch<{
+    intel: import("@/lib/shi/corridor-frontage").ParcelLocationIntel;
+    honesty: { frontageLabel: string; surveyed: boolean; note: string };
+    cacheNote: string | null;
+  }>(`/api/shi/corridors/parcel-location?${params.toString()}`);
+}
+
 export async function shiCorridorsProjects(opts: {
   countyFips: string;
   bbox?: readonly [number, number, number, number];

@@ -29,6 +29,11 @@ export type CorridorParcelPick = {
   marketValue?: number | null;
   lat: number;
   lng: number;
+  /** Optional map-feature polygon for client approx frontage (C2.0-C). */
+  geojson?: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: number[][][] | number[][][][];
+  } | null;
 };
 
 export type ParcelTrafficAssociation =
@@ -67,7 +72,7 @@ function haversineMiles(
 
 /**
  * Nearest published station within max miles.
- * Never claims "measured at property" without road-segment association (C2.0-C+).
+ * Labels estimated until segment frontage confirms boundary association (C2.0-C).
  */
 export function associateParcelTraffic(
   pick: CorridorParcelPick,
@@ -102,7 +107,7 @@ export function associateParcelTraffic(
     label: "Estimated traffic exposure",
     detail: `Nearest published count is ${best.miles.toFixed(2)} mi away${
       best.station.onRoad ? ` on ${best.station.onRoad}` : ""
-    }. Not measured at the property boundary — segment frontage arrives in a later wave (${PARCEL_TRAFFIC_RULE_VERSION}).`,
+    }. Not measured at the property boundary until approx frontage ties a mapped road (${PARCEL_TRAFFIC_RULE_VERSION}).`,
   };
 }
 
