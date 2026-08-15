@@ -8,17 +8,19 @@
 **Analytics:** [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md) · [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md)  
 **Scenarios:** [`ARCHIE-INTELLIGENCE-SCENARIOS.md`](./ARCHIE-INTELLIGENCE-SCENARIOS.md)  
 **Ops scale:** [`ARCHIE-COUNTY-OPS-SCALE.md`](./ARCHIE-COUNTY-OPS-SCALE.md)  
+**Story Walk:** [`STORY-WALK.md`](./STORY-WALK.md) · **Map Theater:** [`STORY-MAP-THEATER.md`](./STORY-MAP-THEATER.md)  
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-SHELL-NAV
-Floating bottom dock — mobile glass pill brought to desktop (centered). **Preview only until owner green-lights live.**
+### STORY-WALK (SW-0 → SW-1)
+Agent World / Living Mark / Story Walk — blueprint locked; Agent World shell next.
 
 ## Next
-- Owner review desktop dock look on eqmg preview  
-- Optional: wordmark / MapStage / collapse mark  
+- SW-1 Agent World shell → SW-2…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
+- Optional: wordmark / MapStage / Map Theater when green-lit  
 
 ## Done
+- STORY-SHELL-NAV (desktop floating glass pill dock)  
 - STORY-SHELL-HEADER (overlay living header + no black rule)  
 - STORY-GLASS-G (always-on sound) · F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  
