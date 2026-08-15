@@ -28,6 +28,6 @@ assert.doesNotMatch(home, /md:pb-0/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /STORY-SHELL-NAV/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"STORY-SHELL-NAV"/);
+assert.match(waves, /id:\s*"STORY-SHELL-NAV"/);
 
 console.log("story-shell-nav armor: ok");

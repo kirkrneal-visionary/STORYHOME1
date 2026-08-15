@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BadgeCheck, Building2, Save, Trash2, UserPlus, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { TextField, TextAreaField } from "@/components/broker/ui";
+import { LivingMarkLibraryCard } from "@/components/settings/LivingMarkLibraryCard";
 import {
   getMyProfile,
   updateMyProfile,
@@ -93,6 +94,22 @@ export function SettingsView() {
           {pending && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}
+          <LivingMarkLibraryCard
+            userId={user.id}
+            initials={
+              profile?.fullName
+                ?.split(" ")
+                .map((p) => p[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase() ||
+              user.initials ||
+              "SH"
+            }
+            profileStillUrl={profile?.photoUrl}
+            profileVideoUrl={profile?.livingMarkVideoUrl}
+            onChanged={load}
+          />
           {profile && <AccountSection profile={profile} onSaved={load} />}
           {isPro && profile && <ProSection profile={profile} onSaved={load} />}
           {isPro && profile && <LicenseSection profile={profile} />}
@@ -143,20 +160,21 @@ function AccountSection({ profile, onSaved }: { profile: MyProfile; onSaved: () 
     fullName: profile.fullName,
     phone: profile.phone ?? "",
     website: profile.website ?? "",
-    photoUrl: profile.photoUrl ?? "",
     bio: profile.bio ?? "",
   });
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   return (
     <Card icon={UserRound} title="Account" subtitle="Your name, contact, and public bio.">
-      <form onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await updateMyProfile(profile.id, { ...f, photoUrl: f.photoUrl || null }); setNote("Saved."); setTimeout(() => setNote(""), 2000); onSaved(); } finally { setBusy(false); } }}>
+      <form onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await updateMyProfile(profile.id, { ...f }); setNote("Saved."); setTimeout(() => setNote(""), 2000); onSaved(); } finally { setBusy(false); } }}>
         <div className="grid gap-3 sm:grid-cols-2">
           <TextField id="s-name" label="Full name" value={f.fullName} onChange={(v) => setF((p) => ({ ...p, fullName: v }))} />
           <TextField id="s-phone" label="Phone" value={f.phone} onChange={(v) => setF((p) => ({ ...p, phone: v }))} />
           <TextField id="s-web" label="Website" value={f.website} onChange={(v) => setF((p) => ({ ...p, website: v }))} />
-          <TextField id="s-photo" label="Photo URL" value={f.photoUrl} onChange={(v) => setF((p) => ({ ...p, photoUrl: v }))} />
         </div>
+        <p className="mt-2 text-[11px] text-[var(--muted)]">
+          Living Mark photo/video uploads live in the Living Mark library above — not a raw URL field.
+        </p>
         <div className="mt-3">
           <TextAreaField id="s-bio" label="About / bio" rows={4} value={f.bio} onChange={(v) => setF((p) => ({ ...p, bio: v }))} />
         </div>

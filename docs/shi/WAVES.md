@@ -12,15 +12,15 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### STORY-WALK (SW-0 → SW-1)
-Agent World / Living Mark / Story Walk — blueprint locked; Agent World shell next.
+### STORY-WALK · SW-1…SW-4 (preview / demo track)
+Agent World + Living Mark library + presence + **play respect** (guest 4/session · account 4/lifetime). **Not merged to live** until owner green-lights.
 
 ## Next
-- SW-1 Agent World shell → SW-2…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
-- Optional: wordmark / MapStage / Map Theater when green-lit  
+- SW-5 agent analytics → SW-6…SW-8 per [`STORY-WALK.md`](./STORY-WALK.md)  
+- Keep building on preview branch — clean main until finalize  
 
 ## Done
-- STORY-SHELL-NAV (desktop floating glass pill dock)  
+- STORY-SHELL-NAV (desktop floating glass pill dock) — live  
 - STORY-SHELL-HEADER (overlay living header + no black rule)  
 - STORY-GLASS-G (always-on sound) · F · E · D · C · AB · STORY-FEEL-WAVE-4 · WAVE-3 · WAVE-2 · WAVE-1  
 - ARCHIE-COUNTY-OPS-SCALE · INTELLIGENCE-SCENARIOS  

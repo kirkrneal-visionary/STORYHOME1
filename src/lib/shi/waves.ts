@@ -791,7 +791,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "STORY-SHELL-NAV",
     name: "Unified shell · floating bottom dock",
     goal: "Bring the mobile Story Glass floating pill nav to tablet/desktop as a centered dock — same visual language, preview-first.",
-    status: "current",
+    status: "done",
     frontend: [
       "story-bottom-dock + story-glass-nav on all breakpoints",
       "Desktop: centered floating pill (max ~32rem), not full-bleed",
@@ -805,10 +805,35 @@ export const SHI_WAVES: ShiWave[] = [
       "Replacing desktop header utility cluster",
     ],
   },
+  {
+    id: "STORY-WALK",
+    name: "Story Walk · Agent World · Living Mark",
+    goal: "Agent World public profile under StoryHome OS; Living Mark presence with play respect; Story Walk export in later SW waves.",
+    status: "current",
+    frontend: [
+      "SW-1: AgentWorldView on /agents/[id] — identity, trust, listings",
+      "SW-2: Settings Living Mark library — image/video upload (demo localStorage + Supabase bucket)",
+      "SW-3: LivingMarkPresence — circle video autoplay (no chrome), freeze to still, agent weekly nudge",
+      "SW-4: Play respect — guest 4/session (sessionStorage) · logged-in 4/lifetime/agent · own always",
+      "photo_url / living_mark_video_url + poster freeze from video frame",
+      "StoryHome chrome insets (safe-top + bottom clearance)",
+    ],
+    backend: [
+      "Armor scripts/test-story-walk-sw1…sw4.mjs",
+      "Migration 0032_living_marks.sql (bucket + living_mark_video_url)",
+    ],
+    outOfScope: [
+      "SW-5 agent analytics dashboard (next)",
+      "Story Walk compositor (SW-7)",
+      "Permanent guest fingerprinting",
+      "Merging to production without owner review",
+      "GRPT / CAD / map theater",
+    ],
+  },
 ];
 
-/** Active wave — floating bottom dock across platforms. */
-export const ARCHIE_CURRENT_WAVE = "STORY-SHELL-NAV" as const;
+/** Active wave — Story Walk / Agent World. */
+export const ARCHIE_CURRENT_WAVE = "STORY-WALK" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

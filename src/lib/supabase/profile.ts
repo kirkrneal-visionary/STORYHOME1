@@ -12,6 +12,8 @@ export type MyProfile = {
   professionalRole: string | null;
   brokerageId: string | null;
   photoUrl: string | null;
+  /** Living Mark welcome video (SW-2+). */
+  livingMarkVideoUrl: string | null;
   bio: string | null;
   phone: string | null;
   website: string | null;
@@ -29,7 +31,7 @@ export type MyProfile = {
 };
 
 const SELECT =
-  "id, email, full_name, account_kind, professional_role, brokerage_id, photo_url, bio, phone, website, primary_market_city, license_number, specialties, service_areas, languages, designations, socials, trec_license, trec_status, sponsor_name, sponsor_license_number";
+  "id, email, full_name, account_kind, professional_role, brokerage_id, photo_url, living_mark_video_url, bio, phone, website, primary_market_city, license_number, specialties, service_areas, languages, designations, socials, trec_license, trec_status, sponsor_name, sponsor_license_number";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function toProfile(r: any): MyProfile {
@@ -41,6 +43,7 @@ function toProfile(r: any): MyProfile {
     professionalRole: r.professional_role ?? null,
     brokerageId: r.brokerage_id ?? null,
     photoUrl: r.photo_url ?? null,
+    livingMarkVideoUrl: r.living_mark_video_url ?? null,
     bio: r.bio ?? null,
     phone: r.phone ?? null,
     website: r.website ?? null,
@@ -70,6 +73,7 @@ export async function getMyProfile(id: string): Promise<MyProfile | null> {
 export type ProfilePatch = Partial<{
   fullName: string;
   photoUrl: string | null;
+  livingMarkVideoUrl: string | null;
   bio: string;
   phone: string;
   website: string;
@@ -87,6 +91,9 @@ export async function updateMyProfile(id: string, patch: ProfilePatch): Promise<
   const row: Record<string, unknown> = {};
   if (patch.fullName !== undefined) row.full_name = patch.fullName;
   if (patch.photoUrl !== undefined) row.photo_url = patch.photoUrl;
+  if (patch.livingMarkVideoUrl !== undefined) {
+    row.living_mark_video_url = patch.livingMarkVideoUrl;
+  }
   if (patch.bio !== undefined) row.bio = patch.bio;
   if (patch.phone !== undefined) row.phone = patch.phone;
   if (patch.website !== undefined) row.website = patch.website;

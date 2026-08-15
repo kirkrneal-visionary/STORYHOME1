@@ -10,7 +10,7 @@ import { txCountyFipsByName } from "@/lib/tx-counties";
 
 /** Columns to fetch for a listing, with the owning agent embedded. */
 export const LISTING_SELECT =
-  "*, agent:profiles(id, full_name, initials, professional_role, primary_market_city, reputation_score, star_rating, review_count, bio, avatar_url)";
+  "*, agent:profiles(id, full_name, initials, professional_role, primary_market_city, reputation_score, star_rating, review_count, bio, avatar_url, photo_url)";
 
 const AVATAR_TONE = "bg-[color-mix(in_srgb,var(--gold)_35%,var(--navy))]";
 
@@ -25,6 +25,8 @@ type AgentRow = {
   review_count: number | null;
   bio: string | null;
   avatar_url: string | null;
+  photo_url?: string | null;
+  living_mark_video_url?: string | null;
 };
 
 type ListingRow = Record<string, any>;
@@ -47,6 +49,7 @@ function initialsFrom(name: string): string {
 export function rowToAgent(row: AgentRow | null | undefined): DemoAgent | undefined {
   if (!row) return undefined;
   const fullName = row.full_name || "Story Home Agent";
+  const photoUrl = row.photo_url || row.avatar_url || null;
   return {
     id: row.id,
     fullName,
@@ -58,6 +61,8 @@ export function rowToAgent(row: AgentRow | null | undefined): DemoAgent | undefi
     professionalRole: row.professional_role || "agent",
     bio: row.bio || "",
     avatarTone: AVATAR_TONE,
+    photoUrl,
+    livingMarkVideoUrl: row.living_mark_video_url ?? null,
   };
 }
 
