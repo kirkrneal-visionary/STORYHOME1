@@ -128,14 +128,14 @@ Shown under “What does this mean?” — never as the headline.
 
 **Acceptance**
 
-- [ ] Hero states Corridors finds properties around real traffic movement (land-forward).  
-- [ ] Station / traffic dossier shows **vehicles / day** as primary; AADT year·source underneath.  
-- [ ] “What does this mean?” reveals `aadt-explainer-v1`.  
-- [ ] Corridor status uses `corridor-status-v1` labels (not only Rising/Falling).  
-- [ ] Map line/station colors use `traffic-intensity-v1` stepped classes.  
-- [ ] Scenario board leads with vehicles/day; keeps Conservative/Base/Upside as scenario-not-forecast.  
-- [ ] No new schema; no deletion of toolbox / growth watch / analyze / compare.  
-- [ ] Armor `npm run test:corridors-2a` passes.  
+- [x] Hero states Corridors finds properties around real traffic movement (land-forward).  
+- [x] Station / traffic dossier shows **vehicles / day** as primary; AADT year·source underneath.  
+- [x] “What does this mean?” reveals `aadt-explainer-v1`.  
+- [x] Corridor status uses `corridor-status-v1` labels (not only Rising/Falling).  
+- [x] Map line/station colors use `traffic-intensity-v1` stepped classes.  
+- [x] Scenario board leads with vehicles/day; keeps Conservative/Base/Upside as scenario-not-forecast.  
+- [x] No new schema; no deletion of toolbox / growth watch / analyze / compare.  
+- [x] Armor `npm run test:corridors-2a` passes.  
 - [ ] Preview on eqmg before live.
 
 **Out of A:** parcel click, frontage, Find Strongest Sites, exposure score, Ask Archie.
