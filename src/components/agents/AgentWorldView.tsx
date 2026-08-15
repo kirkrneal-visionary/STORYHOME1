@@ -6,6 +6,7 @@ import { MapPin, Star } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { LivingMarkPresence } from "@/components/agents/LivingMarkPresence";
 import { AgentWorldAnalyticsCard } from "@/components/agents/AgentWorldAnalyticsCard";
+import { AgentWorldShareButton } from "@/components/agents/AgentWorldShareButton";
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
 import { ListingCard } from "@/components/ListingCard";
 import {
@@ -22,7 +23,7 @@ type AgentWorldViewProps = {
 };
 
 /**
- * STORY-WALK SW-1…SW-5 — Agent World + Living Mark + agent analytics slice.
+ * STORY-WALK SW-1…SW-6 — Agent World + Living Mark + analytics + share link.
  */
 export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   const { user } = useAuth();
@@ -121,6 +122,13 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
             >
               Inventory
             </a>
+            <AgentWorldShareButton
+              agentId={agent.id}
+              agentName={agent.fullName}
+              marketCity={agent.primaryMarketCity}
+              roleLabel={roleLabel}
+              isOwn={isOwn}
+            />
             <Link
               href="/network"
               onClick={() => onCta("find_agents")}
