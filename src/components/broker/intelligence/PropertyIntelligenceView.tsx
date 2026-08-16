@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
 import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
+import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -34,6 +35,7 @@ import {
   shiFreshness,
   shiGetFrame,
   shiGetProperty,
+  shiFloodAtPoint,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
@@ -51,6 +53,7 @@ import type {
   ShiSavedFrame,
   ShiStudyFolder,
 } from "@/lib/shi/types";
+import type { FloodFact } from "@/lib/shi/flood-fema";
 import { cn } from "@/lib/utils";
 
 function money(n: number | null | undefined) {
@@ -89,6 +92,7 @@ export function PropertyIntelligenceView({
   const [results, setResults] = useState<ShiPropertySummary[]>([]);
   const [indexNote, setIndexNote] = useState<string | null>(null);
   const [selected, setSelected] = useState<ShiPropertyDetail | null>(null);
+  const [floodFact, setFloodFact] = useState<FloodFact | null>(null);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -200,11 +204,13 @@ export function PropertyIntelligenceView({
         if (!property) {
           setError("Property not found");
           setSelected(null);
+          setFloodFact(null);
           setMatches([]);
           setDiscoverPins([]);
           return;
         }
         setSelected(property);
+        setFloodFact(null);
         setDiscoverPins([]);
         if (property.countyFips) {
           track("archie_parcel_opened", { county_fips: property.countyFips });
@@ -215,6 +221,26 @@ export function PropertyIntelligenceView({
           void refreshFolders(property.source);
         }
         void loadMatches(property);
+        /* DC-1 — FEMA flood at centroid; retract (null) when userReveal false. */
+        if (
+          property.countyFips &&
+          property.centroidLat != null &&
+          property.centroidLng != null
+        ) {
+          void shiFloodAtPoint({
+            countyFips: property.countyFips,
+            lat: property.centroidLat,
+            lng: property.centroidLng,
+          })
+            .then((body) => {
+              setFloodFact(
+                body.flood?.userReveal ? body.flood : null,
+              );
+            })
+            .catch(() => {
+              setFloodFact(null);
+            });
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load property");
       } finally {
@@ -1052,6 +1078,8 @@ export function PropertyIntelligenceView({
                   </ul>
                 </div>
               ) : null}
+
+              <ShiFloodEvidencePanel flood={floodFact} />
 
               <ShiCadEvidencePanel
                 property={selected}

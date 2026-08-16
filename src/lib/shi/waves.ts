@@ -850,10 +850,32 @@ export const SHI_WAVES: ShiWave[] = [
       "Live congestion / seller probability",
     ],
   },
+  {
+    id: "ARCHIE-DATA-COVERAGE",
+    name: "Data Coverage · free public truth (DC-1…5)",
+    goal: "Peer-grade flood / utilities / environment for launch 7 without click-metered landlords — reveal only when polished; retract on fail.",
+    status: "current",
+    frontend: [
+      "DC-1: ShiFloodEvidencePanel on Research + Corridors parcel (KNOWN/VERIFY chips)",
+      "Evidence tiers shared (evidence-tier.ts) — foundation for DC-4",
+      "userReveal gate — no half panel, no upsell",
+    ],
+    backend: [
+      "GET /api/shi/flood — FEMA NFHL point query",
+      "flood-fema.ts · coverage gate for launch 7",
+      "Armor npm run test:data-coverage-dc1",
+    ],
+    outOfScope: [
+      "ATTOM / Regrid / Zoneomics / DataTree",
+      "Live congestion SKUs",
+      "Deed history user reveal (DC-5 dark until equal)",
+      "Paywall for any evidence field",
+    ],
+  },
 ];
 
-/** Last completed product line — Corridors 2.0 A…F live. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
+/** Current product line — Data Coverage DC-1. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-DATA-COVERAGE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

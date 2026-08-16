@@ -12,6 +12,10 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
+### ARCHIE-DATA-COVERAGE · **DC-1 Flood shipping**
+FEMA NFHL for launch 7 · evidence tiers · retract-on-fail. See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).  
+**Next in track:** DC-2 Utilities (PUCT CCN) · DC-3 · DC-4 polish · DC-5 dark deeds.
+
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
@@ -19,8 +23,9 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
+- DC-2…DC-5 data coverage (free public only)  
 - Parallel: public Agent World polish  
-- Deepen Ask intents / intersection distance as data arrives  
+- Deepen Ask intents on revealed facts only  
 
 ## Done (recent)
 - ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
@@ -31,3 +36,4 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  
+- Click-metered flood / deed / zoning landlords for the truth desk  

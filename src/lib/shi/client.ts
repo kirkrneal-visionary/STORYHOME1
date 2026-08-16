@@ -448,6 +448,23 @@ export async function shiOwnerPortfolio(opts: {
   return body.portfolio;
 }
 
+/* --------------------- Data Coverage · Flood (DC-1) --------------------- */
+
+export async function shiFloodAtPoint(opts: {
+  countyFips: string;
+  lat: number;
+  lng: number;
+}): Promise<{
+  flood: import("@/lib/shi/flood-fema").FloodFact;
+  coverageReady: boolean;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  params.set("lat", String(opts.lat));
+  params.set("lng", String(opts.lng));
+  return shiFetch(`/api/shi/flood?${params.toString()}`);
+}
+
 /* --------------------- Corridors · Traffic (Wave 1) --------------------- */
 
 export async function shiCorridorsTraffic(countyFips: string) {

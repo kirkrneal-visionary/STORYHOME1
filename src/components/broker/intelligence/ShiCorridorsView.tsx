@@ -27,9 +27,12 @@ import {
   shiCorridorsTraffic,
   shiCreateFarm,
   shiCreateFolder,
+  shiFloodAtPoint,
   shiListFolders,
   shiSaveFrame,
 } from "@/lib/shi/client";
+import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
+import type { FloodFact } from "@/lib/shi/flood-fema";
 import {
   openBoundaryInResearch,
   openParcelInResearch,
@@ -693,7 +696,11 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-f">
+    <div
+      className="space-y-4"
+      data-corridors-version="c2-0-f"
+      data-data-coverage="dc-1"
+    >
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -1629,10 +1636,12 @@ function ParcelSitePanel({
 }) {
   const [intel, setIntel] = useState<ParcelLocationIntel | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
+  const [floodFact, setFloodFact] = useState<FloodFact | null>(null);
 
   useEffect(() => {
     if (!parcel) {
       setIntel(null);
+      setFloodFact(null);
       onIntelChange?.(null);
       return;
     }
@@ -1658,6 +1667,7 @@ function ParcelSitePanel({
 
     let cancelled = false;
     setIntelLoading(true);
+    setFloodFact(null);
     void shiCorridorsParcelLocation({
       propId: parcel.propId,
       source: parcel.source ?? county.source,
@@ -1685,6 +1695,20 @@ function ParcelSitePanel({
       })
       .finally(() => {
         if (!cancelled) setIntelLoading(false);
+      });
+
+    /* DC-1 — FEMA flood; retract when userReveal is false. */
+    void shiFloodAtPoint({
+      countyFips: parcel.countyFips ?? county.fips,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setFloodFact(body.flood?.userReveal ? body.flood : null);
+      })
+      .catch(() => {
+        if (!cancelled) setFloodFact(null);
       });
 
     return () => {
@@ -1732,6 +1756,8 @@ function ParcelSitePanel({
       {parcel.situsAddress ? (
         <p className="text-xs text-[var(--muted)]">CAD #{parcel.propId}</p>
       ) : null}
+
+      <ShiFloodEvidencePanel flood={floodFact} compact />
 
       <div className="story-well px-3 py-2.5" data-corridor-exposure-score>
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">

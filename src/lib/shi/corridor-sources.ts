@@ -135,9 +135,11 @@ export const CORRIDOR_SOURCE_ADAPTERS: CorridorSourceAdapter[] = [
     id: "flood_environment",
     label: "Flood / environmental",
     category: "environment",
-    defaultStatus: "planned",
-    provider: "Not connected",
-    honesty: "Adapter reserved — not used until a lawful feed is connected.",
+    /** Live adapter — status resolved per pass (see resolveSourcesForAnalysis). */
+    defaultStatus: "live",
+    provider: "FEMA NFHL (public MapServer)",
+    honesty:
+      "Effective flood hazard zones from FEMA — not an insurance quote. Retracted from UI when the query fails.",
   },
   {
     id: "mls_licensed",
@@ -169,10 +171,44 @@ export function resolveSourcesForAnalysis(opts: {
   projectsAvailable?: boolean;
   cadPulseAvailable?: boolean;
   cadPulseNote?: string | null;
+  /** DC-1 — flood fact contributed when userReveal */
+  floodAvailable?: boolean;
+  floodNote?: string | null;
 }): CorridorSourceUse[] {
   const uses: CorridorSourceUse[] = [];
 
   for (const adapter of CORRIDOR_SOURCE_ADAPTERS) {
+    if (adapter.id === "flood_environment") {
+      /* undefined = this analysis pass did not query flood (point desk only). */
+      if (opts.floodAvailable === undefined) {
+        uses.push({
+          id: adapter.id,
+          label: adapter.label,
+          category: adapter.category,
+          status: "planned",
+          provider: adapter.provider,
+          note: "Point flood desk — open a parcel for FEMA zone",
+          honesty: adapter.honesty,
+          contributed: false,
+        });
+        continue;
+      }
+      const ok = Boolean(opts.floodAvailable);
+      uses.push({
+        id: adapter.id,
+        label: adapter.label,
+        category: adapter.category,
+        status: ok ? "live" : "degraded",
+        provider: adapter.provider,
+        note: ok
+          ? opts.floodNote || "FEMA flood zone available"
+          : opts.floodNote || "Flood not revealed for this pass",
+        honesty: adapter.honesty,
+        contributed: ok,
+      });
+      continue;
+    }
+
     if (adapter.defaultStatus === "planned") {
       uses.push({
         id: adapter.id,
