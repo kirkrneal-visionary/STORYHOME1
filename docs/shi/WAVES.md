@@ -12,9 +12,9 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-DATA-COVERAGE · **DC-1…DC-3 shipping**
-FEMA flood · PUCT CCN · NWI/TIGER environment desk · deeper CAD. See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).  
-**Next in track:** DC-4 evidence polish · DC-5 dark deeds.
+### ARCHIE-DATA-COVERAGE · **DC-1…DC-4 shipping**
+FEMA flood · PUCT CCN · NWI/TIGER environment desk · shared evidence chips across Research / Corridors / Ask / reports. See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).  
+**Next in track:** DC-5 dark deeds.
 
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
@@ -23,11 +23,12 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- DC-4…DC-5 data coverage (free public only)  
+- DC-5 data coverage (deeds dark until clerk-grade)  
 - Parallel: public Agent World polish  
 - Deepen Ask intents on revealed facts only  
 
 ## Done (recent)
+- ARCHIE-DATA-COVERAGE DC-1…DC-4 — flood · utilities · environment · evidence UI  
 - ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
 - STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  
 - ARCHIE Corridors v1 waves live (traffic · growth · scenarios · land loop · toolbox)  

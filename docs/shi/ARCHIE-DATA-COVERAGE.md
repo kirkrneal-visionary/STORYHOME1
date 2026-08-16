@@ -19,8 +19,8 @@
 |---|---|---|---|
 | **1** | **DC-1 Flood** | **done** | FEMA NFHL point join · Research + Corridors parcel · retract on fail |
 | **2** | **DC-2 Utilities** | **done** | PUCT water/sewer CCN · certificated honesty · owned launch-7 clip |
-| **3** | **DC-3 Environment + desk** | **current / shipping** | NWI wetlands · TIGER place/ISD · zoning context (no invented districts) · deeper CAD fields |
-| **4** | **DC-4 Evidence UI** | started (tiers live with DC-1) | Shared chips · source · as-of across Research / Corridors / Ask / reports |
+| **3** | **DC-3 Environment + desk** | **done** | NWI wetlands · TIGER place/ISD · zoning context (no invented districts) · deeper CAD fields |
+| **4** | **DC-4 Evidence UI** | **current / shipping** | Shared chips · source · as-of across Research / Corridors / Ask / reports |
 | **5** | **DC-5 Dark store** | planned | Deeds knowledge path only if 7-county clerk-grade; default **no user reveal** |
 
 Optional later: Ask Archie challenge → alternatives → rank on **revealed** facts only.
@@ -49,7 +49,7 @@ FEMA effective flood hazard — not insurance quote, elevation certificate, or s
 npm run test:data-coverage-dc1
 ```
 
-## DC-2 — Utilities (this wave)
+## DC-2 — Utilities
 
 **Source:** Official PUCT CCN Water + Sewer TSMS shapefiles (FTP), clipped to launch-7 footprint  
 **Data:** `data/shi/puct-ccn-launch7.json` (~1.8 MB owned clip)  
@@ -82,7 +82,7 @@ npm run test:data-coverage-dc2
 3. Rural point with no CCN → “No PUCT water/sewer CCN area” (still revealed, still honest)  
 4. Corridors parcel panel shows the same compact card  
 
-## DC-3 — Environment + desk (this wave)
+## DC-3 — Environment + desk
 
 **Sources:** USFWS NWI (wetlands) · Census TIGER (place + unified school district) · CAD fields already ingested  
 **API:** `GET /api/shi/environment?countyFips=&lat=&lng=` (Story Pro)  
@@ -107,6 +107,34 @@ npm run test:data-coverage-dc2
 ```bash
 npm run test:data-coverage-dc3
 ```
+
+## DC-4 — Evidence UI (this wave)
+
+**Goal:** One shared evidence language across every surface that reveals a desk fact.
+
+**Evidence labels:** KNOWN · CALCULATED · ESTIMATED · OBSERVED · VERIFY · UNKNOWN (plus OPPORTUNITY / ALTERNATIVE when used).  
+**Shared UI:** `ShiEvidenceChip` · `ShiEvidenceHeader` · `ShiEvidenceSource`  
+**Lib:** `evidence-tier.ts` — `EVIDENCE_LEGEND_LINES` · `formatEvidenceTag` · `evidenceLegendHtml`  
+**Ask:** `corridor-ask-v2` — facts carry `tier` / `source` / `asOf`; intents `flood_zone` · `utilities_ccn` · `environment_desk`  
+**Reports:** property location report v2 + development intelligence report v1.1 include evidence legend + tagged glance rows  
+**Surfaces:** Research evidence cards · Corridors parcel cards · Ask Archie answer rows · print reports  
+
+### Honesty
+
+Gaps stay VERIFY or UNKNOWN. Labels never fill empty desks. Failures still retract (`userReveal: false` → no UI).
+
+### Armor
+
+```bash
+npm run test:data-coverage-dc4
+```
+
+### Manual
+
+1. Pro → Corridors → select launch-7 parcel → Flood / Utilities / Environment cards show shared chips  
+2. Ask panel → Flood zone / Utilities / Environment chips answer from desk facts with tier + source  
+3. Print property location report → evidence tags on glance rows + Evidence labels section  
+4. County change clears desk facts and Ask answer  
 
 ## Out of scope (all DC waves)
 

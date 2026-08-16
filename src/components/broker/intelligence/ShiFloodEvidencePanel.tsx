@@ -1,7 +1,10 @@
 "use client";
 
 import type { FloodFact } from "@/lib/shi/flood-fema";
-import { EVIDENCE_TIER_COPY } from "@/lib/shi/evidence-tier";
+import {
+  ShiEvidenceHeader,
+  ShiEvidenceSource,
+} from "@/components/broker/intelligence/ShiEvidenceChip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -36,23 +39,7 @@ export function ShiFloodEvidencePanel({
         compact && "px-2.5 py-2",
       )}
     >
-      <div className="flex flex-wrap items-center gap-1.5">
-        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-          Flood · FEMA
-        </p>
-        <span
-          data-evidence-tier={flood.tier}
-          className="rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-navy bg-gold/25"
-          title={EVIDENCE_TIER_COPY[flood.tier]}
-        >
-          {flood.tier}
-        </span>
-        {flood.chip.asOf ? (
-          <span className="font-mono text-[9px] text-[var(--muted)]">
-            as-of {flood.chip.asOf}
-          </span>
-        ) : null}
-      </div>
+      <ShiEvidenceHeader label="Flood · FEMA" chip={flood.chip} />
       <p
         className={cn(
           "mt-1 font-semibold text-ink",
@@ -69,10 +56,10 @@ export function ShiFloodEvidencePanel({
           {flood.honesty}
         </p>
       ) : null}
-      <p className="mt-1 font-mono text-[9px] text-[var(--muted)]">
-        {flood.chip.source}
-        {flood.dfirmId ? ` · DFIRM ${flood.dfirmId}` : ""}
-      </p>
+      <ShiEvidenceSource
+        source={flood.chip.source}
+        extra={flood.dfirmId ? `DFIRM ${flood.dfirmId}` : null}
+      />
     </section>
   );
 }

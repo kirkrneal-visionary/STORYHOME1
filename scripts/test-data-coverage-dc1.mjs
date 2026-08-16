@@ -49,7 +49,15 @@ const panel = read(
 );
 assert.match(panel, /userReveal/);
 assert.match(panel, /data-flood-evidence/);
-assert.match(panel, /data-evidence-tier/);
+assert.match(panel, /ShiEvidenceHeader/);
+assert.match(panel, /ShiEvidenceSource/);
+
+const chip = read(
+  "src/components/broker/intelligence/ShiEvidenceChip.tsx",
+);
+assert.match(chip, /data-evidence-tier/);
+assert.match(chip, /data-evidence-asof/);
+assert.match(chip, /data-evidence-source/);
 
 const research = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
@@ -60,7 +68,7 @@ assert.match(research, /ShiFloodEvidencePanel/);
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsView.tsx",
 );
-assert.match(corridors, /data-data-coverage="dc-[123]"/);
+assert.match(corridors, /data-data-coverage="dc-[1234]"/);
 assert.match(corridors, /shiFloodAtPoint/);
 assert.match(corridors, /ShiFloodEvidencePanel/);
 

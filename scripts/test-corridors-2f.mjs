@@ -16,7 +16,7 @@ assert.match(doc, /\[x\].*LLM never invents/);
 assert.match(doc, /\[x\].*At least 5 canned intents/);
 
 const ask = read("src/lib/shi/corridor-ask.ts");
-assert.match(ask, /corridor-ask-v1/);
+assert.match(ask, /corridor-ask-v[12]/);
 assert.match(ask, /CORRIDOR_ASK_INTENTS/);
 assert.match(ask, /answerCorridorAsk/);
 assert.match(ask, /matchCorridorAskIntent/);

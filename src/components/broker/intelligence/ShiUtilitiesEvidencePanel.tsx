@@ -1,7 +1,10 @@
 "use client";
 
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
-import { EVIDENCE_TIER_COPY } from "@/lib/shi/evidence-tier";
+import {
+  ShiEvidenceHeader,
+  ShiEvidenceSource,
+} from "@/components/broker/intelligence/ShiEvidenceChip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -34,23 +37,7 @@ export function ShiUtilitiesEvidencePanel({
         compact && "px-2.5 py-2",
       )}
     >
-      <div className="flex flex-wrap items-center gap-1.5">
-        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-          Utilities · PUCT CCN
-        </p>
-        <span
-          data-evidence-tier={utilities.tier}
-          className="rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-navy bg-gold/25"
-          title={EVIDENCE_TIER_COPY[utilities.tier]}
-        >
-          {utilities.tier}
-        </span>
-        {utilities.datasetAsOf ? (
-          <span className="font-mono text-[9px] text-[var(--muted)]">
-            as-of {utilities.datasetAsOf}
-          </span>
-        ) : null}
-      </div>
+      <ShiEvidenceHeader label="Utilities · PUCT CCN" chip={utilities.chip} />
       <p
         className={cn(
           "mt-1 font-semibold text-ink",
@@ -67,9 +54,7 @@ export function ShiUtilitiesEvidencePanel({
           {utilities.honesty}
         </p>
       ) : null}
-      <p className="mt-1 font-mono text-[9px] text-[var(--muted)]">
-        {utilities.chip.source}
-      </p>
+      <ShiEvidenceSource source={utilities.chip.source} />
     </section>
   );
 }

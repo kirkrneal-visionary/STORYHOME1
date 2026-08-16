@@ -860,7 +860,8 @@ export const SHI_WAVES: ShiWave[] = [
       "DC-2: ShiUtilitiesEvidencePanel — PUCT water/sewer CCN certificated areas",
       "DC-3: ShiEnvironmentEvidencePanel — NWI · TIGER place/ISD · zoning VERIFY context",
       "DC-3: deeper CAD facts — abstract · tract · first/last seen",
-      "Evidence tiers shared (evidence-tier.ts) — foundation for DC-4",
+      "DC-4: ShiEvidenceChip shared across Research / Corridors / Ask / print reports",
+      "DC-4: corridor-ask-v2 desk intents flood_zone · utilities_ccn · environment_desk",
       "userReveal gate — no half panel, no upsell",
     ],
     backend: [
@@ -868,7 +869,7 @@ export const SHI_WAVES: ShiWave[] = [
       "GET /api/shi/utilities — PUCT CCN point-in-polygon on owned launch-7 clip",
       "GET /api/shi/environment — NWI + TIGER place/school + zoning context",
       "data/shi/puct-ccn-launch7.json · npm run rebuild:puct-ccn",
-      "Armor npm run test:data-coverage-dc1 · dc2 · dc3",
+      "Armor npm run test:data-coverage-dc1 · dc2 · dc3 · dc4",
     ],
     outOfScope: [
       "ATTOM / Regrid / Zoneomics / DataTree",

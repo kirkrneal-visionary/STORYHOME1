@@ -59,7 +59,7 @@ assert.match(research, /Last seen/);
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsView.tsx",
 );
-assert.match(corridors, /data-data-coverage="dc-3"/);
+assert.match(corridors, /data-data-coverage="dc-[34]"/);
 assert.match(corridors, /shiEnvironmentAtPoint/);
 assert.match(corridors, /ShiEnvironmentEvidencePanel/);
 

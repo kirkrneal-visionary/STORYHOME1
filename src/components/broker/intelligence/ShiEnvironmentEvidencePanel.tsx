@@ -1,30 +1,18 @@
 "use client";
 
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
-import { EVIDENCE_TIER_COPY } from "@/lib/shi/evidence-tier";
+import {
+  ShiEvidenceHeader,
+  ShiEvidenceSource,
+} from "@/components/broker/intelligence/ShiEvidenceChip";
 import { cn } from "@/lib/utils";
-
-function TierChip({
-  tier,
-}: {
-  tier: keyof typeof EVIDENCE_TIER_COPY;
-}) {
-  return (
-    <span
-      data-evidence-tier={tier}
-      className="rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-navy bg-gold/25"
-      title={EVIDENCE_TIER_COPY[tier]}
-    >
-      {tier}
-    </span>
-  );
-}
 
 function Block({
   label,
   headline,
   detail,
   tier,
+  asOf,
   source,
   compact,
   testId,
@@ -32,19 +20,15 @@ function Block({
   label: string;
   headline: string;
   detail: string;
-  tier: keyof typeof EVIDENCE_TIER_COPY;
+  tier: import("@/lib/shi/evidence-tier").EvidenceTier;
+  asOf?: string | null;
   source: string;
   compact?: boolean;
   testId: string;
 }) {
   return (
     <div data-env-block={testId} className="space-y-1">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
-          {label}
-        </p>
-        <TierChip tier={tier} />
-      </div>
+      <ShiEvidenceHeader label={label} chip={{ tier, asOf: asOf ?? null }} />
       <p
         className={cn(
           "font-semibold text-ink",
@@ -54,9 +38,7 @@ function Block({
         {headline}
       </p>
       <p className="text-[11px] leading-relaxed text-[var(--muted)]">{detail}</p>
-      {!compact ? (
-        <p className="font-mono text-[9px] text-[var(--muted)]">{source}</p>
-      ) : null}
+      {!compact ? <ShiEvidenceSource source={source} /> : null}
     </div>
   );
 }
@@ -82,6 +64,7 @@ export function ShiEnvironmentEvidencePanel({
           headline: environment.wetlands.headline,
           detail: environment.wetlands.detail,
           tier: environment.wetlands.tier,
+          asOf: environment.wetlands.chip.asOf,
           source: environment.wetlands.chip.source,
         }
       : null,
@@ -92,6 +75,7 @@ export function ShiEnvironmentEvidencePanel({
           headline: environment.place.headline,
           detail: environment.place.detail,
           tier: environment.place.tier,
+          asOf: environment.place.chip.asOf,
           source: environment.place.chip.source,
         }
       : null,
@@ -102,6 +86,7 @@ export function ShiEnvironmentEvidencePanel({
           headline: environment.schoolDistrict.headline,
           detail: environment.schoolDistrict.detail,
           tier: environment.schoolDistrict.tier,
+          asOf: environment.schoolDistrict.chip.asOf,
           source: environment.schoolDistrict.chip.source,
         }
       : null,
@@ -112,6 +97,7 @@ export function ShiEnvironmentEvidencePanel({
           headline: environment.zoningContext.headline,
           detail: environment.zoningContext.detail,
           tier: environment.zoningContext.tier,
+          asOf: environment.zoningContext.chip.asOf,
           source: environment.zoningContext.chip.source,
         }
       : null,
@@ -120,7 +106,8 @@ export function ShiEnvironmentEvidencePanel({
     label: string;
     headline: string;
     detail: string;
-    tier: keyof typeof EVIDENCE_TIER_COPY;
+    tier: import("@/lib/shi/evidence-tier").EvidenceTier;
+    asOf: string | null;
     source: string;
   }>;
 
@@ -146,6 +133,7 @@ export function ShiEnvironmentEvidencePanel({
           headline={b.headline}
           detail={b.detail}
           tier={b.tier}
+          asOf={b.asOf}
           source={b.source}
           compact={compact}
         />
