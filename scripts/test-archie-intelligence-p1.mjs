@@ -20,7 +20,7 @@ assert.doesNotMatch(lib, /openai|anthropic|gpt-4/i);
 const panel = read(
   "src/components/broker/intelligence/ShiArchieIntelligencePanel.tsx",
 );
-assert.match(panel, /data-archie-intelligence="p1"/);
+assert.match(panel, /data-archie-intelligence="p[123]"/);
 assert.match(panel, /data-archie-findings/);
 assert.match(panel, /data-archie-chips/);
 assert.match(panel, /Ownership/);

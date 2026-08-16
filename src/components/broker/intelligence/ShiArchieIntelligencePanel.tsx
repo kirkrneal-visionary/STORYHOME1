@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from "react";
 import {
+  ARCHIE_DECISION_DISCLAIMER,
   archieTruthLabel,
   buildArchiePropertyBrief,
   type ArchieFocusChip,
   type ArchieFinding,
 } from "@/lib/shi/archie-phase1";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
+import type { TrafficStation } from "@/lib/shi/corridors";
 import type { ShiOwnerMatch, ShiPropertyDetail } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
 
@@ -20,9 +22,9 @@ const CHIPS: { id: ArchieFocusChip; label: string }[] = [
 ];
 
 /**
- * ARCHIE-INTELLIGENCE Phase 1 — property-aware panel.
- * Speaks first when a parcel is open. Deterministic findings from desk facts.
- * Not the Access desk Ask · Sites · Compare room.
+ * ARCHIE-INTELLIGENCE Phase 1–3 — property-aware panel.
+ * Speaks first · spatial desk context · conclusion assistance.
+ * Deterministic findings from desk facts. Not the Access desk Ask room.
  */
 export function ShiArchieIntelligencePanel({
   property,
@@ -30,6 +32,7 @@ export function ShiArchieIntelligencePanel({
   possibleOwnerCount,
   matches,
   accessIntel,
+  stations = [],
   onFocusOwnership,
   onFocusNearby,
   onAskAccess,
@@ -40,6 +43,8 @@ export function ShiArchieIntelligencePanel({
   possibleOwnerCount: number;
   matches: ShiOwnerMatch[];
   accessIntel?: ParcelLocationIntel | null;
+  /** Optional TxDOT stations already loaded on the Access desk. */
+  stations?: TrafficStation[];
   onFocusOwnership?: () => void;
   onFocusNearby?: () => void;
   /** Opens Access desk Ask (traffic / frontage desk) — optional hand-off. */
@@ -54,11 +59,20 @@ export function ShiArchieIntelligencePanel({
         possibleOwnerCount,
         matches,
         accessIntel,
+        stations,
       }),
-    [property, exactOwnerCount, possibleOwnerCount, matches, accessIntel],
+    [
+      property,
+      exactOwnerCount,
+      possibleOwnerCount,
+      matches,
+      accessIntel,
+      stations,
+    ],
   );
 
   const [focus, setFocus] = useState<ArchieFocusChip | null>(null);
+  const [showConclusionDetail, setShowConclusionDetail] = useState(false);
 
   function runFocus(chip: ArchieFocusChip, finding?: ArchieFinding) {
     setFocus(chip);
@@ -73,9 +87,11 @@ export function ShiArchieIntelligencePanel({
     }
   }
 
+  const conclusion = brief.conclusion;
+
   return (
     <section
-      data-archie-intelligence="p1"
+      data-archie-intelligence="p3"
       data-archie-phase={brief.version}
       className={cn("story-well space-y-3 px-3 py-3", className)}
     >
@@ -125,6 +141,82 @@ export function ShiArchieIntelligencePanel({
         ))}
       </ul>
 
+      <div
+        className="rounded-lg border border-hairline bg-[var(--surface)] px-3 py-2.5"
+        data-archie-conclusion
+        data-archie-conclusion-kind={conclusion.kind}
+      >
+        <p className="font-mono text-[10px] font-semibold tracking-[0.12em] text-gold uppercase">
+          Current read
+        </p>
+        <p className="mt-1 text-sm font-semibold text-ink" data-archie-conclusion-statement>
+          {conclusion.statement}
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+          {conclusion.why}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span
+            className="rounded-md border border-hairline px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink"
+            data-archie-confidence={conclusion.confidenceBand}
+          >
+            {conclusion.confidenceLabel} · {conclusion.confidence}%
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowConclusionDetail((v) => !v)}
+            className="text-[11px] font-semibold text-gold underline-offset-2 hover:underline"
+            data-archie-conclusion-toggle
+          >
+            {showConclusionDetail ? "Hide detail" : "View reasoning"}
+          </button>
+        </div>
+
+        {showConclusionDetail ? (
+          <div className="mt-2 space-y-2 border-t border-hairline pt-2" data-archie-conclusion-detail>
+            {conclusion.verifyNeeds.length > 0 ? (
+              <div data-archie-verify-needs>
+                <p className="font-mono text-[10px] font-bold uppercase text-[var(--muted)]">
+                  Still verify
+                </p>
+                <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-ink">
+                  {conclusion.verifyNeeds.map((v) => (
+                    <li key={v}>{v}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {conclusion.alternatives.length > 0 ? (
+              <div data-archie-alternatives>
+                <p className="font-mono text-[10px] font-bold uppercase text-[var(--muted)]">
+                  Alternatives
+                </p>
+                <ul className="mt-1 space-y-1.5">
+                  {conclusion.alternatives.map((a) => (
+                    <li key={a.id} className="text-xs text-ink">
+                      <span className="font-semibold">{a.title}. </span>
+                      <span className="text-[var(--muted)]">{a.note}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+              Archie helps you reach a defensible read. {ARCHIE_DECISION_DISCLAIMER}
+            </p>
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => runFocus(conclusion.nextFocus)}
+          className="mt-2 text-[11px] font-semibold text-gold underline-offset-2 hover:underline"
+          data-archie-next-action
+        >
+          {conclusion.nextAction}
+        </button>
+      </div>
+
       <div>
         <p className="text-[11px] text-[var(--muted)]">What would you like to understand?</p>
         <div
@@ -159,6 +251,7 @@ export function ShiArchieIntelligencePanel({
             exactOwnerCount={exactOwnerCount}
             possibleOwnerCount={possibleOwnerCount}
             accessIntel={accessIntel}
+            nearbySummary={brief.nearbySummary}
           />
         </div>
       ) : null}
@@ -172,12 +265,14 @@ function FocusCopy({
   exactOwnerCount,
   possibleOwnerCount,
   accessIntel,
+  nearbySummary,
 }: {
   focus: ArchieFocusChip;
   property: ShiPropertyDetail;
   exactOwnerCount: number;
   possibleOwnerCount: number;
   accessIntel?: ParcelLocationIntel | null;
+  nearbySummary: string | null;
 }) {
   if (focus === "ownership") {
     return (
@@ -237,8 +332,9 @@ function FocusCopy({
     return (
       <p className="text-xs leading-relaxed text-ink">
         <span className="font-semibold">Nearby parcels. </span>
-        Start with related ownership below, then use Discover or a market frame
-        for spatial neighbors. Phase 1 does not invent corridor change claims.
+        {nearbySummary
+          ? nearbySummary
+          : "No same-owner tracts within 1 mile with centroids on desk, and no planning-traffic association loaded yet. Use owner portfolio below or Discover for broader search. Archie does not invent adjoining boundaries."}
       </p>
     );
   }

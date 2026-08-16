@@ -986,28 +986,32 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-INTELLIGENCE",
-    name: "Archie Intelligence · property-aware Phase 1",
-    goal: "On property open, Archie speaks first with translated context and up to 3 evidence-backed findings — not an empty chatbot.",
+    name: "Archie Intelligence · property-aware Phase 1…3",
+    goal: "On property open, Archie speaks first with findings, spatial desk context, and conclusion assistance — confidence, verify needs, alternatives — without forcing buy/sell advice.",
     status: "current",
     frontend: [
       "P1: ShiArchieIntelligencePanel on Research property record",
       "P1: Archie Found · truth chips · focus chips (Ownership · Value · Development · Nearby · Ask)",
       "P1: Speaks before CAD fact grid — progressive disclosure",
-      "Marker data-archie-intelligence=p1",
+      "P2: Same-owner tracts within 1 mi · frontage AADT · mapped crossing · nearby planning traffic",
+      "P3: Current read · confidence band · verify needs · alternatives · next action",
+      "Marker data-archie-intelligence=p3",
     ],
     backend: [
-      "Deterministic buildArchiePropertyBrief from desk facts (no LLM)",
-      "Armor npm run test:archie-intelligence-p1",
+      "Deterministic buildArchiePropertyBrief + buildArchieConclusion (no LLM)",
+      "Reuse owner-matches centroids · parcel-location · associateParcelTraffic — no new landlord SKUs",
+      "Armor npm run test:archie-intelligence-p1 · p2 · p3",
     ],
     outOfScope: [
       "Founder Interpreter product / private agent UI",
-      "Dual live LLM minds · MLS · change monitoring",
-      "Fabricating missing CAD / survey / zoning",
+      "Dual live LLM minds · MLS · change monitoring · persistent reasoning state store",
+      "Fabricating missing CAD / survey / zoning / ST_Touches adjoining API (later if needed)",
+      "Buy/sell recommendations",
     ],
   },
 ];
 
-/** Current product line — Archie Intelligence Phase 1. */
+/** Current product line — Archie Intelligence Phase 2. */
 export const ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
