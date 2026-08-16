@@ -13,7 +13,10 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-RESEARCH-MERGE · **R2 shipping**
+### ARCHIE-INTELLIGENCE · **P1 shipping**
+Property-aware Archie on Research: speaks first with context + up to 3 findings + focus chips. Deterministic desk facts — no LLM. Not a Founder Interpreter product.
+
+### ARCHIE-RESEARCH-MERGE · **R2 live**
 Access desk (Ask · Sites · Compare) inside Research. Access tab soft-hidden. Old `section=corridors` redirects to `mode=access`. APIs kept.
 
 ### ARCHIE-IX · **IX-1 live**
@@ -26,10 +29,12 @@ Owned clerk deed index scaffold — user reveal still closed until DEEDS-2.
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
+- ARCHIE-INTELLIGENCE Phase 2 — spatial / adjoining / corridor context in Archie brief  
 - DEEDS-2: peer-grade clerk coverage → open user reveal  
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-RESEARCH-MERGE R2 — Access desk inside Research · tab soft-hidden  
 - ARCHIE-RESEARCH-MERGE R1 — Traffic tool + Access panel + readable map tools  
 - ARCHIE-IX IX-1 — intersection meter distance  
 - ARCHIE-DEEDS DEEDS-1 — clerk index scaffold (reveal closed)  

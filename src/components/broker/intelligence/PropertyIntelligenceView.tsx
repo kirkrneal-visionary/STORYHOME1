@@ -13,6 +13,7 @@ import {
   ShiResearchAccessDesk,
   type ResearchAccessDeskTab,
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
+import { ShiArchieIntelligencePanel } from "@/components/broker/intelligence/ShiArchieIntelligencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -172,6 +173,7 @@ export function PropertyIntelligenceView({
   const [discoverPins, setDiscoverPins] = useState<ShiDiscoverPin[]>([]);
   const mapRef = useRef<ShiMapHandle | null>(null);
   const openedPropRef = useRef<string | null>(null);
+  const ownerPortfolioRef = useRef<HTMLDivElement | null>(null);
   const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
     { filterSource: "" },
   );
@@ -1222,6 +1224,37 @@ export function PropertyIntelligenceView({
                 ) : null}
               </div>
 
+              <ShiArchieIntelligencePanel
+                property={selected}
+                exactOwnerCount={exactCount}
+                possibleOwnerCount={possibleCount}
+                matches={matches}
+                accessIntel={accessIntel}
+                onFocusOwnership={() => {
+                  ownerPortfolioRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                  });
+                }}
+                onFocusNearby={() => {
+                  ownerPortfolioRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                  });
+                }}
+                onAskAccess={() => {
+                  setAccessDeskTab("ask");
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("mode", "access");
+                  params.set("accessTab", "ask");
+                  const q = params.toString();
+                  router.replace(
+                    q ? `${pathname}?${q}` : `${pathname}?mode=access`,
+                    { scroll: false },
+                  );
+                }}
+              />
+
               <dl className="grid grid-cols-2 gap-2 text-xs">
                 <Fact label="Property ID" value={selected.propId} mono />
                 <Fact label="Geo ID" value={selected.geoId ?? "—"} mono />
@@ -1281,7 +1314,7 @@ export function PropertyIntelligenceView({
                 />
               </dl>
 
-              <div>
+              <div ref={ownerPortfolioRef}>
                 <h4 className="flex items-center gap-2 text-xs font-bold text-ink">
                   <Users className="h-3.5 w-3.5 text-gold" />
                   Owner portfolio

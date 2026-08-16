@@ -967,7 +967,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-RESEARCH-MERGE",
     name: "Research owns Access tools (R1…R2)",
     goal: "Bring Corridors capability into Research map tools without deleting APIs or desk facts — one room for land + access.",
-    status: "current",
+    status: "done",
     frontend: [
       "R1: story-map-tool readable chrome (navy/gold active) on Research + Access maps",
       "R1: Research Traffic overlay + Access panel (frontage · IX · nearby AADT)",
@@ -984,10 +984,31 @@ export const SHI_WAVES: ShiWave[] = [
       "Survey-grade or live-congestion claims",
     ],
   },
+  {
+    id: "ARCHIE-INTELLIGENCE",
+    name: "Archie Intelligence · property-aware Phase 1",
+    goal: "On property open, Archie speaks first with translated context and up to 3 evidence-backed findings — not an empty chatbot.",
+    status: "current",
+    frontend: [
+      "P1: ShiArchieIntelligencePanel on Research property record",
+      "P1: Archie Found · truth chips · focus chips (Ownership · Value · Development · Nearby · Ask)",
+      "P1: Speaks before CAD fact grid — progressive disclosure",
+      "Marker data-archie-intelligence=p1",
+    ],
+    backend: [
+      "Deterministic buildArchiePropertyBrief from desk facts (no LLM)",
+      "Armor npm run test:archie-intelligence-p1",
+    ],
+    outOfScope: [
+      "Founder Interpreter product / private agent UI",
+      "Dual live LLM minds · MLS · change monitoring",
+      "Fabricating missing CAD / survey / zoning",
+    ],
+  },
 ];
 
-/** Current product line — Research owns Access. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-RESEARCH-MERGE" as const;
+/** Current product line — Archie Intelligence Phase 1. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
