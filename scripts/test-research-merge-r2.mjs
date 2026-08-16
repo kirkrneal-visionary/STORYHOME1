@@ -33,6 +33,12 @@ assert.match(view, /answerCorridorAsk/);
 assert.match(view, /comparePropertySites/);
 assert.match(view, /mode === "access"|get\("mode"\)/);
 
+const researchMap = read(
+  "src/components/broker/intelligence/ShiResearchMap.tsx",
+);
+assert.match(researchMap, /data-research-map-fallback/);
+assert.match(researchMap, /setMapFailed/);
+
 const corridorsView = read(
   "src/components/broker/intelligence/ShiCorridorsView.tsx",
 );

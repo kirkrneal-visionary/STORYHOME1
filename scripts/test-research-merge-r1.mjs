@@ -23,6 +23,7 @@ assert.match(researchMap, /story-map-tool/);
 assert.match(researchMap, /data-research-access-traffic-tool/);
 assert.match(researchMap, /research-access-segments/);
 assert.match(researchMap, /onAccessTrafficToggle/);
+assert.match(researchMap, /data-research-map-fallback|setMapFailed/);
 assert.doesNotMatch(
   researchMap.split("story-map-tool")[0] + "MARKER",
   /bottom-12 left-3[\s\S]*text-navy hover:bg-navy/,
