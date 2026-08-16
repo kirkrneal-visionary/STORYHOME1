@@ -13,18 +13,21 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-DEEDS · **DEEDS-1 shipping**
-Owned clerk deed index scaffold for launch 7 — ingest · coverage registry · migration 0036. **User reveal stays closed** until DEEDS-2 peer-grade. See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).
+### ARCHIE-IX · **IX-1 shipping**
+Approx meters to nearest mapped-road crossing (`corridor-intersection-v1`) on the Corridors desk. Not survey-grade. See [`ARCHIE-CORRIDORS-2.md`](./ARCHIE-CORRIDORS-2.md).
+
+### ARCHIE-DEEDS · **DEEDS-1 live**
+Owned clerk deed index scaffold — user reveal still closed until DEEDS-2.
 
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F + F2 **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- DEEDS-2: peer-grade clerk coverage → open `DEEDS_USER_REVEAL_OPEN`  
-- Intersection **meter distance** only after a versioned desk field exists  
+- DEEDS-2: peer-grade clerk coverage → open user reveal  
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-DEEDS DEEDS-1 — clerk index scaffold (reveal closed)  
 - ARCHIE-LAUNCH7-MAP L7-1…3 — free-world streets · owned tile API + disk cache · CDN/R2 hooks  
 - ARCHIE-CORRIDORS-2 C2.0-F2 — Ask deepen · map soft-fail  
 - AGENT-WORLD-POLISH AW-1 — visitor CTA · trust · empty · presence  

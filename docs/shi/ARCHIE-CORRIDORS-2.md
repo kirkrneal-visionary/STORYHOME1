@@ -68,7 +68,7 @@ Corridors helps a real-estate professional answer: **which property has the best
 | Road geometry | Cached corridor_road_segments + live GeoJSON segments |
 | History | Up to ~6 TxDOT published years per station |
 | Parcel↔road / frontage | Approx frontage (PostGIS RPC or JS) — never surveyed |
-| Intersection proximity | Corner-likely heuristic when dual-road (C2.0-C); distance TBD |
+| Intersection proximity | IX-1 `approxDistanceToIntersectionM` (`corridor-intersection-v1`) + corner/dual heuristic |
 | Exposure score | Traffic + Commercial Exposure v1 (C2.0-D) |
 | Parcel click on Corridors | Live (C2.0-B) |
 | Direct Prospects / Farms CTA | Live from Site panel (C2.0-E) |
@@ -247,16 +247,41 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 | Data confidence | `parcel_confidence` | confidence + traffic association |
 | This exposure | `parcel_exposure` | `scoreCommercialExposure` for selected parcel |
 
-**Honesty lock:** Corner / dual is **not** surveyed intersection distance. Meter distance stays **TBD** until a versioned field ships (later wave).
+**Honesty lock:** Corner / dual is **not** surveyed intersection distance. IX-1 adds approx meters (`corridor-intersection-v1`) when a mapped-road crossing is found — still APPROX / not survey-grade; retracts to null when unknown.
 
-**Rule version:** `corridor-ask-v1.1` · marker `data-corridors-version="c2-0-f2"`
+**Rule version:** `corridor-ask-v2.2` · marker `data-corridors-version="c2-0-f2"` · IX marker `data-corridor-ix="ix-1"`
 
 **Acceptance**
 
 - [x] New intents answer only from selected-parcel desk context (or honest missing).  
-- [x] Intersection answer never claims meter distance.  
+- [x] Intersection answer never claims survey-grade meter distance.  
 - [x] Armor `npm run test:corridors-2f2`.  
 - [x] LLM still never invents counts.
+
+---
+
+### IX-1 — Intersection meter distance (versioned desk field)
+
+**Goal:** Own approx meters from parcel centroid to nearest mapped-road crossing on the desk.
+
+| Piece | Path |
+|-------|------|
+| Rule | `corridor-intersection-v1` |
+| Field | `ParcelLocationIntel.approxDistanceToIntersectionM` |
+| PostGIS | `corridor_parcel_intersection_distance` (migration `0037`) |
+| JS fallback | `approxIntersectionDistanceFromGeojson` |
+| UI | Site panel line under Dual-road / Corner chips |
+| Ask | Corner / dual chip includes meters when present |
+| Armor | `npm run test:corridors-ix1` |
+
+**Honesty:** CALCULATED (PostGIS) or ESTIMATED (JS). Never invent. Retract when &lt;2 routes or no near-crossing. Not survey-grade.
+
+**Acceptance**
+
+- [x] Versioned desk field present on intel.  
+- [x] Ask / compare / report show meters only when field set.  
+- [x] Failures omit meters (no fake 0).  
+- [x] Armor `npm run test:corridors-ix1`.
 
 ---
 

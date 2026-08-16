@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   FRONTAGE_BUFFER_M,
+  INTERSECTION_JOIN_M,
+  INTERSECTION_SEARCH_M,
   MIN_FRONTAGE_FT,
   approxFrontageFromGeojson,
+  approxIntersectionDistanceFromGeojson,
   buildParcelLocationIntel,
   stationFallbackIntel,
   type FrontageRoadHit,
+  type IntersectionDistanceHit,
   type ParcelLocationIntel,
 } from "@/lib/shi/corridor-frontage";
 import {
@@ -39,7 +43,8 @@ function asParcelGeo(raw: unknown): ParcelGeo | null {
 }
 
 /**
- * C2.0-C — parcel location intel (approx frontage, dual-road, confidence).
+ * C2.0-C + IX-1 — parcel location intel (approx frontage, dual-road,
+ * confidence, approx meters to mapped-road crossing).
  * Prefer PostGIS RPC when segment cache is warm; else JS approx + live TxDOT.
  */
 export async function GET(req: NextRequest) {
@@ -75,6 +80,8 @@ export async function GET(req: NextRequest) {
 
   let intel: ParcelLocationIntel | null = null;
   let cacheNote: string | null = null;
+  let intersectionHit: IntersectionDistanceHit | null = null;
+  let intersectionTier: ParcelLocationIntel["intersectionTier"] = null;
 
   /* 1) PostGIS frontage when migration + cache are live */
   try {
@@ -109,10 +116,42 @@ export async function GET(req: NextRequest) {
           ...roads.map((r) => 0),
           new Date().getFullYear(),
         );
+        /* IX-1 PostGIS crossing distance (soft-fail) */
+        try {
+          const { data: ix, error: ixErr } = await gate.supabase.rpc(
+            "corridor_parcel_intersection_distance",
+            {
+              p_prop_id: propId,
+              p_source: parcelSource,
+              p_join_m: INTERSECTION_JOIN_M,
+              p_search_m: INTERSECTION_SEARCH_M,
+            },
+          );
+          if (!ixErr && Array.isArray(ix) && ix[0]) {
+            const row = ix[0] as {
+              approx_distance_m?: number;
+              route_a?: string;
+              route_b?: string;
+            };
+            const m = Number(row.approx_distance_m);
+            if (Number.isFinite(m) && row.route_a && row.route_b) {
+              intersectionHit = {
+                approxDistanceToIntersectionM: m,
+                routeA: String(row.route_a),
+                routeB: String(row.route_b),
+              };
+              intersectionTier = "CALCULATED";
+            }
+          }
+        } catch {
+          /* retract meters — keep frontage */
+        }
         intel = buildParcelLocationIntel({
           roads,
           source: "postgis",
           observationYear: year,
+          intersection: intersectionHit,
+          intersectionTier,
         });
       }
     } else if (error) {
@@ -199,11 +238,17 @@ export async function GET(req: NextRequest) {
         0,
         ...segments.map(() => new Date().getFullYear()),
       );
+      const ixHit = approxIntersectionDistanceFromGeojson({
+        parcelGeojson: parcelGeo,
+        segments,
+      });
       intel = buildParcelLocationIntel({
         roads,
         source: "client_approx",
         observationYear: observationYear || null,
         stationNearby: roads.length > 0,
+        intersection: ixHit,
+        intersectionTier: ixHit ? "ESTIMATED" : null,
       });
     } else if (
       !intel &&
@@ -238,8 +283,9 @@ export async function GET(req: NextRequest) {
       honesty: {
         frontageLabel: "APPROX",
         surveyed: false,
+        intersectionRuleVersion: intel.intersectionRuleVersion,
         note:
-          "Frontage is approximate from mapped roads — not a survey. Never claims measured-at-property without segment association.",
+          "Frontage and intersection distance are approximate from mapped roads — not a survey. Meters retract when no crossing is found.",
       },
       cacheNote,
       county: { fips: county.fips, name: county.name, source: county.source },

@@ -75,11 +75,15 @@ export function buildPropertyLocationReportHtml(
       ? TRAFFIC_INTENSITY_LABEL[trafficIntensityClass(station.latestAadt)]
       : "—";
   const frontage = formatApproxFrontageFt(intel?.totalApproxFrontageFt ?? 0);
-  const intersection = intel?.cornerLikely
-    ? "Corner likely (approx)"
-    : intel?.dualRoad
-      ? "Dual-road (approx)"
-      : "Not indicated from mapped roads";
+  const intersection =
+    intel?.approxDistanceToIntersectionM != null &&
+    Number.isFinite(intel.approxDistanceToIntersectionM)
+      ? `${intel.cornerLikely ? "Corner likely" : intel.dualRoad ? "Dual-road" : "Mapped roads"} · ~${Math.round(intel.approxDistanceToIntersectionM)} m (approx)`
+      : intel?.cornerLikely
+        ? "Corner likely (approx)"
+        : intel?.dualRoad
+          ? "Dual-road (approx)"
+          : "Not indicated from mapped roads";
 
   let compareBlock = "";
   if (input.compareSites && input.compareSites.length >= 2) {

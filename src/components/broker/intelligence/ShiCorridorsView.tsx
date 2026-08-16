@@ -113,8 +113,10 @@ import {
 } from "@/lib/shi/corridor-parcel-traffic";
 import {
   approxFrontageFromGeojson,
+  approxIntersectionDistanceFromGeojson,
   buildParcelLocationIntel,
   formatApproxFrontageFt,
+  formatApproxIntersectionM,
   type ParcelLocationIntel,
 } from "@/lib/shi/corridor-frontage";
 import {
@@ -1725,11 +1727,17 @@ function ParcelSitePanel({
         parcelGeojson: parcel.geojson,
         segments,
       });
+      const ixHit = approxIntersectionDistanceFromGeojson({
+        parcelGeojson: parcel.geojson,
+        segments,
+      });
       const next = buildParcelLocationIntel({
         roads,
         source: "client_approx",
         observationYear: new Date().getFullYear(),
         stationNearby: roads.length > 0,
+        intersection: ixHit,
+        intersectionTier: ixHit ? "ESTIMATED" : null,
       });
       setIntel(next);
       onIntelChange?.(next);
@@ -1966,6 +1974,26 @@ function ParcelSitePanel({
             Data {confidenceLabel}
           </span>
         </div>
+        {intel?.approxDistanceToIntersectionM != null &&
+        intel.intersectionTier ? (
+          <p
+            className="mt-2 text-[11px] leading-snug text-ink"
+            data-corridor-ix="ix-1"
+            data-corridor-ix-meters={intel.approxDistanceToIntersectionM}
+            data-corridor-ix-tier={intel.intersectionTier}
+          >
+            <span className="font-semibold">
+              {formatApproxIntersectionM(intel.approxDistanceToIntersectionM)}
+            </span>
+            <span className="text-[var(--muted)]">
+              {" "}
+              · {intel.intersectionTier} · not a survey
+              {intel.intersectionRouteIds
+                ? ` · ${intel.intersectionRouteIds.join(" × ")}`
+                : ""}
+            </span>
+          </p>
+        ) : null}
         {intel?.confidenceWhy ? (
           <p className="mt-1.5 text-[11px] text-[var(--muted)]">
             {intel.confidenceWhy}

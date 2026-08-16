@@ -834,12 +834,13 @@ export const SHI_WAVES: ShiWave[] = [
     frontend: [
       "C2.0-A…F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
       "C2.0-F2 shipping: Ask deepen — frontage · corner/dual · confidence · this exposure (desk facts)",
-      "Ask Archie: corridor-ask-v2.1 — F2 desk deepen + DC flood/utilities/env/deeds; no LLM stats; intersection distance TBD",
+      "Ask Archie: corridor-ask-v2.2 — F2 desk deepen + DC flood/utilities/env/deeds + IX-1 meters; no LLM stats",
       "Preserve v1 toolbox · growth watch · scenarios · analyze · area compare",
     ],
     backend: [
-      "Armor scripts/test-corridors-2a…2f.mjs · test:corridors-2f2",
+      "Armor scripts/test-corridors-2a…2f.mjs · test:corridors-2f2 · test:corridors-ix1",
       "Migration 0034_corridor_road_segments.sql · 0035 grants · RPC corridor_parcel_frontage",
+      "Migration 0037 · RPC corridor_parcel_intersection_distance",
       "API parcel-location · strongest-sites · softCache on traffic GET",
     ],
     outOfScope: [
@@ -924,7 +925,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-DEEDS",
     name: "Owned clerk deeds · index then reveal (DEEDS-1…2)",
     goal: "Own clerk-grade deed index for launch 7 before any user reveal — no DataTree / ATTOM / CAD-as-deed.",
-    status: "current",
+    status: "done",
     frontend: [
       "DEEDS-1: ShiDeedsEvidencePanel stays retracted (DEEDS_USER_REVEAL_OPEN false)",
       "DEEDS-1: Ask deed_history honesty unchanged — dark until DEEDS-2",
@@ -941,10 +942,31 @@ export const SHI_WAVES: ShiWave[] = [
       "Paywall / upsell for deed history",
     ],
   },
+  {
+    id: "ARCHIE-IX",
+    name: "Intersection meter distance (IX-1)",
+    goal: "Versioned desk field for approx meters to nearest mapped-road crossing — CALCULATED/ESTIMATED, not survey-grade.",
+    status: "current",
+    frontend: [
+      "IX-1: Site panel shows approx meters under Dual-road / Corner (data-corridor-ix=ix-1)",
+      "IX-1: Ask Corner/dual + compare/report include meters when present",
+      "Ask Archie: corridor-ask-v2.2 — F2 desk deepen + IX-1 meters when on desk",
+    ],
+    backend: [
+      "IX-1: corridor-intersection-v1 · approxIntersectionDistanceFromGeojson",
+      "IX-1: migration 0037 corridor_parcel_intersection_distance",
+      "Armor npm run test:corridors-ix1",
+    ],
+    outOfScope: [
+      "Survey-grade intersection claims",
+      "Invented meters when no crossing found",
+      "Counties beyond launch 7",
+    ],
+  },
 ];
 
-/** Current product line — owned clerk deeds scaffold. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS" as const;
+/** Current product line — intersection meter distance. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-IX" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
