@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
 import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
@@ -9,6 +9,10 @@ import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiU
 import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
 import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
 import { ShiResearchAccessPanel } from "@/components/broker/intelligence/ShiResearchAccessPanel";
+import {
+  ShiResearchAccessDesk,
+  type ResearchAccessDeskTab,
+} from "@/components/broker/intelligence/ShiResearchAccessDesk";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -45,6 +49,7 @@ import {
   shiDeedsForParcel,
   shiCorridorsTraffic,
   shiCorridorsParcelLocation,
+  shiCorridorsStrongestSites,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
@@ -56,6 +61,16 @@ import type {
   TrafficStation,
 } from "@/lib/shi/corridors";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
+import {
+  answerCorridorAsk,
+  type CorridorAskAnswer,
+} from "@/lib/shi/corridor-ask";
+import type { RankedSite } from "@/lib/shi/corridor-exposure";
+import {
+  comparePropertySites,
+  toggleCompareSite,
+} from "@/lib/shi/corridor-property-compare";
+import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import type {
   ShiAreaAnalysis,
@@ -127,6 +142,15 @@ export function PropertyIntelligenceView({
     [],
   );
   const [accessStations, setAccessStations] = useState<TrafficStation[]>([]);
+  const [accessDeskTab, setAccessDeskTab] = useState<ResearchAccessDeskTab>("ask");
+  const [askAnswer, setAskAnswer] = useState<CorridorAskAnswer | null>(null);
+  const [rankedSites, setRankedSites] = useState<RankedSite[]>([]);
+  const [strongestLoading, setStrongestLoading] = useState(false);
+  const [strongestNote, setStrongestNote] = useState("");
+  const [comparePicks, setComparePicks] = useState<CorridorParcelPick[]>([]);
+  const [compareIntelById, setCompareIntelById] = useState<
+    Record<string, ParcelLocationIntel | null>
+  >({});
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -799,6 +823,156 @@ export function PropertyIntelligenceView({
         c.countyName === selected.countyName,
     );
 
+  const activeFrame = frames.find((f) => f.localId === activeFrameId) ?? null;
+
+  const launchFips =
+    selected?.countyFips ||
+    AVAILABLE_COUNTIES.find((c) => c.source === source)?.fips ||
+    "";
+
+  const ensureAccessStations = useCallback(async () => {
+    if (!launchFips || !isLaunchCorridorFips(launchFips)) return;
+    if (accessStations.length > 0) return;
+    try {
+      const body = await shiCorridorsTraffic(launchFips);
+      setAccessSegments(body.segments ?? []);
+      setAccessStations(body.stations ?? []);
+    } catch {
+      /* Ask still works with empty stations */
+    }
+  }, [launchFips, accessStations.length]);
+
+  useEffect(() => {
+    const mode = searchParams.get("mode");
+    const tab = searchParams.get("accessTab");
+    if (mode === "access") {
+      void ensureAccessStations();
+      if (tab === "sites" || tab === "compare" || tab === "ask") {
+        setAccessDeskTab(tab);
+      }
+    }
+  }, [searchParams, ensureAccessStations]);
+
+  const propertyCompare = useMemo(() => {
+    if (comparePicks.length < 2) return null;
+    return comparePropertySites(
+      comparePicks.map((pick) => ({
+        pick,
+        intel: compareIntelById[pick.propId] ?? null,
+      })),
+      accessStations,
+    );
+  }, [comparePicks, compareIntelById, accessStations]);
+
+  const runAsk = useCallback(
+    (q: string) => {
+      void ensureAccessStations();
+      const pick: CorridorParcelPick | null =
+        selected &&
+        selected.centroidLat != null &&
+        selected.centroidLng != null
+          ? {
+              propId: selected.propId,
+              source: selected.source,
+              countyFips: selected.countyFips ?? undefined,
+              situsAddress: selected.situsAddress,
+              ownerName: selected.ownerName,
+              legalAcreage: selected.legalAcreage,
+              marketValue: selected.marketValue,
+              lat: selected.centroidLat,
+              lng: selected.centroidLng,
+              geojson: null,
+            }
+          : null;
+      const answer = answerCorridorAsk(q, {
+        countyName:
+          selected?.countyName ||
+          AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ||
+          "County",
+        stations: accessStations,
+        watchAreas: [],
+        selectedParcel: pick,
+        selectedStation: null,
+        parcelIntel: accessIntel,
+        rankedSites,
+        hasAnalysisBoundary: Boolean(activeFrame?.boundary),
+        compareCount: comparePicks.length,
+        flood: floodFact,
+        utilities: utilitiesFact,
+        environment: environmentDesk,
+      });
+      setAskAnswer(answer);
+      if (answer.hint === "run_strongest") setAccessDeskTab("sites");
+      if (answer.hint === "open_compare") setAccessDeskTab("compare");
+    },
+    [
+      ensureAccessStations,
+      selected,
+      source,
+      accessStations,
+      accessIntel,
+      rankedSites,
+      activeFrame?.boundary,
+      comparePicks.length,
+      floodFact,
+      utilitiesFact,
+      environmentDesk,
+    ],
+  );
+
+  const findStrongestSites = useCallback(async () => {
+    if (!activeFrame?.boundary) {
+      setStrongestNote("Select or draw a market frame first.");
+      return;
+    }
+    if (!launchFips || !isLaunchCorridorFips(launchFips)) {
+      setStrongestNote("Strongest Sites works in the launch 7 counties.");
+      return;
+    }
+    setStrongestLoading(true);
+    setStrongestNote("Ranking parcels by commercial exposure…");
+    try {
+      const body = await shiCorridorsStrongestSites({
+        countyFips: launchFips,
+        boundary: activeFrame.boundary,
+        limit: 12,
+      });
+      setRankedSites(body.sites);
+      setStrongestNote(
+        body.sites.length
+          ? `Top ${body.sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — ${body.honesty}`
+          : "No parcels to rank in this outline.",
+      );
+      void ensureAccessStations();
+    } catch (e) {
+      setRankedSites([]);
+      setStrongestNote(
+        e instanceof Error
+          ? e.message
+          : "Could not rank strongest sites for this area.",
+      );
+    } finally {
+      setStrongestLoading(false);
+    }
+  }, [activeFrame?.boundary, launchFips, ensureAccessStations]);
+
+  const onToggleCompareFromSite = useCallback(
+    (site: RankedSite) => {
+      const pick: CorridorParcelPick = {
+        propId: site.propId,
+        source: site.source,
+        lat: site.lat,
+        lng: site.lng,
+        situsAddress: site.situsAddress,
+        ownerName: site.ownerName,
+        legalAcreage: site.legalAcreage,
+        marketValue: site.marketValue,
+      };
+      setComparePicks((prev) => toggleCompareSite(prev, pick));
+    },
+    [],
+  );
+
   return (
     <div className="space-y-3">
       {freshness.length > 0 ? (
@@ -1367,6 +1541,27 @@ export function PropertyIntelligenceView({
         source={source}
         onOpenProperty={(opts) => void openProperty(opts)}
       />
+
+      {launchFips && isLaunchCorridorFips(launchFips) ? (
+        <ShiResearchAccessDesk
+          tab={accessDeskTab}
+          onTabChange={setAccessDeskTab}
+          askAnswer={askAnswer}
+          onAsk={runAsk}
+          hasActiveFrame={Boolean(activeFrame?.boundary)}
+          strongestLoading={strongestLoading}
+          strongestNote={strongestNote}
+          rankedSites={rankedSites}
+          onFindStrongest={() => void findStrongestSites()}
+          onToggleCompareSite={onToggleCompareFromSite}
+          comparePropIds={new Set(comparePicks.map((p) => p.propId))}
+          compare={propertyCompare}
+          onClearCompare={() => {
+            setComparePicks([]);
+            setCompareIntelById({});
+          }}
+        />
+      ) : null}
 
       {reopening ? (
         <div className="flex items-center gap-2 story-well px-3 py-2 text-xs font-semibold text-navy">

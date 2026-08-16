@@ -52,13 +52,14 @@ assert.match(view, /accessTrafficOn/);
 assert.match(view, /isLaunchCorridorFips/);
 
 const nav = read("src/lib/navigation/networks.ts");
-assert.match(nav, /label: "Access"/);
-assert.match(nav, /id: "corridors"/);
+assert.match(nav, /label: "Research"/);
+assert.match(nav, /Access desk is inside Research|soft-hidden/i);
 
 const workspace = read(
   "src/components/broker/intelligence/ShiWorkspace.tsx",
 );
-assert.match(workspace, /title: "Access"/);
+assert.match(workspace, /mode.*access|mode=access/);
+assert.match(workspace, /PropertyIntelligenceView/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-RESEARCH-MERGE|R1/);

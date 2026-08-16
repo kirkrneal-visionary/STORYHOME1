@@ -37,6 +37,7 @@
     "test:corridors-2f2": "node scripts/test-corridors-2f2.mjs",
     "test:corridors-ix1": "node scripts/test-corridors-ix1.mjs",
     "test:research-merge-r1": "node scripts/test-research-merge-r1.mjs",
+    "test:research-merge-r2": "node scripts/test-research-merge-r2.mjs",
     "test:data-coverage-dc1": "node scripts/test-data-coverage-dc1.mjs",
     "test:data-coverage-dc2": "node scripts/test-data-coverage-dc2.mjs",
     "test:data-coverage-dc3": "node scripts/test-data-coverage-dc3.mjs",

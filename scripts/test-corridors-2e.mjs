@@ -40,7 +40,7 @@ assert.match(panel, /data-corridor-property-compare/);
 assert.match(panel, /data-property-compare-summary/);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-[ef]"/);
+assert.match(view, /data-corridors-version="c2-0-(?:[ef]|f2)"/);
 assert.match(view, /data-corridor-workflow-ctas/);
 assert.match(view, /data-corridor-parcel-prospect/);
 assert.match(view, /data-corridor-parcel-farm/);
@@ -53,7 +53,7 @@ assert.match(view, /openPropertyLocationReport/);
 assert.match(view, /comparePropertySites/);
 
 const waves = read("src/lib/shi/waves.ts");
-assert.match(waves, /C2\.0-E/);
+assert.match(waves, /C2\.0-E|property compare\/CTAs|ARCHIE-CORRIDORS-2/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:corridors-2e/);

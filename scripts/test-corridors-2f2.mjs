@@ -29,8 +29,13 @@ assert.doesNotMatch(ask, /openai|anthropic|gpt-4/i);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
 assert.match(view, /data-corridors-version="c2-0-f2"/);
-assert.match(view, /data-corridor-ask-chips/);
-assert.match(view, /CORRIDOR_ASK_INTENTS/);
+assert.match(view, /ShiCorridorsAskPanel/);
+
+const askPanel = read(
+  "src/components/broker/intelligence/ShiCorridorsAskPanel.tsx",
+);
+assert.match(askPanel, /data-corridor-ask-chips/);
+assert.match(askPanel, /CORRIDOR_ASK_INTENTS/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /C2\.0-F2|F2/);

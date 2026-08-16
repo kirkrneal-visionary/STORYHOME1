@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
-import { ShiCorridorsView } from "@/components/broker/intelligence/ShiCorridorsView";
 import { ShiFarmsView } from "@/components/broker/intelligence/ShiFarmsView";
 import { ShiProspectsView } from "@/components/broker/intelligence/ShiProspectsView";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
@@ -27,12 +26,12 @@ const MODULE_COPY: Record<
   research: {
     title: "Research",
     blurb:
-      "Search · map · property record. Define a market area, analyze parcels, and save Map Memory or Farms.",
+      "Search · map · property · Access desk (Ask · Sites · Compare). Traffic and frontage live on the same map — planning counts, not live congestion.",
   },
   corridors: {
     title: "Access",
     blurb:
-      "Deep access desk (traffic · growth · compare). Same facts also live on Research — Traffic tool + Access panel. Planning counts, not live congestion.",
+      "Redirects into Research Access desk. Same facts — one room.",
   },
   prospects: {
     title: "Prospects",
@@ -75,6 +74,20 @@ export function ShiWorkspace() {
     const moduleProp: ArchieModuleProp = section;
     track("archie_module_selected", { module: moduleProp });
   }, [section]);
+
+  /* R2 — soft-hide Access tab: old Corridors deep links land in Research Access desk */
+  useEffect(() => {
+    if (section !== "corridors") return;
+    setResearchVisited(true);
+    writeLastArchieModule("research");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("section");
+    params.set("mode", "access");
+    const q = params.toString();
+    router.replace(q ? `/portal/intelligence?${q}` : "/portal/intelligence?mode=access", {
+      scroll: false,
+    });
+  }, [section, router, searchParams]);
 
   const selectSection = useCallback(
     (next: ShiSection) => {
@@ -140,23 +153,15 @@ export function ShiWorkspace() {
         {researchVisited ? (
           <div
             className={cn(
-              section === "research"
+              section === "research" || section === "corridors"
                 ? "motion-safe:animate-[archieModuleIn_180ms_ease-out]"
                 : "hidden",
             )}
-            aria-hidden={section !== "research"}
+            aria-hidden={section !== "research" && section !== "corridors"}
           >
             <PropertyIntelligenceView
               onOpenVault={() => selectSection("vault")}
               onOpenFarms={() => selectSection("farms")}
-            />
-          </div>
-        ) : null}
-
-        {section === "corridors" ? (
-          <div className="motion-safe:animate-[archieModuleIn_180ms_ease-out]">
-            <ShiCorridorsView
-              onOpenResearch={() => selectSection("research")}
             />
           </div>
         ) : null}

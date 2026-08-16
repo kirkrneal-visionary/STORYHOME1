@@ -58,12 +58,7 @@ export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
         label: "Research",
         match: "/portal/intelligence",
       },
-      {
-        id: "corridors",
-        href: archieHrefForModule("corridors"),
-        label: "Access",
-        match: "/portal/intelligence",
-      },
+      /* R2 — Access desk is inside Research (mode=access). Corridors tab soft-hidden. */
       {
         id: "prospects",
         href: archieHrefForModule("prospects"),
