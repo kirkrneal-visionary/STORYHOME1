@@ -5,9 +5,7 @@
 **Live verify:** https://storyhome-1-eqmg.vercel.app/portal/intelligence?section=corridors  
 **Companion:** [`ARCHIE-CORRIDORS.md`](./ARCHIE-CORRIDORS.md) (v1 waves still live) · [`WAVES.md`](./WAVES.md)
 
-**Status:** Audit locked. Phases C2.0-A…F acceptance bars locked. **Do not rewrite Corridors from scratch.**
-
-Preview branch first — live only on owner green-light.
+**Status:** Waves **C2.0-A…F complete and LIVE** on owner green-light.
 
 ---
 
