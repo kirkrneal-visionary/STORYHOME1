@@ -236,6 +236,30 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 
 ---
 
+### C2.0-F2 — Ask deepen (desk facts)
+
+**Ship:** Four more canned intents that read Site-panel facts already on the desk — **no new GIS**.
+
+| Chip | Intent | Desk source |
+|---|---|---|
+| Frontage | `parcel_frontage` | `ParcelLocationIntel` roads + total APPROX ft |
+| Corner / dual | `parcel_intersection` | `cornerLikely` / `dualRoad` heuristic |
+| Data confidence | `parcel_confidence` | confidence + traffic association |
+| This exposure | `parcel_exposure` | `scoreCommercialExposure` for selected parcel |
+
+**Honesty lock:** Corner / dual is **not** surveyed intersection distance. Meter distance stays **TBD** until a versioned field ships (later wave).
+
+**Rule version:** `corridor-ask-v1.1` · marker `data-corridors-version="c2-0-f2"`
+
+**Acceptance**
+
+- [x] New intents answer only from selected-parcel desk context (or honest missing).  
+- [x] Intersection answer never claims meter distance.  
+- [x] Armor `npm run test:corridors-2f2`.  
+- [x] LLM still never invents counts.
+
+---
+
 ## 6. Explicitly out of Corridors 2.0 (unless owner orders)
 
 - Live Google-style congestion  
@@ -258,4 +282,4 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 
 ---
 
-*Locked for Corridors 2.0. Waves **C2.0-A…F complete**. Live on owner green-light.*
+*Locked for Corridors 2.0. Waves **C2.0-A…F complete**; **C2.0-F2** Ask deepen shipping. Live on owner green-light.*

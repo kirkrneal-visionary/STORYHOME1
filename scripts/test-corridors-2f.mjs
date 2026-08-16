@@ -34,7 +34,7 @@ assert.ok(
 );
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-f"/);
+assert.match(view, /data-corridors-version="c2-0-f/);
 assert.match(view, /data-corridor-ask-panel/);
 assert.match(view, /data-corridor-ask-chips/);
 assert.match(view, /data-corridor-ask-answer/);

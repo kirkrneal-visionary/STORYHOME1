@@ -212,6 +212,7 @@ export function ShiCorridorsMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
+  const [mapFailed, setMapFailed] = useState<string | null>(null);
   const [base, setBase] = useState<MapBaseLayer>("satellite");
   const [zoom, setZoom] = useState(9);
   const [radiusMiles, setRadiusMiles] = useState(1);
@@ -308,32 +309,51 @@ export function ShiCorridorsMap({
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: buildStoryMapStyle(),
-      bounds: [
-        [county.bbox[0], county.bbox[1]],
-        [county.bbox[2], county.bbox[3]],
-      ],
-      fitBoundsOptions: { padding: 36 },
-      maxZoom: 22,
-      pitchWithRotate: false,
-      dragRotate: false,
-      pixelRatio: Math.min(
-        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
-        2,
-      ),
-      attributionControl: { compact: true },
-    });
+    setMapFailed(null);
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: containerRef.current,
+        style: buildStoryMapStyle(),
+        bounds: [
+          [county.bbox[0], county.bbox[1]],
+          [county.bbox[2], county.bbox[3]],
+        ],
+        fitBoundsOptions: { padding: 36 },
+        maxZoom: 22,
+        pitchWithRotate: false,
+        dragRotate: false,
+        pixelRatio: Math.min(
+          typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+          2,
+        ),
+        attributionControl: { compact: true },
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Map could not start in this browser.";
+      setMapFailed(msg);
+      setReady(false);
+      return;
+    }
     mapRef.current = map;
     map.addControl(
       new maplibregl.NavigationControl({ showCompass: false }),
       "bottom-right",
     );
 
+    map.on("error", (e) => {
+      const raw = e?.error?.message || e?.error?.toString?.() || "";
+      if (/webgl|context/i.test(raw)) {
+        setMapFailed(raw || "WebGL unavailable — map paused.");
+        setReady(false);
+      }
+    });
+
     map.on("load", () => {
       setBaseLayerVisibility(map, "satellite");
       setZoom(map.getZoom());
+      setReady(true);
 
       map.addSource("growth-watch", {
         type: "geojson",
@@ -1251,8 +1271,30 @@ export function ShiCorridorsMap({
       data-no-swipe-back
       data-shi-map
       data-corridors-toolbox="map-native"
+      data-corridor-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
     >
       <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+
+      {mapFailed ? (
+        <div
+          className="absolute inset-0 z-[15] flex items-center justify-center bg-[color-mix(in_srgb,var(--env-1)_88%,#0b1c18)] px-6"
+          data-corridor-map-fallback
+        >
+          <div className="max-w-md rounded-xl border border-hairline bg-[var(--surface)] px-5 py-4 text-center shadow-[var(--elev-raise)]">
+            <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
+              Map paused
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-ink">
+              This browser can’t start the corridor map (often WebGL). Ask Archie
+              and the side panels still work — select a county and use Ask chips
+              for honest desk answers.
+            </p>
+            <p className="mt-2 font-mono text-[10px] text-[var(--muted)]">
+              {county.name} · map fallback
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {/* Basemap — top-left on map */}
       <div className="pointer-events-none absolute inset-0 z-10">

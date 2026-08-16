@@ -830,21 +830,21 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-2",
     name: "Corridors 2.0 · parcel traffic + commercial location",
     goal: "Help pros answer which property has the best traffic exposure — land-first, plain language, no Corridors rewrite.",
-    status: "done",
+    status: "current",
     frontend: [
       "C2.0-A…F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
-      "C2.0-A language · C2.0-B parcel select · C2.0-C frontage · C2.0-D exposure · C2.0-E compare · C2.0-F Ask",
-      "Ask Archie: canned intents → deterministic facts (corridor-ask-v1) — no LLM stats",
+      "C2.0-F2 shipping: Ask deepen — frontage · corner/dual · confidence · this exposure (desk facts)",
+      "Ask Archie: corridor-ask-v2.1 — F2 desk deepen + DC flood/utilities/env/deeds; no LLM stats; intersection distance TBD",
       "Preserve v1 toolbox · growth watch · scenarios · analyze · area compare",
     ],
     backend: [
-      "Armor scripts/test-corridors-2a…2f.mjs",
+      "Armor scripts/test-corridors-2a…2f.mjs · test:corridors-2f2",
       "Migration 0034_corridor_road_segments.sql · 0035 grants · RPC corridor_parcel_frontage",
       "API parcel-location · strongest-sites · softCache on traffic GET",
     ],
     outOfScope: [
       "Rebuild Corridors from scratch",
-      "Survey-grade frontage claims",
+      "Survey-grade frontage / intersection distance claims",
       "LLM-invented traffic counts",
       "Live congestion / seller probability",
     ],
@@ -884,7 +884,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "AGENT-WORLD-POLISH",
     name: "Agent World polish · visitor surface (AW-1)",
     goal: "Clarify public Agent World CTAs, trust strip, empty states, presence feel, and mobile — not a redesign.",
-    status: "current",
+    status: "done",
     frontend: [
       "AW-1: visitor CTA hierarchy — primary listings; hide Find agents on visitor",
       "AW-1: trust strip 3-col mobile · empty listings / bio states",
@@ -900,8 +900,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Current product line — Agent World visitor polish. */
-export const ARCHIE_CURRENT_WAVE = "AGENT-WORLD-POLISH" as const;
+/** Current product line — Corridors Ask deepen F2 (on top of A–F LIVE). */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

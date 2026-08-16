@@ -715,7 +715,7 @@ export function ShiCorridorsView({
   return (
     <div
       className="space-y-4"
-      data-corridors-version="c2-0-f"
+      data-corridors-version="c2-0-f2"
       data-data-coverage="dc-5"
     >
       {/* Hero — tools live on the map, not here */}

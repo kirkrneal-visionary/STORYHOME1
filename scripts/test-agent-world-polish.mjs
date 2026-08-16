@@ -42,8 +42,10 @@ const wavesDoc = read("docs/shi/WAVES.md");
 assert.match(wavesDoc, /AGENT-WORLD-POLISH|AW-1/);
 
 const waves = read("src/lib/shi/waves.ts");
-assert.match(waves, /AGENT-WORLD-POLISH/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"AGENT-WORLD-POLISH"/);
+assert.match(waves, /id: "AGENT-WORLD-POLISH"/);
+assert.match(waves, /AW-1/);
+/* Landed — may no longer be ARCHIE_CURRENT_WAVE once later waves ship */
+assert.match(waves, /AGENT-WORLD-POLISH[\s\S]*?status: "(done|current)"/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:agent-world-polish/);

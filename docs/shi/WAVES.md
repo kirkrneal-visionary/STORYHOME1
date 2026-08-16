@@ -12,18 +12,20 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### AGENT-WORLD-POLISH · **AW-1 shipping**
-Public Agent World visitor surface — CTA clarity, trust strip, empty states, presence feel, mobile. See [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md).
+### ARCHIE-CORRIDORS-2 · **C2.0-F2 Ask deepen shipping**
+Frontage · corner/dual · data confidence · this-parcel exposure Ask chips — desk facts only; intersection **distance TBD**. See [`ARCHIE-CORRIDORS-2.md`](./ARCHIE-CORRIDORS-2.md).  
+Ask also carries Data Coverage desk intents (flood · utilities · environment · deeds honesty) on `corridor-ask-v2.1`.
 
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
 ## Next
-- Land Ask deepen (C2.0-F2) on eqmg → owner live gate  
+- Preview stacked land on eqmg → owner live gate  
 - Own clerk-grade deed index for launch 7 before any deeds reveal  
-- Intersection distance as desk GIS arrives
+- Intersection **meter distance** only after a versioned desk field exists  
 
 ## Done (recent)
+- AGENT-WORLD-POLISH AW-1 — visitor CTA · trust · empty · presence  
 - ARCHIE-DATA-COVERAGE DC-1…DC-5 — flood · utilities · environment · evidence UI · deeds dark  
 - ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
 - STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  

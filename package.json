@@ -34,6 +34,7 @@
     "test:corridors-2d": "node scripts/test-corridors-2d.mjs",
     "test:corridors-2e": "node scripts/test-corridors-2e.mjs",
     "test:corridors-2f": "node scripts/test-corridors-2f.mjs",
+    "test:corridors-2f2": "node scripts/test-corridors-2f2.mjs",
     "test:data-coverage-dc1": "node scripts/test-data-coverage-dc1.mjs",
     "test:data-coverage-dc2": "node scripts/test-data-coverage-dc2.mjs",
     "test:data-coverage-dc3": "node scripts/test-data-coverage-dc3.mjs",
