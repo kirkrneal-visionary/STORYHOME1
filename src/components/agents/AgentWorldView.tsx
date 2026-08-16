@@ -24,7 +24,8 @@ type AgentWorldViewProps = {
 };
 
 /**
- * STORY-WALK SW-1…SW-8 — Agent World + Living Mark + analytics + share + Story Walk film.
+ * STORY-WALK SW-1…SW-8 + AW-POLISH — Agent World visitor surface.
+ * Own vs visitor share one shell; polish clarifies CTAs, trust, empty, mobile.
  */
 export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   const { user } = useAuth();
@@ -33,6 +34,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   const roleLabel =
     agent.professionalRole.replace(/_/g, " ").trim() || "Agent";
   const listingsHref = `/marketplace?agent=${encodeURIComponent(agent.id)}`;
+  const hasListings = listings.length > 0;
   const [summary, setSummary] = useState<AgentWorldSummary>(
     emptyAgentWorldSummary(),
   );
@@ -68,17 +70,24 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
   return (
     <div
       data-story-agent-world
+      data-agent-world-polish="aw-1"
+      data-agent-world-audience={isOwn ? "own" : "visitor"}
       className="min-h-dvh pb-[var(--story-bottom-clearance)] pt-[var(--story-safe-top)]"
     >
       {/* Atmosphere band — world, not a FB cover photo clone */}
-      <div className="relative h-36 overflow-hidden md:h-44">
+      <div
+        className="relative h-36 overflow-hidden md:h-44"
+        data-agent-world-atmosphere
+        aria-hidden
+      >
         <div className="absolute inset-0 bg-[var(--env-1)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_30%,rgba(245,183,30,0.2),transparent_48%),radial-gradient(circle_at_88%_0%,rgba(18,63,56,0.42),transparent_42%),linear-gradient(180deg,transparent_40%,var(--background)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_30%,rgba(245,183,30,0.22),transparent_48%),radial-gradient(circle_at_88%_0%,rgba(18,63,56,0.45),transparent_42%),linear-gradient(180deg,transparent_36%,var(--background)_100%)]" />
+        <div className="agent-world-atmosphere-sheen absolute inset-0 opacity-70" />
       </div>
 
       <div className="relative z-[1] mx-auto max-w-6xl px-4 md:px-6">
         {/* Living Mark + identity */}
-        <div className="-mt-14 flex flex-col gap-6 md:-mt-16 md:flex-row md:items-end md:justify-between">
+        <div className="-mt-14 flex flex-col gap-5 md:-mt-16 md:flex-row md:items-end md:justify-between md:gap-6">
           <div className="flex items-end gap-4 md:gap-5">
             <LivingMarkPresence
               agentId={agent.id}
@@ -108,56 +117,79 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          {/* CTA cluster — one primary job; visitor vs own */}
+          <div
+            className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap"
+            data-agent-world-ctas
+            data-agent-world-cta-mode={isOwn ? "own" : "visitor"}
+          >
             <Link
               href={listingsHref}
               onClick={() => onCta("listings")}
-              className="story-press inline-flex h-11 items-center rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)]"
+              className="story-press col-span-2 inline-flex h-11 items-center justify-center rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)] sm:col-span-1"
+              data-agent-world-cta="listings"
             >
-              View listings
+              {hasListings ? "View listings" : "Browse marketplace"}
             </Link>
-            <a
-              href="#agent-listings"
-              onClick={() => onCta("inventory")}
-              className="story-press inline-flex h-11 items-center rounded-full border border-hairline bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-5 text-sm font-semibold text-ink backdrop-blur-sm"
-            >
-              Inventory
-            </a>
-            <AgentWorldShareButton
-              agentId={agent.id}
-              agentName={agent.fullName}
-              marketCity={agent.primaryMarketCity}
-              roleLabel={roleLabel}
-              isOwn={isOwn}
-            />
-            <Link
-              href="/network"
-              onClick={() => onCta("find_agents")}
-              className="story-press inline-flex h-11 items-center rounded-full border border-hairline px-5 text-sm font-semibold text-[var(--muted)] hover:text-ink"
-            >
-              Find agents
-            </Link>
+            {hasListings ? (
+              <a
+                href="#agent-listings"
+                onClick={() => onCta("inventory")}
+                className="story-press inline-flex h-11 items-center justify-center rounded-full border border-hairline bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-5 text-sm font-semibold text-ink backdrop-blur-sm"
+                data-agent-world-cta="inventory"
+              >
+                On this world
+              </a>
+            ) : null}
+            <div className={hasListings ? "min-w-0" : "col-span-2 min-w-0 sm:col-span-1"}>
+              <AgentWorldShareButton
+                agentId={agent.id}
+                agentName={agent.fullName}
+                marketCity={agent.primaryMarketCity}
+                roleLabel={roleLabel}
+                isOwn={isOwn}
+                className="w-full sm:w-auto"
+              />
+            </div>
+            {isOwn ? (
+              <Link
+                href="/network"
+                onClick={() => onCta("find_agents")}
+                className="story-press inline-flex h-11 items-center justify-center rounded-full border border-hairline px-5 text-sm font-semibold text-[var(--muted)] hover:text-ink"
+                data-agent-world-cta="find_agents"
+              >
+                Find agents
+              </Link>
+            ) : null}
           </div>
         </div>
 
-        {/* Trust strip */}
-        <div className="story-glass mt-8 flex flex-wrap items-end gap-8 px-5 py-4">
+        {/* Trust strip — compact on mobile */}
+        <div
+          className="story-glass mt-7 grid grid-cols-3 gap-3 px-4 py-3.5 sm:mt-8 sm:flex sm:flex-wrap sm:items-end sm:gap-8 sm:px-5 sm:py-4"
+          data-agent-world-trust
+        >
           <div>
-            <p className="font-mono text-[10px] tracking-[0.12em] text-[var(--muted)] uppercase">
+            <p className="font-mono text-[9px] tracking-[0.12em] text-[var(--muted)] uppercase sm:text-[10px]">
               Reputation
             </p>
-            <p className="font-serif text-4xl font-bold text-ink md:text-5xl">
+            <p className="font-serif text-3xl font-bold text-ink sm:text-4xl md:text-5xl">
               {agent.reputationScore || "—"}
             </p>
           </div>
-          <div className="flex items-center gap-1.5 pb-1 text-sm text-[var(--muted)]">
-            <Star className="h-4 w-4 fill-gold text-gold" aria-hidden />
-            <span className="font-mono text-ink">
-              {agent.starRating > 0 ? agent.starRating.toFixed(2) : "—"}
+          <div className="flex flex-col justify-end gap-0.5 pb-0.5 text-[11px] text-[var(--muted)] sm:flex-row sm:items-center sm:gap-1.5 sm:pb-1 sm:text-sm">
+            <span className="inline-flex items-center gap-1">
+              <Star className="h-3.5 w-3.5 fill-gold text-gold sm:h-4 sm:w-4" aria-hidden />
+              <span className="font-mono text-ink">
+                {agent.starRating > 0 ? agent.starRating.toFixed(2) : "—"}
+              </span>
             </span>
-            <span>· {agent.reviewCount} reviews</span>
+            <span className="sm:ml-0">
+              <span className="hidden sm:inline">· </span>
+              {agent.reviewCount} review{agent.reviewCount === 1 ? "" : "s"}
+            </span>
           </div>
-          <div className="pb-1 font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase md:ml-auto">
+          <div className="pb-0.5 text-right font-mono text-[10px] tracking-wide text-[var(--muted)] uppercase sm:ml-auto sm:pb-1 sm:text-[11px] sm:text-left">
             {listings.length} listing{listings.length === 1 ? "" : "s"}
           </div>
         </div>
@@ -177,38 +209,83 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
         ) : null}
 
         {agent.bio ? (
-          <p className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted)]">
+          <p
+            className="mt-6 max-w-2xl text-base leading-relaxed text-[var(--muted)]"
+            data-agent-world-bio
+          >
             {agent.bio}
           </p>
         ) : (
-          <p className="mt-6 max-w-2xl text-sm text-[var(--muted)]">
-            Every home has a story — and every agent has a world on StoryHome.
+          <p
+            className="mt-6 max-w-2xl text-sm leading-relaxed text-[var(--muted)]"
+            data-agent-world-bio="empty"
+          >
+            {isOwn
+              ? "Add a short bio in Settings so visitors know your world at a glance."
+              : "This agent hasn’t published a bio yet — explore their listings below."}
           </p>
         )}
 
         {/* Inventory presence */}
-        <section id="agent-listings" className="mt-10 scroll-mt-28">
+        <section
+          id="agent-listings"
+          className="mt-10 scroll-mt-28"
+          data-agent-world-listings
+        >
           <div className="flex items-end justify-between gap-4">
-            <h2 className="font-serif text-2xl font-bold text-ink">Listings</h2>
-            {listings.length > 0 ? (
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-ink">Listings</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Homes on this Agent World
+              </p>
+            </div>
+            {hasListings ? (
               <Link
                 href={listingsHref}
                 onClick={() => onCta("listings")}
-                className="text-sm font-semibold text-gold hover:underline"
+                className="shrink-0 text-sm font-semibold text-gold hover:underline"
               >
                 Open in marketplace
               </Link>
             ) : null}
           </div>
-          {listings.length === 0 ? (
-            <p className="story-well mt-4 border-dashed p-8 text-center text-sm text-[var(--muted)]">
-              No active listings yet.
-            </p>
-          ) : (
+          {hasListings ? (
             <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
               {listings.map((listing) => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
+            </div>
+          ) : (
+            <div
+              className="story-well mt-4 border-dashed px-5 py-8 text-center"
+              data-agent-world-listings-empty
+            >
+              <p className="font-serif text-lg font-semibold text-ink">
+                No active listings yet
+              </p>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-[var(--muted)]">
+                {isOwn
+                  ? "When you publish inventory, it appears here for visitors — and feeds your Story Walk film."
+                  : "Check back soon, or browse the wider marketplace for homes in this market."}
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                <Link
+                  href={isOwn ? "/settings" : "/marketplace"}
+                  onClick={() => onCta("listings")}
+                  className="story-press inline-flex h-10 items-center rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)]"
+                >
+                  {isOwn ? "Open Settings" : "Browse marketplace"}
+                </Link>
+                {!isOwn ? (
+                  <AgentWorldShareButton
+                    agentId={agent.id}
+                    agentName={agent.fullName}
+                    marketCity={agent.primaryMarketCity}
+                    roleLabel={roleLabel}
+                    isOwn={false}
+                  />
+                ) : null}
+              </div>
             </div>
           )}
         </section>

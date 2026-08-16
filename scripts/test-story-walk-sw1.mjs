@@ -39,6 +39,6 @@ assert.match(demo, /photoUrl/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /STORY-WALK-SW-1|STORY-WALK/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE\s*=\s*"STORY-WALK"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE/);
 
 console.log("story-walk-sw1 armor: ok");

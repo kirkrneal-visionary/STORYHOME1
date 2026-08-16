@@ -8,18 +8,18 @@
 **Analytics:** [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md) · [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md)  
 **Scenarios:** [`ARCHIE-INTELLIGENCE-SCENARIOS.md`](./ARCHIE-INTELLIGENCE-SCENARIOS.md)  
 **Ops scale:** [`ARCHIE-COUNTY-OPS-SCALE.md`](./ARCHIE-COUNTY-OPS-SCALE.md)  
-**Story Walk:** [`STORY-WALK.md`](./STORY-WALK.md) · [`STORY-WALK-SW6-READY.md`](./STORY-WALK-SW6-READY.md)  
+**Story Walk:** [`STORY-WALK.md`](./STORY-WALK.md) · [`STORY-WALK-SW6-READY.md`](./STORY-WALK-SW6-READY.md) · [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md)  
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
+### AGENT-WORLD-POLISH · **AW-1 shipping**
+Public Agent World visitor surface — CTA clarity, trust strip, empty states, presence feel, mobile. See [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md).
+
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
-### Owner sticky — do not forget
-**Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
-
 ## Next
-- Parallel: public Agent World polish  
+- Preview AW-1 on eqmg → owner live gate  
 - Deepen Ask intents / intersection distance as data arrives  
 
 ## Done (recent)

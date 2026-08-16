@@ -70,7 +70,9 @@ export function AgentWorldShareButton({
         data-agent-world-share
         disabled={busy}
         onClick={() => void onShare()}
-        className="story-press inline-flex h-11 items-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-5 text-sm font-semibold text-ink backdrop-blur-sm hover:border-gold/40 disabled:opacity-60"
+        className={cn(
+          "story-press inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-hairline bg-[color-mix(in_srgb,var(--surface)_70%,transparent)] px-5 text-sm font-semibold text-ink backdrop-blur-sm hover:border-gold/40 disabled:opacity-60 sm:w-auto",
+        )}
         aria-label={isOwn ? "Share your Agent World" : "Share this Agent World"}
       >
         {note.startsWith("Agent World link copied") ||
