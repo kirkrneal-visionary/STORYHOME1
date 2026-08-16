@@ -85,13 +85,16 @@ export function planLaunch7Expand(addFips: string[]): {
   missingBbox: string[];
 } {
   const wanted = [...new Set(addFips.map((f) => f.trim()).filter(Boolean))];
-  const byFips = new Map(CORRIDOR_COUNTIES.map((c) => [c.fips, c]));
+  const byFips = new Map<string, CorridorCounty>(
+    CORRIDOR_COUNTIES.map((c) => [c.fips, c]),
+  );
   const missingBbox: string[] = [];
   const extras: CorridorCounty[] = [];
 
   for (const fips of wanted) {
-    if (byFips.has(fips)) {
-      extras.push(byFips.get(fips)!);
+    const known = byFips.get(fips);
+    if (known) {
+      extras.push(known);
       continue;
     }
     const avail = AVAILABLE_COUNTIES.find((c) => c.fips === fips);
