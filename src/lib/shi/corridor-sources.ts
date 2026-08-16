@@ -127,9 +127,11 @@ export const CORRIDOR_SOURCE_ADAPTERS: CorridorSourceAdapter[] = [
     id: "utilities_infra",
     label: "Utilities & infrastructure",
     category: "environment",
-    defaultStatus: "planned",
-    provider: "Not connected",
-    honesty: "Adapter reserved — not used until a lawful feed is connected.",
+    /** Live — status resolved per pass (point desk). */
+    defaultStatus: "live",
+    provider: "PUCT CCN (official shapefile, launch 7 clip)",
+    honesty:
+      "Certificated water/sewer service area from PUCT — not a tap guarantee. Retracted when the owned dataset cannot be read.",
   },
   {
     id: "flood_environment",
@@ -174,10 +176,43 @@ export function resolveSourcesForAnalysis(opts: {
   /** DC-1 — flood fact contributed when userReveal */
   floodAvailable?: boolean;
   floodNote?: string | null;
+  /** DC-2 — utilities CCN contributed when userReveal */
+  utilitiesAvailable?: boolean;
+  utilitiesNote?: string | null;
 }): CorridorSourceUse[] {
   const uses: CorridorSourceUse[] = [];
 
   for (const adapter of CORRIDOR_SOURCE_ADAPTERS) {
+    if (adapter.id === "utilities_infra") {
+      if (opts.utilitiesAvailable === undefined) {
+        uses.push({
+          id: adapter.id,
+          label: adapter.label,
+          category: adapter.category,
+          status: "planned",
+          provider: adapter.provider,
+          note: "Point utilities desk — open a parcel for PUCT CCN",
+          honesty: adapter.honesty,
+          contributed: false,
+        });
+        continue;
+      }
+      const ok = Boolean(opts.utilitiesAvailable);
+      uses.push({
+        id: adapter.id,
+        label: adapter.label,
+        category: adapter.category,
+        status: ok ? "live" : "degraded",
+        provider: adapter.provider,
+        note: ok
+          ? opts.utilitiesNote || "PUCT CCN available"
+          : opts.utilitiesNote || "Utilities not revealed for this pass",
+        honesty: adapter.honesty,
+        contributed: ok,
+      });
+      continue;
+    }
+
     if (adapter.id === "flood_environment") {
       /* undefined = this analysis pass did not query flood (point desk only). */
       if (opts.floodAvailable === undefined) {

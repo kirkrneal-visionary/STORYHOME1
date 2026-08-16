@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
 import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
 import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
+import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -36,6 +37,7 @@ import {
   shiGetFrame,
   shiGetProperty,
   shiFloodAtPoint,
+  shiUtilitiesAtPoint,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
@@ -54,6 +56,7 @@ import type {
   ShiStudyFolder,
 } from "@/lib/shi/types";
 import type { FloodFact } from "@/lib/shi/flood-fema";
+import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import { cn } from "@/lib/utils";
 
 function money(n: number | null | undefined) {
@@ -93,6 +96,9 @@ export function PropertyIntelligenceView({
   const [indexNote, setIndexNote] = useState<string | null>(null);
   const [selected, setSelected] = useState<ShiPropertyDetail | null>(null);
   const [floodFact, setFloodFact] = useState<FloodFact | null>(null);
+  const [utilitiesFact, setUtilitiesFact] = useState<UtilitiesFact | null>(
+    null,
+  );
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -205,12 +211,14 @@ export function PropertyIntelligenceView({
           setError("Property not found");
           setSelected(null);
           setFloodFact(null);
+          setUtilitiesFact(null);
           setMatches([]);
           setDiscoverPins([]);
           return;
         }
         setSelected(property);
         setFloodFact(null);
+        setUtilitiesFact(null);
         setDiscoverPins([]);
         if (property.countyFips) {
           track("archie_parcel_opened", { county_fips: property.countyFips });
@@ -221,24 +229,30 @@ export function PropertyIntelligenceView({
           void refreshFolders(property.source);
         }
         void loadMatches(property);
-        /* DC-1 — FEMA flood at centroid; retract (null) when userReveal false. */
+        /* DC-1 / DC-2 — flood + utilities; retract when userReveal false. */
         if (
           property.countyFips &&
           property.centroidLat != null &&
           property.centroidLng != null
         ) {
-          void shiFloodAtPoint({
-            countyFips: property.countyFips,
-            lat: property.centroidLat,
-            lng: property.centroidLng,
-          })
+          const fips = property.countyFips;
+          const lat = property.centroidLat;
+          const lng = property.centroidLng;
+          void shiFloodAtPoint({ countyFips: fips, lat, lng })
             .then((body) => {
-              setFloodFact(
-                body.flood?.userReveal ? body.flood : null,
-              );
+              setFloodFact(body.flood?.userReveal ? body.flood : null);
             })
             .catch(() => {
               setFloodFact(null);
+            });
+          void shiUtilitiesAtPoint({ countyFips: fips, lat, lng })
+            .then((body) => {
+              setUtilitiesFact(
+                body.utilities?.userReveal ? body.utilities : null,
+              );
+            })
+            .catch(() => {
+              setUtilitiesFact(null);
             });
         }
       } catch (e) {
@@ -1080,6 +1094,7 @@ export function PropertyIntelligenceView({
               ) : null}
 
               <ShiFloodEvidencePanel flood={floodFact} />
+              <ShiUtilitiesEvidencePanel utilities={utilitiesFact} />
 
               <ShiCadEvidencePanel
                 property={selected}

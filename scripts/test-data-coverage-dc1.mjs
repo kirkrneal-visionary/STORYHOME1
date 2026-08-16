@@ -60,7 +60,7 @@ assert.match(research, /ShiFloodEvidencePanel/);
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsView.tsx",
 );
-assert.match(corridors, /data-data-coverage="dc-1"/);
+assert.match(corridors, /data-data-coverage="dc-[12]"/);
 assert.match(corridors, /shiFloodAtPoint/);
 assert.match(corridors, /ShiFloodEvidencePanel/);
 

@@ -12,7 +12,7 @@ const ADAPTERS = [
   { id: "building_permits", defaultStatus: "planned" },
   { id: "subdivision_plats", defaultStatus: "planned" },
   { id: "zoning_landuse", defaultStatus: "planned" },
-  { id: "utilities_infra", defaultStatus: "planned" },
+  { id: "utilities_infra", defaultStatus: "live" },
   { id: "flood_environment", defaultStatus: "live" },
   { id: "mls_licensed", defaultStatus: "planned" },
 ];
@@ -20,6 +20,25 @@ const ADAPTERS = [
 function resolveSourcesForAnalysis(opts) {
   const uses = [];
   for (const adapter of ADAPTERS) {
+    if (adapter.id === "utilities_infra") {
+      if (opts.utilitiesAvailable === undefined) {
+        uses.push({
+          id: adapter.id,
+          status: "planned",
+          contributed: false,
+          note: "Point utilities desk",
+        });
+        continue;
+      }
+      const ok = Boolean(opts.utilitiesAvailable);
+      uses.push({
+        id: adapter.id,
+        status: ok ? "live" : "degraded",
+        contributed: ok,
+        note: ok ? "PUCT" : "retracted",
+      });
+      continue;
+    }
     if (adapter.id === "flood_environment") {
       if (opts.floodAvailable === undefined) {
         uses.push({
@@ -114,6 +133,7 @@ assert.equal(rich.find((s) => s.id === "txdot_aadt")?.contributed, true);
 assert.equal(rich.find((s) => s.id === "building_permits")?.status, "planned");
 assert.equal(rich.find((s) => s.id === "mls_licensed")?.contributed, false);
 assert.equal(rich.find((s) => s.id === "flood_environment")?.status, "planned");
+assert.equal(rich.find((s) => s.id === "utilities_infra")?.status, "planned");
 
 const floodLive = resolveSourcesForAnalysis({
   parcelCount: 40,
@@ -124,9 +144,12 @@ const floodLive = resolveSourcesForAnalysis({
   cadPulseAvailable: true,
   floodAvailable: true,
   floodNote: "Zone X",
+  utilitiesAvailable: true,
+  utilitiesNote: "CCN",
 });
 assert.equal(floodLive.find((s) => s.id === "flood_environment")?.status, "live");
 assert.equal(floodLive.find((s) => s.id === "flood_environment")?.contributed, true);
+assert.equal(floodLive.find((s) => s.id === "utilities_infra")?.status, "live");
 
 const down = resolveSourcesForAnalysis({
   parcelCount: 0,
@@ -142,7 +165,7 @@ assert.equal(down.find((s) => s.id === "txdot_projects")?.status, "unavailable")
 assert.equal(down.find((s) => s.id === "cad_parcels")?.status, "degraded");
 assert.ok(down.every((s) => s.status !== "live" || s.id === "never"));
 
-// Planned never flips to live from empty opts (flood stays planned until queried)
+// Planned never flips to live from empty opts (flood/utilities stay planned until queried)
 const planned = down.filter((s) =>
   [
     "building_permits",

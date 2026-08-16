@@ -857,13 +857,15 @@ export const SHI_WAVES: ShiWave[] = [
     status: "current",
     frontend: [
       "DC-1: ShiFloodEvidencePanel on Research + Corridors parcel (KNOWN/VERIFY chips)",
+      "DC-2: ShiUtilitiesEvidencePanel — PUCT water/sewer CCN certificated areas",
       "Evidence tiers shared (evidence-tier.ts) — foundation for DC-4",
       "userReveal gate — no half panel, no upsell",
     ],
     backend: [
       "GET /api/shi/flood — FEMA NFHL point query",
-      "flood-fema.ts · coverage gate for launch 7",
-      "Armor npm run test:data-coverage-dc1",
+      "GET /api/shi/utilities — PUCT CCN point-in-polygon on owned launch-7 clip",
+      "data/shi/puct-ccn-launch7.json · npm run rebuild:puct-ccn",
+      "Armor npm run test:data-coverage-dc1 · test:data-coverage-dc2",
     ],
     outOfScope: [
       "ATTOM / Regrid / Zoneomics / DataTree",

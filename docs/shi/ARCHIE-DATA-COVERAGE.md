@@ -17,15 +17,15 @@
 
 | Wave | Id | Status | Ship |
 |---|---|---|---|
-| **1** | **DC-1 Flood** | **current / shipping** | FEMA NFHL point join · Research + Corridors parcel · retract on fail |
-| **2** | **DC-2 Utilities** | planned | PUCT water/sewer CCN · “certificated” honesty |
+| **1** | **DC-1 Flood** | **done / shipping** | FEMA NFHL point join · Research + Corridors parcel · retract on fail |
+| **2** | **DC-2 Utilities** | **current / shipping** | PUCT water/sewer CCN · certificated honesty · owned launch-7 clip |
 | **3** | **DC-3 Environment + desk** | planned | NWI wetlands · TIGER place/ISD · deeper CAD · city zoning files only |
 | **4** | **DC-4 Evidence UI** | started (tiers live with DC-1) | Shared chips · source · as-of across Research / Corridors / Ask / reports |
 | **5** | **DC-5 Dark store** | planned | Deeds knowledge path only if 7-county clerk-grade; default **no user reveal** |
 
 Optional later: Ask Archie challenge → alternatives → rank on **revealed** facts only.
 
-## DC-1 — Flood (this wave)
+## DC-1 — Flood
 
 **Source:** FEMA NFHL public MapServer layers 28 (zones) + 0 (availability)  
 **API:** `GET /api/shi/flood?countyFips=&lat=&lng=` (Story Pro)  
@@ -49,11 +49,38 @@ FEMA effective flood hazard — not insurance quote, elevation certificate, or s
 npm run test:data-coverage-dc1
 ```
 
+## DC-2 — Utilities (this wave)
+
+**Source:** Official PUCT CCN Water + Sewer TSMS shapefiles (FTP), clipped to launch-7 footprint  
+**Data:** `data/shi/puct-ccn-launch7.json` (~1.8 MB owned clip)  
+**Rebuild:** `npm run rebuild:puct-ccn`  
+**API:** `GET /api/shi/utilities?countyFips=&lat=&lng=` (Story Pro)  
+**Lib:** `src/lib/shi/utilities-ccn.ts`  
+**UI:** `ShiUtilitiesEvidencePanel` — Research + Corridors parcel  
+
+### Reveal gate
+
+- Launch 7 FIPS only  
+- Owned dataset loads → point-in-polygon → `userReveal: true` + tier **KNOWN**  
+  (including “no CCN area at this point” — that is a real published absence)  
+- Dataset missing / unreadable → `userReveal: false` → **UI renders nothing**
+
+### Honesty
+
+Certificated service area = exclusive right to serve on the PUCT map — **not** “water is on tomorrow.” Cities/districts may serve without a CCN. Confirm with the utility.
+
+### Armor
+
+```bash
+npm run test:data-coverage-dc2
+```
+
 ### Manual
 
-1. Pro login → Intelligence → Research → open a launch-county parcel with a centroid  
-2. Flood card appears with zone + **KNOWN** (or retracts silently if FEMA is down)  
-3. Corridors → tap parcel → same flood card (compact)
+1. Pro → Research → open Lufkin / Huntsville / Livingston parcel  
+2. Utilities card shows certificated water/sewer utility + CCN # · **KNOWN**  
+3. Rural point with no CCN → “No PUCT water/sewer CCN area” (still revealed, still honest)  
+4. Corridors parcel panel shows the same compact card  
 
 ## Out of scope (all DC waves)
 
