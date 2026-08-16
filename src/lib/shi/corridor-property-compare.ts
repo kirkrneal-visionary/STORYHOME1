@@ -66,10 +66,21 @@ function siteLabel(site: PropertyCompareSite, index: number): string {
 
 function intersectionLabel(intel: ParcelLocationIntel | null | undefined): string {
   if (!intel) return "—";
-  if (intel.cornerLikely) return "Corner likely";
-  if (intel.dualRoad) return "Dual-road";
-  if (intel.roads.length === 1) return "Single frontage";
-  return "—";
+  const base = intel.cornerLikely
+    ? "Corner likely"
+    : intel.dualRoad
+      ? "Dual-road"
+      : intel.roads.length === 1
+        ? "Single frontage"
+        : null;
+  if (!base) return "—";
+  if (
+    intel.approxDistanceToIntersectionM != null &&
+    Number.isFinite(intel.approxDistanceToIntersectionM)
+  ) {
+    return `${base} · ~${Math.round(intel.approxDistanceToIntersectionM)} m`;
+  }
+  return base;
 }
 
 function buildColumn(

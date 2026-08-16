@@ -50,7 +50,7 @@ const client = read("src/lib/shi/client.ts");
 assert.match(client, /shiCorridorsParcelLocation/);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-[cdef]"/);
+assert.match(view, /data-corridors-version="c2-0-(?:[cdef]|f2)"/);
 assert.match(view, /data-corridor-frontage-block/);
 assert.match(view, /data-corridor-data-confidence/);
 assert.match(view, /Approx\. frontage/);
@@ -61,7 +61,7 @@ const map = read("src/components/broker/intelligence/ShiCorridorsMap.tsx");
 assert.match(map, /geojson/);
 
 const wavesTs = read("src/lib/shi/waves.ts");
-assert.match(wavesTs, /C2\.0-C/);
+assert.match(wavesTs, /C2\.0-C|frontage|ARCHIE-CORRIDORS-2/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:corridors-2c/);

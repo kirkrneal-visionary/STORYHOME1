@@ -4,7 +4,8 @@
  * Every fact may carry an evidence tier (KNOWN / CALCULATED / ESTIMATED / …).
  * F2 deepens Ask using Site-panel desk facts already on context (no new GIS).
  *
- * Rule version: corridor-ask-v2.1
+ * Rule version: corridor-ask-v2.2
+ * C2.0-F2 desk deepen + DC evidence + IX-1 intersection meters when on desk.
  */
 
 import type { TrafficStation } from "@/lib/shi/corridors";
@@ -35,7 +36,7 @@ import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
 
-export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v2.1" as const;
+export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v2.2" as const;
 
 export const CORRIDOR_ASK_HONESTY =
   "Archie answers from published TxDOT counts, mapped roads, CAD parcels, and Data Coverage facts already on this desk — never invents statistics. Each fact carries an evidence label.";
@@ -934,8 +935,8 @@ function answerFrontage(ctx: CorridorAskContext): CorridorAskAnswer {
 }
 
 /**
- * F2 — corner / dual from mapped-road heuristic.
- * Honest: no meter distance-to-intersection until a versioned field ships.
+ * F2 / IX-1 — corner / dual + optional approx meters to mapped-road crossing.
+ * Never claims survey-grade distance.
  */
 function answerIntersection(ctx: CorridorAskContext): CorridorAskAnswer {
   const intent = CORRIDOR_ASK_INTENTS.find(
@@ -958,33 +959,47 @@ function answerIntersection(ctx: CorridorAskContext): CorridorAskAnswer {
     };
   }
   const label = askIntersectionLabel(intel);
+  const meters = intel.approxDistanceToIntersectionM;
+  const hasMeters =
+    meters != null && Number.isFinite(meters) && intel.intersectionTier != null;
+  const facts = [
+    {
+      label: "Intersection",
+      value: label,
+      detail:
+        intel.roads.length === 0
+          ? "No mapped roads touching this parcel yet."
+          : `${intel.roads.length} mapped road${intel.roads.length === 1 ? "" : "s"} on desk`,
+    },
+    {
+      label: "Dual-road",
+      value: intel.dualRoad ? "Yes" : "No",
+    },
+    {
+      label: "Corner likely",
+      value: intel.cornerLikely ? "Yes" : "No",
+      detail: intel.confidenceWhy,
+    },
+  ];
+  if (hasMeters) {
+    facts.push({
+      label: "Approx. distance to mapped crossing",
+      value: `${Math.round(meters)} m`,
+      detail: `${intel.intersectionTier} · ${intel.intersectionRuleVersion} · routes ${intel.intersectionRouteIds?.join(" × ") ?? "—"} — not a survey`,
+    });
+  }
   return {
     intentId: "parcel_intersection",
     intentLabel: intent.label,
     honesty: CORRIDOR_ASK_HONESTY,
     ruleVersion: CORRIDOR_ASK_RULE_VERSION,
-    summary:
-      "Corner / dual is a mapped-road heuristic — not surveyed intersection distance (distance TBD until we own a versioned field).",
-    facts: [
-      {
-        label: "Intersection",
-        value: label,
-        detail:
-          intel.roads.length === 0
-            ? "No mapped roads touching this parcel yet."
-            : `${intel.roads.length} mapped road${intel.roads.length === 1 ? "" : "s"} on desk`,
-      },
-      {
-        label: "Dual-road",
-        value: intel.dualRoad ? "Yes" : "No",
-      },
-      {
-        label: "Corner likely",
-        value: intel.cornerLikely ? "Yes" : "No",
-        detail: intel.confidenceWhy,
-      },
-    ],
-    missing: [],
+    summary: hasMeters
+      ? `Corner / dual from mapped roads. Approx. ${Math.round(meters)} m to nearest mapped-road crossing (${intel.intersectionTier} · corridor-intersection-v1) — not a survey.`
+      : "Corner / dual is a mapped-road heuristic — not surveyed intersection distance. No mapped-crossing meters on desk for this parcel.",
+    facts,
+    missing: hasMeters
+      ? []
+      : ["No mapped-road crossing distance on desk (retracted or not found)."],
     hint: null,
   };
 }

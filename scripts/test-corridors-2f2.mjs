@@ -12,10 +12,10 @@ const read = (rel) => readFileSync(join(root, rel), "utf8");
 const doc = read("docs/shi/ARCHIE-CORRIDORS-2.md");
 assert.match(doc, /C2\.0-F2/);
 assert.match(doc, /Ask deepen|desk facts/i);
-assert.match(doc, /distance TBD|not surveyed intersection distance/i);
+assert.match(doc, /not surveyed intersection distance|corridor-intersection-v1/i);
 
 const ask = read("src/lib/shi/corridor-ask.ts");
-assert.match(ask, /corridor-ask-v2\.1/);
+assert.match(ask, /corridor-ask-v2\.[12]/);
 assert.match(ask, /parcel_frontage/);
 assert.match(ask, /parcel_intersection/);
 assert.match(ask, /parcel_confidence/);
@@ -24,7 +24,7 @@ assert.match(ask, /flood_zone/);
 assert.match(ask, /askIntersectionLabel/);
 assert.match(ask, /scoreCommercialExposure/);
 assert.match(ask, /never invents/);
-assert.match(ask, /distance TBD|not surveyed intersection distance/i);
+assert.match(ask, /not surveyed|not a survey/i);
 assert.doesNotMatch(ask, /openai|anthropic|gpt-4/i);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
