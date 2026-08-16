@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ARCHIE_DECISION_DISCLAIMER,
   archieTruthLabel,
@@ -8,6 +8,14 @@ import {
   type ArchieFocusChip,
   type ArchieFinding,
 } from "@/lib/shi/archie-phase1";
+import {
+  ARCHIE_REASONING_MEMORY_HONESTY,
+  diffArchieReasoning,
+  fingerprintFromBrief,
+  readArchieReasoningMemory,
+  rememberArchieReasoning,
+  type ArchieReasoningDiff,
+} from "@/lib/shi/archie-reasoning-memory";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
 import type { TrafficStation } from "@/lib/shi/corridors";
 import type { ShiOwnerMatch, ShiPropertyDetail } from "@/lib/shi/types";
@@ -22,8 +30,8 @@ const CHIPS: { id: ArchieFocusChip; label: string }[] = [
 ];
 
 /**
- * ARCHIE-INTELLIGENCE Phase 1–3 — property-aware panel.
- * Speaks first · spatial desk context · conclusion assistance.
+ * ARCHIE-INTELLIGENCE Phase 1–4 — property-aware panel.
+ * Speaks first · spatial desk context · conclusion assistance · since-last-look memory.
  * Deterministic findings from desk facts. Not the Access desk Ask room.
  */
 export function ShiArchieIntelligencePanel({
@@ -73,6 +81,40 @@ export function ShiArchieIntelligencePanel({
 
   const [focus, setFocus] = useState<ArchieFocusChip | null>(null);
   const [showConclusionDetail, setShowConclusionDetail] = useState(false);
+  const [memoryDiff, setMemoryDiff] = useState<ArchieReasoningDiff | null>(
+    null,
+  );
+
+  const findingKey = brief.findings.map((f) => f.id).join("|");
+  const conclusion = brief.conclusion;
+
+  useEffect(() => {
+    const prior = readArchieReasoningMemory(property.source, property.propId);
+    const current = fingerprintFromBrief({
+      conclusion: brief.conclusion,
+      findings: brief.findings,
+    });
+    setMemoryDiff(diffArchieReasoning(prior, current));
+    rememberArchieReasoning({
+      source: property.source,
+      propId: property.propId,
+      countyFips: property.countyFips ?? null,
+      conclusion: brief.conclusion,
+      findings: brief.findings,
+    });
+  }, [
+    property.source,
+    property.propId,
+    property.countyFips,
+    findingKey,
+    conclusion.kind,
+    conclusion.statement,
+    conclusion.confidence,
+    conclusion.confidenceBand,
+    conclusion.nextAction,
+    brief.conclusion,
+    brief.findings,
+  ]);
 
   function runFocus(chip: ArchieFocusChip, finding?: ArchieFinding) {
     setFocus(chip);
@@ -87,11 +129,9 @@ export function ShiArchieIntelligencePanel({
     }
   }
 
-  const conclusion = brief.conclusion;
-
   return (
     <section
-      data-archie-intelligence="p3"
+      data-archie-intelligence="p4"
       data-archie-phase={brief.version}
       className={cn("story-well space-y-3 px-3 py-3", className)}
     >
@@ -171,6 +211,36 @@ export function ShiArchieIntelligencePanel({
             {showConclusionDetail ? "Hide detail" : "View reasoning"}
           </button>
         </div>
+
+        {memoryDiff && memoryDiff.status !== "first" ? (
+          <div
+            className="mt-2 rounded-md border border-hairline bg-[var(--background)] px-2.5 py-2"
+            data-archie-memory
+            data-archie-memory-status={memoryDiff.status}
+          >
+            <p className="font-mono text-[10px] font-bold uppercase text-gold">
+              Since last look
+            </p>
+            <p className="mt-0.5 text-[11px] leading-snug text-[var(--muted)]">
+              {memoryDiff.note}
+            </p>
+            {memoryDiff.status === "shifted" && memoryDiff.previousStatement ? (
+              <p
+                className="mt-1 text-[11px] leading-snug text-ink"
+                data-archie-memory-prior
+              >
+                <span className="font-semibold">Prior read. </span>
+                {memoryDiff.previousStatement}
+                {memoryDiff.previousBand
+                  ? ` (${memoryDiff.previousBand})`
+                  : ""}
+              </p>
+            ) : null}
+            <p className="mt-1 text-[10px] leading-snug text-[var(--muted)]">
+              {ARCHIE_REASONING_MEMORY_HONESTY}
+            </p>
+          </div>
+        ) : null}
 
         {showConclusionDetail ? (
           <div className="mt-2 space-y-2 border-t border-hairline pt-2" data-archie-conclusion-detail>

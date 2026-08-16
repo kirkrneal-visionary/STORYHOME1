@@ -23,7 +23,7 @@ assert.doesNotMatch(lib, /you should (buy|sell)/i);
 const panel = read(
   "src/components/broker/intelligence/ShiArchieIntelligencePanel.tsx",
 );
-assert.match(panel, /data-archie-intelligence="p3"/);
+assert.match(panel, /data-archie-intelligence="p[34]"/);
 assert.match(panel, /data-archie-conclusion/);
 assert.match(panel, /data-archie-confidence/);
 assert.match(panel, /data-archie-alternatives|View reasoning/);
