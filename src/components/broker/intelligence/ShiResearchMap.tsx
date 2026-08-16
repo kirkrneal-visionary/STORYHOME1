@@ -21,6 +21,7 @@ import {
   MAP_BASE_OPTIONS,
   MAP_GOLD,
   MAP_NAVY,
+  MAP_SOVEREIGNTY_VERSION,
   MAP_TEAL,
   setBaseLayerVisibility,
   type MapBaseLayer,
@@ -1202,6 +1203,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       <div
         data-shi-map
         data-no-swipe-back
+        data-map-sovereignty={MAP_SOVEREIGNTY_VERSION}
+        data-map-free-world="1"
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
           className,
