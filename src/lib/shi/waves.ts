@@ -900,20 +900,19 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-LAUNCH7-MAP",
-    name: "Launch 7 map sovereignty · owned tile service (L7-2)",
-    goal: "Research basemap traffic hits Story Home only — owned disk cache with free upstream fill for the launch 7 footprint.",
+    name: "Launch 7 map sovereignty · CDN/R2 ops (L7-3)",
+    goal: "Own launch-7 basemap end-to-end — API cache today, CDN/R2 when credentials land, expand playbook ready.",
     status: "current",
     frontend: [
       "L7-1: OpenFreeMap liberty schema (no OSM.org tile hotlink)",
-      "L7-2: MapLibre streets → /api/map/launch7/streets/{z}/{x}/{y}",
-      "L7-2: Imagery → /api/map/launch7/imagery/{z}/{x}/{y} (USGS cache)",
-      "L7-2: data-map-sovereignty=l7-2 · Research data-map-free-world",
-      "CDN overrides NEXT_PUBLIC_LAUNCH7_STREETS_TILES / SATELLITE_TILES still honored",
+      "L7-2: MapLibre → /api/map/launch7/streets + /imagery",
+      "L7-3: NEXT_PUBLIC_LAUNCH7_CDN_BASE flips serve mode to CDN",
+      "L7-3: data-map-sovereignty=l7-3 · Research data-map-free-world",
     ],
     backend: [
-      "src/lib/shi/launch7-map.ts · launch7-tiles.ts",
-      "GET /api/map/launch7/streets · /imagery — cache + upstream fill",
-      "npm run build:launch7-tiles · test:launch7-map-l1 · l2",
+      "GET /api/map/launch7/status — CDN/R2 readiness + footprint",
+      "npm run publish:launch7-tiles · refresh:launch7-tiles · plan:launch7-expand",
+      "Armor test:launch7-map-l1 · l2 · l3",
     ],
     outOfScope: [
       "Mapbox as Research basemap",

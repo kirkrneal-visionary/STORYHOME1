@@ -15,11 +15,11 @@ assert.match(doc, /OpenFreeMap|free-world/i);
 assert.match(doc, /MapLibre/);
 assert.match(doc, /Out of scope[\s\S]*Mapbox as primary/);
 assert.match(doc, /Out of scope[\s\S]*Google Maps JS as Research/);
-assert.match(doc, /NEXT_PUBLIC_LAUNCH7_STREETS_TILES/);
+assert.match(doc, /NEXT_PUBLIC_LAUNCH7_CDN_BASE/);
 assert.match(doc, /Polk|Angelina|Walker/);
 
 const launch = read("src/lib/shi/launch7-map.ts");
-assert.match(launch, /l7-[12]/);
+assert.match(launch, /l7-[123]/);
 assert.match(launch, /launch7UnionBbox/);
 assert.match(launch, /NEXT_PUBLIC_LAUNCH7_STREETS_TILES/);
 assert.match(launch, /NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES/);
@@ -27,7 +27,7 @@ assert.match(launch, /LAUNCH7_MAP_HONESTY/);
 
 const style = read("src/lib/map-style.ts");
 assert.match(style, /openfreemap-liberty/);
-assert.match(style, /MAP_SOVEREIGNTY_VERSION|l7-[12]/);
+assert.match(style, /MAP_SOVEREIGNTY_VERSION|l7-[123]/);
 assert.match(style, /ownedStreetsTileTemplate|LAUNCH7_STREETS/);
 assert.doesNotMatch(style, /tile\.openstreetmap\.org/);
 assert.doesNotMatch(style, /demotiles\.maplibre\.org\/font/);

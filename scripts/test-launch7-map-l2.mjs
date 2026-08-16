@@ -16,7 +16,7 @@ assert.match(doc, /owned|cache/i);
 assert.match(doc, /USGS|imagery/i);
 
 const launch = read("src/lib/shi/launch7-map.ts");
-assert.match(launch, /l7-2/);
+assert.match(launch, /L7-2|l7-[23]/);
 assert.match(launch, /LAUNCH7_STREETS_API_TEMPLATE/);
 assert.match(launch, /LAUNCH7_IMAGERY_API_TEMPLATE/);
 assert.match(launch, /resolveStreetsVectorTemplate/);
@@ -54,7 +54,7 @@ assert.match(pkg, /test:launch7-map-l2/);
 assert.match(pkg, /build:launch7-tiles/);
 
 const waves = read("src/lib/shi/waves.ts");
-assert.match(waves, /L7-2|owned tile/);
+assert.match(waves, /L7-2|owned tile|l7-2/);
 
 assert.ok(existsSync(join(root, "data/shi/tiles/.gitkeep")));
 

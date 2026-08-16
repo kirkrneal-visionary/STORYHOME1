@@ -44,3 +44,8 @@ next-env.d.ts
 # Launch-7 owned basemap tile cache (seed locally / CDN)
 data/shi/tiles/streets/
 data/shi/tiles/imagery/
+
+# Launch-7 ops reports (regenerated)
+data/shi/launch7-publish-report.json
+data/shi/launch7-refresh-report.json
+data/shi/launch7-expand-plan.json

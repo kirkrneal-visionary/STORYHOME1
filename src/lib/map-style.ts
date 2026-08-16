@@ -118,6 +118,7 @@ export function buildStoryMapStyle(): StyleSpecification {
         ? "owned-raster"
         : "owned-vector-api",
       "storyhome:satellite": "owned-imagery-api",
+      "storyhome:serve": "l7-3",
     },
     glyphs:
       liberty.glyphs ??

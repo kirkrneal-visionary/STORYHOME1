@@ -18,30 +18,46 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 ### L7-1 — Free-world basemap contract (**done**)
 
 - Streets = OpenFreeMap liberty vector schema (no `tile.openstreetmap.org` hotlink)  
-- Optional CDN overrides: `NEXT_PUBLIC_LAUNCH7_STREETS_TILES`, `NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES`  
-- Markers: `data-map-sovereignty` · Research `data-map-free-world="1"`  
-- Registry: `src/lib/shi/launch7-map.ts`
+- Markers: `data-map-sovereignty` · Research `data-map-free-world="1"`
 
-### L7-2 — Owned launch-7 tile service (**shipping**)
+### L7-2 — Owned launch-7 tile service (**done**)
 
-- Clients load **only** Story Home endpoints:
-  - `/api/map/launch7/streets/{z}/{x}/{y}` — vector (OpenMapTiles schema)
-  - `/api/map/launch7/imagery/{z}/{x}/{y}` — USGS Imagery Only JPEG
-- Disk cache under `data/shi/tiles/{streets|imagery}/…` (gitignored blobs)
-- Miss inside footprint → fetch upstream → write owned cache → return
-- Seed: `npm run build:launch7-tiles` → `data/shi/launch7-tiles-manifest.json`
-- Imagery default is **our API** (not Esri World Imagery)
-- Marker: `data-map-sovereignty="l7-2"`
+- `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}`  
+- Disk cache + upstream fill · `npm run build:launch7-tiles`
 
-### L7-3 — Serve + refresh ops (next)
+### L7-3 — Serve + refresh ops (**shipping**)
 
-- Host warmed tiles on CDN / R2 · scheduled refresh · county expand playbook  
-- Point `NEXT_PUBLIC_LAUNCH7_*_TILES` at CDN when ready  
-- Still no Mapbox / Google map loads on the Research desk
+- **Serve modes:** `api` (default) · `cdn` when `NEXT_PUBLIC_LAUNCH7_CDN_BASE` is set · `explicit` tile URL overrides  
+- **Publish:** `npm run publish:launch7-tiles` → Cloudflare R2 via S3 API (`LAUNCH7_R2_*`) · dry-runs without credentials  
+- **Refresh:** `npm run refresh:launch7-tiles` (seed → publish dry-run) · add `--publish` when R2 is ready  
+- **Status:** `GET /api/map/launch7/status`  
+- **Expand playbook:** `npm run plan:launch7-expand -- --add=FIPS,FIPS`  
+- Marker: `data-map-sovereignty="l7-3"`
+
+#### R2 env (owner)
+
+```
+LAUNCH7_R2_ACCOUNT_ID=
+LAUNCH7_R2_ACCESS_KEY_ID=
+LAUNCH7_R2_SECRET_ACCESS_KEY=
+LAUNCH7_R2_BUCKET=
+LAUNCH7_R2_PREFIX=launch7
+NEXT_PUBLIC_LAUNCH7_CDN_BASE=https://YOUR_PUBLIC_HOST/launch7
+```
+
+After first successful publish, set `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on eqmg so MapLibre reads streets/imagery from CDN (`…/streets/{z}/{x}/{y}.pbf`, `…/imagery/{z}/{x}/{y}.jpg`). API remains the fallback fill path.
+
+#### County expand playbook
+
+1. Add county to `AVAILABLE_COUNTIES` + `CORRIDOR_COUNTIES` (bbox required)  
+2. `npm run plan:launch7-expand -- --add=NEWfps` — check tile counts  
+3. `npm run build:launch7-tiles` — seed new union  
+4. `npm run publish:launch7-tiles` — when R2 credentials exist  
+5. Owner gate on eqmg  
 
 ## Cost posture (100 agents × $75)
 
-Research map traffic hits **our** API/CDN. Upstream fills are bounded to the launch-7 footprint and cache locally — not per-agent Mapbox/Google SKUs.
+App-server fills stay footprint-bounded. Once CDN is on, map tile bandwidth moves to cheap object storage — still no Mapbox/Google map SKUs.
 
 ## Out of scope
 
@@ -52,4 +68,4 @@ Research map traffic hits **our** API/CDN. Upstream fills are bounded to the lau
 
 ## Armor
 
-`npm run test:launch7-map-l1` · `npm run test:launch7-map-l2`
+`npm run test:launch7-map-l1` · `l2` · `l3`
