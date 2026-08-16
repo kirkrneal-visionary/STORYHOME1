@@ -44,6 +44,12 @@ import {
   PROPERTY_COMPARE_MAX,
   toggleCompareSite,
 } from "@/lib/shi/corridor-property-compare";
+import {
+  answerCorridorAsk,
+  CORRIDOR_ASK_HONESTY,
+  CORRIDOR_ASK_INTENTS,
+  type CorridorAskAnswer,
+} from "@/lib/shi/corridor-ask";
 import { openPropertyLocationReport } from "@/lib/shi/corridor-property-report";
 import { boundsAroundPoints } from "@/lib/shi/discover-bounds";
 import {
@@ -146,8 +152,12 @@ export function ShiCorridorsView({
     null,
   );
   const [roadFilter, setRoadFilter] = useState("");
-  const [panel, setPanel] = useState<"watch" | "station" | "site" | "memory">(
-    "watch",
+  const [panel, setPanel] = useState<
+    "watch" | "station" | "site" | "memory" | "ask"
+  >("watch");
+  const [askAnswer, setAskAnswer] = useState<CorridorAskAnswer | null>(null);
+  const [parcelIntel, setParcelIntel] = useState<ParcelLocationIntel | null>(
+    null,
   );
   const [projects, setProjects] = useState<TxdotProject[]>([]);
   const [projectsNote, setProjectsNote] = useState("");
@@ -230,6 +240,8 @@ export function ShiCorridorsView({
       setComparePicks([]);
       setCompareIntelById({});
       setWorkflowNote("");
+      setAskAnswer(null);
+      setParcelIntel(null);
       try {
         const data = await shiCorridorsTraffic(fips);
         setPayload(data);
@@ -681,7 +693,7 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-e">
+    <div className="space-y-4" data-corridors-version="c2-0-f">
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -933,6 +945,7 @@ export function ShiCorridorsView({
             <div className="flex gap-1 story-glass rounded-[var(--radius-md)] p-0.5">
               {(
                 [
+                  ["ask", "Ask"],
                   ["watch", "Patterns"],
                   ["site", "Site"],
                   ["station", "Traffic"],
@@ -955,6 +968,39 @@ export function ShiCorridorsView({
               ))}
             </div>
 
+            {panel === "ask" ? (
+              <AskArchiePanel
+                answer={askAnswer}
+                onAsk={(q) => {
+                  const answer = answerCorridorAsk(q, {
+                    countyName: county.name,
+                    stations: payload?.stations ?? [],
+                    watchAreas: payload?.watch?.areas ?? [],
+                    selectedParcel,
+                    selectedStation: selected,
+                    parcelIntel,
+                    rankedSites,
+                    hasAnalysisBoundary: Boolean(analysisBoundary),
+                    compareCount: comparePicks.length,
+                  });
+                  setAskAnswer(answer);
+                  if (answer.hint === "draw_area") {
+                    setTool("freehand");
+                  } else if (answer.hint === "run_strongest") {
+                    void findStrongestSites();
+                  } else if (answer.hint === "select_parcel") {
+                    setTool("pan");
+                    setPanel("site");
+                  } else if (answer.hint === "select_station") {
+                    setTool("traffic");
+                    setRevealStations(true);
+                    setPanel("station");
+                  } else if (answer.hint === "open_compare") {
+                    /* stay — compare panel is below */
+                  }
+                }}
+              />
+            ) : null}
             {panel === "watch" ? (
               <WatchPanel
                 areas={payload?.watch?.areas ?? []}
@@ -979,6 +1025,7 @@ export function ShiCorridorsView({
                 }
                 compareCount={comparePicks.length}
                 workflowBusy={workflowBusy}
+                onIntelChange={setParcelIntel}
                 onToggleCompare={(intel) => {
                   if (!selectedParcel) return;
                   addParcelToCompare(selectedParcel, intel);
@@ -1457,6 +1504,98 @@ function WatchPanel({
   );
 }
 
+function AskArchiePanel({
+  answer,
+  onAsk,
+}: {
+  answer: CorridorAskAnswer | null;
+  onAsk: (query: string) => void;
+}) {
+  const [draft, setDraft] = useState("");
+  return (
+    <div className="space-y-3" data-corridor-ask-panel>
+      <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+        Ask Archie
+      </p>
+      <p className="text-[11px] leading-snug text-[var(--muted)]">
+        {CORRIDOR_ASK_HONESTY}
+      </p>
+      <div className="flex flex-wrap gap-1.5" data-corridor-ask-chips>
+        {CORRIDOR_ASK_INTENTS.map((intent) => (
+          <button
+            key={intent.id}
+            type="button"
+            onClick={() => onAsk(intent.id)}
+            className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1.5 font-mono text-[10px] font-semibold uppercase text-ink hover:border-gold/40"
+          >
+            {intent.chip}
+          </button>
+        ))}
+      </div>
+      <form
+        className="flex gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!draft.trim()) return;
+          onAsk(draft.trim());
+        }}
+      >
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="Or type a canned question…"
+          className="field-input h-9 flex-1 text-xs"
+          data-corridor-ask-input
+        />
+        <button
+          type="submit"
+          className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+        >
+          Ask
+        </button>
+      </form>
+      {answer ? (
+        <div className="story-well space-y-2 px-3 py-2.5" data-corridor-ask-answer>
+          <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
+            {answer.intentLabel}
+          </p>
+          <p className="text-sm text-ink">{answer.summary}</p>
+          {answer.facts.length > 0 ? (
+            <ul className="space-y-1.5">
+              {answer.facts.map((f, i) => (
+                <li key={`${f.label}:${i}`} className="text-xs">
+                  <span className="font-semibold text-ink">{f.label}: </span>
+                  <span className="tabular-nums text-ink">{f.value}</span>
+                  {f.detail ? (
+                    <span className="block text-[11px] text-[var(--muted)]">
+                      {f.detail}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {answer.missing.length > 0 ? (
+            <ul className="space-y-1" data-corridor-ask-missing>
+              {answer.missing.map((m) => (
+                <li
+                  key={m}
+                  className="text-[11px] leading-snug text-[var(--muted)]"
+                >
+                  {m}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="font-mono text-[9px] text-[var(--muted)]">
+            {answer.ruleVersion}
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ParcelSitePanel({
   parcel,
   stations,
@@ -1465,6 +1604,7 @@ function ParcelSitePanel({
   compareSelected,
   compareCount,
   workflowBusy,
+  onIntelChange,
   onToggleCompare,
   onStudyLand,
   onSave,
@@ -1479,6 +1619,7 @@ function ParcelSitePanel({
   compareSelected: boolean;
   compareCount: number;
   workflowBusy: boolean;
+  onIntelChange?: (intel: ParcelLocationIntel | null) => void;
   onToggleCompare: (intel: ParcelLocationIntel | null) => void;
   onStudyLand: () => void;
   onSave: () => void;
@@ -1492,6 +1633,7 @@ function ParcelSitePanel({
   useEffect(() => {
     if (!parcel) {
       setIntel(null);
+      onIntelChange?.(null);
       return;
     }
 
@@ -1501,16 +1643,17 @@ function ParcelSitePanel({
         parcelGeojson: parcel.geojson,
         segments,
       });
-      setIntel(
-        buildParcelLocationIntel({
-          roads,
-          source: "client_approx",
-          observationYear: new Date().getFullYear(),
-          stationNearby: roads.length > 0,
-        }),
-      );
+      const next = buildParcelLocationIntel({
+        roads,
+        source: "client_approx",
+        observationYear: new Date().getFullYear(),
+        stationNearby: roads.length > 0,
+      });
+      setIntel(next);
+      onIntelChange?.(next);
     } else {
       setIntel(null);
+      onIntelChange?.(null);
     }
 
     let cancelled = false;
@@ -1524,16 +1667,17 @@ function ParcelSitePanel({
     })
       .then((body) => {
         if (cancelled || !body.intel) return;
-        /* Prefer PostGIS; otherwise keep client approx if richer. */
         setIntel((prev) => {
-          if (body.intel.source === "postgis") return body.intel;
-          if (
+          let next = body.intel;
+          if (body.intel.source === "postgis") next = body.intel;
+          else if (
             prev &&
             prev.totalApproxFrontageFt > body.intel.totalApproxFrontageFt
           ) {
-            return prev;
+            next = prev;
           }
-          return body.intel;
+          onIntelChange?.(next);
+          return next;
         });
       })
       .catch(() => {
@@ -1546,7 +1690,7 @@ function ParcelSitePanel({
     return () => {
       cancelled = true;
     };
-  }, [parcel, segments, county.fips, county.source]);
+  }, [parcel, segments, county.fips, county.source, onIntelChange]);
 
   if (!parcel) {
     return (

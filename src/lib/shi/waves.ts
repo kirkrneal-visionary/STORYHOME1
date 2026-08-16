@@ -831,32 +831,28 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-2",
     name: "Corridors 2.0 · parcel traffic + commercial location",
     goal: "Help pros answer which property has the best traffic exposure — land-first, plain language, no Corridors rewrite.",
-    status: "current",
+    status: "done",
     frontend: [
-      "C2.0-A (preview): vehicles/day primary · intensity classes · corridor-status labels · AADT explainer",
-      "C2.0-B (preview): parcel click · location panel · estimated nearby traffic · Open in Research",
-      "C2.0-C (preview): approx frontage · dual-road/corner · data-confidence · soft segment cache",
-      "C2.0-D (preview): traffic/commercial exposure WHY? · Find Strongest Sites · land-first map mode",
-      "C2.0-E (preview): property compare · Save/Prospects/Farms/Research/Report CTAs · location report",
-      "Locked plan: ARCHIE-CORRIDORS-2.md (A→F acceptance bars)",
-      "Preserve v1 toolbox · growth watch · scenarios · analyze · compare",
+      "C2.0-A…F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
+      "C2.0-A language · C2.0-B parcel select · C2.0-C frontage · C2.0-D exposure · C2.0-E compare · C2.0-F Ask",
+      "Ask Archie: canned intents → deterministic facts (corridor-ask-v1) — no LLM stats",
+      "Preserve v1 toolbox · growth watch · scenarios · analyze · area compare",
     ],
     backend: [
-      "Armor scripts/test-corridors-2a…2e.mjs",
+      "Armor scripts/test-corridors-2a…2f.mjs",
       "Migration 0034_corridor_road_segments.sql · 0035 grants · RPC corridor_parcel_frontage",
       "API parcel-location · strongest-sites · softCache on traffic GET",
     ],
     outOfScope: [
       "Rebuild Corridors from scratch",
       "Survey-grade frontage claims",
-      "Ask Archie intents (C2.0-F)",
       "LLM-invented traffic counts",
       "Live congestion / seller probability",
     ],
   },
 ];
 
-/** Active wave — Corridors 2.0. */
+/** Last completed product line — Corridors 2.0 A…F live. */
 export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */

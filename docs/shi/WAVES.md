@@ -12,21 +12,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-CORRIDORS-2 · C2.0-E (preview) — Compare + workflow
-Multi-property compare · Save / Prospects / Farms / Research / Report CTAs · property location report.
+### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
+Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- C2.0-F Ask Archie + deepen  
 - Parallel: public Agent World polish  
+- Deepen Ask intents / intersection distance as data arrives  
 
 ## Done (recent)
-- ARCHIE-CORRIDORS-2 C2.0-D preview — exposure · Find Strongest Sites  
-- ARCHIE-CORRIDORS-2 C2.0-C preview — approx frontage · segment cache  
-- ARCHIE-CORRIDORS-2 C2.0-B preview — parcel select + estimated traffic  
-- ARCHIE-CORRIDORS-2 C2.0-A preview — language + hierarchy  
+- ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
 - STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  
 - ARCHIE Corridors v1 waves live (traffic · growth · scenarios · land loop · toolbox)  
 - STORY-SHELL-NAV · HEADER · GLASS · FEEL waves  

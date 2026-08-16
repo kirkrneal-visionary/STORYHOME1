@@ -40,7 +40,7 @@ assert.match(panel, /data-corridor-property-compare/);
 assert.match(panel, /data-property-compare-summary/);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-e"/);
+assert.match(view, /data-corridors-version="c2-0-[ef]"/);
 assert.match(view, /data-corridor-workflow-ctas/);
 assert.match(view, /data-corridor-parcel-prospect/);
 assert.match(view, /data-corridor-parcel-farm/);

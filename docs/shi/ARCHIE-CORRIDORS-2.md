@@ -232,9 +232,9 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 
 **Acceptance**
 
-- [ ] LLM never invents property/traffic statistics.  
-- [ ] At least 5 canned intents map to real queries.  
-- [ ] Missing-data paths are honest.
+- [x] LLM never invents property/traffic statistics.  
+- [x] At least 5 canned intents map to real queries.  
+- [x] Missing-data paths are honest.
 
 ---
 
@@ -260,4 +260,4 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 
 ---
 
-*Locked for Corridors 2.0. Current implementation wave: **C2.0-E** (on C2.0-A…D). Preview before live.*
+*Locked for Corridors 2.0. Waves **C2.0-A…F complete**. Live on owner green-light.*

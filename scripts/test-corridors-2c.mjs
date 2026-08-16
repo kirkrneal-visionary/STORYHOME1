@@ -50,7 +50,7 @@ const client = read("src/lib/shi/client.ts");
 assert.match(client, /shiCorridorsParcelLocation/);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-[cde]"/);
+assert.match(view, /data-corridors-version="c2-0-[cdef]"/);
 assert.match(view, /data-corridor-frontage-block/);
 assert.match(view, /data-corridor-data-confidence/);
 assert.match(view, /Approx\. frontage/);
