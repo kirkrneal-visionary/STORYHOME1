@@ -29,8 +29,9 @@ import {
   type PropertyCompareSite,
 } from "@/lib/shi/corridor-property-compare";
 import { CORRIDOR_REPORT_HONESTY } from "@/lib/shi/corridor-report";
+import { evidenceLegendHtml, formatEvidenceTag } from "@/lib/shi/evidence-tier";
 
-export const PROPERTY_REPORT_VERSION = "corridor-property-report-v1" as const;
+export const PROPERTY_REPORT_VERSION = "corridor-property-report-v2" as const;
 
 function escapeHtml(s: string): string {
   return s
@@ -143,16 +144,18 @@ export function buildPropertyLocationReportHtml(
       : "No nearby published count within range.",
   )}</p>
 <table>
-<tr><td>Intensity</td><td><strong>${escapeHtml(intensity)}</strong></td></tr>
+<tr><td>Intensity</td><td><strong>${escapeHtml(intensity)}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "KNOWN", source: "TxDOT AADT" }))}</span></td></tr>
 <tr><td>Corridor status</td><td><strong>${escapeHtml(
     status ? CORRIDOR_STATUS_LABEL[status.status] : "—",
-  )}</strong></td></tr>
-<tr><td>Approx. frontage</td><td><strong>${escapeHtml(frontage)}</strong></td></tr>
-<tr><td>Intersection</td><td><strong>${escapeHtml(intersection)}</strong></td></tr>
+  )}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "TxDOT history" }))}</span></td></tr>
+<tr><td>Approx. frontage</td><td><strong>${escapeHtml(frontage)}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "Mapped roads · APPROX" }))}</span></td></tr>
+<tr><td>Intersection</td><td><strong>${escapeHtml(intersection)}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "Mapped roads" }))}</span></td></tr>
 <tr><td>Commercial exposure</td><td><strong>${commercial.score}/${commercial.maxScore}</strong> · ${escapeHtml(
     exposureBandLabel(commercial.band),
-  )}</td></tr>
+  )}<br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "commercial-exposure-v1" }))}</span></td></tr>
 </table>
+
+${evidenceLegendHtml()}
 
 <h2>What the numbers mean for this land</h2>
 <p>${escapeHtml(

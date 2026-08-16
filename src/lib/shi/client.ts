@@ -448,6 +448,80 @@ export async function shiOwnerPortfolio(opts: {
   return body.portfolio;
 }
 
+/* --------------------- Data Coverage · Flood (DC-1) --------------------- */
+
+export async function shiFloodAtPoint(opts: {
+  countyFips: string;
+  lat: number;
+  lng: number;
+}): Promise<{
+  flood: import("@/lib/shi/flood-fema").FloodFact;
+  coverageReady: boolean;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  params.set("lat", String(opts.lat));
+  params.set("lng", String(opts.lng));
+  return shiFetch(`/api/shi/flood?${params.toString()}`);
+}
+
+/* --------------------- Data Coverage · Utilities (DC-2) --------------------- */
+
+export async function shiUtilitiesAtPoint(opts: {
+  countyFips: string;
+  lat: number;
+  lng: number;
+}): Promise<{
+  utilities: import("@/lib/shi/utilities-ccn").UtilitiesFact;
+  coverageReady: boolean;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  params.set("lat", String(opts.lat));
+  params.set("lng", String(opts.lng));
+  return shiFetch(`/api/shi/utilities?${params.toString()}`);
+}
+
+/* --------------------- Data Coverage · Environment (DC-3) --------------------- */
+
+export async function shiEnvironmentAtPoint(opts: {
+  countyFips: string;
+  lat: number;
+  lng: number;
+}): Promise<{
+  environment: import("@/lib/shi/environment-desk").EnvironmentDesk;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  params.set("lat", String(opts.lat));
+  params.set("lng", String(opts.lng));
+  return shiFetch(`/api/shi/environment?${params.toString()}`);
+}
+
+/* --------------------- Data Coverage · Deeds dark store (DC-5) --------------------- */
+
+export async function shiDeedsForParcel(opts: {
+  countyFips: string;
+  propId?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+}): Promise<{
+  deeds: import("@/lib/shi/deeds-clerk").DeedsFact;
+  coverageReady: boolean;
+  dark: boolean;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  if (opts.propId) params.set("propId", opts.propId);
+  if (opts.lat != null && Number.isFinite(opts.lat)) {
+    params.set("lat", String(opts.lat));
+  }
+  if (opts.lng != null && Number.isFinite(opts.lng)) {
+    params.set("lng", String(opts.lng));
+  }
+  return shiFetch(`/api/shi/deeds?${params.toString()}`);
+}
+
 /* --------------------- Corridors · Traffic (Wave 1) --------------------- */
 
 export async function shiCorridorsTraffic(countyFips: string) {

@@ -166,8 +166,8 @@ CONNECT → NORMALIZE → features/signals.
 | **Unavailable** | Expected live source failed this pass |
 | **Planned** | Reserved slot — never treated as present |
 
-Live today: county property records · TxDOT AADT · TxDOT projects · CAD observation pulse.  
-Planned (listed, unused): permits · plats · zoning · utilities · flood · licensed MLS.
+Live today: county property records · TxDOT AADT · TxDOT projects · CAD observation pulse · **FEMA flood (DC-1)** · **PUCT CCN utilities (DC-2)**.  
+Planned (listed, unused): permits · plats · zoning · licensed MLS.  
 
 Professional **quality flags** (stale / questionable / missing / incorrect) are a private ledger — they never mutate CAD.
 

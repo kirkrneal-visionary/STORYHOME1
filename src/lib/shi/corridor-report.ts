@@ -6,8 +6,9 @@
 import type { CorridorAnalysisResult } from "@/lib/shi/corridor-analysis";
 import type { CorridorCompareResult } from "@/lib/shi/corridor-compare";
 import { CORRIDOR_COMPARE_HONESTY } from "@/lib/shi/corridor-compare";
+import { evidenceLegendHtml } from "@/lib/shi/evidence-tier";
 
-export const CORRIDOR_REPORT_VERSION = "corridors-report-v1.0.0" as const;
+export const CORRIDOR_REPORT_VERSION = "corridors-report-v1.1.0" as const;
 
 export const CORRIDOR_REPORT_HONESTY =
   "This Development Intelligence Report organizes available evidence for professional discussion. It is not a guarantee of appreciation, zoning outcomes, development approval, or investment return.";
@@ -159,6 +160,8 @@ ${
 }
 <li>Signal model ${escapeHtml(a.modelVersion)} · Report ${escapeHtml(CORRIDOR_REPORT_VERSION)}</li>
 </ul>
+
+${evidenceLegendHtml()}
 
 <h2>Limitations</h2>
 <ul>${limits}<li>${escapeHtml(CORRIDOR_REPORT_HONESTY)}</li></ul>

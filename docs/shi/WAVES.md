@@ -12,6 +12,10 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
+### ARCHIE-DATA-COVERAGE · **DC-1…DC-5 shipping**
+FEMA flood · PUCT CCN · NWI/TIGER environment · shared evidence chips · **deeds dark store** (no user reveal until clerk-grade). See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).  
+**Track complete** for free public + dark deeds path — flip clerk FIPS only after owned ingest.
+
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
@@ -20,9 +24,11 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 
 ## Next
 - Parallel: public Agent World polish  
-- Deepen Ask intents / intersection distance as data arrives  
+- Own clerk-grade deed index for launch 7 before any deeds reveal  
+- Deepen Ask intents on revealed facts only  
 
 ## Done (recent)
+- ARCHIE-DATA-COVERAGE DC-1…DC-5 — flood · utilities · environment · evidence UI · deeds dark  
 - ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
 - STORY-WALK SW-1…SW-8 live — Agent World · Living Mark · Story Walk film  
 - ARCHIE Corridors v1 waves live (traffic · growth · scenarios · land loop · toolbox)  
@@ -31,3 +37,4 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  
+- Click-metered flood / deed / zoning landlords for the truth desk  

@@ -1,8 +1,9 @@
 /**
- * Corridors 2.0-F — Ask Archie (canned intents → deterministic facts).
+ * Corridors 2.0-F + DC-4 — Ask Archie (canned intents → deterministic facts).
  * LLM never invents property/traffic statistics.
+ * Every fact may carry an evidence tier (KNOWN / CALCULATED / ESTIMATED / …).
  *
- * Rule version: corridor-ask-v1
+ * Rule version: corridor-ask-v2
  */
 
 import type { TrafficStation } from "@/lib/shi/corridors";
@@ -27,11 +28,15 @@ import {
   type RankedSite,
 } from "@/lib/shi/corridor-exposure";
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
+import type { EvidenceTier } from "@/lib/shi/evidence-tier";
+import type { FloodFact } from "@/lib/shi/flood-fema";
+import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
+import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
 
-export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v1" as const;
+export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v2" as const;
 
 export const CORRIDOR_ASK_HONESTY =
-  "Archie answers from published TxDOT counts, mapped roads, and CAD parcels already on this desk — never invents statistics.";
+  "Archie answers from published TxDOT counts, mapped roads, CAD parcels, and Data Coverage facts already on this desk — never invents statistics. Each fact carries an evidence label.";
 
 export type CorridorAskIntentId =
   | "strongest_sites"
@@ -40,7 +45,11 @@ export type CorridorAskIntentId =
   | "high_traffic_roads"
   | "growth_patterns"
   | "explain_exposure"
-  | "compare_hint";
+  | "compare_hint"
+  | "flood_zone"
+  | "utilities_ccn"
+  | "environment_desk"
+  | "deed_history";
 
 export type CorridorAskIntent = {
   id: CorridorAskIntentId;
@@ -50,7 +59,7 @@ export type CorridorAskIntent = {
   match: RegExp;
 };
 
-/** At least 5 canned intents — keyword match only, no LLM. */
+/** Canned intents — keyword match only, no LLM. */
 export const CORRIDOR_ASK_INTENTS: CorridorAskIntent[] = [
   {
     id: "strongest_sites",
@@ -99,12 +108,40 @@ export const CORRIDOR_ASK_INTENTS: CorridorAskIntent[] = [
     chip: "How to compare",
     match: /compare\s+(these\s+)?propert|compare\s+site|side\s+by\s+side/i,
   },
+  {
+    id: "flood_zone",
+    label: "What's the FEMA flood zone here?",
+    chip: "Flood zone",
+    match: /flood|sfha|fema\s+zone|floodplain/i,
+  },
+  {
+    id: "utilities_ccn",
+    label: "Who is the certificated water/sewer utility?",
+    chip: "Utilities",
+    match: /utilit|ccn|water\s+service|sewer\s+service|certificat/i,
+  },
+  {
+    id: "environment_desk",
+    label: "What's on the environment desk for this point?",
+    chip: "Environment",
+    match: /wetland|environment|school\s+district|zoning\s+context|place\s+context/i,
+  },
+  {
+    id: "deed_history",
+    label: "Is deed / transfer history available?",
+    chip: "Deeds",
+    match: /deed|transfer\s+histor|clerk\s+record|title\s+histor|grantor|grantee/i,
+  },
 ];
 
 export type CorridorAskFact = {
   label: string;
   value: string;
   detail?: string;
+  /** DC-4 evidence tier */
+  tier?: EvidenceTier;
+  source?: string;
+  asOf?: string | null;
 };
 
 export type CorridorAskAnswer = {
@@ -135,7 +172,31 @@ export type CorridorAskContext = {
   rankedSites: RankedSite[];
   hasAnalysisBoundary: boolean;
   compareCount: number;
+  /** DC desk facts for the selected parcel (when revealed) */
+  flood?: FloodFact | null;
+  utilities?: UtilitiesFact | null;
+  environment?: EnvironmentDesk | null;
 };
+
+function fact(
+  label: string,
+  value: string,
+  opts?: {
+    detail?: string;
+    tier?: EvidenceTier;
+    source?: string;
+    asOf?: string | null;
+  },
+): CorridorAskFact {
+  return {
+    label,
+    value,
+    detail: opts?.detail,
+    tier: opts?.tier,
+    source: opts?.source,
+    asOf: opts?.asOf ?? null,
+  };
+}
 
 export function matchCorridorAskIntent(
   text: string,
@@ -164,11 +225,17 @@ function answerStrongest(ctx: CorridorAskContext): CorridorAskAnswer {
       honesty: CORRIDOR_ASK_HONESTY,
       ruleVersion: CORRIDOR_ASK_RULE_VERSION,
       summary: `Top ${top.length} ranked sites in your outline by commercial-exposure-v1 (traffic factors + land size) — not an AI score.`,
-      facts: top.map((s) => ({
-        label: `#${s.rank} ${s.situsAddress?.trim() || `CAD #${s.propId}`}`,
-        value: `${s.commercial.score}/${s.commercial.maxScore}`,
-        detail: exposureBandLabel(s.commercial.band),
-      })),
+      facts: top.map((s) =>
+        fact(
+          `#${s.rank} ${s.situsAddress?.trim() || `CAD #${s.propId}`}`,
+          `${s.commercial.score}/${s.commercial.maxScore}`,
+          {
+            detail: exposureBandLabel(s.commercial.band),
+            tier: "CALCULATED",
+            source: "commercial-exposure-v1",
+          },
+        ),
+      ),
       missing: [],
       hint: null,
     };
@@ -216,43 +283,77 @@ function answerParcel(ctx: CorridorAskContext): CorridorAskAnswer {
   const pick = ctx.selectedParcel;
   const assoc = associateParcelTraffic(pick, ctx.stations);
   const facts: CorridorAskFact[] = [
-    {
-      label: "Parcel",
-      value: pick.situsAddress?.trim() || `CAD #${pick.propId}`,
+    fact("Parcel", pick.situsAddress?.trim() || `CAD #${pick.propId}`, {
       detail: formatAcres(pick.legalAcreage),
-    },
+      tier: "KNOWN",
+      source: "County CAD",
+    }),
   ];
   const missing: string[] = [];
   if (assoc.kind === "estimated") {
     const s = assoc.station;
-    facts.push({
-      label: "Vehicles / day",
-      value:
+    facts.push(
+      fact(
+        "Vehicles / day",
         s.latestAadt != null
           ? Math.round(s.latestAadt).toLocaleString("en-US")
           : "—",
-      detail: `${vehiclesPerDayCaption(s.latestYear)} · ${assoc.label}`,
-    });
-    facts.push({
-      label: "Nearest count",
-      value: `${assoc.distanceMiles.toFixed(2)} mi`,
-      detail: s.onRoad || s.stationId,
-    });
+        {
+          detail: `${vehiclesPerDayCaption(s.latestYear)} · ${assoc.label}`,
+          tier: "ESTIMATED",
+          source: "TxDOT AADT (nearest station)",
+          asOf: s.latestYear != null ? String(s.latestYear) : null,
+        },
+      ),
+    );
+    facts.push(
+      fact("Nearest count", `${assoc.distanceMiles.toFixed(2)} mi`, {
+        detail: s.onRoad || s.stationId,
+        tier: "KNOWN",
+        source: "TxDOT station",
+      }),
+    );
   } else {
     missing.push(assoc.detail);
   }
   if (ctx.parcelIntel && ctx.parcelIntel.totalApproxFrontageFt > 0) {
-    facts.push({
-      label: "Approx. frontage",
-      value: formatApproxFrontageFt(ctx.parcelIntel.totalApproxFrontageFt),
-      detail: ctx.parcelIntel.cornerLikely
-        ? "Corner likely"
-        : ctx.parcelIntel.dualRoad
-          ? "Dual-road"
-          : ctx.parcelIntel.confidenceWhy,
-    });
+    facts.push(
+      fact(
+        "Approx. frontage",
+        formatApproxFrontageFt(ctx.parcelIntel.totalApproxFrontageFt),
+        {
+          detail: ctx.parcelIntel.cornerLikely
+            ? "Corner likely"
+            : ctx.parcelIntel.dualRoad
+              ? "Dual-road"
+              : ctx.parcelIntel.confidenceWhy,
+          tier: "CALCULATED",
+          source: "Mapped roads · APPROX",
+        },
+      ),
+    );
   } else {
     missing.push("Approx frontage not available yet for this parcel.");
+  }
+  if (ctx.flood?.userReveal) {
+    facts.push(
+      fact("Flood", ctx.flood.headline, {
+        detail: ctx.flood.detail,
+        tier: ctx.flood.tier,
+        source: ctx.flood.chip.source,
+        asOf: ctx.flood.chip.asOf,
+      }),
+    );
+  }
+  if (ctx.utilities?.userReveal) {
+    facts.push(
+      fact("Utilities", ctx.utilities.headline, {
+        detail: ctx.utilities.detail,
+        tier: ctx.utilities.tier,
+        source: ctx.utilities.chip.source,
+        asOf: ctx.utilities.chip.asOf,
+      }),
+    );
   }
   return {
     intentId: "parcel_traffic",
@@ -299,27 +400,34 @@ function answerGrowth(ctx: CorridorAskContext): CorridorAskAnswer {
     ruleVersion: CORRIDOR_ASK_RULE_VERSION,
     summary: `${station.onRoad || station.stationId}: ${CORRIDOR_STATUS_LABEL[status.status]}.`,
     facts: [
-      {
-        label: "Corridor status",
-        value: CORRIDOR_STATUS_LABEL[status.status],
+      fact("Corridor status", CORRIDOR_STATUS_LABEL[status.status], {
         detail: status.why,
-      },
-      {
-        label: "Vehicles / day",
-        value:
-          station.latestAadt != null
-            ? Math.round(station.latestAadt).toLocaleString("en-US")
-            : "—",
-        detail: vehiclesPerDayCaption(station.latestYear),
-      },
-      {
-        label: "Change",
-        value:
-          status.changePct != null
-            ? `${status.changePct >= 0 ? "+" : ""}${status.changePct.toFixed(1)}%`
-            : "—",
-        detail: "Across published TxDOT years (corridor-status-v1).",
-      },
+        tier: "CALCULATED",
+        source: "TxDOT multi-year AADT",
+      }),
+      fact(
+        "Vehicles / day",
+        station.latestAadt != null
+          ? Math.round(station.latestAadt).toLocaleString("en-US")
+          : "—",
+        {
+          detail: vehiclesPerDayCaption(station.latestYear),
+          tier: "KNOWN",
+          source: "TxDOT AADT",
+          asOf: station.latestYear != null ? String(station.latestYear) : null,
+        },
+      ),
+      fact(
+        "Change",
+        status.changePct != null
+          ? `${status.changePct >= 0 ? "+" : ""}${status.changePct.toFixed(1)}%`
+          : "—",
+        {
+          detail: "Across published TxDOT years (corridor-status-v1).",
+          tier: "CALCULATED",
+          source: "TxDOT history",
+        },
+      ),
     ],
     missing: [],
     hint: null,
@@ -346,14 +454,20 @@ function answerHighRoads(ctx: CorridorAskContext): CorridorAskAnswer {
     honesty: CORRIDOR_ASK_HONESTY,
     ruleVersion: CORRIDOR_ASK_RULE_VERSION,
     summary: `Highest published vehicles/day among loaded TxDOT stations in ${ctx.countyName}.`,
-    facts: top.map((s) => ({
-      label: s.onRoad || s.stationId,
-      value:
+    facts: top.map((s) =>
+      fact(
+        s.onRoad || s.stationId,
         s.latestAadt != null
           ? `${Math.round(s.latestAadt).toLocaleString("en-US")}/day`
           : "—",
-      detail: `${TRAFFIC_INTENSITY_LABEL[trafficIntensityClass(s.latestAadt)]} · ${vehiclesPerDayCaption(s.latestYear)}`,
-    })),
+        {
+          detail: `${TRAFFIC_INTENSITY_LABEL[trafficIntensityClass(s.latestAadt)]} · ${vehiclesPerDayCaption(s.latestYear)}`,
+          tier: "KNOWN",
+          source: "TxDOT AADT",
+          asOf: s.latestYear != null ? String(s.latestYear) : null,
+        },
+      ),
+    ),
     missing: [],
     hint: null,
   };
@@ -380,11 +494,13 @@ function answerPatterns(ctx: CorridorAskContext): CorridorAskAnswer {
     ruleVersion: CORRIDOR_ASK_RULE_VERSION,
     summary:
       "Growth patterns are evidence clusters — not a hot score or sale prediction.",
-    facts: areas.map((a) => ({
-      label: a.title,
-      value: a.strength,
-      detail: a.reasons[0]?.detail ?? a.reasons[0]?.label,
-    })),
+    facts: areas.map((a) =>
+      fact(a.title, a.strength, {
+        detail: a.reasons[0]?.detail ?? a.reasons[0]?.label,
+        tier: "OBSERVED",
+        source: "Growth Watch",
+      }),
+    ),
     missing: [],
     hint: null,
   };
@@ -465,6 +581,245 @@ function answerCompare(ctx: CorridorAskContext): CorridorAskAnswer {
   };
 }
 
+
+function answerFlood(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "flood_zone")!;
+  if (!ctx.selectedParcel) {
+    return {
+      intentId: "flood_zone",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary: "Select a parcel to read FEMA flood evidence for that point.",
+      facts: [],
+      missing: ["No parcel selected."],
+      hint: "select_parcel",
+    };
+  }
+  const flood = ctx.flood;
+  if (!flood?.userReveal) {
+    return {
+      intentId: "flood_zone",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary:
+        "Flood evidence is not on the desk for this parcel yet (loading, retracted, or outside coverage).",
+      facts: [],
+      missing: ["FEMA flood not revealed for this point."],
+      hint: "select_parcel",
+    };
+  }
+  return {
+    intentId: "flood_zone",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary: flood.headline,
+    facts: [
+      fact("Flood", flood.headline, {
+        detail: flood.detail,
+        tier: flood.tier,
+        source: flood.chip.source,
+        asOf: flood.chip.asOf,
+      }),
+      fact("SFHA", flood.sfha.toUpperCase(), {
+        detail: flood.zone ? `Zone ${flood.zone}` : undefined,
+        tier: flood.tier,
+        source: flood.chip.source,
+        asOf: flood.chip.asOf,
+      }),
+    ],
+    missing: [],
+    hint: null,
+  };
+}
+
+function answerUtilities(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "utilities_ccn")!;
+  if (!ctx.selectedParcel) {
+    return {
+      intentId: "utilities_ccn",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary: "Select a parcel to read PUCT certificated utilities.",
+      facts: [],
+      missing: ["No parcel selected."],
+      hint: "select_parcel",
+    };
+  }
+  const u = ctx.utilities;
+  if (!u?.userReveal) {
+    return {
+      intentId: "utilities_ccn",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary: "Utilities evidence is not revealed for this parcel yet.",
+      facts: [],
+      missing: ["PUCT CCN not revealed for this point."],
+      hint: "select_parcel",
+    };
+  }
+  const facts = [
+    fact("Utilities", u.headline, {
+      detail: u.detail,
+      tier: u.tier,
+      source: u.chip.source,
+      asOf: u.chip.asOf,
+    }),
+  ];
+  for (const w of u.water.slice(0, 2)) {
+    facts.push(
+      fact("Water CCN", w.ccnNo || "—", {
+        detail: w.utility || undefined,
+        tier: "KNOWN",
+        source: u.chip.source,
+        asOf: u.chip.asOf,
+      }),
+    );
+  }
+  for (const s of u.sewer.slice(0, 2)) {
+    facts.push(
+      fact("Sewer CCN", s.ccnNo || "—", {
+        detail: s.utility || undefined,
+        tier: "KNOWN",
+        source: u.chip.source,
+        asOf: u.chip.asOf,
+      }),
+    );
+  }
+  return {
+    intentId: "utilities_ccn",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary: u.headline,
+    facts,
+    missing: [],
+    hint: null,
+  };
+}
+
+function answerEnvironment(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "environment_desk")!;
+  if (!ctx.selectedParcel) {
+    return {
+      intentId: "environment_desk",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary: "Select a parcel to read the environment desk.",
+      facts: [],
+      missing: ["No parcel selected."],
+      hint: "select_parcel",
+    };
+  }
+  const env = ctx.environment;
+  if (!env) {
+    return {
+      intentId: "environment_desk",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary: "Environment desk has not loaded for this parcel yet.",
+      facts: [],
+      missing: ["Environment desk empty."],
+      hint: "select_parcel",
+    };
+  }
+  const facts: CorridorAskFact[] = [];
+  if (env.wetlands.userReveal) {
+    facts.push(
+      fact("Wetlands", env.wetlands.headline, {
+        detail: env.wetlands.detail,
+        tier: env.wetlands.tier,
+        source: env.wetlands.chip.source,
+        asOf: env.wetlands.chip.asOf,
+      }),
+    );
+  }
+  if (env.place.userReveal) {
+    facts.push(
+      fact("Place", env.place.headline, {
+        detail: env.place.detail,
+        tier: env.place.tier,
+        source: env.place.chip.source,
+        asOf: env.place.chip.asOf,
+      }),
+    );
+  }
+  if (env.schoolDistrict.userReveal) {
+    facts.push(
+      fact("School district", env.schoolDistrict.headline, {
+        detail: env.schoolDistrict.detail,
+        tier: env.schoolDistrict.tier,
+        source: env.schoolDistrict.chip.source,
+        asOf: env.schoolDistrict.chip.asOf,
+      }),
+    );
+  }
+  if (env.zoningContext.userReveal) {
+    facts.push(
+      fact("Zoning context", env.zoningContext.headline, {
+        detail: env.zoningContext.detail,
+        tier: env.zoningContext.tier,
+        source: env.zoningContext.chip.source,
+        asOf: env.zoningContext.chip.asOf,
+      }),
+    );
+  }
+  return {
+    intentId: "environment_desk",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary:
+      facts.length > 0
+        ? "Environment desk facts for this point — inventory and boundaries, not surveys or zoning approval."
+        : "No environment facts revealed for this point.",
+    facts,
+    missing: facts.length ? [] : ["No revealed environment blocks."],
+    hint: null,
+  };
+}
+
+/**
+ * DC-5 — deeds stay dark. Honest answer only; never invent transfers from CAD.
+ */
+function answerDeedHistory(_ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "deed_history")!;
+  return {
+    intentId: "deed_history",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary:
+      "Deed / transfer history stays dark until Archie owns clerk-grade records for all launch 7 counties. CAD owner-field changes are not deeds.",
+    facts: [
+      fact("Deeds desk", "Dark store", {
+        detail:
+          "No user reveal. No DataTree / ATTOM rent. Knowledge path reserved for owned clerk index.",
+        tier: "UNKNOWN",
+        source: "County clerk (owned — not connected)",
+        asOf: null,
+      }),
+      fact("CAD observation", "Not deed history", {
+        detail:
+          "Owner/address/value changes Archie saw between county loads stay labeled as observation — never transfer dates.",
+        tier: "OBSERVED",
+        source: "Archie CAD observation",
+        asOf: null,
+      }),
+    ],
+    missing: [
+      "Clerk-grade coverage not ready for launch 7 — stay dark.",
+    ],
+    hint: null,
+  };
+}
+
 /**
  * Resolve a canned intent (or free-text match) into facts from desk context.
  */
@@ -507,6 +862,14 @@ export function answerCorridorAsk(
       return answerExplainExposure();
     case "compare_hint":
       return answerCompare(ctx);
+    case "flood_zone":
+      return answerFlood(ctx);
+    case "utilities_ccn":
+      return answerUtilities(ctx);
+    case "environment_desk":
+      return answerEnvironment(ctx);
+    case "deed_history":
+      return answerDeedHistory(ctx);
     default:
       return {
         intentId: "unknown",

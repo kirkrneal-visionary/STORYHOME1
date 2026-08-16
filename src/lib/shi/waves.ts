@@ -850,10 +850,41 @@ export const SHI_WAVES: ShiWave[] = [
       "Live congestion / seller probability",
     ],
   },
+  {
+    id: "ARCHIE-DATA-COVERAGE",
+    name: "Data Coverage · free public truth (DC-1…5)",
+    goal: "Peer-grade flood / utilities / environment for launch 7 without click-metered landlords — reveal only when polished; retract on fail.",
+    status: "current",
+    frontend: [
+      "DC-1: ShiFloodEvidencePanel on Research + Corridors parcel (KNOWN/VERIFY chips)",
+      "DC-2: ShiUtilitiesEvidencePanel — PUCT water/sewer CCN certificated areas",
+      "DC-3: ShiEnvironmentEvidencePanel — NWI · TIGER place/ISD · zoning VERIFY context",
+      "DC-3: deeper CAD facts — abstract · tract · first/last seen",
+      "DC-4: ShiEvidenceChip shared across Research / Corridors / Ask / print reports",
+      "DC-4: corridor-ask-v2 desk intents flood_zone · utilities_ccn · environment_desk",
+      "DC-5: ShiDeedsEvidencePanel dark store — userReveal false until clerk-grade",
+      "DC-5: Ask deed_history honesty · clerk_deeds source planned",
+      "userReveal gate — no half panel, no upsell",
+    ],
+    backend: [
+      "GET /api/shi/flood — FEMA NFHL point query",
+      "GET /api/shi/utilities — PUCT CCN point-in-polygon on owned launch-7 clip",
+      "GET /api/shi/environment — NWI + TIGER place/school + zoning context",
+      "GET /api/shi/deeds — dark store knowledge path (always retracted until coverage)",
+      "data/shi/puct-ccn-launch7.json · npm run rebuild:puct-ccn",
+      "Armor npm run test:data-coverage-dc1 · dc2 · dc3 · dc4 · dc5",
+    ],
+    outOfScope: [
+      "ATTOM / Regrid / Zoneomics / DataTree",
+      "Live congestion SKUs",
+      "Deed history user reveal before clerk-grade for launch 7",
+      "Paywall for any evidence field",
+    ],
+  },
 ];
 
-/** Last completed product line — Corridors 2.0 A…F live. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
+/** Current product line — Data Coverage DC-1. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-DATA-COVERAGE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

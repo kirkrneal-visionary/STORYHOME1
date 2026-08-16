@@ -27,9 +27,23 @@ import {
   shiCorridorsTraffic,
   shiCreateFarm,
   shiCreateFolder,
+  shiFloodAtPoint,
+  shiUtilitiesAtPoint,
+  shiEnvironmentAtPoint,
+  shiDeedsForParcel,
   shiListFolders,
   shiSaveFrame,
 } from "@/lib/shi/client";
+import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
+import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
+import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
+import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
+import { ShiEvidenceChip } from "@/components/broker/intelligence/ShiEvidenceChip";
+import type { FloodFact } from "@/lib/shi/flood-fema";
+import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
+import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
+import type { DeedsFact } from "@/lib/shi/deeds-clerk";
+import { EVIDENCE_LEGEND_LINES } from "@/lib/shi/evidence-tier";
 import {
   openBoundaryInResearch,
   openParcelInResearch,
@@ -159,6 +173,12 @@ export function ShiCorridorsView({
   const [parcelIntel, setParcelIntel] = useState<ParcelLocationIntel | null>(
     null,
   );
+  const [deskFlood, setDeskFlood] = useState<FloodFact | null>(null);
+  const [deskUtilities, setDeskUtilities] = useState<UtilitiesFact | null>(
+    null,
+  );
+  const [deskEnvironment, setDeskEnvironment] =
+    useState<EnvironmentDesk | null>(null);
   const [projects, setProjects] = useState<TxdotProject[]>([]);
   const [projectsNote, setProjectsNote] = useState("");
   const [projectsLoading, setProjectsLoading] = useState(false);
@@ -693,7 +713,11 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-f">
+    <div
+      className="space-y-4"
+      data-corridors-version="c2-0-f"
+      data-data-coverage="dc-5"
+    >
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -741,6 +765,12 @@ export function ShiCorridorsView({
               setStrongestNote("");
               setComparePicks([]);
               setCompareIntelById({});
+              setDeskFlood(null);
+              setDeskUtilities(null);
+              setDeskEnvironment(null);
+              setAskAnswer(null);
+              setSelectedParcel(null);
+              setParcelIntel(null);
             }}
             className="field-input mt-1 h-10"
           >
@@ -982,6 +1012,9 @@ export function ShiCorridorsView({
                     rankedSites,
                     hasAnalysisBoundary: Boolean(analysisBoundary),
                     compareCount: comparePicks.length,
+                    flood: deskFlood,
+                    utilities: deskUtilities,
+                    environment: deskEnvironment,
                   });
                   setAskAnswer(answer);
                   if (answer.hint === "draw_area") {
@@ -1026,6 +1059,11 @@ export function ShiCorridorsView({
                 compareCount={comparePicks.length}
                 workflowBusy={workflowBusy}
                 onIntelChange={setParcelIntel}
+                onDeskEvidence={(desk) => {
+                  setDeskFlood(desk.flood);
+                  setDeskUtilities(desk.utilities);
+                  setDeskEnvironment(desk.environment);
+                }}
                 onToggleCompare={(intel) => {
                   if (!selectedParcel) return;
                   addParcelToCompare(selectedParcel, intel);
@@ -1520,6 +1558,15 @@ function AskArchiePanel({
       <p className="text-[11px] leading-snug text-[var(--muted)]">
         {CORRIDOR_ASK_HONESTY}
       </p>
+      <div
+        className="flex flex-wrap gap-1"
+        data-evidence-legend
+        title="Evidence labels Archie uses on desk facts"
+      >
+        {EVIDENCE_LEGEND_LINES.slice(0, 6).map((row) => (
+          <ShiEvidenceChip key={row.tier} tier={row.tier} />
+        ))}
+      </div>
       <div className="flex flex-wrap gap-1.5" data-corridor-ask-chips>
         {CORRIDOR_ASK_INTENTS.map((intent) => (
           <button
@@ -1561,14 +1608,24 @@ function AskArchiePanel({
           </p>
           <p className="text-sm text-ink">{answer.summary}</p>
           {answer.facts.length > 0 ? (
-            <ul className="space-y-1.5">
+            <ul className="space-y-1.5" data-corridor-ask-facts>
               {answer.facts.map((f, i) => (
                 <li key={`${f.label}:${i}`} className="text-xs">
-                  <span className="font-semibold text-ink">{f.label}: </span>
-                  <span className="tabular-nums text-ink">{f.value}</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-semibold text-ink">{f.label}: </span>
+                    <span className="tabular-nums text-ink">{f.value}</span>
+                    {f.tier ? (
+                      <ShiEvidenceChip tier={f.tier} asOf={f.asOf} />
+                    ) : null}
+                  </div>
                   {f.detail ? (
                     <span className="block text-[11px] text-[var(--muted)]">
                       {f.detail}
+                    </span>
+                  ) : null}
+                  {f.source ? (
+                    <span className="block font-mono text-[9px] text-[var(--muted)]">
+                      {f.source}
                     </span>
                   ) : null}
                 </li>
@@ -1605,6 +1662,7 @@ function ParcelSitePanel({
   compareCount,
   workflowBusy,
   onIntelChange,
+  onDeskEvidence,
   onToggleCompare,
   onStudyLand,
   onSave,
@@ -1620,6 +1678,11 @@ function ParcelSitePanel({
   compareCount: number;
   workflowBusy: boolean;
   onIntelChange?: (intel: ParcelLocationIntel | null) => void;
+  onDeskEvidence?: (desk: {
+    flood: FloodFact | null;
+    utilities: UtilitiesFact | null;
+    environment: EnvironmentDesk | null;
+  }) => void;
   onToggleCompare: (intel: ParcelLocationIntel | null) => void;
   onStudyLand: () => void;
   onSave: () => void;
@@ -1629,10 +1692,29 @@ function ParcelSitePanel({
 }) {
   const [intel, setIntel] = useState<ParcelLocationIntel | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
+  const [floodFact, setFloodFact] = useState<FloodFact | null>(null);
+  const [utilitiesFact, setUtilitiesFact] = useState<UtilitiesFact | null>(
+    null,
+  );
+  const [environmentDesk, setEnvironmentDesk] =
+    useState<EnvironmentDesk | null>(null);
+  const [deedsFact, setDeedsFact] = useState<DeedsFact | null>(null);
+
+  useEffect(() => {
+    onDeskEvidence?.({
+      flood: floodFact,
+      utilities: utilitiesFact,
+      environment: environmentDesk,
+    });
+  }, [floodFact, utilitiesFact, environmentDesk, onDeskEvidence]);
 
   useEffect(() => {
     if (!parcel) {
       setIntel(null);
+      setFloodFact(null);
+      setUtilitiesFact(null);
+      setEnvironmentDesk(null);
+      setDeedsFact(null);
       onIntelChange?.(null);
       return;
     }
@@ -1658,6 +1740,10 @@ function ParcelSitePanel({
 
     let cancelled = false;
     setIntelLoading(true);
+    setFloodFact(null);
+    setUtilitiesFact(null);
+    setEnvironmentDesk(null);
+    setDeedsFact(null);
     void shiCorridorsParcelLocation({
       propId: parcel.propId,
       source: parcel.source ?? county.source,
@@ -1685,6 +1771,60 @@ function ParcelSitePanel({
       })
       .finally(() => {
         if (!cancelled) setIntelLoading(false);
+      });
+
+    const fips = parcel.countyFips ?? county.fips;
+    /* DC-1…5 — flood · utilities · environment · deeds dark; retract when userReveal false. */
+    void shiFloodAtPoint({
+      countyFips: fips,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setFloodFact(body.flood?.userReveal ? body.flood : null);
+      })
+      .catch(() => {
+        if (!cancelled) setFloodFact(null);
+      });
+    void shiUtilitiesAtPoint({
+      countyFips: fips,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setUtilitiesFact(
+          body.utilities?.userReveal ? body.utilities : null,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setUtilitiesFact(null);
+      });
+    void shiEnvironmentAtPoint({
+      countyFips: fips,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setEnvironmentDesk(body.environment ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setEnvironmentDesk(null);
+      });
+    void shiDeedsForParcel({
+      countyFips: fips,
+      propId: parcel.propId,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+      })
+      .catch(() => {
+        if (!cancelled) setDeedsFact(null);
       });
 
     return () => {
@@ -1732,6 +1872,11 @@ function ParcelSitePanel({
       {parcel.situsAddress ? (
         <p className="text-xs text-[var(--muted)]">CAD #{parcel.propId}</p>
       ) : null}
+
+      <ShiFloodEvidencePanel flood={floodFact} compact />
+      <ShiUtilitiesEvidencePanel utilities={utilitiesFact} compact />
+      <ShiEnvironmentEvidencePanel environment={environmentDesk} compact />
+      <ShiDeedsEvidencePanel deeds={deedsFact} compact />
 
       <div className="story-well px-3 py-2.5" data-corridor-exposure-score>
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">

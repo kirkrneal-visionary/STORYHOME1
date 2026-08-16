@@ -18,6 +18,7 @@ export type CorridorSourceId =
   | "zoning_landuse"
   | "utilities_infra"
   | "flood_environment"
+  | "clerk_deeds"
   | "mls_licensed";
 
 export type SourceStatus = "live" | "degraded" | "unavailable" | "planned";
@@ -127,17 +128,30 @@ export const CORRIDOR_SOURCE_ADAPTERS: CorridorSourceAdapter[] = [
     id: "utilities_infra",
     label: "Utilities & infrastructure",
     category: "environment",
-    defaultStatus: "planned",
-    provider: "Not connected",
-    honesty: "Adapter reserved — not used until a lawful feed is connected.",
+    /** Live — status resolved per pass (point desk). */
+    defaultStatus: "live",
+    provider: "PUCT CCN (official shapefile, launch 7 clip)",
+    honesty:
+      "Certificated water/sewer service area from PUCT — not a tap guarantee. Retracted when the owned dataset cannot be read.",
   },
   {
     id: "flood_environment",
     label: "Flood / environmental",
     category: "environment",
+    /** Live adapter — status resolved per pass (see resolveSourcesForAnalysis). */
+    defaultStatus: "live",
+    provider: "FEMA NFHL (public MapServer)",
+    honesty:
+      "Effective flood hazard zones from FEMA — not an insurance quote. Retracted from UI when the query fails.",
+  },
+  {
+    id: "clerk_deeds",
+    label: "Deed / transfer history",
+    category: "property",
     defaultStatus: "planned",
-    provider: "Not connected",
-    honesty: "Adapter reserved — not used until a lawful feed is connected.",
+    provider: "County clerk (owned dark store — not connected)",
+    honesty:
+      "Dark until Archie owns clerk-grade records for launch 7. CAD owner changes are not deeds. No DataTree / ATTOM rent.",
   },
   {
     id: "mls_licensed",
@@ -169,10 +183,91 @@ export function resolveSourcesForAnalysis(opts: {
   projectsAvailable?: boolean;
   cadPulseAvailable?: boolean;
   cadPulseNote?: string | null;
+  /** DC-1 — flood fact contributed when userReveal */
+  floodAvailable?: boolean;
+  floodNote?: string | null;
+  /** DC-2 — utilities CCN contributed when userReveal */
+  utilitiesAvailable?: boolean;
+  utilitiesNote?: string | null;
 }): CorridorSourceUse[] {
   const uses: CorridorSourceUse[] = [];
 
   for (const adapter of CORRIDOR_SOURCE_ADAPTERS) {
+    if (adapter.id === "utilities_infra") {
+      if (opts.utilitiesAvailable === undefined) {
+        uses.push({
+          id: adapter.id,
+          label: adapter.label,
+          category: adapter.category,
+          status: "planned",
+          provider: adapter.provider,
+          note: "Point utilities desk — open a parcel for PUCT CCN",
+          honesty: adapter.honesty,
+          contributed: false,
+        });
+        continue;
+      }
+      const ok = Boolean(opts.utilitiesAvailable);
+      uses.push({
+        id: adapter.id,
+        label: adapter.label,
+        category: adapter.category,
+        status: ok ? "live" : "degraded",
+        provider: adapter.provider,
+        note: ok
+          ? opts.utilitiesNote || "PUCT CCN available"
+          : opts.utilitiesNote || "Utilities not revealed for this pass",
+        honesty: adapter.honesty,
+        contributed: ok,
+      });
+      continue;
+    }
+
+    if (adapter.id === "flood_environment") {
+      /* undefined = this analysis pass did not query flood (point desk only). */
+      if (opts.floodAvailable === undefined) {
+        uses.push({
+          id: adapter.id,
+          label: adapter.label,
+          category: adapter.category,
+          status: "planned",
+          provider: adapter.provider,
+          note: "Point flood desk — open a parcel for FEMA zone",
+          honesty: adapter.honesty,
+          contributed: false,
+        });
+        continue;
+      }
+      const ok = Boolean(opts.floodAvailable);
+      uses.push({
+        id: adapter.id,
+        label: adapter.label,
+        category: adapter.category,
+        status: ok ? "live" : "degraded",
+        provider: adapter.provider,
+        note: ok
+          ? opts.floodNote || "FEMA flood zone available"
+          : opts.floodNote || "Flood not revealed for this pass",
+        honesty: adapter.honesty,
+        contributed: ok,
+      });
+      continue;
+    }
+
+    if (adapter.id === "clerk_deeds") {
+      uses.push({
+        id: adapter.id,
+        label: adapter.label,
+        category: adapter.category,
+        status: "planned",
+        provider: adapter.provider,
+        note: "Dark store — no user reveal until clerk-grade for launch 7",
+        honesty: adapter.honesty,
+        contributed: false,
+      });
+      continue;
+    }
+
     if (adapter.defaultStatus === "planned") {
       uses.push({
         id: adapter.id,
