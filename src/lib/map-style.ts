@@ -1,4 +1,13 @@
-import type { StyleSpecification } from "maplibre-gl";
+import type {
+  LayerSpecification,
+  StyleSpecification,
+} from "maplibre-gl";
+import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
+import {
+  LAUNCH7_MAP_SOVEREIGNTY,
+  ownedSatelliteTileTemplate,
+  ownedStreetsTileTemplate,
+} from "@/lib/shi/launch7-map";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -15,7 +24,11 @@ export type MapBaseLayer =
   | "terrain"
   | "gray";
 
-export const MAP_BASE_OPTIONS: { id: MapBaseLayer; label: string; short: string }[] = [
+export const MAP_BASE_OPTIONS: {
+  id: MapBaseLayer;
+  label: string;
+  short: string;
+}[] = [
   { id: "street", label: "Streets", short: "Streets" },
   { id: "satellite", label: "Imagery", short: "Imagery" },
   { id: "imageryLabels", label: "Imagery + Labels", short: "Img+Lbl" },
@@ -26,31 +39,83 @@ export const MAP_BASE_OPTIONS: { id: MapBaseLayer; label: string; short: string 
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 
-/** Full basemap style with switchable raster layers. */
+/** Free-world street layer ids (prefixed OpenFreeMap liberty). */
+let freeWorldLayerIds: string[] = [];
+
+export function getFreeWorldLayerIds(): readonly string[] {
+  return freeWorldLayerIds;
+}
+
+export const MAP_SOVEREIGNTY_VERSION = LAUNCH7_MAP_SOVEREIGNTY;
+
+type LibertyStyle = {
+  version: number;
+  sources: StyleSpecification["sources"];
+  sprite?: string;
+  glyphs?: string;
+  layers: LayerSpecification[];
+};
+
+/**
+ * Full basemap style:
+ * - Streets = free-world OpenFreeMap vector (or owned raster override) — no Mapbox/Google
+ * - Imagery / topo / gray = borrowed public rasters until launch-7 owned aerial
+ */
 export function buildStoryMapStyle(): StyleSpecification {
+  const liberty = libertyStyle as LibertyStyle;
+  const ownedStreets = ownedStreetsTileTemplate();
+  const ownedSat = ownedSatelliteTileTemplate();
+
+  const fwSources: StyleSpecification["sources"] = ownedStreets
+    ? {
+        "launch7-streets": {
+          type: "raster",
+          tiles: [ownedStreets],
+          tileSize: 256,
+          attribution: "Story Home · launch 7 owned streets",
+        },
+      }
+    : { ...liberty.sources };
+
+  const fwLayers: LayerSpecification[] = ownedStreets
+    ? [
+        {
+          id: "fw-owned-streets",
+          type: "raster",
+          source: "launch7-streets",
+        },
+      ]
+    : liberty.layers.map((layer) => ({
+        ...layer,
+        id: `fw-${layer.id}`,
+      }));
+
+  freeWorldLayerIds = fwLayers.map((l) => l.id);
+
+  const satelliteTiles = ownedSat
+    ? [ownedSat]
+    : [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`];
+
   return {
     version: 8,
-    /** Required for MapLibre symbol text (Corridors presentation labels). */
-    glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+    metadata: {
+      "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
+      "storyhome:streets": ownedStreets ? "owned-raster" : "openfreemap-liberty",
+      "storyhome:satellite": ownedSat ? "owned-raster" : "esri-world-imagery",
+    },
+    /** Prefer OpenFreeMap fonts (production-safe) over MapLibre demotiles. */
+    glyphs: liberty.glyphs ?? "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+    sprite: liberty.sprite,
     sources: {
-      street: {
-        type: "raster",
-        tiles: [
-          "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        ],
-        tileSize: 256,
-        attribution: "&copy; OpenStreetMap contributors",
-      },
-      // Esri World Imagery (Maxar) — high-zoom aerial. Web maps stream tiles
-      // (not a single 8K frame); maxzoom + retina pixelRatio give crisp close-ups.
+      ...fwSources,
       satellite: {
         type: "raster",
-        tiles: [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`],
+        tiles: satelliteTiles,
         tileSize: 256,
         maxzoom: 22,
-        attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics",
+        attribution: ownedSat
+          ? "Story Home · launch 7 owned imagery"
+          : "Imagery © Esri, Maxar, Earthstar Geographics",
       },
       labels: {
         type: "raster",
@@ -59,14 +124,14 @@ export function buildStoryMapStyle(): StyleSpecification {
         ],
         tileSize: 256,
         maxzoom: 19,
-        attribution: "Labels &copy; Esri",
+        attribution: "Labels © Esri",
       },
       topo: {
         type: "raster",
         tiles: [`${ESRI}/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`],
         tileSize: 256,
         maxzoom: 19,
-        attribution: "Topographic &copy; Esri",
+        attribution: "Topographic © Esri",
       },
       terrain: {
         type: "raster",
@@ -77,7 +142,7 @@ export function buildStoryMapStyle(): StyleSpecification {
         ],
         tileSize: 256,
         maxzoom: 17,
-        attribution: "&copy; OpenTopoMap (CC-BY-SA)",
+        attribution: "© OpenTopoMap (CC-BY-SA)",
       },
       gray: {
         type: "raster",
@@ -85,11 +150,11 @@ export function buildStoryMapStyle(): StyleSpecification {
           `${ESRI}/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
         ],
         tileSize: 256,
-        attribution: "Gray Canvas &copy; Esri",
+        attribution: "Gray Canvas © Esri",
       },
     },
     layers: [
-      { id: "base-street", type: "raster", source: "street" },
+      ...fwLayers,
       {
         id: "base-satellite",
         type: "raster",
@@ -114,7 +179,6 @@ export function buildStoryMapStyle(): StyleSpecification {
         source: "gray",
         layout: { visibility: "none" },
       },
-      // Labels sit above the chosen imagery base (used by Imagery + Labels).
       {
         id: "base-labels",
         type: "raster",
@@ -127,13 +191,24 @@ export function buildStoryMapStyle(): StyleSpecification {
 
 type MapLike = {
   setLayoutProperty: (id: string, prop: string, value: string) => void;
+  getLayer?: (id: string) => unknown;
 };
 
 export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
-  const show = (id: string, on: boolean) =>
-    map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  const show = (id: string, on: boolean) => {
+    if (map.getLayer && !map.getLayer(id)) return;
+    try {
+      map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    } catch {
+      /* layer may not exist yet */
+    }
+  };
 
-  show("base-street", base === "street");
+  const freeWorldOn = base === "street";
+  for (const id of freeWorldLayerIds) {
+    show(id, freeWorldOn);
+  }
+
   show("base-satellite", base === "satellite" || base === "imageryLabels");
   show("base-topo", base === "topo");
   show("base-terrain", base === "terrain");

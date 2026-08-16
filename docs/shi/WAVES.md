@@ -9,22 +9,23 @@
 **Scenarios:** [`ARCHIE-INTELLIGENCE-SCENARIOS.md`](./ARCHIE-INTELLIGENCE-SCENARIOS.md)  
 **Ops scale:** [`ARCHIE-COUNTY-OPS-SCALE.md`](./ARCHIE-COUNTY-OPS-SCALE.md)  
 **Story Walk:** [`STORY-WALK.md`](./STORY-WALK.md) · [`STORY-WALK-SW6-READY.md`](./STORY-WALK-SW6-READY.md) · [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md)  
+**Launch 7 map:** [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md)  
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-CORRIDORS-2 · **C2.0-F2 Ask deepen shipping**
-Frontage · corner/dual · data confidence · this-parcel exposure Ask chips — desk facts only; intersection **distance TBD**. See [`ARCHIE-CORRIDORS-2.md`](./ARCHIE-CORRIDORS-2.md).  
-Ask also carries Data Coverage desk intents (flood · utilities · environment · deeds honesty) on `corridor-ask-v2.1`.
+### ARCHIE-LAUNCH7-MAP · **L7-1 shipping**
+Free-world Research basemap (OpenFreeMap streets · owned-tile env overrides) for Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker. No Mapbox / Google map loads on the Intelligence desk. See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
 
-### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
-Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
+### ARCHIE-CORRIDORS-2 · C2.0-A…F + F2 **LIVE**
+Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- Preview stacked land on eqmg → owner live gate  
+- L7-2: clip owned streets + NAIP/aerial for launch-7 union bbox → point env overrides  
 - Own clerk-grade deed index for launch 7 before any deeds reveal  
 - Intersection **meter distance** only after a versioned desk field exists  
 
 ## Done (recent)
+- ARCHIE-CORRIDORS-2 C2.0-F2 — Ask deepen · map soft-fail  
 - AGENT-WORLD-POLISH AW-1 — visitor CTA · trust · empty · presence  
 - ARCHIE-DATA-COVERAGE DC-1…DC-5 — flood · utilities · environment · evidence UI · deeds dark  
 - ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
@@ -36,3 +37,4 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  
 - Click-metered flood / deed / zoning landlords for the truth desk  
+- Mapbox / Google Dynamic Maps as the Research canvas  

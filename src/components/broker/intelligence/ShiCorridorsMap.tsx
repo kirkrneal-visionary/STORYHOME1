@@ -17,6 +17,7 @@ import {
   buildStoryMapStyle,
   MAP_GOLD,
   MAP_NAVY,
+  MAP_SOVEREIGNTY_VERSION,
   setBaseLayerVisibility,
   type MapBaseLayer,
 } from "@/lib/map-style";
@@ -1270,6 +1271,7 @@ export function ShiCorridorsMap({
       )}
       data-no-swipe-back
       data-shi-map
+      data-map-sovereignty={MAP_SOVEREIGNTY_VERSION}
       data-corridors-toolbox="map-native"
       data-corridor-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
     >

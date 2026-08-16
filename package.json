@@ -40,6 +40,8 @@
     "test:data-coverage-dc3": "node scripts/test-data-coverage-dc3.mjs",
     "test:data-coverage-dc4": "node scripts/test-data-coverage-dc4.mjs",
     "test:data-coverage-dc5": "node scripts/test-data-coverage-dc5.mjs",
+    "test:launch7-map-l1": "node scripts/test-launch7-map-l1.mjs",
+    "plan:launch7-basemap": "node scripts/plan-launch7-basemap.mjs",
     "rebuild:puct-ccn": "node scripts/rebuild-puct-ccn-launch7.mjs",
     "smoke:corridors": "node scripts/smoke-corridors-txdot.mjs",
     "cad:list": "node scripts/ingest-cad.mjs --list",

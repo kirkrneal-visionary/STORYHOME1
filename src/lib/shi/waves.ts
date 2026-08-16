@@ -830,7 +830,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-2",
     name: "Corridors 2.0 · parcel traffic + commercial location",
     goal: "Help pros answer which property has the best traffic exposure — land-first, plain language, no Corridors rewrite.",
-    status: "current",
+    status: "done",
     frontend: [
       "C2.0-A…F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
       "C2.0-F2 shipping: Ask deepen — frontage · corner/dual · confidence · this exposure (desk facts)",
@@ -898,10 +898,32 @@ export const SHI_WAVES: ShiWave[] = [
       "New engagement event taxonomy",
     ],
   },
+  {
+    id: "ARCHIE-LAUNCH7-MAP",
+    name: "Launch 7 map sovereignty · free-world basemap (L7-1)",
+    goal: "Research runs without Mapbox/Google map loads — OpenFreeMap streets + owned-tile overrides for the launch 7 footprint.",
+    status: "current",
+    frontend: [
+      "L7-1: OpenFreeMap liberty streets (no OSM.org tile hotlink)",
+      "L7-1: env overrides NEXT_PUBLIC_LAUNCH7_STREETS_TILES / SATELLITE_TILES",
+      "L7-1: data-map-sovereignty=l7-1 · Research data-map-free-world",
+      "Borrowed imagery/topo remain switchable until L7-2 owned aerial",
+    ],
+    backend: [
+      "src/lib/shi/launch7-map.ts · union bbox + honesty",
+      "src/lib/map-styles/openfreemap-liberty.json",
+      "Armor npm run test:launch7-map-l1 · plan:launch7-basemap",
+    ],
+    outOfScope: [
+      "Mapbox as Research basemap",
+      "Google Maps JS as Research canvas",
+      "ATTOM / Regrid parcel basemap landlords",
+    ],
+  },
 ];
 
-/** Current product line — Corridors Ask deepen F2 (on top of A–F LIVE). */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
+/** Current product line — Launch 7 map sovereignty. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-LAUNCH7-MAP" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
