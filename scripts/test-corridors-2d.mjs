@@ -34,7 +34,7 @@ const client = read("src/lib/shi/client.ts");
 assert.match(client, /shiCorridorsStrongestSites/);
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
-assert.match(view, /data-corridors-version="c2-0-d"/);
+assert.match(view, /data-corridors-version="c2-0-[de]"/);
 assert.match(view, /data-find-strongest-sites/);
 assert.match(view, /data-commercial-exposure-toggle/);
 assert.match(view, /data-corridor-exposure-why/);

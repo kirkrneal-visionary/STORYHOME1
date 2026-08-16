@@ -73,7 +73,7 @@ Corridors helps a real-estate professional answer: **which property has the best
 | Intersection proximity | Corner-likely heuristic when dual-road (C2.0-C); distance TBD |
 | Exposure score | Traffic + Commercial Exposure v1 (C2.0-D) |
 | Parcel click on Corridors | Live (C2.0-B) |
-| Direct Prospects / Farms CTA | **Not implemented** (C2.0-E) |
+| Direct Prospects / Farms CTA | Live from Site panel (C2.0-E) |
 
 ---
 
@@ -219,10 +219,10 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 
 **Acceptance**
 
-- [ ] Compare shows traffic, growth, frontage, intersection, acreage, data year.  
-- [ ] Archie copy explains tradeoffs — no forced winner without context.  
-- [ ] Workflow CTAs open existing Archie tools with the property context.  
-- [ ] Report reads as RE location intel, not engineering dump.
+- [x] Compare shows traffic, growth, frontage, intersection, acreage, data year.  
+- [x] Archie copy explains tradeoffs — no forced winner without context.  
+- [x] Workflow CTAs open existing Archie tools with the property context.  
+- [x] Report reads as RE location intel, not engineering dump.
 
 ---
 
@@ -260,4 +260,4 @@ Traffic Exposure + **land size** factor (max +15). Emphasizes parcels, not only 
 
 ---
 
-*Locked for Corridors 2.0. Current implementation wave: **C2.0-D** (on C2.0-A…C). Preview before live.*
+*Locked for Corridors 2.0. Current implementation wave: **C2.0-E** (on C2.0-A…D). Preview before live.*

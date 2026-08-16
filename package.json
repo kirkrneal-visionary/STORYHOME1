@@ -31,6 +31,7 @@
     "test:corridors-2b": "node scripts/test-corridors-2b.mjs",
     "test:corridors-2c": "node scripts/test-corridors-2c.mjs",
     "test:corridors-2d": "node scripts/test-corridors-2d.mjs",
+    "test:corridors-2e": "node scripts/test-corridors-2e.mjs",
     "smoke:corridors": "node scripts/smoke-corridors-txdot.mjs",
     "cad:list": "node scripts/ingest-cad.mjs --list",
     "cad:ingest": "node scripts/ingest-cad.mjs",

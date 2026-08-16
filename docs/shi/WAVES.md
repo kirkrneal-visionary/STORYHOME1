@@ -12,17 +12,18 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-CORRIDORS-2 · C2.0-D (preview) — Exposure + Sites
-Traffic / Commercial Exposure scores (WHY?) · Find Strongest Sites · land-first map mode.
+### ARCHIE-CORRIDORS-2 · C2.0-E (preview) — Compare + workflow
+Multi-property compare · Save / Prospects / Farms / Research / Report CTAs · property location report.
 
 ### Owner sticky — do not forget
 **Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
 
 ## Next
-- C2.0-E Compare/workflow → F Ask Archie  
+- C2.0-F Ask Archie + deepen  
 - Parallel: public Agent World polish  
 
 ## Done (recent)
+- ARCHIE-CORRIDORS-2 C2.0-D preview — exposure · Find Strongest Sites  
 - ARCHIE-CORRIDORS-2 C2.0-C preview — approx frontage · segment cache  
 - ARCHIE-CORRIDORS-2 C2.0-B preview — parcel select + estimated traffic  
 - ARCHIE-CORRIDORS-2 C2.0-A preview — language + hierarchy  

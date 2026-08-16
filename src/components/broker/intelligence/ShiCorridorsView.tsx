@@ -16,13 +16,16 @@ import {
 } from "@/components/broker/intelligence/ShiCorridorsMap";
 import { ShiCorridorsAnalysisPanel } from "@/components/broker/intelligence/ShiCorridorsAnalysisPanel";
 import { ShiCorridorsComparePanel } from "@/components/broker/intelligence/ShiCorridorsComparePanel";
+import { ShiCorridorsPropertyComparePanel } from "@/components/broker/intelligence/ShiCorridorsPropertyComparePanel";
 import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
 import {
+  shiAddProspect,
   shiAnalyzeArea,
   shiCorridorsParcelLocation,
   shiCorridorsProjects,
   shiCorridorsStrongestSites,
   shiCorridorsTraffic,
+  shiCreateFarm,
   shiCreateFolder,
   shiListFolders,
   shiSaveFrame,
@@ -36,6 +39,13 @@ import {
   openMapPackPrint,
   PRESENTATION_HONESTY,
 } from "@/lib/shi/corridor-presentation";
+import {
+  comparePropertySites,
+  PROPERTY_COMPARE_MAX,
+  toggleCompareSite,
+} from "@/lib/shi/corridor-property-compare";
+import { openPropertyLocationReport } from "@/lib/shi/corridor-property-report";
+import { boundsAroundPoints } from "@/lib/shi/discover-bounds";
 import {
   composeCorridorAnalysis,
   CORRIDOR_ANALYSIS_HONESTY,
@@ -167,6 +177,12 @@ export function ShiCorridorsView({
   const [rankedSites, setRankedSites] = useState<RankedSite[]>([]);
   const [strongestLoading, setStrongestLoading] = useState(false);
   const [strongestNote, setStrongestNote] = useState("");
+  const [comparePicks, setComparePicks] = useState<CorridorParcelPick[]>([]);
+  const [compareIntelById, setCompareIntelById] = useState<
+    Record<string, ParcelLocationIntel | null>
+  >({});
+  const [workflowNote, setWorkflowNote] = useState("");
+  const [workflowBusy, setWorkflowBusy] = useState(false);
 
   useEffect(() => {
     setSavedStudies(listCorridorStudies(county.fips));
@@ -211,6 +227,9 @@ export function ShiCorridorsView({
       setRankedSites([]);
       setStrongestNote("");
       setCommercialExposureMode(false);
+      setComparePicks([]);
+      setCompareIntelById({});
+      setWorkflowNote("");
       try {
         const data = await shiCorridorsTraffic(fips);
         setPayload(data);
@@ -385,6 +404,140 @@ export function ShiCorridorsView({
     }
   }, [analysisBoundary, county.fips]);
 
+  const propertyCompare = useMemo(() => {
+    if (comparePicks.length < 2) return null;
+    return comparePropertySites(
+      comparePicks.map((pick) => ({
+        pick,
+        intel: compareIntelById[pick.propId] ?? null,
+      })),
+      payload?.stations ?? [],
+    );
+  }, [comparePicks, compareIntelById, payload?.stations]);
+
+  const addParcelToCompare = useCallback(
+    (pick: CorridorParcelPick, intel?: ParcelLocationIntel | null) => {
+      setComparePicks((prev) => {
+        const next = toggleCompareSite(prev, pick);
+        return next;
+      });
+      if (intel) {
+        setCompareIntelById((prev) => ({ ...prev, [pick.propId]: intel }));
+      }
+    },
+    [],
+  );
+
+  const saveParcelToVault = useCallback(
+    async (pick: CorridorParcelPick) => {
+      setWorkflowBusy(true);
+      setWorkflowNote("");
+      try {
+        let folders = await shiListFolders(county.source);
+        let folder = folders.find((f) =>
+          f.name.toLowerCase().includes("corridor"),
+        );
+        if (!folder) {
+          folder = await shiCreateFolder({
+            name: "Corridors",
+            countySource: county.source,
+          });
+        }
+        const pad = 0.004;
+        const label = pick.situsAddress?.trim() || `CAD #${pick.propId}`;
+        await shiSaveFrame({
+          folderId: folder.id,
+          name: `Corridors · ${label}`,
+          color: "#f5b71e",
+          boundary: {
+            type: "rectangle",
+            bounds: {
+              west: pick.lng - pad,
+              south: pick.lat - pad,
+              east: pick.lng + pad,
+              north: pick.lat + pad,
+            },
+          },
+        });
+        setWorkflowNote(`Saved “${label}” to Study Vault (Corridors).`);
+      } catch (e) {
+        setWorkflowNote(
+          e instanceof Error ? e.message : "Could not save to Study Vault.",
+        );
+      } finally {
+        setWorkflowBusy(false);
+      }
+    },
+    [county.source],
+  );
+
+  const addParcelProspect = useCallback(
+    async (pick: CorridorParcelPick) => {
+      setWorkflowBusy(true);
+      setWorkflowNote("");
+      try {
+        const { created } = await shiAddProspect({
+          source: pick.source ?? county.source,
+          propId: pick.propId,
+          countyFips: pick.countyFips ?? county.fips,
+          countyName: county.name,
+          label: pick.situsAddress,
+          ownerName: pick.ownerName,
+          situsAddress: pick.situsAddress,
+          legalAcreage: pick.legalAcreage,
+          marketValue: pick.marketValue,
+          centroidLat: pick.lat,
+          centroidLng: pick.lng,
+        });
+        writeLastArchieModule("prospects");
+        setWorkflowNote(
+          created
+            ? "Added to Prospects — opening…"
+            : "Already in Prospects — opening…",
+        );
+        router.push("/portal/intelligence?section=prospects");
+      } catch (e) {
+        setWorkflowNote(
+          e instanceof Error ? e.message : "Could not add prospect.",
+        );
+      } finally {
+        setWorkflowBusy(false);
+      }
+    },
+    [county, router],
+  );
+
+  const createParcelFarm = useCallback(
+    async (pick: CorridorParcelPick) => {
+      setWorkflowBusy(true);
+      setWorkflowNote("");
+      try {
+        const boundary = boundsAroundPoints([{ lat: pick.lat, lng: pick.lng }]);
+        if (!boundary) throw new Error("Could not build farm boundary.");
+        const label = pick.situsAddress?.trim() || `CAD #${pick.propId}`;
+        await shiCreateFarm({
+          name: `Corridors · ${label}`,
+          countySource: county.source,
+          countyName: county.name,
+          boundary,
+          mapCenterLat: pick.lat,
+          mapCenterLng: pick.lng,
+          mapZoom: 15,
+        });
+        writeLastArchieModule("farms");
+        setWorkflowNote("Farm created — opening…");
+        router.push("/portal/intelligence?section=farms");
+      } catch (e) {
+        setWorkflowNote(
+          e instanceof Error ? e.message : "Could not create farm.",
+        );
+      } finally {
+        setWorkflowBusy(false);
+      }
+    },
+    [county, router],
+  );
+
   const saveStudy = useCallback(async () => {
     if (!analysis || !analysisBoundary) return;
     setSaving(true);
@@ -528,7 +681,7 @@ export function ShiCorridorsView({
   }, [payload, selectedWatch, memoryDiff, projectsNote]);
 
   return (
-    <div className="space-y-4" data-corridors-version="c2-0-d">
+    <div className="space-y-4" data-corridors-version="c2-0-e">
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
@@ -574,6 +727,8 @@ export function ShiCorridorsView({
               setAnalysisBoundary(null);
               setRankedSites([]);
               setStrongestNote("");
+              setComparePicks([]);
+              setCompareIntelById({});
             }}
             className="field-input mt-1 h-10"
           >
@@ -818,6 +973,16 @@ export function ShiCorridorsView({
                 stations={payload?.stations ?? []}
                 segments={payload?.segments ?? []}
                 county={county}
+                compareSelected={
+                  !!selectedParcel &&
+                  comparePicks.some((p) => p.propId === selectedParcel.propId)
+                }
+                compareCount={comparePicks.length}
+                workflowBusy={workflowBusy}
+                onToggleCompare={(intel) => {
+                  if (!selectedParcel) return;
+                  addParcelToCompare(selectedParcel, intel);
+                }}
                 onStudyLand={() => {
                   if (!selectedParcel) return;
                   openParcelInResearch({
@@ -830,7 +995,38 @@ export function ShiCorridorsView({
                   });
                   writeLastArchieModule("research");
                   if (onOpenResearch) onOpenResearch();
-                  else router.push("/portal/intelligence?section=research&handoff=corridor");
+                  else
+                    router.push(
+                      "/portal/intelligence?section=research&handoff=corridor",
+                    );
+                }}
+                onSave={() => {
+                  if (!selectedParcel) return;
+                  void saveParcelToVault(selectedParcel);
+                }}
+                onProspect={() => {
+                  if (!selectedParcel) return;
+                  void addParcelProspect(selectedParcel);
+                }}
+                onFarm={() => {
+                  if (!selectedParcel) return;
+                  void createParcelFarm(selectedParcel);
+                }}
+                onReport={(intel) => {
+                  if (!selectedParcel) return;
+                  openPropertyLocationReport({
+                    countyName: county.name,
+                    pick: selectedParcel,
+                    stations: payload?.stations ?? [],
+                    intel,
+                    compareSites:
+                      comparePicks.length >= 2
+                        ? comparePicks.map((pick) => ({
+                            pick,
+                            intel: compareIntelById[pick.propId] ?? null,
+                          }))
+                        : undefined,
+                  });
                 }}
               />
             ) : null}
@@ -973,6 +1169,22 @@ export function ShiCorridorsView({
         />
       ) : null}
 
+      {propertyCompare && !presentationMode ? (
+        <ShiCorridorsPropertyComparePanel
+          compare={propertyCompare}
+          onClear={() => {
+            setComparePicks([]);
+            setCompareIntelById({});
+          }}
+        />
+      ) : null}
+
+      {workflowNote && !presentationMode ? (
+        <p className="text-sm text-[var(--muted)]" data-corridor-workflow-note>
+          {workflowNote}
+        </p>
+      ) : null}
+
       {strongestNote && !presentationMode ? (
         <p
           className="text-sm text-[var(--muted)]"
@@ -992,44 +1204,65 @@ export function ShiCorridorsView({
           </p>
           <p className="mt-1 text-xs text-[var(--muted)]">
             Ranked land parcels — transparent factors, not an AI mystery score.
+            Select 2–{PROPERTY_COMPARE_MAX} to compare properties.
           </p>
           <ul className="mt-3 space-y-1">
-            {rankedSites.map((s) => (
-              <li key={s.propId}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedParcel({
-                      propId: s.propId,
-                      source: s.source,
-                      lat: s.lat,
-                      lng: s.lng,
-                      situsAddress: s.situsAddress,
-                      ownerName: s.ownerName,
-                      legalAcreage: s.legalAcreage,
-                      marketValue: s.marketValue,
-                    });
-                    setSelected(null);
-                    setPanel("site");
-                    setExploreOpen(true);
-                  }}
-                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-[var(--background)]"
+            {rankedSites.map((s) => {
+              const pick: CorridorParcelPick = {
+                propId: s.propId,
+                source: s.source,
+                lat: s.lat,
+                lng: s.lng,
+                situsAddress: s.situsAddress,
+                ownerName: s.ownerName,
+                legalAcreage: s.legalAcreage,
+                marketValue: s.marketValue,
+              };
+              const inCompare = comparePicks.some((p) => p.propId === s.propId);
+              return (
+                <li
+                  key={s.propId}
+                  className="flex items-center gap-1"
                 >
-                  <span className="min-w-0 truncate">
-                    <span className="font-mono text-[10px] text-gold">
-                      #{s.rank}
-                    </span>{" "}
-                    <span className="font-semibold text-ink">
-                      {s.situsAddress?.trim() || `CAD #${s.propId}`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedParcel(pick);
+                      setSelected(null);
+                      setPanel("site");
+                      setExploreOpen(true);
+                    }}
+                    className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-2 py-2 text-left text-sm hover:bg-[var(--background)]"
+                  >
+                    <span className="min-w-0 truncate">
+                      <span className="font-mono text-[10px] text-gold">
+                        #{s.rank}
+                      </span>{" "}
+                      <span className="font-semibold text-ink">
+                        {s.situsAddress?.trim() || `CAD #${s.propId}`}
+                      </span>
                     </span>
-                  </span>
-                  <span className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--muted)]">
-                    {s.commercial.score}/{s.commercial.maxScore} ·{" "}
-                    {exposureBandLabel(s.commercial.band)}
-                  </span>
-                </button>
-              </li>
-            ))}
+                    <span className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--muted)]">
+                      {s.commercial.score}/{s.commercial.maxScore} ·{" "}
+                      {exposureBandLabel(s.commercial.band)}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    data-property-compare-toggle
+                    onClick={() => addParcelToCompare(pick)}
+                    className={cn(
+                      "shrink-0 rounded-md px-2 py-1.5 font-mono text-[10px] font-semibold uppercase",
+                      inCompare
+                        ? "bg-gold text-navy"
+                        : "border border-hairline text-[var(--muted)]",
+                    )}
+                  >
+                    {inCompare ? "In compare" : "Compare"}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}
@@ -1229,13 +1462,29 @@ function ParcelSitePanel({
   stations,
   segments,
   county,
+  compareSelected,
+  compareCount,
+  workflowBusy,
+  onToggleCompare,
   onStudyLand,
+  onSave,
+  onProspect,
+  onFarm,
+  onReport,
 }: {
   parcel: CorridorParcelPick | null;
   stations: TrafficStation[];
   segments: TrafficCorridorSegment[];
   county: CorridorCounty;
+  compareSelected: boolean;
+  compareCount: number;
+  workflowBusy: boolean;
+  onToggleCompare: (intel: ParcelLocationIntel | null) => void;
   onStudyLand: () => void;
+  onSave: () => void;
+  onProspect: () => void;
+  onFarm: () => void;
+  onReport: (intel: ParcelLocationIntel | null) => void;
 }) {
   const [intel, setIntel] = useState<ParcelLocationIntel | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
@@ -1483,14 +1732,71 @@ function ParcelSitePanel({
         — approx frontage and published traffic only.
       </p>
 
-      <button
-        type="button"
-        onClick={onStudyLand}
-        data-corridor-parcel-research
-        className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+      <div
+        className="flex flex-wrap gap-1.5"
+        data-corridor-workflow-ctas
       >
-        Open in Research
-      </button>
+        <button
+          type="button"
+          onClick={onStudyLand}
+          data-corridor-parcel-research
+          className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+        >
+          Research
+        </button>
+        <button
+          type="button"
+          onClick={onProspect}
+          disabled={workflowBusy}
+          data-corridor-parcel-prospect
+          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
+        >
+          Prospects
+        </button>
+        <button
+          type="button"
+          onClick={onFarm}
+          disabled={workflowBusy}
+          data-corridor-parcel-farm
+          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
+        >
+          Farms
+        </button>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={workflowBusy}
+          data-corridor-parcel-save
+          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          onClick={() => onReport(intel)}
+          data-corridor-parcel-report
+          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
+        >
+          Report
+        </button>
+        <button
+          type="button"
+          onClick={() => onToggleCompare(intel)}
+          data-corridor-parcel-compare
+          className={cn(
+            "inline-flex h-9 items-center rounded-lg px-3 text-xs font-semibold",
+            compareSelected
+              ? "bg-gold text-navy"
+              : "border border-hairline text-ink",
+          )}
+        >
+          {compareSelected
+            ? `In compare (${compareCount})`
+            : compareCount >= PROPERTY_COMPARE_MAX
+              ? "Compare full"
+              : "Add to compare"}
+        </button>
+      </div>
     </div>
   );
 }
