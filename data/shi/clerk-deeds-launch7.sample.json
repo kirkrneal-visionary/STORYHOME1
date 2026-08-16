@@ -1,0 +1,17 @@
+{
+  "version": "deeds-1-sample",
+  "note": "Fixture shape for ingest stub only — not production clerk data. Do not flip readyFips from this sample in prod.",
+  "transfers": [
+    {
+      "countyFips": "48005",
+      "propId": "SAMPLE-PROP-001",
+      "recordedDate": "2019-06-14",
+      "grantor": "SAMPLE GRANTOR LLC",
+      "grantee": "SAMPLE GRANTEE",
+      "instrument": "WD",
+      "volumePage": "1234/56",
+      "docNumber": "SAMPLE-2019-0001",
+      "sourceNote": "fixture-not-production"
+    }
+  ]
+}
