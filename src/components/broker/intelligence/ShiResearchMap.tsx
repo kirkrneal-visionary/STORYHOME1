@@ -202,6 +202,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const draftRef = useRef<LatLng[]>([]);
     const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
     const [ready, setReady] = useState(false);
+    const [mapFailed, setMapFailed] = useState<string | null>(null);
     const [base, setBase] = useState<MapBaseLayer>("street");
     const [showParcels, setShowParcels] = useState(true);
     const [tool, setTool] = useState<DrawTool>("pan");
@@ -383,25 +384,45 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
     useEffect(() => {
       if (!containerRef.current) return;
-      const map = new maplibregl.Map({
-        container: containerRef.current,
-        style: buildStoryMapStyle(),
-        center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
-        zoom: EAST_TEXAS_DEFAULT_ZOOM,
-        pixelRatio: Math.min(
-          typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
-          2,
-        ),
-        maxZoom: 22,
-        // Required so Map Memory toDataURL is not a blank canvas.
-        preserveDrawingBuffer: true,
-        attributionControl: { compact: true },
-      });
+      setMapFailed(null);
+      let map: maplibregl.Map;
+      try {
+        map = new maplibregl.Map({
+          container: containerRef.current,
+          style: buildStoryMapStyle(),
+          center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
+          zoom: EAST_TEXAS_DEFAULT_ZOOM,
+          pixelRatio: Math.min(
+            typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+            2,
+          ),
+          maxZoom: 22,
+          // Required so Map Memory toDataURL is not a blank canvas.
+          preserveDrawingBuffer: true,
+          attributionControl: { compact: true },
+        });
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Map could not start in this browser.";
+        setMapFailed(msg);
+        setReady(false);
+        return;
+      }
       mapRef.current = map;
       map.addControl(
         new maplibregl.NavigationControl({ showCompass: false }),
         "bottom-right",
       );
+
+      map.on("error", (e) => {
+        const raw = e?.error?.message || e?.error?.toString?.() || "";
+        if (/webgl|context/i.test(raw)) {
+          setMapFailed(raw || "WebGL unavailable — map paused.");
+          setReady(false);
+        }
+      });
 
       const kickResize = () => map.resize();
       requestAnimationFrame(kickResize);
@@ -1318,6 +1339,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-no-swipe-back
         data-map-sovereignty={MAP_SOVEREIGNTY_VERSION}
         data-map-free-world="1"
+        data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
           className,
@@ -1327,6 +1349,23 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           ref={containerRef}
           className="relative min-h-0 w-full flex-1 bg-[var(--background)] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none"
         />
+
+        {mapFailed ? (
+          <div
+            className="absolute inset-0 z-[15] flex items-center justify-center bg-[color-mix(in_srgb,var(--env-1)_88%,#0b1c18)] px-6"
+            data-research-map-fallback
+          >
+            <div className="max-w-md rounded-xl border border-hairline bg-[var(--surface)] px-5 py-4 text-center shadow-[var(--elev-raise)]">
+              <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
+                Map paused
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-ink">
+                This browser can’t start the Research map (often WebGL). Search,
+                property record, and the Access desk below still work.
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         <div className="pointer-events-none absolute inset-0 z-10">
           <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1">

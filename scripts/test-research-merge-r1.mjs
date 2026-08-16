@@ -23,6 +23,7 @@ assert.match(researchMap, /story-map-tool/);
 assert.match(researchMap, /data-research-access-traffic-tool/);
 assert.match(researchMap, /research-access-segments/);
 assert.match(researchMap, /onAccessTrafficToggle/);
+assert.match(researchMap, /data-research-map-fallback|setMapFailed/);
 assert.doesNotMatch(
   researchMap.split("story-map-tool")[0] + "MARKER",
   /bottom-12 left-3[\s\S]*text-navy hover:bg-navy/,
@@ -52,13 +53,14 @@ assert.match(view, /accessTrafficOn/);
 assert.match(view, /isLaunchCorridorFips/);
 
 const nav = read("src/lib/navigation/networks.ts");
-assert.match(nav, /label: "Access"/);
-assert.match(nav, /id: "corridors"/);
+assert.match(nav, /label: "Research"/);
+assert.match(nav, /Access desk is inside Research|soft-hidden/i);
 
 const workspace = read(
   "src/components/broker/intelligence/ShiWorkspace.tsx",
 );
-assert.match(workspace, /title: "Access"/);
+assert.match(workspace, /mode.*access|mode=access/);
+assert.match(workspace, /PropertyIntelligenceView/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-RESEARCH-MERGE|R1/);

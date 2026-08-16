@@ -832,7 +832,7 @@ export const SHI_WAVES: ShiWave[] = [
     goal: "Help pros answer which property has the best traffic exposure — land-first, plain language, no Corridors rewrite.",
     status: "done",
     frontend: [
-      "C2.0-A…F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
+      "C2.0-A · C2.0-B · C2.0-C · C2.0-D · C2.0-E · C2.0-F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
       "C2.0-F2 shipping: Ask deepen — frontage · corner/dual · confidence · this exposure (desk facts)",
       "Ask Archie: corridor-ask-v2.2 — F2 desk deepen + DC flood/utilities/env/deeds + IX-1 meters; no LLM stats",
       "Preserve v1 toolbox · growth watch · scenarios · analyze · area compare",
@@ -965,21 +965,22 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-RESEARCH-MERGE",
-    name: "Research owns Access tools (R1…)",
+    name: "Research owns Access tools (R1…R2)",
     goal: "Bring Corridors capability into Research map tools without deleting APIs or desk facts — one room for land + access.",
     status: "current",
     frontend: [
       "R1: story-map-tool readable chrome (navy/gold active) on Research + Access maps",
       "R1: Research Traffic overlay + Access panel (frontage · IX · nearby AADT)",
-      "R1: Ribbon label Access (same corridors route) — deep desk kept",
+      "R2: Access desk Ask · Sites · Compare inside Research",
+      "R2: Ribbon Access tab soft-hidden; section=corridors → mode=access",
     ],
     backend: [
-      "Reuse shiCorridorsTraffic · shiCorridorsParcelLocation — no new landlord SKUs",
-      "Armor npm run test:research-merge-r1",
+      "Reuse shiCorridorsTraffic · parcel-location · strongest-sites — no new landlord SKUs",
+      "Shared ShiCorridorsAskPanel · Armor test:research-merge-r1 · r2",
     ],
     outOfScope: [
       "Deleting Corridors APIs / Study Vault folders",
-      "Hiding Access tab before R2 parity (Ask / Strongest Sites / compare)",
+      "Deleting ShiCorridorsView source (kept for extract/tests)",
       "Survey-grade or live-congestion claims",
     ],
   },

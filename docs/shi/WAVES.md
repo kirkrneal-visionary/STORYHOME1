@@ -13,8 +13,8 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-RESEARCH-MERGE · **R1 shipping**
-Access facts + Traffic tool live inside Research. Map toolbar readable (navy/gold). Deep Access desk kept (old Corridors route) — no data loss.
+### ARCHIE-RESEARCH-MERGE · **R2 shipping**
+Access desk (Ask · Sites · Compare) inside Research. Access tab soft-hidden. Old `section=corridors` redirects to `mode=access`. APIs kept.
 
 ### ARCHIE-IX · **IX-1 live**
 Approx meters to nearest mapped-road crossing on the Access / Research desk.
@@ -26,11 +26,11 @@ Owned clerk deed index scaffold — user reveal still closed until DEEDS-2.
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- R2: Ask / Strongest Sites / compare panels in Research (then hide Access tab)  
 - DEEDS-2: peer-grade clerk coverage → open user reveal  
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-RESEARCH-MERGE R1 — Traffic tool + Access panel + readable map tools  
 - ARCHIE-IX IX-1 — intersection meter distance  
 - ARCHIE-DEEDS DEEDS-1 — clerk index scaffold (reveal closed)  
 - ARCHIE-LAUNCH7-MAP L7-1…3 — free-world streets · owned tile API + disk cache · CDN/R2 hooks  

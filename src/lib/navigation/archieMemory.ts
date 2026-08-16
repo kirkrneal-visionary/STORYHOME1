@@ -39,7 +39,8 @@ export function archieHrefForModule(module: ArchieModule): string {
   if (module === "vault") return "/portal/intelligence?section=vault";
   if (module === "prospects") return "/portal/intelligence?section=prospects";
   if (module === "farms") return "/portal/intelligence?section=farms";
-  if (module === "corridors") return "/portal/intelligence?section=corridors";
+  /* R2 — Access desk lives inside Research */
+  if (module === "corridors") return "/portal/intelligence?mode=access";
   return "/portal/intelligence";
 }
 

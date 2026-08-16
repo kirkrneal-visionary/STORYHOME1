@@ -35,12 +35,16 @@ assert.ok(
 
 const view = read("src/components/broker/intelligence/ShiCorridorsView.tsx");
 assert.match(view, /data-corridors-version="c2-0-f/);
-assert.match(view, /data-corridor-ask-panel/);
-assert.match(view, /data-corridor-ask-chips/);
-assert.match(view, /data-corridor-ask-answer/);
-assert.match(view, /data-corridor-ask-missing/);
+assert.match(view, /ShiCorridorsAskPanel/);
 assert.match(view, /answerCorridorAsk/);
-assert.match(view, /AskArchiePanel/);
+
+const askPanel = read(
+  "src/components/broker/intelligence/ShiCorridorsAskPanel.tsx",
+);
+assert.match(askPanel, /data-corridor-ask-panel/);
+assert.match(askPanel, /data-corridor-ask-chips/);
+assert.match(askPanel, /data-corridor-ask-answer/);
+assert.match(askPanel, /data-corridor-ask-missing/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /C2\.0-F/);
