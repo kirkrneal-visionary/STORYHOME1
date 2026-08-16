@@ -1,8 +1,9 @@
 /**
- * ARCHIE-INTELLIGENCE Phase 1–3 — property brief (deterministic).
+ * ARCHIE-INTELLIGENCE Phase 1–4 — property brief (deterministic).
  * P1: property-aware findings from desk records.
  * P2: spatial context from matches · Access intel · optional traffic stations.
  * P3: conclusion assistance — current read, confidence, verify, alternatives.
+ * P4: browser-local reasoning memory (since last look) — see archie-reasoning-memory.
  * Tools / Story Home records establish facts. No LLM. No fabrication.
  * You remain the decision maker. This is not buy/sell advice.
  */
@@ -23,8 +24,9 @@ import type { ShiOwnerMatch, ShiPropertyDetail } from "@/lib/shi/types";
 export const ARCHIE_PHASE1_VERSION = "archie-intelligence-p1" as const;
 export const ARCHIE_PHASE2_VERSION = "archie-intelligence-p2" as const;
 export const ARCHIE_PHASE3_VERSION = "archie-intelligence-p3" as const;
+export const ARCHIE_PHASE4_VERSION = "archie-intelligence-p4" as const;
 /** Active brief version. */
-export const ARCHIE_BRIEF_VERSION = ARCHIE_PHASE3_VERSION;
+export const ARCHIE_BRIEF_VERSION = ARCHIE_PHASE4_VERSION;
 
 export type ArchieTruthClass =
   | "known"
