@@ -381,6 +381,54 @@ html[data-role="professional"] {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
+/**
+ * Map toolbar on dark Story Glass — readable forever.
+ * Active = Story navy + gold (Research OS blue).
+ * Idle = paper/ink on glass — never navy-on-black.
+ */
+.story-map-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: var(--radius-md, 0.5rem);
+  padding: 0.375rem 0.625rem;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--paper);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.story-map-tool:hover {
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
+}
+.story-map-tool-active {
+  background: var(--navy);
+  color: var(--gold);
+}
+.story-map-tool-active:hover {
+  background: var(--navy-soft);
+  color: var(--gold);
+}
+.story-map-tool-muted {
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+.story-map-tool-input {
+  width: 3rem;
+  border-radius: 0.25rem;
+  border: 1px solid color-mix(in srgb, var(--paper) 28%, transparent);
+  background: color-mix(in srgb, var(--env-0) 55%, transparent);
+  padding: 0.125rem 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--paper);
+}
+
 /* App chrome (nav / tabs) — Story Glass shell edge */
 .story-chrome {
   background: var(--glass-bg-strong);

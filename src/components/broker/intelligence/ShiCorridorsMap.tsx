@@ -1250,10 +1250,8 @@ export function ShiCorridorsMap({
       onClick={() => selectTool(id)}
       title={title}
       className={cn(
-        "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold",
-        tool === id
-          ? "bg-gold text-navy"
-          : "text-navy hover:bg-navy/10",
+        "story-map-tool",
+        tool === id && "story-map-tool-active",
       )}
     >
       {icon}
@@ -1313,10 +1311,8 @@ export function ShiCorridorsMap({
               type="button"
               onClick={() => setBase(id)}
               className={cn(
-                "rounded-lg px-2 py-1.5 font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                base === id
-                  ? "bg-gold text-navy"
-                  : "bg-transparent text-navy hover:bg-navy/10",
+                "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                base === id && "story-map-tool-active",
               )}
             >
               {label}
@@ -1353,7 +1349,7 @@ export function ShiCorridorsMap({
                 "Tap a center for a radius study",
               )}
               {tool === "radius" ? (
-                <label className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-navy">
+                <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
                   mi
                   <input
                     type="number"
@@ -1366,7 +1362,7 @@ export function ShiCorridorsMap({
                       if (!Number.isFinite(n)) return;
                       setRadiusMiles(Math.min(10, Math.max(0.25, n)));
                     }}
-                    className="w-12 rounded border border-navy/25 bg-white px-1 py-0.5 font-mono text-[10px] font-bold text-navy"
+                    className="story-map-tool-input"
                   />
                 </label>
               ) : null}

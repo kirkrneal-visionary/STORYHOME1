@@ -8,6 +8,7 @@ import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFlood
 import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
 import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
 import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
+import { ShiResearchAccessPanel } from "@/components/broker/intelligence/ShiResearchAccessPanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -42,11 +43,19 @@ import {
   shiUtilitiesAtPoint,
   shiEnvironmentAtPoint,
   shiDeedsForParcel,
+  shiCorridorsTraffic,
+  shiCorridorsParcelLocation,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
   shiSearch,
 } from "@/lib/shi/client";
+import { isLaunchCorridorFips } from "@/lib/shi/corridors";
+import type {
+  TrafficCorridorSegment,
+  TrafficStation,
+} from "@/lib/shi/corridors";
+import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import type {
   ShiAreaAnalysis,
@@ -108,6 +117,16 @@ export function PropertyIntelligenceView({
   const [environmentDesk, setEnvironmentDesk] =
     useState<EnvironmentDesk | null>(null);
   const [deedsFact, setDeedsFact] = useState<DeedsFact | null>(null);
+  const [accessIntel, setAccessIntel] = useState<ParcelLocationIntel | null>(
+    null,
+  );
+  const [accessLoading, setAccessLoading] = useState(false);
+  const [accessTrafficOn, setAccessTrafficOn] = useState(false);
+  const [accessTrafficLoading, setAccessTrafficLoading] = useState(false);
+  const [accessSegments, setAccessSegments] = useState<TrafficCorridorSegment[]>(
+    [],
+  );
+  const [accessStations, setAccessStations] = useState<TrafficStation[]>([]);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -232,6 +251,7 @@ export function PropertyIntelligenceView({
         setUtilitiesFact(null);
         setEnvironmentDesk(null);
         setDeedsFact(null);
+        setAccessIntel(null);
         setDiscoverPins([]);
         if (property.countyFips) {
           track("archie_parcel_opened", { county_fips: property.countyFips });
@@ -286,6 +306,29 @@ export function PropertyIntelligenceView({
             .catch(() => {
               setDeedsFact(null);
             });
+          /* R1 — Access desk facts inside Research (same APIs as Corridors). */
+          if (isLaunchCorridorFips(fips)) {
+            setAccessLoading(true);
+            void shiCorridorsParcelLocation({
+              propId: property.propId,
+              source: property.source,
+              countyFips: fips,
+              lat,
+              lng,
+            })
+              .then((body) => {
+                setAccessIntel(body.intel ?? null);
+              })
+              .catch(() => {
+                setAccessIntel(null);
+              })
+              .finally(() => {
+                setAccessLoading(false);
+              });
+          } else {
+            setAccessIntel(null);
+            setAccessLoading(false);
+          }
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load property");
@@ -913,6 +956,42 @@ export function PropertyIntelligenceView({
           onActiveFrameIdChange={setActiveFrameId}
           onCreateFrame={createFrame}
           onSelectParcel={openFromMap}
+          accessTrafficOn={accessTrafficOn}
+          accessTrafficLoading={accessTrafficLoading}
+          accessSegments={accessSegments}
+          accessStations={accessStations}
+          onAccessTrafficToggle={() => {
+            const next = !accessTrafficOn;
+            setAccessTrafficOn(next);
+            if (!next) return;
+            const fips =
+              selected?.countyFips ||
+              AVAILABLE_COUNTIES.find((c) => c.source === source)?.fips ||
+              "";
+            if (!fips || !isLaunchCorridorFips(fips)) {
+              setAreaError(
+                "Traffic overlay works in the launch 7 counties — pick a launch county parcel first.",
+              );
+              setAccessTrafficOn(false);
+              return;
+            }
+            if (accessSegments.length > 0) return;
+            setAccessTrafficLoading(true);
+            void shiCorridorsTraffic(fips)
+              .then((body) => {
+                setAccessSegments(body.segments ?? []);
+                setAccessStations(body.stations ?? []);
+              })
+              .catch(() => {
+                setAccessSegments([]);
+                setAccessStations([]);
+                setAreaError("Could not load traffic overlay for this county.");
+                setAccessTrafficOn(false);
+              })
+              .finally(() => {
+                setAccessTrafficLoading(false);
+              });
+          }}
           className="h-[420px] min-h-[400px] xl:h-full xl:min-h-0"
         />
 
@@ -1157,6 +1236,16 @@ export function PropertyIntelligenceView({
               <ShiUtilitiesEvidencePanel utilities={utilitiesFact} />
               <ShiEnvironmentEvidencePanel environment={environmentDesk} />
               <ShiDeedsEvidencePanel deeds={deedsFact} />
+              {selected.countyFips &&
+              isLaunchCorridorFips(selected.countyFips) ? (
+                <ShiResearchAccessPanel
+                  intel={accessIntel}
+                  loading={accessLoading}
+                  stations={accessStations}
+                  lat={selected.centroidLat}
+                  lng={selected.centroidLng}
+                />
+              ) : null}
 
               <ShiCadEvidencePanel
                 property={selected}
