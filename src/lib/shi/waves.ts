@@ -814,7 +814,6 @@ export const SHI_WAVES: ShiWave[] = [
       "SW-1…SW-8 LIVE: Agent World, library, presence, play caps, analytics, share link",
       "SW-7 LIVE: Story Walk compositor — pick listings → Living Mark + photo walk → WebM",
       "SW-8 LIVE: Share film (native file/link/clipboard) + encode harden",
-      "REMINDER: public Agent World visitor polish still owed",
     ],
     backend: [
       "Armor scripts/test-story-walk-sw1…sw8.mjs",
@@ -854,7 +853,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-DATA-COVERAGE",
     name: "Data Coverage · free public truth (DC-1…5)",
     goal: "Peer-grade flood / utilities / environment for launch 7 without click-metered landlords — reveal only when polished; retract on fail.",
-    status: "current",
+    status: "done",
     frontend: [
       "DC-1: ShiFloodEvidencePanel on Research + Corridors parcel (KNOWN/VERIFY chips)",
       "DC-2: ShiUtilitiesEvidencePanel — PUCT water/sewer CCN certificated areas",
@@ -881,10 +880,28 @@ export const SHI_WAVES: ShiWave[] = [
       "Paywall for any evidence field",
     ],
   },
+  {
+    id: "AGENT-WORLD-POLISH",
+    name: "Agent World polish · visitor surface (AW-1)",
+    goal: "Clarify public Agent World CTAs, trust strip, empty states, presence feel, and mobile — not a redesign.",
+    status: "current",
+    frontend: [
+      "AW-1: visitor CTA hierarchy — primary listings; hide Find agents on visitor",
+      "AW-1: trust strip 3-col mobile · empty listings / bio states",
+      "AW-1: Living Mark enter motion + atmosphere sheen (reduce-motion safe)",
+      "Markers data-agent-world-polish=aw-1",
+    ],
+    backend: ["Armor npm run test:agent-world-polish"],
+    outOfScope: [
+      "Full Agent World redesign / social clone",
+      "Story Walk film changes",
+      "New engagement event taxonomy",
+    ],
+  },
 ];
 
-/** Current product line — Data Coverage DC-1. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-DATA-COVERAGE" as const;
+/** Current product line — Agent World visitor polish. */
+export const ARCHIE_CURRENT_WAVE = "AGENT-WORLD-POLISH" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

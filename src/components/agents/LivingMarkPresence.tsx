@@ -175,12 +175,16 @@ export function LivingMarkPresence({
         data-living-mark-video-ready={videoUrl ? "true" : "false"}
         data-living-mark-audience={audience}
         data-living-mark-cap={capState}
-        className="relative h-24 w-24 md:h-28 md:w-28"
+        className={cn(
+          "living-mark-presence relative h-24 w-24 md:h-28 md:w-28",
+          playing && "living-mark-presence--playing",
+        )}
         aria-label={`${name} Living Mark`}
       >
         <div
           className={cn(
-            "flex h-full w-full items-center justify-center overflow-hidden rounded-full ring-2 ring-gold/45 ring-offset-2 ring-offset-[var(--background)]",
+            "flex h-full w-full items-center justify-center overflow-hidden rounded-full ring-2 ring-gold/45 ring-offset-2 ring-offset-[var(--background)] transition-[box-shadow,transform] duration-500 ease-out",
+            playing && "scale-[1.02] ring-gold/70 shadow-[0_0_0_1px_rgba(245,183,30,0.25)]",
             !still && !playing && tone,
           )}
         >
@@ -200,7 +204,14 @@ export function LivingMarkPresence({
             />
           ) : still ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={still} alt="" className="h-full w-full object-cover" />
+            <img
+              src={still}
+              alt=""
+              className={cn(
+                "h-full w-full object-cover transition-opacity duration-500",
+                mode === "frozen" && "opacity-95",
+              )}
+            />
           ) : (
             <span className="font-serif text-2xl font-bold text-navy md:text-3xl">
               {initials || "SH"}

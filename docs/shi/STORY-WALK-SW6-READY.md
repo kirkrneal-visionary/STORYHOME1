@@ -8,7 +8,8 @@
 
 ## Owner sticky
 
-**Public Agent World still needs a dedicated polish pass** — layout, presence feel, visitor CTA clarity, trust strip, empty states, mobile. Share makes this surface more public; polish stays on the board.
+**Resolved by AW-1** — see [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md).  
+Public Agent World visitor polish (CTA clarity, trust, empty, mobile, presence) shipped as follow-up to Share.
 
 ---
 
@@ -31,7 +32,7 @@ Clean **share of Agent World URL / card**. Not the Story Walk film (SW-7).
 - [x] No film compositor
 - [x] Armor `test:story-walk-sw6`
 - [ ] Preview on eqmg before live
-- [ ] Public Agent World polish (parallel / follow-up)
+- [x] Public Agent World polish (AW-1 follow-up)
 
 ---
 

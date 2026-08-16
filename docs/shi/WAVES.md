@@ -8,24 +8,20 @@
 **Analytics:** [`STORY-ANALYTICS-FOUNDATION.md`](./STORY-ANALYTICS-FOUNDATION.md) · [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md)  
 **Scenarios:** [`ARCHIE-INTELLIGENCE-SCENARIOS.md`](./ARCHIE-INTELLIGENCE-SCENARIOS.md)  
 **Ops scale:** [`ARCHIE-COUNTY-OPS-SCALE.md`](./ARCHIE-COUNTY-OPS-SCALE.md)  
-**Story Walk:** [`STORY-WALK.md`](./STORY-WALK.md) · [`STORY-WALK-SW6-READY.md`](./STORY-WALK-SW6-READY.md)  
+**Story Walk:** [`STORY-WALK.md`](./STORY-WALK.md) · [`STORY-WALK-SW6-READY.md`](./STORY-WALK-SW6-READY.md) · [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md)  
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-DATA-COVERAGE · **DC-1…DC-5 shipping**
-FEMA flood · PUCT CCN · NWI/TIGER environment · shared evidence chips · **deeds dark store** (no user reveal until clerk-grade). See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).  
-**Track complete** for free public + dark deeds path — flip clerk FIPS only after owned ingest.
+### AGENT-WORLD-POLISH · **AW-1 shipping**
+Public Agent World visitor surface — CTA clarity, trust strip, empty states, presence feel, mobile. See [`AGENT-WORLD-POLISH.md`](./AGENT-WORLD-POLISH.md).
 
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
-### Owner sticky — do not forget
-**Public Agent World still needs more polish** (visitor surface, presence feel, CTAs, empty states, mobile).
-
 ## Next
-- Parallel: public Agent World polish  
+- Land Ask deepen (C2.0-F2) on eqmg → owner live gate  
 - Own clerk-grade deed index for launch 7 before any deeds reveal  
-- Deepen Ask intents on revealed facts only  
+- Intersection distance as desk GIS arrives
 
 ## Done (recent)
 - ARCHIE-DATA-COVERAGE DC-1…DC-5 — flood · utilities · environment · evidence UI · deeds dark  

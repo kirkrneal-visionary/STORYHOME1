@@ -299,6 +299,48 @@ html[data-role="professional"] {
   transform: scale(0.985);
 }
 
+/* AW-POLISH — Agent World atmosphere + Living Mark presence (respect reduce-motion) */
+@keyframes agentWorldSheen {
+  0% {
+    transform: translateX(-12%) skewX(-8deg);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateX(112%) skewX(-8deg);
+    opacity: 0;
+  }
+}
+@keyframes livingMarkEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.agent-world-atmosphere-sheen {
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(245, 183, 30, 0.14) 50%,
+    transparent 60%
+  );
+  animation: agentWorldSheen 5.5s var(--motion-ease-standard, ease) 0.4s 1 both;
+  pointer-events: none;
+}
+.living-mark-presence {
+  animation: livingMarkEnter 0.55s var(--motion-ease-standard, ease) both;
+}
+.living-mark-presence--playing {
+  animation:
+    livingMarkEnter 0.55s var(--motion-ease-standard, ease) both;
+}
+
 /* Soft surface card — raise on interact, not hard box identity */
 .story-card {
   border-radius: var(--radius-lg);
@@ -560,7 +602,9 @@ html[data-header-state="minimal"] .story-living-mark {
   .story-scrim,
   .story-living-brand,
   .story-living-tagline,
-  .story-app-shell::before {
+  .story-app-shell::before,
+  .agent-world-atmosphere-sheen,
+  .living-mark-presence {
     transition: none !important;
     animation: none !important;
     transform: none !important;
