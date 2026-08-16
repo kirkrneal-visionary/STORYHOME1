@@ -19,7 +19,7 @@ assert.match(doc, /NEXT_PUBLIC_LAUNCH7_STREETS_TILES/);
 assert.match(doc, /Polk|Angelina|Walker/);
 
 const launch = read("src/lib/shi/launch7-map.ts");
-assert.match(launch, /l7-1/);
+assert.match(launch, /l7-[12]/);
 assert.match(launch, /launch7UnionBbox/);
 assert.match(launch, /NEXT_PUBLIC_LAUNCH7_STREETS_TILES/);
 assert.match(launch, /NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES/);
@@ -27,7 +27,7 @@ assert.match(launch, /LAUNCH7_MAP_HONESTY/);
 
 const style = read("src/lib/map-style.ts");
 assert.match(style, /openfreemap-liberty/);
-assert.match(style, /MAP_SOVEREIGNTY_VERSION|l7-1/);
+assert.match(style, /MAP_SOVEREIGNTY_VERSION|l7-[12]/);
 assert.match(style, /ownedStreetsTileTemplate|LAUNCH7_STREETS/);
 assert.doesNotMatch(style, /tile\.openstreetmap\.org/);
 assert.doesNotMatch(style, /demotiles\.maplibre\.org\/font/);

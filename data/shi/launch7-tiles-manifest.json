@@ -1,0 +1,30 @@
+{
+  "wave": "l7-2",
+  "builtAt": "2026-08-16T17:37:09.464Z",
+  "unionBbox": [
+    -95.9,
+    29.85,
+    -94.01,
+    31.57
+  ],
+  "streetsMaxZoom": 10,
+  "imageryMaxZoom": 11,
+  "streets": {
+    "fetched": 36,
+    "skipped": 32,
+    "bytes": 1192811
+  },
+  "imagery": {
+    "fetched": 144,
+    "skipped": 62,
+    "bytes": 2485902
+  },
+  "paths": {
+    "streets": "data/shi/tiles/streets/{z}/{x}/{y}.pbf",
+    "imagery": "data/shi/tiles/imagery/{z}/{x}/{y}.jpg"
+  },
+  "api": {
+    "streets": "/api/map/launch7/streets/{z}/{x}/{y}",
+    "imagery": "/api/map/launch7/imagery/{z}/{x}/{y}"
+  }
+}

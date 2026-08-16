@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Launch-7 owned basemap tile cache (seed locally / CDN)
+data/shi/tiles/streets/
+data/shi/tiles/imagery/

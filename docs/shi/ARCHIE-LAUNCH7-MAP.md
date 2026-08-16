@@ -15,28 +15,33 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 
 ## Waves
 
-### L7-1 — Free-world basemap contract (**shipping**)
+### L7-1 — Free-world basemap contract (**done**)
 
-- Streets default = **OpenFreeMap liberty** vector (no `tile.openstreetmap.org` hotlink)  
-- Optional owned overrides: `NEXT_PUBLIC_LAUNCH7_STREETS_TILES`, `NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES` (`{z}/{x}/{y}` templates)  
-- Imagery / topo / gray remain switchable **borrowed** public rasters until L7-2  
-- Markers: `data-map-sovereignty="l7-1"` · Research also `data-map-free-world="1"`  
-- Registry: `src/lib/shi/launch7-map.ts` (union bbox + honesty)
+- Streets = OpenFreeMap liberty vector schema (no `tile.openstreetmap.org` hotlink)  
+- Optional CDN overrides: `NEXT_PUBLIC_LAUNCH7_STREETS_TILES`, `NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES`  
+- Markers: `data-map-sovereignty` · Research `data-map-free-world="1"`  
+- Registry: `src/lib/shi/launch7-map.ts`
 
-### L7-2 — Owned launch-7 clip (next)
+### L7-2 — Owned launch-7 tile service (**shipping**)
 
-- Clip vector + NAIP/aerial for the launch-7 union bbox into PMTiles / CDN  
-- Point env overrides at our files — Research works offline-from-vendor  
-- Drop borrowed imagery inside the footprint when owned aerial is peer-grade
+- Clients load **only** Story Home endpoints:
+  - `/api/map/launch7/streets/{z}/{x}/{y}` — vector (OpenMapTiles schema)
+  - `/api/map/launch7/imagery/{z}/{x}/{y}` — USGS Imagery Only JPEG
+- Disk cache under `data/shi/tiles/{streets|imagery}/…` (gitignored blobs)
+- Miss inside footprint → fetch upstream → write owned cache → return
+- Seed: `npm run build:launch7-tiles` → `data/shi/launch7-tiles-manifest.json`
+- Imagery default is **our API** (not Esri World Imagery)
+- Marker: `data-map-sovereignty="l7-2"`
 
-### L7-3 — Serve + refresh ops
+### L7-3 — Serve + refresh ops (next)
 
-- Host tiles on our CDN / R2 · scheduled refresh · county expand playbook  
+- Host warmed tiles on CDN / R2 · scheduled refresh · county expand playbook  
+- Point `NEXT_PUBLIC_LAUNCH7_*_TILES` at CDN when ready  
 - Still no Mapbox / Google map loads on the Research desk
 
 ## Cost posture (100 agents × $75)
 
-L7-1 keeps Research map loads off Mapbox/Google meters. Marginal cost ≈ CDN for tiles we host later — not per-agent map SKUs.
+Research map traffic hits **our** API/CDN. Upstream fills are bounded to the launch-7 footprint and cache locally — not per-agent Mapbox/Google SKUs.
 
 ## Out of scope
 
@@ -47,4 +52,4 @@ L7-1 keeps Research map loads off Mapbox/Google meters. Marginal cost ≈ CDN fo
 
 ## Armor
 
-`npm run test:launch7-map-l1`
+`npm run test:launch7-map-l1` · `npm run test:launch7-map-l2`

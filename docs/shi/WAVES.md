@@ -13,18 +13,19 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-LAUNCH7-MAP · **L7-1 shipping**
-Free-world Research basemap (OpenFreeMap streets · owned-tile env overrides) for Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker. No Mapbox / Google map loads on the Intelligence desk. See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
+### ARCHIE-LAUNCH7-MAP · **L7-2 shipping**
+Owned launch-7 tile service — `/api/map/launch7/streets` + `/imagery` with disk cache and free upstream fill (OpenFreeMap · USGS). See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
 
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F + F2 **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- L7-2: clip owned streets + NAIP/aerial for launch-7 union bbox → point env overrides  
+- L7-3: host warmed tiles on CDN / R2 · refresh ops · county expand  
 - Own clerk-grade deed index for launch 7 before any deeds reveal  
 - Intersection **meter distance** only after a versioned desk field exists  
 
 ## Done (recent)
+- ARCHIE-LAUNCH7-MAP L7-1 — free-world OpenFreeMap streets contract  
 - ARCHIE-CORRIDORS-2 C2.0-F2 — Ask deepen · map soft-fail  
 - AGENT-WORLD-POLISH AW-1 — visitor CTA · trust · empty · presence  
 - ARCHIE-DATA-COVERAGE DC-1…DC-5 — flood · utilities · environment · evidence UI · deeds dark  

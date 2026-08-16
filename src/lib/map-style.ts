@@ -5,7 +5,9 @@ import type {
 import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
 import {
   LAUNCH7_MAP_SOVEREIGNTY,
-  ownedSatelliteTileTemplate,
+  resolveSatelliteTileTemplate,
+  resolveStreetsVectorTemplate,
+  streetsUseOwnedRaster,
   ownedStreetsTileTemplate,
 } from "@/lib/shi/launch7-map";
 
@@ -57,54 +59,69 @@ type LibertyStyle = {
 };
 
 /**
- * Full basemap style:
- * - Streets = free-world OpenFreeMap vector (or owned raster override) — no Mapbox/Google
- * - Imagery / topo / gray = borrowed public rasters until launch-7 owned aerial
+ * Full basemap style (L7-2):
+ * - Streets = owned /api/map/launch7/streets vector (OpenFreeMap schema) unless raster override
+ * - Imagery = owned /api/map/launch7/imagery (USGS cache) unless CDN override
+ * - Topo / terrain / gray remain borrowed switchable rasters
  */
 export function buildStoryMapStyle(): StyleSpecification {
   const liberty = libertyStyle as LibertyStyle;
-  const ownedStreets = ownedStreetsTileTemplate();
-  const ownedSat = ownedSatelliteTileTemplate();
+  const rasterStreets = streetsUseOwnedRaster();
+  const streetsRasterTmpl = ownedStreetsTileTemplate();
+  const satelliteTiles = [resolveSatelliteTileTemplate()];
 
-  const fwSources: StyleSpecification["sources"] = ownedStreets
-    ? {
-        "launch7-streets": {
-          type: "raster",
-          tiles: [ownedStreets],
-          tileSize: 256,
-          attribution: "Story Home · launch 7 owned streets",
-        },
-      }
-    : { ...liberty.sources };
+  let fwSources: StyleSpecification["sources"];
+  let fwLayers: LayerSpecification[];
 
-  const fwLayers: LayerSpecification[] = ownedStreets
-    ? [
-        {
-          id: "fw-owned-streets",
-          type: "raster",
-          source: "launch7-streets",
-        },
-      ]
-    : liberty.layers.map((layer) => ({
-        ...layer,
-        id: `fw-${layer.id}`,
-      }));
+  if (rasterStreets && streetsRasterTmpl) {
+    fwSources = {
+      "launch7-streets": {
+        type: "raster",
+        tiles: [streetsRasterTmpl],
+        tileSize: 256,
+        attribution: "Story Home · launch 7 owned streets",
+      },
+    };
+    fwLayers = [
+      {
+        id: "fw-owned-streets",
+        type: "raster",
+        source: "launch7-streets",
+      },
+    ];
+  } else {
+    const vectorTiles = resolveStreetsVectorTemplate();
+    fwSources = {
+      ...liberty.sources,
+      openmaptiles: {
+        type: "vector",
+        tiles: [vectorTiles],
+        minzoom: 0,
+        maxzoom: 14,
+        attribution:
+          "© OpenMapTiles © OpenStreetMap · Story Home launch-7 cache",
+      },
+    };
+    fwLayers = liberty.layers.map((layer) => ({
+      ...layer,
+      id: `fw-${layer.id}`,
+    }));
+  }
 
   freeWorldLayerIds = fwLayers.map((l) => l.id);
-
-  const satelliteTiles = ownedSat
-    ? [ownedSat]
-    : [`${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`];
 
   return {
     version: 8,
     metadata: {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
-      "storyhome:streets": ownedStreets ? "owned-raster" : "openfreemap-liberty",
-      "storyhome:satellite": ownedSat ? "owned-raster" : "esri-world-imagery",
+      "storyhome:streets": rasterStreets
+        ? "owned-raster"
+        : "owned-vector-api",
+      "storyhome:satellite": "owned-imagery-api",
     },
-    /** Prefer OpenFreeMap fonts (production-safe) over MapLibre demotiles. */
-    glyphs: liberty.glyphs ?? "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+    glyphs:
+      liberty.glyphs ??
+      "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
     sprite: liberty.sprite,
     sources: {
       ...fwSources,
@@ -112,10 +129,8 @@ export function buildStoryMapStyle(): StyleSpecification {
         type: "raster",
         tiles: satelliteTiles,
         tileSize: 256,
-        maxzoom: 22,
-        attribution: ownedSat
-          ? "Story Home · launch 7 owned imagery"
-          : "Imagery © Esri, Maxar, Earthstar Geographics",
+        maxzoom: 18,
+        attribution: "Imagery © USGS National Map · Story Home launch-7 cache",
       },
       labels: {
         type: "raster",
