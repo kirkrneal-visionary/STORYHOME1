@@ -13,19 +13,19 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-LAUNCH7-MAP · **L7-3 shipping**
-CDN/R2 publish path · refresh ops · county expand playbook. Serve mode `api` until `NEXT_PUBLIC_LAUNCH7_CDN_BASE` is set. See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
+### ARCHIE-DEEDS · **DEEDS-1 shipping**
+Owned clerk deed index scaffold for launch 7 — ingest · coverage registry · migration 0036. **User reveal stays closed** until DEEDS-2 peer-grade. See [`ARCHIE-DATA-COVERAGE.md`](./ARCHIE-DATA-COVERAGE.md).
 
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F + F2 **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- Owner: set `LAUNCH7_R2_*` + `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on eqmg, run `npm run refresh:launch7-tiles -- --publish`  
-- Own clerk-grade deed index for launch 7 before any deeds reveal  
+- DEEDS-2: peer-grade clerk coverage → open `DEEDS_USER_REVEAL_OPEN`  
 - Intersection **meter distance** only after a versioned desk field exists  
+- R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
-- ARCHIE-LAUNCH7-MAP L7-1…2 — free-world streets · owned tile API + disk cache  
+- ARCHIE-LAUNCH7-MAP L7-1…3 — free-world streets · owned tile API + disk cache · CDN/R2 hooks  
 - ARCHIE-CORRIDORS-2 C2.0-F2 — Ask deepen · map soft-fail  
 - AGENT-WORLD-POLISH AW-1 — visitor CTA · trust · empty · presence  
 - ARCHIE-DATA-COVERAGE DC-1…DC-5 — flood · utilities · environment · evidence UI · deeds dark  
@@ -34,6 +34,7 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 - ARCHIE Corridors v1 waves live (traffic · growth · scenarios · land loop · toolbox)  
 - STORY-SHELL-NAV · HEADER · GLASS · FEEL waves  
 - ARCHIE county ops · analytics foundation  
+
 
 ## Out of scope forever
 - Fake seller-probability / AVM guarantees  

@@ -1,13 +1,18 @@
 /**
- * DC-5 — Clerk deeds dark store (launch 7).
+ * DEEDS-1 — Owned clerk deed index (launch 7) · still dark for users.
  *
- * Knowledge path for deed / transfer evidence once we own clerk-grade records
- * for Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker.
+ * DC-5 reserved the path. DEEDS-1 adds:
+ * - coverage registry (data/shi/clerk-coverage-launch7.json)
+ * - PostGIS/PostgREST tables (migration 0036)
+ * - optional owned-index load when coverage ready
  *
- * Until then: userReveal stays false. No UI. No teaser. No CAD→deed claim.
- * Never rent click-metered deed landlords for this desk.
+ * userReveal stays false until DEEDS-2 peer-grade reveal gate opens.
+ * Never rent paid deed landlords for this desk.
  */
 
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   isLaunchCorridorFips,
   resolveCorridorCounty,
@@ -18,18 +23,35 @@ import {
   type EvidenceTier,
 } from "@/lib/shi/evidence-tier";
 
-export const DEEDS_CLERK_VERSION = "deeds-clerk-v1" as const;
+export const DEEDS_CLERK_VERSION = "deeds-clerk-v1.1" as const;
+
+/** Product reveal still closed in DEEDS-1 even if index rows exist. */
+export const DEEDS_USER_REVEAL_OPEN = false;
 
 export const DEEDS_CLERK_HONESTY =
-  "Deed and transfer history stay dark until Archie owns clerk-grade records for the launch 7 counties. CAD owner-field changes between county loads are not deeds and are never shown as transfer dates.";
+  "Deed and transfer history stay dark until Archie owns clerk-grade records for the launch 7 counties and peer-grade reveal opens. CAD owner-field changes between county loads are not deeds and are never shown as transfer dates.";
 
-export const DEEDS_SOURCE_LABEL = "County clerk (owned — not connected)";
+export const DEEDS_SOURCE_LABEL = "County clerk (owned index)";
 
-/**
- * Counties where clerk-grade transfer polygons/index are peer-ready.
- * Empty by design for DC-5 — flip FIPS only after owned clerk-grade ingest.
- */
-const CLERK_COVERAGE_READY_FIPS: ReadonlySet<string> = new Set();
+export const CLERK_COVERAGE_FILE = join(
+  "data",
+  "shi",
+  "clerk-coverage-launch7.json",
+);
+
+type CoverageFile = {
+  version?: string;
+  readyFips?: string[];
+  counties?: Record<
+    string,
+    {
+      name?: string;
+      ready?: boolean;
+      peerGrade?: boolean;
+      transferCount?: number;
+    }
+  >;
+};
 
 export type DeedsTransfer = {
   recordedDate: string | null;
@@ -60,33 +82,65 @@ export type DeedsFact = {
   userReveal: boolean;
   gateNote: string;
   queriedAt: string;
+  indexConnected: boolean;
 };
 
-/** True only when this FIPS has owned clerk-grade coverage (none yet). */
-export function isClerkCoverageReady(countyFips: string): boolean {
-  return (
-    isLaunchCorridorFips(countyFips) &&
-    CLERK_COVERAGE_READY_FIPS.has(countyFips)
-  );
+function serviceClient(): SupabaseClient | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key, { auth: { persistSession: false } });
 }
 
-/** How many launch-7 counties have clerk-grade ready (0 until ingest). */
-export function clerkCoverageReadyCount(): number {
-  return CLERK_COVERAGE_READY_FIPS.size;
+function loadCoverageFile(): CoverageFile {
+  try {
+    const abs = join(process.cwd(), CLERK_COVERAGE_FILE);
+    if (!existsSync(abs)) return { readyFips: [] };
+    return JSON.parse(readFileSync(abs, "utf8")) as CoverageFile;
+  } catch {
+    return { readyFips: [] };
+  }
 }
 
 /**
- * Pure gate: may the user see deed facts for this county?
- * Requires coverage ready — never invents transfers from CAD.
+ * FIPS with owned clerk index marked ready (file registry).
+ * Empty by default — flip only via ingest after owned clerk-grade load.
+ */
+export function clerkReadyFipsFromRegistry(): ReadonlySet<string> {
+  const file = loadCoverageFile();
+  const fromList = (file.readyFips ?? []).filter(Boolean);
+  const fromMap = Object.entries(file.counties ?? {})
+    .filter(([, v]) => v?.ready)
+    .map(([fips]) => fips);
+  return new Set([...fromList, ...fromMap]);
+}
+
+/** @deprecated DC-5 name — use clerkReadyFipsFromRegistry() */
+export const CLERK_COVERAGE_READY_FIPS = clerkReadyFipsFromRegistry();
+
+/** True only when this FIPS has owned clerk-grade coverage flagged ready. */
+export function isClerkCoverageReady(countyFips: string): boolean {
+  return (
+    isLaunchCorridorFips(countyFips) &&
+    clerkReadyFipsFromRegistry().has(countyFips)
+  );
+}
+
+/** How many launch-7 counties have clerk-grade ready. */
+export function clerkCoverageReadyCount(): number {
+  return clerkReadyFipsFromRegistry().size;
+}
+
+/**
+ * Pure gate: may the user see deed facts?
+ * DEEDS-1 keeps this closed — DEEDS-2 opens after peer-grade for launch 7.
  */
 export function canRevealDeeds(opts: {
   countyFips: string;
   transfers: DeedsTransfer[];
 }): boolean {
+  if (!DEEDS_USER_REVEAL_OPEN) return false;
   if (!isClerkCoverageReady(opts.countyFips)) return false;
-  /* Peer-grade reveal still needs at least a successful clerk read.
-     Empty successful “no deeds found” can reveal later as KNOWN absence —
-     not until coverage opens. */
   void opts.transfers;
   return false;
 }
@@ -97,16 +151,19 @@ function darkFact(opts: {
   lat?: number | null;
   lng?: number | null;
   gateNote: string;
+  transfers?: DeedsTransfer[];
+  indexConnected?: boolean;
 }): DeedsFact {
   const county = resolveCorridorCounty(opts.countyFips);
   const coverageReady = isClerkCoverageReady(opts.countyFips);
+  const transfers = opts.transfers ?? [];
   return {
     version: DEEDS_CLERK_VERSION,
     countyFips: opts.countyFips,
     propId: opts.propId ?? null,
     lat: opts.lat ?? null,
     lng: opts.lng ?? null,
-    transfers: [],
+    transfers,
     coverageReady,
     tier: "UNKNOWN",
     chip: evidenceChip({
@@ -117,18 +174,60 @@ function darkFact(opts: {
     }),
     headline: "Deed history dark",
     detail: coverageReady
-      ? `Clerk coverage is marked ready for ${county.name}, but peer-grade reveal is not open yet.`
+      ? `Owned clerk index is flagged ready for ${county.name}, but peer-grade user reveal is not open yet (DEEDS-1).`
       : `No owned clerk-grade deed index for ${county.name} yet. Archie will not invent transfer history from CAD.`,
     honesty: DEEDS_CLERK_HONESTY,
     userReveal: false,
     gateNote: opts.gateNote,
     queriedAt: new Date().toISOString(),
+    indexConnected: Boolean(opts.indexConnected),
   };
 }
 
+async function loadTransfersFromIndex(opts: {
+  countyFips: string;
+  propId?: string | null;
+}): Promise<{ transfers: DeedsTransfer[]; connected: boolean }> {
+  const sb = serviceClient();
+  if (!sb) return { transfers: [], connected: false };
+
+  try {
+    let q = sb
+      .from("clerk_deed_transfers")
+      .select(
+        "recorded_date, grantor, grantee, instrument, volume_page, doc_number",
+      )
+      .eq("county_fips", opts.countyFips)
+      .order("recorded_date", { ascending: false, nullsFirst: false })
+      .limit(40);
+
+    if (opts.propId?.trim()) {
+      q = q.eq("prop_id", opts.propId.trim());
+    } else {
+      /* Without prop_id we do not dump a whole county — stay empty. */
+      return { transfers: [], connected: true };
+    }
+
+    const { data, error } = await q;
+    if (error) return { transfers: [], connected: false };
+
+    const transfers: DeedsTransfer[] = (data ?? []).map((row) => ({
+      recordedDate: row.recorded_date ?? null,
+      grantor: row.grantor ?? null,
+      grantee: row.grantee ?? null,
+      instrument: row.instrument ?? null,
+      volumePage: row.volume_page ?? null,
+      docNumber: row.doc_number ?? null,
+    }));
+    return { transfers, connected: true };
+  } catch {
+    return { transfers: [], connected: false };
+  }
+}
+
 /**
- * Knowledge-path lookup. Always retracts until clerk-grade coverage opens.
- * Does not read CAD owner diffs as deeds.
+ * Knowledge-path lookup. Loads owned index when coverage ready.
+ * Always retracts user reveal in DEEDS-1.
  */
 export async function fetchDeedsForParcel(opts: {
   countyFips: string;
@@ -159,14 +258,52 @@ export async function fetchDeedsForParcel(opts: {
     });
   }
 
-  /* Future: load owned clerk index, normalize transfers, then decide reveal.
-     Coverage set is empty in DC-5, so this branch is unreachable in prod. */
-  return darkFact({
+  const { transfers, connected } = await loadTransfersFromIndex({
     countyFips,
     propId: opts.propId,
-    lat: opts.lat,
-    lng: opts.lng,
-    gateNote:
-      "Coverage flagged but owned transfer index not connected — stay dark.",
   });
+
+  const reveal = canRevealDeeds({ countyFips, transfers });
+  if (!reveal) {
+    return darkFact({
+      countyFips,
+      propId: opts.propId,
+      lat: opts.lat,
+      lng: opts.lng,
+      transfers,
+      indexConnected: connected,
+      gateNote: connected
+        ? "Owned index connected — DEEDS-1 keeps user reveal closed until peer-grade gate (DEEDS-2)."
+        : "Coverage flagged but owned transfer table not reachable — stay dark.",
+    });
+  }
+
+  /* Unreachable while DEEDS_USER_REVEAL_OPEN is false. */
+  const county = resolveCorridorCounty(countyFips);
+  return {
+    version: DEEDS_CLERK_VERSION,
+    countyFips,
+    propId: opts.propId ?? null,
+    lat: opts.lat ?? null,
+    lng: opts.lng ?? null,
+    transfers,
+    coverageReady: true,
+    tier: transfers.length > 0 ? "KNOWN" : "VERIFY",
+    chip: evidenceChip({
+      tier: transfers.length > 0 ? "KNOWN" : "VERIFY",
+      source: DEEDS_SOURCE_LABEL,
+      asOf: null,
+      label: transfers.length > 0 ? "KNOWN" : "VERIFY",
+    }),
+    headline:
+      transfers.length > 0
+        ? `${transfers.length} clerk transfer${transfers.length === 1 ? "" : "s"}`
+        : `No clerk transfers on index for this parcel (${county.shortName})`,
+    detail: DEEDS_CLERK_HONESTY,
+    honesty: DEEDS_CLERK_HONESTY,
+    userReveal: true,
+    gateNote: "Peer-grade reveal open.",
+    queriedAt: new Date().toISOString(),
+    indexConnected: connected,
+  };
 }

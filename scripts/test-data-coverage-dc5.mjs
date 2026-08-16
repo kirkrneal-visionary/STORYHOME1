@@ -24,9 +24,12 @@ assert.match(lib, /isClerkCoverageReady/);
 assert.match(lib, /canRevealDeeds/);
 assert.match(lib, /userReveal/);
 assert.match(lib, /CLERK_COVERAGE_READY_FIPS/);
+assert.match(lib, /DEEDS_USER_REVEAL_OPEN\s*=\s*false/);
 assert.doesNotMatch(lib, /attom|datatree|corelogic|regrid|zoneomics/i);
-/* Coverage set must start empty — dark by default */
-assert.match(lib, /new Set\(\)/);
+/* Coverage registry starts with empty readyFips — dark by default */
+const cov = JSON.parse(read("data/shi/clerk-coverage-launch7.json"));
+assert.ok(Array.isArray(cov.readyFips));
+assert.equal(cov.readyFips.length, 0);
 
 const route = read("src/app/api/shi/deeds/route.ts");
 assert.match(route, /fetchDeedsForParcel/);

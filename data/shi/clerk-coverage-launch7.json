@@ -1,0 +1,14 @@
+{
+  "version": "deeds-1",
+  "honesty": "Coverage flags only. Empty readyFips until owned clerk ingest marks a county. User reveal stays closed in DEEDS-1.",
+  "readyFips": [],
+  "counties": {
+    "48373": { "name": "Polk", "ready": false, "peerGrade": false, "transferCount": 0 },
+    "48005": { "name": "Angelina", "ready": false, "peerGrade": false, "transferCount": 0 },
+    "48455": { "name": "Trinity", "ready": false, "peerGrade": false, "transferCount": 0 },
+    "48457": { "name": "Tyler", "ready": false, "peerGrade": false, "transferCount": 0 },
+    "48407": { "name": "San Jacinto", "ready": false, "peerGrade": false, "transferCount": 0 },
+    "48291": { "name": "Liberty", "ready": false, "peerGrade": false, "transferCount": 0 },
+    "48471": { "name": "Walker", "ready": false, "peerGrade": false, "transferCount": 0 }
+  }
+}

@@ -902,7 +902,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-LAUNCH7-MAP",
     name: "Launch 7 map sovereignty · CDN/R2 ops (L7-3)",
     goal: "Own launch-7 basemap end-to-end — API cache today, CDN/R2 when credentials land, expand playbook ready.",
-    status: "current",
+    status: "done",
     frontend: [
       "L7-1: OpenFreeMap liberty schema (no OSM.org tile hotlink)",
       "L7-2: MapLibre → /api/map/launch7/streets + /imagery",
@@ -920,10 +920,31 @@ export const SHI_WAVES: ShiWave[] = [
       "ATTOM / Regrid parcel basemap landlords",
     ],
   },
+  {
+    id: "ARCHIE-DEEDS",
+    name: "Owned clerk deeds · index then reveal (DEEDS-1…2)",
+    goal: "Own clerk-grade deed index for launch 7 before any user reveal — no DataTree / ATTOM / CAD-as-deed.",
+    status: "current",
+    frontend: [
+      "DEEDS-1: ShiDeedsEvidencePanel stays retracted (DEEDS_USER_REVEAL_OPEN false)",
+      "DEEDS-1: Ask deed_history honesty unchanged — dark until DEEDS-2",
+    ],
+    backend: [
+      "DEEDS-1: deeds-clerk-v1.1 · clerk-coverage-launch7.json · migration 0036",
+      "DEEDS-1: npm run ingest:clerk-deeds · Armor test:data-coverage-deeds1",
+      "DEEDS-2 next: peer-grade readyFips → open user reveal",
+    ],
+    outOfScope: [
+      "DataTree / ATTOM / CoreLogic deed SKUs",
+      "CAD owner diffs as transfer dates",
+      "User reveal before peer-grade for launch 7",
+      "Paywall / upsell for deed history",
+    ],
+  },
 ];
 
-/** Current product line — Launch 7 map sovereignty. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-LAUNCH7-MAP" as const;
+/** Current product line — owned clerk deeds scaffold. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;
