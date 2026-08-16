@@ -831,28 +831,28 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-CORRIDORS-2",
     name: "Corridors 2.0 · parcel traffic + commercial location",
     goal: "Help pros answer which property has the best traffic exposure — land-first, plain language, no Corridors rewrite.",
-    status: "done",
+    status: "current",
     frontend: [
       "C2.0-A…F LIVE: language · parcel · frontage · exposure/sites · property compare/CTAs · Ask Archie",
-      "C2.0-A language · C2.0-B parcel select · C2.0-C frontage · C2.0-D exposure · C2.0-E compare · C2.0-F Ask",
-      "Ask Archie: canned intents → deterministic facts (corridor-ask-v1) — no LLM stats",
+      "C2.0-F2 shipping: Ask deepen — frontage · corner/dual · confidence · this exposure (desk facts)",
+      "Ask Archie: corridor-ask-v1.1 — no LLM stats; intersection distance TBD",
       "Preserve v1 toolbox · growth watch · scenarios · analyze · area compare",
     ],
     backend: [
-      "Armor scripts/test-corridors-2a…2f.mjs",
+      "Armor scripts/test-corridors-2a…2f.mjs · test:corridors-2f2",
       "Migration 0034_corridor_road_segments.sql · 0035 grants · RPC corridor_parcel_frontage",
       "API parcel-location · strongest-sites · softCache on traffic GET",
     ],
     outOfScope: [
       "Rebuild Corridors from scratch",
-      "Survey-grade frontage claims",
+      "Survey-grade frontage / intersection distance claims",
       "LLM-invented traffic counts",
       "Live congestion / seller probability",
     ],
   },
 ];
 
-/** Last completed product line — Corridors 2.0 A…F live. */
+/** Current product line — Corridors Ask deepen F2. */
 export const ARCHIE_CURRENT_WAVE = "ARCHIE-CORRIDORS-2" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */

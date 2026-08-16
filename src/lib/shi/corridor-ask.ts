@@ -1,8 +1,9 @@
 /**
- * Corridors 2.0-F — Ask Archie (canned intents → deterministic facts).
+ * Corridors 2.0-F + F2 — Ask Archie (canned intents → deterministic facts).
  * LLM never invents property/traffic statistics.
+ * F2 deepens Ask using Site-panel desk facts already on context (no new GIS).
  *
- * Rule version: corridor-ask-v1
+ * Rule version: corridor-ask-v1.1
  */
 
 import type { TrafficStation } from "@/lib/shi/corridors";
@@ -24,11 +25,12 @@ import {
 } from "@/lib/shi/corridor-parcel-traffic";
 import {
   exposureBandLabel,
+  scoreCommercialExposure,
   type RankedSite,
 } from "@/lib/shi/corridor-exposure";
 import type { GrowthWatchArea } from "@/lib/shi/growth-watch";
 
-export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v1" as const;
+export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v1.1" as const;
 
 export const CORRIDOR_ASK_HONESTY =
   "Archie answers from published TxDOT counts, mapped roads, and CAD parcels already on this desk — never invents statistics.";
@@ -40,7 +42,11 @@ export type CorridorAskIntentId =
   | "high_traffic_roads"
   | "growth_patterns"
   | "explain_exposure"
-  | "compare_hint";
+  | "compare_hint"
+  | "parcel_frontage"
+  | "parcel_intersection"
+  | "parcel_confidence"
+  | "parcel_exposure";
 
 export type CorridorAskIntent = {
   id: CorridorAskIntentId;
@@ -50,7 +56,7 @@ export type CorridorAskIntent = {
   match: RegExp;
 };
 
-/** At least 5 canned intents — keyword match only, no LLM. */
+/** Canned intents — keyword match only, no LLM. */
 export const CORRIDOR_ASK_INTENTS: CorridorAskIntent[] = [
   {
     id: "strongest_sites",
@@ -99,6 +105,34 @@ export const CORRIDOR_ASK_INTENTS: CorridorAskIntent[] = [
     chip: "How to compare",
     match: /compare\s+(these\s+)?propert|compare\s+site|side\s+by\s+side/i,
   },
+  {
+    id: "parcel_frontage",
+    label: "What's the approx frontage on this parcel?",
+    chip: "Frontage",
+    match:
+      /frontage|how\s+much\s+front|road\s+front|feet\s+of\s+front|along\s+the\s+road/i,
+  },
+  {
+    id: "parcel_intersection",
+    label: "Is this a corner or dual-road parcel?",
+    chip: "Corner / dual",
+    match:
+      /corner|dual[- ]?road|intersection|two\s+roads|crossroads|at\s+the\s+corner/i,
+  },
+  {
+    id: "parcel_confidence",
+    label: "How confident is the location data here?",
+    chip: "Data confidence",
+    match:
+      /data\s+confidence|how\s+confident|confidence\s+(here|on)|reliable\s+(frontage|data)|limited\s+data/i,
+  },
+  {
+    id: "parcel_exposure",
+    label: "What's the commercial exposure on this parcel?",
+    chip: "This exposure",
+    match:
+      /this\s+(parcel.?s?\s+)?exposure|exposure\s+(here|score|on\s+this)|commercial\s+exposure\s+(here|for\s+this|on\s+this)/i,
+  },
 ];
 
 export type CorridorAskFact = {
@@ -137,6 +171,17 @@ export type CorridorAskContext = {
   compareCount: number;
 };
 
+/** Same labels as property compare — mapped-road heuristic, not survey. */
+export function askIntersectionLabel(
+  intel: ParcelLocationIntel | null | undefined,
+): string {
+  if (!intel) return "—";
+  if (intel.cornerLikely) return "Corner likely";
+  if (intel.dualRoad) return "Dual-road";
+  if (intel.roads.length === 1) return "Single frontage";
+  return "—";
+}
+
 export function matchCorridorAskIntent(
   text: string,
 ): CorridorAskIntent | null {
@@ -153,6 +198,25 @@ function topStations(stations: TrafficStation[], n = 5): TrafficStation[] {
     .filter((s) => s.latestAadt != null && Number.isFinite(s.latestAadt))
     .sort((a, b) => (b.latestAadt ?? 0) - (a.latestAadt ?? 0))
     .slice(0, n);
+}
+
+function needParcel(
+  intentId: CorridorAskIntentId,
+  intentLabel: string,
+  ctx: CorridorAskContext,
+): CorridorAskAnswer | null {
+  if (ctx.selectedParcel) return null;
+  return {
+    intentId,
+    intentLabel,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary:
+      "Select a parcel on the map (zoom in until outlines appear) to answer from desk facts.",
+    facts: [],
+    missing: ["No parcel selected."],
+    hint: "select_parcel",
+  };
 }
 
 function answerStrongest(ctx: CorridorAskContext): CorridorAskAnswer {
@@ -465,6 +529,194 @@ function answerCompare(ctx: CorridorAskContext): CorridorAskAnswer {
   };
 }
 
+/** F2 — approx frontage from mapped roads already on the desk. */
+function answerFrontage(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "parcel_frontage")!;
+  const gate = needParcel("parcel_frontage", intent.label, ctx);
+  if (gate) return gate;
+  const intel = ctx.parcelIntel;
+  if (!intel || intel.totalApproxFrontageFt <= 0) {
+    return {
+      intentId: "parcel_frontage",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary:
+        "Approx frontage is not on the desk yet for this parcel (waiting on mapped roads / polygon).",
+      facts: [],
+      missing: ["Parcel location intel empty or zero frontage."],
+      hint: "select_parcel",
+    };
+  }
+  const facts: CorridorAskFact[] = [
+    {
+      label: "Approx. frontage",
+      value: formatApproxFrontageFt(intel.totalApproxFrontageFt),
+      detail: `${intel.source} · never a survey`,
+    },
+  ];
+  for (const road of intel.roads.slice(0, 4)) {
+    facts.push({
+      label: road.routeId || "Mapped road",
+      value: formatApproxFrontageFt(road.approxFrontageFt),
+      detail:
+        road.aadt != null
+          ? `Nearby AADT ~${Math.round(road.aadt).toLocaleString("en-US")}`
+          : "No AADT on this segment",
+    });
+  }
+  return {
+    intentId: "parcel_frontage",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary:
+      "Approx frontage from mapped roads touching this parcel — directional only, not surveyed.",
+    facts,
+    missing: [],
+    hint: null,
+  };
+}
+
+/**
+ * F2 — corner / dual from mapped-road heuristic.
+ * Honest: no meter distance-to-intersection until a versioned field ships.
+ */
+function answerIntersection(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find(
+    (i) => i.id === "parcel_intersection",
+  )!;
+  const gate = needParcel("parcel_intersection", intent.label, ctx);
+  if (gate) return gate;
+  const intel = ctx.parcelIntel;
+  if (!intel) {
+    return {
+      intentId: "parcel_intersection",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary:
+        "Intersection reading needs parcel location intel (mapped roads). Select a parcel and wait for the Site panel to load.",
+      facts: [],
+      missing: ["No parcel location intel yet."],
+      hint: "select_parcel",
+    };
+  }
+  const label = askIntersectionLabel(intel);
+  return {
+    intentId: "parcel_intersection",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary:
+      "Corner / dual is a mapped-road heuristic — not surveyed intersection distance (distance TBD until we own a versioned field).",
+    facts: [
+      {
+        label: "Intersection",
+        value: label,
+        detail:
+          intel.roads.length === 0
+            ? "No mapped roads touching this parcel yet."
+            : `${intel.roads.length} mapped road${intel.roads.length === 1 ? "" : "s"} on desk`,
+      },
+      {
+        label: "Dual-road",
+        value: intel.dualRoad ? "Yes" : "No",
+      },
+      {
+        label: "Corner likely",
+        value: intel.cornerLikely ? "Yes" : "No",
+        detail: intel.confidenceWhy,
+      },
+    ],
+    missing: [],
+    hint: null,
+  };
+}
+
+function answerConfidence(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "parcel_confidence")!;
+  const gate = needParcel("parcel_confidence", intent.label, ctx);
+  if (gate) return gate;
+  const intel = ctx.parcelIntel;
+  if (!intel) {
+    return {
+      intentId: "parcel_confidence",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary: "Data confidence appears after parcel location intel loads.",
+      facts: [],
+      missing: ["No parcel location intel yet."],
+      hint: "select_parcel",
+    };
+  }
+  const assoc = associateParcelTraffic(ctx.selectedParcel!, ctx.stations);
+  return {
+    intentId: "parcel_confidence",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary: `Location data confidence is ${intel.confidence.toUpperCase()} for this parcel.`,
+    facts: [
+      {
+        label: "Confidence",
+        value: intel.confidence.toUpperCase(),
+        detail: intel.confidenceWhy,
+      },
+      {
+        label: "Frontage source",
+        value: intel.source,
+        detail: intel.ruleVersion,
+      },
+      {
+        label: "Traffic association",
+        value: assoc.confidence.toUpperCase(),
+        detail: assoc.detail,
+      },
+    ],
+    missing: [],
+    hint: null,
+  };
+}
+
+function answerParcelExposure(ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "parcel_exposure")!;
+  const gate = needParcel("parcel_exposure", intent.label, ctx);
+  if (gate) return gate;
+  const pick = ctx.selectedParcel!;
+  const commercial = scoreCommercialExposure({
+    pick,
+    stations: ctx.stations,
+    intel: ctx.parcelIntel,
+    legalAcreage: pick.legalAcreage,
+  });
+  const topFactors = [...commercial.factors]
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 3);
+  return {
+    intentId: "parcel_exposure",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary: `Commercial exposure for this parcel is ${commercial.score}/${commercial.maxScore} · ${exposureBandLabel(commercial.band)} (commercial-exposure-v1) — open WHY? on the Site panel for the full breakdown.`,
+    facts: [
+      {
+        label: "Commercial exposure",
+        value: `${commercial.score}/${commercial.maxScore}`,
+        detail: exposureBandLabel(commercial.band),
+      },
+      ...topFactors.map((f) => ({
+        label: f.label,
+        value: `${f.points}/${f.maxPoints}`,
+        detail: f.detail,
+      })),
+    ],
+    missing: [],
+    hint: null,
+  };
+}
+
 /**
  * Resolve a canned intent (or free-text match) into facts from desk context.
  */
@@ -507,6 +759,14 @@ export function answerCorridorAsk(
       return answerExplainExposure();
     case "compare_hint":
       return answerCompare(ctx);
+    case "parcel_frontage":
+      return answerFrontage(ctx);
+    case "parcel_intersection":
+      return answerIntersection(ctx);
+    case "parcel_confidence":
+      return answerConfidence(ctx);
+    case "parcel_exposure":
+      return answerParcelExposure(ctx);
     default:
       return {
         intentId: "unknown",

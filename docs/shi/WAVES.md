@@ -12,6 +12,9 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
+### ARCHIE-CORRIDORS-2 · **C2.0-F2 Ask deepen shipping**
+Frontage · corner/dual · data confidence · this-parcel exposure Ask chips — desk facts only; intersection **distance TBD**. See [`ARCHIE-CORRIDORS-2.md`](./ARCHIE-CORRIDORS-2.md).
+
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie.
 
@@ -20,7 +23,7 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 
 ## Next
 - Parallel: public Agent World polish  
-- Deepen Ask intents / intersection distance as data arrives  
+- Intersection **meter distance** only after a versioned desk field exists  
 
 ## Done (recent)
 - ARCHIE-CORRIDORS-2 C2.0-A…F — Corridors 2.0 complete (live)  
