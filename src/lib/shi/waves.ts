@@ -946,7 +946,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-IX",
     name: "Intersection meter distance (IX-1)",
     goal: "Versioned desk field for approx meters to nearest mapped-road crossing — CALCULATED/ESTIMATED, not survey-grade.",
-    status: "current",
+    status: "done",
     frontend: [
       "IX-1: Site panel shows approx meters under Dual-road / Corner (data-corridor-ix=ix-1)",
       "IX-1: Ask Corner/dual + compare/report include meters when present",
@@ -963,10 +963,30 @@ export const SHI_WAVES: ShiWave[] = [
       "Counties beyond launch 7",
     ],
   },
+  {
+    id: "ARCHIE-RESEARCH-MERGE",
+    name: "Research owns Access tools (R1…)",
+    goal: "Bring Corridors capability into Research map tools without deleting APIs or desk facts — one room for land + access.",
+    status: "current",
+    frontend: [
+      "R1: story-map-tool readable chrome (navy/gold active) on Research + Access maps",
+      "R1: Research Traffic overlay + Access panel (frontage · IX · nearby AADT)",
+      "R1: Ribbon label Access (same corridors route) — deep desk kept",
+    ],
+    backend: [
+      "Reuse shiCorridorsTraffic · shiCorridorsParcelLocation — no new landlord SKUs",
+      "Armor npm run test:research-merge-r1",
+    ],
+    outOfScope: [
+      "Deleting Corridors APIs / Study Vault folders",
+      "Hiding Access tab before R2 parity (Ask / Strongest Sites / compare)",
+      "Survey-grade or live-congestion claims",
+    ],
+  },
 ];
 
-/** Current product line — intersection meter distance. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-IX" as const;
+/** Current product line — Research owns Access. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-RESEARCH-MERGE" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

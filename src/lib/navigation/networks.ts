@@ -61,7 +61,7 @@ export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
       {
         id: "corridors",
         href: archieHrefForModule("corridors"),
-        label: "Corridors",
+        label: "Access",
         match: "/portal/intelligence",
       },
       {

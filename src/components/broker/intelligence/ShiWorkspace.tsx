@@ -30,9 +30,9 @@ const MODULE_COPY: Record<
       "Search · map · property record. Define a market area, analyze parcels, and save Map Memory or Farms.",
   },
   corridors: {
-    title: "Corridors",
+    title: "Access",
     blurb:
-      "Access · traffic · growth. Custom Traffic tool on TxDOT AADT for your launch counties — planning counts, not live congestion.",
+      "Deep access desk (traffic · growth · compare). Same facts also live on Research — Traffic tool + Access panel. Planning counts, not live congestion.",
   },
   prospects: {
     title: "Prospects",

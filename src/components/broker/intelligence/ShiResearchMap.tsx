@@ -9,7 +9,7 @@ import {
 } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Circle, Grid3x3, Hand, Layers, PenTool, Square, X } from "lucide-react";
+import { Circle, Grid3x3, Hand, Layers, PenTool, Route, Square, X } from "lucide-react";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
@@ -53,6 +53,10 @@ import type {
   ShiOwnerMatch,
   ShiPropertyDetail,
 } from "@/lib/shi/types";
+import type {
+  TrafficCorridorSegment,
+  TrafficStation,
+} from "@/lib/shi/corridors";
 import { cn } from "@/lib/utils";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -99,6 +103,12 @@ type ShiResearchMapProps = {
   onCreateFrame: (boundary: DrawnBoundary) => boolean;
   onSelectParcel: (sel: ShiMapSelect) => void;
   className?: string;
+  /** R1 — Access / traffic overlay (launch-7 planning AADT). */
+  accessTrafficOn?: boolean;
+  onAccessTrafficToggle?: () => void;
+  accessSegments?: TrafficCorridorSegment[];
+  accessStations?: TrafficStation[];
+  accessTrafficLoading?: boolean;
 };
 
 function circleRing(center: LatLng, radiusMiles: number, steps = 64): number[][] {
@@ -173,6 +183,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       onCreateFrame,
       onSelectParcel,
       className,
+      accessTrafficOn = false,
+      onAccessTrafficToggle,
+      accessSegments = [],
+      accessStations = [],
+      accessTrafficLoading = false,
     },
     ref,
   ) {
@@ -538,6 +553,59 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           },
         });
 
+        /* R1 — Access traffic overlay (planning AADT; toggled from toolbar) */
+        map.addSource("research-access-segments", {
+          type: "geojson",
+          data: EMPTY_FC,
+        });
+        map.addLayer({
+          id: "research-access-segments-line",
+          type: "line",
+          source: "research-access-segments",
+          layout: { visibility: "none" },
+          paint: {
+            "line-color": [
+              "step",
+              ["coalesce", ["get", "aadt"], 0],
+              "#5a7a8a",
+              5000,
+              "#2a9d8f",
+              15000,
+              "#c9a227",
+              30000,
+              "#c0392b",
+            ],
+            "line-width": 2.5,
+            "line-opacity": 0.85,
+          },
+        });
+        map.addSource("research-access-stations", {
+          type: "geojson",
+          data: EMPTY_FC,
+        });
+        map.addLayer({
+          id: "research-access-stations-circle",
+          type: "circle",
+          source: "research-access-stations",
+          layout: { visibility: "none" },
+          paint: {
+            "circle-radius": 5,
+            "circle-color": [
+              "step",
+              ["coalesce", ["get", "aadt"], 0],
+              "#5a7a8a",
+              5000,
+              "#2a9d8f",
+              15000,
+              "#c9a227",
+              30000,
+              "#c0392b",
+            ],
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": "#f7f4ec",
+          },
+        });
+
         map.addSource("shi-box-draft", { type: "geojson", data: EMPTY_FC });
         map.addLayer({
           id: "shi-box-draft-fill",
@@ -745,6 +813,51 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
       }
     }, [ready, showParcels]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      const vis = accessTrafficOn ? "visible" : "none";
+      for (const id of [
+        "research-access-segments-line",
+        "research-access-stations-circle",
+      ]) {
+        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", vis);
+      }
+      const segSrc = map.getSource(
+        "research-access-segments",
+      ) as maplibregl.GeoJSONSource | undefined;
+      const stSrc = map.getSource(
+        "research-access-stations",
+      ) as maplibregl.GeoJSONSource | undefined;
+      if (segSrc) {
+        segSrc.setData({
+          type: "FeatureCollection",
+          features: accessSegments.map((s) => ({
+            type: "Feature",
+            properties: { id: s.id, routeId: s.routeId, aadt: s.aadt },
+            geometry: s.geometry,
+          })),
+        });
+      }
+      if (stSrc) {
+        stSrc.setData({
+          type: "FeatureCollection",
+          features: accessStations.map((s) => ({
+            type: "Feature",
+            properties: {
+              id: s.id,
+              aadt: s.latestAadt,
+              onRoad: s.onRoad,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: [s.lng, s.lat],
+            },
+          })),
+        });
+      }
+    }, [ready, accessTrafficOn, accessSegments, accessStations]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1224,10 +1337,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 onClick={() => setBase(opt.id)}
                 title={opt.label}
                 className={cn(
-                  "rounded-lg px-2 py-1.5 font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                  base === opt.id
-                    ? "bg-navy text-gold"
-                    : "bg-transparent text-navy hover:bg-navy/10",
+                  "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                  base === opt.id && "story-map-tool-active",
                 )}
               >
                 {opt.short}
@@ -1235,7 +1346,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             ))}
           </div>
 
-          <div className="pointer-events-auto absolute bottom-12 left-3 flex flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1">
+          <div className="pointer-events-auto absolute bottom-12 left-3 flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1">
             <button
               type="button"
               onClick={() => {
@@ -1245,8 +1356,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 setTool("pan");
               }}
               className={cn(
-                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
-                tool === "pan" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                "story-map-tool",
+                tool === "pan" && "story-map-tool-active",
               )}
               title="Pan / select"
             >
@@ -1265,8 +1376,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 setTool("rectangle");
               }}
               className={cn(
-                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
-                tool === "rectangle" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                "story-map-tool",
+                tool === "rectangle" && "story-map-tool-active",
                 !canDrawFrames && "opacity-60",
               )}
               title={
@@ -1290,8 +1401,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 setTool("freehand");
               }}
               className={cn(
-                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
-                tool === "freehand" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                "story-map-tool",
+                tool === "freehand" && "story-map-tool-active",
                 !canDrawFrames && "opacity-60",
               )}
               title={
@@ -1315,8 +1426,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 setTool("radius");
               }}
               className={cn(
-                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy",
-                tool === "radius" ? "bg-navy text-gold" : "hover:bg-navy/10",
+                "story-map-tool",
+                tool === "radius" && "story-map-tool-active",
                 !canDrawFrames && "opacity-60",
               )}
               title={canDrawFrames ? "Radius frame" : "Pick a county first"}
@@ -1324,7 +1435,24 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               <Circle className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Radius</span>
             </button>
-            <label className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-navy">
+            {onAccessTrafficToggle ? (
+              <button
+                type="button"
+                onClick={() => onAccessTrafficToggle()}
+                className={cn(
+                  "story-map-tool",
+                  accessTrafficOn && "story-map-tool-active",
+                )}
+                title="Show planning traffic counts on this map (Access)"
+                data-research-access-traffic-tool
+              >
+                <Route className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">
+                  {accessTrafficLoading ? "Traffic…" : "Traffic"}
+                </span>
+              </button>
+            ) : null}
+            <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
               mi
               <input
                 type="number"
@@ -1337,7 +1465,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   if (!Number.isFinite(n)) return;
                   setRadiusMiles(Math.min(10, Math.max(0.25, n)));
                 }}
-                className="w-12 rounded border border-navy/25 bg-white px-1 py-0.5 font-mono text-[10px] font-bold text-navy"
+                className="story-map-tool-input"
               />
             </label>
             {tool !== "pan" ? (
@@ -1349,7 +1477,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   setDrawWarn("");
                   setTool("pan");
                 }}
-                className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy hover:bg-navy/10"
+                className="story-map-tool"
                 title="Cancel draw (Esc)"
               >
                 <X className="h-3.5 w-3.5" />
@@ -1360,13 +1488,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               <button
                 type="button"
                 onClick={removeActiveFrame}
-                className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-navy hover:bg-navy/10"
+                className="story-map-tool"
               >
                 <X className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Remove</span>
               </button>
             ) : null}
-            <span className="px-1 font-mono text-[10px] font-bold text-navy/70">
+            <span className="story-map-tool-muted px-1">
               {frames.length}/{SHI_CAPS.maxFramesOnMap}
             </span>
           </div>
