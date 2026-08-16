@@ -6,6 +6,7 @@ import { Loader2, Search, Users } from "lucide-react";
 import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
 import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
 import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
+import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -38,6 +39,7 @@ import {
   shiGetProperty,
   shiFloodAtPoint,
   shiUtilitiesAtPoint,
+  shiEnvironmentAtPoint,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
@@ -57,6 +59,7 @@ import type {
 } from "@/lib/shi/types";
 import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
+import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
 import { cn } from "@/lib/utils";
 
 function money(n: number | null | undefined) {
@@ -99,6 +102,8 @@ export function PropertyIntelligenceView({
   const [utilitiesFact, setUtilitiesFact] = useState<UtilitiesFact | null>(
     null,
   );
+  const [environmentDesk, setEnvironmentDesk] =
+    useState<EnvironmentDesk | null>(null);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -212,6 +217,7 @@ export function PropertyIntelligenceView({
           setSelected(null);
           setFloodFact(null);
           setUtilitiesFact(null);
+          setEnvironmentDesk(null);
           setMatches([]);
           setDiscoverPins([]);
           return;
@@ -219,6 +225,7 @@ export function PropertyIntelligenceView({
         setSelected(property);
         setFloodFact(null);
         setUtilitiesFact(null);
+        setEnvironmentDesk(null);
         setDiscoverPins([]);
         if (property.countyFips) {
           track("archie_parcel_opened", { county_fips: property.countyFips });
@@ -229,7 +236,7 @@ export function PropertyIntelligenceView({
           void refreshFolders(property.source);
         }
         void loadMatches(property);
-        /* DC-1 / DC-2 — flood + utilities; retract when userReveal false. */
+        /* DC-1…3 — flood · utilities · environment; retract when userReveal false. */
         if (
           property.countyFips &&
           property.centroidLat != null &&
@@ -253,6 +260,13 @@ export function PropertyIntelligenceView({
             })
             .catch(() => {
               setUtilitiesFact(null);
+            });
+          void shiEnvironmentAtPoint({ countyFips: fips, lat, lng })
+            .then((body) => {
+              setEnvironmentDesk(body.environment ?? null);
+            })
+            .catch(() => {
+              setEnvironmentDesk(null);
             });
         }
       } catch (e) {
@@ -959,12 +973,40 @@ export function PropertyIntelligenceView({
                   value={selected.schoolName ?? selected.schoolCode ?? "—"}
                 />
                 <Fact
+                  label="Abstract / subdiv"
+                  value={selected.abstractSubdivisionCode ?? "—"}
+                  mono
+                />
+                <Fact
+                  label="Tract / lot"
+                  value={selected.tractOrLot ?? "—"}
+                  mono
+                />
+                <Fact
                   label="City / ZIP"
                   value={
                     [selected.situsCity, selected.situsZip]
                       .filter(Boolean)
                       .join(" ") || "—"
                   }
+                />
+                <Fact
+                  label="First seen"
+                  value={
+                    selected.firstSeenAt
+                      ? selected.firstSeenAt.slice(0, 10)
+                      : "—"
+                  }
+                  mono
+                />
+                <Fact
+                  label="Last seen"
+                  value={
+                    selected.lastSeenAt
+                      ? selected.lastSeenAt.slice(0, 10)
+                      : "—"
+                  }
+                  mono
                 />
               </dl>
 
@@ -1095,6 +1137,7 @@ export function PropertyIntelligenceView({
 
               <ShiFloodEvidencePanel flood={floodFact} />
               <ShiUtilitiesEvidencePanel utilities={utilitiesFact} />
+              <ShiEnvironmentEvidencePanel environment={environmentDesk} />
 
               <ShiCadEvidencePanel
                 property={selected}

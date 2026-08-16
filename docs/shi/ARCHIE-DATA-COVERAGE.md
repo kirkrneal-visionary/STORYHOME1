@@ -17,9 +17,9 @@
 
 | Wave | Id | Status | Ship |
 |---|---|---|---|
-| **1** | **DC-1 Flood** | **done / shipping** | FEMA NFHL point join · Research + Corridors parcel · retract on fail |
-| **2** | **DC-2 Utilities** | **current / shipping** | PUCT water/sewer CCN · certificated honesty · owned launch-7 clip |
-| **3** | **DC-3 Environment + desk** | planned | NWI wetlands · TIGER place/ISD · deeper CAD · city zoning files only |
+| **1** | **DC-1 Flood** | **done** | FEMA NFHL point join · Research + Corridors parcel · retract on fail |
+| **2** | **DC-2 Utilities** | **done** | PUCT water/sewer CCN · certificated honesty · owned launch-7 clip |
+| **3** | **DC-3 Environment + desk** | **current / shipping** | NWI wetlands · TIGER place/ISD · zoning context (no invented districts) · deeper CAD fields |
 | **4** | **DC-4 Evidence UI** | started (tiers live with DC-1) | Shared chips · source · as-of across Research / Corridors / Ask / reports |
 | **5** | **DC-5 Dark store** | planned | Deeds knowledge path only if 7-county clerk-grade; default **no user reveal** |
 
@@ -81,6 +81,32 @@ npm run test:data-coverage-dc2
 2. Utilities card shows certificated water/sewer utility + CCN # · **KNOWN**  
 3. Rural point with no CCN → “No PUCT water/sewer CCN area” (still revealed, still honest)  
 4. Corridors parcel panel shows the same compact card  
+
+## DC-3 — Environment + desk (this wave)
+
+**Sources:** USFWS NWI (wetlands) · Census TIGER (place + unified school district) · CAD fields already ingested  
+**API:** `GET /api/shi/environment?countyFips=&lat=&lng=` (Story Pro)  
+**Lib:** `wetlands-nwi.ts` · `place-tiger.ts` · `environment-desk.ts`  
+**UI:** `ShiEnvironmentEvidencePanel` + deeper CAD facts (abstract · tract · first/last seen)
+
+### Zoning rule (quality lock)
+
+- **No invented district codes.** City shapefiles were not cleanly ownable for peer-grade districts this wave.  
+- Inside Census incorporated place → **VERIFY** with city planning (context only).  
+- Outside city → **KNOWN** “no city zoning layer.”  
+- `zoning_landuse` adapter stays **planned** until we host official city district polygons.
+
+### Reveal gate
+
+- Launch 7 only  
+- Each sub-fact retracts independently on failure  
+- Empty NWI / no place still can reveal as honest **KNOWN** absence when the query succeeds  
+
+### Armor
+
+```bash
+npm run test:data-coverage-dc3
+```
 
 ## Out of scope (all DC waves)
 

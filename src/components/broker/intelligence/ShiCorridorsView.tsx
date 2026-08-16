@@ -29,13 +29,16 @@ import {
   shiCreateFolder,
   shiFloodAtPoint,
   shiUtilitiesAtPoint,
+  shiEnvironmentAtPoint,
   shiListFolders,
   shiSaveFrame,
 } from "@/lib/shi/client";
 import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
 import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
+import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
 import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
+import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
 import {
   openBoundaryInResearch,
   openParcelInResearch,
@@ -702,7 +705,7 @@ export function ShiCorridorsView({
     <div
       className="space-y-4"
       data-corridors-version="c2-0-f"
-      data-data-coverage="dc-2"
+      data-data-coverage="dc-3"
     >
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
@@ -1643,12 +1646,15 @@ function ParcelSitePanel({
   const [utilitiesFact, setUtilitiesFact] = useState<UtilitiesFact | null>(
     null,
   );
+  const [environmentDesk, setEnvironmentDesk] =
+    useState<EnvironmentDesk | null>(null);
 
   useEffect(() => {
     if (!parcel) {
       setIntel(null);
       setFloodFact(null);
       setUtilitiesFact(null);
+      setEnvironmentDesk(null);
       onIntelChange?.(null);
       return;
     }
@@ -1676,6 +1682,7 @@ function ParcelSitePanel({
     setIntelLoading(true);
     setFloodFact(null);
     setUtilitiesFact(null);
+    setEnvironmentDesk(null);
     void shiCorridorsParcelLocation({
       propId: parcel.propId,
       source: parcel.source ?? county.source,
@@ -1706,7 +1713,7 @@ function ParcelSitePanel({
       });
 
     const fips = parcel.countyFips ?? county.fips;
-    /* DC-1 / DC-2 — flood + utilities; retract when userReveal is false. */
+    /* DC-1…3 — flood · utilities · environment; retract when userReveal false. */
     void shiFloodAtPoint({
       countyFips: fips,
       lat: parcel.lat,
@@ -1732,6 +1739,18 @@ function ParcelSitePanel({
       })
       .catch(() => {
         if (!cancelled) setUtilitiesFact(null);
+      });
+    void shiEnvironmentAtPoint({
+      countyFips: fips,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setEnvironmentDesk(body.environment ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setEnvironmentDesk(null);
       });
 
     return () => {
@@ -1782,6 +1801,7 @@ function ParcelSitePanel({
 
       <ShiFloodEvidencePanel flood={floodFact} compact />
       <ShiUtilitiesEvidencePanel utilities={utilitiesFact} compact />
+      <ShiEnvironmentEvidencePanel environment={environmentDesk} compact />
 
       <div className="story-well px-3 py-2.5" data-corridor-exposure-score>
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">

@@ -482,6 +482,22 @@ export async function shiUtilitiesAtPoint(opts: {
   return shiFetch(`/api/shi/utilities?${params.toString()}`);
 }
 
+/* --------------------- Data Coverage · Environment (DC-3) --------------------- */
+
+export async function shiEnvironmentAtPoint(opts: {
+  countyFips: string;
+  lat: number;
+  lng: number;
+}): Promise<{
+  environment: import("@/lib/shi/environment-desk").EnvironmentDesk;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  params.set("lat", String(opts.lat));
+  params.set("lng", String(opts.lng));
+  return shiFetch(`/api/shi/environment?${params.toString()}`);
+}
+
 /* --------------------- Corridors · Traffic (Wave 1) --------------------- */
 
 export async function shiCorridorsTraffic(countyFips: string) {
