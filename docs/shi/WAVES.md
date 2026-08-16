@@ -13,8 +13,8 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-INTELLIGENCE · **P2 shipping**
-Property-aware Archie + spatial desk context: same-owner within 1 mi · frontage AADT · mapped crossing · nearby planning traffic. Deterministic — no LLM.
+### ARCHIE-INTELLIGENCE · **P3 shipping**
+Property-aware Archie + spatial desk context + **Current read** (confidence · verify · alternatives · next action). Deterministic — no LLM · no buy/sell advice.
 
 ### ARCHIE-RESEARCH-MERGE · **R2 live**
 Access desk (Ask · Sites · Compare) inside Research. Access tab soft-hidden. Old `section=corridors` redirects to `mode=access`. APIs kept.
@@ -29,12 +29,13 @@ Owned clerk deed index scaffold — user reveal still closed until DEEDS-2.
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- ARCHIE-INTELLIGENCE Phase 3 — conclusion assistance · alternatives · confidence  
+- ARCHIE-INTELLIGENCE Phase 4 — market / MLS when ready · persistent reasoning state  
 - Optional thin neighbors API (ST_DWithin / touches) if desk spatial gaps remain  
 - DEEDS-2: peer-grade clerk coverage → open user reveal  
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-INTELLIGENCE P2 — spatial desk context in Archie brief  
 - ARCHIE-INTELLIGENCE P1 — property-aware Archie speaks first  
 - ARCHIE-RESEARCH-MERGE R2 — Access desk inside Research · tab soft-hidden  
 - ARCHIE-RESEARCH-MERGE R1 — Traffic tool + Access panel + readable map tools  
