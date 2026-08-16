@@ -8,6 +8,7 @@ import {
   type ArchieFinding,
 } from "@/lib/shi/archie-phase1";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
+import type { TrafficStation } from "@/lib/shi/corridors";
 import type { ShiOwnerMatch, ShiPropertyDetail } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ export function ShiArchieIntelligencePanel({
   possibleOwnerCount,
   matches,
   accessIntel,
+  stations = [],
   onFocusOwnership,
   onFocusNearby,
   onAskAccess,
@@ -40,6 +42,8 @@ export function ShiArchieIntelligencePanel({
   possibleOwnerCount: number;
   matches: ShiOwnerMatch[];
   accessIntel?: ParcelLocationIntel | null;
+  /** Optional TxDOT stations already loaded on the Access desk. */
+  stations?: TrafficStation[];
   onFocusOwnership?: () => void;
   onFocusNearby?: () => void;
   /** Opens Access desk Ask (traffic / frontage desk) — optional hand-off. */
@@ -54,8 +58,16 @@ export function ShiArchieIntelligencePanel({
         possibleOwnerCount,
         matches,
         accessIntel,
+        stations,
       }),
-    [property, exactOwnerCount, possibleOwnerCount, matches, accessIntel],
+    [
+      property,
+      exactOwnerCount,
+      possibleOwnerCount,
+      matches,
+      accessIntel,
+      stations,
+    ],
   );
 
   const [focus, setFocus] = useState<ArchieFocusChip | null>(null);
@@ -75,7 +87,7 @@ export function ShiArchieIntelligencePanel({
 
   return (
     <section
-      data-archie-intelligence="p1"
+      data-archie-intelligence="p2"
       data-archie-phase={brief.version}
       className={cn("story-well space-y-3 px-3 py-3", className)}
     >
@@ -159,6 +171,7 @@ export function ShiArchieIntelligencePanel({
             exactOwnerCount={exactOwnerCount}
             possibleOwnerCount={possibleOwnerCount}
             accessIntel={accessIntel}
+            nearbySummary={brief.nearbySummary}
           />
         </div>
       ) : null}
@@ -172,12 +185,14 @@ function FocusCopy({
   exactOwnerCount,
   possibleOwnerCount,
   accessIntel,
+  nearbySummary,
 }: {
   focus: ArchieFocusChip;
   property: ShiPropertyDetail;
   exactOwnerCount: number;
   possibleOwnerCount: number;
   accessIntel?: ParcelLocationIntel | null;
+  nearbySummary: string | null;
 }) {
   if (focus === "ownership") {
     return (
@@ -237,8 +252,9 @@ function FocusCopy({
     return (
       <p className="text-xs leading-relaxed text-ink">
         <span className="font-semibold">Nearby parcels. </span>
-        Start with related ownership below, then use Discover or a market frame
-        for spatial neighbors. Phase 1 does not invent corridor change claims.
+        {nearbySummary
+          ? nearbySummary
+          : "No same-owner tracts within 1 mile with centroids on desk, and no planning-traffic association loaded yet. Use owner portfolio below or Discover for broader search. Archie does not invent adjoining boundaries."}
       </p>
     );
   }

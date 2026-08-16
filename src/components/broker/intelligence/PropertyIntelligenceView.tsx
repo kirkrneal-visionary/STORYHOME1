@@ -855,6 +855,13 @@ export function PropertyIntelligenceView({
     }
   }, [searchParams, ensureAccessStations]);
 
+  /* P2 — load planning stations for Archie spatial brief when a launch-county parcel is open */
+  useEffect(() => {
+    if (!selected) return;
+    if (!launchFips || !isLaunchCorridorFips(launchFips)) return;
+    void ensureAccessStations();
+  }, [selected?.propId, launchFips, ensureAccessStations, selected]);
+
   const propertyCompare = useMemo(() => {
     if (comparePicks.length < 2) return null;
     return comparePropertySites(
@@ -1230,6 +1237,7 @@ export function PropertyIntelligenceView({
                 possibleOwnerCount={possibleCount}
                 matches={matches}
                 accessIntel={accessIntel}
+                stations={accessStations}
                 onFocusOwnership={() => {
                   ownerPortfolioRef.current?.scrollIntoView({
                     behavior: "smooth",
