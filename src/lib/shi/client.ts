@@ -498,6 +498,30 @@ export async function shiEnvironmentAtPoint(opts: {
   return shiFetch(`/api/shi/environment?${params.toString()}`);
 }
 
+/* --------------------- Data Coverage · Deeds dark store (DC-5) --------------------- */
+
+export async function shiDeedsForParcel(opts: {
+  countyFips: string;
+  propId?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+}): Promise<{
+  deeds: import("@/lib/shi/deeds-clerk").DeedsFact;
+  coverageReady: boolean;
+  dark: boolean;
+}> {
+  const params = new URLSearchParams();
+  params.set("countyFips", opts.countyFips);
+  if (opts.propId) params.set("propId", opts.propId);
+  if (opts.lat != null && Number.isFinite(opts.lat)) {
+    params.set("lat", String(opts.lat));
+  }
+  if (opts.lng != null && Number.isFinite(opts.lng)) {
+    params.set("lng", String(opts.lng));
+  }
+  return shiFetch(`/api/shi/deeds?${params.toString()}`);
+}
+
 /* --------------------- Corridors · Traffic (Wave 1) --------------------- */
 
 export async function shiCorridorsTraffic(countyFips: string) {

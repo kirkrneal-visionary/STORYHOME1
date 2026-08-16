@@ -70,7 +70,7 @@ assert.match(report, /corridors-report-v1\.1/);
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsView.tsx",
 );
-assert.match(corridors, /data-data-coverage="dc-4"/);
+assert.match(corridors, /data-data-coverage="dc-[45]"/);
 assert.match(corridors, /data-evidence-legend/);
 assert.match(corridors, /ShiEvidenceChip/);
 assert.match(corridors, /deskFlood/);

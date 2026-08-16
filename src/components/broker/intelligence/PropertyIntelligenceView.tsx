@@ -7,6 +7,7 @@ import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvid
 import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
 import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
 import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
+import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
@@ -40,6 +41,7 @@ import {
   shiFloodAtPoint,
   shiUtilitiesAtPoint,
   shiEnvironmentAtPoint,
+  shiDeedsForParcel,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
@@ -60,6 +62,7 @@ import type {
 import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
+import type { DeedsFact } from "@/lib/shi/deeds-clerk";
 import { cn } from "@/lib/utils";
 
 function money(n: number | null | undefined) {
@@ -104,6 +107,7 @@ export function PropertyIntelligenceView({
   );
   const [environmentDesk, setEnvironmentDesk] =
     useState<EnvironmentDesk | null>(null);
+  const [deedsFact, setDeedsFact] = useState<DeedsFact | null>(null);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -218,6 +222,7 @@ export function PropertyIntelligenceView({
           setFloodFact(null);
           setUtilitiesFact(null);
           setEnvironmentDesk(null);
+          setDeedsFact(null);
           setMatches([]);
           setDiscoverPins([]);
           return;
@@ -226,6 +231,7 @@ export function PropertyIntelligenceView({
         setFloodFact(null);
         setUtilitiesFact(null);
         setEnvironmentDesk(null);
+        setDeedsFact(null);
         setDiscoverPins([]);
         if (property.countyFips) {
           track("archie_parcel_opened", { county_fips: property.countyFips });
@@ -236,7 +242,7 @@ export function PropertyIntelligenceView({
           void refreshFolders(property.source);
         }
         void loadMatches(property);
-        /* DC-1…3 — flood · utilities · environment; retract when userReveal false. */
+        /* DC-1…5 — flood · utilities · environment · deeds dark; retract when userReveal false. */
         if (
           property.countyFips &&
           property.centroidLat != null &&
@@ -267,6 +273,18 @@ export function PropertyIntelligenceView({
             })
             .catch(() => {
               setEnvironmentDesk(null);
+            });
+          void shiDeedsForParcel({
+            countyFips: fips,
+            propId: property.propId,
+            lat,
+            lng,
+          })
+            .then((body) => {
+              setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+            })
+            .catch(() => {
+              setDeedsFact(null);
             });
         }
       } catch (e) {
@@ -1138,6 +1156,7 @@ export function PropertyIntelligenceView({
               <ShiFloodEvidencePanel flood={floodFact} />
               <ShiUtilitiesEvidencePanel utilities={utilitiesFact} />
               <ShiEnvironmentEvidencePanel environment={environmentDesk} />
+              <ShiDeedsEvidencePanel deeds={deedsFact} />
 
               <ShiCadEvidencePanel
                 property={selected}

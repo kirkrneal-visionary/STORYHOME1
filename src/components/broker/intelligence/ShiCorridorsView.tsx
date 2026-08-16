@@ -30,16 +30,19 @@ import {
   shiFloodAtPoint,
   shiUtilitiesAtPoint,
   shiEnvironmentAtPoint,
+  shiDeedsForParcel,
   shiListFolders,
   shiSaveFrame,
 } from "@/lib/shi/client";
 import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
 import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
 import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
+import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
 import { ShiEvidenceChip } from "@/components/broker/intelligence/ShiEvidenceChip";
 import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
+import type { DeedsFact } from "@/lib/shi/deeds-clerk";
 import { EVIDENCE_LEGEND_LINES } from "@/lib/shi/evidence-tier";
 import {
   openBoundaryInResearch,
@@ -713,7 +716,7 @@ export function ShiCorridorsView({
     <div
       className="space-y-4"
       data-corridors-version="c2-0-f"
-      data-data-coverage="dc-4"
+      data-data-coverage="dc-5"
     >
       {/* Hero — tools live on the map, not here */}
       <div className="story-surface px-4 py-4 md:px-6 md:py-5">
@@ -1695,6 +1698,7 @@ function ParcelSitePanel({
   );
   const [environmentDesk, setEnvironmentDesk] =
     useState<EnvironmentDesk | null>(null);
+  const [deedsFact, setDeedsFact] = useState<DeedsFact | null>(null);
 
   useEffect(() => {
     onDeskEvidence?.({
@@ -1710,6 +1714,7 @@ function ParcelSitePanel({
       setFloodFact(null);
       setUtilitiesFact(null);
       setEnvironmentDesk(null);
+      setDeedsFact(null);
       onIntelChange?.(null);
       return;
     }
@@ -1738,6 +1743,7 @@ function ParcelSitePanel({
     setFloodFact(null);
     setUtilitiesFact(null);
     setEnvironmentDesk(null);
+    setDeedsFact(null);
     void shiCorridorsParcelLocation({
       propId: parcel.propId,
       source: parcel.source ?? county.source,
@@ -1768,7 +1774,7 @@ function ParcelSitePanel({
       });
 
     const fips = parcel.countyFips ?? county.fips;
-    /* DC-1…3 — flood · utilities · environment; retract when userReveal false. */
+    /* DC-1…5 — flood · utilities · environment · deeds dark; retract when userReveal false. */
     void shiFloodAtPoint({
       countyFips: fips,
       lat: parcel.lat,
@@ -1806,6 +1812,19 @@ function ParcelSitePanel({
       })
       .catch(() => {
         if (!cancelled) setEnvironmentDesk(null);
+      });
+    void shiDeedsForParcel({
+      countyFips: fips,
+      propId: parcel.propId,
+      lat: parcel.lat,
+      lng: parcel.lng,
+    })
+      .then((body) => {
+        if (cancelled) return;
+        setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+      })
+      .catch(() => {
+        if (!cancelled) setDeedsFact(null);
       });
 
     return () => {
@@ -1857,6 +1876,7 @@ function ParcelSitePanel({
       <ShiFloodEvidencePanel flood={floodFact} compact />
       <ShiUtilitiesEvidencePanel utilities={utilitiesFact} compact />
       <ShiEnvironmentEvidencePanel environment={environmentDesk} compact />
+      <ShiDeedsEvidencePanel deeds={deedsFact} compact />
 
       <div className="story-well px-3 py-2.5" data-corridor-exposure-score>
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">

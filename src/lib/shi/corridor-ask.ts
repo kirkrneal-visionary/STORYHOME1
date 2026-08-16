@@ -48,7 +48,8 @@ export type CorridorAskIntentId =
   | "compare_hint"
   | "flood_zone"
   | "utilities_ccn"
-  | "environment_desk";
+  | "environment_desk"
+  | "deed_history";
 
 export type CorridorAskIntent = {
   id: CorridorAskIntentId;
@@ -124,6 +125,12 @@ export const CORRIDOR_ASK_INTENTS: CorridorAskIntent[] = [
     label: "What's on the environment desk for this point?",
     chip: "Environment",
     match: /wetland|environment|school\s+district|zoning\s+context|place\s+context/i,
+  },
+  {
+    id: "deed_history",
+    label: "Is deed / transfer history available?",
+    chip: "Deeds",
+    match: /deed|transfer\s+histor|clerk\s+record|title\s+histor|grantor|grantee/i,
   },
 ];
 
@@ -779,6 +786,41 @@ function answerEnvironment(ctx: CorridorAskContext): CorridorAskAnswer {
 }
 
 /**
+ * DC-5 — deeds stay dark. Honest answer only; never invent transfers from CAD.
+ */
+function answerDeedHistory(_ctx: CorridorAskContext): CorridorAskAnswer {
+  const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "deed_history")!;
+  return {
+    intentId: "deed_history",
+    intentLabel: intent.label,
+    honesty: CORRIDOR_ASK_HONESTY,
+    ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+    summary:
+      "Deed / transfer history stays dark until Archie owns clerk-grade records for all launch 7 counties. CAD owner-field changes are not deeds.",
+    facts: [
+      fact("Deeds desk", "Dark store", {
+        detail:
+          "No user reveal. No DataTree / ATTOM rent. Knowledge path reserved for owned clerk index.",
+        tier: "UNKNOWN",
+        source: "County clerk (owned — not connected)",
+        asOf: null,
+      }),
+      fact("CAD observation", "Not deed history", {
+        detail:
+          "Owner/address/value changes Archie saw between county loads stay labeled as observation — never transfer dates.",
+        tier: "OBSERVED",
+        source: "Archie CAD observation",
+        asOf: null,
+      }),
+    ],
+    missing: [
+      "Clerk-grade coverage not ready for launch 7 — stay dark.",
+    ],
+    hint: null,
+  };
+}
+
+/**
  * Resolve a canned intent (or free-text match) into facts from desk context.
  */
 export function answerCorridorAsk(
@@ -826,6 +868,8 @@ export function answerCorridorAsk(
       return answerUtilities(ctx);
     case "environment_desk":
       return answerEnvironment(ctx);
+    case "deed_history":
+      return answerDeedHistory(ctx);
     default:
       return {
         intentId: "unknown",

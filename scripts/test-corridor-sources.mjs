@@ -14,6 +14,7 @@ const ADAPTERS = [
   { id: "zoning_landuse", defaultStatus: "planned" },
   { id: "utilities_infra", defaultStatus: "live" },
   { id: "flood_environment", defaultStatus: "live" },
+  { id: "clerk_deeds", defaultStatus: "planned" },
   { id: "mls_licensed", defaultStatus: "planned" },
 ];
 
@@ -55,6 +56,15 @@ function resolveSourcesForAnalysis(opts) {
         status: ok ? "live" : "degraded",
         contributed: ok,
         note: ok ? "FEMA" : "retracted",
+      });
+      continue;
+    }
+    if (adapter.id === "clerk_deeds") {
+      uses.push({
+        id: adapter.id,
+        status: "planned",
+        contributed: false,
+        note: "Dark store — no user reveal until clerk-grade for launch 7",
       });
       continue;
     }
@@ -173,9 +183,12 @@ const planned = down.filter((s) =>
     "zoning_landuse",
     "utilities_infra",
     "flood_environment",
+    "clerk_deeds",
     "mls_licensed",
   ].includes(s.id),
 );
 assert.ok(planned.every((s) => s.status === "planned" && !s.contributed));
+assert.equal(rich.find((s) => s.id === "clerk_deeds")?.status, "planned");
+assert.equal(rich.find((s) => s.id === "clerk_deeds")?.contributed, false);
 
 console.log("corridor-sources armor: ok");

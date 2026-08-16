@@ -20,8 +20,8 @@
 | **1** | **DC-1 Flood** | **done** | FEMA NFHL point join · Research + Corridors parcel · retract on fail |
 | **2** | **DC-2 Utilities** | **done** | PUCT water/sewer CCN · certificated honesty · owned launch-7 clip |
 | **3** | **DC-3 Environment + desk** | **done** | NWI wetlands · TIGER place/ISD · zoning context (no invented districts) · deeper CAD fields |
-| **4** | **DC-4 Evidence UI** | **current / shipping** | Shared chips · source · as-of across Research / Corridors / Ask / reports |
-| **5** | **DC-5 Dark store** | planned | Deeds knowledge path only if 7-county clerk-grade; default **no user reveal** |
+| **4** | **DC-4 Evidence UI** | **done** | Shared chips · source · as-of across Research / Corridors / Ask / reports |
+| **5** | **DC-5 Dark store** | **current / shipping** | Deeds knowledge path · clerk coverage gate empty · default **no user reveal** |
 
 Optional later: Ask Archie challenge → alternatives → rank on **revealed** facts only.
 
@@ -108,7 +108,7 @@ npm run test:data-coverage-dc2
 npm run test:data-coverage-dc3
 ```
 
-## DC-4 — Evidence UI (this wave)
+## DC-4 — Evidence UI
 
 **Goal:** One shared evidence language across every surface that reveals a desk fact.
 
@@ -135,6 +135,38 @@ npm run test:data-coverage-dc4
 2. Ask panel → Flood zone / Utilities / Environment chips answer from desk facts with tier + source  
 3. Print property location report → evidence tags on glance rows + Evidence labels section  
 4. County change clears desk facts and Ask answer  
+
+## DC-5 — Deeds dark store (this wave)
+
+**Goal:** Reserve an owned clerk-deed knowledge path without revealing anything until peer-grade for launch 7.
+
+**Lib:** `src/lib/shi/deeds-clerk.ts` — `deeds-clerk-v1` · `userReveal: false` by default  
+**API:** `GET /api/shi/deeds?countyFips=&propId=` (or lat/lng) · Story Pro · launch 7  
+**UI:** `ShiDeedsEvidencePanel` — renders **nothing** while dark  
+**Source strip:** `clerk_deeds` adapter — planned / dark note  
+**Ask:** `deed_history` intent — honest “stays dark” answer; never invents transfers from CAD  
+
+### Reveal gate (closed)
+
+- `CLERK_COVERAGE_READY_FIPS` is **empty** until owned clerk-grade ingest exists for a county  
+- Even with a future index, no CAD owner-diff → deed date  
+- Failures / dark → `userReveal: false` → **UI renders nothing** (no teaser, no upsell)
+
+### Honesty
+
+CAD observation (owner/address/value between pulls) stays observation — **not** deed history. DataTree / ATTOM / CoreLogic stay on the paid stop line.
+
+### Armor
+
+```bash
+npm run test:data-coverage-dc5
+```
+
+### Manual
+
+1. Pro → Research or Corridors parcel → no deeds card appears  
+2. Ask → Deeds chip → “Dark store” / UNKNOWN — no invented transfers  
+3. Source strip lists Deed / transfer history as planned / dark  
 
 ## Out of scope (all DC waves)
 

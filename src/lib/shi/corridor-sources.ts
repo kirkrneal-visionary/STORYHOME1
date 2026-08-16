@@ -18,6 +18,7 @@ export type CorridorSourceId =
   | "zoning_landuse"
   | "utilities_infra"
   | "flood_environment"
+  | "clerk_deeds"
   | "mls_licensed";
 
 export type SourceStatus = "live" | "degraded" | "unavailable" | "planned";
@@ -144,6 +145,15 @@ export const CORRIDOR_SOURCE_ADAPTERS: CorridorSourceAdapter[] = [
       "Effective flood hazard zones from FEMA — not an insurance quote. Retracted from UI when the query fails.",
   },
   {
+    id: "clerk_deeds",
+    label: "Deed / transfer history",
+    category: "property",
+    defaultStatus: "planned",
+    provider: "County clerk (owned dark store — not connected)",
+    honesty:
+      "Dark until Archie owns clerk-grade records for launch 7. CAD owner changes are not deeds. No DataTree / ATTOM rent.",
+  },
+  {
     id: "mls_licensed",
     label: "Licensed listing context",
     category: "market",
@@ -240,6 +250,20 @@ export function resolveSourcesForAnalysis(opts: {
           : opts.floodNote || "Flood not revealed for this pass",
         honesty: adapter.honesty,
         contributed: ok,
+      });
+      continue;
+    }
+
+    if (adapter.id === "clerk_deeds") {
+      uses.push({
+        id: adapter.id,
+        label: adapter.label,
+        category: adapter.category,
+        status: "planned",
+        provider: adapter.provider,
+        note: "Dark store — no user reveal until clerk-grade for launch 7",
+        honesty: adapter.honesty,
+        contributed: false,
       });
       continue;
     }
