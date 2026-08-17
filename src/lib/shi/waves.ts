@@ -930,11 +930,13 @@ export const SHI_WAVES: ShiWave[] = [
       "DEEDS-1: ShiDeedsEvidencePanel stays retracted while dark",
       "DEEDS-2: Panel reveals clerk transfers when county is ready + peerGrade",
       "DEEDS-2: Ask deed_history honesty — dark until peer-grade; Deeds card reveals when open",
+      "DEEDS-UI: hide Ask chip · source-strip row · panel while DEEDS_USER_UI_OFFERED false",
     ],
     backend: [
       "DEEDS-1: deeds-clerk-v1.1 scaffold · clerk-coverage-launch7.json · migration 0036",
       "DEEDS-2: deeds-clerk-v1.2 · DEEDS_USER_REVEAL_OPEN true · canRevealDeeds(ready+peerGrade)",
       "DEEDS-2: ingest --mark-peer-grade · Armor test:data-coverage-deeds2",
+      "DEEDS-UI: deeds-clerk-v1.3 · deeds-ui.ts kill switch · canRevealDeeds requires uiOffered",
       "Prod registry starts with zero peer-grade FIPS — still dark live",
     ],
     outOfScope: [
@@ -942,6 +944,7 @@ export const SHI_WAVES: ShiWave[] = [
       "CAD owner diffs as transfer dates",
       "User reveal before peer-grade for that county",
       "Paywall / upsell for deed history",
+      "Empty Deeds essays in Ask / source strip while UI hidden",
     ],
   },
   {
@@ -1038,7 +1041,7 @@ export const SHI_WAVES: ShiWave[] = [
 ];
 
 /** Current product line — Archie Neighbors N1. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-NEIGHBORS" as const;
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

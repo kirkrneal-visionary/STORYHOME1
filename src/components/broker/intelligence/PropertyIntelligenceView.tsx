@@ -90,6 +90,7 @@ import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
 import type { DeedsFact } from "@/lib/shi/deeds-clerk";
+import { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
 import { cn } from "@/lib/utils";
 
 function money(n: number | null | undefined) {
@@ -326,18 +327,22 @@ export function PropertyIntelligenceView({
             .catch(() => {
               setEnvironmentDesk(null);
             });
-          void shiDeedsForParcel({
-            countyFips: fips,
-            propId: property.propId,
-            lat,
-            lng,
-          })
-            .then((body) => {
-              setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+          if (DEEDS_USER_UI_OFFERED) {
+            void shiDeedsForParcel({
+              countyFips: fips,
+              propId: property.propId,
+              lat,
+              lng,
             })
-            .catch(() => {
-              setDeedsFact(null);
-            });
+              .then((body) => {
+                setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+              })
+              .catch(() => {
+                setDeedsFact(null);
+              });
+          } else {
+            setDeedsFact(null);
+          }
           /* R1 — Access desk facts inside Research (same APIs as Corridors). */
           if (isLaunchCorridorFips(fips)) {
             setAccessLoading(true);

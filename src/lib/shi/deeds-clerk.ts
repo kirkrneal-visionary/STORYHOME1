@@ -4,9 +4,10 @@
  * Founder Interpreter (build process only — not a product):
  * - Intent: show clerk transfer history only when Archie owns peer-grade
  *   records for that county — never invent, never teaser, never paywall.
- * - UX: ShiDeedsEvidencePanel renders nothing while dark; reveals transfers when open.
+ * - UX: product hides Deeds entirely while DEEDS_USER_UI_OFFERED is false;
+ *   panel still returns null when userReveal is false.
  * - Data meaning: ready = owned index flagged; peerGrade = quality bar for user eyes.
- * - Acceptance: prod registry starts with zero peer-grade → still dark; armor proves gate.
+ * - Acceptance: UI offered false → no user surface; peer-grade still required when offered.
  *
  * Never rent paid deed landlords for this desk.
  */
@@ -23,14 +24,19 @@ import {
   type EvidenceChip,
   type EvidenceTier,
 } from "@/lib/shi/evidence-tier";
+import { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
 
-export const DEEDS_CLERK_VERSION = "deeds-clerk-v1.2" as const;
+export const DEEDS_CLERK_VERSION = "deeds-clerk-v1.3" as const;
 
 /**
  * DEEDS-2 — software reveal capability is open.
  * Per-county peerGrade + ready still required (prod registry starts empty → dark).
+ * Product UI stays hidden while DEEDS_USER_UI_OFFERED is false.
  */
 export const DEEDS_USER_REVEAL_OPEN = true;
+
+/** Re-export for callers that already import deeds-clerk. */
+export { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
 
 export const DEEDS_CLERK_HONESTY =
   "Deed and transfer history stay dark until Archie owns peer-grade clerk records for that launch-7 county. CAD owner-field changes between county loads are not deeds and are never shown as transfer dates.";
@@ -172,7 +178,7 @@ export function clerkPeerGradeCount(file?: CoverageFile): number {
 
 /**
  * Pure gate: may the user see deed facts for this county?
- * DEEDS-2: software open + ready + peerGrade for that FIPS.
+ * DEEDS-2: UI offered + software open + ready + peerGrade for that FIPS.
  */
 export function canRevealDeeds(opts: {
   countyFips: string;
@@ -181,7 +187,11 @@ export function canRevealDeeds(opts: {
   coverage?: CoverageFile;
   /** Inject software flag for tests — defaults to DEEDS_USER_REVEAL_OPEN. */
   revealOpen?: boolean;
+  /** Inject UI offer flag for tests — defaults to DEEDS_USER_UI_OFFERED. */
+  uiOffered?: boolean;
 }): boolean {
+  const uiOffered = opts.uiOffered ?? DEEDS_USER_UI_OFFERED;
+  if (!uiOffered) return false;
   const revealOpen = opts.revealOpen ?? DEEDS_USER_REVEAL_OPEN;
   if (!revealOpen) return false;
   if (!isClerkCoverageReady(opts.countyFips, opts.coverage)) return false;

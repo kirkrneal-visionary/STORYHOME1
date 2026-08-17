@@ -15,7 +15,7 @@ assert.match(doc, /Ask deepen|desk facts/i);
 assert.match(doc, /not surveyed intersection distance|corridor-intersection-v1/i);
 
 const ask = read("src/lib/shi/corridor-ask.ts");
-assert.match(ask, /corridor-ask-v2\.[12]/);
+assert.match(ask, /corridor-ask-v2\.[123]/);
 assert.match(ask, /parcel_frontage/);
 assert.match(ask, /parcel_intersection/);
 assert.match(ask, /parcel_confidence/);
@@ -35,7 +35,7 @@ const askPanel = read(
   "src/components/broker/intelligence/ShiCorridorsAskPanel.tsx",
 );
 assert.match(askPanel, /data-corridor-ask-chips/);
-assert.match(askPanel, /CORRIDOR_ASK_INTENTS/);
+assert.match(askPanel, /corridorAskIntentsForUser/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /C2\.0-F2|F2/);

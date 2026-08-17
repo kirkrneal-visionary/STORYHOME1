@@ -8,6 +8,8 @@
  * never pretended as integrated.
  */
 
+import { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
+
 export type CorridorSourceId =
   | "cad_parcels"
   | "txdot_aadt"
@@ -255,6 +257,8 @@ export function resolveSourcesForAnalysis(opts: {
     }
 
     if (adapter.id === "clerk_deeds") {
+      /* Founder Interpreter (process): hide empty Deeds from the strip until UI is offered. */
+      if (!DEEDS_USER_UI_OFFERED) continue;
       uses.push({
         id: adapter.id,
         label: adapter.label,

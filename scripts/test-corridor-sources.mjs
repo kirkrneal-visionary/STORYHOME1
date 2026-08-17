@@ -3,6 +3,12 @@
  * Run: node scripts/test-corridor-sources.mjs
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+const root = process.cwd();
+const uiSrc = readFileSync(join(root, "src/lib/shi/deeds-ui.ts"), "utf8");
+const DEEDS_USER_UI_OFFERED = /DEEDS_USER_UI_OFFERED\s*=\s*true/.test(uiSrc);
 
 const ADAPTERS = [
   { id: "cad_parcels", defaultStatus: "live" },
@@ -60,6 +66,7 @@ function resolveSourcesForAnalysis(opts) {
       continue;
     }
     if (adapter.id === "clerk_deeds") {
+      if (!DEEDS_USER_UI_OFFERED) continue;
       uses.push({
         id: adapter.id,
         status: "planned",
@@ -129,6 +136,10 @@ function resolveSourcesForAnalysis(opts) {
   return uses;
 }
 
+const expectedCount = DEEDS_USER_UI_OFFERED
+  ? ADAPTERS.length
+  : ADAPTERS.length - 1;
+
 const rich = resolveSourcesForAnalysis({
   parcelCount: 40,
   trafficAvailable: true,
@@ -137,13 +148,19 @@ const rich = resolveSourcesForAnalysis({
   projectsAvailable: true,
   cadPulseAvailable: true,
 });
-assert.equal(rich.length, ADAPTERS.length);
+assert.equal(rich.length, expectedCount);
 assert.equal(rich.find((s) => s.id === "cad_parcels")?.status, "live");
 assert.equal(rich.find((s) => s.id === "txdot_aadt")?.contributed, true);
 assert.equal(rich.find((s) => s.id === "building_permits")?.status, "planned");
 assert.equal(rich.find((s) => s.id === "mls_licensed")?.contributed, false);
 assert.equal(rich.find((s) => s.id === "flood_environment")?.status, "planned");
 assert.equal(rich.find((s) => s.id === "utilities_infra")?.status, "planned");
+if (DEEDS_USER_UI_OFFERED) {
+  assert.equal(rich.find((s) => s.id === "clerk_deeds")?.status, "planned");
+  assert.equal(rich.find((s) => s.id === "clerk_deeds")?.contributed, false);
+} else {
+  assert.equal(rich.find((s) => s.id === "clerk_deeds"), undefined);
+}
 
 const floodLive = resolveSourcesForAnalysis({
   parcelCount: 40,
@@ -176,19 +193,16 @@ assert.equal(down.find((s) => s.id === "cad_parcels")?.status, "degraded");
 assert.ok(down.every((s) => s.status !== "live" || s.id === "never"));
 
 // Planned never flips to live from empty opts (flood/utilities stay planned until queried)
-const planned = down.filter((s) =>
-  [
-    "building_permits",
-    "subdivision_plats",
-    "zoning_landuse",
-    "utilities_infra",
-    "flood_environment",
-    "clerk_deeds",
-    "mls_licensed",
-  ].includes(s.id),
-);
+const plannedIds = [
+  "building_permits",
+  "subdivision_plats",
+  "zoning_landuse",
+  "utilities_infra",
+  "flood_environment",
+  "mls_licensed",
+];
+if (DEEDS_USER_UI_OFFERED) plannedIds.push("clerk_deeds");
+const planned = down.filter((s) => plannedIds.includes(s.id));
 assert.ok(planned.every((s) => s.status === "planned" && !s.contributed));
-assert.equal(rich.find((s) => s.id === "clerk_deeds")?.status, "planned");
-assert.equal(rich.find((s) => s.id === "clerk_deeds")?.contributed, false);
 
 console.log("corridor-sources armor: ok");

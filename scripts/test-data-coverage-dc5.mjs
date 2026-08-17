@@ -66,11 +66,12 @@ assert.match(client, /\/api\/shi\/deeds/);
 const sources = read("src/lib/shi/corridor-sources.ts");
 assert.match(sources, /clerk_deeds/);
 assert.match(sources, /Dark until Archie owns clerk-grade/);
+assert.match(sources, /DEEDS_USER_UI_OFFERED/);
 
 const ask = read("src/lib/shi/corridor-ask.ts");
 assert.match(ask, /deed_history/);
-assert.match(ask, /stays dark/i);
 assert.match(ask, /Not deed history/);
+assert.match(ask, /corridorAskIntentsForUser/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /DC-5/);
@@ -78,24 +79,40 @@ assert.match(waves, /DC-5/);
 const pkg = read("package.json");
 assert.match(pkg, /test:data-coverage-dc5/);
 
-/* Pure gate mirrors — prod empty registry stays dark; peer-grade opens path */
-function canRevealDeeds({ revealOpen, ready, peerGrade }) {
-  return Boolean(revealOpen && ready && peerGrade);
+/* Pure gate mirrors — UI offered + peer-grade opens path; empty stays dark */
+function canRevealDeeds({ uiOffered, revealOpen, ready, peerGrade }) {
+  return Boolean(uiOffered && revealOpen && ready && peerGrade);
 }
 assert.equal(
-  canRevealDeeds({ revealOpen: true, ready: false, peerGrade: false }),
+  canRevealDeeds({
+    uiOffered: true,
+    revealOpen: true,
+    ready: false,
+    peerGrade: false,
+  }),
   false,
-);
-assert.equal(
-  canRevealDeeds({ revealOpen: true, ready: true, peerGrade: false }),
-  false,
-);
-assert.equal(
-  canRevealDeeds({ revealOpen: true, ready: true, peerGrade: true }),
-  true,
 );
 assert.equal(
   canRevealDeeds({
+    uiOffered: true,
+    revealOpen: true,
+    ready: true,
+    peerGrade: false,
+  }),
+  false,
+);
+assert.equal(
+  canRevealDeeds({
+    uiOffered: false,
+    revealOpen: true,
+    ready: true,
+    peerGrade: true,
+  }),
+  false,
+);
+assert.equal(
+  canRevealDeeds({
+    uiOffered: true,
     revealOpen: true,
     ready: true,
     peerGrade: true,

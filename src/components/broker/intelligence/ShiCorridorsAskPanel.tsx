@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ShiEvidenceChip } from "@/components/broker/intelligence/ShiEvidenceChip";
 import {
   CORRIDOR_ASK_HONESTY,
-  CORRIDOR_ASK_INTENTS,
+  corridorAskIntentsForUser,
   type CorridorAskAnswer,
 } from "@/lib/shi/corridor-ask";
 import { EVIDENCE_LEGEND_LINES } from "@/lib/shi/evidence-tier";
@@ -38,7 +38,7 @@ export function ShiCorridorsAskPanel({
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5" data-corridor-ask-chips>
-        {CORRIDOR_ASK_INTENTS.map((intent) => (
+        {corridorAskIntentsForUser().map((intent) => (
           <button
             key={intent.id}
             type="button"

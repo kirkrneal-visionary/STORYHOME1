@@ -35,8 +35,9 @@ import type { EvidenceTier } from "@/lib/shi/evidence-tier";
 import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
+import { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
 
-export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v2.2" as const;
+export const CORRIDOR_ASK_RULE_VERSION = "corridor-ask-v2.3" as const;
 
 export const CORRIDOR_ASK_HONESTY =
   "Archie answers from published TxDOT counts, mapped roads, CAD parcels, and Data Coverage facts already on this desk — never invents statistics. Each fact carries an evidence label.";
@@ -233,12 +234,21 @@ function fact(
   };
 }
 
+/**
+ * Intents offered in the Ask chip row.
+ * Founder Interpreter (process): hide empty Deeds until UI is offered again.
+ */
+export function corridorAskIntentsForUser(): CorridorAskIntent[] {
+  if (DEEDS_USER_UI_OFFERED) return CORRIDOR_ASK_INTENTS;
+  return CORRIDOR_ASK_INTENTS.filter((i) => i.id !== "deed_history");
+}
+
 export function matchCorridorAskIntent(
   text: string,
 ): CorridorAskIntent | null {
   const q = text.trim();
   if (!q) return null;
-  for (const intent of CORRIDOR_ASK_INTENTS) {
+  for (const intent of corridorAskIntentsForUser()) {
     if (intent.match.test(q)) return intent;
   }
   return null;
@@ -853,10 +863,31 @@ function answerEnvironment(ctx: CorridorAskContext): CorridorAskAnswer {
 /**
  * DEEDS-2 / DC-5 — deeds Ask honesty.
  * Never invents transfers from CAD. Does not import server-only deeds-clerk (node:fs).
- * Peer-grade open counties surface on the property Deeds card — Ask stays honest.
+ * While DEEDS_USER_UI_OFFERED is false, Ask does not dump empty-topic essays.
  */
 function answerDeedHistory(_ctx: CorridorAskContext): CorridorAskAnswer {
   const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "deed_history")!;
+  if (!DEEDS_USER_UI_OFFERED) {
+    return {
+      intentId: "deed_history",
+      intentLabel: intent.label,
+      honesty: CORRIDOR_ASK_HONESTY,
+      ruleVersion: CORRIDOR_ASK_RULE_VERSION,
+      summary:
+        "Deed history is not offered in the product yet. Archie will not invent transfers from CAD.",
+      facts: [
+        fact("CAD observation", "Not deed history", {
+          detail:
+            "Owner/address/value changes between county loads stay observation — never transfer dates.",
+          tier: "OBSERVED",
+          source: "Archie CAD observation",
+          asOf: null,
+        }),
+      ],
+      missing: [],
+      hint: null,
+    };
+  }
   return {
     intentId: "deed_history",
     intentLabel: intent.label,
@@ -1096,7 +1127,8 @@ export function answerCorridorAsk(
   queryOrIntentId: string,
   ctx: CorridorAskContext,
 ): CorridorAskAnswer {
-  const asId = CORRIDOR_ASK_INTENTS.find((i) => i.id === queryOrIntentId);
+  const offered = corridorAskIntentsForUser();
+  const asId = offered.find((i) => i.id === queryOrIntentId);
   const intent = asId ?? matchCorridorAskIntent(queryOrIntentId);
 
   if (!intent) {
@@ -1107,7 +1139,7 @@ export function answerCorridorAsk(
       ruleVersion: CORRIDOR_ASK_RULE_VERSION,
       summary:
         "Try a canned question below. Archie only answers from data already on this Corridors desk — no invented counts.",
-      facts: CORRIDOR_ASK_INTENTS.map((i) => ({
+      facts: offered.map((i) => ({
         label: i.chip,
         value: i.label,
       })),

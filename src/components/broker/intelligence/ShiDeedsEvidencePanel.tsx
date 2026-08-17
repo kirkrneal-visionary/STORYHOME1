@@ -1,6 +1,7 @@
 "use client";
 
 import type { DeedsFact } from "@/lib/shi/deeds-clerk";
+import { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
 import {
   ShiEvidenceHeader,
   ShiEvidenceSource,
@@ -9,7 +10,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * DC-5 — Deed history card.
- * Renders nothing when userReveal is false (dark store / retracted).
+ * Hidden while DEEDS_USER_UI_OFFERED is false (empty topic — do not expand).
+ * Also renders nothing when userReveal is false (dark store / retracted).
  * Never teasers, never “buy deed data.”
  */
 export function ShiDeedsEvidencePanel({
@@ -19,6 +21,7 @@ export function ShiDeedsEvidencePanel({
   deeds: DeedsFact | null | undefined;
   compact?: boolean;
 }) {
+  if (!DEEDS_USER_UI_OFFERED) return null;
   if (!deeds?.userReveal) return null;
 
   return (
