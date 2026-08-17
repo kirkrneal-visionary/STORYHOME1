@@ -15,6 +15,11 @@ import {
   type MapBaseLayer,
 } from "@/lib/map-style";
 import {
+  MAP_PARCEL_SOURCE_MAX_ZOOM,
+  MAP_PRECISION_MAX_ZOOM,
+  PARCEL_LINE_WIDTH_EXPR,
+} from "@/lib/map-precision";
+import {
   fetchParcelsByPropIdsAny,
   type CountyParcel,
 } from "@/lib/supabase/parcels";
@@ -119,6 +124,7 @@ export function ListingCadMap({
       style: buildStoryMapStyle(),
       center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
+      maxZoom: MAP_PRECISION_MAX_ZOOM,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
@@ -169,7 +175,7 @@ export function ListingCadMap({
         type: "vector",
         tiles: [`${window.location.origin}/api/parcels/{z}/{x}/{y}`],
         minzoom: 13,
-        maxzoom: 16,
+        maxzoom: MAP_PARCEL_SOURCE_MAX_ZOOM,
       });
       map.addLayer({
         id: "parcels-fill",
@@ -188,7 +194,7 @@ export function ListingCadMap({
         paint: {
           "line-color": MAP_GOLD,
           "line-opacity": 0.7,
-          "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.3, 16, 1],
+          "line-width": [...PARCEL_LINE_WIDTH_EXPR],
         },
       });
 

@@ -16,6 +16,9 @@
 ### ARCHIE-NEIGHBORS · **N1 shipping**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
+### Map zoom precision · **shipping**
+Soft max zoom (z19) aligned to launch-7 tile depth — no navy void on close zoom; CAD lot lines thicken for desk precision. Founder Interpreter on `map-precision.ts` (build process only). See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
+
 ### ARCHIE-DEEDS · **DEEDS-2 live**
 Peer-grade reveal gate open in software. Per-county reveal only when `ready` + `peerGrade`. Prod registry starts with **zero** peer-grade FIPS → still dark live.
 
