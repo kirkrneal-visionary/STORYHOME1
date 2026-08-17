@@ -30,6 +30,7 @@ import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
   MAP_PRECISION_MAX_ZOOM,
   PARCEL_LINE_WIDTH_EXPR,
+  mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import { CadOverlayControl } from "@/components/map/CadOverlayControl";
 import {
@@ -402,6 +403,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             2,
           ),
           maxZoom: MAP_PRECISION_MAX_ZOOM,
+          transformRequest: mapLibreTransformRequest,
           // Required so Map Memory toDataURL is not a blank canvas.
           preserveDrawingBuffer: true,
           attributionControl: { compact: true },

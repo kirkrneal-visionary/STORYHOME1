@@ -4,12 +4,13 @@ import type { ExpressionSpecification } from "maplibre-gl";
  * Founder Interpreter (build process only — not a product):
  * - Intent: Desk zoom for lot precision must never go black. CAD lines stay readable when you lean in.
  * - UX: Soft max zoom aligned to real tile depth. Streets overzoom past z14; imagery holds to z18.
- *   Parcel strokes thicken at close range. Basemap tile URLs are absolute (MapLibre workers cannot
- *   fetch relative /api paths — that was the live white/black void). No redesign.
+ *   Parcel strokes thicken at close range. Basemap tile URLs are absolute in the style AND via
+ *   MapLibre transformRequest (workers cannot fetch relative /api paths — white Streets on start,
+ *   map only waking after Imagery + zoom). No redesign.
  * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
- * - Acceptance: Streets and Imagery paint on marketplace/research. Zoom never paints void.
- *   Parcel lines visible at close zoom. Soft ceiling. Armor covers constants + absolute tiles.
+ * - Acceptance: First paint is not white void on Streets. Imagery paints without a zoom ritual.
+ *   Soft ceiling. Armor covers constants + absolute tiles + transformRequest.
  *   No Archie/CAD write paths touched.
  */
 
@@ -34,6 +35,21 @@ export function absolutizeMapTileTemplate(tmpl: string): string {
     return `https://${vercel.replace(/\/+$/, "")}${path}`;
   }
   return path;
+}
+
+/**
+ * Belt-and-suspenders for MapLibre: any relative tile/glyph/sprite URL
+ * becomes absolute at request time (workers have no document base).
+ * Without this, Streets first-paint stays white until Imagery + zoom wakes the map.
+ */
+export function mapLibreTransformRequest(url: string): { url: string } {
+  if (!url || /^https?:\/\//i.test(url) || url.startsWith("blob:") || url.startsWith("data:")) {
+    return { url };
+  }
+  if (url.startsWith("/")) {
+    return { url: absolutizeMapTileTemplate(url) };
+  }
+  return { url };
 }
 
 /** Launch-7 / Protomaps streets vector ceiling — API rejects z > 14. */

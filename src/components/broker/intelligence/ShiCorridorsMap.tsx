@@ -25,6 +25,7 @@ import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
   MAP_PRECISION_MAX_ZOOM,
   PARCEL_LINE_WIDTH_EXPR,
+  mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import type { DrawnBoundary, LatLng } from "@/lib/geo";
 import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
@@ -327,6 +328,7 @@ export function ShiCorridorsMap({
         ],
         fitBoundsOptions: { padding: 36 },
         maxZoom: MAP_PRECISION_MAX_ZOOM,
+        transformRequest: mapLibreTransformRequest,
         pitchWithRotate: false,
         dragRotate: false,
         pixelRatio: Math.min(

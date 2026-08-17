@@ -18,6 +18,7 @@ import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
   MAP_PRECISION_MAX_ZOOM,
   PARCEL_LINE_WIDTH_EXPR,
+  mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import {
   fetchParcelsByPropIdsAny,
@@ -125,6 +126,7 @@ export function ListingCadMap({
       center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
       maxZoom: MAP_PRECISION_MAX_ZOOM,
+      transformRequest: mapLibreTransformRequest,
       attributionControl: { compact: true },
     });
     mapRef.current = map;

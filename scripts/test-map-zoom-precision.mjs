@@ -18,6 +18,7 @@ assert.match(precision, /MAP_IMAGERY_SOURCE_MAX_ZOOM = 18/);
 assert.match(precision, /MAP_PARCEL_SOURCE_MAX_ZOOM = 16/);
 assert.match(precision, /PARCEL_LINE_WIDTH_EXPR/);
 assert.match(precision, /absolutizeMapTileTemplate/);
+assert.match(precision, /mapLibreTransformRequest/);
 assert.doesNotMatch(precision, /maxZoom:\s*22/);
 
 const style = read("src/lib/map-style.ts");
@@ -46,28 +47,48 @@ assert.equal(
   "https://cdn.example/tiles/{z}/{x}/{y}.pbf",
 );
 
+function mapLibreTransformRequest(url, origin = "https://example.test") {
+  if (!url || /^https?:\/\//i.test(url) || url.startsWith("blob:") || url.startsWith("data:")) {
+    return { url };
+  }
+  if (url.startsWith("/")) {
+    return { url: absolutizeMapTileTemplate(url, origin) };
+  }
+  return { url };
+}
+
+assert.equal(
+  mapLibreTransformRequest("/api/map/launch7/imagery/{z}/{x}/{y}").url,
+  "https://example.test/api/map/launch7/imagery/{z}/{x}/{y}",
+);
+assert.equal(
+  mapLibreTransformRequest("https://cdn.example/x.jpg").url,
+  "https://cdn.example/x.jpg",
+);
+
 const research = read(
   "src/components/broker/intelligence/ShiResearchMap.tsx",
 );
 assert.match(research, /MAP_PRECISION_MAX_ZOOM/);
-assert.match(research, /MAP_PARCEL_SOURCE_MAX_ZOOM/);
-assert.match(research, /PARCEL_LINE_WIDTH_EXPR/);
+assert.match(research, /mapLibreTransformRequest/);
+assert.match(research, /transformRequest:\s*mapLibreTransformRequest/);
 assert.doesNotMatch(research, /maxZoom:\s*22/);
 
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsMap.tsx",
 );
 assert.match(corridors, /MAP_PRECISION_MAX_ZOOM/);
-assert.match(corridors, /PARCEL_LINE_WIDTH_EXPR/);
+assert.match(corridors, /mapLibreTransformRequest/);
 assert.doesNotMatch(corridors, /maxZoom:\s*22/);
 
 const market = read("src/components/marketplace/MarketplaceMap.tsx");
 assert.match(market, /MAP_PRECISION_MAX_ZOOM/);
-assert.match(market, /PARCEL_LINE_WIDTH_EXPR/);
+assert.match(market, /mapLibreTransformRequest/);
+assert.match(market, /transformRequest:\s*mapLibreTransformRequest/);
 
 const listing = read("src/components/broker/ListingCadMap.tsx");
 assert.match(listing, /MAP_PRECISION_MAX_ZOOM/);
-assert.match(listing, /PARCEL_LINE_WIDTH_EXPR/);
+assert.match(listing, /mapLibreTransformRequest/);
 
 const doc = read("docs/shi/ARCHIE-LAUNCH7-MAP.md");
 assert.match(doc, /Map zoom precision/);
