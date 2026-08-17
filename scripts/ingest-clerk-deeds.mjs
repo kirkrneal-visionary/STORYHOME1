@@ -1,11 +1,12 @@
 /**
- * DEEDS-1 — ingest owned clerk deed transfers (stub / fixture / file).
+ * DEEDS-1…2 — ingest owned clerk deed transfers (stub / fixture / file).
  * Run:
  *   node scripts/ingest-clerk-deeds.mjs --dry-run
  *   node scripts/ingest-clerk-deeds.mjs --fixture
- *   node scripts/ingest-clerk-deeds.mjs --file=path.json [--mark-ready=48005]
+ *   node scripts/ingest-clerk-deeds.mjs --file=path.json [--mark-ready=48005] [--mark-peer-grade=48005]
  *
- * Does NOT open user reveal. Marks coverage ready only when --mark-ready is set.
+ * Marks coverage ready / peer-grade only when those flags are set.
+ * DEEDS-2: user reveal opens per county when ready + peerGrade both true.
  * Never invents deeds from CAD.
  */
 import {
@@ -45,10 +46,14 @@ const markReady = (arg("mark-ready") || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+const markPeerGrade = (arg("mark-peer-grade") || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 if (!filePath) {
   console.error(
-    "Usage: node scripts/ingest-clerk-deeds.mjs --fixture | --file=path.json [--mark-ready=FIPS] [--dry-run]",
+    "Usage: node scripts/ingest-clerk-deeds.mjs --fixture | --file=path.json [--mark-ready=FIPS] [--mark-peer-grade=FIPS] [--dry-run]",
   );
   process.exit(1);
 }
@@ -83,11 +88,12 @@ const rows = transfers.map((t) => ({
 console.log(
   JSON.stringify(
     {
-      wave: "deeds-1",
+      wave: "deeds-2",
       file: filePath,
       dryRun,
       transferCount: rows.length,
       markReady,
+      markPeerGrade,
       db: canDb ? "upsert" : dryRun ? "skipped-dry-run" : "skipped-no-service-role",
     },
     null,
@@ -109,27 +115,33 @@ if (canDb && rows.length > 0) {
   }
 }
 
-/* Update coverage registry file */
 const coverage = existsSync(COVERAGE)
   ? JSON.parse(readFileSync(COVERAGE, "utf8"))
-  : { version: "deeds-1", readyFips: [], counties: {} };
+  : { version: "deeds-2", readyFips: [], peerGradeFips: [], counties: {} };
 
 const counts = {};
 for (const r of rows) {
   counts[r.county_fips] = (counts[r.county_fips] || 0) + 1;
 }
 
-coverage.version = "deeds-1";
+coverage.version = "deeds-2";
 coverage.honesty =
-  "Coverage flags only. User reveal stays closed in DEEDS-1. Flip readyFips only after owned clerk-grade ingest.";
+  "Coverage flags only. ready ≠ peerGrade. User reveal opens per county only when ready and peerGrade are both true (DEEDS-2).";
 coverage.counties = coverage.counties || {};
 for (const fips of LAUNCH7) {
   const prev = coverage.counties[fips] || {};
   const ready = markReady.includes(fips) || Boolean(prev.ready);
+  const peerGrade = markPeerGrade.includes(fips) || Boolean(prev.peerGrade);
+  if (peerGrade && !ready) {
+    console.error(
+      `Refuse peer-grade without ready for ${fips}. Pass --mark-ready=${fips} too.`,
+    );
+    process.exit(1);
+  }
   coverage.counties[fips] = {
     name: prev.name || fips,
     ready,
-    peerGrade: false,
+    peerGrade,
     transferCount: (prev.transferCount || 0) + (counts[fips] || 0),
   };
 }
@@ -137,23 +149,41 @@ coverage.readyFips = Object.entries(coverage.counties)
   .filter(([, v]) => v.ready)
   .map(([f]) => f)
   .sort();
+coverage.peerGradeFips = Object.entries(coverage.counties)
+  .filter(([, v]) => v.peerGrade)
+  .map(([f]) => f)
+  .sort();
 
 if (!dryRun) {
   writeFileSync(COVERAGE, JSON.stringify(coverage, null, 2) + "\n");
-  console.log("coverage →", COVERAGE, "readyFips", coverage.readyFips);
+  console.log(
+    "coverage →",
+    COVERAGE,
+    "readyFips",
+    coverage.readyFips,
+    "peerGradeFips",
+    coverage.peerGradeFips,
+  );
 } else {
-  console.log("dry-run coverage preview", coverage.readyFips);
+  console.log("dry-run coverage preview", {
+    readyFips: coverage.readyFips,
+    peerGradeFips: coverage.peerGradeFips,
+  });
 }
 
-if (canDb && markReady.length > 0) {
+if (canDb && (markReady.length > 0 || markPeerGrade.length > 0)) {
   const sb = createClient(url, key, { auth: { persistSession: false } });
-  for (const fips of markReady) {
+  const touch = new Set([...markReady, ...markPeerGrade]);
+  for (const fips of touch) {
+    const row = coverage.counties[fips];
     const { error } = await sb.from("clerk_county_coverage").upsert({
       county_fips: fips,
-      ready: true,
-      peer_grade: false,
-      transfer_count: coverage.counties[fips]?.transferCount ?? 0,
-      notes: "deeds-1 ingest — reveal still closed",
+      ready: Boolean(row?.ready),
+      peer_grade: Boolean(row?.peerGrade),
+      transfer_count: row?.transferCount ?? 0,
+      notes: row?.peerGrade
+        ? "deeds-2 ingest — peer-grade reveal eligible"
+        : "deeds-2 ingest — ready only, reveal still closed for this county",
       updated_at: new Date().toISOString(),
     });
     if (error) console.error("coverage upsert", fips, error.message);
@@ -161,5 +191,5 @@ if (canDb && markReady.length > 0) {
 }
 
 console.log(
-  "DEEDS-1 note: userReveal remains closed until DEEDS-2 peer-grade gate.",
+  "DEEDS-2 note: userReveal opens only for counties with ready + peerGrade.",
 );

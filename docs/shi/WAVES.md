@@ -13,8 +13,11 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-INTELLIGENCE · **P4 shipping**
-Property-aware Archie + spatial desk context + Current read + **Since last look** (browser-local reasoning memory). Deterministic — no LLM · no buy/sell advice · no MLS yet · Founder Interpreter is build process only (not a product).
+### ARCHIE-DEEDS · **DEEDS-2 shipping**
+Peer-grade reveal gate open in software. Per-county reveal only when `ready` + `peerGrade`. Prod registry starts with **zero** peer-grade FIPS → still dark live. No DataTree / ATTOM / CAD-as-deed.
+
+### ARCHIE-INTELLIGENCE · **P4 live**
+Property-aware Archie + spatial desk context + Current read + Since last look (browser-local). Deterministic — no LLM · no buy/sell advice · no MLS yet · Founder Interpreter is build process only (not a product).
 
 ### ARCHIE-RESEARCH-MERGE · **R2 live**
 Access desk (Ask · Sites · Compare) inside Research. Access tab soft-hidden. Old `section=corridors` redirects to `mode=access`. APIs kept.
@@ -22,19 +25,17 @@ Access desk (Ask · Sites · Compare) inside Research. Access tab soft-hidden. O
 ### ARCHIE-IX · **IX-1 live**
 Approx meters to nearest mapped-road crossing on the Access / Research desk.
 
-### ARCHIE-DEEDS · **DEEDS-1 live**
-Owned clerk deed index scaffold — user reveal still closed until DEEDS-2.
-
 ### ARCHIE-CORRIDORS-2 · C2.0-A…F + F2 **LIVE**
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- ARCHIE-INTELLIGENCE Phase 4b — market / MLS when ready (not this ship)  
+- Mark launch-7 counties peer-grade after owned clerk ingest (ops)  
+- ARCHIE-INTELLIGENCE Phase 4b — market / MLS when ready  
 - Optional thin neighbors API (ST_DWithin / touches) if desk spatial gaps remain  
-- DEEDS-2: peer-grade clerk coverage → open user reveal  
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-DEEDS DEEDS-2 — peer-grade reveal gate (prod still dark until peerGrade flags)  
 - ARCHIE-INTELLIGENCE P4 — persistent reasoning memory (since last look)  
 - ARCHIE-INTELLIGENCE P3 — conclusion assistance (Current read)  
 - ARCHIE-INTELLIGENCE P2 — spatial desk context in Archie brief  

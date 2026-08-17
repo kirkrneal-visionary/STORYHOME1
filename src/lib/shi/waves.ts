@@ -925,20 +925,22 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-DEEDS",
     name: "Owned clerk deeds · index then reveal (DEEDS-1…2)",
     goal: "Own clerk-grade deed index for launch 7 before any user reveal — no DataTree / ATTOM / CAD-as-deed.",
-    status: "done",
+    status: "current",
     frontend: [
-      "DEEDS-1: ShiDeedsEvidencePanel stays retracted (DEEDS_USER_REVEAL_OPEN false)",
-      "DEEDS-1: Ask deed_history honesty unchanged — dark until DEEDS-2",
+      "DEEDS-1: ShiDeedsEvidencePanel stays retracted while dark",
+      "DEEDS-2: Panel reveals clerk transfers when county is ready + peerGrade",
+      "DEEDS-2: Ask deed_history honesty — dark until peer-grade; Deeds card reveals when open",
     ],
     backend: [
-      "DEEDS-1: deeds-clerk-v1.1 · clerk-coverage-launch7.json · migration 0036",
-      "DEEDS-1: npm run ingest:clerk-deeds · Armor test:data-coverage-deeds1",
-      "DEEDS-2 next: peer-grade readyFips → open user reveal",
+      "DEEDS-1: deeds-clerk-v1.1 scaffold · clerk-coverage-launch7.json · migration 0036",
+      "DEEDS-2: deeds-clerk-v1.2 · DEEDS_USER_REVEAL_OPEN true · canRevealDeeds(ready+peerGrade)",
+      "DEEDS-2: ingest --mark-peer-grade · Armor test:data-coverage-deeds2",
+      "Prod registry starts with zero peer-grade FIPS — still dark live",
     ],
     outOfScope: [
       "DataTree / ATTOM / CoreLogic deed SKUs",
       "CAD owner diffs as transfer dates",
-      "User reveal before peer-grade for launch 7",
+      "User reveal before peer-grade for that county",
       "Paywall / upsell for deed history",
     ],
   },
@@ -988,7 +990,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-INTELLIGENCE",
     name: "Archie Intelligence · property-aware Phase 1…4",
     goal: "On property open, Archie speaks first with findings, spatial desk context, conclusion assistance, and browser-local since-last-look memory — without forcing buy/sell advice.",
-    status: "current",
+    status: "done",
     frontend: [
       "P1: ShiArchieIntelligencePanel on Research property record",
       "P1: Archie Found · truth chips · focus chips (Ownership · Value · Development · Nearby · Ask)",
@@ -1013,8 +1015,8 @@ export const SHI_WAVES: ShiWave[] = [
   },
 ];
 
-/** Current product line — Archie Intelligence Phase 4. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE" as const;
+/** Current product line — Archie Deeds Phase 2. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

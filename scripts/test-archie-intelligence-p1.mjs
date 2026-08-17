@@ -37,7 +37,7 @@ assert.ok(archieIdx > 0 && factIdx > archieIdx, "Archie panel before CAD fact gr
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-INTELLIGENCE/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS)"/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
 assert.match(wavesDoc, /ARCHIE-INTELLIGENCE/);
