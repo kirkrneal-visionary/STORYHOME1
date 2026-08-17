@@ -13,11 +13,14 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-NEIGHBORS · **N1 shipping**
+### ARCHIE-DEEDS · **UI hidden (for now)**
+Deeds Ask chip, source-strip row, and panel stay out of the product while `DEEDS_USER_UI_OFFERED` is false. Backend index path stays; no empty-topic essays. Flip the flag only after owned peer-grade clerk data exists.
+
+### ARCHIE-NEIGHBORS · **N1 live**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
-### ARCHIE-DEEDS · **DEEDS-2 live**
-Peer-grade reveal gate open in software. Per-county reveal only when `ready` + `peerGrade`. Prod registry starts with **zero** peer-grade FIPS → still dark live.
+### ARCHIE-DEEDS · **DEEDS-2 live (data gate)**
+Peer-grade reveal gate open in software. Per-county reveal only when UI offered + `ready` + `peerGrade`. Prod registry starts with **zero** peer-grade FIPS → still dark live.
 
 ### ARCHIE-INTELLIGENCE · **P4 live**
 Property-aware Archie + spatial desk context + Current read + Since last look (browser-local). Deterministic — no LLM · no buy/sell advice · no MLS yet · Founder Interpreter is build process only (not a product).

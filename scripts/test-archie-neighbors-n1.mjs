@@ -52,10 +52,10 @@ assert.match(view, /parcelNeighbors/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-NEIGHBORS/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-NEIGHBORS"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(NEIGHBORS|DEEDS)"/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
-assert.match(wavesDoc, /N1 shipping/);
+assert.match(wavesDoc, /N1 (shipping|live)/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:archie-neighbors-n1/);

@@ -43,6 +43,7 @@ import type { FloodFact } from "@/lib/shi/flood-fema";
 import type { UtilitiesFact } from "@/lib/shi/utilities-ccn";
 import type { EnvironmentDesk } from "@/lib/shi/environment-desk";
 import type { DeedsFact } from "@/lib/shi/deeds-clerk";
+import { DEEDS_USER_UI_OFFERED } from "@/lib/shi/deeds-ui";
 import {
   openBoundaryInResearch,
   openParcelInResearch,
@@ -1707,19 +1708,23 @@ function ParcelSitePanel({
       .catch(() => {
         if (!cancelled) setEnvironmentDesk(null);
       });
-    void shiDeedsForParcel({
-      countyFips: fips,
-      propId: parcel.propId,
-      lat: parcel.lat,
-      lng: parcel.lng,
-    })
-      .then((body) => {
-        if (cancelled) return;
-        setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+    if (DEEDS_USER_UI_OFFERED) {
+      void shiDeedsForParcel({
+        countyFips: fips,
+        propId: parcel.propId,
+        lat: parcel.lat,
+        lng: parcel.lng,
       })
-      .catch(() => {
-        if (!cancelled) setDeedsFact(null);
-      });
+        .then((body) => {
+          if (cancelled) return;
+          setDeedsFact(body.deeds?.userReveal ? body.deeds : null);
+        })
+        .catch(() => {
+          if (!cancelled) setDeedsFact(null);
+        });
+    } else {
+      setDeedsFact(null);
+    }
 
     return () => {
       cancelled = true;

@@ -15,8 +15,9 @@ assert.match(doc, /peerGrade|peer-grade/i);
 assert.match(doc, /Founder Interpreter \(process\)/);
 
 const lib = read("src/lib/shi/deeds-clerk.ts");
-assert.match(lib, /deeds-clerk-v1\.2/);
+assert.match(lib, /deeds-clerk-v1\.3/);
 assert.match(lib, /DEEDS_USER_REVEAL_OPEN\s*=\s*true/);
+assert.match(lib, /DEEDS_USER_UI_OFFERED/);
 assert.match(lib, /isClerkPeerGrade/);
 assert.match(lib, /clerkPeerGradeFipsFromRegistry/);
 assert.match(lib, /canRevealDeeds/);
@@ -44,7 +45,7 @@ assert.doesNotMatch(ask, /from \"@\/lib\/shi\/deeds-clerk\"/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /DEEDS-2/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(DEEDS|NEIGHBORS)"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS"/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
 assert.match(wavesDoc, /DEEDS-2 (shipping|live)/);
@@ -53,29 +54,59 @@ const pkg = read("package.json");
 assert.match(pkg, /test:data-coverage-deeds2/);
 
 /** Pure gate (mirrors lib). */
-function canRevealDeeds({ revealOpen, ready, peerGrade }) {
-  return Boolean(revealOpen && ready && peerGrade);
+function canRevealDeeds({ uiOffered, revealOpen, ready, peerGrade }) {
+  return Boolean(uiOffered && revealOpen && ready && peerGrade);
 }
 
 assert.equal(
-  canRevealDeeds({ revealOpen: true, ready: false, peerGrade: false }),
+  canRevealDeeds({
+    uiOffered: true,
+    revealOpen: true,
+    ready: false,
+    peerGrade: false,
+  }),
   false,
   "empty prod stays dark",
 );
 assert.equal(
-  canRevealDeeds({ revealOpen: true, ready: true, peerGrade: false }),
+  canRevealDeeds({
+    uiOffered: true,
+    revealOpen: true,
+    ready: true,
+    peerGrade: false,
+  }),
   false,
   "ready alone is not enough",
 );
 assert.equal(
-  canRevealDeeds({ revealOpen: false, ready: true, peerGrade: true }),
+  canRevealDeeds({
+    uiOffered: true,
+    revealOpen: false,
+    ready: true,
+    peerGrade: true,
+  }),
   false,
   "software kill switch",
 );
 assert.equal(
-  canRevealDeeds({ revealOpen: true, ready: true, peerGrade: true }),
+  canRevealDeeds({
+    uiOffered: false,
+    revealOpen: true,
+    ready: true,
+    peerGrade: true,
+  }),
+  false,
+  "UI kill switch",
+);
+assert.equal(
+  canRevealDeeds({
+    uiOffered: true,
+    revealOpen: true,
+    ready: true,
+    peerGrade: true,
+  }),
   true,
-  "peer-grade path opens",
+  "peer-grade path opens when UI offered",
 );
 
 console.log("data-coverage-deeds2 armor: ok");

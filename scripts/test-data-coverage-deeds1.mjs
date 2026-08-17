@@ -25,7 +25,7 @@ assert.match(mig, /DEEDS-1|peer-grade|dark/i);
 assert.match(mig, /service_role/);
 
 const lib = read("src/lib/shi/deeds-clerk.ts");
-assert.match(lib, /deeds-clerk-v1\.[12]/);
+assert.match(lib, /deeds-clerk-v1\.[123]/);
 assert.match(lib, /DEEDS_USER_REVEAL_OPEN/);
 assert.match(lib, /clerk-coverage-launch7\.json/);
 assert.match(lib, /clerk_deed_transfers/);

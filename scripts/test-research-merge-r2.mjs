@@ -22,7 +22,7 @@ const askPanel = read(
   "src/components/broker/intelligence/ShiCorridorsAskPanel.tsx",
 );
 assert.match(askPanel, /data-corridor-ask-chips/);
-assert.match(askPanel, /CORRIDOR_ASK_INTENTS/);
+assert.match(askPanel, /corridorAskIntentsForUser/);
 
 const view = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
