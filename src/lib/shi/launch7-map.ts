@@ -106,13 +106,9 @@ export function ownedSatelliteTileTemplate(): string | null {
   return envTrim("NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES");
 }
 
-/** Imagery: explicit → CDN → API. */
+/** Imagery: explicit → API (CDN skipped until R2 CORS serves MapLibre workers). */
 export function resolveSatelliteTileTemplate(): string {
-  return (
-    ownedSatelliteTileTemplate() ||
-    cdnImageryTileTemplate() ||
-    LAUNCH7_IMAGERY_API_TEMPLATE
-  );
+  return ownedSatelliteTileTemplate() || LAUNCH7_IMAGERY_API_TEMPLATE;
 }
 
 export function streetsUseOwnedRaster(): boolean {
@@ -121,11 +117,11 @@ export function streetsUseOwnedRaster(): boolean {
   return /\.(png|jpg|jpeg|webp)(\?|$)/i.test(t) || t.includes("raster");
 }
 
-/** Streets: explicit → CDN → API. */
+/** Streets: explicit → API (CDN skipped until R2 CORS serves MapLibre workers). */
 export function resolveStreetsVectorTemplate(): string {
   const t = ownedStreetsTileTemplate();
   if (t && !streetsUseOwnedRaster()) return t;
-  return cdnStreetsTileTemplate() || LAUNCH7_STREETS_API_TEMPLATE;
+  return LAUNCH7_STREETS_API_TEMPLATE;
 }
 
 export type Launch7ServeMode = "cdn" | "api" | "explicit";
@@ -134,7 +130,7 @@ export function launch7ServeMode(): Launch7ServeMode {
   if (ownedStreetsTileTemplate() || ownedSatelliteTileTemplate()) {
     return "explicit";
   }
-  if (launch7CdnBase()) return "cdn";
+  // CDN base may be set for publish ops, but MapLibre serves from API until R2 CORS works.
   return "api";
 }
 

@@ -10,7 +10,8 @@ import type { ExpressionSpecification } from "maplibre-gl";
  * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
  * - Acceptance: First paint is not white void on Streets. Imagery paints without a zoom ritual.
- *   Soft ceiling. Armor covers constants + absolute tiles + transformRequest.
+ *   Liberty numeric filters coalesce nulls (MapLibre "Expected number, found null"). Soft ceiling.
+ *   Armor covers constants + absolute tiles + transformRequest + liberty sanitize.
  *   No Archie/CAD write paths touched.
  */
 
