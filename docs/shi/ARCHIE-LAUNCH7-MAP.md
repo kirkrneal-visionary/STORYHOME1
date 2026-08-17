@@ -25,16 +25,36 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}`  
 - Disk cache + upstream fill · `npm run build:launch7-tiles`
 
-### L7-3 — Serve + refresh ops (**shipping**)
+### L7-3 — Serve + refresh ops (**ready — waiting on R2 keys**)
 
 - **Serve modes:** `api` (default) · `cdn` when `NEXT_PUBLIC_LAUNCH7_CDN_BASE` is set · `explicit` tile URL overrides  
-- **Publish:** `npm run publish:launch7-tiles` → Cloudflare R2 via S3 API (`LAUNCH7_R2_*`) · dry-runs without credentials  
+- **Publish:** `npm run publish:launch7-tiles` → Cloudflare R2 via SigV4 PutObject (`LAUNCH7_R2_*`) · no AWS CLI · dry-runs without credentials  
 - **Refresh:** `npm run refresh:launch7-tiles` (seed → publish dry-run) · add `--publish` when R2 is ready  
 - **Status:** `GET /api/map/launch7/status`  
 - **Expand playbook:** `npm run plan:launch7-expand -- --add=FIPS,FIPS`  
 - Marker: `data-map-sovereignty="l7-3"`
 
-#### R2 env (owner)
+#### Owner job (one time) — create R2, then reply DONE
+
+1. Open https://dash.cloudflare.com and sign in  
+2. **R2** → **Create bucket** → name `storyhome-launch7`  
+3. Make the bucket **public** (R2.dev subdomain or custom domain) — copy the public base URL  
+4. **Manage R2 API Tokens** → Create token (Object Read & Write on that bucket) — copy Access Key ID + Secret  
+5. Copy **Account ID** from the R2 overview  
+6. Reply **DONE** with these values (or add them as Cursor secrets + Vercel `storyhome-1-eqmg`):
+
+```
+LAUNCH7_R2_ACCOUNT_ID=
+LAUNCH7_R2_ACCESS_KEY_ID=
+LAUNCH7_R2_SECRET_ACCESS_KEY=
+LAUNCH7_R2_BUCKET=storyhome-launch7
+LAUNCH7_R2_PREFIX=launch7
+NEXT_PUBLIC_LAUNCH7_CDN_BASE=https://YOUR_PUBLIC_HOST/launch7
+```
+
+Agent then runs publish + confirms `serveMode: cdn`.
+
+#### R2 env (reference)
 
 ```
 LAUNCH7_R2_ACCOUNT_ID=

@@ -34,7 +34,9 @@ assert.match(statusRoute, /launch7OpsStatus/);
 const publish = read("scripts/publish-launch7-tiles.mjs");
 assert.match(publish, /LAUNCH7_R2_ACCOUNT_ID/);
 assert.match(publish, /dry-run|dryRun/);
-assert.match(publish, /s3.*sync|aws/);
+assert.match(publish, /sigv4-putobject|PutObject|X-Amz-Content-Sha256/);
+assert.doesNotMatch(publish, /spawnSync\(\s*"aws"/);
+assert.match(doc, /Owner job|Reply \*\*DONE\*\*/i);
 
 const refresh = read("scripts/refresh-launch7-tiles.mjs");
 assert.match(refresh, /build-launch7-tiles/);

@@ -13,7 +13,10 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-NEIGHBORS · **N1 shipping**
+### ARCHIE-LAUNCH7-MAP · **L7-3 CDN waiting on R2 keys**
+Publish path ready (SigV4 PutObject · no AWS CLI). Local tiles warmed. Needs Cloudflare R2 bucket + `LAUNCH7_R2_*` + `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on eqmg.
+
+### ARCHIE-NEIGHBORS · **N1 live**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
 ### ARCHIE-DEEDS · **DEEDS-2 live**
@@ -32,11 +35,12 @@ Approx meters to nearest mapped-road crossing on the Access / Research desk.
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
+- Launch-7 CDN/R2 — **owner creates Cloudflare R2 bucket + keys** (publish script ready; no AWS CLI)  
 - Mark launch-7 counties peer-grade after owned clerk ingest (ops)  
 - ARCHIE-INTELLIGENCE Phase 4b — market / MLS when ready  
-- R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-DEEDS UI hide — empty Deeds off product until peer-grade data  
 - ARCHIE-NEIGHBORS N1 — thin CAD neighbors (touches / near)  
 - ARCHIE-DEEDS DEEDS-2 — peer-grade reveal gate (prod still dark until peerGrade flags)  
 - ARCHIE-INTELLIGENCE P4 — persistent reasoning memory (since last look)  

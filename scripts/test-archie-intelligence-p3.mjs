@@ -32,7 +32,7 @@ assert.match(panel, /ARCHIE_DECISION_DISCLAIMER|decision maker/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /P3:/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS|NEIGHBORS)"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS|NEIGHBORS|LAUNCH7-MAP)"/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
 assert.match(wavesDoc, /P3/);
