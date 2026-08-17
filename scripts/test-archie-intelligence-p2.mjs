@@ -37,7 +37,7 @@ assert.match(view, /P2 — load planning stations|Archie spatial/);
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-INTELLIGENCE/);
 assert.match(waves, /P2:/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS)"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS|NEIGHBORS)"/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
 assert.match(wavesDoc, /ARCHIE-INTELLIGENCE/);

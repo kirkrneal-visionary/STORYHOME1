@@ -522,6 +522,30 @@ export async function shiDeedsForParcel(opts: {
   return shiFetch(`/api/shi/deeds?${params.toString()}`);
 }
 
+/* --------------------- Neighbors · CAD polygon (N1) --------------------- */
+
+export async function shiParcelNeighbors(opts: {
+  propId: string;
+  source: string;
+  countyFips: string;
+  cadOwnerId?: string | null;
+  bufferM?: number;
+}): Promise<{
+  version: string;
+  neighbors: import("@/lib/shi/parcel-neighbors").ParcelNeighborsResult;
+  county: { fips: string; name: string };
+}> {
+  const params = new URLSearchParams();
+  params.set("propId", opts.propId);
+  params.set("source", opts.source);
+  params.set("countyFips", opts.countyFips);
+  if (opts.cadOwnerId) params.set("cadOwnerId", opts.cadOwnerId);
+  if (opts.bufferM != null && Number.isFinite(opts.bufferM)) {
+    params.set("bufferM", String(opts.bufferM));
+  }
+  return shiFetch(`/api/shi/neighbors?${params.toString()}`);
+}
+
 /* --------------------- Corridors · Traffic (Wave 1) --------------------- */
 
 export async function shiCorridorsTraffic(countyFips: string) {
