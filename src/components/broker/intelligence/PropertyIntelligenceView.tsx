@@ -51,6 +51,7 @@ import {
   shiCorridorsTraffic,
   shiCorridorsParcelLocation,
   shiCorridorsStrongestSites,
+  shiParcelNeighbors,
   shiListFolders,
   shiOwnerMatches,
   shiSaveFrame,
@@ -62,6 +63,7 @@ import type {
   TrafficStation,
 } from "@/lib/shi/corridors";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
+import type { ParcelNeighborsResult } from "@/lib/shi/parcel-neighbors";
 import {
   answerCorridorAsk,
   type CorridorAskAnswer,
@@ -136,6 +138,8 @@ export function PropertyIntelligenceView({
   const [accessIntel, setAccessIntel] = useState<ParcelLocationIntel | null>(
     null,
   );
+  const [parcelNeighbors, setParcelNeighbors] =
+    useState<ParcelNeighborsResult | null>(null);
   const [accessLoading, setAccessLoading] = useState(false);
   const [accessTrafficOn, setAccessTrafficOn] = useState(false);
   const [accessTrafficLoading, setAccessTrafficLoading] = useState(false);
@@ -269,6 +273,7 @@ export function PropertyIntelligenceView({
           setEnvironmentDesk(null);
           setDeedsFact(null);
           setMatches([]);
+          setParcelNeighbors(null);
           setDiscoverPins([]);
           return;
         }
@@ -278,6 +283,7 @@ export function PropertyIntelligenceView({
         setEnvironmentDesk(null);
         setDeedsFact(null);
         setAccessIntel(null);
+        setParcelNeighbors(null);
         setDiscoverPins([]);
         if (property.countyFips) {
           track("archie_parcel_opened", { county_fips: property.countyFips });
@@ -351,8 +357,22 @@ export function PropertyIntelligenceView({
               .finally(() => {
                 setAccessLoading(false);
               });
+            /* N1 — CAD polygon neighbors (soft-fail empty). */
+            void shiParcelNeighbors({
+              propId: property.propId,
+              source: property.source,
+              countyFips: fips,
+              cadOwnerId: property.cadOwnerId,
+            })
+              .then((body) => {
+                setParcelNeighbors(body.neighbors ?? null);
+              })
+              .catch(() => {
+                setParcelNeighbors(null);
+              });
           } else {
             setAccessIntel(null);
+            setParcelNeighbors(null);
             setAccessLoading(false);
           }
         }
@@ -1238,6 +1258,7 @@ export function PropertyIntelligenceView({
                 matches={matches}
                 accessIntel={accessIntel}
                 stations={accessStations}
+                parcelNeighbors={parcelNeighbors}
                 onFocusOwnership={() => {
                   ownerPortfolioRef.current?.scrollIntoView({
                     behavior: "smooth",

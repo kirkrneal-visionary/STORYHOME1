@@ -18,6 +18,7 @@ import {
 } from "@/lib/shi/archie-reasoning-memory";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
 import type { TrafficStation } from "@/lib/shi/corridors";
+import type { ParcelNeighborsResult } from "@/lib/shi/parcel-neighbors";
 import type { ShiOwnerMatch, ShiPropertyDetail } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export function ShiArchieIntelligencePanel({
   matches,
   accessIntel,
   stations = [],
+  parcelNeighbors = null,
   onFocusOwnership,
   onFocusNearby,
   onAskAccess,
@@ -53,6 +55,8 @@ export function ShiArchieIntelligencePanel({
   accessIntel?: ParcelLocationIntel | null;
   /** Optional TxDOT stations already loaded on the Access desk. */
   stations?: TrafficStation[];
+  /** N1 — CAD polygon neighbors (touches / near). */
+  parcelNeighbors?: ParcelNeighborsResult | null;
   onFocusOwnership?: () => void;
   onFocusNearby?: () => void;
   /** Opens Access desk Ask (traffic / frontage desk) — optional hand-off. */
@@ -68,6 +72,7 @@ export function ShiArchieIntelligencePanel({
         matches,
         accessIntel,
         stations,
+        parcelNeighbors,
       }),
     [
       property,
@@ -76,6 +81,7 @@ export function ShiArchieIntelligencePanel({
       matches,
       accessIntel,
       stations,
+      parcelNeighbors,
     ],
   );
 
@@ -132,6 +138,7 @@ export function ShiArchieIntelligencePanel({
   return (
     <section
       data-archie-intelligence="p4"
+      data-archie-neighbors={parcelNeighbors?.available ? "n1" : undefined}
       data-archie-phase={brief.version}
       className={cn("story-well space-y-3 px-3 py-3", className)}
     >
@@ -322,6 +329,7 @@ export function ShiArchieIntelligencePanel({
             possibleOwnerCount={possibleOwnerCount}
             accessIntel={accessIntel}
             nearbySummary={brief.nearbySummary}
+            parcelNeighbors={parcelNeighbors}
           />
         </div>
       ) : null}
@@ -336,6 +344,7 @@ function FocusCopy({
   possibleOwnerCount,
   accessIntel,
   nearbySummary,
+  parcelNeighbors,
 }: {
   focus: ArchieFocusChip;
   property: ShiPropertyDetail;
@@ -343,6 +352,7 @@ function FocusCopy({
   possibleOwnerCount: number;
   accessIntel?: ParcelLocationIntel | null;
   nearbySummary: string | null;
+  parcelNeighbors?: ParcelNeighborsResult | null;
 }) {
   if (focus === "ownership") {
     return (
@@ -404,7 +414,9 @@ function FocusCopy({
         <span className="font-semibold">Nearby parcels. </span>
         {nearbySummary
           ? nearbySummary
-          : "No same-owner tracts within 1 mile with centroids on desk, and no planning-traffic association loaded yet. Use owner portfolio below or Discover for broader search. Archie does not invent adjoining boundaries."}
+          : parcelNeighbors?.available === false
+            ? "CAD polygon neighbors are not on the desk yet (RPC soft-fail or outside launch 7). Centroid same-owner search still uses owner matches when present. Archie does not invent adjoining boundaries."
+            : "No same-owner tracts within 1 mile with centroids on desk, and no CAD polygon neighbors loaded yet. Use owner portfolio below or Discover for broader search. Archie does not invent adjoining boundaries."}
       </p>
     );
   }

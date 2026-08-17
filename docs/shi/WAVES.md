@@ -13,8 +13,11 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-DEEDS · **DEEDS-2 shipping**
-Peer-grade reveal gate open in software. Per-county reveal only when `ready` + `peerGrade`. Prod registry starts with **zero** peer-grade FIPS → still dark live. No DataTree / ATTOM / CAD-as-deed.
+### ARCHIE-NEIGHBORS · **N1 shipping**
+Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
+
+### ARCHIE-DEEDS · **DEEDS-2 live**
+Peer-grade reveal gate open in software. Per-county reveal only when `ready` + `peerGrade`. Prod registry starts with **zero** peer-grade FIPS → still dark live.
 
 ### ARCHIE-INTELLIGENCE · **P4 live**
 Property-aware Archie + spatial desk context + Current read + Since last look (browser-local). Deterministic — no LLM · no buy/sell advice · no MLS yet · Founder Interpreter is build process only (not a product).
@@ -31,10 +34,10 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 ## Next
 - Mark launch-7 counties peer-grade after owned clerk ingest (ops)  
 - ARCHIE-INTELLIGENCE Phase 4b — market / MLS when ready  
-- Optional thin neighbors API (ST_DWithin / touches) if desk spatial gaps remain  
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-NEIGHBORS N1 — thin CAD neighbors (touches / near)  
 - ARCHIE-DEEDS DEEDS-2 — peer-grade reveal gate (prod still dark until peerGrade flags)  
 - ARCHIE-INTELLIGENCE P4 — persistent reasoning memory (since last look)  
 - ARCHIE-INTELLIGENCE P3 — conclusion assistance (Current read)  

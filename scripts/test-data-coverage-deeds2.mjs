@@ -44,10 +44,10 @@ assert.doesNotMatch(ask, /from \"@\/lib\/shi\/deeds-clerk\"/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /DEEDS-2/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(DEEDS|NEIGHBORS)"/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
-assert.match(wavesDoc, /DEEDS-2 shipping/);
+assert.match(wavesDoc, /DEEDS-2 (shipping|live)/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:data-coverage-deeds2/);

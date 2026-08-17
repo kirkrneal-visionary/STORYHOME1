@@ -925,7 +925,7 @@ export const SHI_WAVES: ShiWave[] = [
     id: "ARCHIE-DEEDS",
     name: "Owned clerk deeds · index then reveal (DEEDS-1…2)",
     goal: "Own clerk-grade deed index for launch 7 before any user reveal — no DataTree / ATTOM / CAD-as-deed.",
-    status: "current",
+    status: "done",
     frontend: [
       "DEEDS-1: ShiDeedsEvidencePanel stays retracted while dark",
       "DEEDS-2: Panel reveals clerk transfers when county is ready + peerGrade",
@@ -1009,14 +1009,36 @@ export const SHI_WAVES: ShiWave[] = [
     outOfScope: [
       "Founder Interpreter product / private agent UI",
       "Dual live LLM minds · MLS market layer · cross-device sync",
-      "Fabricating missing CAD / survey / zoning / ST_Touches adjoining API (later if needed)",
+      "Fabricating missing CAD / survey / zoning",
       "Buy/sell recommendations",
+    ],
+  },
+  {
+    id: "ARCHIE-NEIGHBORS",
+    name: "Thin CAD neighbors · touches / near (N1)",
+    goal: "Close the desk gap between centroid same-owner-within-1mi and CAD polygons that touch or nearly touch — owned geom only, not survey.",
+    status: "current",
+    frontend: [
+      "N1: Archie adjoining-owner finding when same CAD owner touches / near-buffers",
+      "N1: Nearby chip summary includes CAD polygon neighbor counts",
+      "Marker data-archie-neighbors=n1 when RPC available",
+    ],
+    backend: [
+      "N1: migration 0038 parcel_neighbors (ST_Touches · ST_DWithin buffer)",
+      "N1: GET /api/shi/neighbors · fetchParcelNeighbors soft-fail",
+      "N1: Armor test:archie-neighbors-n1 · launch 7 + Story Pro",
+    ],
+    outOfScope: [
+      "Survey-grade adjoining claims",
+      "Inventing neighbors when geom missing",
+      "MLS / paid parcel landlords",
+      "Assemblage / buy-sell advice",
     ],
   },
 ];
 
-/** Current product line — Archie Deeds Phase 2. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-DEEDS" as const;
+/** Current product line — Archie Neighbors N1. */
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-NEIGHBORS" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

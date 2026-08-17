@@ -19,6 +19,8 @@ import {
 } from "@/lib/shi/corridor-parcel-traffic";
 import type { TrafficStation } from "@/lib/shi/corridors";
 import { formatAadt } from "@/lib/shi/corridors";
+import type { ParcelNeighborsResult } from "@/lib/shi/parcel-neighbors";
+import { sameOwnerAdjoining } from "@/lib/shi/parcel-neighbors";
 import type { ShiOwnerMatch, ShiPropertyDetail } from "@/lib/shi/types";
 
 export const ARCHIE_PHASE1_VERSION = "archie-intelligence-p1" as const;
@@ -205,6 +207,8 @@ export function buildArchiePropertyBrief(opts: {
   accessIntel?: ParcelLocationIntel | null;
   /** Optional TxDOT stations already on the Access desk — never fetched for show. */
   stations?: TrafficStation[];
+  /** N1 — CAD polygon neighbors (touches / near). Soft-fail empty. */
+  parcelNeighbors?: ParcelNeighborsResult | null;
 }): ArchiePropertyBrief {
   const {
     property,
@@ -213,6 +217,7 @@ export function buildArchiePropertyBrief(opts: {
     matches,
     accessIntel,
     stations = [],
+    parcelNeighbors = null,
   } = opts;
   const acresLine = formatAcres(property.legalAcreage);
   const cat = categoryLabel(property.propertyCategory);
@@ -228,11 +233,30 @@ export function buildArchiePropertyBrief(opts: {
   }
 
   const nearbyOwners = findNearbyExactOwners({ property, matches });
+  const adjoining = parcelNeighbors?.available
+    ? sameOwnerAdjoining(parcelNeighbors.neighbors)
+    : { touches: [], near: [] };
+  const adjoiningHits = [...adjoining.touches, ...adjoining.near];
+
   const nearbySummaryParts: string[] = [];
+  if (adjoiningHits.length > 0) {
+    nearbySummaryParts.push(
+      `${adjoining.touches.length} same-owner CAD tract${adjoining.touches.length === 1 ? "" : "s"} touching · ${adjoining.near.length} within a small buffer (not survey).`,
+    );
+  }
   if (nearbyOwners.length > 0) {
     const nearest = nearbyOwners[0]!;
     nearbySummaryParts.push(
-      `${nearbyOwners.length} same-owner tract${nearbyOwners.length === 1 ? "" : "s"} within ${ARCHIE_NEARBY_OWNER_MAX_MILES} mi (nearest ~${nearest.miles.toFixed(2)} mi).`,
+      `${nearbyOwners.length} same-owner tract${nearbyOwners.length === 1 ? "" : "s"} within ${ARCHIE_NEARBY_OWNER_MAX_MILES} mi by centroid (nearest ~${nearest.miles.toFixed(2)} mi).`,
+    );
+  }
+  if (
+    parcelNeighbors?.available &&
+    parcelNeighbors.neighbors.length > 0 &&
+    adjoiningHits.length === 0
+  ) {
+    nearbySummaryParts.push(
+      `${parcelNeighbors.neighbors.length} CAD polygon neighbor${parcelNeighbors.neighbors.length === 1 ? "" : "s"} (${parcelNeighbors.touchesCount} touch · ${parcelNeighbors.nearCount} near) — different CAD owner id.`,
     );
   }
 
@@ -249,8 +273,25 @@ export function buildArchiePropertyBrief(opts: {
     });
   }
 
-  /* P2 — spatial same-owner before county-wide ownership count */
-  if (nearbyOwners.length > 0 && findings.length < 3) {
+  /* N1 — same-owner CAD adjoining before centroid-within-1mi */
+  if (adjoiningHits.length > 0 && findings.length < 3) {
+    const acresNear = adjoiningHits.reduce(
+      (sum, h) => sum + (h.legalAcreage ?? 0),
+      0,
+    );
+    const acresBit =
+      acresNear > 0
+        ? ` Combined acreage on those exact-owner CAD neighbors is about ${acresNear.toLocaleString("en-US", { maximumFractionDigits: 1 })} acres.`
+        : "";
+    findings.push({
+      id: "adjoining-owner",
+      title: "Same owner adjoining (CAD)",
+      body: `${adjoining.touches.length} exact same-owner tract${adjoining.touches.length === 1 ? "" : "s"} touch this parcel on the CAD map${adjoining.near.length > 0 ? ` · ${adjoining.near.length} more within a small digitizing buffer` : ""}.${acresBit} That can change how you size the opportunity. Calculated from owned CAD polygons — not a survey boundary claim.`,
+      classification: "calculated",
+      focus: "nearby",
+      actionLabel: "Examine adjoining ownership",
+    });
+  } else if (nearbyOwners.length > 0 && findings.length < 3) {
     const nearest = nearbyOwners[0]!;
     const acresNear = nearbyOwners.reduce(
       (sum, h) => sum + (h.match.legalAcreage ?? 0),
@@ -540,7 +581,10 @@ export function buildArchieConclusion(opts: {
       "Absence from a full pull is not a deed or sale, but it weakens reliance on ownership and value fields.";
     nextAction = "Review ownership and freshness before sizing opportunity.";
     nextFocus = "ownership";
-  } else if (ids.has("nearby-owner") && (ids.has("frontage") || ids.has("nearby-traffic"))) {
+  } else if (
+    (ids.has("adjoining-owner") || ids.has("nearby-owner")) &&
+    (ids.has("frontage") || ids.has("nearby-traffic"))
+  ) {
     kind = "analytical";
     statement =
       "Related ownership nearby plus road/traffic desk facts is the strongest pattern on this record so far.";
@@ -561,15 +605,21 @@ export function buildArchieConclusion(opts: {
         note: "Frontage/traffic is planning context only. Utility capacity and access still need Verify.",
       },
     );
-  } else if (ids.has("nearby-owner") || ids.has("owner-exact")) {
+  } else if (
+    ids.has("adjoining-owner") ||
+    ids.has("nearby-owner") ||
+    ids.has("owner-exact")
+  ) {
     kind = "analytical";
     statement =
       "Ownership concentration is the strongest desk signal on this property right now.";
-    why = ids.has("nearby-owner")
-      ? "Exact same-owner tracts appear within one mile of this parcel."
-      : "The same owner id appears on other tracts in this county.";
+    why = ids.has("adjoining-owner")
+      ? "Exact same-owner tracts touch or nearly touch this parcel on the CAD map."
+      : ids.has("nearby-owner")
+        ? "Exact same-owner tracts appear within one mile of this parcel."
+        : "The same owner id appears on other tracts in this county.";
     nextAction = "Examine the owner portfolio before deciding how to size the opportunity.";
-    nextFocus = "ownership";
+    nextFocus = ids.has("adjoining-owner") || ids.has("nearby-owner") ? "nearby" : "ownership";
     alternatives.push({
       id: "size-ownership",
       title: "Size related ownership",
@@ -619,7 +669,7 @@ export function buildArchieConclusion(opts: {
   }
 
   /* Cap: never claim strong certainty on use conclusions */
-  if (kind !== "insufficient" && score > 70 && !ids.has("nearby-owner") && !ids.has("owner-exact")) {
+  if (kind !== "insufficient" && score > 70 && !ids.has("nearby-owner") && !ids.has("adjoining-owner") && !ids.has("owner-exact")) {
     score = 68;
   }
 
