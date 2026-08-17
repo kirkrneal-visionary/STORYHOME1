@@ -25,7 +25,7 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}`  
 - Disk cache + upstream fill · `npm run build:launch7-tiles`
 
-### L7-3 — Serve + refresh ops (**ready — waiting on R2 keys**)
+### L7-3 — Serve + refresh ops (**tiles published — set CDN on eqmg**)
 
 - **Serve modes:** `api` (default) · `cdn` when `NEXT_PUBLIC_LAUNCH7_CDN_BASE` is set · `explicit` tile URL overrides  
 - **Publish:** `npm run publish:launch7-tiles` → Cloudflare R2 via SigV4 PutObject (`LAUNCH7_R2_*`) · no AWS CLI · dry-runs without credentials  

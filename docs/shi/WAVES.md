@@ -13,8 +13,8 @@
 **Motion:** [`../MOTION.md`](../MOTION.md) · [`../STORY-OS-CONSTITUTION.md`](../STORY-OS-CONSTITUTION.md)
 
 ## Current
-### ARCHIE-LAUNCH7-MAP · **L7-3 CDN waiting on R2 keys**
-Publish path ready (SigV4 PutObject · no AWS CLI). Local tiles warmed. Needs Cloudflare R2 bucket + `LAUNCH7_R2_*` + `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on eqmg.
+### ARCHIE-LAUNCH7-MAP · **L7-3 tiles on R2 — flip CDN on eqmg**
+274 tiles published to `storyhome-launch7`. Public tiles return 200. Set `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on Vercel eqmg to start serving the map from CDN.
 
 ### ARCHIE-NEIGHBORS · **N1 live**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
@@ -35,7 +35,7 @@ Approx meters to nearest mapped-road crossing on the Access / Research desk.
 Language · parcel select · frontage · exposure / Strongest Sites · property compare + CTAs · Ask Archie (desk deepen).
 
 ## Next
-- Launch-7 CDN/R2 — **owner creates Cloudflare R2 bucket + keys** (publish script ready; no AWS CLI)  
+- Launch-7 CDN — set `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on Vercel **storyhome-1-eqmg** then redeploy  
 - Mark launch-7 counties peer-grade after owned clerk ingest (ops)  
 - ARCHIE-INTELLIGENCE Phase 4b — market / MLS when ready  
 
