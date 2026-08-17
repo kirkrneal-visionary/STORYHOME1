@@ -64,6 +64,66 @@ type LibertyStyle = {
 };
 
 /**
+ * OpenFreeMap liberty filters compare props like ramp/rank/admin_level as numbers.
+ * Missing props arrive as null → MapLibre worker: "Expected number, found null"
+ * and Streets paints a white/blue void despite 200 tile responses.
+ */
+const LIBERTY_NUMERIC_PROPS = new Set([
+  "ramp",
+  "oneway",
+  "admin_level",
+  "maritime",
+  "disputed",
+  "rank",
+  "ref_length",
+  "capital",
+  "render_height",
+  "render_min_height",
+  "layer",
+  "level",
+]);
+
+/** Pure — coalesce numeric feature gets so liberty filters never see null. */
+export function sanitizeLibertyExpr(expr: unknown): unknown {
+  if (!Array.isArray(expr)) return expr;
+  if (
+    expr[0] === "get" &&
+    typeof expr[1] === "string" &&
+    LIBERTY_NUMERIC_PROPS.has(expr[1])
+  ) {
+    return ["coalesce", ["get", expr[1]], 0];
+  }
+  return expr.map((part) => sanitizeLibertyExpr(part));
+}
+
+export function sanitizeLibertyLayer(
+  layer: LayerSpecification,
+): LayerSpecification {
+  const next: LayerSpecification = {
+    ...layer,
+    id: `fw-${layer.id}`,
+  };
+  if ("filter" in next && next.filter != null) {
+    (next as { filter?: unknown }).filter = sanitizeLibertyExpr(next.filter);
+  }
+  if (next.paint) {
+    const paint: Record<string, unknown> = { ...next.paint };
+    for (const [k, v] of Object.entries(paint)) {
+      paint[k] = sanitizeLibertyExpr(v);
+    }
+    next.paint = paint as LayerSpecification["paint"];
+  }
+  if (next.layout) {
+    const layout: Record<string, unknown> = { ...next.layout };
+    for (const [k, v] of Object.entries(layout)) {
+      layout[k] = sanitizeLibertyExpr(v);
+    }
+    next.layout = layout as LayerSpecification["layout"];
+  }
+  return next;
+}
+
+/**
  * Full basemap style (L7-2):
  * - Streets = owned /api/map/launch7/streets vector (OpenFreeMap schema) unless raster override
  * - Imagery = owned /api/map/launch7/imagery (USGS cache) unless CDN override
@@ -112,10 +172,7 @@ export function buildStoryMapStyle(): StyleSpecification {
           "© OpenMapTiles © OpenStreetMap · Story Home launch-7 cache",
       },
     };
-    fwLayers = liberty.layers.map((layer) => ({
-      ...layer,
-      id: `fw-${layer.id}`,
-    }));
+    fwLayers = liberty.layers.map((layer) => sanitizeLibertyLayer(layer));
   }
 
   freeWorldLayerIds = fwLayers.map((l) => l.id);

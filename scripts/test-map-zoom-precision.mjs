@@ -30,6 +30,8 @@ assert.match(style, /absolutizeMapTileTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(\s*resolveStreetsVectorTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(resolveSatelliteTileTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(streetsRasterTmpl\)/);
+assert.match(style, /sanitizeLibertyLayer|sanitizeLibertyExpr/);
+assert.match(style, /coalesce/);
 /** Pure absolutize mirror — relative paths become origin-absolute; https stays. */
 function absolutizeMapTileTemplate(tmpl, origin = "https://example.test") {
   if (!tmpl) return tmpl;
@@ -64,6 +66,34 @@ assert.equal(
 assert.equal(
   mapLibreTransformRequest("https://cdn.example/x.jpg").url,
   "https://cdn.example/x.jpg",
+);
+
+/** Liberty null-sanitize mirror */
+function sanitizeLibertyExpr(expr) {
+  const NUMERIC = new Set(["ramp", "oneway", "admin_level", "rank", "ref_length"]);
+  if (!Array.isArray(expr)) return expr;
+  if (expr[0] === "get" && typeof expr[1] === "string" && NUMERIC.has(expr[1])) {
+    return ["coalesce", ["get", expr[1]], 0];
+  }
+  return expr.map(sanitizeLibertyExpr);
+}
+
+assert.deepEqual(sanitizeLibertyExpr(["==", ["get", "ramp"], 1]), [
+  "==",
+  ["coalesce", ["get", "ramp"], 0],
+  1,
+]);
+assert.deepEqual(sanitizeLibertyExpr(["==", ["get", "class"], "motorway"]), [
+  "==",
+  ["get", "class"],
+  "motorway",
+]);
+
+const launch = read("src/lib/shi/launch7-map.ts");
+assert.match(launch, /CDN skipped until R2 CORS|LAUNCH7_STREETS_API_TEMPLATE/);
+assert.doesNotMatch(
+  launch.split("resolveStreetsVectorTemplate")[1]?.split("export ")[0] ?? "",
+  /cdnStreetsTileTemplate\(\)/,
 );
 
 const research = read(
