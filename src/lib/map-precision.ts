@@ -4,12 +4,37 @@ import type { ExpressionSpecification } from "maplibre-gl";
  * Founder Interpreter (build process only — not a product):
  * - Intent: Desk zoom for lot precision must never go black. CAD lines stay readable when you lean in.
  * - UX: Soft max zoom aligned to real tile depth. Streets overzoom past z14; imagery holds to z18.
- *   Parcel strokes thicken at close range. No redesign — same map, honest stop instead of a void.
+ *   Parcel strokes thicken at close range. Basemap tile URLs are absolute (MapLibre workers cannot
+ *   fetch relative /api paths — that was the live white/black void). No redesign.
  * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
- * - Acceptance: Zoom never paints navy void on Street or Imagery. Parcel lines visible at close zoom.
- *   Soft ceiling stops before black. Armor covers constants. No Archie/CAD write paths touched.
+ * - Acceptance: Streets and Imagery paint on marketplace/research. Zoom never paints void.
+ *   Parcel lines visible at close zoom. Soft ceiling. Armor covers constants + absolute tiles.
+ *   No Archie/CAD write paths touched.
  */
+
+/**
+ * MapLibre tile workers reject relative Request URLs. Parcels already used origin;
+ * launch-7 streets/imagery must too or the desk paints a void.
+ */
+export function absolutizeMapTileTemplate(tmpl: string): string {
+  if (!tmpl) return tmpl;
+  if (/^https?:\/\//i.test(tmpl)) return tmpl;
+  const path = tmpl.startsWith("/") ? tmpl : `/${tmpl}`;
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return `${window.location.origin}${path}`;
+  }
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) {
+    const origin = site.replace(/\/+$/, "");
+    return `${origin.startsWith("http") ? origin : `https://${origin}`}${path}`;
+  }
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) {
+    return `https://${vercel.replace(/\/+$/, "")}${path}`;
+  }
+  return path;
+}
 
 /** Launch-7 / Protomaps streets vector ceiling — API rejects z > 14. */
 export const MAP_STREETS_SOURCE_MAX_ZOOM = 14;

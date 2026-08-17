@@ -17,6 +17,7 @@ assert.match(precision, /MAP_STREETS_SOURCE_MAX_ZOOM = 14/);
 assert.match(precision, /MAP_IMAGERY_SOURCE_MAX_ZOOM = 18/);
 assert.match(precision, /MAP_PARCEL_SOURCE_MAX_ZOOM = 16/);
 assert.match(precision, /PARCEL_LINE_WIDTH_EXPR/);
+assert.match(precision, /absolutizeMapTileTemplate/);
 assert.doesNotMatch(precision, /maxZoom:\s*22/);
 
 const style = read("src/lib/map-style.ts");
@@ -24,6 +25,26 @@ assert.match(style, /MAP_STREETS_SOURCE_MAX_ZOOM/);
 assert.match(style, /MAP_IMAGERY_SOURCE_MAX_ZOOM/);
 assert.match(style, /maxzoom: MAP_STREETS_SOURCE_MAX_ZOOM/);
 assert.match(style, /maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM/);
+assert.match(style, /absolutizeMapTileTemplate/);
+assert.match(style, /absolutizeMapTileTemplate\(\s*resolveStreetsVectorTemplate/);
+assert.match(style, /absolutizeMapTileTemplate\(resolveSatelliteTileTemplate/);
+assert.match(style, /absolutizeMapTileTemplate\(streetsRasterTmpl\)/);
+/** Pure absolutize mirror — relative paths become origin-absolute; https stays. */
+function absolutizeMapTileTemplate(tmpl, origin = "https://example.test") {
+  if (!tmpl) return tmpl;
+  if (/^https?:\/\//i.test(tmpl)) return tmpl;
+  const path = tmpl.startsWith("/") ? tmpl : `/${tmpl}`;
+  return `${origin}${path}`;
+}
+
+assert.equal(
+  absolutizeMapTileTemplate("/api/map/launch7/streets/{z}/{x}/{y}"),
+  "https://example.test/api/map/launch7/streets/{z}/{x}/{y}",
+);
+assert.equal(
+  absolutizeMapTileTemplate("https://cdn.example/tiles/{z}/{x}/{y}.pbf"),
+  "https://cdn.example/tiles/{z}/{x}/{y}.pbf",
+);
 
 const research = read(
   "src/components/broker/intelligence/ShiResearchMap.tsx",
@@ -32,6 +53,13 @@ assert.match(research, /MAP_PRECISION_MAX_ZOOM/);
 assert.match(research, /MAP_PARCEL_SOURCE_MAX_ZOOM/);
 assert.match(research, /PARCEL_LINE_WIDTH_EXPR/);
 assert.doesNotMatch(research, /maxZoom:\s*22/);
+
+const corridors = read(
+  "src/components/broker/intelligence/ShiCorridorsMap.tsx",
+);
+assert.match(corridors, /MAP_PRECISION_MAX_ZOOM/);
+assert.match(corridors, /PARCEL_LINE_WIDTH_EXPR/);
+assert.doesNotMatch(corridors, /maxZoom:\s*22/);
 
 const market = read("src/components/marketplace/MarketplaceMap.tsx");
 assert.match(market, /MAP_PRECISION_MAX_ZOOM/);

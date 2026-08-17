@@ -4,6 +4,7 @@ import type {
 } from "maplibre-gl";
 import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
 import {
+  absolutizeMapTileTemplate,
   MAP_IMAGERY_SOURCE_MAX_ZOOM,
   MAP_STREETS_SOURCE_MAX_ZOOM,
 } from "@/lib/map-precision";
@@ -72,7 +73,9 @@ export function buildStoryMapStyle(): StyleSpecification {
   const liberty = libertyStyle as LibertyStyle;
   const rasterStreets = streetsUseOwnedRaster();
   const streetsRasterTmpl = ownedStreetsTileTemplate();
-  const satelliteTiles = [resolveSatelliteTileTemplate()];
+  const satelliteTiles = [
+    absolutizeMapTileTemplate(resolveSatelliteTileTemplate()),
+  ];
 
   let fwSources: StyleSpecification["sources"];
   let fwLayers: LayerSpecification[];
@@ -81,7 +84,7 @@ export function buildStoryMapStyle(): StyleSpecification {
     fwSources = {
       "launch7-streets": {
         type: "raster",
-        tiles: [streetsRasterTmpl],
+        tiles: [absolutizeMapTileTemplate(streetsRasterTmpl)],
         tileSize: 256,
         maxzoom: MAP_STREETS_SOURCE_MAX_ZOOM,
         attribution: "Story Home · launch 7 owned streets",
@@ -95,7 +98,9 @@ export function buildStoryMapStyle(): StyleSpecification {
       },
     ];
   } else {
-    const vectorTiles = resolveStreetsVectorTemplate();
+    const vectorTiles = absolutizeMapTileTemplate(
+      resolveStreetsVectorTemplate(),
+    );
     fwSources = {
       ...liberty.sources,
       openmaptiles: {

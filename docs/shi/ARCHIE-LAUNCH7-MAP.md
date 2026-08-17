@@ -69,9 +69,9 @@ App-server fills stay footprint-bounded. Once CDN is on, map tile bandwidth move
 ## Map zoom precision (Founder Interpreter — build process only)
 
 - **Intent:** Close zoom never goes black; CAD lot lines stay readable for desk precision.
-- **UX:** Soft map ceiling at z19 (aligned to tile depth). Streets overzoom past z14; imagery holds to z18. Parcel strokes thicken at close range. No redesign.
+- **UX:** Soft map ceiling at z19 (aligned to tile depth). Streets overzoom past z14; imagery holds to z18. Parcel strokes thicken at close range. **Absolute** launch-7 tile URLs (MapLibre workers cannot fetch relative `/api/...` — that caused the live white/black void). No redesign.
 - **Data meaning:** Launch-7 streets ≤z14 · imagery ≤z18 · parcels MVT overzooms past source z16 — not survey GPS.
-- **Acceptance:** Zoom never paints navy void on Street/Imagery; parcel lines visible at close zoom; `npm run test:map-zoom-precision`.
+- **Acceptance:** Streets + Imagery paint; zoom never void; parcel lines at close zoom; `npm run test:map-zoom-precision`.
 
 Shared constants: `src/lib/map-precision.ts` · wired on Research · Marketplace · Listing CAD maps.
 
