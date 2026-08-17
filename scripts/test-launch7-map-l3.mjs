@@ -21,6 +21,8 @@ assert.match(launch, /l7-3/);
 assert.match(launch, /launch7CdnBase/);
 assert.match(launch, /cdnStreetsTileTemplate/);
 assert.match(launch, /launch7ServeMode/);
+assert.match(launch, /process\.env\.NEXT_PUBLIC_LAUNCH7_CDN_BASE/);
+assert.doesNotMatch(launch, /function envTrim/);
 
 const ops = read("src/lib/shi/launch7-ops.ts");
 assert.match(ops, /launch7OpsStatus/);
