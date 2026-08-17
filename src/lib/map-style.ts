@@ -157,7 +157,7 @@ export function buildStoryMapStyle(): StyleSpecification {
         source: "launch7-streets",
       },
     ];
-  } else {
+  } else if (process.env.NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS === "1") {
     const vectorTiles = absolutizeMapTileTemplate(
       resolveStreetsVectorTemplate(),
     );
@@ -173,6 +173,30 @@ export function buildStoryMapStyle(): StyleSpecification {
       },
     };
     fwLayers = liberty.layers.map((layer) => sanitizeLibertyLayer(layer));
+  } else {
+    /**
+     * Default Streets = absolute Esri raster. Launch-7 vector tiles 200 OK but
+     * liberty still left a white/blue first paint on eqmg after null-sanitize.
+     * Flip NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS=1 when vector desk is proven live.
+     */
+    fwSources = {
+      "streets-raster": {
+        type: "raster",
+        tiles: [
+          `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`,
+        ],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "Streets © Esri · Story Home desk",
+      },
+    };
+    fwLayers = [
+      {
+        id: "fw-streets-raster",
+        type: "raster",
+        source: "streets-raster",
+      },
+    ];
   }
 
   freeWorldLayerIds = fwLayers.map((l) => l.id);
@@ -183,7 +207,9 @@ export function buildStoryMapStyle(): StyleSpecification {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
       "storyhome:streets": rasterStreets
         ? "owned-raster"
-        : "owned-vector-api",
+        : process.env.NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS === "1"
+          ? "owned-vector-api"
+          : "esri-raster-fallback",
       "storyhome:satellite": "owned-imagery-api",
       "storyhome:serve": "l7-3",
     },
