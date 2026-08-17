@@ -22,7 +22,8 @@
 | **3** | **DC-3 Environment + desk** | **done** | NWI wetlands · TIGER place/ISD · zoning context (no invented districts) · deeper CAD fields |
 | **4** | **DC-4 Evidence UI** | **done** | Shared chips · source · as-of across Research / Corridors / Ask / reports |
 | **5** | **DC-5 Dark store** | **done** | Deeds knowledge path · clerk coverage gate empty · default **no user reveal** |
-| **+** | **DEEDS-1** | **shipping** | Owned clerk index scaffold · ingest · migration 0036 · reveal still closed |
+| **+** | **DEEDS-1** | **done** | Owned clerk index scaffold · ingest · migration 0036 · reveal still closed |
+| **+** | **DEEDS-2** | **shipping** | Peer-grade reveal gate · per-county ready+peerGrade · prod still dark until flags |
 
 Optional later: Ask Archie challenge → alternatives → rank on **revealed** facts only.
 
@@ -141,15 +142,16 @@ npm run test:data-coverage-dc4
 
 **Goal:** Reserve an owned clerk-deed knowledge path without revealing anything until peer-grade for launch 7.
 
-**Lib:** `src/lib/shi/deeds-clerk.ts` — `deeds-clerk-v1.1` · `DEEDS_USER_REVEAL_OPEN = false`  
+**Lib:** `src/lib/shi/deeds-clerk.ts` — `deeds-clerk-v1.2` · software reveal open · per-county peerGrade gate  
 **API:** `GET /api/shi/deeds?countyFips=&propId=` (or lat/lng) · Story Pro · launch 7  
-**UI:** `ShiDeedsEvidencePanel` — renders **nothing** while dark  
-**Source strip:** `clerk_deeds` adapter — planned / dark note  
-**Ask:** `deed_history` intent — honest “stays dark” answer; never invents transfers from CAD  
+**UI:** `ShiDeedsEvidencePanel` — renders **nothing** while dark; transfers when peer-grade open  
+**Source strip:** `clerk_deeds` adapter — planned / dark note until peer-grade  
+**Ask:** `deed_history` intent — honest dark answer until peer-grade; never invents transfers from CAD  
 
-### Reveal gate (closed)
+### Reveal gate (DEEDS-2)
 
-- `data/shi/clerk-coverage-launch7.json` → `readyFips: []` until owned clerk-grade ingest marks a county  
+- `data/shi/clerk-coverage-launch7.json` → `readyFips` + `peerGradeFips` (prod starts empty)  
+- `canRevealDeeds` requires software open **and** ready **and** peerGrade for that FIPS  
 - Even with index rows, no CAD owner-diff → deed date  
 - Failures / dark → `userReveal: false` → **UI renders nothing** (no teaser, no upsell)
 
@@ -182,12 +184,31 @@ npm run test:data-coverage-dc5
 | Ingest | `npm run ingest:clerk-deeds -- --fixture` / `--file` / `--mark-ready` / `--dry-run` |
 | Armor | `npm run test:data-coverage-deeds1` |
 
-**Hard rules (unchanged):** no ATTOM / DataTree / paid deed SKUs; CAD owner diffs ≠ deeds; empty or not-ready county → `userReveal: false`; UI stays retracted until **DEEDS-2** peer-grade open (`DEEDS_USER_REVEAL_OPEN`).
+**Hard rules (unchanged):** no ATTOM / DataTree / paid deed SKUs; CAD owner diffs ≠ deeds; empty or not-ready county → `userReveal: false`.
 
 ### Armor
 
 ```bash
 npm run test:data-coverage-deeds1
+```
+
+## DEEDS-2 — Peer-grade reveal gate
+
+**Goal:** Open user reveal only when a launch-7 county is both `ready` and `peerGrade` in the owned coverage registry. Prod starts with zero peer-grade FIPS → still dark live.
+
+| Piece | Path |
+|-------|------|
+| Gate | `canRevealDeeds` · `isClerkPeerGrade` · `DEEDS_USER_REVEAL_OPEN = true` (software) |
+| Registry | `peerGradeFips` + per-county `peerGrade` in `clerk-coverage-launch7.json` |
+| Ingest | `--mark-peer-grade=FIPS` (requires ready) |
+| Armor | `npm run test:data-coverage-deeds2` |
+
+**Founder Interpreter (process):** intent = show owned clerk transfers when peer-grade; UX = panel appears only when `userReveal`; data = ready ≠ peerGrade; acceptance = empty prod flags stay dark + armor proves open path.
+
+### Armor
+
+```bash
+npm run test:data-coverage-deeds2
 ```
 
 ## Out of scope (all DC waves)

@@ -38,11 +38,11 @@ assert.doesNotMatch(panel, /Founder Interpreter product/);
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /P4:/);
 assert.match(waves, /archie-reasoning-memory/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-INTELLIGENCE"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS)"/);
 assert.match(waves, /Founder Interpreter product/);
 
 const wavesDoc = read("docs/shi/WAVES.md");
-assert.match(wavesDoc, /P4 shipping/);
+assert.match(wavesDoc, /P4 (shipping|live)/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:archie-intelligence-p4/);

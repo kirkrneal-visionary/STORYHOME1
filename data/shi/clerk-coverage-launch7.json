@@ -1,7 +1,8 @@
 {
-  "version": "deeds-1",
-  "honesty": "Coverage flags only. Empty readyFips until owned clerk ingest marks a county. User reveal stays closed in DEEDS-1.",
+  "version": "deeds-2",
+  "honesty": "Coverage flags only. ready ≠ peerGrade. User reveal opens per county only when ready and peerGrade are both true (DEEDS-2). Prod starts with zero peer-grade FIPS — still dark.",
   "readyFips": [],
+  "peerGradeFips": [],
   "counties": {
     "48373": { "name": "Polk", "ready": false, "peerGrade": false, "transferCount": 0 },
     "48005": { "name": "Angelina", "ready": false, "peerGrade": false, "transferCount": 0 },

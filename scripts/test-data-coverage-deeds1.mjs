@@ -25,8 +25,8 @@ assert.match(mig, /DEEDS-1|peer-grade|dark/i);
 assert.match(mig, /service_role/);
 
 const lib = read("src/lib/shi/deeds-clerk.ts");
-assert.match(lib, /deeds-clerk-v1\.1/);
-assert.match(lib, /DEEDS_USER_REVEAL_OPEN\s*=\s*false/);
+assert.match(lib, /deeds-clerk-v1\.[12]/);
+assert.match(lib, /DEEDS_USER_REVEAL_OPEN/);
 assert.match(lib, /clerk-coverage-launch7\.json/);
 assert.match(lib, /clerk_deed_transfers/);
 assert.match(lib, /fetchDeedsForParcel/);
@@ -34,7 +34,7 @@ assert.match(lib, /canRevealDeeds/);
 assert.doesNotMatch(lib, /attom|datatree|corelogic|regrid|zoneomics/i);
 
 const cov = JSON.parse(read("data/shi/clerk-coverage-launch7.json"));
-assert.equal(cov.version, "deeds-1");
+assert.ok(["deeds-1", "deeds-2"].includes(cov.version));
 assert.ok(Array.isArray(cov.readyFips));
 assert.equal(cov.readyFips.length, 0, "prod registry starts with zero ready FIPS");
 
@@ -45,7 +45,7 @@ assert.ok(sample.transfers[0]?.countyFips);
 const ingest = read("scripts/ingest-clerk-deeds.mjs");
 assert.match(ingest, /mark-ready/);
 assert.match(ingest, /dry-run/);
-assert.match(ingest, /DEEDS-1|userReveal remains closed/);
+assert.match(ingest, /DEEDS-[12]|peerGrade|userReveal/);
 
 const pkg = read("package.json");
 assert.match(pkg, /ingest:clerk-deeds/);

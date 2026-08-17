@@ -851,7 +851,9 @@ function answerEnvironment(ctx: CorridorAskContext): CorridorAskAnswer {
 }
 
 /**
- * DC-5 — deeds stay dark. Honest answer only; never invent transfers from CAD.
+ * DEEDS-2 / DC-5 — deeds Ask honesty.
+ * Never invents transfers from CAD. Does not import server-only deeds-clerk (node:fs).
+ * Peer-grade open counties surface on the property Deeds card — Ask stays honest.
  */
 function answerDeedHistory(_ctx: CorridorAskContext): CorridorAskAnswer {
   const intent = CORRIDOR_ASK_INTENTS.find((i) => i.id === "deed_history")!;
@@ -861,13 +863,13 @@ function answerDeedHistory(_ctx: CorridorAskContext): CorridorAskAnswer {
     honesty: CORRIDOR_ASK_HONESTY,
     ruleVersion: CORRIDOR_ASK_RULE_VERSION,
     summary:
-      "Deed / transfer history stays dark until Archie owns clerk-grade records for all launch 7 counties. CAD owner-field changes are not deeds.",
+      "Deed / transfer history stays dark until Archie owns peer-grade clerk records for that launch-7 county. When a county is peer-grade, the property Deeds card can reveal indexed transfers — Ask will not invent deed rows from CAD.",
     facts: [
-      fact("Deeds desk", "Dark store", {
+      fact("Deeds desk", "Dark until peer-grade", {
         detail:
-          "No user reveal. No DataTree / ATTOM rent. Knowledge path reserved for owned clerk index.",
+          "No DataTree / ATTOM rent. Ready ≠ peerGrade. User reveal is per-county on the Deeds card only.",
         tier: "UNKNOWN",
-        source: "County clerk (owned — not connected)",
+        source: "County clerk (owned index)",
         asOf: null,
       }),
       fact("CAD observation", "Not deed history", {
@@ -879,7 +881,7 @@ function answerDeedHistory(_ctx: CorridorAskContext): CorridorAskAnswer {
       }),
     ],
     missing: [
-      "Clerk-grade coverage not ready for launch 7 — stay dark.",
+      "Open a property Deeds card only after that county is ready + peerGrade in the owned registry.",
     ],
     hint: null,
   };

@@ -14,9 +14,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 20;
 
 /**
- * DEEDS-1 / DC-5 — Clerk deeds dark store (launch 7 only).
- * Always returns userReveal:false while DEEDS_USER_REVEAL_OPEN is false.
- * Clients must show nothing when retracted — no teaser, no upsell.
+ * DEEDS-2 / DC-5 — Clerk deeds desk (launch 7 only).
+ * userReveal follows peer-grade gate per county. Clients show nothing when retracted.
  */
 export async function GET(req: NextRequest) {
   const gate = await requireStoryPro();

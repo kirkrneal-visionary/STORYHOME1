@@ -12,7 +12,7 @@ const read = (rel) => readFileSync(join(root, rel), "utf8");
 const doc = read("docs/shi/ARCHIE-DATA-COVERAGE.md");
 assert.match(doc, /DC-5/);
 assert.match(doc, /[Dd]ark store/);
-assert.match(doc, /clerk-grade/i);
+assert.match(doc, /clerk-grade|peer-grade|clerk coverage/i);
 assert.match(doc, /userReveal/);
 assert.match(doc, /DataTree|ATTOM/);
 assert.match(doc, /never invents|not deeds|not deed/i);
@@ -24,12 +24,14 @@ assert.match(lib, /isClerkCoverageReady/);
 assert.match(lib, /canRevealDeeds/);
 assert.match(lib, /userReveal/);
 assert.match(lib, /CLERK_COVERAGE_READY_FIPS/);
-assert.match(lib, /DEEDS_USER_REVEAL_OPEN\s*=\s*false/);
+assert.match(lib, /DEEDS_USER_REVEAL_OPEN\s*=\s*true/);
 assert.doesNotMatch(lib, /attom|datatree|corelogic|regrid|zoneomics/i);
 /* Coverage registry starts with empty readyFips — dark by default */
 const cov = JSON.parse(read("data/shi/clerk-coverage-launch7.json"));
 assert.ok(Array.isArray(cov.readyFips));
 assert.equal(cov.readyFips.length, 0);
+assert.ok(Array.isArray(cov.peerGradeFips));
+assert.equal(cov.peerGradeFips.length, 0);
 
 const route = read("src/app/api/shi/deeds/route.ts");
 assert.match(route, /fetchDeedsForParcel/);
@@ -76,32 +78,29 @@ assert.match(waves, /DC-5/);
 const pkg = read("package.json");
 assert.match(pkg, /test:data-coverage-dc5/);
 
-/* Pure gate mirrors — stay dark */
-function isClerkCoverageReady(countyFips, readySet = new Set()) {
-  const launch = new Set([
-    "48373",
-    "48005",
-    "48455",
-    "48457",
-    "48407",
-    "48291",
-    "48471",
-  ]);
-  return launch.has(countyFips) && readySet.has(countyFips);
+/* Pure gate mirrors — prod empty registry stays dark; peer-grade opens path */
+function canRevealDeeds({ revealOpen, ready, peerGrade }) {
+  return Boolean(revealOpen && ready && peerGrade);
 }
-function canRevealDeeds({ countyFips, transfers }) {
-  if (!isClerkCoverageReady(countyFips)) return false;
-  void transfers;
-  return false;
-}
-assert.equal(isClerkCoverageReady("48005"), false);
-assert.equal(canRevealDeeds({ countyFips: "48005", transfers: [] }), false);
+assert.equal(
+  canRevealDeeds({ revealOpen: true, ready: false, peerGrade: false }),
+  false,
+);
+assert.equal(
+  canRevealDeeds({ revealOpen: true, ready: true, peerGrade: false }),
+  false,
+);
+assert.equal(
+  canRevealDeeds({ revealOpen: true, ready: true, peerGrade: true }),
+  true,
+);
 assert.equal(
   canRevealDeeds({
-    countyFips: "48005",
-    transfers: [{ recordedDate: "2020-01-01" }],
+    revealOpen: true,
+    ready: true,
+    peerGrade: true,
   }),
-  false,
+  true,
 );
 
 console.log("data-coverage-dc5 armor: ok");
