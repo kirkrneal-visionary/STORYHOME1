@@ -194,7 +194,7 @@ export function ListingCadMap({
         paint: {
           "line-color": MAP_GOLD,
           "line-opacity": 0.7,
-          "line-width": [...PARCEL_LINE_WIDTH_EXPR],
+          "line-width": PARCEL_LINE_WIDTH_EXPR,
         },
       });
 

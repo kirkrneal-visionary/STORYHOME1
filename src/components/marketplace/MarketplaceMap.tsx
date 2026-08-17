@@ -229,7 +229,7 @@ export function MarketplaceMap({
         paint: {
           "line-color": GOLD,
           "line-opacity": 0.9,
-          "line-width": [...PARCEL_LINE_WIDTH_EXPR],
+          "line-width": PARCEL_LINE_WIDTH_EXPR,
         },
       });
       // Wave L6 — BIS CAD overlays (Abstracts / Subdivisions / Schools / …)

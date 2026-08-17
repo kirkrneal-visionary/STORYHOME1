@@ -1,3 +1,5 @@
+import type { ExpressionSpecification } from "maplibre-gl";
+
 /**
  * Founder Interpreter (build process only — not a product):
  * - Intent: Desk zoom for lot precision must never go black. CAD lines stay readable when you lean in.
@@ -34,7 +36,7 @@ export const MAP_STREETS_DETAIL_FADE_ZOOM = MAP_STREETS_SOURCE_MAX_ZOOM;
  * CAD lot stroke width — thickens through soft precision ceiling so lines
  * stay readable when basemap tiles are overzoomed.
  */
-export const PARCEL_LINE_WIDTH_EXPR = [
+export const PARCEL_LINE_WIDTH_EXPR: ExpressionSpecification = [
   "interpolate",
   ["linear"],
   ["zoom"],
@@ -44,4 +46,4 @@ export const PARCEL_LINE_WIDTH_EXPR = [
   1.25,
   MAP_PRECISION_MAX_ZOOM,
   2.5,
-] as const;
+];
