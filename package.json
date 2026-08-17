@@ -55,6 +55,7 @@
     "test:launch7-map-l1": "node scripts/test-launch7-map-l1.mjs",
     "test:launch7-map-l2": "node scripts/test-launch7-map-l2.mjs",
     "test:launch7-map-l3": "node scripts/test-launch7-map-l3.mjs",
+    "test:map-zoom-precision": "node scripts/test-map-zoom-precision.mjs",
     "plan:launch7-basemap": "node scripts/plan-launch7-basemap.mjs",
     "plan:launch7-expand": "node scripts/plan-launch7-expand.mjs",
     "build:launch7-tiles": "node scripts/build-launch7-tiles.mjs",

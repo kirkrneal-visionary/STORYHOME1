@@ -26,6 +26,12 @@ import {
   setBaseLayerVisibility,
   type MapBaseLayer,
 } from "@/lib/map-style";
+import {
+  MAP_PARCEL_SOURCE_MAX_ZOOM,
+  MAP_PRECISION_MAX_ZOOM,
+  PARCEL_LINE_WIDTH_EXPR,
+  mapLibreTransformRequest,
+} from "@/lib/map-precision";
 import { CadOverlayControl } from "@/components/map/CadOverlayControl";
 import {
   ensureCadOverlayLayers,
@@ -396,7 +402,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
             2,
           ),
-          maxZoom: 22,
+          maxZoom: MAP_PRECISION_MAX_ZOOM,
+          transformRequest: mapLibreTransformRequest,
           // Required so Map Memory toDataURL is not a blank canvas.
           preserveDrawingBuffer: true,
           attributionControl: { compact: true },
@@ -543,7 +550,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           type: "vector",
           tiles: [`${window.location.origin}/api/parcels/{z}/{x}/{y}`],
           minzoom: 13,
-          maxzoom: 16,
+          maxzoom: MAP_PARCEL_SOURCE_MAX_ZOOM,
         });
         map.addLayer({
           id: "parcels-fill",
@@ -562,15 +569,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           paint: {
             "line-color": MAP_GOLD,
             "line-opacity": 0.85,
-            "line-width": [
-              "interpolate",
-              ["linear"],
-              ["zoom"],
-              13,
-              0.35,
-              16,
-              1.2,
-            ],
+            "line-width": PARCEL_LINE_WIDTH_EXPR,
           },
         });
 
@@ -1347,7 +1346,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       >
         <div
           ref={containerRef}
-          className="relative min-h-0 w-full flex-1 bg-[var(--background)] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none"
+          className="relative min-h-0 w-full flex-1 bg-[#f8f4f0] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none"
         />
 
         {mapFailed ? (

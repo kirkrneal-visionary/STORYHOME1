@@ -21,6 +21,12 @@ import {
   setBaseLayerVisibility,
   type MapBaseLayer,
 } from "@/lib/map-style";
+import {
+  MAP_PARCEL_SOURCE_MAX_ZOOM,
+  MAP_PRECISION_MAX_ZOOM,
+  PARCEL_LINE_WIDTH_EXPR,
+  mapLibreTransformRequest,
+} from "@/lib/map-precision";
 import type { DrawnBoundary, LatLng } from "@/lib/geo";
 import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
@@ -321,7 +327,8 @@ export function ShiCorridorsMap({
           [county.bbox[2], county.bbox[3]],
         ],
         fitBoundsOptions: { padding: 36 },
-        maxZoom: 22,
+        maxZoom: MAP_PRECISION_MAX_ZOOM,
+        transformRequest: mapLibreTransformRequest,
         pitchWithRotate: false,
         dragRotate: false,
         pixelRatio: Math.min(
@@ -569,7 +576,7 @@ export function ShiCorridorsMap({
         type: "vector",
         tiles: [`${window.location.origin}/api/parcels/{z}/{x}/{y}`],
         minzoom: 13,
-        maxzoom: 16,
+        maxzoom: MAP_PARCEL_SOURCE_MAX_ZOOM,
         promoteId: "prop_id",
       });
       map.addLayer({
@@ -606,7 +613,7 @@ export function ShiCorridorsMap({
             "case",
             ["boolean", ["feature-state", "selected"], false],
             2.2,
-            ["interpolate", ["linear"], ["zoom"], 13, 0.3, 16, 1],
+            PARCEL_LINE_WIDTH_EXPR,
           ],
         },
       });

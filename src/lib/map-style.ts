@@ -4,6 +4,11 @@ import type {
 } from "maplibre-gl";
 import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
 import {
+  absolutizeMapTileTemplate,
+  MAP_IMAGERY_SOURCE_MAX_ZOOM,
+  MAP_STREETS_SOURCE_MAX_ZOOM,
+} from "@/lib/map-precision";
+import {
   LAUNCH7_MAP_SOVEREIGNTY,
   resolveSatelliteTileTemplate,
   resolveStreetsVectorTemplate,
@@ -68,7 +73,9 @@ export function buildStoryMapStyle(): StyleSpecification {
   const liberty = libertyStyle as LibertyStyle;
   const rasterStreets = streetsUseOwnedRaster();
   const streetsRasterTmpl = ownedStreetsTileTemplate();
-  const satelliteTiles = [resolveSatelliteTileTemplate()];
+  const satelliteTiles = [
+    absolutizeMapTileTemplate(resolveSatelliteTileTemplate()),
+  ];
 
   let fwSources: StyleSpecification["sources"];
   let fwLayers: LayerSpecification[];
@@ -77,8 +84,9 @@ export function buildStoryMapStyle(): StyleSpecification {
     fwSources = {
       "launch7-streets": {
         type: "raster",
-        tiles: [streetsRasterTmpl],
+        tiles: [absolutizeMapTileTemplate(streetsRasterTmpl)],
         tileSize: 256,
+        maxzoom: MAP_STREETS_SOURCE_MAX_ZOOM,
         attribution: "Story Home · launch 7 owned streets",
       },
     };
@@ -90,14 +98,16 @@ export function buildStoryMapStyle(): StyleSpecification {
       },
     ];
   } else {
-    const vectorTiles = resolveStreetsVectorTemplate();
+    const vectorTiles = absolutizeMapTileTemplate(
+      resolveStreetsVectorTemplate(),
+    );
     fwSources = {
       ...liberty.sources,
       openmaptiles: {
         type: "vector",
         tiles: [vectorTiles],
         minzoom: 0,
-        maxzoom: 14,
+        maxzoom: MAP_STREETS_SOURCE_MAX_ZOOM,
         attribution:
           "© OpenMapTiles © OpenStreetMap · Story Home launch-7 cache",
       },
@@ -130,7 +140,7 @@ export function buildStoryMapStyle(): StyleSpecification {
         type: "raster",
         tiles: satelliteTiles,
         tileSize: 256,
-        maxzoom: 18,
+        maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
         attribution: "Imagery © USGS National Map · Story Home launch-7 cache",
       },
       labels: {
