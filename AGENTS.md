@@ -48,3 +48,11 @@ Or, if SQL is required:
 - Short. Plain English.  
 - One thing at a time.  
 - Double-check before sending: “Would Kirk know exactly what to click without asking?”
+
+### Kirk hard rules (remember always)
+- He gets mad when steps are vague — **one screen / one click per message** when guiding dashboards  
+- If a page has a URL, **send the URL** (or the exact `?to=` Cloudflare deep link)  
+- Never assume he can find a menu — say the **exact words** on the button/tab  
+- Wait for **DONE** before giving the next step — do not stack “then also…”  
+- Dashboard walks beat essays — no “configure / enable / provision” without a click path  
+- He has said the agents have been a big help — keep that trust by staying this simple  
