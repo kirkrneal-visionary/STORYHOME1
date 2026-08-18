@@ -180,16 +180,16 @@ export function applyStoryPlaceLabelStyle(
         ["exponential", 1.15],
         ["zoom"],
         4,
-        12,
+        13,
         7,
-        15,
+        16,
         9,
-        17,
+        19,
         11,
-        20,
+        22,
       ];
       layout["text-letter-spacing"] = 0.035;
-      paint["text-halo-width"] = 2.1;
+      paint["text-halo-width"] = 2.35;
       break;
     case "label_town":
       layout["text-font"] = ["Noto Sans Bold"];
@@ -198,14 +198,14 @@ export function applyStoryPlaceLabelStyle(
         ["exponential", 1.15],
         ["zoom"],
         7,
-        13,
+        14,
         9,
-        15,
-        11,
         17,
+        11,
+        19,
       ];
-      layout["text-letter-spacing"] = 0.025;
-      paint["text-halo-width"] = 2;
+      layout["text-letter-spacing"] = 0.03;
+      paint["text-halo-width"] = 2.2;
       break;
     case "label_village":
       layout["text-font"] = ["Noto Sans Regular"];
@@ -214,14 +214,14 @@ export function applyStoryPlaceLabelStyle(
         ["exponential", 1.1],
         ["zoom"],
         8,
+        12,
         11,
-        11,
-        13,
-        13,
         14,
+        13,
+        15,
       ];
       layout["text-letter-spacing"] = 0.02;
-      paint["text-halo-width"] = 1.75;
+      paint["text-halo-width"] = 1.9;
       break;
     case "label_state":
       layout["text-font"] = ["Noto Sans Bold"];
@@ -347,6 +347,7 @@ export function buildStoryMapStyle(): StyleSpecification {
     metadata: {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
       "storyhome:streets": streetsMode,
+      "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
       "storyhome:satellite": "owned-imagery-api",
       "storyhome:serve": "l7-3",

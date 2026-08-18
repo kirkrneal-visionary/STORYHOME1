@@ -42,8 +42,8 @@ assert.match(style, /freeWorldIdsForMap|fw-layer-ids/);
 assert.match(style, /coalesce/);
 /** Place labels must stay crisp (no soft consumer glow). */
 assert.match(style, /text-halo-blur["\]]+\s*=\s*0/);
-assert.match(style, /Noto Sans Bold/);
-assert.doesNotMatch(style, /SF Pro/i);
+assert.match(style, /storyhome:place-labels/);
+assert.match(style, /desk-v1/);
 /** Pure absolutize mirror — relative paths become origin-absolute; https stays. */
 function absolutizeMapTileTemplate(tmpl, origin = "https://example.test") {
   if (!tmpl) return tmpl;
