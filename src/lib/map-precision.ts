@@ -11,7 +11,9 @@ import type { ExpressionSpecification } from "maplibre-gl";
  * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
  * - Acceptance: Open = East Texas counties in view. Streets paint. No Atlantic jump on ungeocoded
- *   listings. Soft ceiling. Armor. No Archie/CAD write paths touched.
+ *   listings. Place labels read as Story Home desk type (navy + paper halo, clear city/town
+ *   hierarchy) — not soft consumer-phone cartography. Soft ceiling. Armor. No Archie/CAD write
+ *   paths touched.
  */
 
 /**
