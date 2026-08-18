@@ -99,6 +99,7 @@ export function sanitizeLibertyExpr(expr: unknown): unknown {
 export function sanitizeLibertyLayer(
   layer: LayerSpecification,
 ): LayerSpecification {
+  const originalId = layer.id;
   const next: LayerSpecification = {
     ...layer,
     id: `fw-${layer.id}`,
@@ -120,7 +121,147 @@ export function sanitizeLibertyLayer(
     }
     next.layout = layout as LayerSpecification["layout"];
   }
-  return next;
+  return applyStoryPlaceLabelStyle(originalId, next);
+}
+
+/**
+ * Story Home place labels — desk hierarchy (not soft consumer-phone cartography).
+ * Stronger navy ink + paper halo so Huntsville / Woodlands / etc. read on
+ * forest and road clutter. Applied on every map that uses buildStoryMapStyle.
+ */
+const STORY_PLACE_LABEL_IDS = new Set([
+  "label_city_capital",
+  "label_city",
+  "label_town",
+  "label_village",
+  "label_other",
+  "label_state",
+]);
+
+export function applyStoryPlaceLabelStyle(
+  originalId: string,
+  layer: LayerSpecification,
+): LayerSpecification {
+  if (layer.type !== "symbol" || !STORY_PLACE_LABEL_IDS.has(originalId)) {
+    return layer;
+  }
+
+  const layout: Record<string, unknown> = { ...(layer.layout ?? {}) };
+  const paint: Record<string, unknown> = { ...(layer.paint ?? {}) };
+
+  // Crisp desk halo — blur stays 0 (no soft consumer glow).
+  paint["text-color"] = MAP_NAVY;
+  paint["text-halo-color"] = MAP_PAPER;
+  paint["text-halo-blur"] = 0;
+
+  switch (originalId) {
+    case "label_city_capital":
+      layout["text-font"] = ["Noto Sans Bold"];
+      layout["text-size"] = [
+        "interpolate",
+        ["exponential", 1.15],
+        ["zoom"],
+        4,
+        13,
+        7,
+        16,
+        9,
+        18,
+        11,
+        22,
+      ];
+      layout["text-letter-spacing"] = 0.04;
+      paint["text-halo-width"] = 2.25;
+      break;
+    case "label_city":
+      layout["text-font"] = ["Noto Sans Bold"];
+      layout["text-size"] = [
+        "interpolate",
+        ["exponential", 1.15],
+        ["zoom"],
+        4,
+        12,
+        7,
+        15,
+        9,
+        17,
+        11,
+        20,
+      ];
+      layout["text-letter-spacing"] = 0.035;
+      paint["text-halo-width"] = 2.1;
+      break;
+    case "label_town":
+      layout["text-font"] = ["Noto Sans Bold"];
+      layout["text-size"] = [
+        "interpolate",
+        ["exponential", 1.15],
+        ["zoom"],
+        7,
+        13,
+        9,
+        15,
+        11,
+        17,
+      ];
+      layout["text-letter-spacing"] = 0.025;
+      paint["text-halo-width"] = 2;
+      break;
+    case "label_village":
+      layout["text-font"] = ["Noto Sans Regular"];
+      layout["text-size"] = [
+        "interpolate",
+        ["exponential", 1.1],
+        ["zoom"],
+        8,
+        11,
+        11,
+        13,
+        13,
+        14,
+      ];
+      layout["text-letter-spacing"] = 0.02;
+      paint["text-halo-width"] = 1.75;
+      break;
+    case "label_state":
+      layout["text-font"] = ["Noto Sans Bold"];
+      layout["text-size"] = [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        5,
+        11,
+        8,
+        15,
+      ];
+      layout["text-letter-spacing"] = 0.12;
+      paint["text-color"] = MAP_TEAL;
+      paint["text-halo-width"] = 1.75;
+      break;
+    case "label_other":
+      layout["text-font"] = ["Noto Sans Regular"];
+      layout["text-size"] = [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        8,
+        10,
+        12,
+        12,
+      ];
+      layout["text-letter-spacing"] = 0.06;
+      paint["text-halo-width"] = 1.6;
+      break;
+    default:
+      break;
+  }
+
+  return {
+    ...layer,
+    type: "symbol",
+    layout: layout as Extract<LayerSpecification, { type: "symbol" }>["layout"],
+    paint: paint as Extract<LayerSpecification, { type: "symbol" }>["paint"],
+  };
 }
 
 /**

@@ -31,11 +31,19 @@ assert.match(style, /absolutizeMapTileTemplate\(\s*resolveStreetsVectorTemplate/
 assert.match(style, /absolutizeMapTileTemplate\(resolveSatelliteTileTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(streetsRasterTmpl\)/);
 assert.match(style, /sanitizeLibertyLayer|sanitizeLibertyExpr/);
+assert.match(style, /applyStoryPlaceLabelStyle/);
+assert.match(style, /label_city|label_town/);
+assert.match(style, /text-halo-width/);
+assert.match(style, /MAP_NAVY/);
 assert.match(style, /fw-streets-raster|World_Street_Map/);
 assert.match(style, /storyhome:fw-layer-ids/);
 assert.match(style, /underlay-plus-vector|background.*natural_earth|natural_earth/);
 assert.match(style, /freeWorldIdsForMap|fw-layer-ids/);
 assert.match(style, /coalesce/);
+/** Place labels must stay crisp (no soft consumer glow). */
+assert.match(style, /text-halo-blur["\]]+\s*=\s*0/);
+assert.match(style, /Noto Sans Bold/);
+assert.doesNotMatch(style, /SF Pro/i);
 /** Pure absolutize mirror — relative paths become origin-absolute; https stays. */
 function absolutizeMapTileTemplate(tmpl, origin = "https://example.test") {
   if (!tmpl) return tmpl;
