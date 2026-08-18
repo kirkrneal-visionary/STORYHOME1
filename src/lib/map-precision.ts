@@ -5,11 +5,13 @@ import type { ExpressionSpecification } from "maplibre-gl";
  * - Intent: Desk zoom for lot precision must never go black. CAD lines stay readable when you lean in.
  * - UX: Soft max zoom. Esri Streets underlay never leaves a white void; owned launch-7
  *   vector paints on top (liberty background omitted). Absolute tile URLs + transformRequest.
- *   free-world layer ids stored on style metadata (no module singleton race). No redesign.
+ *   free-world layer ids stored on style metadata (no module singleton race). Marketplace
+ *   opens fit to the 7-county bbox — never null-island (0,0) when a listing lacks geocode.
+ *   No redesign.
  * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
- * - Acceptance: Streets first paint shows roads and stays painted. Imagery paints without zoom ritual.
- *   Soft ceiling. Armor. No Archie/CAD write paths touched.
+ * - Acceptance: Open = East Texas counties in view. Streets paint. No Atlantic jump on ungeocoded
+ *   listings. Soft ceiling. Armor. No Archie/CAD write paths touched.
  */
 
 /**

@@ -119,6 +119,23 @@ const market = read("src/components/marketplace/MarketplaceMap.tsx");
 assert.match(market, /MAP_PRECISION_MAX_ZOOM/);
 assert.match(market, /mapLibreTransformRequest/);
 assert.match(market, /transformRequest:\s*mapLibreTransformRequest/);
+assert.match(market, /launch7UnionBbox/);
+assert.match(market, /hasUsableMapPin/);
+assert.match(market, /fitBoundsOptions/);
+assert.match(market, /bounds:/);
+
+const geo = read("src/lib/geo.ts");
+assert.match(geo, /hasUsableMapPin/);
+assert.match(geo, /null island|Gulf of Guinea|Atlantic/i);
+/** Mirror: 0,0 is not a usable pin; East Texas is. */
+function hasUsableMapPin(lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) return false;
+  return true;
+}
+assert.equal(hasUsableMapPin(0, 0), false);
+assert.equal(hasUsableMapPin(30.71, -94.955), true);
+assert.equal(hasUsableMapPin(NaN, -95), false);
 
 const listing = read("src/components/broker/ListingCadMap.tsx");
 assert.match(listing, /MAP_PRECISION_MAX_ZOOM/);
