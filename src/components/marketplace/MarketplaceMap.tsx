@@ -25,6 +25,7 @@ import {
   boundaryLabel,
   formatAreaIn,
   formatDistanceIn,
+  hasUsableMapPin,
   pathLengthMeters,
   polygonAreaSqMeters,
   type AreaUnit,
@@ -41,6 +42,7 @@ import {
   setBaseLayerVisibility,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
+import { launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
   MAP_PRECISION_MAX_ZOOM,
@@ -179,9 +181,16 @@ export function MarketplaceMap({
   // Init map once.
   useEffect(() => {
     if (!containerRef.current) return;
+    // Open over the 7 launch counties (not null island / Atlantic).
+    const [west, south, east, north] = launch7UnionBbox();
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: buildStoryMapStyle(),
+      bounds: [
+        [west, south],
+        [east, north],
+      ],
+      fitBoundsOptions: { padding: 48, maxZoom: 10 },
       center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
       maxZoom: MAP_PRECISION_MAX_ZOOM,
@@ -568,12 +577,12 @@ export function MarketplaceMap({
     );
   }, [ready, measurePoints]);
 
-  // Fly to the selected listing.
+  // Fly to the selected listing — never to 0,0 (Atlantic / null island).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !selectedId) return;
     const l = listings.find((x) => x.id === selectedId);
-    if (!l) return;
+    if (!l || !hasUsableMapPin(l.lat, l.lng)) return;
     map.flyTo({ center: [l.lng, l.lat], zoom: Math.max(map.getZoom(), 12), duration: 600 });
   }, [ready, selectedId, listings]);
 
@@ -585,7 +594,7 @@ export function MarketplaceMap({
     markersRef.current = [];
     const b = map.getBounds();
     const visible = listings.filter(
-      (l) => l.lat && l.lng && b.contains([l.lng, l.lat]),
+      (l) => hasUsableMapPin(l.lat, l.lng) && b.contains([l.lng, l.lat]),
     );
     for (const l of visible.slice(0, 400)) {
       const el = document.createElement("button");

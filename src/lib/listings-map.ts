@@ -94,6 +94,7 @@ export function rowToListing(row: ListingRow): DemoListing {
     likeCount: row.like_count ?? 0,
     saveCount: row.save_count ?? 0,
     commentCount: row.comment_count ?? 0,
+    // Missing coords stay 0,0 — MarketplaceMap must not fly there (null island).
     lat: row.lat != null ? num(row.lat) : 0,
     lng: row.lng != null ? num(row.lng) : 0,
     agent: rowToAgent(row.agent),

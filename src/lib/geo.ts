@@ -13,10 +13,25 @@ export type DrawnBoundary =
   | { type: "rectangle"; bounds: MapBounds }
   | { type: "viewport"; bounds: MapBounds };
 
-/** East Texas launch footprint center */
-export const EAST_TEXAS_CENTER: LatLng = { lat: 30.95, lng: -95.05 };
+/**
+ * East Texas launch footprint center (7-county union midpoint).
+ * Prefer fitBounds(launch7UnionBbox) on open — this is the fallback center only.
+ */
+export const EAST_TEXAS_CENTER: LatLng = { lat: 30.71, lng: -94.955 };
 
+/** Fallback zoom when bounds are unavailable; prefer fitBounds to the 7 counties. */
 export const EAST_TEXAS_DEFAULT_ZOOM = 8;
+
+/**
+ * True when lat/lng can be used as a map pin.
+ * Missing geocodes were historically written as 0,0 — that is null island
+ * (Atlantic, Gulf of Guinea west of Africa), not East Texas.
+ */
+export function hasUsableMapPin(lat: number, lng: number): boolean {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) return false;
+  return true;
+}
 
 export function pointInPolygon(point: LatLng, polygon: LatLng[]) {
   if (polygon.length < 3) return false;
