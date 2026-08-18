@@ -3,16 +3,13 @@ import type { ExpressionSpecification } from "maplibre-gl";
 /**
  * Founder Interpreter (build process only — not a product):
  * - Intent: Desk zoom for lot precision must never go black. CAD lines stay readable when you lean in.
- * - UX: Soft max zoom aligned to real tile depth. Streets overzoom past z14; imagery holds to z18.
- *   Parcel strokes thicken at close range. Basemap tile URLs are absolute in the style AND via
- *   MapLibre transformRequest. Default Streets = Esri raster first paint (launch-7 vector behind
- *   NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS=1 until eqmg vector desk is proven). Liberty numeric filters
- *   coalesce nulls. No redesign.
+ * - UX: Soft max zoom. Esri Streets underlay never leaves a white void; owned launch-7
+ *   vector paints on top (liberty background omitted). Absolute tile URLs + transformRequest.
+ *   free-world layer ids stored on style metadata (no module singleton race). No redesign.
  * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
- * - Acceptance: First paint is not white void on Streets. Imagery paints without a zoom ritual.
- *   Soft ceiling. Armor covers constants + absolute tiles + transformRequest + liberty sanitize.
- *   No Archie/CAD write paths touched.
+ * - Acceptance: Streets first paint shows roads and stays painted. Imagery paints without zoom ritual.
+ *   Soft ceiling. Armor. No Archie/CAD write paths touched.
  */
 
 /**

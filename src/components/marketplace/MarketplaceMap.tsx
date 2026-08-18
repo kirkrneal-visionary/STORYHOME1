@@ -186,12 +186,20 @@ export function MarketplaceMap({
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
       maxZoom: MAP_PRECISION_MAX_ZOOM,
       transformRequest: mapLibreTransformRequest,
+      preserveDrawingBuffer: true,
       attributionControl: { compact: true },
     });
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
+    const kickResize = () => map.resize();
+    requestAnimationFrame(kickResize);
+    const t1 = window.setTimeout(kickResize, 50);
+    const t2 = window.setTimeout(kickResize, 250);
+
     map.on("load", () => {
+      kickResize();
+      setBaseLayerVisibility(map, "street");
       map.addSource("boundary", { type: "geojson", data: EMPTY_FC });
       map.addSource("draft", { type: "geojson", data: EMPTY_FC });
       map.addSource("measure", { type: "geojson", data: EMPTY_FC });
@@ -356,6 +364,8 @@ export function MarketplaceMap({
     window.addEventListener("orientationchange", onWinResize);
 
     return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
       ro.disconnect();
       window.removeEventListener("resize", onWinResize);
       window.removeEventListener("orientationchange", onWinResize);
