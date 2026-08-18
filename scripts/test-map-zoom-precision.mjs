@@ -31,7 +31,10 @@ assert.match(style, /absolutizeMapTileTemplate\(\s*resolveStreetsVectorTemplate/
 assert.match(style, /absolutizeMapTileTemplate\(resolveSatelliteTileTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(streetsRasterTmpl\)/);
 assert.match(style, /sanitizeLibertyLayer|sanitizeLibertyExpr/);
-assert.match(style, /esri-raster-fallback|World_Street_Map/);
+assert.match(style, /fw-streets-raster|World_Street_Map/);
+assert.match(style, /storyhome:fw-layer-ids/);
+assert.match(style, /underlay-plus-vector|background.*natural_earth|natural_earth/);
+assert.match(style, /freeWorldIdsForMap|fw-layer-ids/);
 assert.match(style, /coalesce/);
 /** Pure absolutize mirror — relative paths become origin-absolute; https stays. */
 function absolutizeMapTileTemplate(tmpl, origin = "https://example.test") {

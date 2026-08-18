@@ -124,10 +124,13 @@ export function sanitizeLibertyLayer(
 }
 
 /**
- * Full basemap style (L7-2):
- * - Streets = owned /api/map/launch7/streets vector (OpenFreeMap schema) unless raster override
- * - Imagery = owned /api/map/launch7/imagery (USGS cache) unless CDN override
+ * Full basemap style (L7-2 / map zoom precision):
+ * - Streets = Esri raster underlay (never white) + owned launch-7 vector on top
+ *   (liberty background omitted so underlay shows if vector is slow/empty)
+ * - Imagery = owned /api/map/launch7/imagery unless explicit override
  * - Topo / terrain / gray remain borrowed switchable rasters
+ * - Free-world layer ids live in style metadata (not a module singleton — that
+ *   raced across Marketplace/Research and could hide the wrong layers)
  */
 export function buildStoryMapStyle(): StyleSpecification {
   const liberty = libertyStyle as LibertyStyle;
@@ -139,8 +142,10 @@ export function buildStoryMapStyle(): StyleSpecification {
 
   let fwSources: StyleSpecification["sources"];
   let fwLayers: LayerSpecification[];
+  let streetsMode: "owned-raster" | "underlay-plus-vector" = "underlay-plus-vector";
 
   if (rasterStreets && streetsRasterTmpl) {
+    streetsMode = "owned-raster";
     fwSources = {
       "launch7-streets": {
         type: "raster",
@@ -157,11 +162,18 @@ export function buildStoryMapStyle(): StyleSpecification {
         source: "launch7-streets",
       },
     ];
-  } else if (process.env.NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS === "1") {
+  } else {
     const vectorTiles = absolutizeMapTileTemplate(
       resolveStreetsVectorTemplate(),
     );
     fwSources = {
+      "streets-raster": {
+        type: "raster",
+        tiles: [`${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: "Streets © Esri · Story Home underlay",
+      },
       ...liberty.sources,
       openmaptiles: {
         type: "vector",
@@ -172,44 +184,29 @@ export function buildStoryMapStyle(): StyleSpecification {
           "© OpenMapTiles © OpenStreetMap · Story Home launch-7 cache",
       },
     };
-    fwLayers = liberty.layers.map((layer) => sanitizeLibertyLayer(layer));
-  } else {
-    /**
-     * Default Streets = absolute Esri raster. Launch-7 vector tiles 200 OK but
-     * liberty still left a white/blue first paint on eqmg after null-sanitize.
-     * Flip NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS=1 when vector desk is proven live.
-     */
-    fwSources = {
-      "streets-raster": {
-        type: "raster",
-        tiles: [
-          `${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`,
-        ],
-        tileSize: 256,
-        maxzoom: 19,
-        attribution: "Streets © Esri · Story Home desk",
-      },
-    };
+    // Skip liberty background + natural_earth so Esri underlay stays visible
+    // when vector is cold, empty, or partially filtered.
     fwLayers = [
       {
         id: "fw-streets-raster",
         type: "raster",
         source: "streets-raster",
       },
+      ...liberty.layers
+        .filter((layer) => layer.id !== "background" && layer.id !== "natural_earth")
+        .map((layer) => sanitizeLibertyLayer(layer)),
     ];
   }
 
-  freeWorldLayerIds = fwLayers.map((l) => l.id);
+  const fwIds = fwLayers.map((l) => l.id);
+  freeWorldLayerIds = fwIds;
 
   return {
     version: 8,
     metadata: {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
-      "storyhome:streets": rasterStreets
-        ? "owned-raster"
-        : process.env.NEXT_PUBLIC_LAUNCH7_VECTOR_STREETS === "1"
-          ? "owned-vector-api"
-          : "esri-raster-fallback",
+      "storyhome:streets": streetsMode,
+      "storyhome:fw-layer-ids": fwIds,
       "storyhome:satellite": "owned-imagery-api",
       "storyhome:serve": "l7-3",
     },
@@ -301,7 +298,19 @@ export function buildStoryMapStyle(): StyleSpecification {
 type MapLike = {
   setLayoutProperty: (id: string, prop: string, value: string) => void;
   getLayer?: (id: string) => unknown;
+  getStyle?: () => { metadata?: unknown };
 };
+
+function freeWorldIdsForMap(map: MapLike): readonly string[] {
+  const meta = map.getStyle?.()?.metadata;
+  if (meta && typeof meta === "object" && meta !== null) {
+    const fromStyle = (meta as Record<string, unknown>)["storyhome:fw-layer-ids"];
+    if (Array.isArray(fromStyle) && fromStyle.every((x) => typeof x === "string")) {
+      return fromStyle as string[];
+    }
+  }
+  return freeWorldLayerIds;
+}
 
 export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
   const show = (id: string, on: boolean) => {
@@ -314,7 +323,7 @@ export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
   };
 
   const freeWorldOn = base === "street";
-  for (const id of freeWorldLayerIds) {
+  for (const id of freeWorldIdsForMap(map)) {
     show(id, freeWorldOn);
   }
 
