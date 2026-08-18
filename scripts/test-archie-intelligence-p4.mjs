@@ -38,7 +38,7 @@ assert.doesNotMatch(panel, /Founder Interpreter product/);
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /P4:/);
 assert.match(waves, /archie-reasoning-memory/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS|NEIGHBORS)"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(INTELLIGENCE|DEEDS|NEIGHBORS|LAUNCH7-MAP)"/);
 assert.match(waves, /Founder Interpreter product/);
 
 const wavesDoc = read("docs/shi/WAVES.md");

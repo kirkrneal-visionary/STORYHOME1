@@ -912,7 +912,8 @@ export const SHI_WAVES: ShiWave[] = [
     ],
     backend: [
       "GET /api/map/launch7/status — CDN/R2 readiness + footprint",
-      "npm run publish:launch7-tiles · refresh:launch7-tiles · plan:launch7-expand",
+      "npm run publish:launch7-tiles — SigV4 PutObject (no AWS CLI) · dry-run without keys",
+      "npm run refresh:launch7-tiles · plan:launch7-expand",
       "Armor test:launch7-map-l1 · l2 · l3",
     ],
     outOfScope: [
@@ -1038,7 +1039,7 @@ export const SHI_WAVES: ShiWave[] = [
 ];
 
 /** Current product line — Archie Neighbors N1. */
-export const ARCHIE_CURRENT_WAVE = "ARCHIE-NEIGHBORS" as const;
+export const ARCHIE_CURRENT_WAVE = "ARCHIE-LAUNCH7-MAP" as const;
 
 /** @deprecated Use ARCHIE_CURRENT_WAVE */
 export const SHI_CURRENT_LINE = ARCHIE_CURRENT_WAVE;

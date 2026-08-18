@@ -31,15 +31,18 @@ export const LAUNCH7_STREETS_API_TEMPLATE =
 export const LAUNCH7_IMAGERY_API_TEMPLATE =
   "/api/map/launch7/imagery/{z}/{x}/{y}";
 
-function envTrim(name: string): string | null {
-  if (typeof process === "undefined") return null;
-  const v = process.env[name]?.trim();
+/**
+ * Next/Vercel only expose NEXT_PUBLIC_* on a static key read.
+ * Dynamic env lookup stays empty in production builds.
+ */
+function publicEnv(value: string | undefined): string | null {
+  const v = value?.trim();
   return v || null;
 }
 
 /** Public CDN root for warmed tiles (no trailing slash), e.g. https://tiles.example.com/launch7 */
 export function launch7CdnBase(): string | null {
-  const raw = envTrim("NEXT_PUBLIC_LAUNCH7_CDN_BASE");
+  const raw = publicEnv(process.env.NEXT_PUBLIC_LAUNCH7_CDN_BASE);
   if (!raw) return null;
   return raw.replace(/\/+$/, "");
 }
@@ -99,11 +102,11 @@ export function pointInLaunch7Bbox(lng: number, lat: number): boolean {
  * When unset, prefers CDN base (L7-3) then API (L7-2).
  */
 export function ownedStreetsTileTemplate(): string | null {
-  return envTrim("NEXT_PUBLIC_LAUNCH7_STREETS_TILES");
+  return publicEnv(process.env.NEXT_PUBLIC_LAUNCH7_STREETS_TILES);
 }
 
 export function ownedSatelliteTileTemplate(): string | null {
-  return envTrim("NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES");
+  return publicEnv(process.env.NEXT_PUBLIC_LAUNCH7_SATELLITE_TILES);
 }
 
 /** Imagery: explicit → API (CDN skipped until R2 CORS serves MapLibre workers). */

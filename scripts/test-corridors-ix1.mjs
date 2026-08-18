@@ -57,7 +57,7 @@ assert.match(report, /approxDistanceToIntersectionM/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-IX|IX-1/);
-assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-IX"/);
+assert.match(waves, /ARCHIE_CURRENT_WAVE = "ARCHIE-(IX|NEIGHBORS|DEEDS|LAUNCH7-MAP)"/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:corridors-ix1/);
