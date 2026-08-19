@@ -13,6 +13,7 @@ import {
   CAD_OVERLAYS,
   type CadOverlayId,
 } from "@/lib/cad-layers";
+import { overlayBboxTooWide } from "@/lib/cad-overlay-abuse";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 
@@ -120,7 +121,10 @@ async function fetchOverlay(
     east: String(bbox.east),
     north: String(bbox.north),
   });
-  const res = await fetch(`/api/cad/overlay?${sp}`, { signal });
+  const res = await fetch(`/api/cad/overlay?${sp}`, {
+    signal,
+    credentials: "same-origin",
+  });
   if (!res.ok) return EMPTY_FC;
   const json = (await res.json()) as FeatureCollection;
   if (json?.type !== "FeatureCollection") return EMPTY_FC;
@@ -130,7 +134,9 @@ async function fetchOverlay(
 export function useCadOverlays(
   mapRef: MutableRefObject<MapLibreMap | null>,
   ready: boolean,
+  opts?: { allowed?: boolean },
 ) {
+  const allowed = opts?.allowed !== false;
   const [activeCounty, setActiveCounty] = useState("polk_cad");
   const [enabled, setEnabled] = useState<Set<CadOverlayId>>(
     () => new Set(CAD_OVERLAYS.filter((l) => l.defaultOn).map((l) => l.id)),
@@ -152,6 +158,11 @@ export function useCadOverlays(
   const reload = useCallback(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
+    if (!allowed) {
+      setOverlayVisibility(map, new Set());
+      setLoading(false);
+      return;
+    }
 
     setOverlayVisibility(map, enabledRef.current);
     const layers = [...enabledRef.current];
@@ -167,8 +178,7 @@ export function useCadOverlays(
       east: b.getEast(),
       north: b.getNorth(),
     };
-    // Skip oversized viewports (API also rejects >1.5°)
-    if (bbox.east - bbox.west > 1.5 || bbox.north - bbox.south > 1.5) {
+    if (overlayBboxTooWide(bbox)) {
       setLoading(false);
       return;
     }
@@ -201,7 +211,7 @@ export function useCadOverlays(
         if (!ac.signal.aborted) setLoading(false);
       }
     })();
-  }, [mapRef, ready]);
+  }, [mapRef, ready, allowed]);
 
   const scheduleReload = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -220,7 +230,7 @@ export function useCadOverlays(
       if (timerRef.current) clearTimeout(timerRef.current);
       abortRef.current?.abort();
     };
-  }, [mapRef, ready, enabled, activeCounty, scheduleReload]);
+  }, [mapRef, ready, allowed, enabled, activeCounty, scheduleReload]);
 
   function toggle(id: CadOverlayId) {
     setEnabled((prev) => {
