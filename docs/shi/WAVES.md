@@ -16,6 +16,9 @@
 ### ARCHIE-NEIGHBORS · **N1 shipping**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
+### CAD overlay lock · **shipping**
+County ArcGIS overlay (`/api/cad/overlay`) is Story Pro only. Marketplace consumers do not proxy CAD. Zoomed-in bbox · feature cap · per-user rate.
+
 ### Map zoom precision · **shipping**
 Soft max zoom (z19) aligned to launch-7 tile depth — no navy void on close zoom; CAD lot lines thicken for desk precision. Founder Interpreter on `map-precision.ts` (build process only). See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
 
@@ -40,6 +43,7 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- CAD overlay lock — Story Pro only + bbox/rate caps  
 - ARCHIE-NEIGHBORS N1 — thin CAD neighbors (touches / near)  
 - ARCHIE-DEEDS DEEDS-2 — peer-grade reveal gate (prod still dark until peerGrade flags)  
 - ARCHIE-INTELLIGENCE P4 — persistent reasoning memory (since last look)  

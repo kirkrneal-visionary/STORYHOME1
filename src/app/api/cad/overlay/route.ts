@@ -4,33 +4,46 @@ import {
   getBisServer,
   type CadOverlayId,
 } from "@/lib/cad-layers";
+import {
+  CAD_OVERLAY_MAX_BBOX_DEG,
+  CAD_OVERLAY_MAX_FEATURES,
+  parseOverlayBbox,
+  takeOverlayRateToken,
+} from "@/lib/cad-overlay-abuse";
+import { requireStoryPro } from "@/lib/shi/require-pro";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type BBox = { west: number; south: number; east: number; north: number };
-
-function parseBbox(sp: URLSearchParams): BBox | null {
-  const west = Number(sp.get("west"));
-  const south = Number(sp.get("south"));
-  const east = Number(sp.get("east"));
-  const north = Number(sp.get("north"));
-  if (![west, south, east, north].every(Number.isFinite)) return null;
-  if (east <= west || north <= south) return null;
-  // Clamp runaway viewports
-  if (east - west > 1.5 || north - south > 1.5) return null;
-  return { west, south, east, north };
-}
-
 /**
  * Viewport GeoJSON for a BIS CAD overlay layer.
+ * Story Pro only. Zoomed-in bbox. Per-user rate cap.
  * GET /api/cad/overlay?source=polk_cad&layer=abstracts&west=&south=&east=&north=
  */
 export async function GET(req: Request) {
+  const gate = await requireStoryPro();
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: gate.error, type: "FeatureCollection", features: [] },
+      { status: gate.status },
+    );
+  }
+
+  if (!takeOverlayRateToken(gate.user.id)) {
+    return NextResponse.json(
+      {
+        error: "Too many overlay requests. Pan less often or wait a minute.",
+        type: "FeatureCollection",
+        features: [],
+      },
+      { status: 429 },
+    );
+  }
+
   const url = new URL(req.url);
   const source = url.searchParams.get("source") || "";
   const layer = (url.searchParams.get("layer") || "") as CadOverlayId;
-  const bbox = parseBbox(url.searchParams);
+  const bbox = parseOverlayBbox(url.searchParams);
 
   const server = getBisServer(source);
   if (!server) {
@@ -44,7 +57,9 @@ export async function GET(req: Request) {
   }
   if (!bbox) {
     return NextResponse.json(
-      { error: "Valid west,south,east,north bbox required (max ~1.5°)" },
+      {
+        error: `Valid west,south,east,north bbox required (max ~${CAD_OVERLAY_MAX_BBOX_DEG}°)`,
+      },
       { status: 400 },
     );
   }
@@ -61,7 +76,7 @@ export async function GET(req: Request) {
     returnGeometry: "true",
     outSR: "4326",
     f: "geojson",
-    resultRecordCount: "1500",
+    resultRecordCount: String(CAD_OVERLAY_MAX_FEATURES),
   });
 
   const arcUrl = `${server.rootUrl}/${layerId}/query?${qs.toString()}`;
@@ -85,7 +100,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(json, {
       headers: {
-        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600",
+        "Cache-Control": "private, max-age=60",
       },
     });
   } catch (e) {

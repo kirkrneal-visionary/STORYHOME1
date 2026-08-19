@@ -68,6 +68,7 @@ import {
   FREEHAND_VERTEX_RADIUS_PX,
 } from "@/lib/shi/freehand";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/AuthContext";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export type DrawTool = "pan" | "freehand" | "radius" | "rectangle" | "measure";
@@ -149,6 +150,8 @@ export function MarketplaceMap({
   onBoundaryChange,
   className,
 }: MarketplaceMapProps) {
+  const { user } = useAuth();
+  const overlayAllowed = user?.kind === "pro" || user?.kind === "broker";
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
@@ -169,7 +172,7 @@ export function MarketplaceMap({
   const [areaUnit, setAreaUnit] = useState<AreaUnit>("acres");
   const [showParcels, setShowParcels] = useState(true);
   const [freehandHint, setFreehandHint] = useState<"idle" | "drawing" | "closeable">("idle");
-  const overlays = useCadOverlays(mapRef, ready);
+  const overlays = useCadOverlays(mapRef, ready, { allowed: overlayAllowed });
 
   useEffect(() => {
     toolRef.current = tool;
@@ -771,20 +774,22 @@ export function MarketplaceMap({
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={() => overlays.setPanelOpen((v) => !v)}
-            title="BIS CAD layers"
-            className={cn(
-              "story-press flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-bold",
-              overlays.panelOpen
-                ? "bg-gold text-navy"
-                : "story-glass text-paper hover:bg-white/10",
-            )}
-          >
-            <Grid3x3 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">CAD</span>
-          </button>
+          {overlayAllowed ? (
+            <button
+              type="button"
+              onClick={() => overlays.setPanelOpen((v) => !v)}
+              title="BIS CAD layers (Story Pro)"
+              className={cn(
+                "story-press flex items-center gap-1.5 rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-bold",
+                overlays.panelOpen
+                  ? "bg-gold text-navy"
+                  : "story-glass text-paper hover:bg-white/10",
+              )}
+            >
+              <Grid3x3 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">CAD</span>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => setShowParcels((v) => !v)}
@@ -806,7 +811,7 @@ export function MarketplaceMap({
             {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
-        {overlays.panelOpen ? (
+        {overlayAllowed && overlays.panelOpen ? (
           <CadOverlayControl
             activeCounty={overlays.activeCounty}
             onCountyChange={overlays.setActiveCounty}

@@ -1035,6 +1035,26 @@ export const SHI_WAVES: ShiWave[] = [
       "Assemblage / buy-sell advice",
     ],
   },
+  {
+    id: "CAD-OVERLAY-LOCK",
+    name: "CAD overlay lock",
+    goal: "County ArcGIS overlay is Story Pro only. Marketplace consumers do not proxy CAD.",
+    status: "done",
+    frontend: [
+      "Marketplace CAD layers button hidden unless user.kind is pro or broker",
+      "useCadOverlays({ allowed }) skips fetch when not allowed",
+    ],
+    backend: [
+      "GET /api/cad/overlay requireStoryPro + bbox 0.6° + 500 features + 48/min",
+      "cad/status uses anon key only (no service-role fallback)",
+      "Armor test:cad-overlay-pro-gate",
+    ],
+    outOfScope: [
+      "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
+      "Paid parcel landlords",
+      "Public CDN cache of county ArcGIS",
+    ],
+  },
 ];
 
 /** Current product line — Archie Neighbors N1. */
