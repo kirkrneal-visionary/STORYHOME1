@@ -21,6 +21,8 @@ import {
   associateParcelTraffic,
   type CorridorParcelPick,
 } from "@/lib/shi/corridor-parcel-traffic";
+import type { ParcelPositionRecord } from "@/lib/shi/parcel-position";
+import { POSITION_CLASS_LABEL } from "@/lib/shi/parcel-position-profile";
 
 export const TRAFFIC_EXPOSURE_RULE_VERSION = "traffic-exposure-v1" as const;
 export const COMMERCIAL_EXPOSURE_RULE_VERSION =
@@ -65,6 +67,9 @@ export type RankedSite = {
   marketValue: number | null;
   commercial: CommercialExposureScore;
   rank: number;
+  /** Filled after Find Strongest Sites — this parcel's position, not a neighbor's. */
+  position?: ParcelPositionRecord | null;
+  intel?: ParcelLocationIntel | null;
 };
 
 function bandFromScore(
@@ -330,6 +335,46 @@ export function exposureBandLabel(
     default:
       return "Limited exposure";
   }
+}
+
+/** Acres · frontage · road position — not a shared 67/100 score. */
+export function rankedSiteFactLine(site: RankedSite): string {
+  const bits: string[] = [];
+  if (site.legalAcreage != null && Number.isFinite(site.legalAcreage) && site.legalAcreage > 0) {
+    bits.push(
+      `${site.legalAcreage.toLocaleString("en-US", { maximumFractionDigits: 2 })} ac`,
+    );
+  }
+  const pos = site.position ?? null;
+  if (pos) {
+    const ft = pos.primary?.approxFrontageFt || pos.combinedApproxFrontageFt;
+    const road = pos.primary?.road ?? pos.primary?.traffic?.road ?? null;
+    if (ft > 0) {
+      bits.push(
+        road
+          ? `~${Math.round(ft).toLocaleString("en-US")} ft ${road}`
+          : `~${Math.round(ft).toLocaleString("en-US")} ft`,
+      );
+    }
+    bits.push(POSITION_CLASS_LABEL[pos.positionClass]);
+    if (pos.secondary?.road) bits.push(`also ${pos.secondary.road}`);
+  }
+  return bits.join(" · ") || "Position facts still loading";
+}
+
+/** Same highway AADT on a list is one road fact — not a reason the lots look identical. */
+export function samePublishedTrafficNote(sites: RankedSite[]): string | null {
+  const counts = sites
+    .map(
+      (s) =>
+        s.position?.primary?.traffic?.vehiclesPerDay ??
+        s.commercial.traffic.vehiclesPerDay,
+    )
+    .filter((n): n is number => n != null && Number.isFinite(n));
+  if (counts.length < 2) return null;
+  const first = counts[0];
+  if (!counts.every((n) => n === first)) return null;
+  return "Same published highway count on this list — look at frontage, a second road, and acres. A shared score can happen when lots sit on one road.";
 }
 
 /** Map fill color steps for commercial exposure choropleth (land). */
