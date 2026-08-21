@@ -16,9 +16,15 @@ import {
   isLaunchCorridorFips,
   resolveCorridorCounty,
   type TrafficCorridorSegment,
+  type TrafficStation,
 } from "@/lib/shi/corridors";
+import { deriveParcelPosition } from "@/lib/shi/parcel-position-engine";
 import { softCacheCountyTraffic } from "@/lib/shi/corridor-segment-cache";
 import { requireStoryPro } from "@/lib/shi/require-pro";
+import {
+  readCountyTrafficObservations,
+  stationsFromCachedObservations,
+} from "@/lib/shi/traffic-observation-cache";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 
 export const runtime = "nodejs";
@@ -277,9 +283,47 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  let stations: TrafficStation[] = [];
+  try {
+    const cachedRows = await readCountyTrafficObservations(
+      gate.supabase,
+      countyFips,
+    );
+    stations = stationsFromCachedObservations(
+      cachedRows,
+      countyFips,
+      county.name,
+    );
+  } catch {
+    stations = [];
+  }
+  if (stations.length === 0) {
+    try {
+      const live = await fetchCountyTraffic(countyFips);
+      stations = live.stations ?? [];
+      void softCacheCountyTraffic({
+        countyFips,
+        segments: live.segments ?? [],
+        stations,
+      });
+    } catch {
+      stations = [];
+    }
+  }
+
+  const position = deriveParcelPosition({
+    propId,
+    source: parcelSource,
+    intel,
+    stations,
+    lat: Number.isFinite(lat) ? lat : null,
+    lng: Number.isFinite(lng) ? lng : null,
+  });
+
   return NextResponse.json(
     {
       intel,
+      position,
       honesty: {
         frontageLabel: "APPROX",
         surveyed: false,
