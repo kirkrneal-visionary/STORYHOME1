@@ -46,6 +46,7 @@
     "test:parcel-position-p1": "node scripts/test-parcel-position-p1.mjs",
     "test:parcel-position-p2": "node scripts/test-parcel-position-p2.mjs",
     "test:parcel-position-p3": "node scripts/test-parcel-position-p3.mjs",
+    "test:parcel-position-p4": "node scripts/test-parcel-position-p4.mjs",
     "test:data-coverage-dc1": "node scripts/test-data-coverage-dc1.mjs",
     "test:data-coverage-dc2": "node scripts/test-data-coverage-dc2.mjs",
     "test:data-coverage-dc3": "node scripts/test-data-coverage-dc3.mjs",

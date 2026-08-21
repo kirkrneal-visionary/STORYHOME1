@@ -126,6 +126,29 @@ export async function shiAnalyzeArea(opts: {
   return body.analysis;
 }
 
+/** Phase 4 — short "worth a look" list after Analyze (not a score). */
+export async function shiWorthALook(opts: {
+  countyFips: string;
+  parcels: Array<{
+    propId: string;
+    lat?: number | null;
+    lng?: number | null;
+    acres?: number | null;
+  }>;
+}) {
+  return shiFetch<{
+    engine: "parcel-position-area-v1";
+    scanned: number;
+    worthALook: import("@/lib/shi/parcel-position-area").WorthALookItem[];
+    frame: import("@/lib/shi/parcel-position-profile").AreaPositionSnapshot;
+    disclaimer: string;
+  }>("/api/shi/research/worth-a-look", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
 export async function shiListFolders(countySource?: string) {
   const params = new URLSearchParams();
   if (countySource) params.set("countySource", countySource);

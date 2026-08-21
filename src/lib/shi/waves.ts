@@ -1037,11 +1037,12 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-POSITION",
-    name: "Parcel position · Phase 1–3 profile",
-    goal: "Give every Research parcel its own road-position record. Traffic stays a road fact. Position stays a parcel fact. No new screen yet.",
+    name: "Parcel position · Phase 1–4 worth a look",
+    goal: "Give every Research parcel its own road-position record. After Analyze This Area, show a short worth-a-look list. Traffic stays a road fact. Position stays a parcel fact.",
     status: "done",
     frontend: [
-      "No Research UI change — copy reserved for a later phase",
+      "P4: Properties worth a look after Analyze active — tap opens the property",
+      "P4: Gold look pins on the Research map (shi-look — not Discover similar)",
     ],
     backend: [
       "parcel-position-v1 DTO · primary/secondary · access not verified",
@@ -1050,6 +1051,7 @@ export const SHI_WAVES: ShiWave[] = [
       "parcel-position-engine-v1 · station matches frontage road, not nearest pin",
       "parcel-position-profile-v1 · why-stands-out · CAD snapshot must match propId",
       "GET parcel-location returns position + profile · Armor p1–p3 · A/B/C/D/E",
+      "P4: parcel-position-area-v1 · POST /api/shi/research/worth-a-look · cap 48 / list 6",
     ],
     outOfScope: [
       "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",

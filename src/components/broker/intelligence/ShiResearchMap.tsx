@@ -99,6 +99,13 @@ type ShiResearchMapProps = {
   related: ShiOwnerMatch[];
   /** SHI-5.2 Discover centroid pins (similar / portfolio). */
   discoverPins?: ShiDiscoverPin[];
+  /** P4 — worth-a-look pins. Separate layer — do not reuse Discover `similar`. */
+  lookPins?: Array<{
+    propId: string;
+    source?: string | null;
+    lat: number | null;
+    lng: number | null;
+  }>;
   frames: ShiLocalFrame[];
   activeFrameId: string | null;
   /** County must be picked before market frames can be committed. */
@@ -181,6 +188,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       selected,
       related,
       discoverPins = [],
+      lookPins = [],
       frames,
       activeFrameId,
       canDrawFrames = true,
@@ -746,6 +754,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
         ensureCadOverlayLayers(map, "shi-selected-fill");
 
+        map.addSource("shi-look", { type: "geojson", data: EMPTY_FC });
+        map.addLayer({
+          id: "shi-look-circle",
+          type: "circle",
+          source: "shi-look",
+          paint: {
+            "circle-radius": 8,
+            "circle-color": MAP_GOLD,
+            "circle-opacity": 0.95,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": MAP_NAVY,
+          },
+        });
+
         map.on("click", "shi-frames-fill", (e) => {
           if (toolRef.current !== "pan") return;
           const id = e.features?.[0]?.properties?.id;
@@ -786,6 +808,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             preferredSource: preferredSourceRef.current,
           });
         });
+        map.on("click", "shi-look-circle", (e) => {
+          if (toolRef.current !== "pan") return;
+          const f = e.features?.[0];
+          const propId = f?.properties?.propId;
+          if (typeof propId !== "string" || !propId) return;
+          const srcRaw = f?.properties?.source;
+          onSelectRef.current({
+            propId,
+            source: typeof srcRaw === "string" && srcRaw ? srcRaw : undefined,
+            lat: e.lngLat.lat,
+            lng: e.lngLat.lng,
+            preferredSource: preferredSourceRef.current,
+          });
+        });
         map.on("mouseenter", "parcels-fill", () => {
           if (toolRef.current === "pan")
             map.getCanvas().style.cursor = "pointer";
@@ -799,6 +835,14 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             map.getCanvas().style.cursor = "pointer";
         });
         map.on("mouseleave", "shi-discover-circle", () => {
+          map.getCanvas().style.cursor =
+            toolRef.current === "pan" ? "" : "crosshair";
+        });
+        map.on("mouseenter", "shi-look-circle", () => {
+          if (toolRef.current === "pan")
+            map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "shi-look-circle", () => {
           map.getCanvas().style.cursor =
             toolRef.current === "pan" ? "" : "crosshair";
         });
@@ -1208,6 +1252,36 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       }));
       src.setData({ type: "FeatureCollection", features });
     }, [ready, discoverPins]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      const src = map.getSource("shi-look") as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      if (!src) return;
+      const features: FeatureCollection["features"] = lookPins
+        .filter(
+          (p) =>
+            typeof p.lat === "number" &&
+            Number.isFinite(p.lat) &&
+            typeof p.lng === "number" &&
+            Number.isFinite(p.lng),
+        )
+        .map((p) => ({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [p.lng as number, p.lat as number],
+          },
+          properties: {
+            propId: p.propId,
+            source: p.source ?? "",
+            kind: "look",
+          },
+        }));
+      src.setData({ type: "FeatureCollection", features });
+    }, [ready, lookPins]);
 
     const discoverFitKey = discoverPins
       .map((p) => `${p.key}:${p.lat.toFixed(5)},${p.lng.toFixed(5)}`)
