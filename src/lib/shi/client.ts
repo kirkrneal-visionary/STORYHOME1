@@ -126,6 +126,33 @@ export async function shiAnalyzeArea(opts: {
   return body.analysis;
 }
 
+/** Phase 4/5 — short "worth a look" list after Analyze (not a score). */
+export async function shiWorthALook(opts: {
+  countyFips: string;
+  parcels: Array<{
+    propId: string;
+    lat?: number | null;
+    lng?: number | null;
+    acres?: number | null;
+  }>;
+  objective?: import("@/lib/shi/parcel-position-objective").PositionObjective;
+}) {
+  return shiFetch<{
+    engine: "parcel-position-area-v1";
+    pickEngine: "parcel-position-objective-v1";
+    objective: import("@/lib/shi/parcel-position-objective").PositionObjective;
+    scanned: number;
+    worthALook: import("@/lib/shi/parcel-position-area").WorthALookItem[];
+    candidates: import("@/lib/shi/parcel-position-objective").LookCandidate[];
+    frame: import("@/lib/shi/parcel-position-profile").AreaPositionSnapshot;
+    disclaimer: string;
+  }>("/api/shi/research/worth-a-look", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
 export async function shiListFolders(countySource?: string) {
   const params = new URLSearchParams();
   if (countySource) params.set("countySource", countySource);
@@ -572,6 +599,9 @@ export async function shiCorridorsParcelLocation(opts: {
   if (opts.lng != null) params.set("lng", String(opts.lng));
   return shiFetch<{
     intel: import("@/lib/shi/corridor-frontage").ParcelLocationIntel;
+    position: import("@/lib/shi/parcel-position").ParcelPositionRecord;
+    profile: import("@/lib/shi/parcel-position-profile").ParcelPositionProfile;
+    context: import("@/lib/shi/parcel-position-context").ParcelPositionContext;
     honesty: { frontageLabel: string; surveyed: boolean; note: string };
     cacheNote: string | null;
   }>(`/api/shi/corridors/parcel-location?${params.toString()}`);
