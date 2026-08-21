@@ -1037,7 +1037,7 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-POSITION",
-    name: "Parcel position · Phase 1–4 worth a look · P5 objective · P6 phone card · P7 context · P8 proof",
+    name: "Parcel position · Phase 1–4 worth a look · P5 objective · P6 phone card · P7 context · P8 proof · Compare facts",
     goal: "Give every Research parcel its own road-position record. After Analyze This Area, show a short worth-a-look list that follows what the agent is looking for. Open property shows a phone-first position card with surrounding owned evidence. Traffic stays a road fact. Position stays a parcel fact.",
     status: "done",
     frontend: [
@@ -1047,6 +1047,7 @@ export const SHI_WAVES: ShiWave[] = [
       "P6: Phone card — why it stands out · access not verified · see the evidence",
       "P7: Surrounding context chips — history years · CAD size · TxDOT project · same-owner nearby",
       "P8: A–E proof lock — p1–p8 armor · two roads never add · D is not best · E can surface on size",
+      "Compare + Strongest Sites use parcel position — same highway count can match; frontage / second road / acres differ",
     ],
     backend: [
       "parcel-position-v1 DTO · primary/secondary · access not verified",
@@ -1060,6 +1061,7 @@ export const SHI_WAVES: ShiWave[] = [
       "P6: ShiParcelPositionCard · PARCEL_POSITION_COPY · profile from parcel-location",
       "P7: parcel-position-context-v1 · GET parcel-location returns context · soft-fail projects",
       "P8: Armor test:parcel-position (p1–p8) · A–E fixture in one story",
+      "Compare prefers parcel-position-v1 · primary-road AADT only · Find Strongest Sites kept",
     ],
     outOfScope: [
       "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",

@@ -4,7 +4,11 @@ import { ShiCorridorsAskPanel } from "@/components/broker/intelligence/ShiCorrid
 import { ShiCorridorsPropertyComparePanel } from "@/components/broker/intelligence/ShiCorridorsPropertyComparePanel";
 import type { CorridorAskAnswer } from "@/lib/shi/corridor-ask";
 import type { RankedSite } from "@/lib/shi/corridor-exposure";
-import { exposureBandLabel } from "@/lib/shi/corridor-exposure";
+import {
+  rankedSiteFactLine,
+  samePublishedTrafficNote,
+} from "@/lib/shi/corridor-exposure";
+import { PARCEL_POSITION_COPY } from "@/lib/shi/parcel-position";
 import type { PropertyCompareResult } from "@/lib/shi/corridor-property-compare";
 import { PROPERTY_COMPARE_MAX } from "@/lib/shi/corridor-property-compare";
 import { cn } from "@/lib/utils";
@@ -46,6 +50,7 @@ export function ShiResearchAccessDesk({
   onClearCompare: () => void;
   className?: string;
 }) {
+  const sameHighwayNote = samePublishedTrafficNote(rankedSites);
   const tabs: { id: ResearchAccessDeskTab; label: string }[] = [
     { id: "ask", label: "Ask" },
     { id: "sites", label: "Sites" },
@@ -93,8 +98,9 @@ export function ShiResearchAccessDesk({
         {tab === "sites" ? (
           <div className="space-y-3" data-research-access-sites>
             <p className="text-[11px] leading-snug text-[var(--muted)]">
-              Draw or select a market frame on the map, then rank parcels by
-              commercial exposure (planning counts — not live traffic).
+              Draw or select a market frame, then Find Strongest Sites. Lots on
+              the same highway can share one traffic number — frontage, a second
+              road, and acres are what differ.
             </p>
             <button
               type="button"
@@ -115,6 +121,14 @@ export function ShiResearchAccessDesk({
             ) : null}
             {rankedSites.length > 0 ? (
               <ul className="space-y-2" data-research-ranked-sites>
+                {sameHighwayNote ? (
+                  <li
+                    className="rounded-lg border border-gold/30 bg-gold/5 px-3 py-2 text-[11px] text-ink"
+                    data-same-highway-traffic-note
+                  >
+                    {sameHighwayNote}
+                  </li>
+                ) : null}
                 {rankedSites.map((site) => {
                   const inCompare = comparePropIds.has(site.propId);
                   return (
@@ -129,9 +143,14 @@ export function ShiResearchAccessDesk({
                             site.ownerName ||
                             `CAD #${site.propId}`}
                         </p>
+                        <p
+                          className="text-[11px] text-ink"
+                          data-site-position-facts
+                        >
+                          {rankedSiteFactLine(site)}
+                        </p>
                         <p className="font-mono text-[10px] text-[var(--muted)]">
-                          {exposureBandLabel(site.commercial.band)} ·{" "}
-                          {site.commercial.score}/{site.commercial.maxScore}
+                          Access {PARCEL_POSITION_COPY.accessNotVerified.toLowerCase()}
                         </p>
                       </div>
                       <button
@@ -167,8 +186,9 @@ export function ShiResearchAccessDesk({
               />
             ) : (
               <p className="text-sm text-[var(--muted)]">
-                Add at least two sites from the Sites tab to compare traffic,
-                frontage, and intersection on one table.
+                Add at least two sites from the Sites tab. Same highway traffic
+                can match — the table fills frontage, a second road, crossing,
+                acres, and access (not verified).
               </p>
             )}
           </div>

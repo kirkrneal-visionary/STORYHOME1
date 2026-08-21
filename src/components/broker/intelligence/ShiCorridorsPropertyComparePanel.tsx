@@ -56,19 +56,30 @@ export function ShiCorridorsPropertyComparePanel({ compare, onClear }: Props) {
             </tr>
           </thead>
           <tbody>
-            {compare.rows.map((r) => (
-              <tr key={r.id} className="border-t border-hairline">
-                <td className="py-2 pr-2 text-[var(--muted)]">{r.label}</td>
-                {r.values.map((v, i) => (
-                  <td
-                    key={`${r.id}:${compare.columns[i]?.propId ?? i}`}
-                    className="py-2 pr-2 font-semibold text-ink"
-                  >
-                    {v}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {compare.rows.map((r) => {
+              const differs = new Set(r.values).size > 1;
+              return (
+                <tr
+                  key={r.id}
+                  className="border-t border-hairline"
+                  data-compare-row-differs={differs ? "yes" : "no"}
+                >
+                  <td className="py-2 pr-2 text-[var(--muted)]">{r.label}</td>
+                  {r.values.map((v, i) => (
+                    <td
+                      key={`${r.id}:${compare.columns[i]?.propId ?? i}`}
+                      className={
+                        differs
+                          ? "py-2 pr-2 font-semibold text-ink"
+                          : "py-2 pr-2 text-[var(--muted)]"
+                      }
+                    >
+                      {v}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

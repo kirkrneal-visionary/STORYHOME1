@@ -52,6 +52,7 @@ import {
   shiDeedsForParcel,
   shiCorridorsTraffic,
   shiCorridorsParcelLocation,
+  shiAttachPositionToRankedSites,
   shiCorridorsStrongestSites,
   shiParcelNeighbors,
   shiListFolders,
@@ -71,6 +72,7 @@ import {
   type CorridorAskAnswer,
 } from "@/lib/shi/corridor-ask";
 import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
+import type { ParcelPositionRecord } from "@/lib/shi/parcel-position";
 import type { ParcelPositionProfile } from "@/lib/shi/parcel-position-profile";
 import type { ParcelPositionContext } from "@/lib/shi/parcel-position-context";
 import {
@@ -171,6 +173,9 @@ export function PropertyIntelligenceView({
   const [comparePicks, setComparePicks] = useState<CorridorParcelPick[]>([]);
   const [compareIntelById, setCompareIntelById] = useState<
     Record<string, ParcelLocationIntel | null>
+  >({});
+  const [comparePositionById, setComparePositionById] = useState<
+    Record<string, ParcelPositionRecord | null>
   >({});
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
@@ -960,10 +965,11 @@ export function PropertyIntelligenceView({
       comparePicks.map((pick) => ({
         pick,
         intel: compareIntelById[pick.propId] ?? null,
+        position: comparePositionById[pick.propId] ?? null,
       })),
       accessStations,
     );
-  }, [comparePicks, compareIntelById, accessStations]);
+  }, [comparePicks, compareIntelById, comparePositionById, accessStations]);
 
   const runAsk = useCallback(
     (q: string) => {
@@ -1038,10 +1044,13 @@ export function PropertyIntelligenceView({
         boundary: activeFrame.boundary,
         limit: 12,
       });
-      setRankedSites(body.sites);
+      const sites = body.sites.length
+        ? await shiAttachPositionToRankedSites(body.sites, launchFips)
+        : body.sites;
+      setRankedSites(sites);
       setStrongestNote(
-        body.sites.length
-          ? `Top ${body.sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — ${body.honesty}`
+        sites.length
+          ? `Top ${sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — same highway traffic can match; frontage and a second road are what differ.`
           : "No parcels to rank in this outline.",
       );
       void ensureAccessStations();
@@ -1069,9 +1078,63 @@ export function PropertyIntelligenceView({
         legalAcreage: site.legalAcreage,
         marketValue: site.marketValue,
       };
-      setComparePicks((prev) => toggleCompareSite(prev, pick));
+      setComparePicks((prev) => {
+        const next = toggleCompareSite(prev, pick);
+        const added =
+          next.some((p) => p.propId === pick.propId) &&
+          !prev.some((p) => p.propId === pick.propId);
+        const removed =
+          prev.some((p) => p.propId === pick.propId) &&
+          !next.some((p) => p.propId === pick.propId);
+        if (removed) {
+          setCompareIntelById((map) => {
+            const { [pick.propId]: _drop, ...rest } = map;
+            return rest;
+          });
+          setComparePositionById((map) => {
+            const { [pick.propId]: _drop, ...rest } = map;
+            return rest;
+          });
+        }
+        if (added) {
+          if (site.intel) {
+            setCompareIntelById((map) => ({
+              ...map,
+              [pick.propId]: site.intel ?? null,
+            }));
+          }
+          if (site.position) {
+            setComparePositionById((map) => ({
+              ...map,
+              [pick.propId]: site.position ?? null,
+            }));
+          } else if (launchFips) {
+            void shiCorridorsParcelLocation({
+              propId: pick.propId,
+              source: pick.source,
+              countyFips: launchFips,
+              lat: pick.lat,
+              lng: pick.lng,
+            })
+              .then((body) => {
+                setCompareIntelById((map) => ({
+                  ...map,
+                  [pick.propId]: body.intel ?? null,
+                }));
+                setComparePositionById((map) => ({
+                  ...map,
+                  [pick.propId]: body.position ?? null,
+                }));
+              })
+              .catch(() => {
+                /* Soft-fail — acres still compare. */
+              });
+          }
+        }
+        return next;
+      });
     },
-    [],
+    [launchFips],
   );
 
   return (
@@ -1704,6 +1767,7 @@ export function PropertyIntelligenceView({
           onClearCompare={() => {
             setComparePicks([]);
             setCompareIntelById({});
+            setComparePositionById({});
           }}
         />
       ) : null}

@@ -607,6 +607,33 @@ export async function shiCorridorsParcelLocation(opts: {
   }>(`/api/shi/corridors/parcel-location?${params.toString()}`);
 }
 
+/** After ranking — load THIS parcel's position so Sites/Compare can differ. */
+export async function shiAttachPositionToRankedSites(
+  sites: import("@/lib/shi/corridor-exposure").RankedSite[],
+  countyFips: string,
+): Promise<import("@/lib/shi/corridor-exposure").RankedSite[]> {
+  return Promise.all(
+    sites.map(async (site) => {
+      try {
+        const body = await shiCorridorsParcelLocation({
+          propId: site.propId,
+          source: site.source,
+          countyFips,
+          lat: site.lat,
+          lng: site.lng,
+        });
+        return {
+          ...site,
+          position: body.position ?? null,
+          intel: body.intel ?? null,
+        };
+      } catch {
+        return site;
+      }
+    }),
+  );
+}
+
 /** C2.0-D — Find Strongest Sites in a drawn area (commercial-exposure-v1). */
 export async function shiCorridorsStrongestSites(opts: {
   countyFips: string;
