@@ -9,6 +9,7 @@ import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiU
 import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
 import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
 import { ShiResearchAccessPanel } from "@/components/broker/intelligence/ShiResearchAccessPanel";
+import { ShiParcelPositionCard } from "@/components/broker/intelligence/ShiParcelPositionCard";
 import {
   ShiResearchAccessDesk,
   type ResearchAccessDeskTab,
@@ -39,6 +40,7 @@ import {
   consumeOpenSavedFrame,
   shiAddProspect,
   shiAnalyzeArea,
+  shiWorthALook,
   shiCreateFarm,
   shiCreateFolder,
   shiFreshness,
@@ -68,6 +70,13 @@ import {
   answerCorridorAsk,
   type CorridorAskAnswer,
 } from "@/lib/shi/corridor-ask";
+import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
+import type { ParcelPositionProfile } from "@/lib/shi/parcel-position-profile";
+import {
+  pickFromCandidates,
+  type LookCandidate,
+  type PositionObjective,
+} from "@/lib/shi/parcel-position-objective";
 import type { RankedSite } from "@/lib/shi/corridor-exposure";
 import {
   comparePropertySites,
@@ -100,6 +109,8 @@ function money(n: number | null | undefined) {
     maximumFractionDigits: 0,
   });
 }
+
+const EMPTY_WORTH: WorthALookItem[] = [];
 
 function acres(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n)) return "—";
@@ -138,6 +149,8 @@ export function PropertyIntelligenceView({
   const [accessIntel, setAccessIntel] = useState<ParcelLocationIntel | null>(
     null,
   );
+  const [positionProfile, setPositionProfile] =
+    useState<ParcelPositionProfile | null>(null);
   const [parcelNeighbors, setParcelNeighbors] =
     useState<ParcelNeighborsResult | null>(null);
   const [accessLoading, setAccessLoading] = useState(false);
@@ -175,6 +188,13 @@ export function PropertyIntelligenceView({
   const [savingProspect, setSavingProspect] = useState(false);
   const [prospectMsg, setProspectMsg] = useState("");
   const [discoverPins, setDiscoverPins] = useState<ShiDiscoverPin[]>([]);
+  const [worthALook, setWorthALook] = useState<WorthALookItem[] | null>(null);
+  const [lookCandidates, setLookCandidates] = useState<LookCandidate[]>([]);
+  const [lookObjective, setLookObjective] =
+    useState<PositionObjective>("road_position");
+  const lookObjectiveRef = useRef<PositionObjective>("road_position");
+  lookObjectiveRef.current = lookObjective;
+  const [worthLoading, setWorthLoading] = useState(false);
   const mapRef = useRef<ShiMapHandle | null>(null);
   const openedPropRef = useRef<string | null>(null);
   const ownerPortfolioRef = useRef<HTMLDivElement | null>(null);
@@ -272,6 +292,8 @@ export function PropertyIntelligenceView({
           setUtilitiesFact(null);
           setEnvironmentDesk(null);
           setDeedsFact(null);
+          setAccessIntel(null);
+          setPositionProfile(null);
           setMatches([]);
           setParcelNeighbors(null);
           setDiscoverPins([]);
@@ -283,6 +305,7 @@ export function PropertyIntelligenceView({
         setEnvironmentDesk(null);
         setDeedsFact(null);
         setAccessIntel(null);
+        setPositionProfile(null);
         setParcelNeighbors(null);
         setDiscoverPins([]);
         if (property.countyFips) {
@@ -350,9 +373,11 @@ export function PropertyIntelligenceView({
             })
               .then((body) => {
                 setAccessIntel(body.intel ?? null);
+                setPositionProfile(body.profile ?? null);
               })
               .catch(() => {
                 setAccessIntel(null);
+                setPositionProfile(null);
               })
               .finally(() => {
                 setAccessLoading(false);
@@ -372,6 +397,7 @@ export function PropertyIntelligenceView({
               });
           } else {
             setAccessIntel(null);
+            setPositionProfile(null);
             setParcelNeighbors(null);
             setAccessLoading(false);
           }
@@ -516,6 +542,8 @@ export function PropertyIntelligenceView({
     }
     setAnalyzing(true);
     setAreaError("");
+    setWorthALook(null);
+    setLookCandidates([]);
     try {
       const result = await shiAnalyzeArea({
         boundary: active.boundary,
@@ -529,8 +557,44 @@ export function PropertyIntelligenceView({
             : f,
         ),
       );
+      const fips =
+        AVAILABLE_COUNTIES.find((c) => c.source === frameCounty)?.fips || "";
+      if (
+        fips &&
+        isLaunchCorridorFips(fips) &&
+        result.parcels.length > 0
+      ) {
+        setWorthLoading(true);
+        try {
+          const look = await shiWorthALook({
+            countyFips: fips,
+            parcels: result.parcels.slice(0, 48).map((p) => ({
+              propId: p.propId,
+              lat: p.centroidLat,
+              lng: p.centroidLng,
+              acres: p.legalAcreage,
+            })),
+            objective: lookObjectiveRef.current,
+          });
+          setLookCandidates(look.candidates ?? []);
+          setWorthALook(
+            look.candidates?.length
+              ? pickFromCandidates(look.candidates, {
+                  objective: lookObjectiveRef.current,
+                })
+              : look.worthALook,
+          );
+        } catch {
+          setWorthALook(null);
+          setLookCandidates([]);
+        } finally {
+          setWorthLoading(false);
+        }
+      }
     } catch (e) {
       setAnalysis(null);
+      setWorthALook(null);
+      setLookCandidates([]);
       setAreaError(e instanceof Error ? e.message : "Area analysis failed");
     } finally {
       setAnalyzing(false);
@@ -1152,6 +1216,7 @@ export function PropertyIntelligenceView({
           selected={selected}
           related={matches}
           discoverPins={discoverPins}
+          lookPins={worthALook ?? EMPTY_WORTH}
           frames={frames}
           activeFrameId={activeFrameId}
           canDrawFrames={Boolean(source)}
@@ -1283,6 +1348,14 @@ export function PropertyIntelligenceView({
                   );
                 }}
               />
+
+              {selected.countyFips &&
+              isLaunchCorridorFips(selected.countyFips) ? (
+                <ShiParcelPositionCard
+                  profile={positionProfile}
+                  propId={selected.propId}
+                />
+              ) : null}
 
               <dl className="grid grid-cols-2 gap-2 text-xs">
                 <Fact label="Property ID" value={selected.propId} mono />
@@ -1641,6 +1714,8 @@ export function PropertyIntelligenceView({
           setActiveFrameId(id);
           const f = frames.find((x) => x.localId === id);
           setAnalysis(f?.analysis ?? null);
+          setWorthALook(null);
+          setLookCandidates([]);
           setAreaError("");
           if (f?.boundary) mapRef.current?.fitBoundary(f.boundary);
         }}
@@ -1648,6 +1723,25 @@ export function PropertyIntelligenceView({
         analyzing={analyzing}
         analyzeError={areaError}
         onAnalyze={() => void runAreaAnalyze()}
+        worthALook={worthALook}
+        worthLoading={worthLoading}
+        lookObjective={lookObjective}
+        onLookObjective={(next) => {
+          setLookObjective(next);
+          if (lookCandidates.length > 0) {
+            setWorthALook(
+              pickFromCandidates(lookCandidates, { objective: next }),
+            );
+          }
+        }}
+        onOpenProperty={(opts) => {
+          void openProperty({
+            propId: opts.propId,
+            source: opts.source,
+            nearLat: opts.lat ?? undefined,
+            nearLng: opts.lng ?? undefined,
+          });
+        }}
         folders={folders}
         onCreateFolder={createFolder}
         onSaveActive={saveActiveFrame}
