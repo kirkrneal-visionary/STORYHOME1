@@ -66,25 +66,52 @@ export async function softCacheCountyTraffic(opts: {
     }
 
     if (opts.stations.length > 0) {
-      const obs = opts.stations
-        .filter((s) => s.latestYear != null && s.latestAadt != null)
-        .slice(0, 1200)
-        .map((s) => ({
-          county_fips: opts.countyFips,
-          station_id: s.stationId,
-          on_road: s.onRoad,
-          year: s.latestYear!,
-          aadt: s.latestAadt,
-          lat: s.lat,
-          lng: s.lng,
-          geom: pointEwkt(s.lng, s.lat),
-          source: "txdot",
-          updated_at: new Date().toISOString(),
-        }));
-      if (obs.length) {
+      const now = new Date().toISOString();
+      const seen = new Set<string>();
+      const obs: Array<{
+        county_fips: string;
+        station_id: string;
+        on_road: string | null;
+        year: number;
+        aadt: number | null;
+        lat: number;
+        lng: number;
+        geom: string;
+        source: string;
+        updated_at: string;
+      }> = [];
+      for (const s of opts.stations) {
+        const years = [
+          ...s.history,
+          { year: s.latestYear, aadt: s.latestAadt },
+        ];
+        for (const h of years) {
+          if (h.year == null || !Number.isFinite(h.year) || h.year < 1900) {
+            continue;
+          }
+          if (h.aadt == null || !Number.isFinite(h.aadt)) continue;
+          const key = `${s.stationId}:${h.year}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          obs.push({
+            county_fips: opts.countyFips,
+            station_id: s.stationId,
+            on_road: s.onRoad,
+            year: h.year,
+            aadt: h.aadt,
+            lat: s.lat,
+            lng: s.lng,
+            geom: pointEwkt(s.lng, s.lat),
+            source: "txdot",
+            updated_at: now,
+          });
+        }
+      }
+      const rows = obs.slice(0, 1200);
+      if (rows.length) {
         const { error } = await sb
           .from("corridor_traffic_observations")
-          .upsert(obs, { onConflict: "county_fips,station_id,year" });
+          .upsert(rows, { onConflict: "county_fips,station_id,year" });
         if (error) return { ok: false, reason: error.message };
       }
     }

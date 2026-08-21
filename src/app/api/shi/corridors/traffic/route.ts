@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  CORRIDORS_HONESTY,
   isLaunchCorridorFips,
   resolveCorridorCounty,
 } from "@/lib/shi/corridors";
 import { softCacheCountyTraffic } from "@/lib/shi/corridor-segment-cache";
 import { listCountyChanges } from "@/lib/shi/county-changes";
 import { requireStoryPro } from "@/lib/shi/require-pro";
+import {
+  readCountyTrafficObservations,
+  stationsFromCachedObservations,
+} from "@/lib/shi/traffic-observation-cache";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 
 export const runtime = "nodejs";
@@ -67,6 +72,44 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (e) {
+    const cachedRows = await readCountyTrafficObservations(gate.supabase, fips);
+    const stations = stationsFromCachedObservations(
+      cachedRows,
+      fips,
+      county.name,
+    );
+    if (stations.length > 0) {
+      const yearSet = new Set<number>();
+      for (const s of stations) {
+        for (const h of s.history) {
+          if (h.year > 1900 && h.aadt != null) yearSet.add(h.year);
+        }
+      }
+      return NextResponse.json(
+        {
+          county: {
+            fips: county.fips,
+            name: county.name,
+            shortName: county.shortName,
+            source: county.source,
+          },
+          honesty: CORRIDORS_HONESTY,
+          sourceLabel:
+            "Cached TxDOT observations · live county fetch unavailable",
+          stationCount: stations.length,
+          segmentCount: 0,
+          yearsCovered: [...yearSet].sort((a, b) => b - a),
+          stations,
+          segments: [],
+          cacheFallback: true,
+        },
+        {
+          headers: {
+            "Cache-Control": "private, max-age=60",
+          },
+        },
+      );
+    }
     return NextResponse.json(
       {
         error:
