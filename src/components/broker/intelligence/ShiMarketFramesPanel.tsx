@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { FolderPlus, Loader2, PlaySquare, Save } from "lucide-react";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
+import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
+import {
+  POSITION_OBJECTIVES,
+  POSITION_OBJECTIVE_LABEL,
+  POSITION_OBJECTIVE_NOTE,
+  type PositionObjective,
+} from "@/lib/shi/parcel-position-objective";
+import { PARCEL_POSITION_COPY } from "@/lib/shi/parcel-position";
 import type {
   ShiAreaAnalysis,
   ShiLocalFrame,
@@ -41,6 +49,16 @@ type Props = {
   saving: boolean;
   onOpenVault: () => void;
   onOpenFarms?: () => void;
+  worthALook?: WorthALookItem[] | null;
+  worthLoading?: boolean;
+  lookObjective?: PositionObjective;
+  onLookObjective?: (objective: PositionObjective) => void;
+  onOpenProperty?: (opts: {
+    propId: string;
+    source?: string;
+    lat?: number | null;
+    lng?: number | null;
+  }) => void;
 };
 
 /**
@@ -64,6 +82,11 @@ export function ShiMarketFramesPanel({
   saving,
   onOpenVault,
   onOpenFarms,
+  worthALook = null,
+  worthLoading = false,
+  lookObjective = "road_position",
+  onLookObjective,
+  onOpenProperty,
 }: Props) {
   const [frameName, setFrameName] = useState("");
   const [folderId, setFolderId] = useState("");
@@ -393,24 +416,114 @@ export function ShiMarketFramesPanel({
                 />
               </dl>
               <p className="text-[10px] text-[var(--muted)]">{analysis.note}</p>
+              {worthLoading ? (
+                <p className="flex items-center gap-2 text-[11px] font-semibold text-navy">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Checking road position…
+                </p>
+              ) : null}
+              {worthALook && (worthALook.length > 0 || onLookObjective) ? (
+                <div
+                  className="rounded-xl border border-gold/40 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] p-3"
+                  data-worth-a-look="p4"
+                  data-look-objective="p5"
+                >
+                  <p className="font-mono text-[10px] font-bold text-gold uppercase">
+                    {PARCEL_POSITION_COPY.worthALook}
+                  </p>
+                  {/* P4: not a score */}
+                  <p className="mt-0.5 text-[10px] text-[var(--muted)]">
+                    {POSITION_OBJECTIVE_NOTE[lookObjective]}
+                  </p>
+                  {onLookObjective ? (
+                    <div
+                      className="mt-2 flex flex-wrap gap-1.5"
+                      data-look-objective-chips="p5"
+                    >
+                      <span className="self-center text-[10px] font-semibold text-[var(--muted)]">
+                        Looking for
+                      </span>
+                      {POSITION_OBJECTIVES.map((id) => (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => onLookObjective(id)}
+                          className={cn(
+                            "rounded-lg border px-2 py-1 text-[10px] font-bold",
+                            lookObjective === id
+                              ? "border-gold bg-gold/20 text-navy"
+                              : "border-hairline text-[var(--muted)] hover:border-gold/50",
+                          )}
+                        >
+                          {POSITION_OBJECTIVE_LABEL[id]}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {worthALook.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {worthALook.map((item) => (
+                        <li key={`${item.source}:${item.propId}`}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onOpenProperty?.({
+                                propId: item.propId,
+                                source: item.source,
+                                lat: item.lat,
+                                lng: item.lng,
+                              })
+                            }
+                            className="w-full rounded-lg border border-hairline bg-[var(--surface)] px-2.5 py-1.5 text-left hover:border-gold/60"
+                          >
+                            <p className="truncate text-[11px] font-semibold text-ink">
+                              {item.situs || `Parcel ${item.propId}`}
+                            </p>
+                            <p className="truncate text-[10px] text-[var(--muted)]">
+                              {item.headline}
+                              {item.reasons.length
+                                ? ` · ${item.reasons.map((r) => r.label).join(" · ")}`
+                                : ""}
+                            </p>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-[11px] text-[var(--muted)]">
+                      Nothing in this draw matches that yet.
+                    </p>
+                  )}
+                </div>
+              ) : null}
               {analysis.parcels.length > 0 ? (
                 <ul className="max-h-44 space-y-1 overflow-y-auto rounded-lg border border-hairline">
                   {analysis.parcels.slice(0, 60).map((p) => (
-                    <li
-                      key={`${p.source}:${p.propId}`}
-                      className="flex items-start justify-between gap-2 px-2.5 py-1.5 text-[11px]"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-ink">
-                          {p.situsAddress || `Parcel ${p.propId}`}
-                        </p>
-                        <p className="truncate text-[var(--muted)]">
-                          {p.ownerName || "—"} · {p.propId}
-                        </p>
-                      </div>
-                      <span className="shrink-0 font-bold text-navy">
-                        {money(p.marketValue)}
-                      </span>
+                    <li key={`${p.source}:${p.propId}`}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onOpenProperty?.({
+                            propId: p.propId,
+                            source: p.source,
+                            lat: p.centroidLat,
+                            lng: p.centroidLng,
+                          })
+                        }
+                        className="flex w-full items-start justify-between gap-2 px-2.5 py-1.5 text-left text-[11px] hover:bg-[var(--surface)]"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-ink">
+                            {p.situsAddress || `Parcel ${p.propId}`}
+                          </p>
+                          <p className="truncate text-[var(--muted)]">
+                            {p.ownerName || "—"} · {p.propId}
+                          </p>
+                        </div>
+                        <span className="shrink-0 font-bold text-navy">
+                          {money(p.marketValue)}
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>

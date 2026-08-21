@@ -16,6 +16,9 @@
 ### ARCHIE-NEIGHBORS · **N1 shipping**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
+### Parcel position · **P5 objective look**
+After Analyze This Area, Research shows **Properties worth a look** from the P3 profile (P4 worth a look). Built on the P2 engine. **Looking for** chips change the list: road position · larger site · busier road · growing traffic. Higher traffic is never “best.” Two roads are never added together.
+
 ### Map zoom precision · **shipping**
 Soft max zoom (z19) aligned to launch-7 tile depth — no navy void on close zoom; CAD lot lines thicken for desk precision. Founder Interpreter on `map-precision.ts` (build process only). See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
 
@@ -40,6 +43,11 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-POSITION P5 — objective-aware worth a look  
+- ARCHIE-POSITION P4 — worth a look after Analyze  
+- ARCHIE-POSITION P3 — per-property evidence profile  
+- ARCHIE-POSITION P2 engine — frontage-matched traffic  
+- ARCHIE-POSITION P1 — parcel position model + observation cache read  
 - ARCHIE-NEIGHBORS N1 — thin CAD neighbors (touches / near)  
 - ARCHIE-DEEDS DEEDS-2 — peer-grade reveal gate (prod still dark until peerGrade flags)  
 - ARCHIE-INTELLIGENCE P4 — persistent reasoning memory (since last look)  
