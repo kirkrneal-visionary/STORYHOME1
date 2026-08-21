@@ -1037,7 +1037,7 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-POSITION",
-    name: "Parcel position · Phase 1–2 engine",
+    name: "Parcel position · Phase 1–3 profile",
     goal: "Give every Research parcel its own road-position record. Traffic stays a road fact. Position stays a parcel fact. No new screen yet.",
     status: "done",
     frontend: [
@@ -1048,7 +1048,8 @@ export const SHI_WAVES: ShiWave[] = [
       "Read corridor_traffic_observations (authenticated) · history years cached",
       "Traffic route may serve cached observations when live TxDOT fails",
       "parcel-position-engine-v1 · station matches frontage road, not nearest pin",
-      "GET parcel-location returns position · Armor p1 + p2 · A/B/C/D/E fixture",
+      "parcel-position-profile-v1 · why-stands-out · CAD snapshot must match propId",
+      "GET parcel-location returns position + profile · Armor p1–p3 · A/B/C/D/E",
     ],
     outOfScope: [
       "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
