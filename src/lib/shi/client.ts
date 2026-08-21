@@ -126,7 +126,7 @@ export async function shiAnalyzeArea(opts: {
   return body.analysis;
 }
 
-/** Phase 4 — short "worth a look" list after Analyze (not a score). */
+/** Phase 4/5 — short "worth a look" list after Analyze (not a score). */
 export async function shiWorthALook(opts: {
   countyFips: string;
   parcels: Array<{
@@ -135,11 +135,15 @@ export async function shiWorthALook(opts: {
     lng?: number | null;
     acres?: number | null;
   }>;
+  objective?: import("@/lib/shi/parcel-position-objective").PositionObjective;
 }) {
   return shiFetch<{
     engine: "parcel-position-area-v1";
+    pickEngine: "parcel-position-objective-v1";
+    objective: import("@/lib/shi/parcel-position-objective").PositionObjective;
     scanned: number;
     worthALook: import("@/lib/shi/parcel-position-area").WorthALookItem[];
+    candidates: import("@/lib/shi/parcel-position-objective").LookCandidate[];
     frame: import("@/lib/shi/parcel-position-profile").AreaPositionSnapshot;
     disclaimer: string;
   }>("/api/shi/research/worth-a-look", {

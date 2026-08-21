@@ -8,8 +8,14 @@ import {
   PARCEL_POSITION_AREA_ENGINE,
   WORTH_A_LOOK_DISCLAIMER,
   WORTH_A_LOOK_LIMIT,
-  pickWorthALook,
 } from "@/lib/shi/parcel-position-area";
+import {
+  PARCEL_POSITION_OBJECTIVE_ENGINE,
+  isPositionObjective,
+  pickWorthALookForObjective,
+  toLookCandidate,
+  type PositionObjective,
+} from "@/lib/shi/parcel-position-objective";
 import {
   loadCountyScanContext,
   scanAreaPositions,
@@ -72,6 +78,7 @@ export async function POST(req: NextRequest) {
   let body: {
     countyFips?: string;
     parcels?: unknown;
+    objective?: unknown;
   };
   try {
     body = await req.json();
@@ -112,7 +119,14 @@ export async function POST(req: NextRequest) {
       context,
       parcels,
     });
-    const worthALook = pickWorthALook(scanned, WORTH_A_LOOK_LIMIT);
+    const objective: PositionObjective = isPositionObjective(body.objective)
+      ? body.objective
+      : "road_position";
+    const candidates = scanned.map(toLookCandidate);
+    const worthALook = pickWorthALookForObjective(scanned, {
+      limit: WORTH_A_LOOK_LIMIT,
+      objective,
+    });
     const frame = emptyAreaSnapshot();
     frame.parcelCount = scanned.length;
     frame.note =
@@ -120,8 +134,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       engine: PARCEL_POSITION_AREA_ENGINE,
+      pickEngine: PARCEL_POSITION_OBJECTIVE_ENGINE,
+      objective,
       scanned: scanned.length,
       worthALook,
+      candidates,
       frame,
       disclaimer: WORTH_A_LOOK_DISCLAIMER,
       county: { fips: county.fips, name: county.name, source: county.source },

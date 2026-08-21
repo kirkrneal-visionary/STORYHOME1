@@ -70,6 +70,11 @@ import {
   type CorridorAskAnswer,
 } from "@/lib/shi/corridor-ask";
 import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
+import {
+  pickFromCandidates,
+  type LookCandidate,
+  type PositionObjective,
+} from "@/lib/shi/parcel-position-objective";
 import type { RankedSite } from "@/lib/shi/corridor-exposure";
 import {
   comparePropertySites,
@@ -180,6 +185,11 @@ export function PropertyIntelligenceView({
   const [prospectMsg, setProspectMsg] = useState("");
   const [discoverPins, setDiscoverPins] = useState<ShiDiscoverPin[]>([]);
   const [worthALook, setWorthALook] = useState<WorthALookItem[] | null>(null);
+  const [lookCandidates, setLookCandidates] = useState<LookCandidate[]>([]);
+  const [lookObjective, setLookObjective] =
+    useState<PositionObjective>("road_position");
+  const lookObjectiveRef = useRef<PositionObjective>("road_position");
+  lookObjectiveRef.current = lookObjective;
   const [worthLoading, setWorthLoading] = useState(false);
   const mapRef = useRef<ShiMapHandle | null>(null);
   const openedPropRef = useRef<string | null>(null);
@@ -523,6 +533,7 @@ export function PropertyIntelligenceView({
     setAnalyzing(true);
     setAreaError("");
     setWorthALook(null);
+    setLookCandidates([]);
     try {
       const result = await shiAnalyzeArea({
         boundary: active.boundary,
@@ -553,10 +564,19 @@ export function PropertyIntelligenceView({
               lng: p.centroidLng,
               acres: p.legalAcreage,
             })),
+            objective: lookObjectiveRef.current,
           });
-          setWorthALook(look.worthALook);
+          setLookCandidates(look.candidates ?? []);
+          setWorthALook(
+            look.candidates?.length
+              ? pickFromCandidates(look.candidates, {
+                  objective: lookObjectiveRef.current,
+                })
+              : look.worthALook,
+          );
         } catch {
           setWorthALook(null);
+          setLookCandidates([]);
         } finally {
           setWorthLoading(false);
         }
@@ -564,6 +584,7 @@ export function PropertyIntelligenceView({
     } catch (e) {
       setAnalysis(null);
       setWorthALook(null);
+      setLookCandidates([]);
       setAreaError(e instanceof Error ? e.message : "Area analysis failed");
     } finally {
       setAnalyzing(false);
@@ -1676,6 +1697,7 @@ export function PropertyIntelligenceView({
           const f = frames.find((x) => x.localId === id);
           setAnalysis(f?.analysis ?? null);
           setWorthALook(null);
+          setLookCandidates([]);
           setAreaError("");
           if (f?.boundary) mapRef.current?.fitBoundary(f.boundary);
         }}
@@ -1685,6 +1707,15 @@ export function PropertyIntelligenceView({
         onAnalyze={() => void runAreaAnalyze()}
         worthALook={worthALook}
         worthLoading={worthLoading}
+        lookObjective={lookObjective}
+        onLookObjective={(next) => {
+          setLookObjective(next);
+          if (lookCandidates.length > 0) {
+            setWorthALook(
+              pickFromCandidates(lookCandidates, { objective: next }),
+            );
+          }
+        }}
         onOpenProperty={(opts) => {
           void openProperty({
             propId: opts.propId,
