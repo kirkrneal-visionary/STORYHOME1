@@ -601,6 +601,7 @@ export async function shiCorridorsParcelLocation(opts: {
     intel: import("@/lib/shi/corridor-frontage").ParcelLocationIntel;
     position: import("@/lib/shi/parcel-position").ParcelPositionRecord;
     profile: import("@/lib/shi/parcel-position-profile").ParcelPositionProfile;
+    context: import("@/lib/shi/parcel-position-context").ParcelPositionContext;
     honesty: { frontageLabel: string; surveyed: boolean; note: string };
     cacheNote: string | null;
   }>(`/api/shi/corridors/parcel-location?${params.toString()}`);

@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { PARCEL_POSITION_COPY } from "@/lib/shi/parcel-position";
+import {
+  withNeighborContext,
+  type ParcelPositionContext,
+} from "@/lib/shi/parcel-position-context";
+import type { ParcelNeighborsResult } from "@/lib/shi/parcel-neighbors";
 import type { ParcelPositionProfile } from "@/lib/shi/parcel-position-profile";
 import { cn } from "@/lib/utils";
 
@@ -16,16 +21,25 @@ function formatDay(n: number | null | undefined): string | null {
  */
 export function ShiParcelPositionCard({
   profile,
+  context,
+  neighbors,
   propId,
   className,
 }: {
   profile: ParcelPositionProfile | null | undefined;
+  context?: ParcelPositionContext | null;
+  neighbors?: ParcelNeighborsResult | null;
   propId?: string;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
   if (!profile || profile.scope !== "parcel") return null;
   if (propId && profile.propId !== propId) return null;
+  const surrounding = withNeighborContext(
+    context,
+    neighbors,
+    profile.propId,
+  );
 
   const why = profile.whyStandsOut.filter(Boolean);
   const lead = why[0] ?? "Not enough mapped road evidence yet.";
@@ -71,6 +85,22 @@ export function ShiParcelPositionCard({
         </div>
       </dl>
 
+      {surrounding.items.length > 0 ? (
+        <ul
+          className="mt-2 flex flex-wrap gap-1.5"
+          data-position-context="p7"
+        >
+          {surrounding.items.slice(0, 3).map((item) => (
+            <li
+              key={`${item.kind}:${item.label}`}
+              className="rounded-md border border-hairline bg-[var(--surface)] px-2 py-1 font-mono text-[10px] font-semibold text-navy"
+            >
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -100,6 +130,18 @@ export function ShiParcelPositionCard({
               {" · those numbers are not added together"}
             </p>
           ) : null}
+          {surrounding.items.length > 0 ? (
+            <ul className="space-y-1.5" data-position-context-detail="p7">
+              {surrounding.items.map((item) => (
+                <li key={`${item.kind}:${item.detail}`} className="text-[12px] leading-snug text-ink">
+                  <span className="font-semibold">{item.label}.</span> {item.detail}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="text-[10px] leading-relaxed text-[var(--muted)]">
+            {surrounding.note}
+          </p>
           {profile.unknown.length > 0 ? (
             <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-[var(--muted)]">
               {profile.unknown.map((u) => (

@@ -16,8 +16,8 @@
 ### ARCHIE-NEIGHBORS · **N1 shipping**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
-### Parcel position · **P6 phone card**
-Open a property and the phone card shows **Why this property stands out**, access **Not verified**, and **See the evidence**. Built on the P2 engine and P3 profile. P4 worth a look + P5 objective look stay on the draw. Higher traffic is never “best.” Two roads are never added together.
+### Parcel position · **P7 context**
+The P6 phone card now shows surrounding owned facts (published years, CAD size, public TxDOT work on that road, same-owner CAD neighbors). Built on the P2 engine and P3 profile. P4 worth a look + P5 objective look stay on the draw. Context is not position and not a score. Two roads are never added together.
 
 ### Map zoom precision · **shipping**
 Soft max zoom (z19) aligned to launch-7 tile depth — no navy void on close zoom; CAD lot lines thicken for desk precision. Founder Interpreter on `map-precision.ts` (build process only). See [`ARCHIE-LAUNCH7-MAP.md`](./ARCHIE-LAUNCH7-MAP.md).
@@ -43,6 +43,7 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-POSITION P7 — surrounding context on the phone card  
 - ARCHIE-POSITION P6 — phone card (why it stands out)  
 - ARCHIE-POSITION P5 — objective-aware worth a look  
 - ARCHIE-POSITION P4 — worth a look after Analyze  

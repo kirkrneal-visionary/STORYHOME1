@@ -19,10 +19,12 @@ import {
   type TrafficStation,
 } from "@/lib/shi/corridors";
 import { deriveParcelPosition } from "@/lib/shi/parcel-position-engine";
+import { buildParcelPositionContext } from "@/lib/shi/parcel-position-context";
 import {
   buildParcelPositionProfile,
   type ParcelCadSnapshot,
 } from "@/lib/shi/parcel-position-profile";
+import { fetchTxdotProjectsNear } from "@/lib/shi/txdot-projects";
 import { softCacheCountyTraffic } from "@/lib/shi/corridor-segment-cache";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import {
@@ -362,11 +364,35 @@ export async function GET(req: NextRequest) {
 
   const profile = buildParcelPositionProfile({ position, cad });
 
+  let projects: Awaited<ReturnType<typeof fetchTxdotProjectsNear>>["projects"] =
+    [];
+  if (Number.isFinite(lat) && Number.isFinite(lng)) {
+    const pad = 0.03;
+    try {
+      const near = await fetchTxdotProjectsNear({
+        bbox: [lng - pad, lat - pad, lng + pad, lat + pad],
+        county,
+        limit: 20,
+      });
+      projects = near.projects ?? [];
+    } catch {
+      projects = [];
+    }
+  }
+
+  const context = buildParcelPositionContext({
+    propId,
+    position,
+    cad,
+    projects,
+  });
+
   return NextResponse.json(
     {
       intel,
       position,
       profile,
+      context,
       honesty: {
         frontageLabel: "APPROX",
         surveyed: false,

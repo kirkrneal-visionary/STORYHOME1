@@ -72,6 +72,7 @@ import {
 } from "@/lib/shi/corridor-ask";
 import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
 import type { ParcelPositionProfile } from "@/lib/shi/parcel-position-profile";
+import type { ParcelPositionContext } from "@/lib/shi/parcel-position-context";
 import {
   pickFromCandidates,
   type LookCandidate,
@@ -151,6 +152,8 @@ export function PropertyIntelligenceView({
   );
   const [positionProfile, setPositionProfile] =
     useState<ParcelPositionProfile | null>(null);
+  const [positionContext, setPositionContext] =
+    useState<ParcelPositionContext | null>(null);
   const [parcelNeighbors, setParcelNeighbors] =
     useState<ParcelNeighborsResult | null>(null);
   const [accessLoading, setAccessLoading] = useState(false);
@@ -294,6 +297,7 @@ export function PropertyIntelligenceView({
           setDeedsFact(null);
           setAccessIntel(null);
           setPositionProfile(null);
+          setPositionContext(null);
           setMatches([]);
           setParcelNeighbors(null);
           setDiscoverPins([]);
@@ -306,6 +310,7 @@ export function PropertyIntelligenceView({
         setDeedsFact(null);
         setAccessIntel(null);
         setPositionProfile(null);
+        setPositionContext(null);
         setParcelNeighbors(null);
         setDiscoverPins([]);
         if (property.countyFips) {
@@ -374,10 +379,12 @@ export function PropertyIntelligenceView({
               .then((body) => {
                 setAccessIntel(body.intel ?? null);
                 setPositionProfile(body.profile ?? null);
+                setPositionContext(body.context ?? null);
               })
               .catch(() => {
                 setAccessIntel(null);
                 setPositionProfile(null);
+                setPositionContext(null);
               })
               .finally(() => {
                 setAccessLoading(false);
@@ -398,6 +405,7 @@ export function PropertyIntelligenceView({
           } else {
             setAccessIntel(null);
             setPositionProfile(null);
+            setPositionContext(null);
             setParcelNeighbors(null);
             setAccessLoading(false);
           }
@@ -1353,6 +1361,8 @@ export function PropertyIntelligenceView({
               isLaunchCorridorFips(selected.countyFips) ? (
                 <ShiParcelPositionCard
                   profile={positionProfile}
+                  context={positionContext}
+                  neighbors={parcelNeighbors}
                   propId={selected.propId}
                 />
               ) : null}
