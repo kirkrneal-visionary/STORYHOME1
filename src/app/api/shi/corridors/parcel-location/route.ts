@@ -16,9 +16,19 @@ import {
   isLaunchCorridorFips,
   resolveCorridorCounty,
   type TrafficCorridorSegment,
+  type TrafficStation,
 } from "@/lib/shi/corridors";
+import { deriveParcelPosition } from "@/lib/shi/parcel-position-engine";
+import {
+  buildParcelPositionProfile,
+  type ParcelCadSnapshot,
+} from "@/lib/shi/parcel-position-profile";
 import { softCacheCountyTraffic } from "@/lib/shi/corridor-segment-cache";
 import { requireStoryPro } from "@/lib/shi/require-pro";
+import {
+  readCountyTrafficObservations,
+  stationsFromCachedObservations,
+} from "@/lib/shi/traffic-observation-cache";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 
 export const runtime = "nodejs";
@@ -277,9 +287,86 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  let stations: TrafficStation[] = [];
+  try {
+    const cachedRows = await readCountyTrafficObservations(
+      gate.supabase,
+      countyFips,
+    );
+    stations = stationsFromCachedObservations(
+      cachedRows,
+      countyFips,
+      county.name,
+    );
+  } catch {
+    stations = [];
+  }
+  if (stations.length === 0) {
+    try {
+      const live = await fetchCountyTraffic(countyFips);
+      stations = live.stations ?? [];
+      void softCacheCountyTraffic({
+        countyFips,
+        segments: live.segments ?? [],
+        stations,
+      });
+    } catch {
+      stations = [];
+    }
+  }
+
+  const position = deriveParcelPosition({
+    propId,
+    source: parcelSource,
+    intel,
+    stations,
+    lat: Number.isFinite(lat) ? lat : null,
+    lng: Number.isFinite(lng) ? lng : null,
+  });
+
+  let cad: ParcelCadSnapshot = {
+    propId,
+    source: parcelSource,
+    ownerName: null,
+    situsAddress: null,
+    legalAcreage: null,
+    marketValue: null,
+  };
+  try {
+    const { data: row } = await gate.supabase
+      .from("county_parcels")
+      .select("prop_id, source, owner_name, situs_address, legal_acreage, market_value")
+      .eq("prop_id", propId)
+      .eq("source", parcelSource)
+      .maybeSingle();
+    if (row && String(row.prop_id) === propId) {
+      cad = {
+        propId: String(row.prop_id),
+        source: String(row.source ?? parcelSource),
+        ownerName: row.owner_name == null ? null : String(row.owner_name),
+        situsAddress:
+          row.situs_address == null ? null : String(row.situs_address),
+        legalAcreage:
+          row.legal_acreage == null || !Number.isFinite(Number(row.legal_acreage))
+            ? null
+            : Number(row.legal_acreage),
+        marketValue:
+          row.market_value == null || !Number.isFinite(Number(row.market_value))
+            ? null
+            : Number(row.market_value),
+      };
+    }
+  } catch {
+    /* keep empty CAD — do not borrow another parcel */
+  }
+
+  const profile = buildParcelPositionProfile({ position, cad });
+
   return NextResponse.json(
     {
       intel,
+      position,
+      profile,
       honesty: {
         frontageLabel: "APPROX",
         surveyed: false,

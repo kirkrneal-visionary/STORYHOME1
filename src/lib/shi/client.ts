@@ -572,6 +572,8 @@ export async function shiCorridorsParcelLocation(opts: {
   if (opts.lng != null) params.set("lng", String(opts.lng));
   return shiFetch<{
     intel: import("@/lib/shi/corridor-frontage").ParcelLocationIntel;
+    position: import("@/lib/shi/parcel-position").ParcelPositionRecord;
+    profile: import("@/lib/shi/parcel-position-profile").ParcelPositionProfile;
     honesty: { frontageLabel: string; surveyed: boolean; note: string };
     cacheNote: string | null;
   }>(`/api/shi/corridors/parcel-location?${params.toString()}`);
