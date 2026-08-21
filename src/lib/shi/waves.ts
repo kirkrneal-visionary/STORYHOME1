@@ -1035,6 +1035,37 @@ export const SHI_WAVES: ShiWave[] = [
       "Assemblage / buy-sell advice",
     ],
   },
+  {
+    id: "ARCHIE-POSITION",
+    name: "Parcel position · Phase 1–4 worth a look · P5 objective · P6 phone card · P7 context",
+    goal: "Give every Research parcel its own road-position record. After Analyze This Area, show a short worth-a-look list that follows what the agent is looking for. Open property shows a phone-first position card with surrounding owned evidence. Traffic stays a road fact. Position stays a parcel fact.",
+    status: "done",
+    frontend: [
+      "P4: Properties worth a look after Analyze active — tap opens the property",
+      "P4: Gold look pins on the Research map (shi-look — not Discover similar)",
+      "P5: Looking for chips — road position · larger site · busier road · growing",
+      "P6: Phone card — why it stands out · access not verified · see the evidence",
+      "P7: Surrounding context chips — history years · CAD size · TxDOT project · same-owner nearby",
+    ],
+    backend: [
+      "parcel-position-v1 DTO · primary/secondary · access not verified",
+      "Read corridor_traffic_observations (authenticated) · history years cached",
+      "Traffic route may serve cached observations when live TxDOT fails",
+      "parcel-position-engine-v1 · station matches frontage road, not nearest pin",
+      "parcel-position-profile-v1 · why-stands-out · CAD snapshot must match propId",
+      "GET parcel-location returns position + profile · Armor p1–p3 · A/B/C/D/E",
+      "P4: parcel-position-area-v1 · POST /api/shi/research/worth-a-look · cap 48 / list 6",
+      "P5: parcel-position-objective-v1 · client re-pick from candidates · never a site grade",
+      "P6: ShiParcelPositionCard · PARCEL_POSITION_COPY · profile from parcel-location",
+      "P7: parcel-position-context-v1 · GET parcel-location returns context · soft-fail projects",
+    ],
+    outOfScope: [
+      "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
+      "New nav / Corridors room / magic 0–100 score",
+      "Adding two roads' AADT",
+      "Inferring driveway or TxDOT access approval",
+    ],
+  },
 ];
 
 /** Current product line — Archie Neighbors N1. */
