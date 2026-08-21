@@ -1037,13 +1037,14 @@ export const SHI_WAVES: ShiWave[] = [
   },
   {
     id: "ARCHIE-POSITION",
-    name: "Parcel position · Phase 1–4 worth a look · P5 objective",
-    goal: "Give every Research parcel its own road-position record. After Analyze This Area, show a short worth-a-look list that follows what the agent is looking for. Traffic stays a road fact. Position stays a parcel fact.",
+    name: "Parcel position · Phase 1–4 worth a look · P5 objective · P6 phone card",
+    goal: "Give every Research parcel its own road-position record. After Analyze This Area, show a short worth-a-look list that follows what the agent is looking for. Open property shows a phone-first position card. Traffic stays a road fact. Position stays a parcel fact.",
     status: "done",
     frontend: [
       "P4: Properties worth a look after Analyze active — tap opens the property",
       "P4: Gold look pins on the Research map (shi-look — not Discover similar)",
       "P5: Looking for chips — road position · larger site · busier road · growing",
+      "P6: Phone card — why it stands out · access not verified · see the evidence",
     ],
     backend: [
       "parcel-position-v1 DTO · primary/secondary · access not verified",
@@ -1054,6 +1055,7 @@ export const SHI_WAVES: ShiWave[] = [
       "GET parcel-location returns position + profile · Armor p1–p3 · A/B/C/D/E",
       "P4: parcel-position-area-v1 · POST /api/shi/research/worth-a-look · cap 48 / list 6",
       "P5: parcel-position-objective-v1 · client re-pick from candidates · never a site grade",
+      "P6: ShiParcelPositionCard · PARCEL_POSITION_COPY · profile from parcel-location",
     ],
     outOfScope: [
       "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",

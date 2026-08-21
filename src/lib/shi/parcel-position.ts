@@ -15,7 +15,7 @@ import type { TrafficYearPoint } from "@/lib/shi/corridors";
 
 export const PARCEL_POSITION_RULE_VERSION = "parcel-position-v1" as const;
 
-/** Reserved UI copy — Phase 6. Do not render from this module yet. */
+/** Phase 6 phone card renders this copy. */
 export const PARCEL_POSITION_COPY = {
   worthALook: "Properties worth a look",
   whyStandsOut: "Why this property stands out",

@@ -449,7 +449,7 @@ export function ShiMarketFramesPanel({
                           type="button"
                           onClick={() => onLookObjective(id)}
                           className={cn(
-                            "rounded-lg border px-2 py-1 text-[10px] font-bold",
+                            "min-h-11 rounded-lg border px-2.5 py-1 text-[11px] font-bold",
                             lookObjective === id
                               ? "border-gold bg-gold/20 text-navy"
                               : "border-hairline text-[var(--muted)] hover:border-gold/50",
@@ -474,7 +474,7 @@ export function ShiMarketFramesPanel({
                                 lng: item.lng,
                               })
                             }
-                            className="w-full rounded-lg border border-hairline bg-[var(--surface)] px-2.5 py-1.5 text-left hover:border-gold/60"
+                            className="flex min-h-11 w-full flex-col justify-center rounded-lg border border-hairline bg-[var(--surface)] px-2.5 py-2 text-left hover:border-gold/60"
                           >
                             <p className="truncate text-[11px] font-semibold text-ink">
                               {item.situs || `Parcel ${item.propId}`}
