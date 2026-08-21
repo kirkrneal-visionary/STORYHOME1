@@ -1035,6 +1035,28 @@ export const SHI_WAVES: ShiWave[] = [
       "Assemblage / buy-sell advice",
     ],
   },
+  {
+    id: "ARCHIE-POSITION",
+    name: "Parcel position · Phase 1–2 engine",
+    goal: "Give every Research parcel its own road-position record. Traffic stays a road fact. Position stays a parcel fact. No new screen yet.",
+    status: "done",
+    frontend: [
+      "No Research UI change — copy reserved for a later phase",
+    ],
+    backend: [
+      "parcel-position-v1 DTO · primary/secondary · access not verified",
+      "Read corridor_traffic_observations (authenticated) · history years cached",
+      "Traffic route may serve cached observations when live TxDOT fails",
+      "parcel-position-engine-v1 · station matches frontage road, not nearest pin",
+      "GET parcel-location returns position · Armor p1 + p2 · A/B/C/D/E fixture",
+    ],
+    outOfScope: [
+      "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
+      "New nav / Corridors room / magic 0–100 score",
+      "Adding two roads' AADT",
+      "Inferring driveway or TxDOT access approval",
+    ],
+  },
 ];
 
 /** Current product line — Archie Neighbors N1. */
