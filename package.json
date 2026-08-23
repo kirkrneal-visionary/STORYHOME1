@@ -54,6 +54,8 @@
     "test:parcel-position-compare": "node scripts/test-parcel-position-compare.mjs",
     "test:parcel-position": "node scripts/test-parcel-position-compare.mjs",
     "test:research-modes": "node scripts/test-research-modes.mjs",
+    "test:multifamily": "node scripts/test-multifamily.mjs",
+    "ingest:acs-housing": "node scripts/ingest-acs-housing-launch7.mjs",
     "test:data-coverage-dc1": "node scripts/test-data-coverage-dc1.mjs",
     "test:data-coverage-dc2": "node scripts/test-data-coverage-dc2.mjs",
     "test:data-coverage-dc3": "node scripts/test-data-coverage-dc3.mjs",
