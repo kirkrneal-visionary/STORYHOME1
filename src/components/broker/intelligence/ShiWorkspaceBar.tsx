@@ -1,7 +1,8 @@
 "use client";
 
-import { MoreHorizontal, Search } from "lucide-react";
+import { Maximize2, Minimize2, MoreHorizontal, Search } from "lucide-react";
 import { RESEARCH_MODES, type ResearchModeId } from "@/lib/shi/research-modes";
+import { WORKSPACE_COPY } from "@/lib/shi/research-workspace";
 import { cn } from "@/lib/utils";
 
 /**
@@ -13,12 +14,16 @@ export function ShiWorkspaceBar({
   onSearch,
   onMenu,
   searchOpen,
+  expandedMap,
+  onToggleExpandedMap,
 }: {
   mode: ResearchModeId;
   onExit: () => void;
   onSearch: () => void;
   onMenu: () => void;
   searchOpen?: boolean;
+  expandedMap?: boolean;
+  onToggleExpandedMap?: () => void;
 }) {
   const cfg = RESEARCH_MODES[mode];
   return (
@@ -30,7 +35,7 @@ export function ShiWorkspaceBar({
         type="button"
         onClick={onExit}
         data-workspace-exit
-        className="story-glass inline-flex h-10 max-w-[42%] shrink-0 items-center gap-1.5 truncate rounded-xl px-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase"
+        className="story-glass inline-flex h-10 max-w-[38%] shrink-0 items-center gap-1.5 truncate rounded-xl px-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase"
       >
         ‹ {cfg.displayName}
       </button>
@@ -46,6 +51,24 @@ export function ShiWorkspaceBar({
         <Search className="h-3.5 w-3.5 shrink-0 text-gold" />
         <span className="truncate">Search property or area</span>
       </button>
+      {onToggleExpandedMap ? (
+        <button
+          type="button"
+          data-map-expand-toggle
+          onClick={onToggleExpandedMap}
+          aria-pressed={expandedMap}
+          className="story-glass inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 font-mono text-[9px] font-bold tracking-[0.12em] text-gold uppercase"
+        >
+          {expandedMap ? (
+            <Minimize2 className="h-3.5 w-3.5" />
+          ) : (
+            <Maximize2 className="h-3.5 w-3.5" />
+          )}
+          <span className="hidden sm:inline">
+            {expandedMap ? WORKSPACE_COPY.exitMap : WORKSPACE_COPY.expandMap}
+          </span>
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={onMenu}

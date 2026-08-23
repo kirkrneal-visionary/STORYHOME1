@@ -698,30 +698,36 @@ html[data-research-live] .story-living-tagline {
 }
 [data-workspace-stage] {
   position: relative;
+  display: flex;
   min-height: 0;
   flex: 1 1 auto;
 }
-@media (max-width: 1279px) {
-  [data-research-workspace] [data-map-draw-tools],
-  [data-research-workspace] [data-map-hint] {
-    bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem) !important;
-  }
-  [data-research-workspace] [data-map-layers] {
-    right: 0.65rem;
-  }
+[data-map-pane] {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
 }
-@media (min-width: 1280px) {
-  [data-intelligence-sheet] {
-    height: auto !important;
-    max-height: none !important;
-  }
-  [data-research-workspace] .maplibregl-ctrl-bottom-right {
-    right: calc(min(400px, 32vw) + 1.25rem);
-    bottom: 10px;
-  }
+[data-workspace-layout="sheet"] [data-map-pane] {
+  position: absolute;
+  inset: 0;
 }
-@media (max-width: 1279px) {
-  [data-research-workspace] .maplibregl-ctrl-bottom-right {
-    bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem);
-  }
+html[data-map-expanded] [data-research-workspace] {
+  top: env(safe-area-inset-top, 0px);
+}
+html[data-map-expanded] .story-overlay-header,
+html[data-map-expanded] [aria-label="Archie's Intelligence modules"] {
+  opacity: 0;
+  pointer-events: none;
+}
+[data-workspace-layout="sheet"] [data-map-draw-tools],
+[data-workspace-layout="sheet"] [data-map-hint] {
+  bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem) !important;
+}
+[data-workspace-layout="sheet"] .maplibregl-ctrl-bottom-right {
+  bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem);
+}
+[data-workspace-layout="drawer"] .maplibregl-ctrl-bottom-right {
+  right: 10px;
+  bottom: 10px;
 }

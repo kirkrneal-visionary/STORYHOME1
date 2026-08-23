@@ -92,6 +92,7 @@ export type ShiMapHandle = {
     zoom: number;
   } | null;
   fitBoundary: (boundary: DrawnBoundary) => void;
+  resize: () => void;
 };
 
 type ShiResearchMapProps = {
@@ -376,6 +377,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         if (!map) return null;
         const c = map.getCenter();
         return { centerLat: c.lat, centerLng: c.lng, zoom: map.getZoom() };
+      },
+      resize: () => {
+        mapRef.current?.resize();
       },
       fitBoundary: (boundary: DrawnBoundary) => {
         const map = mapRef.current;

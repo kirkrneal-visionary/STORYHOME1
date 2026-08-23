@@ -15,7 +15,7 @@ import {
   type ResearchAccessDeskTab,
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
 import { ShiMultifamilyRead } from "@/components/broker/intelligence/ShiMultifamilyRead";
-import { ShiIntelligenceSheet } from "@/components/broker/intelligence/ShiIntelligenceSheet";
+import { ShiResearchPanelHost } from "@/components/broker/intelligence/ShiResearchDesktopDrawer";
 import { ShiWorkspaceBar } from "@/components/broker/intelligence/ShiWorkspaceBar";
 import { ShiArchieIntelligencePanel } from "@/components/broker/intelligence/ShiArchieIntelligencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
@@ -108,9 +108,12 @@ import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import {
   RESEARCH_WORKSPACE_VERSION,
   WORKSPACE_COPY,
+  drawerWidthPx,
   readWorkspaceSnapshot,
   workspaceContext,
+  workspaceLayout,
   writeWorkspaceSnapshot,
+  type WorkspaceLayout,
   type WorkspaceSheetSnap,
 } from "@/lib/shi/research-workspace";
 import type {
@@ -214,7 +217,17 @@ export function PropertyIntelligenceView({
   const [mfRead, setMfRead] = useState<MultifamilyRead | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [workspaceMenu, setWorkspaceMenu] = useState(false);
-  const [sheetSnap, setSheetSnap] = useState<WorkspaceSheetSnap>("peek");
+  const [sheetSnap, setSheetSnap] = useState<WorkspaceSheetSnap>(
+    () => readWorkspaceSnapshot()?.sheetSnap ?? "peek",
+  );
+  const [expandedMap, setExpandedMap] = useState(
+    () => Boolean(readWorkspaceSnapshot()?.expandedMap),
+  );
+  const [drawerOpen, setDrawerOpen] = useState(
+    () => readWorkspaceSnapshot()?.drawerOpen !== false,
+  );
+  const [layout, setLayout] = useState<WorkspaceLayout>("sheet");
+  const [drawerW, setDrawerW] = useState(380);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -274,6 +287,43 @@ export function PropertyIntelligenceView({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    const sync = () => {
+      const w = window.innerWidth;
+      setLayout(workspaceLayout(w));
+      setDrawerW(drawerWidthPx(w));
+    };
+    sync();
+    window.addEventListener("resize", sync);
+    window.addEventListener("orientationchange", sync);
+    return () => {
+      window.removeEventListener("resize", sync);
+      window.removeEventListener("orientationchange", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (expandedMap) root.dataset.mapExpanded = "true";
+    else delete root.dataset.mapExpanded;
+    return () => {
+      delete root.dataset.mapExpanded;
+    };
+  }, [expandedMap]);
+
+  useEffect(() => {
+    writeWorkspaceSnapshot({
+      expandedMap,
+      drawerOpen,
+      sheetSnap,
+    });
+  }, [expandedMap, drawerOpen, sheetSnap]);
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => mapRef.current?.resize());
+    return () => window.cancelAnimationFrame(id);
+  }, [layout, drawerOpen, drawerW, expandedMap, sheetSnap]);
 
   const loadMatches = useCallback(async (property: ShiPropertyDetail) => {
     try {
@@ -348,7 +398,7 @@ export function PropertyIntelligenceView({
           return;
         }
         setSelected(property);
-        setSheetSnap((s) => (s === "collapsed" ? "half" : s === "peek" ? "half" : s));
+        setSheetSnap((s) => (s === "collapsed" || s === "peek" ? "expanded" : s));
         setFloodFact(null);
         setUtilitiesFact(null);
         setMfRead(null);
@@ -568,7 +618,7 @@ export function PropertyIntelligenceView({
     setActiveFrameId(localId);
     setAnalysis(null);
     setAreaError("");
-    setSheetSnap("half");
+    setSheetSnap("expanded");
     return true;
   }
 
@@ -1290,15 +1340,51 @@ export function PropertyIntelligenceView({
     askOpen: accessDeskTab === "ask" && Boolean(askAnswer),
   });
 
+  const researchHeader = (
+          <div className="min-w-0">
+            <p className="truncate font-serif text-base font-bold text-ink">
+              {sheetCtx === "property"
+                ? "Property review"
+                : sheetCtx === "analysis"
+                  ? RESEARCH_MODES[researchMode].reviewLabel
+                  : sheetCtx === "frame"
+                    ? "Area study"
+                    : RESEARCH_MODES[researchMode].displayName}
+            </p>
+            <p className="truncate text-[11px] text-[var(--muted)]">
+              {sheetCtx === "idle"
+                ? WORKSPACE_COPY.idleTitle
+                : sheetCtx === "property"
+                  ? selected?.situsAddress ||
+                    selected?.legalDescription ||
+                    `CAD #${selected?.propId}`
+                  : sheetCtx === "analysis"
+                    ? strongestNote ||
+                      (analysis
+                        ? `${analysis.parcelCount.toLocaleString("en-US")} parcels in this area`
+                        : "")
+                    : sheetCtx === "frame"
+                      ? activeFrame?.name ?? "Drawn area"
+                      : "Ask Archie"}
+            </p>
+          </div>
+  );
+
   return (
-    <div data-research-workspace={RESEARCH_WORKSPACE_VERSION}>
+    <div
+      data-research-workspace={RESEARCH_WORKSPACE_VERSION}
+      data-workspace-layout={layout}
+      data-map-expanded={expandedMap ? "true" : "false"}
+    >
       <ShiWorkspaceBar
         mode={researchMode}
         searchOpen={searchOpen}
+        expandedMap={expandedMap}
+        onToggleExpandedMap={() => setExpandedMap((v) => !v)}
         onExit={() => onChangeResearchMode?.()}
         onSearch={() => {
           setSearchOpen((v) => !v);
-          setSheetSnap("half");
+          setSheetSnap("expanded");
         }}
         onMenu={() => setWorkspaceMenu((v) => !v)}
       />
@@ -1341,6 +1427,7 @@ export function PropertyIntelligenceView({
       ) : null}
 
       <div data-workspace-stage>
+      <div data-map-pane>
       {searchOpen ? (
         <section
           data-workspace-search
@@ -1531,39 +1618,16 @@ export function PropertyIntelligenceView({
         </div>
       ) : null}
 
-      <ShiIntelligenceSheet
+      </div>
+      <ShiResearchPanelHost
+        layout={layout}
         snap={sheetSnap}
         onSnap={setSheetSnap}
+        drawerOpen={drawerOpen}
+        onDrawerOpenChange={setDrawerOpen}
+        drawerWidthPx={drawerW}
         context={sheetCtx}
-        header={
-          <div className="min-w-0">
-            <p className="truncate font-serif text-base font-bold text-ink">
-              {sheetCtx === "property"
-                ? "Property review"
-                : sheetCtx === "analysis"
-                  ? RESEARCH_MODES[researchMode].reviewLabel
-                  : sheetCtx === "frame"
-                    ? "Area study"
-                    : RESEARCH_MODES[researchMode].displayName}
-            </p>
-            <p className="truncate text-[11px] text-[var(--muted)]">
-              {sheetCtx === "idle"
-                ? WORKSPACE_COPY.idleTitle
-                : sheetCtx === "property"
-                  ? selected?.situsAddress ||
-                    selected?.legalDescription ||
-                    `CAD #${selected?.propId}`
-                  : sheetCtx === "analysis"
-                    ? strongestNote ||
-                      (analysis
-                        ? `${analysis.parcelCount.toLocaleString("en-US")} parcels in this area`
-                        : "")
-                    : sheetCtx === "frame"
-                      ? activeFrame?.name ?? "Drawn area"
-                      : "Ask Archie"}
-            </p>
-          </div>
-        }
+        header={researchHeader}
       >
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
@@ -1594,7 +1658,7 @@ export function PropertyIntelligenceView({
                   className="rounded-lg border border-gold/40 px-3 py-1.5 font-mono text-[10px] font-bold text-gold uppercase"
                   onClick={() => {
                     setSearchOpen(true);
-                    setSheetSnap("half");
+                    setSheetSnap("expanded");
                   }}
                 >
                   Search
@@ -2094,7 +2158,7 @@ export function PropertyIntelligenceView({
         onOpenVault={() => onOpenVault?.()}
         onOpenFarms={() => onOpenFarms?.()}
       />
-      </ShiIntelligenceSheet>
+      </ShiResearchPanelHost>
       </div>
     </div>
   );

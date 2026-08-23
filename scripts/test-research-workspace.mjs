@@ -11,18 +11,24 @@ const root = process.cwd();
 const read = (rel) => readFileSync(join(root, rel), "utf8");
 
 const ws = read("src/lib/shi/research-workspace.ts");
-assert.match(ws, /research-workspace-v1/);
+assert.match(ws, /research-workspace-v2/);
 assert.match(ws, /collapsed/);
 assert.match(ws, /peek/);
-assert.match(ws, /half/);
 assert.match(ws, /expanded/);
+assert.match(ws, /full/);
+assert.doesNotMatch(ws, /"half"/);
+assert.match(ws, /WORKSPACE_DRAWER_MIN_PX/);
+assert.match(ws, /snapFromRelease/);
+assert.match(ws, /workspaceLayout/);
 assert.match(ws, /writeWorkspaceSnapshot/);
 
 const view = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
 );
 assert.match(view, /data-research-workspace/);
-assert.match(view, /ShiIntelligenceSheet/);
+assert.match(view, /data-workspace-layout/);
+assert.match(view, /data-map-pane/);
+assert.match(view, /ShiResearchPanelHost/);
 assert.match(view, /ShiWorkspaceBar/);
 assert.match(view, /data-workspace-search/);
 assert.match(view, /shiSearch/);
@@ -35,6 +41,8 @@ assert.match(view, /ShiMultifamilyRead/);
 assert.match(view, /data-multifamily-landing/);
 assert.match(view, /Find Strongest Sites|onFindStrongest/);
 assert.match(view, /canDrawFrames/);
+assert.match(view, /expandedMap/);
+assert.match(view, /onToggleExpandedMap/);
 assert.doesNotMatch(view, /xl:grid-cols-\[280px_minmax\(0,1fr\)_340px\]/);
 
 const bar = read(
@@ -42,16 +50,25 @@ const bar = read(
 );
 assert.match(bar, /data-workspace-bar/);
 assert.match(bar, /data-workspace-exit/);
+assert.match(bar, /data-map-expand-toggle/);
 assert.match(bar, /Search property or area/);
 assert.doesNotMatch(bar, /absolute top-2/);
 
 const sheet = read(
-  "src/components/broker/intelligence/ShiIntelligenceSheet.tsx",
+  "src/components/broker/intelligence/ShiResearchBottomSheet.tsx",
 );
 assert.match(sheet, /data-intelligence-sheet/);
 assert.match(sheet, /data-sheet-handle/);
-assert.match(sheet, /xl:inset-y-3/);
-assert.doesNotMatch(sheet, /lg:inset-y-3/);
+assert.match(sheet, /snapFromRelease/);
+assert.match(sheet, /visualViewport/);
+assert.match(sheet, /setPointerCapture/);
+
+const drawer = read(
+  "src/components/broker/intelligence/ShiResearchDesktopDrawer.tsx",
+);
+assert.match(drawer, /data-intelligence-drawer/);
+assert.match(drawer, /data-drawer-collapse/);
+assert.match(drawer, /ShiResearchPanelHost/);
 
 const workspace = read(
   "src/components/broker/intelligence/ShiWorkspace.tsx",
@@ -66,6 +83,8 @@ assert.match(css, /--story-workspace-top/);
 assert.match(css, /\[data-research-workspace\]/);
 assert.match(css, /data-research-live/);
 assert.match(css, /data-workspace-stage/);
+assert.match(css, /data-map-pane/);
+assert.match(css, /data-map-expanded/);
 assert.match(css, /flex-direction: column/);
 assert.match(view, /data-workspace-stage/);
 
@@ -77,6 +96,7 @@ assert.match(map, /Layers/);
 assert.match(map, /data-map-locate/);
 assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
+assert.match(map, /resize: \(\) =>/);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /xl:hidden/);
@@ -88,6 +108,15 @@ assert.match(footer, /\/portal\/intelligence/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:research-workspace/);
+
+{
+  const r = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "scripts/test-research-workspace-math.ts"],
+    { cwd: root, encoding: "utf8" },
+  );
+  assert.equal(r.status, 0, `workspace-math\n${r.stdout}\n${r.stderr}`);
+}
 
 {
   const r = spawnSync(process.execPath, ["scripts/test-research-modes.mjs"], {
