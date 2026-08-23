@@ -23,6 +23,7 @@ import {
   shiAddProspect,
   shiAnalyzeArea,
   shiCorridorsParcelLocation,
+  shiAttachPositionToRankedSites,
   shiCorridorsProjects,
   shiCorridorsStrongestSites,
   shiCorridorsTraffic,
@@ -118,9 +119,11 @@ import {
 } from "@/lib/shi/corridor-frontage";
 import {
   exposureBandLabel,
+  rankedSiteFactLine,
   scoreCommercialExposure,
   type RankedSite,
 } from "@/lib/shi/corridor-exposure";
+import type { ParcelPositionRecord } from "@/lib/shi/parcel-position";
 import {
   type GrowthWatchArea,
 } from "@/lib/shi/growth-watch";
@@ -210,6 +213,9 @@ export function ShiCorridorsView({
   const [compareIntelById, setCompareIntelById] = useState<
     Record<string, ParcelLocationIntel | null>
   >({});
+  const [comparePositionById, setComparePositionById] = useState<
+    Record<string, ParcelPositionRecord | null>
+  >({});
   const [workflowNote, setWorkflowNote] = useState("");
   const [workflowBusy, setWorkflowBusy] = useState(false);
 
@@ -258,6 +264,7 @@ export function ShiCorridorsView({
       setCommercialExposureMode(false);
       setComparePicks([]);
       setCompareIntelById({});
+      setComparePositionById({});
       setWorkflowNote("");
       setAskAnswer(null);
       setParcelIntel(null);
@@ -415,10 +422,13 @@ export function ShiCorridorsView({
         boundary: analysisBoundary,
         limit: 12,
       });
-      setRankedSites(body.sites);
+      const sites = body.sites.length
+        ? await shiAttachPositionToRankedSites(body.sites, county.fips)
+        : body.sites;
+      setRankedSites(sites);
       setStrongestNote(
-        body.sites.length
-          ? `Top ${body.sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — ${body.honesty}`
+        sites.length
+          ? `Top ${sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — same highway traffic can match; frontage and a second road are what differ.`
           : "No parcels to rank in this outline.",
       );
       setPanel("site");
@@ -441,22 +451,61 @@ export function ShiCorridorsView({
       comparePicks.map((pick) => ({
         pick,
         intel: compareIntelById[pick.propId] ?? null,
+        position: comparePositionById[pick.propId] ?? null,
       })),
       payload?.stations ?? [],
     );
-  }, [comparePicks, compareIntelById, payload?.stations]);
+  }, [comparePicks, compareIntelById, comparePositionById, payload?.stations]);
 
   const addParcelToCompare = useCallback(
     (pick: CorridorParcelPick, intel?: ParcelLocationIntel | null) => {
+      let added = false;
       setComparePicks((prev) => {
         const next = toggleCompareSite(prev, pick);
+        added =
+          next.some((p) => p.propId === pick.propId) &&
+          !prev.some((p) => p.propId === pick.propId);
+        if (
+          prev.some((p) => p.propId === pick.propId) &&
+          !next.some((p) => p.propId === pick.propId)
+        ) {
+          setCompareIntelById((map) => {
+            const { [pick.propId]: _drop, ...rest } = map;
+            return rest;
+          });
+          setComparePositionById((map) => {
+            const { [pick.propId]: _drop, ...rest } = map;
+            return rest;
+          });
+        }
         return next;
       });
       if (intel) {
         setCompareIntelById((prev) => ({ ...prev, [pick.propId]: intel }));
       }
+      if (!added) return;
+      void shiCorridorsParcelLocation({
+        propId: pick.propId,
+        source: pick.source ?? county.source,
+        countyFips: pick.countyFips ?? county.fips,
+        lat: pick.lat,
+        lng: pick.lng,
+      })
+        .then((body) => {
+          setCompareIntelById((prev) => ({
+            ...prev,
+            [pick.propId]: body.intel ?? intel ?? null,
+          }));
+          setComparePositionById((prev) => ({
+            ...prev,
+            [pick.propId]: body.position ?? null,
+          }));
+        })
+        .catch(() => {
+          /* Soft-fail — acres still compare. */
+        });
     },
-    [],
+    [county.fips, county.source],
   );
 
   const saveParcelToVault = useCallback(
@@ -764,6 +813,7 @@ export function ShiCorridorsView({
               setStrongestNote("");
               setComparePicks([]);
               setCompareIntelById({});
+              setComparePositionById({});
               setDeskFlood(null);
               setDeskUtilities(null);
               setDeskEnvironment(null);
@@ -1259,6 +1309,7 @@ export function ShiCorridorsView({
           onClear={() => {
             setComparePicks([]);
             setCompareIntelById({});
+            setComparePositionById({});
           }}
         />
       ) : null}
@@ -1326,9 +1377,11 @@ export function ShiCorridorsView({
                         {s.situsAddress?.trim() || `CAD #${s.propId}`}
                       </span>
                     </span>
-                    <span className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--muted)]">
-                      {s.commercial.score}/{s.commercial.maxScore} ·{" "}
-                      {exposureBandLabel(s.commercial.band)}
+                    <span
+                      className="shrink-0 text-[11px] text-[var(--muted)]"
+                      data-site-position-facts
+                    >
+                      {rankedSiteFactLine(s)}
                     </span>
                   </button>
                   <button
