@@ -1456,6 +1456,7 @@ export function PropertyIntelligenceView({
             })}
           </ul>
         </section>
+      ) : null}
 
         <ShiResearchMap
           ref={mapRef}
