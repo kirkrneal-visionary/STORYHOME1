@@ -15,6 +15,8 @@ assert.equal(workspaceLayout(1440), "drawer");
 const peek = sheetHeightPx("peek", 800);
 const full = sheetHeightPx("full", 800);
 assert.ok(peek < full);
+assert.ok(peek <= 220, `peek should be a deal card, got ${peek}`);
+assert.ok(peek >= 160, `peek too short: ${peek}`);
 
 assert.equal(nearestSheetSnap(sheetHeightPx("collapsed", 800), 800), "collapsed");
 assert.equal(

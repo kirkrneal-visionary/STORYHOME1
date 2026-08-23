@@ -116,6 +116,18 @@ type ShiResearchMapProps = {
   /** Return false to keep the in-progress draft (county / caps / limit). */
   onCreateFrame: (boundary: DrawnBoundary) => boolean;
   onSelectParcel: (sel: ShiMapSelect) => void;
+  /** Restore camera from the last Research session. */
+  initialView?: {
+    centerLat: number;
+    centerLng: number;
+    zoom: number;
+  } | null;
+  /** Persist camera after pan / zoom. */
+  onViewChange?: (view: {
+    centerLat: number;
+    centerLng: number;
+    zoom: number;
+  }) => void;
   className?: string;
   /** R1 — Access / traffic overlay (launch-7 planning AADT). */
   accessTrafficOn?: boolean;
@@ -197,6 +209,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       onActiveFrameIdChange,
       onCreateFrame,
       onSelectParcel,
+      initialView = null,
+      onViewChange,
       className,
       accessTrafficOn = false,
       onAccessTrafficToggle,
@@ -210,6 +224,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const mapRef = useRef<maplibregl.Map | null>(null);
     const onSelectRef = useRef(onSelectParcel);
     const onCreateRef = useRef(onCreateFrame);
+    const onViewChangeRef = useRef(onViewChange);
+    const initialViewRef = useRef(initialView);
     const onActiveRef = useRef(onActiveFrameIdChange);
     const preferredSourceRef = useRef<string | undefined>(undefined);
     const canDrawRef = useRef(canDrawFrames);
@@ -232,6 +248,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       onSelectRef.current = onSelectParcel;
     }, [onSelectParcel]);
+    useEffect(() => {
+      onViewChangeRef.current = onViewChange;
+    }, [onViewChange]);
     useEffect(() => {
       onCreateRef.current = onCreateFrame;
     }, [onCreateFrame]);
@@ -408,8 +427,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         map = new maplibregl.Map({
           container: containerRef.current,
           style: buildStoryMapStyle(),
-          center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
-          zoom: EAST_TEXAS_DEFAULT_ZOOM,
+          center: initialViewRef.current
+            ? [
+                initialViewRef.current.centerLng,
+                initialViewRef.current.centerLat,
+              ]
+            : [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
+          zoom: initialViewRef.current?.zoom ?? EAST_TEXAS_DEFAULT_ZOOM,
           pixelRatio: Math.min(
             typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
             2,
@@ -434,6 +458,15 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         new maplibregl.NavigationControl({ showCompass: false }),
         "bottom-right",
       );
+
+      map.on("moveend", () => {
+        const c = map.getCenter();
+        onViewChangeRef.current?.({
+          centerLat: c.lat,
+          centerLng: c.lng,
+          zoom: map.getZoom(),
+        });
+      });
 
       map.on("error", (e) => {
         const raw = e?.error?.message || e?.error?.toString?.() || "";
@@ -1448,7 +1481,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         <div className="pointer-events-none absolute inset-0 z-10">
           <div
             data-map-basemap
-            className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
+            className="pointer-events-auto absolute top-[4.5rem] left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
           >
             {MAP_BASE_OPTIONS.map((opt) => (
               <button
@@ -1624,7 +1657,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
           <div
             data-map-layers
-            className="pointer-events-auto absolute top-3 right-3 flex flex-col items-end gap-1.5 xl:right-[min(26rem,calc(32vw+1.25rem))]"
+            className="pointer-events-auto absolute top-[4.5rem] right-3 flex flex-col items-end gap-1.5"
           >
             <button
               type="button"

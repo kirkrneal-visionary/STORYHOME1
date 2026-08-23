@@ -54,9 +54,6 @@ export function ShiMultifamilyRead({
         <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
           Multifamily read
         </p>
-        <p className="mt-1 text-sm font-semibold text-ink">
-          {read.identity.address || `CAD #${read.propId}`}
-        </p>
       </div>
 
       <div data-mf-why>

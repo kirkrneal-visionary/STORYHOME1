@@ -96,7 +96,6 @@ import {
   modeReviewFromRankedFacts,
   type ModeReviewResult,
 } from "@/lib/shi/research-mode-reason";
-import { MULTIFAMILY_COPY } from "@/lib/shi/multifamily";
 import type { MultifamilyRead } from "@/lib/shi/multifamily-read";
 import type { MultifamilyReviewResult } from "@/lib/shi/multifamily-review";
 import {
@@ -221,7 +220,7 @@ export function PropertyIntelligenceView({
     () => readWorkspaceSnapshot()?.sheetSnap ?? "peek",
   );
   const [expandedMap, setExpandedMap] = useState(
-    () => Boolean(readWorkspaceSnapshot()?.expandedMap),
+    () => readWorkspaceSnapshot()?.expandedMap !== false,
   );
   const [drawerOpen, setDrawerOpen] = useState(
     () => readWorkspaceSnapshot()?.drawerOpen !== false,
@@ -255,6 +254,35 @@ export function PropertyIntelligenceView({
   lookObjectiveRef.current = lookObjective;
   const [worthLoading, setWorthLoading] = useState(false);
   const mapRef = useRef<ShiMapHandle | null>(null);
+  const persistViewTimer = useRef(0);
+  const savedMapView = useMemo(() => {
+    const snap = readWorkspaceSnapshot();
+    if (
+      snap?.mapCenterLat == null ||
+      snap?.mapCenterLng == null ||
+      snap?.mapZoom == null
+    ) {
+      return null;
+    }
+    return {
+      centerLat: snap.mapCenterLat,
+      centerLng: snap.mapCenterLng,
+      zoom: snap.mapZoom,
+    };
+  }, []);
+  const persistMapView = useCallback(
+    (view: { centerLat: number; centerLng: number; zoom: number }) => {
+      window.clearTimeout(persistViewTimer.current);
+      persistViewTimer.current = window.setTimeout(() => {
+        writeWorkspaceSnapshot({
+          mapCenterLat: view.centerLat,
+          mapCenterLng: view.centerLng,
+          mapZoom: view.zoom,
+        });
+      }, 400);
+    },
+    [],
+  );
   const openedPropRef = useRef<string | null>(null);
   const ownerPortfolioRef = useRef<HTMLDivElement | null>(null);
   const countyLockRef = useRef<{ selectedSource?: string; filterSource: string }>(
@@ -1376,12 +1404,17 @@ export function PropertyIntelligenceView({
       data-workspace-layout={layout}
       data-map-expanded={expandedMap ? "true" : "false"}
     >
+      <div data-workspace-stage>
+      <div data-map-pane>
       <ShiWorkspaceBar
         mode={researchMode}
         searchOpen={searchOpen}
         expandedMap={expandedMap}
         onToggleExpandedMap={() => setExpandedMap((v) => !v)}
-        onExit={() => onChangeResearchMode?.()}
+        onExit={() => {
+          setExpandedMap(false);
+          onChangeResearchMode?.();
+        }}
         onSearch={() => {
           setSearchOpen((v) => !v);
           setSheetSnap("expanded");
@@ -1398,6 +1431,7 @@ export function PropertyIntelligenceView({
             className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
             onClick={() => {
               setWorkspaceMenu(false);
+              setExpandedMap(false);
               onChangeResearchMode?.();
             }}
           >
@@ -1425,13 +1459,10 @@ export function PropertyIntelligenceView({
           </button>
         </div>
       ) : null}
-
-      <div data-workspace-stage>
-      <div data-map-pane>
       {searchOpen ? (
         <section
           data-workspace-search
-          className="pointer-events-auto absolute top-2 left-2 z-40 w-[min(100%-1rem,22rem)] max-h-[min(70%,28rem)] overflow-y-auto story-glass rounded-xl p-3"
+          className="pointer-events-auto absolute top-[4.75rem] left-2 z-40 w-[min(100%-1rem,22rem)] max-h-[min(70%,28rem)] overflow-y-auto story-glass rounded-xl p-3"
         >
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
             <Search className="h-4 w-4 text-gold" />
@@ -1550,6 +1581,8 @@ export function PropertyIntelligenceView({
           ref={mapRef}
           selected={selected}
           related={matches}
+          initialView={savedMapView}
+          onViewChange={persistMapView}
           discoverPins={discoverPins}
           lookPins={worthALook ?? EMPTY_WORTH}
           frames={frames}
@@ -1601,7 +1634,7 @@ export function PropertyIntelligenceView({
       {activeFrame?.boundary && !analysis ? (
         <div
           data-workspace-frame-toast
-          className="pointer-events-auto absolute top-2 left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
+          className="pointer-events-auto absolute top-[4.75rem] left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
         >
           <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
             {WORKSPACE_COPY.frameReady}
@@ -1636,15 +1669,9 @@ export function PropertyIntelligenceView({
           ) : !selected ? (
             <div data-workspace-idle className="space-y-3">
               {researchMode === "multifamily" ? (
-                <div data-multifamily-landing className="space-y-1">
-                  <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
-                    {MULTIFAMILY_COPY.kicker}
-                  </p>
-                  <p className="font-serif text-lg font-bold text-ink">
-                    {MULTIFAMILY_COPY.headline}
-                  </p>
-                  <p className="text-[12px] text-[var(--muted)]">
-                    {MULTIFAMILY_COPY.support}
+                <div data-multifamily-landing>
+                  <p className="text-sm text-[var(--muted)]">
+                    {WORKSPACE_COPY.idleBody}
                   </p>
                 </div>
               ) : (
@@ -1673,21 +1700,19 @@ export function PropertyIntelligenceView({
               </div>
             </div>
           ) : (
-            <div className="mt-3 space-y-4">
-              <div>
-                <p className="font-mono text-[10px] font-bold tracking-wider text-[var(--muted)] uppercase">
-                  {selected.countyName}
-                  {selected.propertyCategory
-                    ? ` · ${selected.propertyCategory}`
-                    : ""}
-                </p>
-                <h4 className="mt-1 font-serif text-xl font-bold text-ink">
-                  {selected.situsAddress ||
-                    selected.legalDescription ||
-                    `Property ${selected.propId}`}
-                </h4>
-                <p className="mt-1 text-sm text-[var(--muted)]">
+            <div className="mt-1 space-y-4">
+              <div data-property-identity>
+                <p className="text-sm font-semibold text-ink">
                   {selected.ownerName || "Owner not listed"}
+                </p>
+                <p className="mt-0.5 text-[12px] text-[var(--muted)]">
+                  {[
+                    acres(selected.legalAcreage),
+                    selected.countyName,
+                    selected.propertyCategory,
+                  ]
+                    .filter((part) => part && part !== "—")
+                    .join(" · ")}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <Chip

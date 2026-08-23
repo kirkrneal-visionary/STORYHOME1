@@ -720,6 +720,14 @@ html[data-map-expanded] [aria-label="Archie's Intelligence modules"] {
   opacity: 0;
   pointer-events: none;
 }
+[data-research-workspace] [data-map-basemap],
+[data-research-workspace] [data-map-layers] {
+  top: 4.5rem;
+}
+[data-workspace-search],
+[data-workspace-frame-toast] {
+  top: 4.75rem;
+}
 [data-workspace-layout="sheet"] [data-map-draw-tools],
 [data-workspace-layout="sheet"] [data-map-hint] {
   bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem) !important;

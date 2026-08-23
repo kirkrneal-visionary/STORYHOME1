@@ -6,7 +6,7 @@ import { WORKSPACE_COPY } from "@/lib/shi/research-workspace";
 import { cn } from "@/lib/utils";
 
 /**
- * Reserved Research workspace strip — sits above the map, never in the site header.
+ * Floating research chrome — sits on the map, never in the site header.
  */
 export function ShiWorkspaceBar({
   mode,
@@ -29,13 +29,13 @@ export function ShiWorkspaceBar({
   return (
     <header
       data-workspace-bar
-      className="relative z-30 flex shrink-0 items-center gap-2 border-b border-hairline bg-[color-mix(in_srgb,var(--env-1)_88%,transparent)] px-2 py-1.5"
+      className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-2 px-2 pt-[max(0.45rem,env(safe-area-inset-top))] pb-1.5"
     >
       <button
         type="button"
         onClick={onExit}
         data-workspace-exit
-        className="story-glass inline-flex h-10 max-w-[38%] shrink-0 items-center gap-1.5 truncate rounded-xl px-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase"
+        className="pointer-events-auto story-glass inline-flex h-10 max-w-[38%] shrink-0 items-center gap-1.5 truncate rounded-xl px-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase"
       >
         ‹ {cfg.displayName}
       </button>
@@ -44,7 +44,7 @@ export function ShiWorkspaceBar({
         onClick={onSearch}
         data-workspace-search-toggle
         className={cn(
-          "story-glass flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl px-3 text-left text-[12px] text-[var(--muted)]",
+          "pointer-events-auto story-glass flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl px-3 text-left text-[12px] text-[var(--muted)]",
           searchOpen && "border-gold/50",
         )}
       >
@@ -57,7 +57,7 @@ export function ShiWorkspaceBar({
           data-map-expand-toggle
           onClick={onToggleExpandedMap}
           aria-pressed={expandedMap}
-          className="story-glass inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 font-mono text-[9px] font-bold tracking-[0.12em] text-gold uppercase"
+          className="pointer-events-auto story-glass inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-2.5 font-mono text-[9px] font-bold tracking-[0.12em] text-gold uppercase"
         >
           {expandedMap ? (
             <Minimize2 className="h-3.5 w-3.5" />
@@ -74,7 +74,7 @@ export function ShiWorkspaceBar({
         onClick={onMenu}
         data-workspace-menu
         aria-label="Workspace menu"
-        className="story-glass inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gold"
+        className="pointer-events-auto story-glass inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gold"
       >
         <MoreHorizontal className="h-4 w-4" />
       </button>

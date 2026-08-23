@@ -43,6 +43,9 @@ assert.match(view, /Find Strongest Sites|onFindStrongest/);
 assert.match(view, /canDrawFrames/);
 assert.match(view, /expandedMap/);
 assert.match(view, /onToggleExpandedMap/);
+assert.match(view, /onViewChange/);
+assert.match(view, /data-property-identity/);
+assert.doesNotMatch(view, /FIND THE GROUND BEHIND THE DOORS/);
 assert.doesNotMatch(view, /xl:grid-cols-\[280px_minmax\(0,1fr\)_340px\]/);
 
 const bar = read(
@@ -52,16 +55,20 @@ assert.match(bar, /data-workspace-bar/);
 assert.match(bar, /data-workspace-exit/);
 assert.match(bar, /data-map-expand-toggle/);
 assert.match(bar, /Search property or area/);
-assert.doesNotMatch(bar, /absolute top-2/);
+assert.match(bar, /absolute inset-x-0 top-0/);
+assert.doesNotMatch(bar, /border-b border-hairline bg-\[color-mix/);
 
 const sheet = read(
   "src/components/broker/intelligence/ShiResearchBottomSheet.tsx",
 );
 assert.match(sheet, /data-intelligence-sheet/);
 assert.match(sheet, /data-sheet-handle/);
+assert.match(sheet, /data-sheet-drag/);
 assert.match(sheet, /snapFromRelease/);
 assert.match(sheet, /visualViewport/);
 assert.match(sheet, /setPointerCapture/);
+assert.match(sheet, /addEventListener\("pointermove"/);
+assert.doesNotMatch(sheet, /onBodyPointerDown/);
 
 const drawer = read(
   "src/components/broker/intelligence/ShiResearchDesktopDrawer.tsx",
@@ -97,6 +104,9 @@ assert.match(map, /data-map-locate/);
 assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
 assert.match(map, /resize: \(\) =>/);
+assert.match(map, /onViewChange/);
+assert.match(map, /moveend/);
+assert.doesNotMatch(map, /xl:right-\[min\(26rem/);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /xl:hidden/);

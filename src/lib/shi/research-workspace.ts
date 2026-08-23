@@ -44,9 +44,8 @@ export type ResearchWorkspaceSnapshot = {
 
 export const WORKSPACE_COPY = {
   searchHint: "Address, owner, Property ID…",
-  idleTitle: "Select a property or draw an area",
-  idleBody:
-    "Search a property, tap a parcel, or draw on the map to begin. The map stays with you.",
+  idleTitle: "Search or tap a parcel",
+  idleBody: "Search an address or tap a parcel on the map.",
   frameReady: "Area drawn",
   analyzeCta: "Analyze this area",
   expandMap: "Expand map",
@@ -55,11 +54,12 @@ export const WORKSPACE_COPY = {
   collapseResearch: "Hide research",
 } as const;
 
+/** Peek is a deal card, not a half-page essay. */
 const SNAP_VH: Record<WorkspaceSheetSnap, number> = {
-  collapsed: 0.1,
-  peek: 0.34,
+  collapsed: 0.12,
+  peek: 0.26,
   expanded: 0.62,
-  full: 0.9,
+  full: 0.92,
 };
 
 export function workspaceLayout(widthPx: number): WorkspaceLayout {
