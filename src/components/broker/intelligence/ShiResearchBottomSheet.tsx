@@ -165,7 +165,7 @@ export function ShiResearchBottomSheet({
       </div>
       <div
         data-sheet-body
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 [touch-action:pan-y]"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] [touch-action:pan-y]"
       >
         {children}
       </div>

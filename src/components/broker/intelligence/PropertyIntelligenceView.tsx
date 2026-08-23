@@ -335,10 +335,12 @@ export function PropertyIntelligenceView({
     const root = document.documentElement;
     if (expandedMap) root.dataset.mapExpanded = "true";
     else delete root.dataset.mapExpanded;
+    root.dataset.workspaceLayout = layout;
     return () => {
       delete root.dataset.mapExpanded;
+      delete root.dataset.workspaceLayout;
     };
-  }, [expandedMap]);
+  }, [expandedMap, layout]);
 
   useEffect(() => {
     writeWorkspaceSnapshot({

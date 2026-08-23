@@ -727,6 +727,19 @@ html[data-map-expanded] [aria-label="Archie's Intelligence modules"] {
   opacity: 0;
   pointer-events: none;
 }
+/* Phone sheet: the map is the whole screen. No reserved header or dock. */
+html[data-research-live][data-workspace-layout="sheet"] [data-research-workspace] {
+  top: 0;
+  bottom: 0;
+  z-index: 40;
+}
+html[data-research-live][data-workspace-layout="sheet"] .story-overlay-header,
+html[data-research-live][data-workspace-layout="sheet"] [aria-label="Archie's Intelligence modules"],
+html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden;
+}
 [data-research-workspace] [data-map-basemap],
 [data-research-workspace] [data-map-layers] {
   top: 4.5rem;
