@@ -93,6 +93,8 @@ assert.match(css, /data-workspace-stage/);
 assert.match(css, /data-map-pane/);
 assert.match(css, /data-map-expanded/);
 assert.match(css, /flex-direction: column/);
+assert.match(css, /html\[data-research-live\] \.story-route-page/);
+assert.match(css, /will-change: auto/);
 assert.match(view, /data-workspace-stage/);
 
 const map = read("src/components/broker/intelligence/ShiResearchMap.tsx");

@@ -669,6 +669,13 @@ html[data-header-state="minimal"] .story-living-mark {
 html[data-research-live] {
   overflow: hidden;
 }
+/* Route transitions use will-change: transform, which makes position:fixed
+   stick to the page box. Neutralize that so the map room can fill the screen. */
+html[data-research-live] .story-route-page {
+  will-change: auto;
+  transform: none;
+  min-height: 100dvh;
+}
 html[data-research-live] footer {
   display: none;
 }
