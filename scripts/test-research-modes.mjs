@@ -64,7 +64,7 @@ assert.match(workspace, /researchMode/);
 const view = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
 );
-assert.match(view, /ShiResearchModeBanner/);
+assert.match(view, /data-multifamily-landing/);
 assert.match(view, /modeReviewFromRankedFacts/);
 assert.match(view, /lens: "mode"/);
 

@@ -1128,7 +1128,8 @@ export const SHI_WAVES: ShiWave[] = [
     status: "current",
     frontend: [
       "Fixed map-first workspace after mode select",
-      "Compact bar — exit · search · menu",
+      "Reserved chrome lanes — header / ribbon / workspace bar / map / sheet",
+      "Compact bar — exit · search · menu — not over the site header",
       "Draggable intelligence sheet (collapsed / peek / half / expanded)",
       "Search is an action, not a permanent left column",
       "Draw / layers stay on the map",

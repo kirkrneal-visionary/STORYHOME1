@@ -169,6 +169,15 @@ export function ShiWorkspace() {
   const inLiveWorkspace =
     (section === "research" || section === "corridors") && !pickingMode;
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (inLiveWorkspace) root.dataset.researchLive = "true";
+    else delete root.dataset.researchLive;
+    return () => {
+      delete root.dataset.researchLive;
+    };
+  }, [inLiveWorkspace]);
+
   return (
     <div className={cn(!inLiveWorkspace && "space-y-5")}>
       {!inLiveWorkspace ? (

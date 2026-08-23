@@ -125,21 +125,27 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
   }
 
   const inArchie = tab === "intelligence";
+  const liveWorkspace = inArchie && Boolean(searchParams.get("researchMode"));
 
   return (
     <div
       className={cn(
-        "min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6",
+        liveWorkspace
+          ? "h-0 overflow-hidden p-0"
+          : "min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6",
         /* Living header + Archie ribbon when in Intelligence */
-        inArchie
-          ? "pt-[calc(var(--story-safe-top)+var(--story-archie-ribbon-h)+0.75rem)]"
-          : "pt-[calc(var(--story-safe-top)+1.5rem)]",
+        liveWorkspace
+          ? null
+          : inArchie
+            ? "pt-[calc(var(--story-safe-top)+var(--story-archie-ribbon-h)+0.75rem)]"
+            : "pt-[calc(var(--story-safe-top)+1.5rem)]",
       )}
     >
       <div
         className={cn("mx-auto", inArchie ? "max-w-[90rem]" : "max-w-6xl")}
       >
         {inArchie ? (
+          liveWorkspace ? null : (
           <div className="mb-3">
             <Link
               href="/portal?tab=tools"
@@ -149,6 +155,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
               Story Pro
             </Link>
           </div>
+          )
         ) : (
           <>
             <header className="flex flex-col gap-1">

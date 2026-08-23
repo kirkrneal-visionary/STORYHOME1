@@ -37,6 +37,12 @@ export function ShiIntelligenceSheet({
 
   const height = sheetHeightPx(snap, vh);
 
+  useEffect(() => {
+    const root = document.querySelector("[data-research-workspace]");
+    if (!(root instanceof HTMLElement)) return;
+    root.style.setProperty("--sheet-h", `${height}px`);
+  }, [height]);
+
   return (
     <>
       <aside
@@ -46,7 +52,7 @@ export function ShiIntelligenceSheet({
         className={cn(
           "pointer-events-auto absolute z-20 flex flex-col overflow-hidden story-glass",
           "inset-x-0 bottom-0 rounded-t-[var(--radius-sheet)]",
-          "lg:inset-y-3 lg:right-3 lg:left-auto lg:h-auto lg:w-[min(400px,38vw)] lg:rounded-[var(--radius-xl)]",
+          "xl:inset-y-3 xl:right-3 xl:left-auto xl:h-auto xl:w-[min(400px,32vw)] xl:rounded-[var(--radius-xl)]",
         )}
         style={{
           ["--sheet-h" as string]: `${height}px`,
@@ -56,7 +62,7 @@ export function ShiIntelligenceSheet({
       >
         <div
           data-sheet-handle
-          className="flex shrink-0 cursor-grab touch-none flex-col items-center px-3 pt-2 pb-1 active:cursor-grabbing lg:hidden"
+          className="flex shrink-0 cursor-grab touch-none flex-col items-center px-3 pt-2 pb-1 active:cursor-grabbing xl:hidden"
           onPointerDown={(e) => {
             startY.current = e.clientY;
             (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);

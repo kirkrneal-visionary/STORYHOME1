@@ -32,7 +32,7 @@ assert.match(view, /ShiResearchAccessDesk/);
 assert.match(view, /ShiMarketFramesPanel/);
 assert.match(view, /ShiCountyChangeFeed/);
 assert.match(view, /ShiMultifamilyRead/);
-assert.match(view, /ShiResearchModeBanner/);
+assert.match(view, /data-multifamily-landing/);
 assert.match(view, /Find Strongest Sites|onFindStrongest/);
 assert.match(view, /canDrawFrames/);
 assert.doesNotMatch(view, /xl:grid-cols-\[280px_minmax\(0,1fr\)_340px\]/);
@@ -43,23 +43,31 @@ const bar = read(
 assert.match(bar, /data-workspace-bar/);
 assert.match(bar, /data-workspace-exit/);
 assert.match(bar, /Search property or area/);
+assert.doesNotMatch(bar, /absolute top-2/);
 
 const sheet = read(
   "src/components/broker/intelligence/ShiIntelligenceSheet.tsx",
 );
 assert.match(sheet, /data-intelligence-sheet/);
 assert.match(sheet, /data-sheet-handle/);
+assert.match(sheet, /xl:inset-y-3/);
+assert.doesNotMatch(sheet, /lg:inset-y-3/);
 
 const workspace = read(
   "src/components/broker/intelligence/ShiWorkspace.tsx",
 );
 assert.match(workspace, /inLiveWorkspace/);
+assert.match(workspace, /dataset.researchLive/);
 assert.match(workspace, /ShiResearchModeSelector/);
 assert.match(workspace, /PropertyIntelligenceView/);
 
 const css = read("src/app/globals.css");
 assert.match(css, /--story-workspace-top/);
 assert.match(css, /\[data-research-workspace\]/);
+assert.match(css, /data-research-live/);
+assert.match(css, /data-workspace-stage/);
+assert.match(css, /flex-direction: column/);
+assert.match(view, /data-workspace-stage/);
 
 const map = read("src/components/broker/intelligence/ShiResearchMap.tsx");
 assert.match(map, /rectangle/);
@@ -67,6 +75,16 @@ assert.match(map, /freehand/);
 assert.match(map, /radius/);
 assert.match(map, /Layers/);
 assert.match(map, /data-map-locate/);
+assert.match(map, /data-map-draw-tools/);
+assert.match(map, /data-map-basemap/);
+
+const nav = read("src/components/GlobalNav.tsx");
+assert.match(nav, /lg:hidden/);
+assert.match(nav, /lg:flex/);
+assert.match(nav, /overflow-hidden/);
+
+const footer = read("src/components/Footer.tsx");
+assert.match(footer, /\/portal\/intelligence/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:research-workspace/);

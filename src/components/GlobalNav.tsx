@@ -144,7 +144,7 @@ export default function GlobalNav() {
       <nav
         data-header-state={headerState}
         data-story-overlay-header
-        className="story-overlay-header fixed top-0 left-0 z-50 flex w-full items-center justify-between px-4 md:px-6"
+        className="story-overlay-header fixed top-0 left-0 z-50 flex w-full items-center justify-between gap-2 overflow-hidden px-3 md:px-5"
         style={{
           height: "var(--story-safe-top)",
           paddingTop: "env(safe-area-inset-top, 0px)",
@@ -153,7 +153,7 @@ export default function GlobalNav() {
         {/* Mobile: menu left · brand center · actions right (Instagram placement) */}
         <button
           type="button"
-          className="story-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold md:hidden"
+          className="story-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold lg:hidden"
           aria-label="Open network menu"
           aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
@@ -163,7 +163,7 @@ export default function GlobalNav() {
 
         <Link
           href="/"
-          className="story-living-brand absolute left-1/2 flex min-w-0 -translate-x-1/2 select-none items-center md:static md:translate-x-0"
+          className="story-living-brand absolute left-1/2 flex min-w-0 -translate-x-1/2 select-none items-center lg:static lg:translate-x-0"
           aria-label="StoryHome — Every home has a story"
         >
           <span className="story-living-mark h-9 w-9 items-center justify-center rounded-full bg-navy ring-1 ring-gold/50">
@@ -189,7 +189,7 @@ export default function GlobalNav() {
           </span>
         </Link>
 
-        <div className="hidden items-center gap-6 font-sans text-sm font-medium md:flex">
+        <div className="hidden min-w-0 items-center gap-4 overflow-hidden font-sans text-sm font-medium lg:flex xl:gap-6">
           {isHome ? (
             <>
               <NavLink
@@ -275,7 +275,7 @@ export default function GlobalNav() {
               label={archie.shortLabel}
               active={archieActive}
               size="icon"
-              className="md:hidden"
+              className="lg:hidden"
             />
           ) : null}
 
@@ -285,7 +285,7 @@ export default function GlobalNav() {
               <button
                 type="button"
                 onClick={() => setRole("consumer")}
-                className="hidden h-9 items-center rounded-full border border-hairline bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-ink md:inline-flex"
+                className="hidden h-9 items-center rounded-full border border-hairline bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-ink xl:inline-flex"
                 title="Preview the site the way a buyer sees it"
               >
                 View as buyer
@@ -294,7 +294,7 @@ export default function GlobalNav() {
               <button
                 type="button"
                 onClick={() => setRole("professional")}
-                className="hidden h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 text-xs font-bold text-[var(--accent-contrast)] md:inline-flex"
+                className="hidden h-9 items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 text-xs font-bold text-[var(--accent-contrast)] xl:inline-flex"
                 title="Return to your Pro workspace"
               >
                 ← Back to Pro
@@ -323,7 +323,7 @@ export default function GlobalNav() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-navy text-xs text-paper ring-1 ring-gold/40">
                   {user.initials}
                 </span>
-                <span className="hidden flex-col leading-tight sm:flex">
+                <span className="hidden flex-col leading-tight xl:flex">
                   <span className="max-w-[110px] truncate text-xs">
                     {user.name.split(" ")[0]}
                   </span>

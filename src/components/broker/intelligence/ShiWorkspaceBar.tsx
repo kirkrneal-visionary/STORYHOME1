@@ -5,8 +5,7 @@ import { RESEARCH_MODES, type ResearchModeId } from "@/lib/shi/research-modes";
 import { cn } from "@/lib/utils";
 
 /**
- * Compact Research workspace header — leave, search, menu.
- * Not the large Archie page intro.
+ * Reserved Research workspace strip — sits above the map, never in the site header.
  */
 export function ShiWorkspaceBar({
   mode,
@@ -25,13 +24,13 @@ export function ShiWorkspaceBar({
   return (
     <header
       data-workspace-bar
-      className="pointer-events-auto absolute top-2 right-2 left-2 z-30 flex items-center gap-2 lg:right-[min(424px,calc(38vw+24px))]"
+      className="relative z-30 flex shrink-0 items-center gap-2 border-b border-hairline bg-[color-mix(in_srgb,var(--env-1)_88%,transparent)] px-2 py-1.5"
     >
       <button
         type="button"
         onClick={onExit}
         data-workspace-exit
-        className="story-glass inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl px-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase"
+        className="story-glass inline-flex h-10 max-w-[42%] shrink-0 items-center gap-1.5 truncate rounded-xl px-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase"
       >
         ‹ {cfg.displayName}
       </button>

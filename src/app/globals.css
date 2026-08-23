@@ -665,17 +665,63 @@ html[data-header-state="minimal"] .story-living-mark {
   }
 }
 
-/* Research Workspace — map-first room */
+/* Research Workspace — map-first room with reserved chrome lanes */
+html[data-research-live] {
+  overflow: hidden;
+}
+html[data-research-live] footer {
+  display: none;
+}
+html[data-research-live] .story-overlay-header {
+  mask-image: none;
+  -webkit-mask-image: none;
+  background: color-mix(in srgb, var(--env-0) 92%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+html[data-research-live] .story-living-tagline {
+  display: none;
+}
+
 [data-research-workspace] {
   position: fixed;
-  inset: var(--story-workspace-top) 0 var(--story-bottom-clearance) 0;
+  top: var(--story-workspace-top);
+  right: 0;
+  bottom: var(--story-bottom-clearance);
+  left: 0;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   background: var(--env-0);
 }
-@media (min-width: 1024px) {
+[data-workspace-stage] {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+@media (max-width: 1279px) {
+  [data-research-workspace] [data-map-draw-tools],
+  [data-research-workspace] [data-map-hint] {
+    bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem) !important;
+  }
+  [data-research-workspace] [data-map-layers] {
+    right: 0.65rem;
+  }
+}
+@media (min-width: 1280px) {
   [data-intelligence-sheet] {
     height: auto !important;
     max-height: none !important;
+  }
+  [data-research-workspace] .maplibregl-ctrl-bottom-right {
+    right: calc(min(400px, 32vw) + 1.25rem);
+    bottom: 10px;
+  }
+}
+@media (max-width: 1279px) {
+  [data-research-workspace] .maplibregl-ctrl-bottom-right {
+    bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem);
   }
 }

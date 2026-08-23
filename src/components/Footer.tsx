@@ -34,7 +34,8 @@ export default function Footer() {
   // Skip on the full-screen map view and the seller portal's own chrome.
   if (
     pathname === "/marketplace" ||
-    pathname.startsWith("/seller")
+    pathname.startsWith("/seller") ||
+    pathname.startsWith("/portal/intelligence")
   ) {
     return null;
   }

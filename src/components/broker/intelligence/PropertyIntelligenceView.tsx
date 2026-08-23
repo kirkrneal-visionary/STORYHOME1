@@ -14,7 +14,6 @@ import {
   ShiResearchAccessDesk,
   type ResearchAccessDeskTab,
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
-import { ShiResearchModeBanner } from "@/components/broker/intelligence/ShiResearchModeBanner";
 import { ShiMultifamilyRead } from "@/components/broker/intelligence/ShiMultifamilyRead";
 import { ShiIntelligenceSheet } from "@/components/broker/intelligence/ShiIntelligenceSheet";
 import { ShiWorkspaceBar } from "@/components/broker/intelligence/ShiWorkspaceBar";
@@ -97,6 +96,7 @@ import {
   modeReviewFromRankedFacts,
   type ModeReviewResult,
 } from "@/lib/shi/research-mode-reason";
+import { MULTIFAMILY_COPY } from "@/lib/shi/multifamily";
 import type { MultifamilyRead } from "@/lib/shi/multifamily-read";
 import type { MultifamilyReviewResult } from "@/lib/shi/multifamily-review";
 import {
@@ -1305,7 +1305,7 @@ export function PropertyIntelligenceView({
       {workspaceMenu ? (
         <div
           data-workspace-menu-panel
-          className="pointer-events-auto absolute top-14 right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
+          className="pointer-events-auto absolute top-[3.65rem] right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
         >
           <button
             type="button"
@@ -1340,10 +1340,11 @@ export function PropertyIntelligenceView({
         </div>
       ) : null}
 
+      <div data-workspace-stage>
       {searchOpen ? (
         <section
           data-workspace-search
-          className="pointer-events-auto absolute top-14 left-2 z-40 w-[min(100%-1rem,22rem)] story-glass rounded-xl p-3 lg:left-2"
+          className="pointer-events-auto absolute top-2 left-2 z-40 w-[min(100%-1rem,22rem)] max-h-[min(70%,28rem)] overflow-y-auto story-glass rounded-xl p-3"
         >
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
             <Search className="h-4 w-4 text-gold" />
@@ -1513,7 +1514,7 @@ export function PropertyIntelligenceView({
       {activeFrame?.boundary && !analysis ? (
         <div
           data-workspace-frame-toast
-          className="pointer-events-auto absolute top-[4.5rem] left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
+          className="pointer-events-auto absolute top-2 left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
         >
           <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
             {WORKSPACE_COPY.frameReady}
@@ -1535,12 +1536,8 @@ export function PropertyIntelligenceView({
         onSnap={setSheetSnap}
         context={sheetCtx}
         header={
-          <div>
-            <ShiResearchModeBanner
-              mode={researchMode}
-              onChangeMode={() => onChangeResearchMode?.()}
-            />
-            <p className="mt-1 font-serif text-lg font-bold text-ink">
+          <div className="min-w-0">
+            <p className="truncate font-serif text-base font-bold text-ink">
               {sheetCtx === "property"
                 ? "Property review"
                 : sheetCtx === "analysis"
@@ -1549,7 +1546,7 @@ export function PropertyIntelligenceView({
                     ? "Area study"
                     : RESEARCH_MODES[researchMode].displayName}
             </p>
-            <p className="text-[11px] text-[var(--muted)]">
+            <p className="truncate text-[11px] text-[var(--muted)]">
               {sheetCtx === "idle"
                 ? WORKSPACE_COPY.idleTitle
                 : sheetCtx === "property"
@@ -1574,9 +1571,23 @@ export function PropertyIntelligenceView({
             </div>
           ) : !selected ? (
             <div data-workspace-idle className="space-y-3">
+              {researchMode === "multifamily" ? (
+                <div data-multifamily-landing className="space-y-1">
+                  <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
+                    {MULTIFAMILY_COPY.kicker}
+                  </p>
+                  <p className="font-serif text-lg font-bold text-ink">
+                    {MULTIFAMILY_COPY.headline}
+                  </p>
+                  <p className="text-[12px] text-[var(--muted)]">
+                    {MULTIFAMILY_COPY.support}
+                  </p>
+                </div>
+              ) : (
               <p className="text-sm text-[var(--muted)]">
                 {WORKSPACE_COPY.idleBody}
               </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -2084,6 +2095,7 @@ export function PropertyIntelligenceView({
         onOpenFarms={() => onOpenFarms?.()}
       />
       </ShiIntelligenceSheet>
+      </div>
     </div>
   );
 }

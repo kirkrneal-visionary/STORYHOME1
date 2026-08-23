@@ -1442,7 +1442,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         ) : null}
 
         <div className="pointer-events-none absolute inset-0 z-10">
-          <div className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1">
+          <div
+            data-map-basemap
+            className="pointer-events-auto absolute top-3 left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
+          >
             {MAP_BASE_OPTIONS.map((opt) => (
               <button
                 key={opt.id}
@@ -1459,7 +1462,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             ))}
           </div>
 
-          <div className="pointer-events-auto absolute bottom-12 left-3 flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1">
+          <div
+            data-map-draw-tools
+            className="pointer-events-auto absolute bottom-12 left-3 flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1"
+          >
             <button
               type="button"
               onClick={() => {
@@ -1612,7 +1618,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             </span>
           </div>
 
-          <div className="pointer-events-auto absolute top-3 right-3 flex flex-col items-end gap-1.5">
+          <div
+            data-map-layers
+            className="pointer-events-auto absolute top-3 right-3 flex flex-col items-end gap-1.5 xl:right-[min(26rem,calc(32vw+1.25rem))]"
+          >
             <button
               type="button"
               onClick={() => setShowParcels((v) => !v)}
@@ -1679,6 +1688,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           </div>
 
           <p
+            data-map-hint
             className={cn(
               "pointer-events-none absolute bottom-3 left-3 inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase shadow-sm",
               drawWarn
