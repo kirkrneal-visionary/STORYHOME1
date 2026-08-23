@@ -123,6 +123,7 @@ assert.match(map, /data-map-basemap/);
 assert.match(map, /resize: \(\) =>/);
 assert.match(map, /onViewChange/);
 assert.match(map, /moveend/);
+assert.match(map, /rounded-none border-0/);
 assert.doesNotMatch(map, /xl:right-\[min\(26rem/);
 
 const nav = read("src/components/GlobalNav.tsx");
