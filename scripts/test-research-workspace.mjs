@@ -115,6 +115,7 @@ assert.match(css, /data-map-bottom-chrome/);
 assert.match(css, /data-map-hint-kind="idle"/);
 assert.match(css, /data-sheet-snap="peek"/);
 assert.match(css, /--sheet-h: 26vh/);
+assert.match(css, /calc\(100% - 7\.25rem\)/);
 assert.doesNotMatch(css, /top: 5\.35rem/);
 assert.doesNotMatch(css, /5\.75rem/);
 assert.match(view, /dataset.workspaceLayout/);

@@ -1482,7 +1482,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         <div className="pointer-events-none absolute inset-0 z-10">
           <div
             data-map-basemap
-            className="pointer-events-auto absolute left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
+            className="pointer-events-auto absolute left-3 flex flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
           >
             {MAP_BASE_OPTIONS.map((opt) => (
               <button
