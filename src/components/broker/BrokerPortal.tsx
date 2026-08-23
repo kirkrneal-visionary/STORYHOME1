@@ -131,7 +131,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
     <div
       className={cn(
         liveWorkspace
-          ? "h-0 overflow-hidden p-0"
+          ? "min-h-0 p-0"
           : "min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6",
         /* Living header + Archie ribbon when in Intelligence */
         liveWorkspace

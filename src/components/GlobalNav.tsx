@@ -153,7 +153,7 @@ export default function GlobalNav() {
         {/* Mobile: menu left · brand center · actions right (Instagram placement) */}
         <button
           type="button"
-          className="story-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold lg:hidden"
+          className="story-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold xl:hidden"
           aria-label="Open network menu"
           aria-expanded={drawerOpen}
           onClick={() => setDrawerOpen(true)}
@@ -163,7 +163,7 @@ export default function GlobalNav() {
 
         <Link
           href="/"
-          className="story-living-brand absolute left-1/2 flex min-w-0 -translate-x-1/2 select-none items-center lg:static lg:translate-x-0"
+          className="story-living-brand absolute left-1/2 flex min-w-0 -translate-x-1/2 select-none items-center xl:static xl:translate-x-0"
           aria-label="StoryHome — Every home has a story"
         >
           <span className="story-living-mark h-9 w-9 items-center justify-center rounded-full bg-navy ring-1 ring-gold/50">
@@ -189,7 +189,7 @@ export default function GlobalNav() {
           </span>
         </Link>
 
-        <div className="hidden min-w-0 items-center gap-4 overflow-hidden font-sans text-sm font-medium lg:flex xl:gap-6">
+        <div className="hidden min-w-0 items-center gap-5 overflow-hidden font-sans text-sm font-medium xl:flex">
           {isHome ? (
             <>
               <NavLink
@@ -275,7 +275,7 @@ export default function GlobalNav() {
               label={archie.shortLabel}
               active={archieActive}
               size="icon"
-              className="lg:hidden"
+              className="xl:hidden"
             />
           ) : null}
 

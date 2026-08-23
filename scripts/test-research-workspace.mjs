@@ -79,8 +79,8 @@ assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
 
 const nav = read("src/components/GlobalNav.tsx");
-assert.match(nav, /lg:hidden/);
-assert.match(nav, /lg:flex/);
+assert.match(nav, /xl:hidden/);
+assert.match(nav, /xl:flex/);
 assert.match(nav, /overflow-hidden/);
 
 const footer = read("src/components/Footer.tsx");
