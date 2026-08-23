@@ -222,6 +222,7 @@ export async function shiSaveFrame(opts: {
   boundary: DrawnBoundary;
   /** Optional — server recomputes; kept for backward-compatible clients. */
   analysis?: ShiAreaAnalysis;
+  researchMode?: string;
   mapCenterLat?: number;
   mapCenterLng?: number;
   mapZoom?: number;
@@ -639,6 +640,7 @@ export async function shiCorridorsStrongestSites(opts: {
   countyFips: string;
   boundary: import("@/lib/geo").DrawnBoundary;
   limit?: number;
+  lens?: "mode" | "commercial";
 }) {
   return shiFetch<{
     sites: import("@/lib/shi/corridor-exposure").RankedSite[];

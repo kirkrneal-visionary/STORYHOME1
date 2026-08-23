@@ -7,6 +7,7 @@ import {
   CORRIDOR_ASK_INTENTS,
   type CorridorAskAnswer,
 } from "@/lib/shi/corridor-ask";
+import type { ResearchModeChip } from "@/lib/shi/research-modes";
 import { EVIDENCE_LEGEND_LINES } from "@/lib/shi/evidence-tier";
 
 /**
@@ -15,9 +16,13 @@ import { EVIDENCE_LEGEND_LINES } from "@/lib/shi/evidence-tier";
 export function ShiCorridorsAskPanel({
   answer,
   onAsk,
+  chips,
+  onChip,
 }: {
   answer: CorridorAskAnswer | null;
   onAsk: (query: string) => void;
+  chips?: ResearchModeChip[];
+  onChip?: (chip: ResearchModeChip) => void;
 }) {
   const [draft, setDraft] = useState("");
   return (
@@ -38,14 +43,22 @@ export function ShiCorridorsAskPanel({
         ))}
       </div>
       <div className="flex flex-wrap gap-1.5" data-corridor-ask-chips>
-        {CORRIDOR_ASK_INTENTS.map((intent) => (
+        {(chips ??
+          CORRIDOR_ASK_INTENTS.map((intent) => ({
+            id: intent.id,
+            label: intent.chip,
+            ask: intent.id,
+          }))).map((chip) => (
           <button
-            key={intent.id}
+            key={chip.id}
             type="button"
-            onClick={() => onAsk(intent.id)}
+            onClick={() => {
+              if (onChip) onChip(chip);
+              else if (chip.ask) onAsk(chip.ask);
+            }}
             className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1.5 font-mono text-[10px] font-semibold uppercase text-ink hover:border-gold/40"
           >
-            {intent.chip}
+            {chip.label}
           </button>
         ))}
       </div>

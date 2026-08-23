@@ -5,7 +5,11 @@ import {
   isLaunchCorridorFips,
   resolveCorridorCounty,
 } from "@/lib/shi/corridors";
-import { rankSitesByCommercialExposure } from "@/lib/shi/corridor-exposure";
+import {
+  rankSitesByCommercialExposure,
+  scoreCommercialExposure,
+} from "@/lib/shi/corridor-exposure";
+import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 
@@ -27,6 +31,7 @@ export async function POST(req: NextRequest) {
     countyFips?: string;
     boundary?: DrawnBoundary;
     limit?: number;
+    lens?: string;
   };
   try {
     body = await req.json();
@@ -52,42 +57,84 @@ export async function POST(req: NextRequest) {
   }
 
   const county = resolveCorridorCounty(fips);
+  const modeLens = body.lens === "mode";
   const limit =
     typeof body.limit === "number" && body.limit > 0
-      ? Math.min(24, Math.floor(body.limit))
-      : 12;
+      ? Math.min(modeLens ? 36 : 24, Math.floor(body.limit))
+      : modeLens
+        ? 24
+        : 12;
 
   try {
-    const [area, traffic] = await Promise.all([
-      analyzeArea(gate.supabase, {
-        boundary: body.boundary,
-        source: county.source,
-      }),
-      fetchCountyTraffic(fips),
-    ]);
-
-    const sites = rankSitesByCommercialExposure({
-      parcels: area.parcels.map((p) => ({
-        propId: p.propId,
-        source: p.source,
-        centroidLat: p.centroidLat,
-        centroidLng: p.centroidLng,
-        situsAddress: p.situsAddress,
-        ownerName: p.ownerName,
-        legalAcreage: p.legalAcreage,
-        marketValue: p.marketValue,
-      })),
-      stations: traffic.stations ?? [],
-      limit,
+    const area = await analyzeArea(gate.supabase, {
+      boundary: body.boundary,
+      source: county.source,
     });
+    const traffic = modeLens
+      ? { stations: [] }
+      : await fetchCountyTraffic(fips);
+
+    const mapped = area.parcels.map((p) => ({
+      propId: p.propId,
+      source: p.source,
+      centroidLat: p.centroidLat,
+      centroidLng: p.centroidLng,
+      situsAddress: p.situsAddress,
+      ownerName: p.ownerName,
+      legalAcreage: p.legalAcreage,
+      marketValue: p.marketValue,
+    }));
+
+    const sites = modeLens
+      ? [...mapped]
+          .filter(
+            (p) =>
+              Number.isFinite(p.centroidLat) && Number.isFinite(p.centroidLng),
+          )
+          .sort((a, b) => (b.legalAcreage ?? 0) - (a.legalAcreage ?? 0))
+          .slice(0, limit)
+          .map((p) => {
+            const pick: CorridorParcelPick = {
+              propId: p.propId,
+              source: p.source,
+              lat: p.centroidLat,
+              lng: p.centroidLng,
+              situsAddress: p.situsAddress ?? null,
+              ownerName: p.ownerName ?? null,
+              legalAcreage: p.legalAcreage ?? null,
+              marketValue: p.marketValue ?? null,
+            };
+            return {
+              propId: p.propId,
+              source: p.source,
+              lat: p.centroidLat,
+              lng: p.centroidLng,
+              situsAddress: p.situsAddress ?? null,
+              ownerName: p.ownerName ?? null,
+              legalAcreage: p.legalAcreage ?? null,
+              marketValue: p.marketValue ?? null,
+              commercial: scoreCommercialExposure({
+                pick,
+                stations: [],
+                legalAcreage: p.legalAcreage,
+              }),
+              rank: 0,
+            };
+          })
+      : rankSitesByCommercialExposure({
+          parcels: mapped,
+          stations: traffic.stations ?? [],
+          limit,
+        });
 
     return NextResponse.json({
       county: { fips: county.fips, name: county.name, source: county.source },
       parcelCount: area.parcelCount,
       capped: Boolean(area.capped),
       sites,
-      honesty:
-        "Ranked by commercial-exposure-v1 (traffic factors + land size). Not zoning, sale, or investment advice. No AI-invented scores.",
+      honesty: modeLens
+        ? "Candidates for a research-mode review — not a universal 0–100 score. Not zoning, sale, or investment advice."
+        : "Ranked by commercial-exposure-v1 (traffic factors + land size). Not zoning, sale, or investment advice. No AI-invented scores.",
     });
   } catch (e) {
     return NextResponse.json(

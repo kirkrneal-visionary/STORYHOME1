@@ -105,6 +105,7 @@ export async function POST(request: Request) {
     mapZoom?: number;
     thumbnailDataUrl?: string | null;
     frameId?: string;
+    researchMode?: string;
   };
   try {
     body = await request.json();
@@ -132,6 +133,7 @@ export async function POST(request: Request) {
       mapZoom: body.mapZoom,
       thumbnailDataUrl: body.thumbnailDataUrl,
       frameId: body.frameId,
+      researchMode: body.researchMode,
     });
     return NextResponse.json({ frame });
   } catch (e) {

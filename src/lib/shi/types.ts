@@ -137,6 +137,8 @@ export type ShiAreaAnalysis = {
   /** True when the analyze scan hit the hard parcel safety cap. */
   capped?: boolean;
   parcels: ShiAreaParcel[];
+  /** Research Mode lens when this frame was saved. Older studies omit it. */
+  researchMode?: string;
 };
 
 /** @deprecated use ShiAreaAnalysis */

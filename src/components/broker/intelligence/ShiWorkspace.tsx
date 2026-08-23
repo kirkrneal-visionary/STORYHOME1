@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
 import { ShiFarmsView } from "@/components/broker/intelligence/ShiFarmsView";
 import { ShiProspectsView } from "@/components/broker/intelligence/ShiProspectsView";
+import { ShiResearchModeSelector } from "@/components/broker/intelligence/ShiResearchModeSelector";
 import { ShiStudyVaultView } from "@/components/broker/intelligence/ShiStudyVaultView";
 import {
   parseArchieModule,
@@ -14,6 +15,11 @@ import {
 } from "@/lib/navigation/archieMemory";
 import { track, type ArchieModuleProp } from "@/lib/analytics";
 import type { ShiSavedFrame } from "@/lib/shi/types";
+import {
+  parseResearchMode,
+  RESEARCH_MODE_STORAGE_KEY,
+  type ResearchModeId,
+} from "@/lib/shi/research-modes";
 import { SHI_PRODUCT } from "@/lib/shi/waves";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +32,7 @@ const MODULE_COPY: Record<
   research: {
     title: "Research",
     blurb:
-      "Search · map · property · Access desk (Ask · Sites · Compare). Traffic and frontage live on the same map — planning counts, not live congestion.",
+      "Choose a research mode, then search · map · property · Access desk. Same facts — a different professional lens.",
   },
   corridors: {
     title: "Access",
@@ -89,6 +95,36 @@ export function ShiWorkspace() {
     });
   }, [section, router, searchParams]);
 
+  const urlMode = parseResearchMode(searchParams.get("researchMode"));
+  const deepLink =
+    Boolean(searchParams.get("propId")) ||
+    Boolean(searchParams.get("openFrame")) ||
+    searchParams.get("mode") === "access";
+  const [pickingMode, setPickingMode] = useState(() => !urlMode && !deepLink);
+
+  const setResearchMode = useCallback(
+    (id: ResearchModeId, opts?: { pick?: boolean }) => {
+      try {
+        window.sessionStorage.setItem(RESEARCH_MODE_STORAGE_KEY, id);
+      } catch {
+        /* ignore */
+      }
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("section");
+      params.set("researchMode", id);
+      const q = params.toString();
+      router.replace(q ? `/portal/intelligence?${q}` : "/portal/intelligence", {
+        scroll: false,
+      });
+      if (opts?.pick !== false) setPickingMode(false);
+    },
+    [router, searchParams],
+  );
+
+  useEffect(() => {
+    if (urlMode) setPickingMode(false);
+  }, [urlMode]);
+
   const selectSection = useCallback(
     (next: ShiSection) => {
       writeLastArchieModule(next);
@@ -115,6 +151,11 @@ export function ShiWorkspace() {
       const params = new URLSearchParams();
       params.set("openFrame", frame.id);
       if (frame.folderId) params.set("folderId", frame.folderId);
+      const savedMode = parseResearchMode(
+        (frame.snapshot?.metrics as { researchMode?: string } | undefined)
+          ?.researchMode,
+      );
+      params.set("researchMode", savedMode ?? "general");
       const base = pathname?.includes("/intelligence")
         ? "/portal/intelligence"
         : "/portal/intelligence";
@@ -159,10 +200,20 @@ export function ShiWorkspace() {
             )}
             aria-hidden={section !== "research" && section !== "corridors"}
           >
-            <PropertyIntelligenceView
-              onOpenVault={() => selectSection("vault")}
-              onOpenFarms={() => selectSection("farms")}
-            />
+            {pickingMode ? (
+              <ShiResearchModeSelector
+                onSelect={(id) => setResearchMode(id)}
+              />
+            ) : null}
+            <div className={cn(pickingMode && "hidden")}>
+              <PropertyIntelligenceView
+                researchMode={urlMode ?? "general"}
+                onChangeResearchMode={() => setPickingMode(true)}
+                onRestoreResearchMode={(id) => setResearchMode(id)}
+                onOpenVault={() => selectSection("vault")}
+                onOpenFarms={() => selectSection("farms")}
+              />
+            </div>
           </div>
         ) : null}
 

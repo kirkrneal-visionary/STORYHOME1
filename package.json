@@ -53,6 +53,7 @@
     "test:parcel-position-p8": "node scripts/test-parcel-position-p8.mjs",
     "test:parcel-position-compare": "node scripts/test-parcel-position-compare.mjs",
     "test:parcel-position": "node scripts/test-parcel-position-compare.mjs",
+    "test:research-modes": "node scripts/test-research-modes.mjs",
     "test:data-coverage-dc1": "node scripts/test-data-coverage-dc1.mjs",
     "test:data-coverage-dc2": "node scripts/test-data-coverage-dc2.mjs",
     "test:data-coverage-dc3": "node scripts/test-data-coverage-dc3.mjs",
