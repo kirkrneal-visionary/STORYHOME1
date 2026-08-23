@@ -1524,6 +1524,7 @@ export function PropertyIntelligenceView({
     <div
       data-research-workspace={RESEARCH_WORKSPACE_VERSION}
       data-workspace-layout={layout}
+      data-sheet-snap={layout === "sheet" ? sheetSnap : undefined}
       data-map-expanded={expandedMap ? "true" : "false"}
     >
       <div data-workspace-stage>
@@ -1547,7 +1548,7 @@ export function PropertyIntelligenceView({
       {workspaceMenu ? (
         <div
           data-workspace-menu-panel
-          className="pointer-events-auto absolute top-[3.65rem] right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
+          className="pointer-events-auto absolute right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
         >
           <button
             type="button"

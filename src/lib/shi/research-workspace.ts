@@ -54,7 +54,7 @@ export const WORKSPACE_COPY = {
   collapseResearch: "Hide research",
 } as const;
 
-/** Peek is a deal card, not a half-page essay. */
+/** Peek is a deal card, not a half-page essay. Keep in sync with --sheet-h in globals.css. */
 const SNAP_VH: Record<WorkspaceSheetSnap, number> = {
   collapsed: 0.12,
   peek: 0.26,

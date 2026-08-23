@@ -1482,7 +1482,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         <div className="pointer-events-none absolute inset-0 z-10">
           <div
             data-map-basemap
-            className="pointer-events-auto absolute top-[4.5rem] left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
+            className="pointer-events-auto absolute left-3 flex max-w-[min(100%,28rem)] flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
           >
             {MAP_BASE_OPTIONS.map((opt) => (
               <button
@@ -1501,8 +1501,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           </div>
 
           <div
+            data-map-bottom-chrome
+            className="pointer-events-none absolute inset-x-3 flex flex-col-reverse items-start gap-1.5"
+          >
+          <div
             data-map-draw-tools
-            className="pointer-events-auto absolute bottom-12 left-3 flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1"
+            className="pointer-events-auto flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1"
           >
             <button
               type="button"
@@ -1656,9 +1660,40 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             </span>
           </div>
 
+          <p
+            data-map-hint
+            data-map-hint-kind={
+              drawWarn ? "warn" : tool !== "pan" ? "draw" : "idle"
+            }
+            className={cn(
+              "pointer-events-none inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase shadow-sm",
+              drawWarn
+                ? "bg-red-50/95 text-red-800"
+                : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
+            )}
+          >
+            <Layers className="h-3 w-3 shrink-0" />
+            {drawWarn
+              ? drawWarn
+              : tool === "rectangle"
+                ? boxDraftActive
+                  ? "Move to size · click second corner · Esc cancel"
+                  : "Click two corners — adds a new market frame"
+                : tool === "radius"
+                  ? `Click center — ${radiusMiles}-mile radius · Esc cancel`
+                  : tool === "freehand"
+                    ? freehandHint === "closeable"
+                      ? "Near start — release to seal frame"
+                      : freehandHint === "drawing"
+                        ? "Draw a loop · return to start to snap-seal"
+                        : "Hold and draw · loop back to start to seal"
+                    : "Pan · click frame to select · click parcel for record"}
+          </p>
+          </div>
+
           <div
             data-map-layers
-            className="pointer-events-auto absolute top-[4.5rem] right-3 flex flex-col items-end gap-1.5"
+            className="pointer-events-auto absolute right-3 flex flex-col items-end gap-1.5"
           >
             <button
               type="button"
@@ -1724,33 +1759,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               />
             ) : null}
           </div>
-
-          <p
-            data-map-hint
-            className={cn(
-              "pointer-events-none absolute bottom-3 left-3 inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase shadow-sm",
-              drawWarn
-                ? "bg-red-50/95 text-red-800"
-                : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
-            )}
-          >
-            <Layers className="h-3 w-3 shrink-0" />
-            {drawWarn
-              ? drawWarn
-              : tool === "rectangle"
-                ? boxDraftActive
-                  ? "Move to size · click second corner · Esc cancel"
-                  : "Click two corners — adds a new market frame"
-                : tool === "radius"
-                  ? `Click center — ${radiusMiles}-mile radius · Esc cancel`
-                  : tool === "freehand"
-                    ? freehandHint === "closeable"
-                      ? "Near start — release to seal frame"
-                      : freehandHint === "drawing"
-                        ? "Draw a loop · return to start to snap-seal"
-                        : "Hold and draw · loop back to start to seal"
-                    : "Pan · click frame to select · click parcel for record"}
-          </p>
         </div>
       </div>
     );

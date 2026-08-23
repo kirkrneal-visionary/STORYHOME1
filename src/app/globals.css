@@ -692,6 +692,10 @@ html[data-research-live] .story-living-tagline {
 }
 
 [data-research-workspace] {
+  /* Bar = clock inset + search row. Modes / Layers sit under this, not in it. */
+  --workspace-bar-h: calc(max(0.45rem, env(safe-area-inset-top, 0px)) + 3.25rem);
+  /* Peek-sized until a snap token or live drag px wins. Never the short collapsed leftover. */
+  --sheet-h: 26vh;
   position: fixed;
   top: var(--story-workspace-top);
   right: 0;
@@ -702,6 +706,18 @@ html[data-research-live] .story-living-tagline {
   flex-direction: column;
   overflow: hidden;
   background: var(--env-0);
+}
+[data-research-workspace][data-sheet-snap="collapsed"] {
+  --sheet-h: 12vh;
+}
+[data-research-workspace][data-sheet-snap="peek"] {
+  --sheet-h: 26vh;
+}
+[data-research-workspace][data-sheet-snap="expanded"] {
+  --sheet-h: 62vh;
+}
+[data-research-workspace][data-sheet-snap="full"] {
+  --sheet-h: 92vh;
 }
 [data-workspace-stage] {
   position: relative;
@@ -749,17 +765,25 @@ html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
 }
 [data-research-workspace] [data-map-basemap],
 [data-research-workspace] [data-map-layers] {
-  top: 5.35rem;
+  top: calc(var(--workspace-bar-h) + 0.4rem);
 }
 [data-workspace-frame-toast] {
-  top: 5.5rem;
+  top: calc(var(--workspace-bar-h) + 0.55rem);
 }
-[data-workspace-layout="sheet"] [data-map-draw-tools],
-[data-workspace-layout="sheet"] [data-map-hint] {
-  bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem) !important;
+[data-workspace-menu-panel] {
+  top: calc(var(--workspace-bar-h) + 0.2rem);
+}
+[data-map-bottom-chrome] {
+  bottom: 0.75rem;
+}
+[data-workspace-layout="sheet"] [data-map-bottom-chrome] {
+  bottom: calc(var(--sheet-h) + 0.7rem) !important;
+}
+[data-workspace-layout="sheet"] [data-map-hint][data-map-hint-kind="idle"] {
+  display: none;
 }
 [data-workspace-layout="sheet"] .maplibregl-ctrl-bottom-right {
-  bottom: calc(var(--sheet-h, 5.75rem) + 0.55rem);
+  bottom: calc(var(--sheet-h) + 0.7rem);
 }
 [data-workspace-layout="drawer"] .maplibregl-ctrl-bottom-right {
   right: 10px;
