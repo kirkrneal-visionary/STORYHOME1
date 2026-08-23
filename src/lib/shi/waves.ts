@@ -1121,6 +1121,29 @@ export const SHI_WAVES: ShiWave[] = [
       "Zoning / density / utility capacity · fake demand scores",
     ],
   },
+  {
+    id: "ARCHIE-RESEARCH-WORKSPACE",
+    name: "Research Workspace — map-first room",
+    goal: "Once a research mode is chosen, the map is the room. Search, Archie, property, and studies sit around it. Do not destroy the map or the data wiring.",
+    status: "current",
+    frontend: [
+      "Fixed map-first workspace after mode select",
+      "Compact bar — exit · search · menu",
+      "Draggable intelligence sheet (collapsed / peek / half / expanded)",
+      "Search is an action, not a permanent left column",
+      "Draw / layers stay on the map",
+    ],
+    backend: [
+      "research-workspace-v1 session snapshot (county)",
+      "Same property / frames / Multifamily / Access APIs",
+      "Armor test:research-workspace · modes + multifamily regression",
+    ],
+    outOfScope: [
+      "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
+      "New parcel tables or a second Research app",
+      "Rewriting CAD / flood / CCN / ACS backends",
+    ],
+  },
 ];
 
 /** Current product line — Archie Neighbors N1. */

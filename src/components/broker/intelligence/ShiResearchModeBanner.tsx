@@ -13,7 +13,7 @@ export function ShiResearchModeBanner({
   const cfg = RESEARCH_MODES[mode];
   return (
     <div
-      className="story-surface flex flex-wrap items-start justify-between gap-3 px-4 py-3"
+      className="flex flex-wrap items-start justify-between gap-2"
       data-research-mode-banner={mode}
     >
       <div className="min-w-0">

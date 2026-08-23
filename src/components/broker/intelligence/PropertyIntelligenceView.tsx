@@ -16,6 +16,8 @@ import {
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
 import { ShiResearchModeBanner } from "@/components/broker/intelligence/ShiResearchModeBanner";
 import { ShiMultifamilyRead } from "@/components/broker/intelligence/ShiMultifamilyRead";
+import { ShiIntelligenceSheet } from "@/components/broker/intelligence/ShiIntelligenceSheet";
+import { ShiWorkspaceBar } from "@/components/broker/intelligence/ShiWorkspaceBar";
 import { ShiArchieIntelligencePanel } from "@/components/broker/intelligence/ShiArchieIntelligencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
@@ -103,6 +105,14 @@ import {
 } from "@/lib/shi/corridor-property-compare";
 import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
+import {
+  RESEARCH_WORKSPACE_VERSION,
+  WORKSPACE_COPY,
+  readWorkspaceSnapshot,
+  workspaceContext,
+  writeWorkspaceSnapshot,
+  type WorkspaceSheetSnap,
+} from "@/lib/shi/research-workspace";
 import type {
   ShiAreaAnalysis,
   ShiCountyFreshness,
@@ -160,7 +170,7 @@ export function PropertyIntelligenceView({
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [field, setField] = useState<CadSearchField>("all");
-  const [source, setSource] = useState("");
+  const [source, setSource] = useState(() => readWorkspaceSnapshot()?.source ?? "");
   const [results, setResults] = useState<ShiPropertySummary[]>([]);
   const [indexNote, setIndexNote] = useState<string | null>(null);
   const [selected, setSelected] = useState<ShiPropertyDetail | null>(null);
@@ -202,6 +212,9 @@ export function PropertyIntelligenceView({
   const [modeReview, setModeReview] = useState<ModeReviewResult | null>(null);
   const [mfReview, setMfReview] = useState<MultifamilyReviewResult | null>(null);
   const [mfRead, setMfRead] = useState<MultifamilyRead | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [workspaceMenu, setWorkspaceMenu] = useState(false);
+  const [sheetSnap, setSheetSnap] = useState<WorkspaceSheetSnap>("peek");
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -335,6 +348,7 @@ export function PropertyIntelligenceView({
           return;
         }
         setSelected(property);
+        setSheetSnap((s) => (s === "collapsed" ? "half" : s === "peek" ? "half" : s));
         setFloodFact(null);
         setUtilitiesFact(null);
         setMfRead(null);
@@ -515,6 +529,7 @@ export function PropertyIntelligenceView({
 
   function onCountyChange(next: string) {
     setSource(next);
+    writeWorkspaceSnapshot({ source: next });
     void refreshFolders(next);
   }
 
@@ -553,6 +568,7 @@ export function PropertyIntelligenceView({
     setActiveFrameId(localId);
     setAnalysis(null);
     setAreaError("");
+    setSheetSnap("half");
     return true;
   }
 
@@ -1267,43 +1283,68 @@ export function PropertyIntelligenceView({
     [findStrongestSites, runAsk],
   );
 
+  const sheetCtx = workspaceContext({
+    hasProperty: Boolean(selected),
+    hasFrame: Boolean(activeFrame?.boundary),
+    hasAnalysis: Boolean(analysis || mfReview || modeReview),
+    askOpen: accessDeskTab === "ask" && Boolean(askAnswer),
+  });
+
   return (
-    <div className="space-y-3">
-      <ShiResearchModeBanner
+    <div data-research-workspace={RESEARCH_WORKSPACE_VERSION}>
+      <ShiWorkspaceBar
         mode={researchMode}
-        onChangeMode={() => onChangeResearchMode?.()}
+        searchOpen={searchOpen}
+        onExit={() => onChangeResearchMode?.()}
+        onSearch={() => {
+          setSearchOpen((v) => !v);
+          setSheetSnap("half");
+        }}
+        onMenu={() => setWorkspaceMenu((v) => !v)}
       />
-      {freshness.length > 0 ? (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {freshness.map((c) => (
-            <span
-              key={c.countyFips}
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-[10px] font-bold uppercase",
-                c.stale
-                  ? "border-gold/40 bg-gold/10 text-navy"
-                  : "story-well text-[var(--muted)]",
-              )}
-              title={c.label}
-            >
-              <span
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full",
-                  c.stale ? "bg-gold" : "bg-emerald-600",
-                )}
-              />
-              {c.countyName.replace(/ County$/i, "")}
-              <span className="font-semibold normal-case opacity-70">
-                {c.stale ? "stale" : "fresh"}
-              </span>
-            </span>
-          ))}
+      {workspaceMenu ? (
+        <div
+          data-workspace-menu-panel
+          className="pointer-events-auto absolute top-14 right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
+        >
+          <button
+            type="button"
+            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
+            onClick={() => {
+              setWorkspaceMenu(false);
+              onChangeResearchMode?.();
+            }}
+          >
+            Change research mode
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
+            onClick={() => {
+              setWorkspaceMenu(false);
+              onOpenVault?.();
+            }}
+          >
+            Study Vault
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
+            onClick={() => {
+              setWorkspaceMenu(false);
+              onOpenFarms?.();
+            }}
+          >
+            Farms
+          </button>
         </div>
       ) : null}
 
-      {/* Classic 3-split: Search | Map | Property — equal height, bottoms aligned */}
-      <div className="grid gap-3 xl:h-[540px] xl:grid-cols-[280px_minmax(0,1fr)_340px] xl:items-stretch">
-        <section className="flex min-h-[420px] flex-col story-surface p-4 xl:min-h-0 xl:h-full">
+      {searchOpen ? (
+        <section
+          data-workspace-search
+          className="pointer-events-auto absolute top-14 left-2 z-40 w-[min(100%-1rem,22rem)] story-glass rounded-xl p-3 lg:left-2"
+        >
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
             <Search className="h-4 w-4 text-gold" />
             Search
@@ -1465,19 +1506,96 @@ export function PropertyIntelligenceView({
                 setAccessTrafficLoading(false);
               });
           }}
-          className="h-[420px] min-h-[400px] xl:h-full xl:min-h-0"
+          className="absolute inset-0 h-full w-full min-h-0"
         />
 
-        <section className="flex min-h-[420px] flex-col overflow-y-auto story-surface p-4 xl:h-full xl:min-h-0">
-          <h3 className="shrink-0 text-sm font-bold text-ink">Property record</h3>
+      {activeFrame?.boundary && !analysis ? (
+        <div
+          data-workspace-frame-toast
+          className="pointer-events-auto absolute top-[4.5rem] left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
+        >
+          <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
+            {WORKSPACE_COPY.frameReady}
+          </p>
+          <p className="mt-0.5 text-[12px] text-ink">{activeFrame.name}</p>
+          <button
+            type="button"
+            onClick={() => void runAreaAnalyze()}
+            disabled={analyzing}
+            className="mt-2 inline-flex h-8 items-center rounded-lg bg-navy px-3 text-[11px] font-bold text-gold disabled:opacity-50"
+          >
+            {analyzing ? "Analyzing…" : WORKSPACE_COPY.analyzeCta}
+          </button>
+        </div>
+      ) : null}
+
+      <ShiIntelligenceSheet
+        snap={sheetSnap}
+        onSnap={setSheetSnap}
+        context={sheetCtx}
+        header={
+          <div>
+            <ShiResearchModeBanner
+              mode={researchMode}
+              onChangeMode={() => onChangeResearchMode?.()}
+            />
+            <p className="mt-1 font-serif text-lg font-bold text-ink">
+              {sheetCtx === "property"
+                ? "Property review"
+                : sheetCtx === "analysis"
+                  ? RESEARCH_MODES[researchMode].reviewLabel
+                  : sheetCtx === "frame"
+                    ? "Area study"
+                    : RESEARCH_MODES[researchMode].displayName}
+            </p>
+            <p className="text-[11px] text-[var(--muted)]">
+              {sheetCtx === "idle"
+                ? WORKSPACE_COPY.idleTitle
+                : sheetCtx === "property"
+                  ? selected?.situsAddress ||
+                    selected?.legalDescription ||
+                    `CAD #${selected?.propId}`
+                  : sheetCtx === "analysis"
+                    ? strongestNote ||
+                      (analysis
+                        ? `${analysis.parcelCount.toLocaleString("en-US")} parcels in this area`
+                        : "")
+                    : sheetCtx === "frame"
+                      ? activeFrame?.name ?? "Drawn area"
+                      : "Ask Archie"}
+            </p>
+          </div>
+        }
+      >
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
           ) : !selected ? (
-            <p className="mt-6 text-sm text-[var(--muted)]">
-              Select a search result or click a parcel on the map.
-            </p>
+            <div data-workspace-idle className="space-y-3">
+              <p className="text-sm text-[var(--muted)]">
+                {WORKSPACE_COPY.idleBody}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg border border-gold/40 px-3 py-1.5 font-mono text-[10px] font-bold text-gold uppercase"
+                  onClick={() => {
+                    setSearchOpen(true);
+                    setSheetSnap("half");
+                  }}
+                >
+                  Search
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg border border-gold/40 px-3 py-1.5 font-mono text-[10px] font-bold text-gold uppercase"
+                  onClick={() => onOpenVault?.()}
+                >
+                  Open study
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="mt-3 space-y-4">
               <div>
@@ -1880,8 +1998,6 @@ export function PropertyIntelligenceView({
               </div>
             </div>
           )}
-        </section>
-      </div>
 
       <ShiCountyChangeFeed
         source={source}
@@ -1966,6 +2082,7 @@ export function PropertyIntelligenceView({
         onOpenVault={() => onOpenVault?.()}
         onOpenFarms={() => onOpenFarms?.()}
       />
+      </ShiIntelligenceSheet>
     </div>
   );
 }
