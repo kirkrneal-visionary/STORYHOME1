@@ -84,10 +84,9 @@ const MF_CHIPS: ResearchModeChip[] = [
   { id: "review", label: "Site review", action: "site_review" },
   { id: "parcel", label: "This parcel", ask: "parcel_traffic" },
   { id: "large", label: "Large sites", action: "site_review" },
-  { id: "growth", label: "Growth", ask: "corridor_growth" },
   { id: "utilities", label: "Utilities", ask: "utilities_ccn" },
-  { id: "access", label: "Access", ask: "parcel_confidence" },
   { id: "flood", label: "Flood", ask: "flood_zone" },
+  { id: "access", label: "Access", ask: "parcel_confidence" },
   { id: "compare", label: "Compare", action: "compare" },
   { id: "confidence", label: "Data confidence", ask: "parcel_confidence" },
 ];
@@ -173,16 +172,17 @@ export const RESEARCH_MODES: Record<ResearchModeId, ResearchModeConfig> = {
     id: "multifamily",
     displayName: "Multifamily",
     description:
-      "Study land through the factors that matter for housing development — scale, surrounding households, growth, access, utilities, and development context.",
-    subtext: "Scale, access, utilities, flood, and development context.",
-    marketingTitle: "Study the ground behind the doors.",
+      "Find land worth a closer look for apartments and build-to-rent.",
+    subtext:
+      "Find land worth a closer look for apartments and build-to-rent.",
+    marketingTitle: "Find the ground behind the doors.",
     marketingBody:
-      "Research land, growth, access, utilities, and development context in one workspace. Archie helps identify sites worth deeper multifamily investigation without pretending zoning, density, or feasibility has already been proven.",
+      "Study land, mapped flood zones, utilities, roads and local housing conditions before taking a site further. Archie does not estimate units from acreage and does not call land buildable.",
     cta: "Research Multifamily",
     enabled: true,
     reviewLabel: "Multifamily site review",
     reviewCta: "Multifamily site review",
-    tone: "Acreage, access, utilities, and flood — not a permitted unit count.",
+    tone: "Evidence groups — not a score, not a unit count, not an approval.",
     chips: MF_CHIPS,
     compareRowIds: [
       "acreage",

@@ -1094,6 +1094,33 @@ export const SHI_WAVES: ShiWave[] = [
       "Zoning / density / utility capacity claims",
     ],
   },
+  {
+    id: "ARCHIE-MULTIFAMILY",
+    name: "Multifamily tile — data foundation + honest research lens",
+    goal: "Purpose-built multifamily site research over the same parcel truth. Expose only evidence that passes the seven-county test. No acreage×density unit promises.",
+    status: "current",
+    frontend: [
+      "Multifamily tile copy — find land worth a closer look",
+      "Landing: FIND THE GROUND BEHIND THE DOORS — only wired layers named",
+      "Property Multifamily read — land, utilities, housing context, conceptual fit",
+      "Site review evidence groups — not a 0–100 score",
+      "No topography, unit study, apartment inventory, or usable-land numbers",
+    ],
+    backend: [
+      "MULTIFAMILY_DATA_AUDIT.md — prove coverage before advertising",
+      "ACS 5-year housing clip for launch 7 (tract · 2019–2023)",
+      "multifamily-v1 flags · usable-land engine returns insufficient",
+      "Scenario engine — worth studying / limited / insufficient — no units",
+      "GET /api/shi/multifamily/parcel · POST /api/shi/multifamily/review",
+      "Armor test:multifamily · seven-county harness",
+    ],
+    outOfScope: [
+      "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
+      "USGS 3DEP ingest · FEMA parcel-overlap acres · NWI overlap acres",
+      "Apartment inventory · insurance premiums · rents / NOI / cap rates",
+      "Zoning / density / utility capacity · fake demand scores",
+    ],
+  },
 ];
 
 /** Current product line — Archie Neighbors N1. */

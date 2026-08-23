@@ -15,6 +15,7 @@ import {
   type ResearchAccessDeskTab,
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
 import { ShiResearchModeBanner } from "@/components/broker/intelligence/ShiResearchModeBanner";
+import { ShiMultifamilyRead } from "@/components/broker/intelligence/ShiMultifamilyRead";
 import { ShiArchieIntelligencePanel } from "@/components/broker/intelligence/ShiArchieIntelligencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
@@ -55,6 +56,8 @@ import {
   shiCorridorsParcelLocation,
   shiAttachPositionToRankedSites,
   shiCorridorsStrongestSites,
+  shiMultifamilyParcel,
+  shiMultifamilyReview,
   shiParcelNeighbors,
   shiListFolders,
   shiOwnerMatches,
@@ -92,6 +95,8 @@ import {
   modeReviewFromRankedFacts,
   type ModeReviewResult,
 } from "@/lib/shi/research-mode-reason";
+import type { MultifamilyRead } from "@/lib/shi/multifamily-read";
+import type { MultifamilyReviewResult } from "@/lib/shi/multifamily-review";
 import {
   comparePropertySites,
   toggleCompareSite,
@@ -195,6 +200,8 @@ export function PropertyIntelligenceView({
     Record<string, ParcelPositionRecord | null>
   >({});
   const [modeReview, setModeReview] = useState<ModeReviewResult | null>(null);
+  const [mfReview, setMfReview] = useState<MultifamilyReviewResult | null>(null);
+  const [mfRead, setMfRead] = useState<MultifamilyRead | null>(null);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -316,6 +323,7 @@ export function PropertyIntelligenceView({
           setSelected(null);
           setFloodFact(null);
           setUtilitiesFact(null);
+          setMfRead(null);
           setEnvironmentDesk(null);
           setDeedsFact(null);
           setAccessIntel(null);
@@ -329,6 +337,7 @@ export function PropertyIntelligenceView({
         setSelected(property);
         setFloodFact(null);
         setUtilitiesFact(null);
+        setMfRead(null);
         setEnvironmentDesk(null);
         setDeedsFact(null);
         setAccessIntel(null);
@@ -370,6 +379,20 @@ export function PropertyIntelligenceView({
             .catch(() => {
               setUtilitiesFact(null);
             });
+          if (researchMode === "multifamily") {
+            void shiMultifamilyParcel({
+              propId: property.propId,
+              source: property.source,
+              countyFips: fips,
+              lat,
+              lng,
+              acres: property.legalAcreage,
+              address: property.situsAddress,
+              ownerName: property.ownerName,
+            })
+              .then((body) => setMfRead(body.read))
+              .catch(() => setMfRead(null));
+          }
           void shiEnvironmentAtPoint({ countyFips: fips, lat, lng })
             .then((body) => {
               setEnvironmentDesk(body.environment ?? null);
@@ -439,7 +462,7 @@ export function PropertyIntelligenceView({
         setLoadingProperty(false);
       }
     },
-    [loadMatches, refreshFolders],
+    [loadMatches, refreshFolders, researchMode],
   );
 
   const openFromMap = useCallback(
@@ -1081,13 +1104,36 @@ export function PropertyIntelligenceView({
         .filter((s): s is RankedSite => Boolean(s));
       setRankedSites(ordered);
       setModeReview(review);
-      setStrongestNote(
-        ordered.length
-          ? review.excludedWhy ||
-              review.tieNote ||
-              `${review.reviewLabel}: ${ordered.length} of ${body.parcelCount.toLocaleString("en-US")} parcels have enough evidence for this question.`
-          : review.excludedWhy || "Not enough evidence to review sites in this outline.",
-      );
+      if (researchMode === "multifamily" && activeFrame?.boundary) {
+        try {
+          const mf = await shiMultifamilyReview({
+            countyFips: launchFips,
+            boundary: activeFrame.boundary,
+          });
+          setMfReview(mf.review);
+          setStrongestNote(
+            `${mf.review.parcelsReviewed.toLocaleString("en-US")} parcels reviewed. ${mf.review.closerStudyCount.toLocaleString("en-US")} have enough land and evidence for closer study.`,
+          );
+        } catch {
+          setMfReview(null);
+          setStrongestNote(
+            ordered.length
+              ? review.excludedWhy ||
+                  review.tieNote ||
+                  `${review.reviewLabel}: ${ordered.length} of ${body.parcelCount.toLocaleString("en-US")} parcels have enough evidence for this question.`
+              : review.excludedWhy || "Not enough evidence to review sites in this outline.",
+          );
+        }
+      } else {
+        setMfReview(null);
+        setStrongestNote(
+          ordered.length
+            ? review.excludedWhy ||
+                review.tieNote ||
+                `${review.reviewLabel}: ${ordered.length} of ${body.parcelCount.toLocaleString("en-US")} parcels have enough evidence for this question.`
+            : review.excludedWhy || "Not enough evidence to review sites in this outline.",
+        );
+      }
       setAccessDeskTab("sites");
       void ensureAccessStations();
     } catch (e) {
@@ -1185,6 +1231,7 @@ export function PropertyIntelligenceView({
       .map((item) => rankedSites.find((s) => s.propId === item.propId))
       .filter((s): s is RankedSite => Boolean(s));
     setModeReview(review);
+    if (researchMode !== "multifamily") setMfReview(null);
     if (ordered.length && ordered.map((s) => s.propId).join() !== rankedSites.map((s) => s.propId).join()) {
       setRankedSites(ordered);
     }
@@ -1506,6 +1553,10 @@ export function PropertyIntelligenceView({
                   );
                 }}
               />
+
+              {researchMode === "multifamily" ? (
+                <ShiMultifamilyRead read={mfRead} />
+              ) : null}
 
               {selected.countyFips &&
               isLaunchCorridorFips(selected.countyFips) ? (
@@ -1858,6 +1909,7 @@ export function PropertyIntelligenceView({
           }}
           researchMode={researchMode}
           modeReview={modeReview}
+          mfReview={mfReview}
           onChip={onModeChip}
         />
       ) : null}

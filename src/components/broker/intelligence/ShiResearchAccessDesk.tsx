@@ -13,6 +13,7 @@ import type { PropertyCompareResult } from "@/lib/shi/corridor-property-compare"
 import { PROPERTY_COMPARE_MAX } from "@/lib/shi/corridor-property-compare";
 import type { ResearchModeChip } from "@/lib/shi/research-modes";
 import { RESEARCH_MODES, type ResearchModeId } from "@/lib/shi/research-modes";
+import type { MultifamilyReviewResult } from "@/lib/shi/multifamily-review";
 import type { ModeReviewResult } from "@/lib/shi/research-mode-reason";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export function ShiResearchAccessDesk({
   onClearCompare,
   researchMode = "general",
   modeReview = null,
+  mfReview = null,
   onChip,
   className,
 }: {
@@ -56,6 +58,7 @@ export function ShiResearchAccessDesk({
   onClearCompare: () => void;
   researchMode?: ResearchModeId;
   modeReview?: ModeReviewResult | null;
+  mfReview?: MultifamilyReviewResult | null;
   onChip?: (chip: ResearchModeChip) => void;
   className?: string;
 }) {
@@ -141,6 +144,40 @@ export function ShiResearchAccessDesk({
               >
                 {modeReview.excludedWhy}
               </p>
+            ) : null}
+            {mfReview ? (
+              <div
+                className="space-y-2 rounded-lg border border-gold/30 bg-gold/5 px-3 py-2"
+                data-mf-site-review
+              >
+                <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
+                  Multifamily site review
+                </p>
+                <p className="text-[12px] text-ink">
+                  {mfReview.parcelsReviewed.toLocaleString("en-US")} parcels
+                  reviewed. {mfReview.closerStudyCount.toLocaleString("en-US")} have
+                  enough land and evidence for closer study.
+                </p>
+                <ul className="space-y-1.5">
+                  {mfReview.groups.map((g) => (
+                    <li key={g.id} data-mf-group={g.id}>
+                      <p className="text-[11px] font-semibold text-ink">
+                        {g.label} · {g.propIds.length}
+                      </p>
+                      <p className="text-[10px] text-[var(--muted)]">{g.helper}</p>
+                    </li>
+                  ))}
+                </ul>
+                {mfReview.missingGroups.map((g) => (
+                  <p
+                    key={g.id}
+                    className="text-[10px] text-[var(--muted)]"
+                    data-mf-group-missing={g.id}
+                  >
+                    {g.reason}
+                  </p>
+                ))}
+              </div>
             ) : null}
             {modeReview?.frame.notable.length ? (
               <p className="text-[11px] text-[var(--muted)]" data-mode-frame-summary>
