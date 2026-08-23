@@ -366,6 +366,7 @@ export async function saveMarketFrame(
     mapZoom?: number;
     thumbnailDataUrl?: string | null;
     frameId?: string;
+    researchMode?: string;
   },
 ): Promise<ShiSavedFrame> {
   const name = opts.name.trim();
@@ -503,7 +504,10 @@ export async function saveMarketFrame(
     {
       frame_id: frameId,
       owner_id: ownerId,
-      metrics: metricsOnly,
+      metrics: {
+        ...metricsOnly,
+        researchMode: opts.researchMode || "general",
+      },
       parcels: storedParcels,
       thumbnail_path: thumbnailPath,
       analyzed_at: new Date().toISOString(),

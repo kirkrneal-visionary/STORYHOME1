@@ -1070,6 +1070,30 @@ export const SHI_WAVES: ShiWave[] = [
       "Inferring driveway or TxDOT access approval",
     ],
   },
+  {
+    id: "ARCHIE-RESEARCH-MODES",
+    name: "Research Modes — one Archie, multiple professional lenses",
+    goal: "The user chooses what they are researching. Same facts. Different emphasis. No universal best property.",
+    status: "done",
+    frontend: [
+      "Glass Research Mode selector — What are you researching?",
+      "Mode banner + Change research mode without losing the map frame",
+      "Mode-specific Ask chips (no dead buttons) · Fuel / Land / Multifamily / Retail / Medical reviews",
+      "Energy REI Coming Soon — disabled, no fake energy intelligence",
+    ],
+    backend: [
+      "research-modes-v1 config · research-mode-reason-v1 sufficiency + review",
+      "Compare rows follow the mode · saved frames remember researchMode",
+      "Strongest Sites lens=mode does not sort by 0–100 commercial score",
+      "Armor test:research-modes · truth tests A–G",
+    ],
+    outOfScope: [
+      "Changing ARCHIE_CURRENT_WAVE (stays ARCHIE-NEIGHBORS)",
+      "Seven duplicate parcel tables or seven scoring engines",
+      "Energy REI datasets · interconnection · transmission capacity",
+      "Zoning / density / utility capacity claims",
+    ],
+  },
 ];
 
 /** Current product line — Archie Neighbors N1. */

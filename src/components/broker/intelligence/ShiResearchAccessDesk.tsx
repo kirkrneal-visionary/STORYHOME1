@@ -11,6 +11,9 @@ import {
 import { PARCEL_POSITION_COPY } from "@/lib/shi/parcel-position";
 import type { PropertyCompareResult } from "@/lib/shi/corridor-property-compare";
 import { PROPERTY_COMPARE_MAX } from "@/lib/shi/corridor-property-compare";
+import type { ResearchModeChip } from "@/lib/shi/research-modes";
+import { RESEARCH_MODES, type ResearchModeId } from "@/lib/shi/research-modes";
+import type { ModeReviewResult } from "@/lib/shi/research-mode-reason";
 import { cn } from "@/lib/utils";
 
 export type ResearchAccessDeskTab = "ask" | "sites" | "compare";
@@ -33,6 +36,9 @@ export function ShiResearchAccessDesk({
   comparePropIds,
   compare,
   onClearCompare,
+  researchMode = "general",
+  modeReview = null,
+  onChip,
   className,
 }: {
   tab: ResearchAccessDeskTab;
@@ -48,9 +54,14 @@ export function ShiResearchAccessDesk({
   comparePropIds: Set<string>;
   compare: PropertyCompareResult | null;
   onClearCompare: () => void;
+  researchMode?: ResearchModeId;
+  modeReview?: ModeReviewResult | null;
+  onChip?: (chip: ResearchModeChip) => void;
   className?: string;
 }) {
-  const sameHighwayNote = samePublishedTrafficNote(rankedSites);
+  const modeCfg = RESEARCH_MODES[researchMode];
+  const sameHighwayNote =
+    modeReview?.tieNote ?? samePublishedTrafficNote(rankedSites);
   const tabs: { id: ResearchAccessDeskTab; label: string }[] = [
     { id: "ask", label: "Ask" },
     { id: "sites", label: "Sites" },
@@ -69,8 +80,7 @@ export function ShiResearchAccessDesk({
             Access desk
           </p>
           <p className="mt-1 text-[11px] text-[var(--muted)]">
-            Traffic · frontage · strongest sites · compare — same facts as before,
-            inside Research.
+            {modeCfg.tone} Same facts — this mode changes what matters.
           </p>
         </div>
         <div className="flex flex-wrap gap-1" data-research-access-tabs>
@@ -92,15 +102,20 @@ export function ShiResearchAccessDesk({
 
       <div className="mt-4">
         {tab === "ask" ? (
-          <ShiCorridorsAskPanel answer={askAnswer} onAsk={onAsk} />
+          <ShiCorridorsAskPanel
+            answer={askAnswer}
+            onAsk={onAsk}
+            chips={modeCfg.chips}
+            onChip={onChip}
+          />
         ) : null}
 
         {tab === "sites" ? (
           <div className="space-y-3" data-research-access-sites>
             <p className="text-[11px] leading-snug text-[var(--muted)]">
-              Draw or select a market frame, then Find Strongest Sites. Lots on
-              the same highway can share one traffic number — frontage, a second
-              road, and acres are what differ.
+              Draw or select a market frame, then run {modeCfg.reviewLabel}.
+              Find Strongest Sites is this mode’s review — not a universal score.
+              Lots on the same highway can share one traffic number.
             </p>
             <button
               type="button"
@@ -109,7 +124,7 @@ export function ShiResearchAccessDesk({
               className="inline-flex h-9 items-center rounded-lg bg-navy px-3 text-xs font-bold text-gold disabled:opacity-40"
               data-research-find-strongest
             >
-              {strongestLoading ? "Ranking…" : "Find Strongest Sites"}
+              {strongestLoading ? "Reviewing…" : modeCfg.reviewCta}
             </button>
             {!hasActiveFrame ? (
               <p className="text-[11px] text-[var(--muted)]">
@@ -118,6 +133,25 @@ export function ShiResearchAccessDesk({
             ) : null}
             {strongestNote ? (
               <p className="text-[11px] text-[var(--muted)]">{strongestNote}</p>
+            ) : null}
+            {modeReview?.excludedWhy ? (
+              <p
+                className="rounded-lg border border-gold/30 bg-gold/5 px-3 py-2 text-[11px] text-ink"
+                data-mode-insufficient-evidence
+              >
+                {modeReview.excludedWhy}
+              </p>
+            ) : null}
+            {modeReview?.frame.notable.length ? (
+              <p className="text-[11px] text-[var(--muted)]" data-mode-frame-summary>
+                Study area: {modeReview.frame.parcelCount} parcels
+                {modeReview.frame.medianAcres != null
+                  ? ` · median ${modeReview.frame.medianAcres.toLocaleString("en-US", { maximumFractionDigits: 1 })} ac`
+                  : ""}
+                {modeReview.frame.notable.length
+                  ? ` · ${modeReview.frame.notable.join(" · ")}`
+                  : ""}
+              </p>
             ) : null}
             {rankedSites.length > 0 ? (
               <ul className="space-y-2" data-research-ranked-sites>
@@ -131,6 +165,9 @@ export function ShiResearchAccessDesk({
                 ) : null}
                 {rankedSites.map((site) => {
                   const inCompare = comparePropIds.has(site.propId);
+                  const review = modeReview?.items.find(
+                    (i) => i.propId === site.propId,
+                  );
                   return (
                     <li
                       key={site.propId}
@@ -138,16 +175,21 @@ export function ShiResearchAccessDesk({
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-ink">
-                          #{site.rank}{" "}
+                          {review?.rank != null ? `#${review.rank} ` : ""}
                           {site.situsAddress?.trim() ||
                             site.ownerName ||
                             `CAD #${site.propId}`}
                         </p>
+                        {review?.distinction ? (
+                          <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
+                            {review.distinction}
+                          </p>
+                        ) : null}
                         <p
                           className="text-[11px] text-ink"
                           data-site-position-facts
                         >
-                          {rankedSiteFactLine(site)}
+                          {review?.whySurfaced || rankedSiteFactLine(site)}
                         </p>
                         <p className="font-mono text-[10px] text-[var(--muted)]">
                           Access {PARCEL_POSITION_COPY.accessNotVerified.toLowerCase()}

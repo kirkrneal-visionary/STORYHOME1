@@ -28,6 +28,10 @@ import {
   type ParcelPositionRecord,
 } from "@/lib/shi/parcel-position";
 import { POSITION_CLASS_LABEL } from "@/lib/shi/parcel-position-profile";
+import {
+  RESEARCH_MODES,
+  type ResearchModeId,
+} from "@/lib/shi/research-modes";
 
 export const PROPERTY_COMPARE_RULE_VERSION =
   "corridor-property-compare-v1" as const;
@@ -335,6 +339,7 @@ function tradeoffSummary(cols: PropertyCompareColumn[]): string {
 export function comparePropertySites(
   sites: PropertyCompareSite[],
   stations: TrafficStation[],
+  mode?: ResearchModeId,
 ): PropertyCompareResult {
   const sliced = sites.slice(0, PROPERTY_COMPARE_MAX);
   const columns = sliced.map((s, i) => buildColumn(s, stations, i));
@@ -395,9 +400,22 @@ export function comparePropertySites(
     honesty: PROPERTY_COMPARE_HONESTY,
     ruleVersion: PROPERTY_COMPARE_RULE_VERSION,
     columns,
-    rows,
+    rows: mode ? filterCompareRowsForMode(mode, rows) : rows,
     summary: tradeoffSummary(columns),
   };
+}
+
+function filterCompareRowsForMode(
+  mode: ResearchModeId,
+  rows: PropertyCompareMetricRow[],
+): PropertyCompareMetricRow[] {
+  const ids = RESEARCH_MODES[mode].compareRowIds;
+  const picked = rows.filter((r) => ids.includes(r.id));
+  const readable = picked.map((r) => ({
+    ...r,
+    values: r.values.map((v) => (v === "—" ? "Not available" : v)),
+  }));
+  return readable.length ? readable : rows;
 }
 
 export function toggleCompareSite(

@@ -14,6 +14,7 @@ import {
   ShiResearchAccessDesk,
   type ResearchAccessDeskTab,
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
+import { ShiResearchModeBanner } from "@/components/broker/intelligence/ShiResearchModeBanner";
 import { ShiArchieIntelligencePanel } from "@/components/broker/intelligence/ShiArchieIntelligencePanel";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
 import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
@@ -82,6 +83,16 @@ import {
 } from "@/lib/shi/parcel-position-objective";
 import type { RankedSite } from "@/lib/shi/corridor-exposure";
 import {
+  RESEARCH_MODES,
+  researchModeFromSaved,
+  type ResearchModeChip,
+  type ResearchModeId,
+} from "@/lib/shi/research-modes";
+import {
+  modeReviewFromRankedFacts,
+  type ModeReviewResult,
+} from "@/lib/shi/research-mode-reason";
+import {
   comparePropertySites,
   toggleCompareSite,
 } from "@/lib/shi/corridor-property-compare";
@@ -121,6 +132,9 @@ function acres(n: number | null | undefined) {
 }
 
 type ResearchProps = {
+  researchMode?: ResearchModeId;
+  onChangeResearchMode?: () => void;
+  onRestoreResearchMode?: (mode: ResearchModeId) => void;
   onOpenVault?: () => void;
   onOpenFarms?: () => void;
 };
@@ -130,6 +144,9 @@ type ResearchProps = {
  * Study Vault lives on its own submenu (not crammed here).
  */
 export function PropertyIntelligenceView({
+  researchMode = "general",
+  onChangeResearchMode,
+  onRestoreResearchMode,
   onOpenVault,
   onOpenFarms,
 }: ResearchProps = {}) {
@@ -177,6 +194,7 @@ export function PropertyIntelligenceView({
   const [comparePositionById, setComparePositionById] = useState<
     Record<string, ParcelPositionRecord | null>
   >({});
+  const [modeReview, setModeReview] = useState<ModeReviewResult | null>(null);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
   const [exactCount, setExactCount] = useState(0);
@@ -685,6 +703,7 @@ export function PropertyIntelligenceView({
         mapZoom: view?.zoom,
         thumbnailDataUrl: thumb,
         frameId: active.savedId,
+        researchMode,
       });
       const savedCounty =
         saved.snapshot?.metrics?.countySource || active.countySource;
@@ -849,6 +868,9 @@ export function PropertyIntelligenceView({
         return;
       }
       openedFrameRef.current = frame.id;
+      onRestoreResearchMode?.(
+        researchModeFromSaved(frame.snapshot?.metrics?.researchMode),
+      );
       const fromMetrics = frame.snapshot?.metrics?.countySource;
       if (fromMetrics) {
         setSource(fromMetrics);
@@ -968,8 +990,9 @@ export function PropertyIntelligenceView({
         position: comparePositionById[pick.propId] ?? null,
       })),
       accessStations,
+      researchMode,
     );
-  }, [comparePicks, compareIntelById, comparePositionById, accessStations]);
+  }, [comparePicks, compareIntelById, comparePositionById, accessStations, researchMode]);
 
   const runAsk = useCallback(
     (q: string) => {
@@ -1037,34 +1060,48 @@ export function PropertyIntelligenceView({
       return;
     }
     setStrongestLoading(true);
-    setStrongestNote("Ranking parcels by commercial exposure…");
+    setStrongestNote(`Reviewing this study area for ${RESEARCH_MODES[researchMode].displayName}…`);
     try {
       const body = await shiCorridorsStrongestSites({
         countyFips: launchFips,
         boundary: activeFrame.boundary,
-        limit: 12,
+        limit: 24,
+        lens: "mode",
       });
       const sites = body.sites.length
         ? await shiAttachPositionToRankedSites(body.sites, launchFips)
         : body.sites;
-      setRankedSites(sites);
+      const review = modeReviewFromRankedFacts(researchMode, sites, {
+        parcelCount: body.parcelCount,
+        totalAcres: activeFrame.analysis?.totalAcres ?? null,
+        medianAcres: activeFrame.analysis?.medianAcres ?? null,
+      });
+      const ordered = review.items
+        .map((item) => sites.find((s) => s.propId === item.propId))
+        .filter((s): s is RankedSite => Boolean(s));
+      setRankedSites(ordered);
+      setModeReview(review);
       setStrongestNote(
-        sites.length
-          ? `Top ${sites.length} sites of ${body.parcelCount.toLocaleString("en-US")} parcels — same highway traffic can match; frontage and a second road are what differ.`
-          : "No parcels to rank in this outline.",
+        ordered.length
+          ? review.excludedWhy ||
+              review.tieNote ||
+              `${review.reviewLabel}: ${ordered.length} of ${body.parcelCount.toLocaleString("en-US")} parcels have enough evidence for this question.`
+          : review.excludedWhy || "Not enough evidence to review sites in this outline.",
       );
+      setAccessDeskTab("sites");
       void ensureAccessStations();
     } catch (e) {
       setRankedSites([]);
+      setModeReview(null);
       setStrongestNote(
         e instanceof Error
           ? e.message
-          : "Could not rank strongest sites for this area.",
+          : "Could not review sites for this area.",
       );
     } finally {
       setStrongestLoading(false);
     }
-  }, [activeFrame?.boundary, launchFips, ensureAccessStations]);
+  }, [activeFrame?.boundary, activeFrame?.analysis, launchFips, ensureAccessStations, researchMode]);
 
   const onToggleCompareFromSite = useCallback(
     (site: RankedSite) => {
@@ -1137,8 +1174,58 @@ export function PropertyIntelligenceView({
     [launchFips],
   );
 
+  useEffect(() => {
+    if (rankedSites.length === 0) return;
+    const review = modeReviewFromRankedFacts(researchMode, rankedSites, {
+      parcelCount: analysis?.parcelCount,
+      totalAcres: analysis?.totalAcres ?? null,
+      medianAcres: analysis?.medianAcres ?? null,
+    });
+    const ordered = review.items
+      .map((item) => rankedSites.find((s) => s.propId === item.propId))
+      .filter((s): s is RankedSite => Boolean(s));
+    setModeReview(review);
+    if (ordered.length && ordered.map((s) => s.propId).join() !== rankedSites.map((s) => s.propId).join()) {
+      setRankedSites(ordered);
+    }
+  }, [researchMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onModeChip = useCallback(
+    (chip: ResearchModeChip) => {
+      if (chip.action === "site_review") {
+        setAccessDeskTab("sites");
+        void findStrongestSites();
+        return;
+      }
+      if (chip.action === "compare") {
+        setAccessDeskTab("compare");
+        return;
+      }
+      if (chip.action === "similar") {
+        document.getElementById("archie-discover")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        return;
+      }
+      if (chip.action === "owner") {
+        document.getElementById("archie-owner-matches")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+        return;
+      }
+      if (chip.ask) runAsk(chip.ask);
+    },
+    [findStrongestSites, runAsk],
+  );
+
   return (
     <div className="space-y-3">
+      <ShiResearchModeBanner
+        mode={researchMode}
+        onChangeMode={() => onChangeResearchMode?.()}
+      />
       {freshness.length > 0 ? (
         <div className="flex gap-2 overflow-x-auto pb-1">
           {freshness.map((c) => (
@@ -1489,7 +1576,7 @@ export function PropertyIntelligenceView({
                 />
               </dl>
 
-              <div ref={ownerPortfolioRef}>
+              <div ref={ownerPortfolioRef} id="archie-owner-matches">
                 <h4 className="flex items-center gap-2 text-xs font-bold text-ink">
                   <Users className="h-3.5 w-3.5 text-gold" />
                   Owner portfolio
@@ -1769,6 +1856,9 @@ export function PropertyIntelligenceView({
             setCompareIntelById({});
             setComparePositionById({});
           }}
+          researchMode={researchMode}
+          modeReview={modeReview}
+          onChip={onModeChip}
         />
       ) : null}
 

@@ -16,6 +16,9 @@
 ### ARCHIE-NEIGHBORS · **N1 shipping**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
+### Research Modes · **shipping**
+Choose what you are researching. Same property facts. Different professional lens. No universal score. Energy REI stays Coming Soon.
+
 ### Parcel position · **P8 proof** · Compare facts
 A–E lock is armored: A/B/C share one highway fact, C is two roads not a sum, D is never “best,” E can surface when size matters. Built on the P2 engine and P3 profile. P4 worth a look · P5 objective look · P6 phone card · P7 context stay. Compare and Strongest Sites now use those parcel facts — same highway traffic can match; frontage, a second road, crossing, and acres are what differ. Access stays not verified. Find Strongest Sites stays.
 
@@ -43,6 +46,7 @@ Language · parcel select · frontage · exposure / Strongest Sites · property 
 - R2/CDN bucket setup for launch-7 tiles (**HOLD** — explore later)  
 
 ## Done (recent)
+- ARCHIE-RESEARCH-MODES — glass mode selector · mode-aware review + compare  
 - ARCHIE-POSITION Compare — position facts on Compare + Strongest Sites  
 - ARCHIE-POSITION P8 — A–E proof lock  
 - ARCHIE-POSITION P7 — surrounding context on the phone card  
