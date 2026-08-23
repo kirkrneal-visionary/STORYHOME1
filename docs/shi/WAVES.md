@@ -16,6 +16,12 @@
 ### ARCHIE-NEIGHBORS · **N1 shipping**
 Thin CAD polygon neighbors (touches / small buffer). Archie can say **same owner adjoining** from owned geom — not survey. Soft-fail empty. Launch 7 · Story Pro.
 
+### Research Workspace · **shipping**
+Map-first room after you pick a research mode. Search, property, and Archie live in a sheet over a persistent map.
+
+### Multifamily · **shipping foundation**
+Dedicated Multifamily lens over the same parcel truth. ACS housing context for all 7 counties. No usable-land numbers, unit counts, or apartment inventory until those datasets pass the seven-county test. See [`MULTIFAMILY_DATA_AUDIT.md`](./MULTIFAMILY_DATA_AUDIT.md).
+
 ### Research Modes · **shipping**
 Choose what you are researching. Same property facts. Different professional lens. No universal score. Energy REI stays Coming Soon.
 

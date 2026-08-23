@@ -9,7 +9,7 @@ import {
 } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Circle, Grid3x3, Hand, Layers, PenTool, Route, Square, X } from "lucide-react";
+import { Circle, Grid3x3, Hand, Layers, LocateFixed, PenTool, Route, Square, X } from "lucide-react";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
@@ -1415,6 +1415,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
+          className?.includes("h-full") && "!h-full min-h-0 xl:!h-full",
           className,
         )}
       >
@@ -1637,6 +1638,34 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             >
               <Layers className="h-3.5 w-3.5" />
               Layers
+            </button>
+            <button
+              type="button"
+              data-map-locate
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  setDrawWarn("This browser cannot share a location.");
+                  return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    mapRef.current?.flyTo({
+                      center: [pos.coords.longitude, pos.coords.latitude],
+                      zoom: Math.max(mapRef.current.getZoom(), 14),
+                      duration: 700,
+                    });
+                    setDrawWarn("");
+                  },
+                  () => {
+                    setDrawWarn("Could not read your location.");
+                  },
+                );
+              }}
+              className="story-map-tool"
+              title="Locate me"
+            >
+              <LocateFixed className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Locate</span>
             </button>
             {overlays.panelOpen ? (
               <CadOverlayControl

@@ -56,6 +56,9 @@
   --story-safe-top: calc(var(--story-header-h) + env(safe-area-inset-top, 0px));
   --story-bottom-clearance: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   --story-bottom-nav-h: 3.35rem;
+  --story-workspace-top: calc(
+    var(--story-safe-top) + var(--story-archie-ribbon-h)
+  );
 
   /* STORY-FEEL-WAVE-1 — material system */
   --radius-sm: 0.5rem;
@@ -659,5 +662,20 @@ html[data-header-state="minimal"] .story-living-mark {
   }
   .story-continuum-peek {
     opacity: 0 !important;
+  }
+}
+
+/* Research Workspace — map-first room */
+[data-research-workspace] {
+  position: fixed;
+  inset: var(--story-workspace-top) 0 var(--story-bottom-clearance) 0;
+  z-index: 20;
+  overflow: hidden;
+  background: var(--env-0);
+}
+@media (min-width: 1024px) {
+  [data-intelligence-sheet] {
+    height: auto !important;
+    max-height: none !important;
   }
 }

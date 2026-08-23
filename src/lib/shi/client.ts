@@ -680,3 +680,44 @@ export async function shiCorridorsAnalyze(opts: {
   });
   return body.analysis;
 }
+
+export async function shiMultifamilyParcel(opts: {
+  propId: string;
+  source: string;
+  countyFips: string;
+  lat: number;
+  lng: number;
+  acres?: number | null;
+  address?: string | null;
+  ownerName?: string | null;
+  frontageFt?: number | null;
+  primaryRoad?: string | null;
+  secondaryRoad?: string | null;
+}): Promise<{ read: import("@/lib/shi/multifamily-read").MultifamilyRead }> {
+  const params = new URLSearchParams();
+  params.set("propId", opts.propId);
+  params.set("source", opts.source);
+  params.set("countyFips", opts.countyFips);
+  params.set("lat", String(opts.lat));
+  params.set("lng", String(opts.lng));
+  if (opts.acres != null) params.set("acres", String(opts.acres));
+  if (opts.address) params.set("address", opts.address);
+  if (opts.ownerName) params.set("ownerName", opts.ownerName);
+  if (opts.frontageFt != null) params.set("frontageFt", String(opts.frontageFt));
+  if (opts.primaryRoad) params.set("primaryRoad", opts.primaryRoad);
+  if (opts.secondaryRoad) params.set("secondaryRoad", opts.secondaryRoad);
+  return shiFetch(`/api/shi/multifamily/parcel?${params.toString()}`);
+}
+
+export async function shiMultifamilyReview(opts: {
+  countyFips: string;
+  boundary: import("@/lib/geo").DrawnBoundary;
+}): Promise<{
+  review: import("@/lib/shi/multifamily-review").MultifamilyReviewResult;
+}> {
+  return shiFetch("/api/shi/multifamily/review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}

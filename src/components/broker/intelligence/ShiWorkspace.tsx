@@ -166,8 +166,12 @@ export function ShiWorkspace() {
 
   const copy = MODULE_COPY[section];
 
+  const inLiveWorkspace =
+    (section === "research" || section === "corridors") && !pickingMode;
+
   return (
-    <div className="space-y-5">
+    <div className={cn(!inLiveWorkspace && "space-y-5")}>
+      {!inLiveWorkspace ? (
       <header className="flex flex-wrap items-start gap-3">
         <div className="story-surface flex h-12 w-12 items-center justify-center overflow-hidden rounded-[18px]">
           <Image
@@ -189,6 +193,7 @@ export function ShiWorkspace() {
           </p>
         </div>
       </header>
+      ) : null}
 
       <div className="relative">
         {researchVisited ? (
