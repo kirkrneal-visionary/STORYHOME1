@@ -1452,7 +1452,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
-          className?.includes("h-full") && "!h-full min-h-0 xl:!h-full",
+          className?.includes("h-full") &&
+            "!h-full min-h-0 rounded-none border-0 shadow-none xl:!h-full",
           className,
         )}
       >

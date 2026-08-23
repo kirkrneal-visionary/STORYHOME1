@@ -727,23 +727,25 @@ html[data-map-expanded] [aria-label="Archie's Intelligence modules"] {
   opacity: 0;
   pointer-events: none;
 }
-/* Phone sheet: the map is the whole screen. No reserved header or dock. */
-html[data-research-live][data-workspace-layout="sheet"],
-html[data-research-live][data-workspace-layout="sheet"] body {
-  background: transparent;
+/* Phone: map is the screen. Bind to the workspace node so it cannot lose. */
+html[data-research-live] [data-research-workspace][data-workspace-layout="sheet"] {
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  z-index: 60;
+  background: #f8f4f0;
 }
-html[data-research-live][data-workspace-layout="sheet"] [data-research-workspace] {
-  top: 0;
-  bottom: 0;
-  z-index: 40;
-  background: transparent;
+html[data-research-live] [data-research-workspace][data-workspace-layout="sheet"] [data-shi-map],
+html[data-research-live] [data-research-workspace][data-workspace-layout="sheet"] [data-map-pane] {
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 html[data-research-live][data-workspace-layout="sheet"] .story-overlay-header,
 html[data-research-live][data-workspace-layout="sheet"] [aria-label="Archie's Intelligence modules"],
 html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  visibility: hidden;
+  display: none !important;
 }
 [data-research-workspace] [data-map-basemap],
 [data-research-workspace] [data-map-layers] {

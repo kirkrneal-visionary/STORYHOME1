@@ -105,7 +105,10 @@ assert.match(css, /flex-direction: column/);
 assert.match(css, /html\[data-research-live\] \.story-route-page/);
 assert.match(css, /will-change: auto/);
 assert.match(css, /data-workspace-layout="sheet"/);
+assert.match(css, /top: 0 !important/);
+assert.match(css, /border-radius: 0 !important/);
 assert.match(css, /story-bottom-dock/);
+assert.match(css, /display: none !important/);
 assert.match(view, /dataset.workspaceLayout/);
 assert.match(view, /data-workspace-stage/);
 
