@@ -171,10 +171,14 @@ export function ShiWorkspace() {
 
   useEffect(() => {
     const root = document.documentElement;
+    const theme = document.querySelector('meta[name="theme-color"]');
+    const prevTheme = theme?.getAttribute("content") ?? "#0b1220";
     if (inLiveWorkspace) root.dataset.researchLive = "true";
     else delete root.dataset.researchLive;
+    if (inLiveWorkspace) theme?.setAttribute("content", "#1a2118");
     return () => {
       delete root.dataset.researchLive;
+      theme?.setAttribute("content", prevTheme);
     };
   }, [inLiveWorkspace]);
 

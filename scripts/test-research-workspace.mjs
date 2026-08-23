@@ -31,7 +31,14 @@ assert.match(view, /data-map-pane/);
 assert.match(view, /ShiResearchPanelHost/);
 assert.match(view, /ShiWorkspaceBar/);
 assert.match(view, /data-workspace-search/);
+assert.match(view, /sheetCompact/);
+assert.match(view, /data-sheet-detail/);
 assert.match(view, /shiSearch/);
+assert.doesNotMatch(view, /Open study/);
+assert.doesNotMatch(
+  view,
+  /setSearchOpen\(\(v\) => !v\);\s*setSheetSnap\("expanded"\)/,
+);
 assert.match(view, /shiAnalyzeArea/);
 assert.match(view, /shiAddProspect/);
 assert.match(view, /ShiResearchAccessDesk/);
@@ -54,7 +61,9 @@ const bar = read(
 assert.match(bar, /data-workspace-bar/);
 assert.match(bar, /data-workspace-exit/);
 assert.match(bar, /data-map-expand-toggle/);
+assert.match(bar, /showExpand/);
 assert.match(bar, /Search property or area/);
+assert.match(bar, /h-11/);
 assert.match(bar, /absolute inset-x-0 top-0/);
 assert.doesNotMatch(bar, /border-b border-hairline bg-\[color-mix/);
 

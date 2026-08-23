@@ -16,6 +16,7 @@ export function ShiWorkspaceBar({
   searchOpen,
   expandedMap,
   onToggleExpandedMap,
+  showExpand = true,
 }: {
   mode: ResearchModeId;
   onExit: () => void;
@@ -24,6 +25,7 @@ export function ShiWorkspaceBar({
   searchOpen?: boolean;
   expandedMap?: boolean;
   onToggleExpandedMap?: () => void;
+  showExpand?: boolean;
 }) {
   const cfg = RESEARCH_MODES[mode];
   return (
@@ -44,14 +46,14 @@ export function ShiWorkspaceBar({
         onClick={onSearch}
         data-workspace-search-toggle
         className={cn(
-          "pointer-events-auto story-glass flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl px-3 text-left text-[12px] text-[var(--muted)]",
-          searchOpen && "border-gold/50",
+          "pointer-events-auto story-glass flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-gold/35 px-3.5 text-left text-[13px] text-ink",
+          searchOpen && "border-gold/70",
         )}
       >
-        <Search className="h-3.5 w-3.5 shrink-0 text-gold" />
+        <Search className="h-4 w-4 shrink-0 text-gold" />
         <span className="truncate">Search property or area</span>
       </button>
-      {onToggleExpandedMap ? (
+      {showExpand && onToggleExpandedMap ? (
         <button
           type="button"
           data-map-expand-toggle

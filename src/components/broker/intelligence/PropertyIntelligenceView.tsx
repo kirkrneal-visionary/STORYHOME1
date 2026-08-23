@@ -428,6 +428,7 @@ export function PropertyIntelligenceView({
           return;
         }
         setSelected(property);
+        setSearchOpen(false);
         setSheetSnap((s) => (s === "collapsed" || s === "peek" ? "expanded" : s));
         setFloodFact(null);
         setUtilitiesFact(null);
@@ -1370,107 +1371,17 @@ export function PropertyIntelligenceView({
     askOpen: accessDeskTab === "ask" && Boolean(askAnswer),
   });
 
-  const researchHeader = (
-          <div className="min-w-0">
-            <p className="truncate font-serif text-base font-bold text-ink">
-              {sheetCtx === "property"
-                ? "Property review"
-                : sheetCtx === "analysis"
-                  ? RESEARCH_MODES[researchMode].reviewLabel
-                  : sheetCtx === "frame"
-                    ? "Area study"
-                    : RESEARCH_MODES[researchMode].displayName}
-            </p>
-            <p className="truncate text-[11px] text-[var(--muted)]">
-              {sheetCtx === "idle"
-                ? WORKSPACE_COPY.idleTitle
-                : sheetCtx === "property"
-                  ? selected?.situsAddress ||
-                    selected?.legalDescription ||
-                    `CAD #${selected?.propId}`
-                  : sheetCtx === "analysis"
-                    ? strongestNote ||
-                      (analysis
-                        ? `${analysis.parcelCount.toLocaleString("en-US")} parcels in this area`
-                        : "")
-                    : sheetCtx === "frame"
-                      ? activeFrame?.name ?? "Drawn area"
-                      : "Ask Archie"}
-            </p>
-          </div>
-  );
+  const sheetCompact =
+    layout === "sheet" &&
+    (sheetSnap === "peek" || sheetSnap === "collapsed");
 
-  return (
-    <div
-      data-research-workspace={RESEARCH_WORKSPACE_VERSION}
-      data-workspace-layout={layout}
-      data-map-expanded={expandedMap ? "true" : "false"}
-    >
-      <div data-workspace-stage>
-      <div data-map-pane>
-      <ShiWorkspaceBar
-        mode={researchMode}
-        searchOpen={searchOpen}
-        expandedMap={expandedMap}
-        onToggleExpandedMap={() => setExpandedMap((v) => !v)}
-        onExit={() => {
-          setExpandedMap(false);
-          onChangeResearchMode?.();
-        }}
-        onSearch={() => {
-          setSearchOpen((v) => !v);
-          setSheetSnap("expanded");
-        }}
-        onMenu={() => setWorkspaceMenu((v) => !v)}
-      />
-      {workspaceMenu ? (
-        <div
-          data-workspace-menu-panel
-          className="pointer-events-auto absolute top-[3.65rem] right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
-        >
-          <button
-            type="button"
-            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
-            onClick={() => {
-              setWorkspaceMenu(false);
-              setExpandedMap(false);
-              onChangeResearchMode?.();
-            }}
-          >
-            Change research mode
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
-            onClick={() => {
-              setWorkspaceMenu(false);
-              onOpenVault?.();
-            }}
-          >
-            Study Vault
-          </button>
-          <button
-            type="button"
-            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
-            onClick={() => {
-              setWorkspaceMenu(false);
-              onOpenFarms?.();
-            }}
-          >
-            Farms
-          </button>
-        </div>
-      ) : null}
-      {searchOpen ? (
-        <section
-          data-workspace-search
-          className="pointer-events-auto absolute top-[4.75rem] left-2 z-40 w-[min(100%-1rem,22rem)] max-h-[min(70%,28rem)] overflow-y-auto story-glass rounded-xl p-3"
-        >
+  const researchSearch = (
+        <section data-workspace-search className="space-y-2">
           <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
             <Search className="h-4 w-4 text-gold" />
             Search
           </h3>
-          <form onSubmit={runSearch} className="mt-3 shrink-0 space-y-2">
+          <form onSubmit={runSearch} className="space-y-2">
             <label className="block text-[11px] font-semibold text-[var(--muted)]">
               County
               <select
@@ -1530,10 +1441,10 @@ export function PropertyIntelligenceView({
             <p className="mt-2 text-[11px] text-[var(--muted)]">{indexNote}</p>
           ) : null}
 
-          <ul className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
+          <ul className="mt-2 space-y-1">
             {results.length === 0 && !searching ? (
-              <li className="py-4 text-center text-xs text-[var(--muted)]">
-                Results appear here. Or click a parcel on the map.
+              <li className="py-2 text-center text-xs text-[var(--muted)]">
+                Results appear here. Or tap a parcel on the map.
               </li>
             ) : null}
             {results.map((r) => {
@@ -1577,8 +1488,100 @@ export function PropertyIntelligenceView({
             })}
           </ul>
         </section>
-      ) : null}
+  );
 
+  const researchHeader = (
+          <div className="min-w-0">
+            <p className="truncate font-serif text-base font-bold text-ink">
+              {sheetCtx === "property"
+                ? "Property review"
+                : sheetCtx === "analysis"
+                  ? RESEARCH_MODES[researchMode].reviewLabel
+                  : sheetCtx === "frame"
+                    ? "Area study"
+                    : RESEARCH_MODES[researchMode].displayName}
+            </p>
+            <p className="truncate text-[11px] text-[var(--muted)]">
+              {sheetCtx === "idle"
+                ? WORKSPACE_COPY.idleTitle
+                : sheetCtx === "property"
+                  ? selected?.situsAddress ||
+                    selected?.legalDescription ||
+                    `CAD #${selected?.propId}`
+                  : sheetCtx === "analysis"
+                    ? strongestNote ||
+                      (analysis
+                        ? `${analysis.parcelCount.toLocaleString("en-US")} parcels in this area`
+                        : "")
+                    : sheetCtx === "frame"
+                      ? activeFrame?.name ?? "Drawn area"
+                      : "Ask Archie"}
+            </p>
+          </div>
+  );
+
+  return (
+    <div
+      data-research-workspace={RESEARCH_WORKSPACE_VERSION}
+      data-workspace-layout={layout}
+      data-map-expanded={expandedMap ? "true" : "false"}
+    >
+      <div data-workspace-stage>
+      <div data-map-pane>
+      <ShiWorkspaceBar
+        mode={researchMode}
+        searchOpen={searchOpen}
+        expandedMap={expandedMap}
+        showExpand={layout === "drawer"}
+        onToggleExpandedMap={() => setExpandedMap((v) => !v)}
+        onExit={() => {
+          setExpandedMap(false);
+          onChangeResearchMode?.();
+        }}
+        onSearch={() => {
+          setSearchOpen((v) => !v);
+          setSheetSnap((s) => (s === "collapsed" ? "peek" : s));
+        }}
+        onMenu={() => setWorkspaceMenu((v) => !v)}
+      />
+      {workspaceMenu ? (
+        <div
+          data-workspace-menu-panel
+          className="pointer-events-auto absolute top-[3.65rem] right-2 z-40 w-56 space-y-1 rounded-xl story-glass p-2"
+        >
+          <button
+            type="button"
+            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
+            onClick={() => {
+              setWorkspaceMenu(false);
+              setExpandedMap(false);
+              onChangeResearchMode?.();
+            }}
+          >
+            Change research mode
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
+            onClick={() => {
+              setWorkspaceMenu(false);
+              onOpenVault?.();
+            }}
+          >
+            Study Vault
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-lg px-3 py-2 text-left text-[12px] text-ink hover:bg-white/5"
+            onClick={() => {
+              setWorkspaceMenu(false);
+              onOpenFarms?.();
+            }}
+          >
+            Farms
+          </button>
+        </div>
+      ) : null}
         <ShiResearchMap
           ref={mapRef}
           selected={selected}
@@ -1664,6 +1667,7 @@ export function PropertyIntelligenceView({
         context={sheetCtx}
         header={researchHeader}
       >
+          {searchOpen ? researchSearch : null}
           {loadingProperty ? (
             <div className="mt-8 flex justify-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -1681,25 +1685,6 @@ export function PropertyIntelligenceView({
                 {WORKSPACE_COPY.idleBody}
               </p>
               )}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg border border-gold/40 px-3 py-1.5 font-mono text-[10px] font-bold text-gold uppercase"
-                  onClick={() => {
-                    setSearchOpen(true);
-                    setSheetSnap("expanded");
-                  }}
-                >
-                  Search
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-gold/40 px-3 py-1.5 font-mono text-[10px] font-bold text-gold uppercase"
-                  onClick={() => onOpenVault?.()}
-                >
-                  Open study
-                </button>
-              </div>
             </div>
           ) : (
             <div className="mt-1 space-y-4">
@@ -1742,6 +1727,8 @@ export function PropertyIntelligenceView({
                 ) : null}
               </div>
 
+              {sheetCompact ? null : (
+              <div data-sheet-detail className="space-y-4">
               <ShiArchieIntelligencePanel
                 property={selected}
                 exactOwnerCount={exactCount}
@@ -2099,9 +2086,13 @@ export function PropertyIntelligenceView({
                   </div>
                 ) : null}
               </div>
+              </div>
+              )}
             </div>
           )}
 
+      {sheetCompact ? null : (
+      <div data-sheet-detail-more>
       <ShiCountyChangeFeed
         source={source}
         onOpenProperty={(opts) => void openProperty(opts)}
@@ -2185,6 +2176,8 @@ export function PropertyIntelligenceView({
         onOpenVault={() => onOpenVault?.()}
         onOpenFarms={() => onOpenFarms?.()}
       />
+      </div>
+      )}
       </ShiResearchPanelHost>
       </div>
     </div>

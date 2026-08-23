@@ -36,6 +36,9 @@ export const metadata: Metadata = {
   },
   description:
     "Every home has a story. East Texas real estate marketplace and professional network — built by a realtor, for realtors. Launching across Polk, Trinity, Angelina, Tyler, San Jacinto, Liberty, and Walker counties.",
+  appleWebApp: {
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {

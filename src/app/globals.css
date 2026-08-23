@@ -728,10 +728,15 @@ html[data-map-expanded] [aria-label="Archie's Intelligence modules"] {
   pointer-events: none;
 }
 /* Phone sheet: the map is the whole screen. No reserved header or dock. */
+html[data-research-live][data-workspace-layout="sheet"],
+html[data-research-live][data-workspace-layout="sheet"] body {
+  background: transparent;
+}
 html[data-research-live][data-workspace-layout="sheet"] [data-research-workspace] {
   top: 0;
   bottom: 0;
   z-index: 40;
+  background: transparent;
 }
 html[data-research-live][data-workspace-layout="sheet"] .story-overlay-header,
 html[data-research-live][data-workspace-layout="sheet"] [aria-label="Archie's Intelligence modules"],
@@ -742,11 +747,10 @@ html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
 }
 [data-research-workspace] [data-map-basemap],
 [data-research-workspace] [data-map-layers] {
-  top: 4.5rem;
+  top: 5.35rem;
 }
-[data-workspace-search],
 [data-workspace-frame-toast] {
-  top: 4.75rem;
+  top: 5.5rem;
 }
 [data-workspace-layout="sheet"] [data-map-draw-tools],
 [data-workspace-layout="sheet"] [data-map-hint] {
