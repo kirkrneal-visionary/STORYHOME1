@@ -55,7 +55,7 @@ export function parseResearchLidarProduct(
 export function researchLidarTileTemplate(
   product: ResearchLidarProduct,
 ): string {
-  return `/api/map/lidar/${product}/{z}/{x}/{y}.png`;
+  return `/api/map/lidar/{z}/{x}/{y}.png?p=${product}`;
 }
 
 export function researchLidarTileValid(

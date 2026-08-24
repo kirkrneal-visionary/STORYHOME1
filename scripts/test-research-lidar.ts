@@ -29,7 +29,8 @@ assert.equal(RESEARCH_LIDAR_LAYER_ID, "story-lidar-surface");
 assert.equal(RESEARCH_LIDAR_MAX_ZOOM, 16);
 assert.equal(parseResearchLidarProduct("ground"), "ground");
 assert.equal(parseResearchLidarProduct("canopy"), null);
-assert.match(researchLidarTileTemplate("slope"), /\/api\/map\/lidar\/slope\//);
+assert.match(researchLidarTileTemplate("slope"), /\/api\/map\/lidar\/\{z\}/);
+assert.match(researchLidarTileTemplate("slope"), /p=slope/);
 assert.match(RESEARCH_LIDAR_UPSTREAM, /3DEPElevation/);
 assert.equal(
   RESEARCH_LIDAR_RASTER_FUNCTION.ground,
@@ -58,11 +59,18 @@ assert.match(researchLidarIdentifyUrl(-95.55, 30.72), /identify/);
 
 const root = process.cwd();
 const tileRoute = readFileSync(
-  join(root, "src/app/api/map/lidar/[product]/[z]/[x]/[y]/route.ts"),
+  join(root, "src/app/api/map/lidar/[z]/[x]/[y]/route.ts"),
   "utf8",
 );
 assert.match(tileRoute, /getResearchLidarTile/);
 assert.match(tileRoute, /parseResearchLidarProduct/);
+assert.match(tileRoute, /\?p=ground\|slope\|aspect/);
+assert.throws(() =>
+  readFileSync(
+    join(root, "src/app/api/map/lidar/[product]/[z]/[x]/[y]/route.ts"),
+    "utf8",
+  ),
+);
 
 const readRoute = readFileSync(
   join(root, "src/app/api/map/lidar/read/route.ts"),
