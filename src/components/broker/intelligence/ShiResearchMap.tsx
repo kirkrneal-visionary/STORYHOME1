@@ -64,6 +64,11 @@ import type {
   TrafficStation,
 } from "@/lib/shi/corridors";
 import { cn } from "@/lib/utils";
+import {
+  applyResearchCamera,
+  RESEARCH_CAMERA_COPY,
+  type ResearchMapCamera,
+} from "@/lib/shi/research-map-camera";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -243,6 +248,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     >("idle");
     const [drawWarn, setDrawWarn] = useState("");
     const [boxDraftActive, setBoxDraftActive] = useState(false);
+    const [camera, setCamera] = useState<ResearchMapCamera>("2d");
     const overlays = useCadOverlays(mapRef, ready);
 
     useEffect(() => {
@@ -439,6 +445,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             2,
           ),
           maxZoom: MAP_PRECISION_MAX_ZOOM,
+          maxPitch: 75,
+          pitch: 0,
+          dragRotate: false,
+          pitchWithRotate: true,
+          touchPitch: false,
           transformRequest: mapLibreTransformRequest,
           // Required so Map Memory toDataURL is not a blank canvas.
           preserveDrawingBuffer: true,
@@ -455,7 +466,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       }
       mapRef.current = map;
       map.addControl(
-        new maplibregl.NavigationControl({ showCompass: false }),
+        new maplibregl.NavigationControl({ showCompass: true }),
         "bottom-right",
       );
 
@@ -905,6 +916,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       if (!map || !ready) return;
       setBaseLayerVisibility(map, base);
     }, [ready, base]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      applyResearchCamera(map, camera);
+    }, [ready, camera]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1695,6 +1712,37 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             data-map-layers
             className="pointer-events-auto absolute right-3 flex flex-col items-end gap-1.5"
           >
+            <div
+              data-map-camera
+              className="story-glass flex overflow-hidden rounded-lg p-0.5"
+              role="group"
+              aria-label="Map camera"
+            >
+              <button
+                type="button"
+                data-map-camera-2d
+                onClick={() => setCamera("2d")}
+                title={RESEARCH_CAMERA_COPY.flatTitle}
+                className={cn(
+                  "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                  camera === "2d" && "story-map-tool-active",
+                )}
+              >
+                {RESEARCH_CAMERA_COPY.flat}
+              </button>
+              <button
+                type="button"
+                data-map-camera-3d
+                onClick={() => setCamera("3d")}
+                title={`${RESEARCH_CAMERA_COPY.skyTitle} ${RESEARCH_CAMERA_COPY.honesty}`}
+                className={cn(
+                  "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                  camera === "3d" && "story-map-tool-active",
+                )}
+              >
+                {RESEARCH_CAMERA_COPY.sky}
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => setShowParcels((v) => !v)}
