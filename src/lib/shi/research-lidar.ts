@@ -4,6 +4,7 @@
  * Wave 1: the ground IS the map (high-contrast hillshade).
  * Wave 2: contours on that ground, slope/aspect as washes, tap for height.
  * Phase 2: cut the land (elevation slice), land strength, LiDAR over photos.
+ * 3D: same 3DEP heights as a mesh (all Texas). Elev stretches the hills.
  * Not live: DSM / canopy (needs point-cloud processing).
  * Not a survey. Not usable-acre math.
  *
@@ -34,10 +35,17 @@ export const RESEARCH_LIDAR_PIN_LAYER_ID = "shi-lidar-pin";
 export const RESEARCH_LIDAR_CUT_SOURCE_ID = "shi-lidar-cut";
 export const RESEARCH_LIDAR_CUT_LAYER_ID = "shi-lidar-cut";
 export const RESEARCH_LIDAR_CUT_PIN_LAYER_ID = "shi-lidar-cut-pin";
+export const RESEARCH_LIDAR_DEM_SOURCE_ID = "story-lidar-dem";
 export const RESEARCH_LIDAR_MAX_ZOOM = 16;
+export const RESEARCH_LIDAR_DEM_MAX_ZOOM = 14;
+export const RESEARCH_LIDAR_DEM_GEN = "d1";
 export const RESEARCH_LIDAR_PROFILE_SAMPLES = 32;
 export const RESEARCH_LIDAR_STRENGTH_DEFAULT = 0.96;
 export const RESEARCH_LIDAR_STRENGTH_HYBRID = 0.68;
+export const RESEARCH_LIDAR_ELEV_DEFAULT = 1.6;
+export const RESEARCH_LIDAR_ELEV_MIN = 0.3;
+export const RESEARCH_LIDAR_ELEV_MAX = 3.4;
+export const RESEARCH_LIDAR_PITCH = 58;
 
 export const RESEARCH_LIDAR_UPSTREAM =
   "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer";
@@ -63,6 +71,11 @@ export const RESEARCH_LIDAR_COPY = {
   },
   strength: "How hard the ground sits",
   hybrid: { short: "Photos", title: "Bare earth over aerial photos" },
+  threeD: {
+    short: "3D",
+    title: "Tilt the land. Heights from public lidar across Texas.",
+  },
+  elev: "How dramatic the hills sit",
   off: "Off",
   contours: { short: "Contours", title: "Lines from the 1-meter ground" },
   products: {
@@ -119,6 +132,10 @@ export function researchLidarTileTemplate(
   product: ResearchLidarProduct,
 ): string {
   return `/api/map/lidar/{z}/{x}/{y}.png?p=${product}`;
+}
+
+export function researchLidarDemTemplate(): string {
+  return "/api/map/lidar/dem/{z}/{x}/{y}.png";
 }
 
 export function researchLidarTileValid(
@@ -183,6 +200,45 @@ export function researchLidarUpstreamUrl(
     renderingRule: rule,
   });
   return `${RESEARCH_LIDAR_UPSTREAM}/exportImage?${q.toString()}`;
+}
+
+/** Raw 3DEP heights — no hillshade. All Texas. Encoded as Terrarium PNG. */
+export function researchLidarDemUpstreamUrl(
+  z: number,
+  x: number,
+  y: number,
+): string {
+  const [xmin, ymin, xmax, ymax] = researchLidarTileBbox3857(z, x, y);
+  const q = new URLSearchParams({
+    bbox: `${xmin},${ymin},${xmax},${ymax}`,
+    bboxSR: "3857",
+    imageSR: "3857",
+    size: "256,256",
+    format: "tiff",
+    pixelType: "F32",
+    f: "image",
+    interpolation: "RSP_BilinearInterpolation",
+  });
+  return `${RESEARCH_LIDAR_UPSTREAM}/exportImage?${q.toString()}`;
+}
+
+/** MapLibre Terrarium encoding. */
+export function metersToTerrariumRgb(
+  meters: number,
+): [number, number, number] {
+  const h = Math.max(0, Math.min(65535.999, meters + 32768));
+  const r = Math.min(255, Math.floor(h / 256));
+  const g = Math.min(255, Math.floor(h) % 256);
+  const b = Math.min(255, Math.floor((h - Math.floor(h)) * 256));
+  return [r, g, b];
+}
+
+export function terrariumRgbToMeters(
+  r: number,
+  g: number,
+  b: number,
+): number {
+  return r * 256 + g + b / 256 - 32768;
 }
 
 export function researchLidarGetSamplesUrl(
