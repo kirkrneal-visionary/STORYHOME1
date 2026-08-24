@@ -9,7 +9,7 @@
  * Safe for the browser. Tile fetch/cache lives in research-lidar-tiles.ts.
  */
 
-export const RESEARCH_LIDAR_TILE_GEN = "w2";
+export const RESEARCH_LIDAR_TILE_GEN = "w2c";
 
 export const RESEARCH_LIDAR_PRODUCTS = [
   "ground",
@@ -96,9 +96,9 @@ export function parseResearchLidarProduct(
 }
 
 export function researchLidarContourFunction(z: number): string {
-  if (z >= 14) return "Preset 5ft Contour Interval";
-  if (z >= 12) return "Preset 10ft Contour Interval";
-  return "Contour Smoothed 25";
+  if (z >= 14) return "Preset 2ft Contour Interval";
+  if (z >= 12) return "Preset 5ft Contour Interval";
+  return "Contour 25";
 }
 
 export function researchLidarTileTemplate(

@@ -18,7 +18,8 @@ export function styleResearchLidarTile(
     const data = png.data;
     for (let i = 0; i < data.length; i += 4) {
       const lum = (data[i]! + data[i + 1]! + data[i + 2]!) / 3;
-      if (lum < 22) {
+      // 3DEP contour presets draw near-black lines on black.
+      if (lum < 1) {
         data[i + 3] = 0;
         continue;
       }

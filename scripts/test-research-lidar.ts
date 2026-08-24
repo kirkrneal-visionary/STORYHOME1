@@ -36,7 +36,7 @@ assert.doesNotMatch(RESEARCH_LIDAR_COPY.title, /buildable acres/i);
 assert.equal(RESEARCH_LIDAR_SOURCE_ID, "story-lidar");
 assert.equal(RESEARCH_LIDAR_LAYER_ID, "story-lidar-surface");
 assert.equal(RESEARCH_LIDAR_MAX_ZOOM, 16);
-assert.equal(RESEARCH_LIDAR_TILE_GEN, "w2");
+assert.equal(RESEARCH_LIDAR_TILE_GEN, "w2c");
 assert.equal(parseResearchLidarProduct("ground"), "ground");
 assert.equal(parseResearchLidarProduct("contours"), "contours");
 assert.equal(parseResearchLidarProduct("canopy"), null);
@@ -46,8 +46,8 @@ assert.equal(
   RESEARCH_LIDAR_RASTER_FUNCTION.ground,
   "Hillshade Gray-Stretch",
 );
-assert.equal(researchLidarContourFunction(13), "Preset 10ft Contour Interval");
-assert.equal(researchLidarContourFunction(8), "Contour Smoothed 25");
+assert.equal(researchLidarContourFunction(13), "Preset 5ft Contour Interval");
+assert.equal(researchLidarContourFunction(8), "Contour 25");
 assert.equal(researchLidarLandBase("street"), "gray");
 assert.equal(researchLidarLandBase("satellite"), "satellite");
 
