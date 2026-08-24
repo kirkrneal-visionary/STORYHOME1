@@ -13,12 +13,14 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import {
+  RESEARCH_LIDAR_TILE_GEN,
   parseResearchLidarIdentifyMeters,
   researchLidarIdentifyUrl,
   researchLidarTileValid,
   researchLidarUpstreamUrl,
   type ResearchLidarProduct,
 } from "@/lib/shi/research-lidar";
+import { styleResearchLidarTile } from "@/lib/shi/research-lidar-style";
 
 const UA = "StoryHome-ResearchLiDAR/1.0 (+https://storyhome-1-eqmg.vercel.app)";
 
@@ -38,6 +40,7 @@ export function resolveResearchLidarTilePath(
   return join(
     lidarTilesRoot(),
     "lidar",
+    RESEARCH_LIDAR_TILE_GEN,
     product,
     String(z),
     String(x),
@@ -97,7 +100,8 @@ export async function getResearchLidarTile(
     lastStatus = res.status;
     if (res.status === 204 || res.status === 404) return null;
     if (res.ok) {
-      const body = Buffer.from(await res.arrayBuffer());
+      const raw = Buffer.from(await res.arrayBuffer());
+      const body = styleResearchLidarTile(product, raw);
       const cached = writeAtomic(path, body);
       return { body, contentType: "image/png", cached };
     }

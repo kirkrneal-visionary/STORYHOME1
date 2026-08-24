@@ -66,12 +66,17 @@ import type {
 } from "@/lib/shi/corridors";
 import { cn } from "@/lib/utils";
 import {
+  RESEARCH_LIDAR_CONTOURS_LAYER_ID,
   RESEARCH_LIDAR_COPY,
   RESEARCH_LIDAR_LAYER_ID,
-  RESEARCH_LIDAR_PRODUCTS,
-  RESEARCH_LIDAR_SOURCE_ID,
+  RESEARCH_LIDAR_PIN_LAYER_ID,
+  RESEARCH_LIDAR_PIN_SOURCE_ID,
+  RESEARCH_LIDAR_READS,
+  RESEARCH_LIDAR_READ_LAYER_ID,
+  RESEARCH_LIDAR_READ_SOURCE_ID,
+  researchLidarLandBase,
   researchLidarTileTemplate,
-  type ResearchLidarProduct,
+  type ResearchLidarReadId,
 } from "@/lib/shi/research-lidar";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -245,9 +250,14 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const [mapFailed, setMapFailed] = useState<string | null>(null);
     const [base, setBase] = useState<MapBaseLayer>("street");
     const [showParcels, setShowParcels] = useState(true);
-    const [lidarProduct, setLidarProduct] =
-      useState<ResearchLidarProduct | null>(null);
+    const [lidarOn, setLidarOn] = useState(false);
+    const [lidarContours, setLidarContours] = useState(true);
+    const [lidarRead, setLidarRead] = useState<ResearchLidarReadId | null>(
+      null,
+    );
     const [lidarElevFt, setLidarElevFt] = useState<number | null>(null);
+    const [lidarPinFt, setLidarPinFt] = useState<number | null>(null);
+    const baseBeforeLidarRef = useRef<MapBaseLayer | null>(null);
     const [tool, setTool] = useState<DrawTool>("pan");
     const [radiusMiles, setRadiusMiles] = useState(1);
     const [freehandHint, setFreehandHint] = useState<
@@ -816,6 +826,22 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             "circle-stroke-color": MAP_NAVY,
           },
         });
+        map.addSource(RESEARCH_LIDAR_PIN_SOURCE_ID, {
+          type: "geojson",
+          data: EMPTY_FC,
+        });
+        map.addLayer({
+          id: RESEARCH_LIDAR_PIN_LAYER_ID,
+          type: "circle",
+          source: RESEARCH_LIDAR_PIN_SOURCE_ID,
+          paint: {
+            "circle-radius": 6,
+            "circle-color": MAP_GOLD,
+            "circle-opacity": 0.95,
+            "circle-stroke-width": 2,
+            "circle-stroke-color": MAP_NAVY,
+          },
+        });
 
         map.on("click", "shi-frames-fill", (e) => {
           if (toolRef.current !== "pan") return;
@@ -931,58 +957,106 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const map = mapRef.current;
       if (!map || !ready) return;
       if (!map.getLayer(RESEARCH_LIDAR_LAYER_ID)) return;
-      const on = Boolean(lidarProduct);
       map.setLayoutProperty(
         RESEARCH_LIDAR_LAYER_ID,
         "visibility",
-        on ? "visible" : "none",
+        lidarOn ? "visible" : "none",
       );
-      if (!lidarProduct) return;
-      const src = map.getSource(RESEARCH_LIDAR_SOURCE_ID) as
-        | { setTiles?: (tiles: string[]) => void }
-        | undefined;
-      src?.setTiles?.([
-        absolutizeMapTileTemplate(researchLidarTileTemplate(lidarProduct)),
-      ]);
-    }, [ready, lidarProduct]);
+      if (map.getLayer(RESEARCH_LIDAR_CONTOURS_LAYER_ID)) {
+        map.setLayoutProperty(
+          RESEARCH_LIDAR_CONTOURS_LAYER_ID,
+          "visibility",
+          lidarOn && lidarContours ? "visible" : "none",
+        );
+      }
+      if (map.getLayer(RESEARCH_LIDAR_READ_LAYER_ID)) {
+        map.setLayoutProperty(
+          RESEARCH_LIDAR_READ_LAYER_ID,
+          "visibility",
+          lidarOn && lidarRead ? "visible" : "none",
+        );
+      }
+      if (lidarOn && lidarRead) {
+        const src = map.getSource(RESEARCH_LIDAR_READ_SOURCE_ID) as
+          | { setTiles?: (tiles: string[]) => void }
+          | undefined;
+        src?.setTiles?.([
+          absolutizeMapTileTemplate(researchLidarTileTemplate(lidarRead)),
+        ]);
+      }
+      if (!lidarOn) {
+        const pin = map.getSource(RESEARCH_LIDAR_PIN_SOURCE_ID) as
+          | maplibregl.GeoJSONSource
+          | undefined;
+        pin?.setData(EMPTY_FC);
+      }
+    }, [ready, lidarOn, lidarContours, lidarRead]);
 
     useEffect(() => {
       const map = mapRef.current;
-      if (!map || !ready || !lidarProduct) {
+      if (!map || !ready || !lidarOn) {
         setLidarElevFt(null);
+        setLidarPinFt(null);
         return;
       }
       let cancelled = false;
-      const read = async () => {
-        const c = map.getCenter();
+      const readAt = async (
+        lng: number,
+        lat: number,
+        pin: boolean,
+      ) => {
         try {
           const res = await fetch(
-            `/api/map/lidar/read?lat=${c.lat}&lng=${c.lng}`,
+            `/api/map/lidar/read?lat=${lat}&lng=${lng}`,
           );
           if (!res.ok) return;
           const json = (await res.json()) as { feet?: number };
-          if (!cancelled && typeof json.feet === "number") {
+          if (cancelled || typeof json.feet !== "number") return;
+          if (pin) {
+            setLidarPinFt(json.feet);
+            const src = map.getSource(RESEARCH_LIDAR_PIN_SOURCE_ID) as
+              | maplibregl.GeoJSONSource
+              | undefined;
+            src?.setData({
+              type: "FeatureCollection",
+              features: [
+                {
+                  type: "Feature",
+                  properties: {},
+                  geometry: { type: "Point", coordinates: [lng, lat] },
+                },
+              ],
+            });
+          } else {
             setLidarElevFt(json.feet);
           }
         } catch {
           /* identify optional */
         }
       };
-      void read();
+      const readCenter = () => {
+        const c = map.getCenter();
+        void readAt(c.lng, c.lat, false);
+      };
+      void readCenter();
       let t: number | undefined;
       const onMove = () => {
         if (t) window.clearTimeout(t);
-        t = window.setTimeout(() => {
-          void read();
-        }, 450);
+        t = window.setTimeout(readCenter, 450);
+      };
+      const onClick = (e: maplibregl.MapMouseEvent) => {
+        if (toolRef.current !== "pan") return;
+        void readAt(e.lngLat.lng, e.lngLat.lat, true);
       };
       map.on("moveend", onMove);
+      map.on("click", onClick);
       return () => {
         cancelled = true;
         if (t) window.clearTimeout(t);
         map.off("moveend", onMove);
+        map.off("click", onClick);
       };
-    }, [ready, lidarProduct]);
+    }, [ready, lidarOn]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1768,14 +1842,25 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               <button
                 type="button"
                 data-map-lidar-toggle
-                data-map-lidar-on={lidarProduct ? "yes" : "no"}
+                data-map-lidar-on={lidarOn ? "yes" : "no"}
                 title={RESEARCH_LIDAR_COPY.title}
-                onClick={() =>
-                  setLidarProduct((v) => (v ? null : "ground"))
-                }
+                onClick={() => {
+                  setLidarOn((on) => {
+                    if (on) {
+                      const prev = baseBeforeLidarRef.current;
+                      baseBeforeLidarRef.current = null;
+                      if (prev) setBase(prev);
+                      setLidarPinFt(null);
+                      return false;
+                    }
+                    baseBeforeLidarRef.current = base;
+                    setBase(researchLidarLandBase(base));
+                    return true;
+                  });
+                }}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
-                  lidarProduct
+                  lidarOn
                     ? "bg-navy text-gold"
                     : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
                 )}
@@ -1783,24 +1868,38 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 <Mountain className="h-3.5 w-3.5" />
                 {RESEARCH_LIDAR_COPY.label}
               </button>
-              {lidarProduct ? (
+              {lidarOn ? (
                 <>
+                  <button
+                    type="button"
+                    data-map-lidar-contours={lidarContours ? "yes" : "no"}
+                    title={RESEARCH_LIDAR_COPY.contours.title}
+                    onClick={() => setLidarContours((v) => !v)}
+                    className={cn(
+                      "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                      lidarContours && "story-map-tool-active",
+                    )}
+                  >
+                    {RESEARCH_LIDAR_COPY.contours.short}
+                  </button>
                   <div
                     data-map-lidar-products
                     className="story-glass flex overflow-hidden rounded-lg p-0.5"
                     role="group"
-                    aria-label="LiDAR product"
+                    aria-label="LiDAR wash"
                   >
-                    {RESEARCH_LIDAR_PRODUCTS.map((id) => (
+                    {RESEARCH_LIDAR_READS.map((id) => (
                       <button
                         key={id}
                         type="button"
                         data-map-lidar-product={id}
                         title={RESEARCH_LIDAR_COPY.products[id].title}
-                        onClick={() => setLidarProduct(id)}
+                        onClick={() =>
+                          setLidarRead((v) => (v === id ? null : id))
+                        }
                         className={cn(
                           "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                          lidarProduct === id && "story-map-tool-active",
+                          lidarRead === id && "story-map-tool-active",
                         )}
                       >
                         {RESEARCH_LIDAR_COPY.products[id].short}
@@ -1811,15 +1910,24 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     data-map-lidar-read
                     className="max-w-[11rem] rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1 text-right font-mono text-[10px] font-bold text-navy"
                   >
-                    {lidarElevFt != null
-                      ? `${lidarElevFt.toFixed(0)} ft ground`
-                      : RESEARCH_LIDAR_COPY.honesty}
+                    {lidarPinFt != null
+                      ? `${lidarPinFt.toFixed(0)} ft pin`
+                      : lidarElevFt != null
+                        ? `${lidarElevFt.toFixed(0)} ft ground`
+                        : RESEARCH_LIDAR_COPY.honesty}
                   </p>
                   <p
                     data-map-lidar-legend
                     className="max-w-[11rem] text-right font-mono text-[9px] font-semibold leading-snug text-navy/80"
                   >
-                    {RESEARCH_LIDAR_COPY.products[lidarProduct].legend}
+                    {lidarRead
+                      ? RESEARCH_LIDAR_COPY.products[lidarRead].legend
+                      : lidarContours
+                        ? RESEARCH_LIDAR_COPY.products.contours.legend
+                        : RESEARCH_LIDAR_COPY.products.ground.legend}
+                  </p>
+                  <p className="max-w-[11rem] text-right font-mono text-[9px] text-navy/70">
+                    {RESEARCH_LIDAR_COPY.tap}
                   </p>
                 </>
               ) : null}

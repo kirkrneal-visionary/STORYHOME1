@@ -1,28 +1,45 @@
 /**
  * Research LiDAR — Texas StratMap / USGS 3DEP bare-earth products.
  *
- * Live now: ground hillshade, slope, aspect, elevation at a point.
- * Not live: DSM / canopy height (needs point-cloud processing, not this service).
+ * Wave 1: the ground IS the map (high-contrast hillshade).
+ * Wave 2: contours on that ground, slope/aspect as washes, tap for height.
+ * Not live: DSM / canopy (needs point-cloud processing).
  * Not a survey. Not usable-acre math.
  *
  * Safe for the browser. Tile fetch/cache lives in research-lidar-tiles.ts.
  */
 
-export const RESEARCH_LIDAR_PRODUCTS = ["ground", "slope", "aspect"] as const;
+export const RESEARCH_LIDAR_TILE_GEN = "w2";
+
+export const RESEARCH_LIDAR_PRODUCTS = [
+  "ground",
+  "slope",
+  "aspect",
+  "contours",
+] as const;
 export type ResearchLidarProduct = (typeof RESEARCH_LIDAR_PRODUCTS)[number];
+
+export const RESEARCH_LIDAR_READS = ["slope", "aspect"] as const;
+export type ResearchLidarReadId = (typeof RESEARCH_LIDAR_READS)[number];
 
 export const RESEARCH_LIDAR_SOURCE_ID = "story-lidar";
 export const RESEARCH_LIDAR_LAYER_ID = "story-lidar-surface";
+export const RESEARCH_LIDAR_CONTOURS_SOURCE_ID = "story-lidar-contours";
+export const RESEARCH_LIDAR_CONTOURS_LAYER_ID = "story-lidar-contours";
+export const RESEARCH_LIDAR_READ_SOURCE_ID = "story-lidar-read";
+export const RESEARCH_LIDAR_READ_LAYER_ID = "story-lidar-read";
+export const RESEARCH_LIDAR_PIN_SOURCE_ID = "shi-lidar-pin";
+export const RESEARCH_LIDAR_PIN_LAYER_ID = "shi-lidar-pin";
 export const RESEARCH_LIDAR_MAX_ZOOM = 16;
 
 export const RESEARCH_LIDAR_UPSTREAM =
   "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer";
 
 export const RESEARCH_LIDAR_RASTER_FUNCTION: Record<
-  ResearchLidarProduct,
+  Exclude<ResearchLidarProduct, "contours">,
   string
 > = {
-  ground: "Hillshade Multidirectional",
+  ground: "Hillshade Gray-Stretch",
   slope: "Slope Map",
   aspect: "Aspect Map",
 };
@@ -31,7 +48,9 @@ export const RESEARCH_LIDAR_COPY = {
   label: "LiDAR",
   title: "Texas ground from public lidar. Not a survey.",
   honesty: "Public 3DEP / StratMap — not a survey.",
+  tap: "Tap the map for height",
   off: "Off",
+  contours: { short: "Contours", title: "Lines from the 1-meter ground" },
   products: {
     ground: {
       short: "Ground",
@@ -41,12 +60,17 @@ export const RESEARCH_LIDAR_COPY = {
     slope: {
       short: "Slope",
       title: "Steep vs flat",
-      legend: "Pale = flatter. Yellow = steeper.",
+      legend: "Gray = flatter. Yellow to red = steeper.",
     },
     aspect: {
       short: "Aspect",
       title: "Which way the ground faces",
       legend: "Color = which way the ground faces.",
+    },
+    contours: {
+      short: "Contours",
+      title: "Lines from the 1-meter ground",
+      legend: "Brown lines follow the bare earth.",
     },
   },
 } as const;
@@ -60,8 +84,21 @@ const METERS_TO_FEET = 3.280839895;
 export function parseResearchLidarProduct(
   raw: string | null | undefined,
 ): ResearchLidarProduct | null {
-  if (raw === "ground" || raw === "slope" || raw === "aspect") return raw;
+  if (
+    raw === "ground" ||
+    raw === "slope" ||
+    raw === "aspect" ||
+    raw === "contours"
+  ) {
+    return raw;
+  }
   return null;
+}
+
+export function researchLidarContourFunction(z: number): string {
+  if (z >= 14) return "Preset 5ft Contour Interval";
+  if (z >= 12) return "Preset 10ft Contour Interval";
+  return "Contour Smoothed 25";
 }
 
 export function researchLidarTileTemplate(
@@ -116,15 +153,17 @@ export function researchLidarUpstreamUrl(
   y: number,
 ): string {
   const [xmin, ymin, xmax, ymax] = researchLidarTileBbox3857(z, x, y);
-  const rule = JSON.stringify({
-    rasterFunction: RESEARCH_LIDAR_RASTER_FUNCTION[product],
-  });
+  const rasterFunction =
+    product === "contours"
+      ? researchLidarContourFunction(z)
+      : RESEARCH_LIDAR_RASTER_FUNCTION[product];
+  const rule = JSON.stringify({ rasterFunction });
   const q = new URLSearchParams({
     bbox: `${xmin},${ymin},${xmax},${ymax}`,
     bboxSR: "3857",
     imageSR: "3857",
     size: "256,256",
-    format: "png",
+    format: "png32",
     f: "image",
     interpolation: "RSP_BilinearInterpolation",
     renderingRule: rule,
@@ -159,6 +198,16 @@ export function parseResearchLidarIdentifyMeters(raw: unknown): number | null {
     return Number.isFinite(n) ? n : null;
   }
   return null;
+}
+
+/** When LiDAR is the land, competing relief basemaps step aside. */
+export function researchLidarLandBase<T extends string>(
+  current: T,
+): T | "gray" {
+  if (current === "street" || current === "topo" || current === "terrain") {
+    return "gray";
+  }
+  return current;
 }
 
 export type ResearchLidarRead = {
