@@ -15,6 +15,17 @@ import {
   streetsUseOwnedRaster,
   ownedStreetsTileTemplate,
 } from "@/lib/shi/launch7-map";
+import {
+  RESEARCH_LIDAR_ATTRIBUTION,
+  RESEARCH_LIDAR_CONTOURS_LAYER_ID,
+  RESEARCH_LIDAR_CONTOURS_SOURCE_ID,
+  RESEARCH_LIDAR_LAYER_ID,
+  RESEARCH_LIDAR_MAX_ZOOM,
+  RESEARCH_LIDAR_READ_LAYER_ID,
+  RESEARCH_LIDAR_READ_SOURCE_ID,
+  RESEARCH_LIDAR_SOURCE_ID,
+  researchLidarTileTemplate,
+} from "@/lib/shi/research-lidar";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -400,6 +411,29 @@ export function buildStoryMapStyle(): StyleSpecification {
         tileSize: 256,
         attribution: "Gray Canvas © Esri",
       },
+      [RESEARCH_LIDAR_SOURCE_ID]: {
+        type: "raster",
+        tiles: [absolutizeMapTileTemplate(researchLidarTileTemplate("ground"))],
+        tileSize: 256,
+        maxzoom: RESEARCH_LIDAR_MAX_ZOOM,
+        attribution: RESEARCH_LIDAR_ATTRIBUTION,
+      },
+      [RESEARCH_LIDAR_CONTOURS_SOURCE_ID]: {
+        type: "raster",
+        tiles: [
+          absolutizeMapTileTemplate(researchLidarTileTemplate("contours")),
+        ],
+        tileSize: 256,
+        maxzoom: RESEARCH_LIDAR_MAX_ZOOM,
+        attribution: RESEARCH_LIDAR_ATTRIBUTION,
+      },
+      [RESEARCH_LIDAR_READ_SOURCE_ID]: {
+        type: "raster",
+        tiles: [absolutizeMapTileTemplate(researchLidarTileTemplate("slope"))],
+        tileSize: 256,
+        maxzoom: RESEARCH_LIDAR_MAX_ZOOM,
+        attribution: RESEARCH_LIDAR_ATTRIBUTION,
+      },
     },
     layers: [
       ...fwLayers,
@@ -432,6 +466,42 @@ export function buildStoryMapStyle(): StyleSpecification {
         type: "raster",
         source: "labels",
         layout: { visibility: "none" },
+      },
+      {
+        id: RESEARCH_LIDAR_LAYER_ID,
+        type: "raster",
+        source: RESEARCH_LIDAR_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "raster-opacity": 0.96,
+          "raster-contrast": 0.22,
+          "raster-saturation": -0.28,
+          "raster-brightness-min": 0.06,
+          "raster-resampling": "linear",
+          "raster-fade-duration": 160,
+        },
+      },
+      {
+        id: RESEARCH_LIDAR_READ_LAYER_ID,
+        type: "raster",
+        source: RESEARCH_LIDAR_READ_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "raster-opacity": 0.42,
+          "raster-resampling": "linear",
+          "raster-fade-duration": 160,
+        },
+      },
+      {
+        id: RESEARCH_LIDAR_CONTOURS_LAYER_ID,
+        type: "raster",
+        source: RESEARCH_LIDAR_CONTOURS_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "raster-opacity": 0.9,
+          "raster-resampling": "linear",
+          "raster-fade-duration": 160,
+        },
       },
     ],
   };
