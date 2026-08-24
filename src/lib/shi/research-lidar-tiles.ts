@@ -85,16 +85,27 @@ export async function getResearchLidarTile(
     };
   }
 
-  const res = await fetch(researchLidarUpstreamUrl(product, z, x, y), {
-    headers: { "User-Agent": UA },
-  });
-  if (res.status === 204 || res.status === 404) return null;
-  if (!res.ok) {
-    throw new Error(`lidar upstream ${res.status}`);
+  const url = researchLidarUpstreamUrl(product, z, x, y);
+  let lastStatus = 0;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 600 * attempt));
+    }
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA },
+    });
+    lastStatus = res.status;
+    if (res.status === 204 || res.status === 404) return null;
+    if (res.ok) {
+      const body = Buffer.from(await res.arrayBuffer());
+      const cached = writeAtomic(path, body);
+      return { body, contentType: "image/png", cached };
+    }
+    if (res.status < 500) {
+      throw new Error(`lidar upstream ${res.status}`);
+    }
   }
-  const body = Buffer.from(await res.arrayBuffer());
-  const cached = writeAtomic(path, body);
-  return { body, contentType: "image/png", cached };
+  throw new Error(`lidar upstream ${lastStatus}`);
 }
 
 export async function readResearchLidarElevation(
