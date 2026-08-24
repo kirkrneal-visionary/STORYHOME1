@@ -178,7 +178,7 @@ assert.match(map, /data-map-lidar-elev/);
 assert.match(map, /data-map-view-height/);
 assert.match(map, /data-map-terrain-world/);
 assert.match(map, /setTerrain/);
-assert.match(map, /RESEARCH_TERRAIN_SKY/);
+assert.match(map, /researchTerrainSkyForPitch/);
 assert.doesNotMatch(map, /fog-ground-blend": 0\.25/);
 assert.match(map, /storyCameraEase/);
 assert.match(map, /lidarCutARef/);

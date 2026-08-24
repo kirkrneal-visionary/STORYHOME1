@@ -389,6 +389,25 @@ html[data-role="professional"] {
  * Active = Story navy + gold (Research OS blue).
  * Idle = paper/ink on glass — never navy-on-black.
  */
+/**
+ * 3D world air. MapLibre clears the canvas to transparent; this fills the
+ * gap between the terrain far edge and the native sky dome so the horizon
+ * is haze, not paper or a black void.
+ */
+.story-map-sky {
+  background: linear-gradient(
+    180deg,
+    #2f74c0 0%,
+    #3d86cf 22%,
+    #7eb4e0 48%,
+    #d5e6f5 74%,
+    #e8f2fb 100%
+  );
+}
+.story-map-sky .maplibregl-canvas {
+  background: transparent;
+}
+
 .story-map-tool {
   display: inline-flex;
   align-items: center;

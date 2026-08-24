@@ -25,10 +25,11 @@ export const RESEARCH_RELIEF_DEFAULT = 1;
 export const RESEARCH_VIEW_HEIGHT_DEFAULT = 0.42;
 
 export const RESEARCH_TERRAIN_PITCH_2D = 0;
-export const RESEARCH_TERRAIN_PITCH_3D = 52;
-export const RESEARCH_TERRAIN_PITCH_SITE = 48;
-export const RESEARCH_TERRAIN_PITCH_GROUND = 62;
-export const RESEARCH_TERRAIN_PITCH_OVERVIEW = 38;
+/** ≥60 so MapLibre terrain fog can meet the horizon. */
+export const RESEARCH_TERRAIN_PITCH_3D = 60;
+export const RESEARCH_TERRAIN_PITCH_SITE = 56;
+export const RESEARCH_TERRAIN_PITCH_GROUND = 66;
+export const RESEARCH_TERRAIN_PITCH_OVERVIEW = 48;
 
 export const RESEARCH_TERRAIN_CAMERA_MS = 980;
 
@@ -128,26 +129,40 @@ export function cameraPitchForPreset(
             ? RESEARCH_TERRAIN_PITCH_OVERVIEW
             : RESEARCH_TERRAIN_PITCH_3D;
   if (preset === "2d") return 0;
-  return Math.min(64, Math.max(22, base + viewHeightAdjust(viewHeight).pitchDelta));
+  return Math.min(68, Math.max(22, base + viewHeightAdjust(viewHeight).pitchDelta));
 }
 
-/** Native MapLibre sky — no CSS backdrop. Hidden in overhead 2D by pitch. */
-export const RESEARCH_TERRAIN_SKY: SkySpecification = {
-  "sky-color": "#5b8ec4",
-  "horizon-color": "#e4eef8",
-  "fog-color": "#d5e3f0",
-  "sky-horizon-blend": 0.86,
-  "horizon-fog-blend": 0.1,
-  "fog-ground-blend": 0,
-};
+export const RESEARCH_SKY_BLUE = "#3d86cf";
+export const RESEARCH_SKY_HAZE = "#e8f2fb";
+
+/**
+ * Native MapLibre sky. Pitch drives how much distant land fades into haze.
+ * Fog is invisible in MapLibre below ~60° — 3D presets sit at or above that.
+ */
+export function researchTerrainSkyForPitch(pitch: number): SkySpecification {
+  const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 60));
+  return {
+    "sky-color": RESEARCH_SKY_BLUE,
+    "horizon-color": RESEARCH_SKY_HAZE,
+    "fog-color": "#d5e6f5",
+    "sky-horizon-blend": 0.36 + lookingOut * 0.16,
+    "horizon-fog-blend": 0.2 + lookingOut * 0.22,
+    "fog-ground-blend": 0.06 + lookingOut * 0.12,
+    "atmosphere-blend": lookingOut,
+  };
+}
+
+export const RESEARCH_TERRAIN_SKY: SkySpecification =
+  researchTerrainSkyForPitch(RESEARCH_TERRAIN_PITCH_3D);
 
 export const RESEARCH_TERRAIN_SKY_OFF: SkySpecification = {
-  "sky-color": "#f7f4ec",
-  "horizon-color": "#f7f4ec",
-  "fog-color": "#f7f4ec",
-  "sky-horizon-blend": 1,
+  "sky-color": "transparent",
+  "horizon-color": "transparent",
+  "fog-color": "transparent",
+  "sky-horizon-blend": 0,
   "horizon-fog-blend": 0,
   "fog-ground-blend": 0,
+  "atmosphere-blend": 0,
 };
 
 export function isPhotoSkin(base: string): boolean {

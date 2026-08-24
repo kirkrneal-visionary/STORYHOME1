@@ -89,8 +89,8 @@ import {
 import {
   RESEARCH_TERRAIN_CAMERA_MS,
   RESEARCH_TERRAIN_COPY,
-  RESEARCH_TERRAIN_SKY,
   RESEARCH_TERRAIN_SKY_OFF,
+  researchTerrainSkyForPitch,
   RESEARCH_VIEW_HEIGHT_DEFAULT,
   RESEARCH_VIEW_SKINS,
   cameraPitchForPreset,
@@ -544,7 +544,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           // Required so Map Memory toDataURL is not a blank canvas.
           preserveDrawingBuffer: true,
           attributionControl: { compact: true },
-          maxPitch: 64,
+          maxPitch: 68,
           pitchWithRotate: true,
           fadeDuration: 180,
         });
@@ -1131,6 +1131,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               ),
             );
       const exaggeration = Math.min(lidarElev, reliefCapForTier(tier));
+      const paintSky = () => {
+        try {
+          map.setSky(researchTerrainSkyForPitch(map.getPitch()));
+        } catch {
+          /* sky optional while style loads */
+        }
+      };
       const apply = () => {
         try {
           if (on) {
@@ -1139,9 +1146,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               source: RESEARCH_LIDAR_DEM_SOURCE_ID,
               exaggeration,
             });
-            if (tier !== "low") {
-              map.setSky(RESEARCH_TERRAIN_SKY);
-            }
+            paintSky();
             map.touchPitch?.enable();
             map.dragRotate?.enable();
             const target = cameraPitchForPreset("3d", viewHeightRef.current);
@@ -1171,8 +1176,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       };
       apply();
       map.once("idle", apply);
+      if (on) {
+        map.on("pitch", paintSky);
+      }
       return () => {
         map.off("idle", apply);
+        map.off("pitch", paintSky);
       };
     }, [ready, lidar3d, lidarElev]);
 
@@ -1911,6 +1920,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-map-sovereignty={MAP_SOVEREIGNTY_VERSION}
         data-map-free-world="1"
         data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
+        data-map-sky={lidar3d ? "on" : "off"}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
           className?.includes("h-full") &&
@@ -1920,7 +1930,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       >
         <div
           ref={containerRef}
-          className="relative min-h-0 w-full flex-1 bg-[#f8f4f0] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none"
+          className={cn(
+            "relative min-h-0 w-full flex-1 [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none",
+            lidar3d ? "story-map-sky" : "bg-[#f8f4f0]",
+          )}
         />
 
         {mapFailed ? (

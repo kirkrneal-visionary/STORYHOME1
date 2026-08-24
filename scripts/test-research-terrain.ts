@@ -8,8 +8,10 @@ import {
   RESEARCH_TERRAIN_COPY,
   RESEARCH_TERRAIN_ENGINE,
   RESEARCH_TERRAIN_PITCH_3D,
+  RESEARCH_SKY_BLUE,
   RESEARCH_TERRAIN_SKY,
   RESEARCH_VIEW_SKINS,
+  researchTerrainSkyForPitch,
   archieTerrainRead,
   buildResearchParcelTerrainStats,
   cameraPitchForPreset,
@@ -39,8 +41,12 @@ assert.ok(cameraPitchForPreset("ground") > cameraPitchForPreset("overview"));
 assert.ok(Math.abs(storyCameraEase(0.5) - 0.5) < 0.02);
 assert.ok(storyCameraEase(0.2) < 0.2);
 assert.ok(storyCameraEase(0.8) > 0.8);
-assert.equal(RESEARCH_TERRAIN_SKY["fog-ground-blend"], 0);
-assert.ok((RESEARCH_TERRAIN_SKY["sky-horizon-blend"] as number) > 0.7);
+assert.equal(researchTerrainSkyForPitch(0)["atmosphere-blend"], 0);
+assert.ok((researchTerrainSkyForPitch(60)["atmosphere-blend"] as number) > 0.8);
+assert.ok((RESEARCH_TERRAIN_SKY["fog-ground-blend"] as number) > 0);
+assert.ok((RESEARCH_TERRAIN_SKY["fog-ground-blend"] as number) < 0.25);
+assert.ok((RESEARCH_TERRAIN_SKY["sky-horizon-blend"] as number) < 0.7);
+assert.equal(RESEARCH_SKY_BLUE, "#3d86cf");
 assert.equal(isPhotoSkin("satellite"), true);
 assert.equal(isPhotoSkin("street"), false);
 assert.equal(researchTerrainLandDefault("land_development"), "satellite");
@@ -113,10 +119,20 @@ const map = readFileSync(
 assert.match(map, /data-map-view-height/);
 assert.match(map, /data-map-relief/);
 assert.match(map, /data-map-parcel-terrain/);
+assert.match(map, /data-map-sky/);
+assert.match(map, /story-map-sky/);
+assert.match(map, /researchTerrainSkyForPitch/);
 assert.match(map, /researchMode/);
 assert.doesNotMatch(map, /How dramatic the hills sit/);
 assert.doesNotMatch(map, />Photos</);
-assert.match(readFileSync(join(root, "src/lib/shi/research-terrain.ts"), "utf8"), /"fog-ground-blend": 0/);
+assert.match(readFileSync(join(root, "src/lib/shi/research-terrain.ts"), "utf8"), /atmosphere-blend/);
+
+const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
+assert.match(style, /sky: RESEARCH_TERRAIN_SKY_OFF/);
+assert.match(
+  readFileSync(join(root, "src/app/globals.css"), "utf8"),
+  /story-map-sky/,
+);
 
 const demRoute = readFileSync(
   join(root, "src/app/api/map/lidar/dem/[z]/[x]/[y]/route.ts"),
