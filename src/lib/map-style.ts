@@ -15,6 +15,11 @@ import {
   streetsUseOwnedRaster,
   ownedStreetsTileTemplate,
 } from "@/lib/shi/launch7-map";
+import {
+  RESEARCH_DEM_SOURCE_ID,
+  RESEARCH_DEM_TILES,
+  RESEARCH_HILLSHADE_LAYER_ID,
+} from "@/lib/shi/research-map-camera";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -400,6 +405,14 @@ export function buildStoryMapStyle(): StyleSpecification {
         tileSize: 256,
         attribution: "Gray Canvas © Esri",
       },
+      [RESEARCH_DEM_SOURCE_ID]: {
+        type: "raster-dem",
+        tiles: [absolutizeMapTileTemplate(RESEARCH_DEM_TILES)],
+        tileSize: 256,
+        maxzoom: 15,
+        encoding: "terrarium",
+        attribution: "Elevation © Mapzen / AWS Terrain · USGS 3DEP",
+      },
     },
     layers: [
       ...fwLayers,
@@ -432,6 +445,18 @@ export function buildStoryMapStyle(): StyleSpecification {
         type: "raster",
         source: "labels",
         layout: { visibility: "none" },
+      },
+      {
+        id: RESEARCH_HILLSHADE_LAYER_ID,
+        type: "hillshade",
+        source: RESEARCH_DEM_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "hillshade-exaggeration": 0.42,
+          "hillshade-shadow-color": "#1a2118",
+          "hillshade-highlight-color": "#f7f4ec",
+          "hillshade-illumination-anchor": "viewport",
+        },
       },
     ],
   };

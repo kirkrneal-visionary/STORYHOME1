@@ -124,6 +124,10 @@ assert.match(css, /data-sheet-snap="peek"/);
 assert.match(css, /--sheet-h: 26vh/);
 assert.match(css, /calc\(100% - 7\.25rem\)/);
 assert.match(css, /\[data-intelligence-drawer\] \[data-sheet-body\]/);
+const style = read("src/lib/map-style.ts");
+assert.match(style, /RESEARCH_DEM_SOURCE_ID/);
+assert.match(style, /raster-dem/);
+assert.match(style, /hillshade/);
 assert.match(css, /overflow-x: hidden/);
 assert.doesNotMatch(css, /top: 5\.35rem/);
 assert.doesNotMatch(css, /5\.75rem/);
@@ -139,6 +143,11 @@ assert.match(map, /Layers/);
 assert.match(map, /data-map-locate/);
 assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
+assert.match(map, /data-map-camera/);
+assert.match(map, /data-map-camera-3d/);
+assert.match(map, /data-map-camera-mode=\{camera\}/);
+assert.match(map, /dataset.mapPitch/);
+assert.match(map, /applyResearchCamera/);
 assert.match(map, /data-map-bottom-chrome/);
 assert.match(map, /data-map-hint-kind/);
 assert.doesNotMatch(map, /top-\[4\.5rem\]/);
@@ -166,6 +175,15 @@ assert.match(pkg, /test:research-workspace/);
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(r.status, 0, `workspace-math\n${r.stdout}\n${r.stderr}`);
+}
+
+{
+  const r = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "scripts/test-research-map-camera.ts"],
+    { cwd: root, encoding: "utf8" },
+  );
+  assert.equal(r.status, 0, `research-map-camera\n${r.stdout}\n${r.stderr}`);
 }
 
 {
