@@ -15,6 +15,13 @@ import {
   streetsUseOwnedRaster,
   ownedStreetsTileTemplate,
 } from "@/lib/shi/launch7-map";
+import {
+  RESEARCH_LIDAR_ATTRIBUTION,
+  RESEARCH_LIDAR_LAYER_ID,
+  RESEARCH_LIDAR_MAX_ZOOM,
+  RESEARCH_LIDAR_SOURCE_ID,
+  RESEARCH_LIDAR_TILES,
+} from "@/lib/shi/research-lidar";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -400,6 +407,13 @@ export function buildStoryMapStyle(): StyleSpecification {
         tileSize: 256,
         attribution: "Gray Canvas © Esri",
       },
+      [RESEARCH_LIDAR_SOURCE_ID]: {
+        type: "raster",
+        tiles: [absolutizeMapTileTemplate(RESEARCH_LIDAR_TILES)],
+        tileSize: 256,
+        maxzoom: RESEARCH_LIDAR_MAX_ZOOM,
+        attribution: RESEARCH_LIDAR_ATTRIBUTION,
+      },
     },
     layers: [
       ...fwLayers,
@@ -432,6 +446,17 @@ export function buildStoryMapStyle(): StyleSpecification {
         type: "raster",
         source: "labels",
         layout: { visibility: "none" },
+      },
+      {
+        id: RESEARCH_LIDAR_LAYER_ID,
+        type: "raster",
+        source: RESEARCH_LIDAR_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "raster-opacity": 0.72,
+          "raster-resampling": "linear",
+          "raster-fade-duration": 180,
+        },
       },
     ],
   };

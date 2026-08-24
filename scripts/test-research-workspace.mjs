@@ -139,6 +139,7 @@ assert.match(map, /Layers/);
 assert.match(map, /data-map-locate/);
 assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
+assert.match(map, /data-map-lidar/);
 assert.match(map, /data-map-bottom-chrome/);
 assert.match(map, /data-map-hint-kind/);
 assert.doesNotMatch(map, /top-\[4\.5rem\]/);
@@ -166,6 +167,15 @@ assert.match(pkg, /test:research-workspace/);
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(r.status, 0, `workspace-math\n${r.stdout}\n${r.stderr}`);
+}
+
+{
+  const r = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "scripts/test-research-lidar.ts"],
+    { cwd: root, encoding: "utf8" },
+  );
+  assert.equal(r.status, 0, `research-lidar\n${r.stdout}\n${r.stderr}`);
 }
 
 {

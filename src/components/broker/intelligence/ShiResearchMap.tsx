@@ -9,7 +9,7 @@ import {
 } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Circle, Grid3x3, Hand, Layers, LocateFixed, PenTool, Route, Square, X } from "lucide-react";
+import { Circle, Grid3x3, Hand, Layers, LocateFixed, Mountain, PenTool, Route, Square, X } from "lucide-react";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
@@ -64,6 +64,10 @@ import type {
   TrafficStation,
 } from "@/lib/shi/corridors";
 import { cn } from "@/lib/utils";
+import {
+  RESEARCH_LIDAR_COPY,
+  RESEARCH_LIDAR_LAYER_ID,
+} from "@/lib/shi/research-lidar";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -236,6 +240,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const [mapFailed, setMapFailed] = useState<string | null>(null);
     const [base, setBase] = useState<MapBaseLayer>("street");
     const [showParcels, setShowParcels] = useState(true);
+    const [showLidar, setShowLidar] = useState(false);
     const [tool, setTool] = useState<DrawTool>("pan");
     const [radiusMiles, setRadiusMiles] = useState(1);
     const [freehandHint, setFreehandHint] = useState<
@@ -914,6 +919,17 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
       }
     }, [ready, showParcels]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      if (!map.getLayer(RESEARCH_LIDAR_LAYER_ID)) return;
+      map.setLayoutProperty(
+        RESEARCH_LIDAR_LAYER_ID,
+        "visibility",
+        showLidar ? "visible" : "none",
+      );
+    }, [ready, showLidar]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1695,6 +1711,22 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             data-map-layers
             className="pointer-events-auto absolute right-3 flex flex-col items-end gap-1.5"
           >
+            <button
+              type="button"
+              data-map-lidar
+              data-map-lidar-on={showLidar ? "yes" : "no"}
+              title={RESEARCH_LIDAR_COPY.title}
+              onClick={() => setShowLidar((v) => !v)}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
+                showLidar
+                  ? "bg-navy text-gold"
+                  : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
+              )}
+            >
+              <Mountain className="h-3.5 w-3.5" />
+              {RESEARCH_LIDAR_COPY.label}
+            </button>
             <button
               type="button"
               onClick={() => setShowParcels((v) => !v)}
