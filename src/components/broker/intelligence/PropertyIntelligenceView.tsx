@@ -1585,6 +1585,7 @@ export function PropertyIntelligenceView({
       ) : null}
         <ShiResearchMap
           ref={mapRef}
+          researchMode={researchMode}
           selected={selected}
           related={matches}
           initialView={savedMapView}

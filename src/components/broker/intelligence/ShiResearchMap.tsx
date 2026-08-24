@@ -18,7 +18,6 @@ import {
 } from "@/lib/geo";
 import {
   buildStoryMapStyle,
-  MAP_BASE_OPTIONS,
   MAP_GOLD,
   MAP_NAVY,
   MAP_SOVEREIGNTY_VERSION,
@@ -78,17 +77,32 @@ import {
   RESEARCH_LIDAR_LAYER_ID,
   RESEARCH_LIDAR_PIN_LAYER_ID,
   RESEARCH_LIDAR_PIN_SOURCE_ID,
-  RESEARCH_LIDAR_PITCH,
   RESEARCH_LIDAR_READS,
   RESEARCH_LIDAR_READ_LAYER_ID,
   RESEARCH_LIDAR_READ_SOURCE_ID,
   RESEARCH_LIDAR_STRENGTH_DEFAULT,
-  RESEARCH_LIDAR_STRENGTH_HYBRID,
   researchLidarCanvasBase,
   researchLidarTileTemplate,
   type ResearchLidarProfile,
   type ResearchLidarReadId,
 } from "@/lib/shi/research-lidar";
+import {
+  RESEARCH_TERRAIN_CAMERA_MS,
+  RESEARCH_TERRAIN_COPY,
+  RESEARCH_TERRAIN_SKY,
+  RESEARCH_TERRAIN_SKY_OFF,
+  RESEARCH_VIEW_HEIGHT_DEFAULT,
+  RESEARCH_VIEW_SKINS,
+  cameraPitchForPreset,
+  formatSlopeBandPct,
+  isPhotoSkin,
+  reliefCapForTier,
+  researchDeviceTier,
+  researchTerrainLandDefault,
+  storyCameraEase,
+  type ResearchParcelTerrainStats,
+} from "@/lib/shi/research-terrain";
+import type { ResearchModeId } from "@/lib/shi/research-modes";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -186,6 +200,7 @@ type ShiResearchMapProps = {
   accessSegments?: TrafficCorridorSegment[];
   accessStations?: TrafficStation[];
   accessTrafficLoading?: boolean;
+  researchMode?: ResearchModeId;
 };
 
 function circleRing(center: LatLng, radiusMiles: number, steps = 64): number[][] {
@@ -268,6 +283,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       accessSegments = [],
       accessStations = [],
       accessTrafficLoading = false,
+      researchMode = "general",
     },
     ref,
   ) {
@@ -285,8 +301,18 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
     const [ready, setReady] = useState(false);
     const [mapFailed, setMapFailed] = useState<string | null>(null);
-    const [base, setBase] = useState<MapBaseLayer>("street");
+    const [base, setBase] = useState<MapBaseLayer>(() =>
+      researchTerrainLandDefault(researchMode),
+    );
     const [showParcels, setShowParcels] = useState(true);
+    const [openGroup, setOpenGroup] = useState<"view" | "terrain" | "tools">(
+      "terrain",
+    );
+    const [viewHeight, setViewHeight] = useState(RESEARCH_VIEW_HEIGHT_DEFAULT);
+    const [parcelTerrain, setParcelTerrain] =
+      useState<ResearchParcelTerrainStats | null>(null);
+    const viewHeightRef = useRef(viewHeight);
+    viewHeightRef.current = viewHeight;
     const [lidarOn, setLidarOn] = useState(false);
     const [lidarContours, setLidarContours] = useState(true);
     const [lidarRead, setLidarRead] = useState<ResearchLidarReadId | null>(
@@ -459,6 +485,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             padding: { top: 72, bottom: 88, left: 72, right: 72 },
             maxZoom: 15,
             duration: 0,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
           });
         });
       },
@@ -485,6 +513,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             padding: { top: 72, bottom: 88, left: 72, right: 72 },
             maxZoom: 15,
             duration: 500,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
           });
         }
       },
@@ -516,6 +546,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           attributionControl: { compact: true },
           maxPitch: 75,
           pitchWithRotate: true,
+          fadeDuration: 180,
         });
       } catch (err) {
         const msg =
@@ -527,8 +558,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         return;
       }
       mapRef.current = map;
+      map.dragRotate.disable();
+      map.touchPitch.disable();
       map.addControl(
-        new maplibregl.NavigationControl({ showCompass: false }),
+        new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
         "bottom-right",
       );
 
@@ -1034,26 +1067,26 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const map = mapRef.current;
       if (!map || !ready) return;
       if (!map.getLayer(RESEARCH_LIDAR_LAYER_ID)) return;
-      map.setLayoutProperty(
-        RESEARCH_LIDAR_LAYER_ID,
-        "visibility",
-        lidarOn ? "visible" : "none",
-      );
+        map.setLayoutProperty(
+          RESEARCH_LIDAR_LAYER_ID,
+          "visibility",
+          lidarOn && !isPhotoSkin(base) ? "visible" : "none",
+        );
       if (map.getLayer(RESEARCH_LIDAR_CONTOURS_LAYER_ID)) {
         map.setLayoutProperty(
           RESEARCH_LIDAR_CONTOURS_LAYER_ID,
           "visibility",
-          lidarOn && lidarContours ? "visible" : "none",
+          lidarContours && (lidarOn || lidar3d) ? "visible" : "none",
         );
       }
       if (map.getLayer(RESEARCH_LIDAR_READ_LAYER_ID)) {
         map.setLayoutProperty(
           RESEARCH_LIDAR_READ_LAYER_ID,
           "visibility",
-          lidarOn && lidarRead ? "visible" : "none",
+          lidarRead && (lidarOn || lidar3d) ? "visible" : "none",
         );
       }
-      if (lidarOn && lidarRead) {
+      if (lidarRead && (lidarOn || lidar3d)) {
         const src = map.getSource(RESEARCH_LIDAR_READ_SOURCE_ID) as
           | { setTiles?: (tiles: string[]) => void }
           | undefined;
@@ -1061,7 +1094,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           absolutizeMapTileTemplate(researchLidarTileTemplate(lidarRead)),
         ]);
       }
-      if (!lidarOn) {
+      if (!lidarOn && !lidar3d) {
         const pin = map.getSource(RESEARCH_LIDAR_PIN_SOURCE_ID) as
           | maplibregl.GeoJSONSource
           | undefined;
@@ -1080,37 +1113,56 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       } catch {
         /* layer may not accept paint yet */
       }
-    }, [ready, lidarOn, lidarContours, lidarRead, lidarStrength]);
+    }, [ready, lidarOn, lidarContours, lidarRead, lidarStrength, lidar3d, base]);
 
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      const on = lidarOn && lidar3d;
+      const on = lidar3d;
+      const tier =
+        typeof window === "undefined"
+          ? "high"
+          : researchDeviceTier(
+              window.devicePixelRatio || 1,
+              window.innerWidth,
+              Boolean(
+                (navigator as Navigator & { connection?: { saveData?: boolean } })
+                  .connection?.saveData,
+              ),
+            );
+      const exaggeration = Math.min(lidarElev, reliefCapForTier(tier));
       const apply = () => {
         try {
           if (on) {
             if (!map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID)) return;
             map.setTerrain({
               source: RESEARCH_LIDAR_DEM_SOURCE_ID,
-              exaggeration: lidarElev,
+              exaggeration,
             });
-            map.setSky({
-              "sky-color": "#7eb6e0",
-              "sky-horizon-blend": 0.6,
-              "horizon-color": "#e8eef4",
-              "horizon-fog-blend": 0.55,
-              "fog-color": "#d5e0ea",
-              "fog-ground-blend": 0.25,
-            });
+            if (tier !== "low") {
+              map.setSky(RESEARCH_TERRAIN_SKY);
+            }
             map.touchPitch?.enable();
             map.dragRotate?.enable();
-            if (map.getPitch() < RESEARCH_LIDAR_PITCH - 6) {
-              map.easeTo({ pitch: RESEARCH_LIDAR_PITCH, duration: 700 });
+            const target = cameraPitchForPreset("3d", viewHeightRef.current);
+            if (Math.abs(map.getPitch() - target) > 4) {
+              map.easeTo({
+                pitch: target,
+                duration: RESEARCH_TERRAIN_CAMERA_MS,
+                easing: storyCameraEase,
+              });
             }
           } else {
+            map.setSky(RESEARCH_TERRAIN_SKY_OFF);
             map.setTerrain(null);
+            map.touchPitch?.disable();
+            map.dragRotate?.disable();
             if (map.getPitch() > 2) {
-              map.easeTo({ pitch: 0, bearing: 0, duration: 500 });
+              map.easeTo({
+                pitch: 0,
+                duration: 820,
+                easing: storyCameraEase,
+              });
             }
           }
         } catch {
@@ -1122,11 +1174,46 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       return () => {
         map.off("idle", apply);
       };
-    }, [ready, lidarOn, lidar3d, lidarElev]);
+    }, [ready, lidar3d, lidarElev]);
 
     useEffect(() => {
       const map = mapRef.current;
-      if (!map || !ready || !lidarOn) {
+      if (!map || !ready || !lidar3d) return;
+      map.easeTo({
+        pitch: cameraPitchForPreset("3d", viewHeight),
+        duration: 260,
+        easing: storyCameraEase,
+      });
+    }, [ready, lidar3d, viewHeight]);
+
+    useEffect(() => {
+      if (!ready || !selected?.geojson) {
+        setParcelTerrain(null);
+        return;
+      }
+      let cancelled = false;
+      const geo = selected.geojson;
+      void fetch("/api/map/lidar/parcel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(geo),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((json) => {
+          if (cancelled || !json || typeof json.minFt !== "number") return;
+          setParcelTerrain(json as ResearchParcelTerrainStats);
+        })
+        .catch(() => {
+          if (!cancelled) setParcelTerrain(null);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [ready, selected?.propId, selected?.geojson]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready || !(lidarOn || lidar3d)) {
         setLidarElevFt(null);
         setLidarPinFt(null);
         setLidarCut(false);
@@ -1271,13 +1358,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         map.off("click", onClick);
         window.removeEventListener("keydown", onKey);
       };
-    }, [ready, lidarOn]);
+    }, [ready, lidarOn, lidar3d]);
 
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      map.getCanvas().style.cursor = lidarOn && lidarCut ? "crosshair" : "";
-    }, [ready, lidarOn, lidarCut]);
+      map.getCanvas().style.cursor = lidarCut ? "crosshair" : "";
+    }, [ready, lidarCut]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1716,6 +1803,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             padding: 56,
             maxZoom: 15,
             duration: 450,
+            pitch: map.getPitch(),
+            bearing: map.getBearing(),
           });
         }
       } catch {
@@ -1782,7 +1871,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             walk(m.geojson.coordinates);
           }
           if (!bounds.isEmpty()) {
-            map.fitBounds(bounds, { padding: 56, maxZoom: 17, duration: 550 });
+            map.fitBounds(bounds, {
+              padding: 56,
+              maxZoom: 17,
+              duration: 550,
+              pitch: map.getPitch(),
+              bearing: map.getBearing(),
+            });
             return;
           }
         } catch {
@@ -1797,6 +1892,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           center: [selected.centroidLng, selected.centroidLat],
           zoom: Math.max(map.getZoom(), 15),
           duration: 600,
+          pitch: map.getPitch(),
+          bearing: map.getBearing(),
         });
       }
     }, [ready, selected, related]);
@@ -1848,18 +1945,22 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             data-map-basemap
             className="pointer-events-auto absolute left-3 flex flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
           >
-            {MAP_BASE_OPTIONS.map((opt) => (
+            {RESEARCH_VIEW_SKINS.map((opt) => (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setBase(opt.id)}
+                data-map-view-skin={opt.id}
+                onClick={() => {
+                  setBase(opt.id);
+                  setLidarHybrid(opt.id === "imageryLabels" || opt.id === "satellite");
+                }}
                 title={opt.label}
                 className={cn(
                   "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
                   base === opt.id && "story-map-tool-active",
                 )}
               >
-                {opt.short}
+                {opt.label}
               </button>
             ))}
           </div>
@@ -2063,63 +2164,168 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             data-map-layers
             className="pointer-events-auto absolute right-3 flex flex-col items-end gap-1.5"
           >
-            <div data-map-lidar className="flex flex-col items-end gap-1">
-              <button
-                type="button"
-                data-map-lidar-toggle
-                data-map-lidar-on={lidarOn ? "yes" : "no"}
-                title={RESEARCH_LIDAR_COPY.title}
-                onClick={() => {
-                  setLidarOn((on) => {
-                    if (on) {
-                      const prev = baseBeforeLidarRef.current;
-                      baseBeforeLidarRef.current = null;
-                      if (prev) setBase(prev);
-                      setLidarPinFt(null);
-                      setLidar3d(false);
-                      return false;
-                    }
-                    baseBeforeLidarRef.current = base;
-                    setBase(researchLidarCanvasBase(base, lidarHybrid));
-                    return true;
-                  });
-                }}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
-                  lidarOn
-                    ? "bg-navy text-gold"
-                    : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
-                )}
-              >
-                <Mountain className="h-3.5 w-3.5" />
-                {RESEARCH_LIDAR_COPY.label}
-              </button>
-              {lidarOn ? (
+            <div
+              data-map-lidar
+              data-map-terrain-world={lidar3d ? "yes" : "no"}
+              className="flex flex-col items-end gap-1.5"
+            >
+              <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+                <button
+                  type="button"
+                  data-map-group-terrain
+                  onClick={() =>
+                    setOpenGroup((g) => (g === "terrain" ? "terrain" : "terrain"))
+                  }
+                  className={cn(
+                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                    openGroup === "terrain" && "story-map-tool-active",
+                  )}
+                >
+                  {RESEARCH_TERRAIN_COPY.terrain}
+                </button>
+                <button
+                  type="button"
+                  data-map-group-tools
+                  onClick={() =>
+                    setOpenGroup((g) => (g === "tools" ? "terrain" : "tools"))
+                  }
+                  className={cn(
+                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                    openGroup === "tools" && "story-map-tool-active",
+                  )}
+                >
+                  {RESEARCH_TERRAIN_COPY.tools}
+                </button>
+              </div>
+
+              <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+                <button
+                  type="button"
+                  data-map-lidar-3d
+                  data-map-lidar-3d-on={lidar3d ? "yes" : "no"}
+                  title={RESEARCH_LIDAR_COPY.threeD.title}
+                  onClick={() => setLidar3d((v) => !v)}
+                  className={cn(
+                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                    lidar3d && "story-map-tool-active",
+                  )}
+                >
+                  {lidar3d ? "3D" : "2D"}
+                </button>
+                <button
+                  type="button"
+                  data-map-lidar-toggle
+                  data-map-lidar-on={lidarOn ? "yes" : "no"}
+                  title={RESEARCH_LIDAR_COPY.title}
+                  onClick={() => {
+                    setLidarOn((on) => {
+                      if (on) {
+                        const prev = baseBeforeLidarRef.current;
+                        baseBeforeLidarRef.current = null;
+                        if (prev && !isPhotoSkin(base)) setBase(prev);
+                        setLidarPinFt(null);
+                        return false;
+                      }
+                      if (!isPhotoSkin(base) && !lidar3d) {
+                        baseBeforeLidarRef.current = base;
+                        setBase(researchLidarCanvasBase(base, false, lidar3d));
+                      }
+                      return true;
+                    });
+                  }}
+                  className={cn(
+                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                    lidarOn && "story-map-tool-active",
+                  )}
+                >
+                  <Mountain className="h-3.5 w-3.5" />
+                  LiDAR
+                </button>
+              </div>
+
+              {openGroup === "terrain" ? (
                 <>
-                  <button
-                    type="button"
-                    data-map-lidar-contours={lidarContours ? "yes" : "no"}
-                    title={RESEARCH_LIDAR_COPY.contours.title}
-                    onClick={() => setLidarContours((v) => !v)}
-                    className={cn(
-                      "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                      lidarContours && "story-map-tool-active",
-                    )}
-                  >
-                    {RESEARCH_LIDAR_COPY.contours.short}
-                  </button>
+                  {lidar3d ? (
+                    <>
+                      <label
+                        data-map-lidar-elev
+                        data-map-relief
+                        className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"
+                      >
+                        <span className="font-mono text-[9px] font-bold text-navy/80">
+                          {RESEARCH_TERRAIN_COPY.relief}
+                        </span>
+                        <input
+                          type="range"
+                          min={RESEARCH_LIDAR_ELEV_MIN}
+                          max={RESEARCH_LIDAR_ELEV_MAX}
+                          step={0.05}
+                          value={lidarElev}
+                          aria-label={RESEARCH_TERRAIN_COPY.relief}
+                          onChange={(e) =>
+                            setLidarElev(Number(e.target.value))
+                          }
+                          className="w-full accent-navy"
+                        />
+                        <span className="font-mono text-[8px] text-navy/70">
+                          {RESEARCH_TERRAIN_COPY.reliefHint}
+                        </span>
+                      </label>
+                      <label
+                        data-map-view-height
+                        className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"
+                      >
+                        <span className="font-mono text-[9px] font-bold text-navy/80">
+                          {RESEARCH_TERRAIN_COPY.viewHeight}
+                        </span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.02}
+                          value={viewHeight}
+                          aria-label={RESEARCH_TERRAIN_COPY.viewHeight}
+                          onChange={(e) =>
+                            setViewHeight(Number(e.target.value))
+                          }
+                          className="w-full accent-navy"
+                        />
+                        <span className="font-mono text-[8px] text-navy/70">
+                          {RESEARCH_TERRAIN_COPY.viewHeightHint}
+                        </span>
+                      </label>
+                    </>
+                  ) : null}
+                  <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      data-map-lidar-contours={lidarContours ? "yes" : "no"}
+                      title={RESEARCH_LIDAR_COPY.contours.title}
+                      onClick={() => setLidarContours((v) => !v)}
+                      className={cn(
+                        "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                        lidarContours && "story-map-tool-active",
+                      )}
+                    >
+                      {RESEARCH_LIDAR_COPY.contours.short}
+                    </button>
+                  </div>
                   <div
                     data-map-lidar-products
                     className="story-glass flex overflow-hidden rounded-lg p-0.5"
                     role="group"
-                    aria-label="LiDAR wash"
+                    aria-label="Slope and aspect"
                   >
                     {RESEARCH_LIDAR_READS.map((id) => (
                       <button
                         key={id}
                         type="button"
                         data-map-lidar-product={id}
-                        title={RESEARCH_LIDAR_COPY.products[id].title}
+                        title={
+                          id === "aspect"
+                            ? RESEARCH_TERRAIN_COPY.aspectHint
+                            : RESEARCH_LIDAR_COPY.products[id].title
+                        }
                         onClick={() =>
                           setLidarRead((v) => (v === id ? null : id))
                         }
@@ -2128,180 +2334,131 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                           lidarRead === id && "story-map-tool-active",
                         )}
                       >
-                        {RESEARCH_LIDAR_COPY.products[id].short}
+                        {id === "aspect"
+                          ? RESEARCH_TERRAIN_COPY.aspect
+                          : RESEARCH_LIDAR_COPY.products[id].short}
                       </button>
                     ))}
                   </div>
-                  <div
-                    className="story-glass flex overflow-hidden rounded-lg p-0.5"
-                    role="group"
-                    aria-label="LiDAR cut and photos"
-                  >
-                    <button
-                      type="button"
-                      data-map-lidar-cut
-                      data-map-lidar-cut-on={lidarCut ? "yes" : "no"}
-                      title={RESEARCH_LIDAR_COPY.cut.title}
-                      onClick={() => {
-                        setLidarCut((on) => {
-                          const next = !on;
-                          lidarCutRef.current = next;
-                          lidarCutARef.current = null;
-                          setLidarCutA(null);
-                          if (next) setLidarProfile(null);
-                          const src = mapRef.current?.getSource(
-                            RESEARCH_LIDAR_CUT_SOURCE_ID,
-                          ) as maplibregl.GeoJSONSource | undefined;
-                          src?.setData(EMPTY_FC);
-                          return next;
-                        });
-                      }}
-                      className={cn(
-                        "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                        lidarCut && "story-map-tool-active",
-                      )}
-                    >
-                      {RESEARCH_LIDAR_COPY.cut.short}
-                    </button>
-                    <button
-                      type="button"
-                      data-map-lidar-3d
-                      data-map-lidar-3d-on={lidar3d ? "yes" : "no"}
-                      title={RESEARCH_LIDAR_COPY.threeD.title}
-                      onClick={() => setLidar3d((v) => !v)}
-                      className={cn(
-                        "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                        lidar3d && "story-map-tool-active",
-                      )}
-                    >
-                      {RESEARCH_LIDAR_COPY.threeD.short}
-                    </button>
-                    <button
-                      type="button"
-                      data-map-lidar-hybrid
-                      data-map-lidar-hybrid-on={lidarHybrid ? "yes" : "no"}
-                      title={RESEARCH_LIDAR_COPY.hybrid.title}
-                      onClick={() => {
-                        setLidarHybrid((on) => {
-                          const next = !on;
-                          setBase(
-                            researchLidarCanvasBase(
-                              baseBeforeLidarRef.current ?? base,
-                              next,
-                            ),
-                          );
-                          setLidarStrength((s) => {
-                            if (next && s >= 0.9) {
-                              return RESEARCH_LIDAR_STRENGTH_HYBRID;
-                            }
-                            if (
-                              !next &&
-                              Math.abs(s - RESEARCH_LIDAR_STRENGTH_HYBRID) <
-                                0.021
-                            ) {
-                              return RESEARCH_LIDAR_STRENGTH_DEFAULT;
-                            }
-                            return s;
-                          });
-                          return next;
-                        });
-                      }}
-                      className={cn(
-                        "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                        lidarHybrid && "story-map-tool-active",
-                      )}
-                    >
-                      {RESEARCH_LIDAR_COPY.hybrid.short}
-                    </button>
-                  </div>
-                  {lidar3d ? (
-                    <label
-                      data-map-lidar-elev
-                      className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"
-                    >
-                      <span className="font-mono text-[9px] font-bold text-navy/80">
-                        {RESEARCH_LIDAR_COPY.elev}
-                      </span>
-                      <input
-                        type="range"
-                        min={RESEARCH_LIDAR_ELEV_MIN}
-                        max={RESEARCH_LIDAR_ELEV_MAX}
-                        step={0.05}
-                        value={lidarElev}
-                        aria-label={RESEARCH_LIDAR_COPY.elev}
-                        onChange={(e) =>
-                          setLidarElev(Number(e.target.value))
-                        }
-                        className="w-full accent-navy"
-                      />
-                    </label>
-                  ) : null}
-                  <label
-                    data-map-lidar-strength
-                    className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"
-                  >
-                    <span className="font-mono text-[9px] font-bold text-navy/80">
-                      {RESEARCH_LIDAR_COPY.strength}
-                    </span>
-                    <input
-                      type="range"
-                      min={0.25}
-                      max={1}
-                      step={0.01}
-                      value={lidarStrength}
-                      aria-label={RESEARCH_LIDAR_COPY.strength}
-                      onChange={(e) =>
-                        setLidarStrength(Number(e.target.value))
-                      }
-                      className="w-full accent-navy"
-                    />
-                  </label>
-                  <p
-                    data-map-lidar-read
-                    className="max-w-[11rem] rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1 text-right font-mono text-[10px] font-bold text-navy"
-                  >
-                    {lidarPinFt != null
-                      ? `${lidarPinFt.toFixed(0)} ft pin`
-                      : lidarElevFt != null
-                        ? `${lidarElevFt.toFixed(0)} ft ground`
-                        : RESEARCH_LIDAR_COPY.honesty}
-                  </p>
-                  {lidarProfile ? (
-                    <div
-                      data-map-lidar-profile
-                      className="flex w-[11rem] flex-col items-end gap-1 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1.5"
-                    >
-                      <LidarCutChart profile={lidarProfile} />
-                      <p className="text-right font-mono text-[9px] font-bold leading-snug text-navy">
-                        {lidarProfile.lengthMiles.toFixed(2)} mi ·{" "}
-                        {lidarProfile.minFt.toFixed(0)}–
-                        {lidarProfile.maxFt.toFixed(0)} ft
-                      </p>
-                      <p className="text-right font-mono text-[9px] font-semibold text-navy/80">
-                        rise {lidarProfile.riseFt.toFixed(0)} · drop{" "}
-                        {lidarProfile.dropFt.toFixed(0)}
-                      </p>
-                    </div>
-                  ) : null}
-                  <p
-                    data-map-lidar-legend
-                    className="max-w-[11rem] text-right font-mono text-[9px] font-semibold leading-snug text-navy/80"
-                  >
-                    {lidarRead
-                      ? RESEARCH_LIDAR_COPY.products[lidarRead].legend
-                      : lidarContours
-                        ? RESEARCH_LIDAR_COPY.products.contours.legend
-                        : RESEARCH_LIDAR_COPY.products.ground.legend}
-                  </p>
-                  <p className="max-w-[11rem] text-right font-mono text-[9px] text-navy/70">
-                    {lidarCut
-                      ? lidarCutA
-                        ? "Tap the other end"
-                        : RESEARCH_LIDAR_COPY.cut.hint
-                      : RESEARCH_LIDAR_COPY.tap}
-                  </p>
                 </>
+              ) : (
+                <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    data-map-lidar-cut
+                    data-map-lidar-cut-on={lidarCut ? "yes" : "no"}
+                    title={RESEARCH_LIDAR_COPY.cut.title}
+                    onClick={() => {
+                      setLidarCut((on) => {
+                        const next = !on;
+                        lidarCutRef.current = next;
+                        lidarCutARef.current = null;
+                        setLidarCutA(null);
+                        if (next) setLidarProfile(null);
+                        const src = mapRef.current?.getSource(
+                          RESEARCH_LIDAR_CUT_SOURCE_ID,
+                        ) as maplibregl.GeoJSONSource | undefined;
+                        src?.setData(EMPTY_FC);
+                        return next;
+                      });
+                    }}
+                    className={cn(
+                      "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                      lidarCut && "story-map-tool-active",
+                    )}
+                  >
+                    {RESEARCH_LIDAR_COPY.cut.short}
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="button"
+                data-map-lidar-hybrid
+                data-map-lidar-hybrid-on={
+                  base === "imageryLabels" ? "yes" : "no"
+                }
+                hidden
+                aria-hidden
+                tabIndex={-1}
+                title={RESEARCH_LIDAR_COPY.hybrid.title}
+                onClick={() => setBase("imageryLabels")}
+              >
+                {RESEARCH_LIDAR_COPY.hybrid.short}
+              </button>
+
+              <p
+                data-map-lidar-read
+                className="max-w-[11rem] rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1 text-right font-mono text-[10px] font-bold text-navy"
+              >
+                {lidarPinFt != null
+                  ? `${RESEARCH_TERRAIN_COPY.tapPoint} ${lidarPinFt.toFixed(0)} ft`
+                  : lidarElevFt != null
+                    ? `${lidarElevFt.toFixed(0)} ft · ${RESEARCH_TERRAIN_COPY.source}`
+                    : RESEARCH_TERRAIN_COPY.honesty}
+              </p>
+              {parcelTerrain ? (
+                <div
+                  data-map-parcel-terrain
+                  className="flex w-[12rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1.5"
+                >
+                  <p className="font-mono text-[9px] font-extrabold uppercase text-navy">
+                    Terrain
+                  </p>
+                  <p className="text-right font-mono text-[10px] font-bold text-navy">
+                    {parcelTerrain.minFt.toFixed(0)}–{parcelTerrain.maxFt.toFixed(0)} ft
+                  </p>
+                  <p className="text-right font-mono text-[9px] text-navy/80">
+                    Relief {parcelTerrain.reliefFt.toFixed(0)} ft
+                  </p>
+                  <p className="text-right font-mono text-[8px] text-navy/70">
+                    0–5 {formatSlopeBandPct(parcelTerrain.slopeBands["0_5"])} · 5–10{" "}
+                    {formatSlopeBandPct(parcelTerrain.slopeBands["5_10"])}
+                  </p>
+                  <p className="text-right font-mono text-[8px] leading-snug text-navy/80">
+                    {parcelTerrain.archieRead}
+                  </p>
+                </div>
               ) : null}
+              {lidarProfile ? (
+                <div
+                  data-map-lidar-profile
+                  className="flex w-[11rem] flex-col items-end gap-1 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1.5"
+                >
+                  <LidarCutChart profile={lidarProfile} />
+                  <p className="text-right font-mono text-[9px] font-bold leading-snug text-navy">
+                    {lidarProfile.lengthMiles.toFixed(2)} mi ·{" "}
+                    {lidarProfile.minFt.toFixed(0)}–
+                    {lidarProfile.maxFt.toFixed(0)} ft
+                  </p>
+                  <p className="text-right font-mono text-[9px] font-semibold text-navy/80">
+                    rise {lidarProfile.riseFt.toFixed(0)} · drop{" "}
+                    {lidarProfile.dropFt.toFixed(0)}
+                  </p>
+                </div>
+              ) : null}
+              {lidarOn && !lidar3d ? (
+                <label
+                  data-map-lidar-strength
+                  className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"
+                >
+                  <span className="font-mono text-[9px] font-bold text-navy/80">
+                    {RESEARCH_LIDAR_COPY.strength}
+                  </span>
+                  <input
+                    type="range"
+                    min={0.25}
+                    max={1}
+                    step={0.01}
+                    value={lidarStrength}
+                    aria-label={RESEARCH_LIDAR_COPY.strength}
+                    onChange={(e) => setLidarStrength(Number(e.target.value))}
+                    className="w-full accent-navy"
+                  />
+                </label>
+              ) : (
+                <span data-map-lidar-strength hidden />
+              )}
             </div>
             <button
               type="button"
