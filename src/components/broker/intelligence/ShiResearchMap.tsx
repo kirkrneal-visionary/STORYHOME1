@@ -30,6 +30,7 @@ import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
   MAP_PRECISION_MAX_ZOOM,
   PARCEL_LINE_WIDTH_EXPR,
+  absolutizeMapTileTemplate,
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import { CadOverlayControl } from "@/components/map/CadOverlayControl";
@@ -67,6 +68,10 @@ import { cn } from "@/lib/utils";
 import {
   RESEARCH_LIDAR_COPY,
   RESEARCH_LIDAR_LAYER_ID,
+  RESEARCH_LIDAR_PRODUCTS,
+  RESEARCH_LIDAR_SOURCE_ID,
+  researchLidarTileTemplate,
+  type ResearchLidarProduct,
 } from "@/lib/shi/research-lidar";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -240,7 +245,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const [mapFailed, setMapFailed] = useState<string | null>(null);
     const [base, setBase] = useState<MapBaseLayer>("street");
     const [showParcels, setShowParcels] = useState(true);
-    const [showLidar, setShowLidar] = useState(false);
+    const [lidarProduct, setLidarProduct] =
+      useState<ResearchLidarProduct | null>(null);
+    const [lidarElevFt, setLidarElevFt] = useState<number | null>(null);
     const [tool, setTool] = useState<DrawTool>("pan");
     const [radiusMiles, setRadiusMiles] = useState(1);
     const [freehandHint, setFreehandHint] = useState<
@@ -924,12 +931,58 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const map = mapRef.current;
       if (!map || !ready) return;
       if (!map.getLayer(RESEARCH_LIDAR_LAYER_ID)) return;
+      const on = Boolean(lidarProduct);
       map.setLayoutProperty(
         RESEARCH_LIDAR_LAYER_ID,
         "visibility",
-        showLidar ? "visible" : "none",
+        on ? "visible" : "none",
       );
-    }, [ready, showLidar]);
+      if (!lidarProduct) return;
+      const src = map.getSource(RESEARCH_LIDAR_SOURCE_ID) as
+        | { setTiles?: (tiles: string[]) => void }
+        | undefined;
+      src?.setTiles?.([
+        absolutizeMapTileTemplate(researchLidarTileTemplate(lidarProduct)),
+      ]);
+    }, [ready, lidarProduct]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready || !lidarProduct) {
+        setLidarElevFt(null);
+        return;
+      }
+      let cancelled = false;
+      const read = async () => {
+        const c = map.getCenter();
+        try {
+          const res = await fetch(
+            `/api/map/lidar/read?lat=${c.lat}&lng=${c.lng}`,
+          );
+          if (!res.ok) return;
+          const json = (await res.json()) as { feet?: number };
+          if (!cancelled && typeof json.feet === "number") {
+            setLidarElevFt(json.feet);
+          }
+        } catch {
+          /* identify optional */
+        }
+      };
+      void read();
+      let t: number | undefined;
+      const onMove = () => {
+        if (t) window.clearTimeout(t);
+        t = window.setTimeout(() => {
+          void read();
+        }, 450);
+      };
+      map.on("moveend", onMove);
+      return () => {
+        cancelled = true;
+        if (t) window.clearTimeout(t);
+        map.off("moveend", onMove);
+      };
+    }, [ready, lidarProduct]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1711,22 +1764,60 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             data-map-layers
             className="pointer-events-auto absolute right-3 flex flex-col items-end gap-1.5"
           >
-            <button
-              type="button"
-              data-map-lidar
-              data-map-lidar-on={showLidar ? "yes" : "no"}
-              title={RESEARCH_LIDAR_COPY.title}
-              onClick={() => setShowLidar((v) => !v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
-                showLidar
-                  ? "bg-navy text-gold"
-                  : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
-              )}
-            >
-              <Mountain className="h-3.5 w-3.5" />
-              {RESEARCH_LIDAR_COPY.label}
-            </button>
+            <div data-map-lidar className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                data-map-lidar-toggle
+                data-map-lidar-on={lidarProduct ? "yes" : "no"}
+                title={RESEARCH_LIDAR_COPY.title}
+                onClick={() =>
+                  setLidarProduct((v) => (v ? null : "ground"))
+                }
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
+                  lidarProduct
+                    ? "bg-navy text-gold"
+                    : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
+                )}
+              >
+                <Mountain className="h-3.5 w-3.5" />
+                {RESEARCH_LIDAR_COPY.label}
+              </button>
+              {lidarProduct ? (
+                <>
+                  <div
+                    data-map-lidar-products
+                    className="story-glass flex overflow-hidden rounded-lg p-0.5"
+                    role="group"
+                    aria-label="LiDAR product"
+                  >
+                    {RESEARCH_LIDAR_PRODUCTS.map((id) => (
+                      <button
+                        key={id}
+                        type="button"
+                        data-map-lidar-product={id}
+                        title={RESEARCH_LIDAR_COPY.products[id].title}
+                        onClick={() => setLidarProduct(id)}
+                        className={cn(
+                          "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                          lidarProduct === id && "story-map-tool-active",
+                        )}
+                      >
+                        {RESEARCH_LIDAR_COPY.products[id].short}
+                      </button>
+                    ))}
+                  </div>
+                  <p
+                    data-map-lidar-read
+                    className="max-w-[11rem] rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1 text-right font-mono text-[10px] font-bold text-navy"
+                  >
+                    {lidarElevFt != null
+                      ? `${lidarElevFt.toFixed(0)} ft ground`
+                      : RESEARCH_LIDAR_COPY.honesty}
+                  </p>
+                </>
+              ) : null}
+            </div>
             <button
               type="button"
               onClick={() => setShowParcels((v) => !v)}

@@ -13,8 +13,11 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import {
+  parseResearchLidarIdentifyMeters,
+  researchLidarIdentifyUrl,
   researchLidarTileValid,
   researchLidarUpstreamUrl,
+  type ResearchLidarProduct,
 } from "@/lib/shi/research-lidar";
 
 const UA = "StoryHome-ResearchLiDAR/1.0 (+https://storyhome-1-eqmg.vercel.app)";
@@ -27,11 +30,19 @@ function lidarTilesRoot(): string {
 }
 
 export function resolveResearchLidarTilePath(
+  product: ResearchLidarProduct,
   z: number,
   x: number,
   y: number,
 ): string {
-  return join(lidarTilesRoot(), "lidar", String(z), String(x), `${y}.png`);
+  return join(
+    lidarTilesRoot(),
+    "lidar",
+    product,
+    String(z),
+    String(x),
+    `${y}.png`,
+  );
 }
 
 function writeAtomic(path: string, body: Buffer): boolean {
@@ -58,13 +69,14 @@ export type ResearchLidarTile = {
 };
 
 export async function getResearchLidarTile(
+  product: ResearchLidarProduct,
   z: number,
   x: number,
   y: number,
 ): Promise<ResearchLidarTile | null> {
   if (!researchLidarTileValid(z, x, y)) return null;
 
-  const path = resolveResearchLidarTilePath(z, x, y);
+  const path = resolveResearchLidarTilePath(product, z, x, y);
   if (existsSync(path)) {
     return {
       body: readFileSync(path),
@@ -73,7 +85,7 @@ export async function getResearchLidarTile(
     };
   }
 
-  const res = await fetch(researchLidarUpstreamUrl(z, x, y), {
+  const res = await fetch(researchLidarUpstreamUrl(product, z, x, y), {
     headers: { "User-Agent": UA },
   });
   if (res.status === 204 || res.status === 404) return null;
@@ -83,4 +95,25 @@ export async function getResearchLidarTile(
   const body = Buffer.from(await res.arrayBuffer());
   const cached = writeAtomic(path, body);
   return { body, contentType: "image/png", cached };
+}
+
+export async function readResearchLidarElevation(
+  lng: number,
+  lat: number,
+): Promise<number | null> {
+  if (
+    !Number.isFinite(lng) ||
+    !Number.isFinite(lat) ||
+    Math.abs(lat) > 90 ||
+    Math.abs(lng) > 180
+  ) {
+    return null;
+  }
+  const res = await fetch(researchLidarIdentifyUrl(lng, lat), {
+    headers: { "User-Agent": UA },
+  });
+  if (!res.ok) {
+    throw new Error(`lidar identify ${res.status}`);
+  }
+  return parseResearchLidarIdentifyMeters(await res.json());
 }

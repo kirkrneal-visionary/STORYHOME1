@@ -1,29 +1,35 @@
 import { NextResponse } from "next/server";
-import { researchLidarTileValid } from "@/lib/shi/research-lidar";
+import {
+  parseResearchLidarProduct,
+  researchLidarTileValid,
+} from "@/lib/shi/research-lidar";
 import { getResearchLidarTile } from "@/lib/shi/research-lidar-tiles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
+type Ctx = {
+  params: Promise<{ product: string; z: string; x: string; y: string }>;
+};
 
 /**
- * Research LiDAR look tiles.
- * Upstream is USGS 3DEP bare-earth hillshade (Texas StratMap lidar lives in 3DEP).
+ * Research LiDAR surfaces — ground / slope / aspect from USGS 3DEP
+ * (Texas StratMap lidar lives in 3DEP).
  */
 export async function GET(_req: Request, ctx: Ctx) {
-  const { z: zs, x: xs, y: ys } = await ctx.params;
+  const { product: raw, z: zs, x: xs, y: ys } = await ctx.params;
+  const product = parseResearchLidarProduct(raw);
   const z = Number(zs);
   const x = Number(xs);
   const y = Number(String(ys).replace(/\.(png|jpg|jpeg)$/i, ""));
 
-  if (!researchLidarTileValid(z, x, y)) {
+  if (!product || !researchLidarTileValid(z, x, y)) {
     return NextResponse.json({ error: "bad tile" }, { status: 400 });
   }
 
   try {
-    const tile = await getResearchLidarTile(z, x, y);
+    const tile = await getResearchLidarTile(product, z, x, y);
     if (!tile) {
       return new NextResponse(null, { status: 204 });
     }
@@ -33,6 +39,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         "Content-Type": tile.contentType,
         "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
         "Access-Control-Allow-Origin": "*",
+        "X-Story-Lidar-Product": product,
         "X-Story-Lidar-Cached": tile.cached ? "1" : "0",
       },
     });

@@ -20,7 +20,7 @@ import {
   RESEARCH_LIDAR_LAYER_ID,
   RESEARCH_LIDAR_MAX_ZOOM,
   RESEARCH_LIDAR_SOURCE_ID,
-  RESEARCH_LIDAR_TILES,
+  researchLidarTileTemplate,
 } from "@/lib/shi/research-lidar";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
@@ -409,7 +409,7 @@ export function buildStoryMapStyle(): StyleSpecification {
       },
       [RESEARCH_LIDAR_SOURCE_ID]: {
         type: "raster",
-        tiles: [absolutizeMapTileTemplate(RESEARCH_LIDAR_TILES)],
+        tiles: [absolutizeMapTileTemplate(researchLidarTileTemplate("ground"))],
         tileSize: 256,
         maxzoom: RESEARCH_LIDAR_MAX_ZOOM,
         attribution: RESEARCH_LIDAR_ATTRIBUTION,
