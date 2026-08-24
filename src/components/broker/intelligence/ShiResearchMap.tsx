@@ -1086,34 +1086,42 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const map = mapRef.current;
       if (!map || !ready) return;
       const on = lidarOn && lidar3d;
-      try {
-        if (on) {
-          map.setTerrain({
-            source: RESEARCH_LIDAR_DEM_SOURCE_ID,
-            exaggeration: lidarElev,
-          });
-          map.setSky({
-            "sky-color": "#7eb6e0",
-            "sky-horizon-blend": 0.6,
-            "horizon-color": "#e8eef4",
-            "horizon-fog-blend": 0.55,
-            "fog-color": "#d5e0ea",
-            "fog-ground-blend": 0.25,
-          });
-          if (map.getPitch() < 20) {
-            map.easeTo({ pitch: RESEARCH_LIDAR_PITCH, duration: 700 });
+      const apply = () => {
+        try {
+          if (on) {
+            if (!map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID)) return;
+            map.setTerrain({
+              source: RESEARCH_LIDAR_DEM_SOURCE_ID,
+              exaggeration: lidarElev,
+            });
+            map.setSky({
+              "sky-color": "#7eb6e0",
+              "sky-horizon-blend": 0.6,
+              "horizon-color": "#e8eef4",
+              "horizon-fog-blend": 0.55,
+              "fog-color": "#d5e0ea",
+              "fog-ground-blend": 0.25,
+            });
+            map.touchPitch?.enable();
+            map.dragRotate?.enable();
+            if (map.getPitch() < RESEARCH_LIDAR_PITCH - 6) {
+              map.easeTo({ pitch: RESEARCH_LIDAR_PITCH, duration: 700 });
+            }
+          } else {
+            map.setTerrain(null);
+            if (map.getPitch() > 2) {
+              map.easeTo({ pitch: 0, bearing: 0, duration: 500 });
+            }
           }
-          map.touchPitch?.enable();
-          map.dragRotate?.enable();
-        } else {
-          map.setTerrain(null);
-          if (map.getPitch() > 2) {
-            map.easeTo({ pitch: 0, bearing: 0, duration: 500 });
-          }
+        } catch {
+          /* terrain source may still be loading */
         }
-      } catch {
-        /* terrain source may still be loading */
-      }
+      };
+      apply();
+      map.once("idle", apply);
+      return () => {
+        map.off("idle", apply);
+      };
     }, [ready, lidarOn, lidar3d, lidarElev]);
 
     useEffect(() => {
