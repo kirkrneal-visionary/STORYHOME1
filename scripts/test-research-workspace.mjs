@@ -145,6 +145,8 @@ assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
 assert.match(map, /data-map-camera/);
 assert.match(map, /data-map-camera-3d/);
+assert.match(map, /data-map-camera-mode=\{camera\}/);
+assert.match(map, /dataset.mapPitch/);
 assert.match(map, /applyResearchCamera/);
 assert.match(map, /data-map-bottom-chrome/);
 assert.match(map, /data-map-hint-kind/);

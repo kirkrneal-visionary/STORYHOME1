@@ -477,6 +477,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           centerLng: c.lng,
           zoom: map.getZoom(),
         });
+        if (containerRef.current) {
+          containerRef.current.dataset.mapPitch = String(
+            Math.round(map.getPitch()),
+          );
+        }
       });
 
       map.on("error", (e) => {
@@ -1463,6 +1468,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     return (
       <div
         data-shi-map
+        data-map-camera-mode={camera}
         data-no-swipe-back
         data-map-sovereignty={MAP_SOVEREIGNTY_VERSION}
         data-map-free-world="1"
@@ -1714,6 +1720,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           >
             <div
               data-map-camera
+              data-map-camera-mode={camera}
               className="story-glass flex overflow-hidden rounded-lg p-0.5"
               role="group"
               aria-label="Map camera"

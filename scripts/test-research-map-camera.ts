@@ -68,14 +68,18 @@ function mockMap() {
     easeTo: (o: unknown) => {
       calls.push(["easeTo", o]);
     },
+    stop: () => {
+      calls.push(["stop"]);
+    },
   };
 }
 
 {
   const map = mockMap();
   applyResearchCamera(map as never, "3d" as ResearchMapCamera);
-  assert.equal(map.calls[0][0], "setTerrain");
-  assert.deepEqual(map.calls[0][1], {
+  assert.ok(map.calls.some((c) => c[0] === "stop"));
+  const terrain = map.calls.find((c) => c[0] === "setTerrain");
+  assert.deepEqual(terrain?.[1], {
     source: RESEARCH_DEM_SOURCE_ID,
     exaggeration: RESEARCH_3D_EXAGGERATION,
   });

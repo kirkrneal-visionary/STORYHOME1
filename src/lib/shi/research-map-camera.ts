@@ -59,14 +59,34 @@ const FLAT_SKY: SkySpecification = {
 export const RESEARCH_3D_PITCH = 70;
 export const RESEARCH_3D_EXAGGERATION = 1.45;
 
+let cameraApplyGen = 0;
+
+function flattenDesk(map: MapLibreMap): void {
+  try {
+    map.setTerrain(null);
+  } catch {
+    /* ignore */
+  }
+  try {
+    map.setSky(FLAT_SKY);
+  } catch {
+    /* ignore */
+  }
+  if (map.getLayer(RESEARCH_HILLSHADE_LAYER_ID)) {
+    map.setLayoutProperty(RESEARCH_HILLSHADE_LAYER_ID, "visibility", "none");
+  }
+}
+
 export function applyResearchCamera(
   map: MapLibreMap,
   camera: ResearchMapCamera,
 ): void {
+  const gen = ++cameraApplyGen;
   const reduce =
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const duration = reduce ? 0 : camera === "3d" ? 750 : 480;
+  map.stop();
 
   if (camera === "3d") {
     try {
@@ -97,23 +117,20 @@ export function applyResearchCamera(
 
   map.dragRotate.disable();
   map.touchPitch.disable();
+  const finishFlat = () => {
+    if (gen !== cameraApplyGen) return;
+    flattenDesk(map);
+  };
   map.easeTo({
     pitch: 0,
     bearing: 0,
     duration,
     essential: true,
   });
-  try {
-    map.setTerrain(null);
-  } catch {
-    /* ignore */
+  // Removing terrain mid-ease cancels the flatten. Wait, or apply now in tests.
+  if (duration === 0 || typeof map.once !== "function") {
+    finishFlat();
+    return;
   }
-  try {
-    map.setSky(FLAT_SKY);
-  } catch {
-    /* ignore */
-  }
-  if (map.getLayer(RESEARCH_HILLSHADE_LAYER_ID)) {
-    map.setLayoutProperty(RESEARCH_HILLSHADE_LAYER_ID, "visibility", "none");
-  }
+  map.once("moveend", finishFlat);
 }
