@@ -25,10 +25,10 @@ export const RESEARCH_RELIEF_DEFAULT = 1;
 export const RESEARCH_VIEW_HEIGHT_DEFAULT = 0.42;
 
 export const RESEARCH_TERRAIN_PITCH_2D = 0;
-export const RESEARCH_TERRAIN_PITCH_3D = 56;
-export const RESEARCH_TERRAIN_PITCH_SITE = 50;
-export const RESEARCH_TERRAIN_PITCH_GROUND = 68;
-export const RESEARCH_TERRAIN_PITCH_OVERVIEW = 42;
+export const RESEARCH_TERRAIN_PITCH_3D = 52;
+export const RESEARCH_TERRAIN_PITCH_SITE = 48;
+export const RESEARCH_TERRAIN_PITCH_GROUND = 62;
+export const RESEARCH_TERRAIN_PITCH_OVERVIEW = 38;
 
 export const RESEARCH_TERRAIN_CAMERA_MS = 980;
 
@@ -108,8 +108,8 @@ export function viewHeightAdjust(viewHeight: number): {
 } {
   const u = Math.min(1, Math.max(0, viewHeight));
   return {
-    zoomDelta: (0.5 - u) * 1.35,
-    pitchDelta: (0.5 - u) * 14,
+    zoomDelta: (0.5 - u) * 1.1,
+    pitchDelta: (0.5 - u) * 10,
   };
 }
 
@@ -128,14 +128,14 @@ export function cameraPitchForPreset(
             ? RESEARCH_TERRAIN_PITCH_OVERVIEW
             : RESEARCH_TERRAIN_PITCH_3D;
   if (preset === "2d") return 0;
-  return Math.min(75, Math.max(18, base + viewHeightAdjust(viewHeight).pitchDelta));
+  return Math.min(64, Math.max(22, base + viewHeightAdjust(viewHeight).pitchDelta));
 }
 
 /** Native MapLibre sky — no CSS backdrop. Hidden in overhead 2D by pitch. */
 export const RESEARCH_TERRAIN_SKY: SkySpecification = {
-  "sky-color": "#3a6fa6",
-  "horizon-color": "#d7e6f4",
-  "fog-color": "#c8d9ea",
+  "sky-color": "#5b8ec4",
+  "horizon-color": "#e4eef8",
+  "fog-color": "#d5e3f0",
   "sky-horizon-blend": 0.86,
   "horizon-fog-blend": 0.1,
   "fog-ground-blend": 0,

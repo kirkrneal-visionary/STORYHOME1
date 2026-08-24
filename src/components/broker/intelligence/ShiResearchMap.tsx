@@ -544,7 +544,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           // Required so Map Memory toDataURL is not a blank canvas.
           preserveDrawingBuffer: true,
           attributionControl: { compact: true },
-          maxPitch: 75,
+          maxPitch: 64,
           pitchWithRotate: true,
           fadeDuration: 180,
         });
