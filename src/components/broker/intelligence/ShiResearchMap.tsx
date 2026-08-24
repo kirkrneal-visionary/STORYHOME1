@@ -71,9 +71,14 @@ import {
   RESEARCH_LIDAR_CUT_LAYER_ID,
   RESEARCH_LIDAR_CUT_PIN_LAYER_ID,
   RESEARCH_LIDAR_CUT_SOURCE_ID,
+  RESEARCH_LIDAR_DEM_SOURCE_ID,
+  RESEARCH_LIDAR_ELEV_DEFAULT,
+  RESEARCH_LIDAR_ELEV_MAX,
+  RESEARCH_LIDAR_ELEV_MIN,
   RESEARCH_LIDAR_LAYER_ID,
   RESEARCH_LIDAR_PIN_LAYER_ID,
   RESEARCH_LIDAR_PIN_SOURCE_ID,
+  RESEARCH_LIDAR_PITCH,
   RESEARCH_LIDAR_READS,
   RESEARCH_LIDAR_READ_LAYER_ID,
   RESEARCH_LIDAR_READ_SOURCE_ID,
@@ -293,6 +298,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       RESEARCH_LIDAR_STRENGTH_DEFAULT,
     );
     const [lidarHybrid, setLidarHybrid] = useState(false);
+    const [lidar3d, setLidar3d] = useState(false);
+    const [lidarElev, setLidarElev] = useState(RESEARCH_LIDAR_ELEV_DEFAULT);
     const [lidarCut, setLidarCut] = useState(false);
     const [lidarCutA, setLidarCutA] = useState<LatLng | null>(null);
     const [lidarProfile, setLidarProfile] =
@@ -507,6 +514,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           // Required so Map Memory toDataURL is not a blank canvas.
           preserveDrawingBuffer: true,
           attributionControl: { compact: true },
+          maxPitch: 75,
+          pitchWithRotate: true,
         });
       } catch (err) {
         const msg =
@@ -1072,6 +1081,48 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         /* layer may not accept paint yet */
       }
     }, [ready, lidarOn, lidarContours, lidarRead, lidarStrength]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      const on = lidarOn && lidar3d;
+      const apply = () => {
+        try {
+          if (on) {
+            if (!map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID)) return;
+            map.setTerrain({
+              source: RESEARCH_LIDAR_DEM_SOURCE_ID,
+              exaggeration: lidarElev,
+            });
+            map.setSky({
+              "sky-color": "#7eb6e0",
+              "sky-horizon-blend": 0.6,
+              "horizon-color": "#e8eef4",
+              "horizon-fog-blend": 0.55,
+              "fog-color": "#d5e0ea",
+              "fog-ground-blend": 0.25,
+            });
+            map.touchPitch?.enable();
+            map.dragRotate?.enable();
+            if (map.getPitch() < RESEARCH_LIDAR_PITCH - 6) {
+              map.easeTo({ pitch: RESEARCH_LIDAR_PITCH, duration: 700 });
+            }
+          } else {
+            map.setTerrain(null);
+            if (map.getPitch() > 2) {
+              map.easeTo({ pitch: 0, bearing: 0, duration: 500 });
+            }
+          }
+        } catch {
+          /* terrain source may still be loading */
+        }
+      };
+      apply();
+      map.once("idle", apply);
+      return () => {
+        map.off("idle", apply);
+      };
+    }, [ready, lidarOn, lidar3d, lidarElev]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -2025,6 +2076,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                       baseBeforeLidarRef.current = null;
                       if (prev) setBase(prev);
                       setLidarPinFt(null);
+                      setLidar3d(false);
                       return false;
                     }
                     baseBeforeLidarRef.current = base;
@@ -2113,6 +2165,19 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     </button>
                     <button
                       type="button"
+                      data-map-lidar-3d
+                      data-map-lidar-3d-on={lidar3d ? "yes" : "no"}
+                      title={RESEARCH_LIDAR_COPY.threeD.title}
+                      onClick={() => setLidar3d((v) => !v)}
+                      className={cn(
+                        "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                        lidar3d && "story-map-tool-active",
+                      )}
+                    >
+                      {RESEARCH_LIDAR_COPY.threeD.short}
+                    </button>
+                    <button
+                      type="button"
                       data-map-lidar-hybrid
                       data-map-lidar-hybrid-on={lidarHybrid ? "yes" : "no"}
                       title={RESEARCH_LIDAR_COPY.hybrid.title}
@@ -2149,6 +2214,28 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                       {RESEARCH_LIDAR_COPY.hybrid.short}
                     </button>
                   </div>
+                  {lidar3d ? (
+                    <label
+                      data-map-lidar-elev
+                      className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"
+                    >
+                      <span className="font-mono text-[9px] font-bold text-navy/80">
+                        {RESEARCH_LIDAR_COPY.elev}
+                      </span>
+                      <input
+                        type="range"
+                        min={RESEARCH_LIDAR_ELEV_MIN}
+                        max={RESEARCH_LIDAR_ELEV_MAX}
+                        step={0.05}
+                        value={lidarElev}
+                        aria-label={RESEARCH_LIDAR_COPY.elev}
+                        onChange={(e) =>
+                          setLidarElev(Number(e.target.value))
+                        }
+                        className="w-full accent-navy"
+                      />
+                    </label>
+                  ) : null}
                   <label
                     data-map-lidar-strength
                     className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"

@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   RESEARCH_LIDAR_COPY,
+  RESEARCH_LIDAR_DEM_SOURCE_ID,
+  RESEARCH_LIDAR_ELEV_DEFAULT,
   RESEARCH_LIDAR_LAYER_ID,
   RESEARCH_LIDAR_MAX_ZOOM,
   RESEARCH_LIDAR_PRODUCTS,
@@ -17,11 +19,14 @@ import {
   buildResearchLidarProfile,
   lngLatToWebMercator,
   metersToFeet,
+  metersToTerrariumRgb,
   parseResearchLidarIdentifyMeters,
   parseResearchLidarProduct,
   parseResearchLidarSamples,
   researchLidarCanvasBase,
   researchLidarContourFunction,
+  researchLidarDemTemplate,
+  researchLidarDemUpstreamUrl,
   researchLidarGetSamplesUrl,
   researchLidarIdentifyUrl,
   researchLidarLandBase,
@@ -29,6 +34,7 @@ import {
   researchLidarTileTemplate,
   researchLidarTileValid,
   researchLidarUpstreamUrl,
+  terrariumRgbToMeters,
 } from "../src/lib/shi/research-lidar.ts";
 
 assert.deepEqual(
@@ -63,6 +69,11 @@ assert.equal(RESEARCH_LIDAR_STRENGTH_DEFAULT, 0.96);
 assert.ok(RESEARCH_LIDAR_STRENGTH_HYBRID < RESEARCH_LIDAR_STRENGTH_DEFAULT);
 assert.match(RESEARCH_LIDAR_COPY.cut.short, /cut/i);
 assert.match(RESEARCH_LIDAR_COPY.hybrid.short, /photo/i);
+assert.match(RESEARCH_LIDAR_COPY.threeD.short, /3d/i);
+assert.match(RESEARCH_LIDAR_COPY.elev, /dramatic|hill/i);
+assert.match(RESEARCH_LIDAR_COPY.threeD.title, /texas/i);
+assert.ok(RESEARCH_LIDAR_ELEV_DEFAULT > 1);
+assert.equal(RESEARCH_LIDAR_DEM_SOURCE_ID, "story-lidar-dem");
 assert.match(RESEARCH_LIDAR_COPY.strength, /ground/i);
 assert.equal(RESEARCH_LIDAR_PROFILE_SAMPLES, 32);
 
@@ -84,6 +95,14 @@ assert.ok(Math.abs(metersToFeet(113.263) - 371.6) < 1);
 assert.equal(parseResearchLidarIdentifyMeters({ value: "113.263" }), 113.263);
 assert.equal(parseResearchLidarIdentifyMeters({ value: "NoData" }), null);
 assert.match(researchLidarIdentifyUrl(-95.55, 30.72), /identify/);
+
+const [tr, tg, tb] = metersToTerrariumRgb(113.263);
+assert.ok(Math.abs(terrariumRgbToMeters(tr, tg, tb) - 113.263) < 0.02);
+assert.match(researchLidarDemTemplate(), /lidar\/dem/);
+const demUrl = researchLidarDemUpstreamUrl(13, 1921, 3360);
+assert.match(demUrl, /exportImage/);
+assert.match(demUrl, /tiff/);
+assert.doesNotMatch(demUrl, /Hillshade|s3\.amazonaws\.com\/elevation-tiles-prod/);
 
 const samplesUrl = researchLidarGetSamplesUrl(
   { lng: -95.56, lat: 30.72 },
@@ -128,8 +147,11 @@ assert.match(tiles, /styleResearchLidarTile/);
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /researchLidarTileTemplate\("ground"\)/);
 assert.match(style, /researchLidarTileTemplate\("contours"\)/);
+assert.match(style, /researchLidarDemTemplate/);
+assert.match(style, /raster-dem/);
+assert.match(style, /terrarium/);
 assert.match(style, /raster-opacity": 0\.96/);
-assert.doesNotMatch(style, /sky|setPitch|setTerrain/);
+assert.doesNotMatch(style, /s3\.amazonaws\.com\/elevation-tiles-prod/);
 
 const map = readFileSync(
   join(root, "src/components/broker/intelligence/ShiResearchMap.tsx"),
@@ -146,9 +168,19 @@ assert.match(map, /data-map-lidar-cut/);
 assert.match(map, /data-map-lidar-hybrid/);
 assert.match(map, /data-map-lidar-strength/);
 assert.match(map, /data-map-lidar-profile/);
+assert.match(map, /data-map-lidar-3d/);
+assert.match(map, /data-map-lidar-elev/);
+assert.match(map, /setTerrain/);
 assert.match(map, /lidarCutARef/);
 assert.doesNotMatch(map, /setLidarProduct/);
-assert.doesNotMatch(map, /setPitch|setTerrain|sky/);
+assert.doesNotMatch(map, /s3\.amazonaws\.com\/elevation-tiles-prod/);
+
+const demRoute = readFileSync(
+  join(root, "src/app/api/map/lidar/dem/[z]/[x]/[y]/route.ts"),
+  "utf8",
+);
+assert.match(demRoute, /getResearchLidarDemTile/);
+assert.match(tiles, /parseElevationTiff/);
 
 const profileRoute = readFileSync(
   join(root, "src/app/api/map/lidar/profile/route.ts"),
