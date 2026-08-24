@@ -723,7 +723,10 @@ html[data-research-live] .story-living-tagline {
   position: relative;
   display: flex;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
   flex: 1 1 auto;
+  overflow: hidden;
 }
 [data-map-pane] {
   position: relative;
@@ -792,4 +795,15 @@ html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
 [data-workspace-layout="drawer"] .maplibregl-ctrl-bottom-right {
   right: 10px;
   bottom: 10px;
+}
+/* Card is a narrow column. Never let a wide child paint past the screen. */
+[data-intelligence-drawer],
+[data-intelligence-sheet] {
+  min-width: 0;
+  max-width: 100%;
+}
+[data-intelligence-drawer] [data-sheet-body],
+[data-intelligence-sheet] [data-sheet-body] {
+  min-width: 0;
+  overflow-x: hidden;
 }

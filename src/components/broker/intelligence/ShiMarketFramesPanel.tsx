@@ -62,8 +62,8 @@ type Props = {
 };
 
 /**
- * Wide Market Frames strip under the 3-split research row.
- * Left: frame tiles + actions · Right: market data (fills the void).
+ * Market Frames — lives in the Research card (drawer or sheet).
+ * Always one column so tablet/desktop cards stay readable.
  */
 export function ShiMarketFramesPanel({
   countySource,
@@ -129,7 +129,7 @@ export function ShiMarketFramesPanel({
         </button>
       </div>
 
-      <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(220px,280px)_minmax(0,1fr)]">
+      <div className="mt-3 grid min-w-0 grid-cols-1 gap-4">
         {/* Left: frames + actions */}
         <div className="space-y-3">
           <div>
@@ -390,7 +390,7 @@ export function ShiMarketFramesPanel({
                   Analysis capped — draw a smaller frame for a complete estimate.
                 </p>
               ) : null}
-              <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3 xl:grid-cols-6">
+              <dl className="grid grid-cols-2 gap-2 text-xs">
                 <Stat label="Parcels" value={String(analysis.parcelCount)} />
                 <Stat
                   label="Est. area value"

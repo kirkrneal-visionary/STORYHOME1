@@ -86,6 +86,13 @@ assert.match(drawer, /data-intelligence-drawer/);
 assert.match(drawer, /data-drawer-collapse/);
 assert.match(drawer, /ShiResearchPanelHost/);
 
+const frames = read(
+  "src/components/broker/intelligence/ShiMarketFramesPanel.tsx",
+);
+assert.match(frames, /grid-cols-1/);
+assert.doesNotMatch(frames, /lg:grid-cols-\[minmax\(220px/);
+assert.doesNotMatch(frames, /xl:grid-cols-6/);
+
 const workspace = read(
   "src/components/broker/intelligence/ShiWorkspace.tsx",
 );
@@ -116,6 +123,8 @@ assert.match(css, /data-map-hint-kind="idle"/);
 assert.match(css, /data-sheet-snap="peek"/);
 assert.match(css, /--sheet-h: 26vh/);
 assert.match(css, /calc\(100% - 7\.25rem\)/);
+assert.match(css, /\[data-intelligence-drawer\] \[data-sheet-body\]/);
+assert.match(css, /overflow-x: hidden/);
 assert.doesNotMatch(css, /top: 5\.35rem/);
 assert.doesNotMatch(css, /5\.75rem/);
 assert.match(view, /dataset.workspaceLayout/);

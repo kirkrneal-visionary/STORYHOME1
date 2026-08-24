@@ -157,7 +157,7 @@ type ResearchProps = {
 };
 
 /**
- * SHI Research — classic 3-split (Search | Map | Property) with Market Frames below.
+ * SHI Research — map room + Research card. Market Frames live in the card.
  * Study Vault lives on its own submenu (not crammed here).
  */
 export function PropertyIntelligenceView({
