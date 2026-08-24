@@ -1923,18 +1923,28 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-map-sky={lidar3d ? "on" : "off"}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
+          lidar3d && "story-map-sky-on",
           className?.includes("h-full") &&
             "!h-full min-h-0 rounded-none border-0 shadow-none xl:!h-full",
           className,
         )}
       >
-        <div
-          ref={containerRef}
-          className={cn(
-            "relative min-h-0 w-full flex-1 [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none",
-            lidar3d ? "story-map-sky" : "bg-[#f8f4f0]",
-          )}
-        />
+        <div className="relative min-h-0 w-full flex-1">
+          {lidar3d ? (
+            <div
+              data-map-sky-wash
+              className="story-map-sky-layer"
+              aria-hidden
+            />
+          ) : null}
+          <div
+            ref={containerRef}
+            className={cn(
+              "absolute inset-0 z-[1] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none",
+              lidar3d ? "bg-transparent" : "bg-[#f8f4f0]",
+            )}
+          />
+        </div>
 
         {mapFailed ? (
           <div

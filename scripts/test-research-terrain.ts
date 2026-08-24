@@ -120,7 +120,8 @@ assert.match(map, /data-map-view-height/);
 assert.match(map, /data-map-relief/);
 assert.match(map, /data-map-parcel-terrain/);
 assert.match(map, /data-map-sky/);
-assert.match(map, /story-map-sky/);
+assert.match(map, /data-map-sky-wash/);
+assert.match(map, /story-map-sky-layer/);
 assert.match(map, /researchTerrainSkyForPitch/);
 assert.match(map, /researchMode/);
 assert.doesNotMatch(map, /How dramatic the hills sit/);
@@ -131,7 +132,7 @@ const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /sky: RESEARCH_TERRAIN_SKY_OFF/);
 assert.match(
   readFileSync(join(root, "src/app/globals.css"), "utf8"),
-  /story-map-sky/,
+  /story-map-sky-layer/,
 );
 
 const demRoute = readFileSync(

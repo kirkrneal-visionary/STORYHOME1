@@ -145,9 +145,9 @@ export function researchTerrainSkyForPitch(pitch: number): SkySpecification {
     "sky-color": RESEARCH_SKY_BLUE,
     "horizon-color": RESEARCH_SKY_HAZE,
     "fog-color": "#d5e6f5",
-    "sky-horizon-blend": 0.36 + lookingOut * 0.16,
-    "horizon-fog-blend": 0.2 + lookingOut * 0.22,
-    "fog-ground-blend": 0.06 + lookingOut * 0.12,
+    "sky-horizon-blend": 0.28 + lookingOut * 0.12,
+    "horizon-fog-blend": 0.12 + lookingOut * 0.12,
+    "fog-ground-blend": 0.02 + lookingOut * 0.05,
     "atmosphere-blend": lookingOut,
   };
 }
