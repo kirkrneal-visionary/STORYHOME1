@@ -33,9 +33,21 @@ export const RESEARCH_LIDAR_COPY = {
   honesty: "Public 3DEP / StratMap — not a survey.",
   off: "Off",
   products: {
-    ground: { short: "Ground", title: "Bare earth under the trees" },
-    slope: { short: "Slope", title: "Steep vs flat" },
-    aspect: { short: "Aspect", title: "Which way the ground faces" },
+    ground: {
+      short: "Ground",
+      title: "Bare earth under the trees",
+      legend: "Bare earth under the trees.",
+    },
+    slope: {
+      short: "Slope",
+      title: "Steep vs flat",
+      legend: "Pale = flatter. Yellow = steeper.",
+    },
+    aspect: {
+      short: "Aspect",
+      title: "Which way the ground faces",
+      legend: "Color = which way the ground faces.",
+    },
   },
 } as const;
 

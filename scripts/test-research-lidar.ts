@@ -89,6 +89,7 @@ const map = readFileSync(
 assert.match(map, /data-map-lidar/);
 assert.match(map, /data-map-lidar-product/);
 assert.match(map, /data-map-lidar-read/);
+assert.match(map, /data-map-lidar-legend/);
 assert.match(map, /setLidarProduct/);
 assert.doesNotMatch(map, /setShowLidar/);
 

@@ -1815,6 +1815,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                       ? `${lidarElevFt.toFixed(0)} ft ground`
                       : RESEARCH_LIDAR_COPY.honesty}
                   </p>
+                  <p
+                    data-map-lidar-legend
+                    className="max-w-[11rem] text-right font-mono text-[9px] font-semibold leading-snug text-navy/80"
+                  >
+                    {RESEARCH_LIDAR_COPY.products[lidarProduct].legend}
+                  </p>
                 </>
               ) : null}
             </div>
