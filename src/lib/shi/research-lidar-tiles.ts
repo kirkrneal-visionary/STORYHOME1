@@ -14,11 +14,15 @@ import {
 import { dirname, join } from "node:path";
 import {
   RESEARCH_LIDAR_TILE_GEN,
+  buildResearchLidarProfile,
   parseResearchLidarIdentifyMeters,
+  parseResearchLidarSamples,
+  researchLidarGetSamplesUrl,
   researchLidarIdentifyUrl,
   researchLidarTileValid,
   researchLidarUpstreamUrl,
   type ResearchLidarProduct,
+  type ResearchLidarProfile,
 } from "@/lib/shi/research-lidar";
 import { styleResearchLidarTile } from "@/lib/shi/research-lidar-style";
 
@@ -131,4 +135,17 @@ export async function readResearchLidarElevation(
     throw new Error(`lidar identify ${res.status}`);
   }
   return parseResearchLidarIdentifyMeters(await res.json());
+}
+
+export async function readResearchLidarProfile(
+  a: { lng: number; lat: number },
+  b: { lng: number; lat: number },
+): Promise<ResearchLidarProfile | null> {
+  const res = await fetch(researchLidarGetSamplesUrl(a, b), {
+    headers: { "User-Agent": UA },
+  });
+  if (!res.ok) {
+    throw new Error(`lidar samples ${res.status}`);
+  }
+  return buildResearchLidarProfile(parseResearchLidarSamples(await res.json()));
 }

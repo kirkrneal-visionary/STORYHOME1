@@ -3,6 +3,7 @@
  *
  * Wave 1: the ground IS the map (high-contrast hillshade).
  * Wave 2: contours on that ground, slope/aspect as washes, tap for height.
+ * Phase 2: cut the land (elevation slice), land strength, LiDAR over photos.
  * Not live: DSM / canopy (needs point-cloud processing).
  * Not a survey. Not usable-acre math.
  *
@@ -30,7 +31,13 @@ export const RESEARCH_LIDAR_READ_SOURCE_ID = "story-lidar-read";
 export const RESEARCH_LIDAR_READ_LAYER_ID = "story-lidar-read";
 export const RESEARCH_LIDAR_PIN_SOURCE_ID = "shi-lidar-pin";
 export const RESEARCH_LIDAR_PIN_LAYER_ID = "shi-lidar-pin";
+export const RESEARCH_LIDAR_CUT_SOURCE_ID = "shi-lidar-cut";
+export const RESEARCH_LIDAR_CUT_LAYER_ID = "shi-lidar-cut";
+export const RESEARCH_LIDAR_CUT_PIN_LAYER_ID = "shi-lidar-cut-pin";
 export const RESEARCH_LIDAR_MAX_ZOOM = 16;
+export const RESEARCH_LIDAR_PROFILE_SAMPLES = 32;
+export const RESEARCH_LIDAR_STRENGTH_DEFAULT = 0.96;
+export const RESEARCH_LIDAR_STRENGTH_HYBRID = 0.68;
 
 export const RESEARCH_LIDAR_UPSTREAM =
   "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer";
@@ -49,6 +56,13 @@ export const RESEARCH_LIDAR_COPY = {
   title: "Texas ground from public lidar. Not a survey.",
   honesty: "Public 3DEP / StratMap — not a survey.",
   tap: "Tap the map for height",
+  cut: {
+    short: "Cut",
+    title: "Two taps — see the land in a slice",
+    hint: "Tap two points on the ground",
+  },
+  strength: "How hard the ground sits",
+  hybrid: { short: "Photos", title: "Bare earth over aerial photos" },
   off: "Off",
   contours: { short: "Contours", title: "Lines from the 1-meter ground" },
   products: {
@@ -171,6 +185,124 @@ export function researchLidarUpstreamUrl(
   return `${RESEARCH_LIDAR_UPSTREAM}/exportImage?${q.toString()}`;
 }
 
+export function researchLidarGetSamplesUrl(
+  a: { lng: number; lat: number },
+  b: { lng: number; lat: number },
+  sampleCount = RESEARCH_LIDAR_PROFILE_SAMPLES,
+): string {
+  const n = Math.max(8, Math.min(48, Math.round(sampleCount)));
+  const geom = {
+    paths: [
+      [
+        [a.lng, a.lat],
+        [b.lng, b.lat],
+      ],
+    ],
+    spatialReference: { wkid: 4326 },
+  };
+  const q = new URLSearchParams({
+    geometry: JSON.stringify(geom),
+    geometryType: "esriGeometryPolyline",
+    sampleCount: String(n),
+    returnFirstValueOnly: "true",
+    interpolation: "bilinear",
+    f: "json",
+  });
+  return `${RESEARCH_LIDAR_UPSTREAM}/getSamples?${q.toString()}`;
+}
+
+export type ResearchLidarSample = {
+  lng: number;
+  lat: number;
+  meters: number;
+};
+
+export function parseResearchLidarSamples(raw: unknown): ResearchLidarSample[] {
+  if (!raw || typeof raw !== "object") return [];
+  const samples = (raw as { samples?: unknown }).samples;
+  if (!Array.isArray(samples)) return [];
+  const out: ResearchLidarSample[] = [];
+  for (const row of samples) {
+    if (!row || typeof row !== "object") continue;
+    const loc = (row as { location?: { x?: unknown; y?: unknown } }).location;
+    const meters = parseResearchLidarIdentifyMeters({
+      value: (row as { value?: unknown }).value,
+    });
+    const lng = Number(loc?.x);
+    const lat = Number(loc?.y);
+    if (meters == null || !Number.isFinite(lng) || !Number.isFinite(lat)) {
+      continue;
+    }
+    out.push({ lng, lat, meters });
+  }
+  return out;
+}
+
+function haversineMiles(
+  a: { lng: number; lat: number },
+  b: { lng: number; lat: number },
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 3958.8;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+export type ResearchLidarProfilePoint = ResearchLidarSample & {
+  feet: number;
+  miles: number;
+};
+
+export type ResearchLidarProfile = {
+  points: ResearchLidarProfilePoint[];
+  lengthMiles: number;
+  minFt: number;
+  maxFt: number;
+  riseFt: number;
+  dropFt: number;
+  source: "usgs-3dep";
+  honesty: typeof RESEARCH_LIDAR_COPY.honesty;
+};
+
+export function buildResearchLidarProfile(
+  samples: ResearchLidarSample[],
+): ResearchLidarProfile | null {
+  if (samples.length < 2) return null;
+  const points: ResearchLidarProfilePoint[] = [];
+  let miles = 0;
+  let rise = 0;
+  let drop = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i]!;
+    if (i > 0) {
+      miles += haversineMiles(samples[i - 1]!, s);
+      const dFt = metersToFeet(s.meters - samples[i - 1]!.meters);
+      if (dFt > 0) rise += dFt;
+      else drop += -dFt;
+    }
+    points.push({
+      ...s,
+      feet: metersToFeet(s.meters),
+      miles,
+    });
+  }
+  const feet = points.map((p) => p.feet);
+  return {
+    points,
+    lengthMiles: miles,
+    minFt: Math.min(...feet),
+    maxFt: Math.max(...feet),
+    riseFt: rise,
+    dropFt: drop,
+    source: "usgs-3dep",
+    honesty: RESEARCH_LIDAR_COPY.honesty,
+  };
+}
+
 export function researchLidarIdentifyUrl(lng: number, lat: number): string {
   const { x, y } = lngLatToWebMercator(lng, lat);
   const q = new URLSearchParams({
@@ -208,6 +340,15 @@ export function researchLidarLandBase<T extends string>(
     return "gray";
   }
   return current;
+}
+
+/** Photos keeps aerial under the hillshade. Otherwise gray the relief maps. */
+export function researchLidarCanvasBase<T extends string>(
+  current: T,
+  hybrid: boolean,
+): T | "gray" | "satellite" {
+  if (hybrid) return "satellite";
+  return researchLidarLandBase(current);
 }
 
 export type ResearchLidarRead = {
