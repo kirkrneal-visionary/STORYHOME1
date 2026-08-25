@@ -152,5 +152,9 @@ assert.match(
   readFileSync(join(root, ".env.example"), "utf8"),
   /NEXT_PUBLIC_MAPBOX_TOKEN/,
 );
+assert.match(
+  readFileSync(join(root, "src/lib/shi/research-map-engine.ts"), "utf8"),
+  /const NEXT_PUBLIC_MAPBOX_TOKEN = process\.env\.NEXT_PUBLIC_MAPBOX_TOKEN/,
+);
 
 console.log("research-map-engine: ok");
