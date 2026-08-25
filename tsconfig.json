@@ -39,6 +39,7 @@
     "node_modules",
     "scripts/test-research-workspace-math.ts",
     "scripts/test-research-lidar.ts",
-    "scripts/test-research-terrain.ts"
+    "scripts/test-research-terrain.ts",
+    "scripts/test-research-map-engine.ts"
   ]
 }

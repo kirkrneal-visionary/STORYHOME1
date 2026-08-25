@@ -2,14 +2,14 @@
 
 **Live target:** https://storyhome-1-eqmg.vercel.app  
 **Footprint:** Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker  
-**Engine:** MapLibre (not Mapbox, not Google Maps as the Research canvas)
+**Engine:** MapLibre by default. Research 3D may use Mapbox GL as the **renderer** when `NEXT_PUBLIC_MAPBOX_TOKEN` is set. Streets, imagery, parcels, and elevation tiles stay ours — never Mapbox or Google map tiles.
 
 ## Why
 
 Build map quality on **owned infrastructure** and keep Research in **free-world development mode**:
 
 1. Parcel precision = our CAD (PostGIS MVT) — never rent Regrid/ATTOM for the desk  
-2. Basemap = free / owned tiles — no Mapbox session tax, no Google Dynamic Maps on Research  
+2. Basemap **tiles** = free / owned — no Mapbox or Google tile SKUs on Research. A Mapbox **engine** token (map loads only) is optional for 3D sky.  
 3. Google stays only for thin plugs already allowed (HAR / Places / Street View) — not the Intelligence map  
 4. Reveal overlays only when peer-grade (Data Coverage rules unchanged)
 
@@ -61,7 +61,8 @@ App-server fills stay footprint-bounded. Once CDN is on, map tile bandwidth move
 
 ## Out of scope
 
-- Mapbox as primary basemap  
+- Mapbox as primary basemap (hosted streets / satellite / terrain-dem)  
+- Mapbox GL as Research renderer is allowed when `NEXT_PUBLIC_MAPBOX_TOKEN` is set — tiles still ours  
 - Google Maps JS as Research canvas  
 - ATTOM / Regrid / Zoneomics / DataTree for truth layers  
 - Paying per parcel view for public GIS we can own once for launch 7
