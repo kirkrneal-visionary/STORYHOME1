@@ -3,10 +3,12 @@
  *
  * Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker
  *
- * L7-1: free-world basemap contract (no Mapbox / Google map loads on Research).
+ * L7-1: free-world TILE contract (no Mapbox / Google tile loads on Research).
  * L7-2: owned tile endpoints (/api/map/launch7/*) with disk cache + upstream fill.
  * L7-3: CDN/R2 publish path + refresh ops + county expand playbook.
  * Owned CAD parcels stay the precision layer; basemap is atmosphere only.
+ * Research 3D may use Mapbox GL as the engine when NEXT_PUBLIC_MAPBOX_TOKEN
+ * is set. That is a renderer bill, not a tile landlord.
  */
 
 import { CORRIDOR_COUNTIES } from "@/lib/shi/corridors";
@@ -15,7 +17,7 @@ import { CORRIDOR_COUNTIES } from "@/lib/shi/corridors";
 export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
 export const LAUNCH7_MAP_HONESTY =
-  "Research basemap tiles come from Story Home’s launch-7 owned cache (API and/or CDN) — not Mapbox or Google map loads. Parcel outlines are our CAD. Imagery is USGS public tiles we cache for the launch-7 footprint.";
+  "Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. Imagery is USGS public tiles we cache for the launch-7 footprint.";
 
 export type Launch7County = (typeof CORRIDOR_COUNTIES)[number];
 

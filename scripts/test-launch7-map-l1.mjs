@@ -13,6 +13,7 @@ const doc = read("docs/shi/ARCHIE-LAUNCH7-MAP.md");
 assert.match(doc, /L7-1/);
 assert.match(doc, /OpenFreeMap|free-world/i);
 assert.match(doc, /MapLibre/);
+assert.match(doc, /NEXT_PUBLIC_MAPBOX_TOKEN/);
 assert.match(doc, /Out of scope[\s\S]*Mapbox as primary/);
 assert.match(doc, /Out of scope[\s\S]*Google Maps JS as Research/);
 assert.match(doc, /NEXT_PUBLIC_LAUNCH7_CDN_BASE/);

@@ -27,10 +27,8 @@ import {
 } from "@/lib/map-style";
 import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
-  MAP_PRECISION_MAX_ZOOM,
   PARCEL_LINE_WIDTH_EXPR,
   absolutizeMapTileTemplate,
-  mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import { CadOverlayControl } from "@/components/map/CadOverlayControl";
 import {
@@ -102,8 +100,15 @@ import {
   storyCameraEase,
   type ResearchParcelTerrainStats,
 } from "@/lib/shi/research-terrain";
+import { createResearchMap } from "@/lib/shi/create-research-map";
+import {
+  applyResearchAtmosphere,
+  researchMapEngine,
+  type ResearchMapEngine,
+} from "@/lib/shi/research-map-engine";
 import type { ResearchModeId } from "@/lib/shi/research-modes";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 
@@ -301,6 +306,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
     const [ready, setReady] = useState(false);
     const [mapFailed, setMapFailed] = useState<string | null>(null);
+    const [engine, setEngine] = useState<ResearchMapEngine>(() =>
+      researchMapEngine(),
+    );
+    const engineRef = useRef<ResearchMapEngine>(engine);
     const [base, setBase] = useState<MapBaseLayer>(() =>
       researchTerrainLandDefault(researchMode),
     );
@@ -525,7 +534,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       setMapFailed(null);
       let map: maplibregl.Map;
       try {
-        map = new maplibregl.Map({
+        const created = createResearchMap({
           container: containerRef.current,
           style: buildStoryMapStyle(),
           center: initialViewRef.current
@@ -539,15 +548,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
             2,
           ),
-          maxZoom: MAP_PRECISION_MAX_ZOOM,
-          transformRequest: mapLibreTransformRequest,
-          // Required so Map Memory toDataURL is not a blank canvas.
-          preserveDrawingBuffer: true,
-          attributionControl: { compact: true },
-          maxPitch: 68,
-          pitchWithRotate: true,
-          fadeDuration: 180,
         });
+        map = created.map;
+        engineRef.current = created.engine;
+        setEngine(created.engine);
       } catch (err) {
         const msg =
           err instanceof Error
@@ -560,10 +564,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       mapRef.current = map;
       map.dragRotate.disable();
       map.touchPitch.disable();
-      map.addControl(
-        new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
-        "bottom-right",
-      );
 
       map.on("moveend", () => {
         const c = map.getCenter();
@@ -1132,11 +1132,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             );
       const exaggeration = Math.min(lidarElev, reliefCapForTier(tier));
       const paintSky = () => {
-        try {
-          map.setSky(researchTerrainSkyForPitch(map.getPitch()));
-        } catch {
-          /* sky optional while style loads */
-        }
+        applyResearchAtmosphere(map, {
+          engine: engineRef.current,
+          on,
+          maplibreSky: (pitch) =>
+            researchTerrainSkyForPitch(pitch) as Record<string, unknown>,
+          maplibreSkyOff: RESEARCH_TERRAIN_SKY_OFF as Record<string, unknown>,
+        });
       };
       const apply = () => {
         try {
@@ -1158,7 +1160,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               });
             }
           } else {
-            map.setSky(RESEARCH_TERRAIN_SKY_OFF);
+            applyResearchAtmosphere(map, {
+              engine: engineRef.current,
+              on: false,
+              maplibreSky: (pitch) =>
+                researchTerrainSkyForPitch(pitch) as Record<string, unknown>,
+              maplibreSkyOff: RESEARCH_TERRAIN_SKY_OFF as Record<string, unknown>,
+            });
             map.setTerrain(null);
             map.touchPitch?.disable();
             map.dragRotate?.disable();
@@ -1921,6 +1929,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-map-free-world="1"
         data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
         data-map-sky={lidar3d ? "on" : "off"}
+        data-map-engine={engine}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
           lidar3d && "story-map-sky-on",
@@ -1930,7 +1939,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         )}
       >
         <div className="relative min-h-0 w-full flex-1">
-          {lidar3d ? (
+          {lidar3d && engine === "maplibre" ? (
             <div
               data-map-sky-wash
               className="story-map-sky-layer"
@@ -1940,7 +1949,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           <div
             ref={containerRef}
             className={cn(
-              "absolute inset-0 z-[1] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none",
+              "absolute inset-0 z-[1] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none [&_.mapboxgl-map]:h-full [&_.mapboxgl-map]:w-full [&_.mapboxgl-canvas]:outline-none",
               lidar3d ? "bg-transparent" : "bg-[#f8f4f0]",
             )}
           />

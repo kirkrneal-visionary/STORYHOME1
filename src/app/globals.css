@@ -410,7 +410,10 @@ html[data-role="professional"] {
 }
 .story-map-sky-on .maplibregl-map,
 .story-map-sky-on .maplibregl-canvas-container,
-.story-map-sky-on .maplibregl-canvas {
+.story-map-sky-on .maplibregl-canvas,
+.story-map-sky-on .mapboxgl-map,
+.story-map-sky-on .mapboxgl-canvas-container,
+.story-map-sky-on .mapboxgl-canvas {
   background: transparent !important;
 }
 
