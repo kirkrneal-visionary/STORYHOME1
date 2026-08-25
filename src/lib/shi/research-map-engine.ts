@@ -21,13 +21,19 @@ export type EnvLike = {
   [key: string]: string | undefined;
 };
 
-export function researchMapboxToken(env: EnvLike = process.env): string | null {
-  const raw = env.NEXT_PUBLIC_MAPBOX_TOKEN?.trim() || "";
+/**
+ * Next only puts this in the browser when the name is written exactly like this.
+ * Do not read it off a loose `process.env` object — that stays empty on the client.
+ */
+const NEXT_PUBLIC_MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+export function researchMapboxToken(env?: EnvLike): string | null {
+  const raw = (env?.NEXT_PUBLIC_MAPBOX_TOKEN ?? NEXT_PUBLIC_MAPBOX_TOKEN ?? "").trim();
   if (!raw.startsWith("pk.")) return null;
   return raw;
 }
 
-export function researchMapEngine(env: EnvLike = process.env): ResearchMapEngine {
+export function researchMapEngine(env?: EnvLike): ResearchMapEngine {
   return researchMapboxToken(env) ? "mapbox" : "maplibre";
 }
 
