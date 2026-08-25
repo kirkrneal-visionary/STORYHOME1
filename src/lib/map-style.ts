@@ -288,7 +288,23 @@ export function applyStoryPlaceLabelStyle(
  * - Free-world layer ids live in style metadata (not a module singleton — that
  *   raced across Marketplace/Research and could hide the wrong layers)
  */
-export function buildStoryMapStyle(): StyleSpecification {
+
+/** Terrarium DEM for 3D. Add lazily on Research so 2D does not fetch heights. */
+export function researchDemSourceSpec(): StyleSpecification["sources"][string] {
+  return {
+    type: "raster-dem",
+    tiles: [absolutizeMapTileTemplate(researchLidarDemTemplate())],
+    tileSize: 256,
+    maxzoom: RESEARCH_LIDAR_DEM_MAX_ZOOM,
+    encoding: "terrarium",
+    attribution: RESEARCH_LIDAR_ATTRIBUTION,
+  };
+}
+
+export function buildStoryMapStyle(opts?: {
+  deferDem?: boolean;
+  initialBase?: MapBaseLayer;
+}): StyleSpecification {
   const liberty = libertyStyle as LibertyStyle;
   const rasterStreets = streetsUseOwnedRaster();
   const streetsRasterTmpl = ownedStreetsTileTemplate();
@@ -357,7 +373,7 @@ export function buildStoryMapStyle(): StyleSpecification {
   const fwIds = fwLayers.map((l) => l.id);
   freeWorldLayerIds = fwIds;
 
-  return {
+  const style: StyleSpecification = {
     version: 8,
     metadata: {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
@@ -374,6 +390,9 @@ export function buildStoryMapStyle(): StyleSpecification {
     sky: RESEARCH_TERRAIN_SKY_OFF,
     sources: {
       ...fwSources,
+      ...(opts?.deferDem
+        ? {}
+        : { [RESEARCH_LIDAR_DEM_SOURCE_ID]: researchDemSourceSpec() }),
       satellite: {
         type: "raster",
         tiles: satelliteTiles,
@@ -439,16 +458,13 @@ export function buildStoryMapStyle(): StyleSpecification {
         maxzoom: RESEARCH_LIDAR_MAX_ZOOM,
         attribution: RESEARCH_LIDAR_ATTRIBUTION,
       },
-      [RESEARCH_LIDAR_DEM_SOURCE_ID]: {
-        type: "raster-dem",
-        tiles: [absolutizeMapTileTemplate(researchLidarDemTemplate())],
-        tileSize: 256,
-        maxzoom: RESEARCH_LIDAR_DEM_MAX_ZOOM,
-        encoding: "terrarium",
-        attribution: RESEARCH_LIDAR_ATTRIBUTION,
-      },
     },
     layers: [
+      {
+        id: "story-paper",
+        type: "background",
+        paint: { "background-color": "#f8f4f0" },
+      },
       ...fwLayers,
       {
         id: "base-satellite",
@@ -518,6 +534,37 @@ export function buildStoryMapStyle(): StyleSpecification {
       },
     ],
   };
+
+  if (opts?.initialBase) {
+    applyInitialBaseToStyle(style, opts.initialBase, fwIds);
+  }
+  return style;
+}
+
+function applyInitialBaseToStyle(
+  style: StyleSpecification,
+  base: MapBaseLayer,
+  fwIds: string[],
+): void {
+  const vis = (on: boolean) => (on ? "visible" : "none");
+  const want: Record<string, boolean> = {
+    "base-satellite": base === "satellite" || base === "imageryLabels",
+    "base-topo": base === "topo",
+    "base-terrain": base === "terrain",
+    "base-gray": base === "gray",
+    "base-labels": base === "imageryLabels",
+  };
+  const fwOn = base === "street";
+  for (const layer of style.layers) {
+    const layout = { ...(layer.layout ?? {}) } as Record<string, unknown>;
+    if (fwIds.includes(layer.id)) {
+      layout.visibility = vis(fwOn);
+      layer.layout = layout as LayerSpecification["layout"];
+    } else if (layer.id in want) {
+      layout.visibility = vis(want[layer.id]!);
+      layer.layout = layout as LayerSpecification["layout"];
+    }
+  }
 }
 
 type MapLike = {

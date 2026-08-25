@@ -5,7 +5,7 @@
  */
 
 import mapboxgl from "mapbox-gl";
-import maplibregl from "maplibre-gl";
+import maplibregl, { config as maplibreConfig } from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 import { MAP_PRECISION_MAX_ZOOM } from "@/lib/map-precision";
 import {
@@ -15,6 +15,24 @@ import {
   styleJsonForResearchEngine,
   type ResearchMapEngine,
 } from "@/lib/shi/research-map-engine";
+import { maxParallelImageRequestsForTier } from "@/lib/shi/research-map-paint";
+import { researchDeviceTier } from "@/lib/shi/research-terrain";
+
+export function applyResearchTileBudget(opts?: {
+  dpr?: number;
+  width?: number;
+  saveData?: boolean;
+}): number {
+  const tier = researchDeviceTier(
+    opts?.dpr ?? 1,
+    opts?.width ?? 1200,
+    opts?.saveData ?? false,
+  );
+  const n = maxParallelImageRequestsForTier(tier);
+  mapboxgl.maxParallelImageRequests = n;
+  maplibreConfig.MAX_PARALLEL_IMAGE_REQUESTS = n;
+  return n;
+}
 
 export type ResearchMap = maplibregl.Map;
 
@@ -30,6 +48,15 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
   map: ResearchMap;
   engine: ResearchMapEngine;
 } {
+  applyResearchTileBudget({
+    dpr: opts.pixelRatio,
+    width: typeof window !== "undefined" ? window.innerWidth : 1200,
+    saveData: Boolean(
+      typeof navigator !== "undefined" &&
+        (navigator as Navigator & { connection?: { saveData?: boolean } })
+          .connection?.saveData,
+    ),
+  });
   const engine = researchMapEngine();
   const style = styleJsonForResearchEngine(
     opts.style as unknown as Record<string, unknown>,
