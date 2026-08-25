@@ -38,14 +38,14 @@ export const RESEARCH_LIDAR_CUT_PIN_LAYER_ID = "shi-lidar-cut-pin";
 export const RESEARCH_LIDAR_DEM_SOURCE_ID = "story-lidar-dem";
 export const RESEARCH_LIDAR_MAX_ZOOM = 16;
 export const RESEARCH_LIDAR_DEM_MAX_ZOOM = 14;
-export const RESEARCH_LIDAR_DEM_GEN = "d1";
+export const RESEARCH_LIDAR_DEM_GEN = "d2";
 export const RESEARCH_LIDAR_PROFILE_SAMPLES = 32;
 export const RESEARCH_LIDAR_STRENGTH_DEFAULT = 0.96;
 export const RESEARCH_LIDAR_STRENGTH_HYBRID = 0.68;
-export const RESEARCH_LIDAR_ELEV_DEFAULT = 1.6;
-export const RESEARCH_LIDAR_ELEV_MIN = 0.3;
-export const RESEARCH_LIDAR_ELEV_MAX = 3.4;
-export const RESEARCH_LIDAR_PITCH = 58;
+export const RESEARCH_LIDAR_ELEV_DEFAULT = 1;
+export const RESEARCH_LIDAR_ELEV_MIN = 1;
+export const RESEARCH_LIDAR_ELEV_MAX = 3;
+export const RESEARCH_LIDAR_PITCH = 56;
 
 export const RESEARCH_LIDAR_UPSTREAM =
   "https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer";
@@ -60,24 +60,25 @@ export const RESEARCH_LIDAR_RASTER_FUNCTION: Record<
 };
 
 export const RESEARCH_LIDAR_COPY = {
-  label: "LiDAR",
-  title: "Texas ground from public lidar. Not a survey.",
-  honesty: "Public 3DEP / StratMap — not a survey.",
-  tap: "Tap the map for height",
+  label: "LiDAR terrain",
+  title:
+    "High-resolution elevation from available public terrain data. Not every place is raw lidar. Not a survey.",
+  honesty: "Mapped elevation — not a survey.",
+  tap: "Tap a point for mapped elevation",
   cut: {
     short: "Cut",
-    title: "Two taps — see the land in a slice",
+    title: "Two taps — terrain profile from real elevation",
     hint: "Tap two points on the ground",
   },
-  strength: "How hard the ground sits",
-  hybrid: { short: "Photos", title: "Bare earth over aerial photos" },
+  strength: "Dirt strength",
+  hybrid: { short: "Hybrid", title: "Imagery, parcels, and labels on terrain" },
   threeD: {
     short: "3D",
-    title: "Tilt the land. Heights from public lidar across Texas.",
+    title: "Look across the land. Heights from public terrain.",
   },
-  elev: "How dramatic the hills sit",
+  elev: "Relief",
   off: "Off",
-  contours: { short: "Contours", title: "Lines from the 1-meter ground" },
+  contours: { short: "Contours", title: "Lines from the mapped ground" },
   products: {
     ground: {
       short: "Ground",
@@ -162,6 +163,17 @@ export function researchLidarTileBbox3857(
   return [xmin, ymin, xmax, ymax];
 }
 
+export function wgs84BboxTo3857(
+  west: number,
+  south: number,
+  east: number,
+  north: number,
+): [number, number, number, number] {
+  const sw = lngLatToWebMercator(west, south);
+  const ne = lngLatToWebMercator(east, north);
+  return [sw.x, sw.y, ne.x, ne.y];
+}
+
 export function lngLatToWebMercator(
   lng: number,
   lat: number,
@@ -202,24 +214,44 @@ export function researchLidarUpstreamUrl(
   return `${RESEARCH_LIDAR_UPSTREAM}/exportImage?${q.toString()}`;
 }
 
-/** Raw 3DEP heights — no hillshade. All Texas. Encoded as Terrarium PNG. */
-export function researchLidarDemUpstreamUrl(
-  z: number,
-  x: number,
-  y: number,
+function demExportQuery(
+  xmin: number,
+  ymin: number,
+  xmax: number,
+  ymax: number,
+  size: number,
 ): string {
-  const [xmin, ymin, xmax, ymax] = researchLidarTileBbox3857(z, x, y);
   const q = new URLSearchParams({
     bbox: `${xmin},${ymin},${xmax},${ymax}`,
     bboxSR: "3857",
     imageSR: "3857",
-    size: "256,256",
+    size: `${size},${size}`,
     format: "tiff",
     pixelType: "F32",
     f: "image",
     interpolation: "RSP_BilinearInterpolation",
   });
   return `${RESEARCH_LIDAR_UPSTREAM}/exportImage?${q.toString()}`;
+}
+
+/** Raw 3DEP heights — no hillshade. Encoded as Terrarium PNG for the mesh. */
+export function researchLidarDemUpstreamUrl(
+  z: number,
+  x: number,
+  y: number,
+): string {
+  const [xmin, ymin, xmax, ymax] = researchLidarTileBbox3857(z, x, y);
+  return demExportQuery(xmin, ymin, xmax, ymax, 256);
+}
+
+/** Parcel / site export — analytics only. Never use visual relief. */
+export function researchLidarDemBboxUrl(
+  bbox3857: [number, number, number, number],
+  size = 64,
+): string {
+  const [xmin, ymin, xmax, ymax] = bbox3857;
+  const n = Math.max(16, Math.min(128, Math.round(size)));
+  return demExportQuery(xmin, ymin, xmax, ymax, n);
 }
 
 /** MapLibre Terrarium encoding. */
@@ -388,7 +420,7 @@ export function parseResearchLidarIdentifyMeters(raw: unknown): number | null {
   return null;
 }
 
-/** When LiDAR is the land, competing relief basemaps step aside. */
+/** When dirt mode is the land, competing relief basemaps step aside. */
 export function researchLidarLandBase<T extends string>(
   current: T,
 ): T | "gray" {
@@ -398,11 +430,22 @@ export function researchLidarLandBase<T extends string>(
   return current;
 }
 
-/** Photos keeps aerial under the hillshade. Otherwise gray the relief maps. */
+/** Imagery/hybrid keep photos. 3D world never forces the gray canvas. */
 export function researchLidarCanvasBase<T extends string>(
   current: T,
   hybrid: boolean,
+  world3d = false,
 ): T | "gray" | "satellite" {
+  if (world3d) {
+    if (
+      current === "satellite" ||
+      current === "imageryLabels" ||
+      current === "topo"
+    ) {
+      return current;
+    }
+    return "satellite";
+  }
   if (hybrid) return "satellite";
   return researchLidarLandBase(current);
 }

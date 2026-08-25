@@ -42,9 +42,9 @@ assert.deepEqual(
   ["ground", "slope", "aspect", "contours"],
 );
 assert.deepEqual([...RESEARCH_LIDAR_READS], ["slope", "aspect"]);
-assert.equal(RESEARCH_LIDAR_COPY.label, "LiDAR");
+assert.match(RESEARCH_LIDAR_COPY.label, /lidar/i);
 assert.match(RESEARCH_LIDAR_COPY.tap, /tap/i);
-assert.match(RESEARCH_LIDAR_COPY.title, /lidar|3DEP|StratMap/i);
+assert.match(RESEARCH_LIDAR_COPY.title, /lidar|3DEP|StratMap|terrain/i);
 assert.doesNotMatch(RESEARCH_LIDAR_COPY.title, /buildable acres/i);
 assert.equal(RESEARCH_LIDAR_SOURCE_ID, "story-lidar");
 assert.equal(RESEARCH_LIDAR_LAYER_ID, "story-lidar-surface");
@@ -65,16 +65,18 @@ assert.equal(researchLidarLandBase("street"), "gray");
 assert.equal(researchLidarLandBase("satellite"), "satellite");
 assert.equal(researchLidarCanvasBase("street", false), "gray");
 assert.equal(researchLidarCanvasBase("street", true), "satellite");
+assert.equal(researchLidarCanvasBase("street", false, true), "satellite");
 assert.equal(RESEARCH_LIDAR_STRENGTH_DEFAULT, 0.96);
 assert.ok(RESEARCH_LIDAR_STRENGTH_HYBRID < RESEARCH_LIDAR_STRENGTH_DEFAULT);
 assert.match(RESEARCH_LIDAR_COPY.cut.short, /cut/i);
-assert.match(RESEARCH_LIDAR_COPY.hybrid.short, /photo/i);
+assert.match(RESEARCH_LIDAR_COPY.hybrid.short, /hybrid/i);
 assert.match(RESEARCH_LIDAR_COPY.threeD.short, /3d/i);
-assert.match(RESEARCH_LIDAR_COPY.elev, /dramatic|hill/i);
-assert.match(RESEARCH_LIDAR_COPY.threeD.title, /texas/i);
-assert.ok(RESEARCH_LIDAR_ELEV_DEFAULT > 1);
+assert.match(RESEARCH_LIDAR_COPY.elev, /relief/i);
+assert.match(RESEARCH_LIDAR_COPY.threeD.title, /land|terrain/i);
+assert.equal(RESEARCH_LIDAR_ELEV_DEFAULT, 1);
 assert.equal(RESEARCH_LIDAR_DEM_SOURCE_ID, "story-lidar-dem");
-assert.match(RESEARCH_LIDAR_COPY.strength, /ground/i);
+assert.match(RESEARCH_LIDAR_COPY.strength, /dirt|ground/i);
+assert.match(RESEARCH_LIDAR_COPY.honesty, /not a survey/i);
 assert.equal(RESEARCH_LIDAR_PROFILE_SAMPLES, 32);
 
 assert.equal(researchLidarTileValid(13, 1921, 3360), true);
@@ -143,6 +145,9 @@ const tiles = readFileSync(
 );
 assert.match(tiles, /RESEARCH_LIDAR_TILE_GEN/);
 assert.match(tiles, /styleResearchLidarTile/);
+assert.match(tiles, /overzoomTerrariumPng/);
+assert.match(tiles, /elevationLooksEmpty/);
+assert.match(tiles, /elevation-tiles-prod/);
 
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /researchLidarTileTemplate\("ground"\)/);
@@ -170,7 +175,12 @@ assert.match(map, /data-map-lidar-strength/);
 assert.match(map, /data-map-lidar-profile/);
 assert.match(map, /data-map-lidar-3d/);
 assert.match(map, /data-map-lidar-elev/);
+assert.match(map, /data-map-view-height/);
+assert.match(map, /data-map-terrain-world/);
 assert.match(map, /setTerrain/);
+assert.match(map, /researchTerrainSkyForPitch/);
+assert.doesNotMatch(map, /fog-ground-blend": 0\.25/);
+assert.match(map, /storyCameraEase/);
 assert.match(map, /lidarCutARef/);
 assert.doesNotMatch(map, /setLidarProduct/);
 assert.doesNotMatch(map, /s3\.amazonaws\.com\/elevation-tiles-prod/);

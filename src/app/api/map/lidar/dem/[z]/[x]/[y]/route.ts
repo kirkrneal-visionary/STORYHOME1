@@ -25,7 +25,10 @@ export async function GET(_req: Request, ctx: Ctx) {
   try {
     const tile = await getResearchLidarDemTile(z, x, y);
     if (!tile) {
-      return new NextResponse(null, { status: 204 });
+      return NextResponse.json(
+        { error: "no elevation for this tile" },
+        { status: 404 },
+      );
     }
     return new NextResponse(new Uint8Array(tile.body), {
       status: 200,
@@ -35,6 +38,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         "Access-Control-Allow-Origin": "*",
         "X-Story-Lidar-Product": "dem",
         "X-Story-Lidar-Cached": tile.cached ? "1" : "0",
+        "X-Story-Terrain-Source": tile.source,
       },
     });
   } catch (err) {

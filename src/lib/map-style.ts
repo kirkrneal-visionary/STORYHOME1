@@ -29,6 +29,7 @@ import {
   researchLidarDemTemplate,
   researchLidarTileTemplate,
 } from "@/lib/shi/research-lidar";
+import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -370,6 +371,7 @@ export function buildStoryMapStyle(): StyleSpecification {
       liberty.glyphs ??
       "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
     sprite: liberty.sprite,
+    sky: RESEARCH_TERRAIN_SKY_OFF,
     sources: {
       ...fwSources,
       satellite: {
