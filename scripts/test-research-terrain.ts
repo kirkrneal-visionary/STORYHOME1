@@ -29,12 +29,12 @@ import {
 
 assert.equal(RESEARCH_TERRAIN_ENGINE, "story-terrain-v1");
 assert.equal(RESEARCH_RELIEF_NATURAL, 1);
-assert.equal(RESEARCH_RELIEF_ENHANCED, 3);
+assert.equal(RESEARCH_RELIEF_ENHANCED, 2.2);
 assert.equal(RESEARCH_RELIEF_DEFAULT, 1);
 assert.equal(reliefFromSlider(0), 1);
-assert.equal(reliefFromSlider(1), 3);
+assert.equal(reliefFromSlider(1), 2.2);
 assert.equal(sliderFromRelief(1), 0);
-assert.equal(sliderFromRelief(3), 1);
+assert.equal(sliderFromRelief(2.2), 1);
 assert.equal(cameraPitchForPreset("2d"), 0);
 assert.ok(cameraPitchForPreset("3d") >= 40);
 assert.ok(cameraPitchForPreset("ground") > cameraPitchForPreset("overview"));
