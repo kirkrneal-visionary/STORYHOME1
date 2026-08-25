@@ -15,6 +15,10 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
+import {
+  LAUNCH7_IMAGERY_GEN,
+  NAIP_60CM_MIN_ZOOM,
+} from "@/lib/shi/research-imagery";
 
 export const LAUNCH7_STREETS_UPSTREAM_UA =
   "StoryHome-Launch7Tiles/2.0 (+https://storyhome-1-eqmg.vercel.app)";
@@ -33,7 +37,13 @@ export function streetsTilePath(z: number, x: number, y: number): string {
 }
 
 export function imageryTilePath(z: number, x: number, y: number): string {
-  return join(launch7TilesRoot(), "imagery", String(z), String(x), `${y}.jpg`);
+  return join(
+    launch7TilesRoot(),
+    `imagery-${LAUNCH7_IMAGERY_GEN}`,
+    String(z),
+    String(x),
+    `${y}.jpg`,
+  );
 }
 
 /** Web mercator tile index → WGS84 bbox. */
@@ -85,6 +95,69 @@ export const USGS_IMAGERY_TEMPLATE =
   process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim() ||
   "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}";
 
+/** USDA NAIP ~60 cm mosaic. Primary close-zoom fill. */
+export const USGS_NAIP_IMAGESERVER =
+  "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer";
+
+/** Texas 2022 NAIP 60 cm. Fallback when USGS NAIP is down. */
+export const TXGIO_NAIP60_IMAGESERVER =
+  "https://imagery.geographic.texas.gov/server/rest/services/NAIP/NAIP22_NCCIR_60cm/ImageServer";
+
+const WEB_MERCATOR_HALF = 20037508.342789244;
+const NAIP_EXPORT_TIMEOUT_MS = 10_000;
+const USGS_XYZ_MAX_ZOOM = 16;
+
+export type ImageryKind = "naip60" | "xyz";
+
+export function tileBbox3857(
+  z: number,
+  x: number,
+  y: number,
+): [number, number, number, number] {
+  const n = 2 ** z;
+  const xmin = -WEB_MERCATOR_HALF + (x / n) * 2 * WEB_MERCATOR_HALF;
+  const xmax = -WEB_MERCATOR_HALF + ((x + 1) / n) * 2 * WEB_MERCATOR_HALF;
+  const ymin = WEB_MERCATOR_HALF - ((y + 1) / n) * 2 * WEB_MERCATOR_HALF;
+  const ymax = WEB_MERCATOR_HALF - (y / n) * 2 * WEB_MERCATOR_HALF;
+  return [xmin, ymin, xmax, ymax];
+}
+
+export function naip60ExportUrl(
+  server: string,
+  z: number,
+  x: number,
+  y: number,
+  naturalColor = false,
+): string {
+  const [xmin, ymin, xmax, ymax] = tileBbox3857(z, x, y);
+  const q = new URLSearchParams({
+    bbox: `${xmin},${ymin},${xmax},${ymax}`,
+    bboxSR: "3857",
+    imageSR: "3857",
+    size: "256,256",
+    format: "jpg",
+    f: "image",
+    interpolation: "RSP_BilinearInterpolation",
+    compressionQuality: "82",
+    bandIds: "0,1,2",
+  });
+  if (naturalColor) {
+    q.set("renderingRule", JSON.stringify({ rasterFunction: "NaturalColor" }));
+  }
+  return `${server}/exportImage?${q.toString()}`;
+}
+
+export function imageryUsesNaip60(z: number): boolean {
+  return z >= NAIP_60CM_MIN_ZOOM && !process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim();
+}
+
+function looksLikeImage(body: Buffer): boolean {
+  if (body.length < 800) return false;
+  const jpeg = body[0] === 0xff && body[1] === 0xd8;
+  const png = body[0] === 0x89 && body[1] === 0x50;
+  return jpeg || png;
+}
+
 function fillTemplate(
   tmpl: string,
   z: number,
@@ -119,6 +192,7 @@ export type TileFetchResult = {
   contentType: string;
   source: "owned-cache" | "upstream-fill";
   cached: boolean;
+  imageryKind?: ImageryKind;
 };
 
 export async function getLaunch7StreetsTile(
@@ -163,6 +237,56 @@ export async function getLaunch7StreetsTile(
   };
 }
 
+async function fetchImage(
+  url: string,
+  timeoutMs = NAIP_EXPORT_TIMEOUT_MS,
+): Promise<{ body: Buffer; contentType: string } | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": LAUNCH7_STREETS_UPSTREAM_UA },
+      signal: ctrl.signal,
+    });
+    if (res.status === 204 || res.status === 404) return null;
+    if (!res.ok) return null;
+    const body = Buffer.from(await res.arrayBuffer());
+    if (!looksLikeImage(body)) return null;
+    return {
+      body,
+      contentType: res.headers.get("content-type") || "image/jpeg",
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchNaip60Tile(
+  z: number,
+  x: number,
+  y: number,
+  server: "usgs" | "txgio",
+): Promise<{ body: Buffer; contentType: string } | null> {
+  if (server === "usgs") {
+    return fetchImage(
+      naip60ExportUrl(USGS_NAIP_IMAGESERVER, z, x, y, true),
+    );
+  }
+  return fetchImage(naip60ExportUrl(TXGIO_NAIP60_IMAGESERVER, z, x, y, false));
+}
+
+async function fetchUsgsXyzTile(
+  z: number,
+  x: number,
+  y: number,
+): Promise<{ body: Buffer; contentType: string } | null> {
+  const custom = Boolean(process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim());
+  if (!custom && z > USGS_XYZ_MAX_ZOOM) return null;
+  return fetchImage(fillTemplate(USGS_IMAGERY_TEMPLATE, z, x, y), 8000);
+}
+
 export async function getLaunch7ImageryTile(
   z: number,
   x: number,
@@ -182,25 +306,40 @@ export async function getLaunch7ImageryTile(
       contentType: "image/jpeg",
       source: "owned-cache",
       cached: true,
+      imageryKind: imageryUsesNaip60(z) ? "naip60" : "xyz",
     };
   }
 
-  const url = fillTemplate(USGS_IMAGERY_TEMPLATE, z, x, y);
-  const res = await fetch(url, {
-    headers: { "User-Agent": LAUNCH7_STREETS_UPSTREAM_UA },
-  });
-  if (res.status === 204 || res.status === 404) return null;
-  if (!res.ok) {
-    throw new Error(`imagery upstream ${res.status}`);
+  let hit: { body: Buffer; contentType: string } | null = null;
+  let kind: ImageryKind = "xyz";
+
+  if (imageryUsesNaip60(z)) {
+    hit = await fetchNaip60Tile(z, x, y, "usgs");
+    if (hit) kind = "naip60";
+    if (!hit) hit = await fetchUsgsXyzTile(z, x, y);
+    if (!hit) {
+      hit = await fetchNaip60Tile(z, x, y, "txgio");
+      if (hit) kind = "naip60";
+    }
+  } else {
+    hit = await fetchUsgsXyzTile(z, x, y);
   }
-  const body = Buffer.from(await res.arrayBuffer());
+
+  if (!hit) {
+    if (imageryUsesNaip60(z)) {
+      throw new Error("imagery upstream unavailable");
+    }
+    return null;
+  }
+
   const inFootprint = tileIntersectsLaunch7(z, x, y);
-  const cached = inFootprint ? writeAtomic(path, body) : false;
+  const cached = inFootprint ? writeAtomic(path, hit.body) : false;
   return {
-    body,
-    contentType: res.headers.get("content-type") || "image/jpeg",
+    body: hit.body,
+    contentType: hit.contentType,
     source: "upstream-fill",
     cached,
+    imageryKind: kind,
   };
 }
 
@@ -228,6 +367,8 @@ export function ownedTileStats(): {
   return {
     root,
     streetsBytes: dirBytes(join(root, "streets")),
-    imageryBytes: dirBytes(join(root, "imagery")),
+    imageryBytes:
+      dirBytes(join(root, `imagery-${LAUNCH7_IMAGERY_GEN}`)) +
+      dirBytes(join(root, "imagery")),
   };
 }

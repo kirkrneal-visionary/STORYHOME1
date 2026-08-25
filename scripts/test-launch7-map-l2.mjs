@@ -27,6 +27,9 @@ assert.match(tiles, /getLaunch7ImageryTile/);
 assert.match(tiles, /tileIntersectsLaunch7/);
 assert.match(tiles, /openfreemap\.org\/planet/);
 assert.match(tiles, /USGSImageryOnly/);
+assert.match(tiles, /USGSNAIPImagery/);
+assert.match(tiles, /NAIP22_NCCIR_60cm/);
+assert.match(tiles, /imageryUsesNaip60/);
 
 const streetsRoute = read(
   "src/app/api/map/launch7/streets/[z]/[x]/[y]/route.ts",

@@ -8,7 +8,8 @@ export const revalidate = 86400;
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
- * L7-2 — owned launch-7 imagery tiles (USGS Imagery Only upstream).
+ * L7-2 — owned launch-7 imagery tiles.
+ * Close zoom: USDA NAIP 60 cm (USGS / TxGIO). Far-out: USGS Imagery Only.
  * Serves from disk cache; fills upstream inside the footprint.
  */
 export async function GET(_req: Request, ctx: Ctx) {
@@ -32,6 +33,7 @@ export async function GET(_req: Request, ctx: Ctx) {
         "Cache-Control": LAUNCH7_TILE_CACHE_CONTROL,
         "X-Launch7-Tile-Source": tile.source,
         "X-Launch7-Tile-Cached": tile.cached ? "1" : "0",
+        "X-Launch7-Imagery-Kind": tile.imageryKind ?? "xyz",
         "Access-Control-Allow-Origin": "*",
       },
     });

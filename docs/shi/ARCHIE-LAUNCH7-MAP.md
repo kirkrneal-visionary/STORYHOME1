@@ -22,7 +22,8 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 
 ### L7-2 — Owned launch-7 tile service (**done**)
 
-- `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}`  
+- `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}?v=n60`  
+- Close zoom = USDA NAIP 60 cm (USGS / TxGIO). Far-out = USGS Imagery Only.  
 - Disk cache + upstream fill · `npm run build:launch7-tiles`
 
 ### L7-3 — Serve + refresh ops (**shipping**)

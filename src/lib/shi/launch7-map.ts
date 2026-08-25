@@ -12,12 +12,13 @@
  */
 
 import { CORRIDOR_COUNTIES } from "@/lib/shi/corridors";
+import { LAUNCH7_IMAGERY_TILE_TEMPLATE } from "@/lib/shi/research-imagery";
 
 /** Wave marker — bump when basemap ownership step ships. */
 export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
 export const LAUNCH7_MAP_HONESTY =
-  "Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. Imagery is USGS public tiles we cache for the launch-7 footprint.";
+  "Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint. Far-out views use USGS Imagery Only tiles.";
 
 export type Launch7County = (typeof CORRIDOR_COUNTIES)[number];
 
@@ -29,9 +30,8 @@ export const LAUNCH7_FIPS = CORRIDOR_COUNTIES.map((c) => c.fips);
 export const LAUNCH7_STREETS_API_TEMPLATE =
   "/api/map/launch7/streets/{z}/{x}/{y}";
 
-/** Default owned imagery endpoint (L7-2). */
-export const LAUNCH7_IMAGERY_API_TEMPLATE =
-  "/api/map/launch7/imagery/{z}/{x}/{y}";
+/** Default owned imagery endpoint (L7-2). `?v=` busts stale 1 m CDN tiles. */
+export const LAUNCH7_IMAGERY_API_TEMPLATE = LAUNCH7_IMAGERY_TILE_TEMPLATE;
 
 function envTrim(name: string): string | null {
   if (typeof process === "undefined") return null;

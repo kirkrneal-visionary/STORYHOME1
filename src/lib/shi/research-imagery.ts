@@ -1,17 +1,25 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Standard = USGS Imagery Only (owned launch-7 cache). High-res / historic
- * slots exist so we can add a provider later without rebuilding the engine.
- * Safe for the browser. Do not add UI for unused sources.
+ * Close zoom = USDA NAIP 60 cm (USGS / Texas, owned cache).
+ * Far-out zoom = USGS Imagery Only tiles (fast).
+ * High-res / historic slots stay reserved. Safe for the browser.
  */
 
-export const RESEARCH_IMAGERY_ARCH = "research-imagery-v1" as const;
+export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
+
+/** Bust CDN / disk so old ~1 m tiles are not served as 60 cm. */
+export const LAUNCH7_IMAGERY_GEN = "n60";
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
 export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
 
+/** First zoom that asks the 60 cm ImageServer instead of the 1 m tile cache. */
+export const NAIP_60CM_MIN_ZOOM = 14;
+
+export const NAIP_60CM_NATIVE_M = 0.6;
+
 export const LAUNCH7_IMAGERY_TILE_TEMPLATE =
-  "/api/map/launch7/imagery/{z}/{x}/{y}";
+  `/api/map/launch7/imagery/{z}/{x}/{y}?v=${LAUNCH7_IMAGERY_GEN}`;
 
 export type ImagerySourceDef = {
   id: string;
@@ -29,8 +37,9 @@ export type ImagerySourceDef = {
 };
 
 export const USGS_IMAGERY_ONLY_ID = "usgs-imagery-only";
+export const NAIP_60CM_ID = "naip-60cm";
 
-/** ~1 m NAIP-class. z18 is the published tile ceiling. No @2x URL exists. */
+/** Fast far-out tiles. Used under NAIP_60CM_MIN_ZOOM and as a fill if 60 cm fails. */
 export function usgsImageryOnlySource(tileUrl?: string): ImagerySourceDef {
   return {
     id: USGS_IMAGERY_ONLY_ID,
@@ -43,6 +52,24 @@ export function usgsImageryOnlySource(tileUrl?: string): ImagerySourceDef {
     attribution: "Imagery © USGS National Map · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: 1,
+    enabled: false,
+  };
+}
+
+/** USDA NAIP ~60 cm. z18 matches native GSD in East Texas. No @2x URL exists. */
+export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
+  return {
+    id: NAIP_60CM_ID,
+    name: "NAIP 60 cm",
+    type: "raster",
+    tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+    attribution:
+      "Imagery © USDA NAIP 60 cm · USGS / TxGIO · Story Home launch-7 cache",
+    highDpiSupported: false,
+    nativeResolutionM: NAIP_60CM_NATIVE_M,
     enabled: true,
   };
 }
@@ -83,6 +110,7 @@ export function historicImagerySource(): ImagerySourceDef {
 
 export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
   return [
+    naip60cmSource(tileUrl),
     usgsImageryOnlySource(tileUrl),
     highResImagerySource(),
     historicImagerySource(),
@@ -90,8 +118,8 @@ export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
 }
 
 export function activeImagerySource(tileUrl?: string): ImagerySourceDef {
-  const live = usgsImageryOnlySource(tileUrl);
-  return live.enabled ? live : usgsImageryOnlySource();
+  const live = allImagerySources(tileUrl).find((s) => s.enabled);
+  return live ?? naip60cmSource(tileUrl);
 }
 
 /** Mercator ground meters per pixel at a WGS84 latitude. */
