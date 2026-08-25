@@ -21,6 +21,9 @@ assert.match(ws, /WORKSPACE_DRAWER_MIN_PX/);
 assert.match(ws, /snapFromRelease/);
 assert.match(ws, /workspaceLayout/);
 assert.match(ws, /writeWorkspaceSnapshot/);
+assert.match(ws, /sheetSnapAfterSelect/);
+assert.match(ws, /sheetSnapAfterDraw/);
+assert.match(ws, /defaultMapToolGroup/);
 
 const view = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
@@ -141,6 +144,9 @@ assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
 assert.match(map, /data-map-lidar/);
 assert.match(map, /data-map-bottom-chrome/);
+assert.match(map, /data-map-mode="2d"/);
+assert.match(map, /data-map-mode="3d"/);
+assert.match(css, /display-mode: standalone/);
 assert.match(map, /data-map-hint-kind/);
 assert.doesNotMatch(map, /top-\[4\.5rem\]/);
 assert.match(map, /resize: \(\) =>/);
@@ -194,6 +200,15 @@ assert.match(pkg, /test:research-workspace/);
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(r.status, 0, `research-map-engine\n${r.stdout}\n${r.stderr}`);
+}
+
+{
+  const r = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "scripts/test-research-phone-chrome.ts"],
+    { cwd: root, encoding: "utf8" },
+  );
+  assert.equal(r.status, 0, `research-phone-chrome\n${r.stdout}\n${r.stderr}`);
 }
 
 {
