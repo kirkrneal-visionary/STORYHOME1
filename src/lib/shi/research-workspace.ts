@@ -161,6 +161,29 @@ export function writeWorkspaceSnapshot(
   }
 }
 
+/** Phone: keep the map. Desktop: open the card. */
+export function sheetSnapAfterSelect(
+  layout: WorkspaceLayout,
+  current: WorkspaceSheetSnap,
+): WorkspaceSheetSnap {
+  if (layout === "sheet") {
+    if (current === "collapsed") return "peek";
+    return current;
+  }
+  return current === "collapsed" || current === "peek" ? "expanded" : current;
+}
+
+/** After a draw: peek on the phone so the land stays on screen. */
+export function sheetSnapAfterDraw(layout: WorkspaceLayout): WorkspaceSheetSnap {
+  return layout === "sheet" ? "peek" : "expanded";
+}
+
+export function defaultMapToolGroup(
+  widthPx: number,
+): "terrain" | "tools" | null {
+  return widthPx >= WORKSPACE_DRAWER_MIN_PX ? "terrain" : null;
+}
+
 export function workspaceContext(opts: {
   hasProperty: boolean;
   hasFrame: boolean;

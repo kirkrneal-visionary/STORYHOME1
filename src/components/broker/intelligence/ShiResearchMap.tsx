@@ -107,6 +107,7 @@ import {
   type ResearchMapEngine,
 } from "@/lib/shi/research-map-engine";
 import type { ResearchModeId } from "@/lib/shi/research-modes";
+import { defaultMapToolGroup } from "@/lib/shi/research-workspace";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -314,8 +315,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       researchTerrainLandDefault(researchMode),
     );
     const [showParcels, setShowParcels] = useState(true);
-    const [openGroup, setOpenGroup] = useState<"view" | "terrain" | "tools">(
-      "terrain",
+    const [openGroup, setOpenGroup] = useState<"terrain" | "tools" | null>(
+      () =>
+        defaultMapToolGroup(
+          typeof window === "undefined" ? 1200 : window.innerWidth,
+        ),
     );
     const [viewHeight, setViewHeight] = useState(RESEARCH_VIEW_HEIGHT_DEFAULT);
     const [parcelTerrain, setParcelTerrain] =
@@ -334,6 +338,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     );
     const [lidarHybrid, setLidarHybrid] = useState(false);
     const [lidar3d, setLidar3d] = useState(false);
+    const lidar3dPrevRef = useRef<boolean | null>(null);
     const [lidarElev, setLidarElev] = useState(RESEARCH_LIDAR_ELEV_DEFAULT);
     const [lidarCut, setLidarCut] = useState(false);
     const [lidarCutA, setLidarCutA] = useState<LatLng | null>(null);
@@ -1171,13 +1176,18 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             map.touchPitch?.disable();
             map.dragRotate?.disable();
             if (map.getPitch() > 2) {
-              map.easeTo({
-                pitch: 0,
-                duration: 820,
-                easing: storyCameraEase,
-              });
+              if (lidar3dPrevRef.current === null) {
+                map.jumpTo({ pitch: 0, bearing: map.getBearing() });
+              } else {
+                map.easeTo({
+                  pitch: 0,
+                  duration: 820,
+                  easing: storyCameraEase,
+                });
+              }
             }
           }
+          lidar3dPrevRef.current = on;
         } catch {
           /* terrain source may still be loading */
         }
@@ -1930,6 +1940,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
         data-map-sky={lidar3d ? "on" : "off"}
         data-map-engine={engine}
+        data-map-tools={openGroup ?? "closed"}
         className={cn(
           "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
           lidar3d && "story-map-sky-on",
@@ -2110,22 +2121,24 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 </span>
               </button>
             ) : null}
-            <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
-              mi
-              <input
-                type="number"
-                min={0.25}
-                max={10}
-                step={0.25}
-                value={radiusMiles}
-                onChange={(e) => {
-                  const n = Number(e.target.value);
-                  if (!Number.isFinite(n)) return;
-                  setRadiusMiles(Math.min(10, Math.max(0.25, n)));
-                }}
-                className="story-map-tool-input"
-              />
-            </label>
+            {tool === "radius" ? (
+              <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
+                mi
+                <input
+                  type="number"
+                  min={0.25}
+                  max={10}
+                  step={0.25}
+                  value={radiusMiles}
+                  onChange={(e) => {
+                    const n = Number(e.target.value);
+                    if (!Number.isFinite(n)) return;
+                    setRadiusMiles(Math.min(10, Math.max(0.25, n)));
+                  }}
+                  className="story-map-tool-input"
+                />
+              </label>
+            ) : null}
             {tool !== "pan" ? (
               <button
                 type="button"
@@ -2206,7 +2219,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   type="button"
                   data-map-group-terrain
                   onClick={() =>
-                    setOpenGroup((g) => (g === "terrain" ? "terrain" : "terrain"))
+                    setOpenGroup((g) => (g === "terrain" ? null : "terrain"))
                   }
                   className={cn(
                     "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
@@ -2219,7 +2232,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   type="button"
                   data-map-group-tools
                   onClick={() =>
-                    setOpenGroup((g) => (g === "tools" ? "terrain" : "tools"))
+                    setOpenGroup((g) => (g === "tools" ? null : "tools"))
                   }
                   className={cn(
                     "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
@@ -2230,53 +2243,72 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 </button>
               </div>
 
-              <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+              <div
+                className="story-glass flex overflow-hidden rounded-lg p-0.5"
+                role="group"
+                aria-label="2D or 3D"
+              >
                 <button
                   type="button"
                   data-map-lidar-3d
                   data-map-lidar-3d-on={lidar3d ? "yes" : "no"}
-                  title={RESEARCH_LIDAR_COPY.threeD.title}
-                  onClick={() => setLidar3d((v) => !v)}
+                  data-map-mode="2d"
+                  title={RESEARCH_TERRAIN_COPY.threeDOff}
+                  onClick={() => setLidar3d(false)}
+                  className={cn(
+                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                    !lidar3d && "story-map-tool-active",
+                  )}
+                >
+                  2D
+                </button>
+                <button
+                  type="button"
+                  data-map-mode="3d"
+                  title={RESEARCH_TERRAIN_COPY.threeDOn}
+                  onClick={() => setLidar3d(true)}
                   className={cn(
                     "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
                     lidar3d && "story-map-tool-active",
                   )}
                 >
-                  {lidar3d ? "3D" : "2D"}
-                </button>
-                <button
-                  type="button"
-                  data-map-lidar-toggle
-                  data-map-lidar-on={lidarOn ? "yes" : "no"}
-                  title={RESEARCH_LIDAR_COPY.title}
-                  onClick={() => {
-                    setLidarOn((on) => {
-                      if (on) {
-                        const prev = baseBeforeLidarRef.current;
-                        baseBeforeLidarRef.current = null;
-                        if (prev && !isPhotoSkin(base)) setBase(prev);
-                        setLidarPinFt(null);
-                        return false;
-                      }
-                      if (!isPhotoSkin(base) && !lidar3d) {
-                        baseBeforeLidarRef.current = base;
-                        setBase(researchLidarCanvasBase(base, false, lidar3d));
-                      }
-                      return true;
-                    });
-                  }}
-                  className={cn(
-                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                    lidarOn && "story-map-tool-active",
-                  )}
-                >
-                  <Mountain className="h-3.5 w-3.5" />
-                  LiDAR
+                  3D
                 </button>
               </div>
 
               {openGroup === "terrain" ? (
                 <>
+                  <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      data-map-lidar-toggle
+                      data-map-lidar-on={lidarOn ? "yes" : "no"}
+                      title={RESEARCH_LIDAR_COPY.title}
+                      onClick={() => {
+                        setLidarOn((on) => {
+                          if (on) {
+                            const prev = baseBeforeLidarRef.current;
+                            baseBeforeLidarRef.current = null;
+                            if (prev && !isPhotoSkin(base)) setBase(prev);
+                            setLidarPinFt(null);
+                            return false;
+                          }
+                          if (!isPhotoSkin(base) && !lidar3d) {
+                            baseBeforeLidarRef.current = base;
+                            setBase(researchLidarCanvasBase(base, false, lidar3d));
+                          }
+                          return true;
+                        });
+                      }}
+                      className={cn(
+                        "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                        lidarOn && "story-map-tool-active",
+                      )}
+                    >
+                      <Mountain className="h-3.5 w-3.5" />
+                      LiDAR
+                    </button>
+                  </div>
                   {lidar3d ? (
                     <>
                       <label
@@ -2373,7 +2405,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     ))}
                   </div>
                 </>
-              ) : (
+              ) : openGroup === "tools" ? (
                 <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
                   <button
                     type="button"
@@ -2402,7 +2434,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     {RESEARCH_LIDAR_COPY.cut.short}
                   </button>
                 </div>
-              )}
+              ) : null}
 
               <button
                 type="button"
@@ -2421,6 +2453,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
               <p
                 data-map-lidar-read
+                hidden={openGroup !== "terrain"}
                 className="max-w-[11rem] rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1 text-right font-mono text-[10px] font-bold text-navy"
               >
                 {lidarPinFt != null
@@ -2429,7 +2462,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     ? `${lidarElevFt.toFixed(0)} ft · ${RESEARCH_TERRAIN_COPY.source}`
                     : RESEARCH_TERRAIN_COPY.honesty}
               </p>
-              {parcelTerrain ? (
+              {parcelTerrain && openGroup === "terrain" ? (
                 <div
                   data-map-parcel-terrain
                   className="flex w-[12rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1.5"
@@ -2469,7 +2502,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   </p>
                 </div>
               ) : null}
-              {lidarOn && !lidar3d ? (
+              {openGroup === "terrain" && lidarOn && !lidar3d ? (
                 <label
                   data-map-lidar-strength
                   className="flex w-[11rem] flex-col items-end gap-0.5 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1"

@@ -112,6 +112,8 @@ import {
   workspaceContext,
   workspaceLayout,
   writeWorkspaceSnapshot,
+  sheetSnapAfterSelect,
+  sheetSnapAfterDraw,
   type WorkspaceLayout,
   type WorkspaceSheetSnap,
 } from "@/lib/shi/research-workspace";
@@ -216,9 +218,17 @@ export function PropertyIntelligenceView({
   const [mfRead, setMfRead] = useState<MultifamilyRead | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [workspaceMenu, setWorkspaceMenu] = useState(false);
-  const [sheetSnap, setSheetSnap] = useState<WorkspaceSheetSnap>(
-    () => readWorkspaceSnapshot()?.sheetSnap ?? "peek",
-  );
+  const [sheetSnap, setSheetSnap] = useState<WorkspaceSheetSnap>(() => {
+    const snap = readWorkspaceSnapshot()?.sheetSnap ?? "peek";
+    if (
+      typeof window !== "undefined" &&
+      workspaceLayout(window.innerWidth) === "sheet" &&
+      (snap === "expanded" || snap === "full")
+    ) {
+      return "peek";
+    }
+    return snap;
+  });
   const [expandedMap, setExpandedMap] = useState(
     () => readWorkspaceSnapshot()?.expandedMap !== false,
   );
@@ -226,6 +236,8 @@ export function PropertyIntelligenceView({
     () => readWorkspaceSnapshot()?.drawerOpen !== false,
   );
   const [layout, setLayout] = useState<WorkspaceLayout>("sheet");
+  const layoutRef = useRef(layout);
+  layoutRef.current = layout;
   const [drawerW, setDrawerW] = useState(380);
   const [matches, setMatches] = useState<ShiOwnerMatch[]>([]);
   const [matchNote, setMatchNote] = useState("");
@@ -429,7 +441,7 @@ export function PropertyIntelligenceView({
         }
         setSelected(property);
         setSearchOpen(false);
-        setSheetSnap((s) => (s === "collapsed" || s === "peek" ? "expanded" : s));
+        setSheetSnap((s) => sheetSnapAfterSelect(layoutRef.current, s));
         setFloodFact(null);
         setUtilitiesFact(null);
         setMfRead(null);
@@ -649,7 +661,7 @@ export function PropertyIntelligenceView({
     setActiveFrameId(localId);
     setAnalysis(null);
     setAreaError("");
-    setSheetSnap("expanded");
+    setSheetSnap(sheetSnapAfterDraw(layoutRef.current));
     return true;
   }
 

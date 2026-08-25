@@ -816,6 +816,45 @@ html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
 [data-workspace-layout="sheet"] [data-map-hint][data-map-hint-kind="idle"] {
   display: none;
 }
+
+/* Phone + home-screen app: keep the land, shrink chrome. */
+@media (max-width: 1079px) {
+  [data-research-workspace] {
+    --workspace-bar-h: calc(env(safe-area-inset-top, 0px) + 2.85rem);
+  }
+  [data-research-workspace][data-sheet-snap="peek"] {
+    --sheet-h: 22vh;
+  }
+  [data-research-workspace] [data-map-basemap] {
+    max-width: min(22rem, calc(100% - 6.25rem));
+  }
+  [data-research-workspace] [data-map-basemap] .story-map-tool,
+  [data-research-workspace] [data-map-layers] .story-map-tool {
+    padding: 0.28rem 0.42rem;
+    font-size: 10px;
+  }
+  [data-map-layers] > button {
+    padding: 0.28rem 0.5rem !important;
+    font-size: 11px !important;
+  }
+  [data-workspace-layout="sheet"] .maplibregl-ctrl-bottom-right,
+  [data-workspace-layout="sheet"] .mapboxgl-ctrl-bottom-right,
+  [data-workspace-layout="sheet"] .maplibregl-ctrl-bottom-left,
+  [data-workspace-layout="sheet"] .mapboxgl-ctrl-bottom-left {
+    display: none;
+  }
+}
+@media (display-mode: standalone) {
+  [data-research-workspace] {
+    --workspace-bar-h: calc(env(safe-area-inset-top, 0px) + 2.7rem);
+  }
+  [data-research-workspace][data-sheet-snap="peek"] {
+    --sheet-h: 20vh;
+  }
+  [data-research-workspace][data-sheet-snap="expanded"] {
+    --sheet-h: 48vh;
+  }
+}
 [data-workspace-layout="sheet"] .maplibregl-ctrl-bottom-right,
 [data-workspace-layout="sheet"] .maplibregl-ctrl-bottom-left {
   bottom: calc(var(--sheet-h) + 3.35rem);
