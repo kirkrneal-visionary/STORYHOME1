@@ -19,16 +19,16 @@ export const RESEARCH_TERRAIN_ENGINE = "story-terrain-v1";
 
 /** Presentation-only exaggeration. 1 = natural, 3 = enhanced. */
 export const RESEARCH_RELIEF_NATURAL = 1;
-export const RESEARCH_RELIEF_ENHANCED = 3;
+export const RESEARCH_RELIEF_ENHANCED = 2.2;
 export const RESEARCH_RELIEF_DEFAULT = 1;
 
 export const RESEARCH_VIEW_HEIGHT_DEFAULT = 0.42;
 
 export const RESEARCH_TERRAIN_PITCH_2D = 0;
-/** ≥60 so MapLibre terrain fog can meet the horizon. */
-export const RESEARCH_TERRAIN_PITCH_3D = 60;
-export const RESEARCH_TERRAIN_PITCH_SITE = 56;
-export const RESEARCH_TERRAIN_PITCH_GROUND = 66;
+/** Standard look-across. Steeper pitch stretches native imagery. */
+export const RESEARCH_TERRAIN_PITCH_3D = 54;
+export const RESEARCH_TERRAIN_PITCH_SITE = 54;
+export const RESEARCH_TERRAIN_PITCH_GROUND = 62;
 export const RESEARCH_TERRAIN_PITCH_OVERVIEW = 48;
 
 export const RESEARCH_TERRAIN_CAMERA_MS = 980;
@@ -129,7 +129,7 @@ export function cameraPitchForPreset(
             ? RESEARCH_TERRAIN_PITCH_OVERVIEW
             : RESEARCH_TERRAIN_PITCH_3D;
   if (preset === "2d") return 0;
-  return Math.min(68, Math.max(22, base + viewHeightAdjust(viewHeight).pitchDelta));
+  return Math.min(64, Math.max(22, base + viewHeightAdjust(viewHeight).pitchDelta));
 }
 
 export const RESEARCH_SKY_BLUE = "#3d86cf";

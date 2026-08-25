@@ -7,7 +7,8 @@
 import mapboxgl from "mapbox-gl";
 import maplibregl, { config as maplibreConfig } from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
-import { MAP_PRECISION_MAX_ZOOM } from "@/lib/map-precision";
+import { MAP_IMAGERY_SOURCE_MAX_ZOOM } from "@/lib/map-precision";
+import { researchRenderPixelRatio } from "@/lib/shi/research-imagery";
 import {
   researchMapEngine,
   researchMapboxToken,
@@ -48,9 +49,14 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
   map: ResearchMap;
   engine: ResearchMapEngine;
 } {
+  const width = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const dpr =
+    opts.pixelRatio ??
+    (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
+  const pixelRatio = researchRenderPixelRatio(dpr, width, false);
   applyResearchTileBudget({
-    dpr: opts.pixelRatio,
-    width: typeof window !== "undefined" ? window.innerWidth : 1200,
+    dpr: pixelRatio,
+    width,
     saveData: Boolean(
       typeof navigator !== "undefined" &&
         (navigator as Navigator & { connection?: { saveData?: boolean } })
@@ -74,8 +80,10 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
       pitch: 0,
       bearing: 0,
       accessToken: token || undefined,
-      maxZoom: MAP_PRECISION_MAX_ZOOM,
-      maxPitch: 75,
+      maxZoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
+      maxPitch: 64,
+      minTileCacheSize: 32,
+      maxTileCacheSize: 96,
       transformRequest: (url) => storyMapTransformRequest(url),
       preserveDrawingBuffer: true,
       attributionControl: true,
@@ -100,14 +108,16 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
     zoom: opts.zoom,
     pitch: 0,
     bearing: 0,
-    pixelRatio: opts.pixelRatio,
-    maxZoom: MAP_PRECISION_MAX_ZOOM,
+    pixelRatio,
+    maxZoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
     transformRequest: storyMapTransformRequest,
     preserveDrawingBuffer: true,
     attributionControl: { compact: true },
-    maxPitch: 68,
+    maxPitch: 64,
+    maxTileCacheSize: 96,
     pitchWithRotate: true,
     fadeDuration: 180,
+    antialias: true,
   });
   map.addControl(
     new maplibregl.NavigationControl({

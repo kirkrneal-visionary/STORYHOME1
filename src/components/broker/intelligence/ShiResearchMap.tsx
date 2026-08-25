@@ -103,6 +103,14 @@ import {
 } from "@/lib/shi/research-terrain";
 import { createResearchMap } from "@/lib/shi/create-research-map";
 import {
+  RESEARCH_MAPBOX_GL_VERSION,
+  RESEARCH_MAPLIBRE_GL_VERSION,
+  collectResearchMapQualityReport,
+  logResearchMapQuality,
+  researchMapDebugEnabled,
+} from "@/lib/shi/research-map-quality";
+import { researchRenderPixelRatio } from "@/lib/shi/research-imagery";
+import {
   applyResearchAtmosphere,
   researchMapEngine,
   type ResearchMapEngine,
@@ -574,10 +582,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         if (!bounds.isEmpty()) {
           map.fitBounds(bounds, {
             padding: { top: 72, bottom: 88, left: 72, right: 72 },
-            maxZoom: 15,
+            maxZoom: 17,
             duration: 500,
             pitch: map.getPitch(),
             bearing: map.getBearing(),
+          });
+          map.once("idle", () => {
+            map.triggerRepaint();
           });
         }
       },
@@ -617,9 +628,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               ]
             : [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
           zoom: initialViewRef.current?.zoom ?? EAST_TEXAS_DEFAULT_ZOOM,
-          pixelRatio: Math.min(
+          pixelRatio: researchRenderPixelRatio(
             typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
-            2,
+            typeof window !== "undefined" ? window.innerWidth : 1200,
           ),
         });
         map = created.map;
@@ -1112,6 +1123,24 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           landPaintedRef.current = true;
           setLandPainted(true);
           map.resize();
+          if (researchMapDebugEnabled()) {
+            const dpr =
+              typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+            const width =
+              typeof window !== "undefined" ? window.innerWidth : 1200;
+            logResearchMapQuality(
+              collectResearchMapQualityReport({
+                map,
+                engine: engineRef.current,
+                engineVersion:
+                  engineRef.current === "mapbox"
+                    ? RESEARCH_MAPBOX_GL_VERSION
+                    : RESEARCH_MAPLIBRE_GL_VERSION,
+                antialias: true,
+                pixelRatio: researchRenderPixelRatio(dpr, width),
+              }),
+            );
+          }
         };
         landTimer = window.setTimeout(markLand, RESEARCH_LAND_WAIT_MS);
         map.once("idle", () => {
@@ -1253,9 +1282,14 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             map.dragRotate?.enable();
             map.resize();
             const target = cameraPitchForPreset("3d", viewHeightRef.current);
-            if (Math.abs(map.getPitch() - target) > 4) {
+            const next: { pitch: number; zoom?: number } = { pitch: target };
+            if (map.getZoom() > 17.4) next.zoom = 17.2;
+            if (
+              Math.abs(map.getPitch() - target) > 4 ||
+              next.zoom != null
+            ) {
               map.easeTo({
-                pitch: target,
+                ...next,
                 duration: RESEARCH_TERRAIN_CAMERA_MS,
                 easing: storyCameraEase,
               });

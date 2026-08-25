@@ -5,7 +5,6 @@ import type {
 import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
 import {
   absolutizeMapTileTemplate,
-  MAP_IMAGERY_SOURCE_MAX_ZOOM,
   MAP_STREETS_SOURCE_MAX_ZOOM,
 } from "@/lib/map-precision";
 import {
@@ -30,6 +29,7 @@ import {
   researchLidarTileTemplate,
 } from "@/lib/shi/research-lidar";
 import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
+import { activeImagerySource } from "@/lib/shi/research-imagery";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -308,9 +308,10 @@ export function buildStoryMapStyle(opts?: {
   const liberty = libertyStyle as LibertyStyle;
   const rasterStreets = streetsUseOwnedRaster();
   const streetsRasterTmpl = ownedStreetsTileTemplate();
-  const satelliteTiles = [
+  const imagery = activeImagerySource(
     absolutizeMapTileTemplate(resolveSatelliteTileTemplate()),
-  ];
+  );
+  const satelliteTiles = imagery.tiles;
 
   let fwSources: StyleSpecification["sources"];
   let fwLayers: LayerSpecification[];
@@ -396,9 +397,10 @@ export function buildStoryMapStyle(opts?: {
       satellite: {
         type: "raster",
         tiles: satelliteTiles,
-        tileSize: 256,
-        maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
-        attribution: "Imagery © USGS National Map · Story Home launch-7 cache",
+        tileSize: imagery.tileSize,
+        minzoom: imagery.minZoom,
+        maxzoom: imagery.maxZoom,
+        attribution: imagery.attribution,
       },
       labels: {
         type: "raster",
@@ -471,6 +473,10 @@ export function buildStoryMapStyle(opts?: {
         type: "raster",
         source: "satellite",
         layout: { visibility: "none" },
+        paint: {
+          "raster-resampling": "linear",
+          "raster-fade-duration": 120,
+        },
       },
       {
         id: "base-topo",
