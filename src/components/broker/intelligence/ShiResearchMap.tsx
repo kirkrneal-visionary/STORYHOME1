@@ -22,6 +22,7 @@ import {
   MAP_NAVY,
   MAP_SOVEREIGNTY_VERSION,
   MAP_TEAL,
+  researchDemSourceSpec,
   setBaseLayerVisibility,
   type MapBaseLayer,
 } from "@/lib/map-style";
@@ -106,12 +107,55 @@ import {
   researchMapEngine,
   type ResearchMapEngine,
 } from "@/lib/shi/research-map-engine";
+import {
+  RESEARCH_DEM_WAIT_MS,
+  RESEARCH_LAND_LOADING_COPY,
+  RESEARCH_LAND_WAIT_MS,
+  RESEARCH_PAPER,
+  RESEARCH_RESIZE_TICKS_MS,
+  mapPaneHasSize,
+  reliefFor3dApply,
+} from "@/lib/shi/research-map-paint";
 import type { ResearchModeId } from "@/lib/shi/research-modes";
 import { defaultMapToolGroup } from "@/lib/shi/research-workspace";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
+
+function scheduleResearchMapResizes(
+  map: { resize: () => void },
+  container: HTMLElement,
+): () => void {
+  const kick = () => {
+    if (!mapPaneHasSize(container.clientWidth, container.clientHeight)) return;
+    map.resize();
+  };
+  const ro = new ResizeObserver(() => kick());
+  ro.observe(container);
+  const host = container.parentElement;
+  if (host && host !== container) ro.observe(host);
+  const pane = container.closest("[data-map-pane]");
+  if (pane instanceof HTMLElement) ro.observe(pane);
+
+  const vv = window.visualViewport;
+  vv?.addEventListener("resize", kick);
+  vv?.addEventListener("scroll", kick);
+  window.addEventListener("orientationchange", kick);
+
+  const timers = RESEARCH_RESIZE_TICKS_MS.map((ms) =>
+    window.setTimeout(kick, ms),
+  );
+  requestAnimationFrame(kick);
+
+  return () => {
+    ro.disconnect();
+    vv?.removeEventListener("resize", kick);
+    vv?.removeEventListener("scroll", kick);
+    window.removeEventListener("orientationchange", kick);
+    for (const t of timers) window.clearTimeout(t);
+  };
+}
 
 function LidarCutChart({ profile }: { profile: ResearchLidarProfile }) {
   const w = 168;
@@ -306,6 +350,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const draftRef = useRef<LatLng[]>([]);
     const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
     const [ready, setReady] = useState(false);
+    const [paneReady, setPaneReady] = useState(false);
+    const [landPainted, setLandPainted] = useState(false);
+    const landPaintedRef = useRef(false);
     const [mapFailed, setMapFailed] = useState<string | null>(null);
     const [engine, setEngine] = useState<ResearchMapEngine>(() =>
       researchMapEngine(),
@@ -314,6 +361,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const [base, setBase] = useState<MapBaseLayer>(() =>
       researchTerrainLandDefault(researchMode),
     );
+    const baseRef = useRef(base);
+    baseRef.current = base;
     const [showParcels, setShowParcels] = useState(true);
     const [openGroup, setOpenGroup] = useState<"terrain" | "tools" | null>(
       () =>
@@ -535,13 +584,32 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     }));
 
     useEffect(() => {
-      if (!containerRef.current) return;
+      const el = containerRef.current;
+      if (!el) return;
+      const check = () => {
+        if (mapPaneHasSize(el.clientWidth, el.clientHeight)) {
+          setPaneReady(true);
+        }
+      };
+      check();
+      const ro = new ResizeObserver(check);
+      ro.observe(el);
+      const pane = el.closest("[data-map-pane]");
+      if (pane instanceof HTMLElement) ro.observe(pane);
+      return () => ro.disconnect();
+    }, []);
+
+    useEffect(() => {
+      if (!paneReady || !containerRef.current) return;
       setMapFailed(null);
       let map: maplibregl.Map;
       try {
         const created = createResearchMap({
           container: containerRef.current,
-          style: buildStoryMapStyle(),
+          style: buildStoryMapStyle({
+            deferDem: true,
+            initialBase: baseRef.current,
+          }),
           center: initialViewRef.current
             ? [
                 initialViewRef.current.centerLng,
@@ -587,13 +655,14 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         }
       });
 
-      const kickResize = () => map.resize();
-      requestAnimationFrame(kickResize);
-      const t1 = window.setTimeout(kickResize, 50);
-      const t2 = window.setTimeout(kickResize, 250);
+      const stopResize = scheduleResearchMapResizes(
+        map,
+        containerRef.current,
+      );
+      let landTimer = 0;
 
       map.on("load", () => {
-        kickResize();
+        map.resize();
         map.addSource("shi-frames", { type: "geojson", data: EMPTY_FC });
         map.addLayer({
           id: "shi-frames-fill",
@@ -1037,21 +1106,29 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             toolRef.current === "pan" ? "" : "crosshair";
         });
 
+        setBaseLayerVisibility(map, baseRef.current);
         setReady(true);
+        const markLand = () => {
+          landPaintedRef.current = true;
+          setLandPainted(true);
+          map.resize();
+        };
+        landTimer = window.setTimeout(markLand, RESEARCH_LAND_WAIT_MS);
+        map.once("idle", () => {
+          window.clearTimeout(landTimer);
+          markLand();
+        });
       });
 
-      const host = containerRef.current.parentElement ?? containerRef.current;
-      const ro = new ResizeObserver(() => map.resize());
-      ro.observe(host);
-
       return () => {
-        window.clearTimeout(t1);
-        window.clearTimeout(t2);
-        ro.disconnect();
+        window.clearTimeout(landTimer);
+        stopResize();
+        landPaintedRef.current = false;
+        setLandPainted(false);
         map.remove();
         mapRef.current = null;
       };
-    }, []);
+    }, [paneReady]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1135,7 +1212,17 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   .connection?.saveData,
               ),
             );
-      const exaggeration = Math.min(lidarElev, reliefCapForTier(tier));
+      const firstEnable = lidar3dPrevRef.current !== true;
+      const exaggeration = reliefFor3dApply({
+        requested: lidarElev,
+        firstEnable,
+        cap: reliefCapForTier(tier),
+      });
+      let demReady = Boolean(
+        map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID) &&
+          map.isSourceLoaded?.(RESEARCH_LIDAR_DEM_SOURCE_ID),
+      );
+      let demTimedOut = false;
       const paintSky = () => {
         applyResearchAtmosphere(map, {
           engine: engineRef.current,
@@ -1148,7 +1235,15 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const apply = () => {
         try {
           if (on) {
-            if (!map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID)) return;
+            if (!landPaintedRef.current) return;
+            if (!map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID)) {
+              map.addSource(
+                RESEARCH_LIDAR_DEM_SOURCE_ID,
+                researchDemSourceSpec() as never,
+              );
+              return;
+            }
+            if (!demReady && !demTimedOut) return;
             map.setTerrain({
               source: RESEARCH_LIDAR_DEM_SOURCE_ID,
               exaggeration,
@@ -1156,6 +1251,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             paintSky();
             map.touchPitch?.enable();
             map.dragRotate?.enable();
+            map.resize();
             const target = cameraPitchForPreset("3d", viewHeightRef.current);
             if (Math.abs(map.getPitch() - target) > 4) {
               map.easeTo({
@@ -1186,6 +1282,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 });
               }
             }
+            map.resize();
           }
           lidar3dPrevRef.current = on;
         } catch {
@@ -1193,15 +1290,29 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         }
       };
       apply();
+      const onSource = (e: { sourceId?: string; isSourceLoaded?: boolean }) => {
+        if (e.sourceId !== RESEARCH_LIDAR_DEM_SOURCE_ID) return;
+        if (e.isSourceLoaded) {
+          demReady = true;
+          apply();
+        }
+      };
+      map.on("sourcedata", onSource);
       map.once("idle", apply);
+      const demTimer = window.setTimeout(() => {
+        demTimedOut = true;
+        apply();
+      }, RESEARCH_DEM_WAIT_MS);
       if (on) {
         map.on("pitch", paintSky);
       }
       return () => {
+        window.clearTimeout(demTimer);
+        map.off("sourcedata", onSource);
         map.off("idle", apply);
         map.off("pitch", paintSky);
       };
-    }, [ready, lidar3d, lidarElev]);
+    }, [ready, lidar3d, lidarElev, landPainted]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1211,6 +1322,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         duration: 260,
         easing: storyCameraEase,
       });
+      const id = window.setTimeout(() => map.resize(), 280);
+      return () => window.clearTimeout(id);
     }, [ready, lidar3d, viewHeight]);
 
     useEffect(() => {
@@ -1938,19 +2051,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-map-sovereignty={MAP_SOVEREIGNTY_VERSION}
         data-map-free-world="1"
         data-research-map={mapFailed ? "fallback" : ready ? "ready" : "loading"}
+        data-map-land={landPainted ? "ready" : "loading"}
         data-map-sky={lidar3d ? "on" : "off"}
         data-map-engine={engine}
         data-map-tools={openGroup ?? "closed"}
         className={cn(
-          "relative flex h-[480px] w-full min-h-[400px] flex-col overflow-hidden story-surface xl:h-[540px]",
-          lidar3d && "story-map-sky-on",
+          "relative flex h-full w-full min-h-[240px] flex-col overflow-hidden story-surface",
+          lidar3d && landPainted && "story-map-sky-on",
           className?.includes("h-full") &&
             "!h-full min-h-0 rounded-none border-0 shadow-none xl:!h-full",
           className,
         )}
       >
         <div className="relative min-h-0 w-full flex-1">
-          {lidar3d && engine === "maplibre" ? (
+          {lidar3d && landPainted && engine === "maplibre" ? (
             <div
               data-map-sky-wash
               className="story-map-sky-layer"
@@ -1961,9 +2075,21 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             ref={containerRef}
             className={cn(
               "absolute inset-0 z-[1] [&_.maplibregl-map]:h-full [&_.maplibregl-map]:w-full [&_.maplibregl-canvas]:outline-none [&_.mapboxgl-map]:h-full [&_.mapboxgl-map]:w-full [&_.mapboxgl-canvas]:outline-none",
-              lidar3d ? "bg-transparent" : "bg-[#f8f4f0]",
+              lidar3d && landPainted ? "bg-transparent" : "bg-[#f8f4f0]",
             )}
           />
+          {!landPainted && !mapFailed ? (
+            <div
+              data-map-land-cover
+              className="pointer-events-none absolute inset-0 z-[3] flex items-end justify-center pb-[30%]"
+              style={{ background: RESEARCH_PAPER }}
+              aria-live="polite"
+            >
+              <p className="font-mono text-[11px] font-bold tracking-wide text-navy/70 uppercase">
+                {RESEARCH_LAND_LOADING_COPY}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         {mapFailed ? (

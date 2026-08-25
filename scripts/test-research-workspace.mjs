@@ -212,6 +212,15 @@ assert.match(pkg, /test:research-workspace/);
 }
 
 {
+  const r = spawnSync(
+    process.execPath,
+    ["--experimental-strip-types", "scripts/test-research-map-paint.ts"],
+    { cwd: root, encoding: "utf8" },
+  );
+  assert.equal(r.status, 0, `research-map-paint\n${r.stdout}\n${r.stderr}`);
+}
+
+{
   const r = spawnSync(process.execPath, ["scripts/test-research-modes.mjs"], {
     cwd: root,
     encoding: "utf8",

@@ -41,6 +41,7 @@
     "scripts/test-research-lidar.ts",
     "scripts/test-research-terrain.ts",
     "scripts/test-research-map-engine.ts",
-    "scripts/test-research-phone-chrome.ts"
+    "scripts/test-research-phone-chrome.ts",
+    "scripts/test-research-map-paint.ts"
   ]
 }

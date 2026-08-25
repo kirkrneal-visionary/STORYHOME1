@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { researchLidarTileValid } from "@/lib/shi/research-lidar";
 import { getResearchLidarDemTile } from "@/lib/shi/research-lidar-tiles";
+import { LAUNCH7_TILE_CACHE_CONTROL } from "@/lib/shi/research-map-paint";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 export const maxDuration = 30;
 
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
@@ -34,7 +35,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       status: 200,
       headers: {
         "Content-Type": tile.contentType,
-        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+        "Cache-Control": LAUNCH7_TILE_CACHE_CONTROL,
         "Access-Control-Allow-Origin": "*",
         "X-Story-Lidar-Product": "dem",
         "X-Story-Lidar-Cached": tile.cached ? "1" : "0",

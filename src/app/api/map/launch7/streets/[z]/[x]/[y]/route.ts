@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getLaunch7StreetsTile } from "@/lib/shi/launch7-tiles";
+import { LAUNCH7_TILE_CACHE_CONTROL } from "@/lib/shi/research-map-paint";
 
 export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
@@ -28,7 +29,7 @@ export async function GET(_req: Request, ctx: Ctx) {
       status: 200,
       headers: {
         "Content-Type": tile.contentType,
-        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+        "Cache-Control": LAUNCH7_TILE_CACHE_CONTROL,
         "X-Launch7-Tile-Source": tile.source,
         "X-Launch7-Tile-Cached": tile.cached ? "1" : "0",
         "Access-Control-Allow-Origin": "*",

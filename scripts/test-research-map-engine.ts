@@ -128,6 +128,8 @@ assert.doesNotMatch(styleSrc, /api\.mapbox\.com/);
 assert.match(styleSrc, /LAUNCH7_IMAGERY|resolveSatelliteTileTemplate|launch7\/imagery/);
 assert.match(styleSrc, /RESEARCH_LIDAR_DEM_SOURCE_ID/);
 assert.match(styleSrc, /terrarium/);
+assert.match(styleSrc, /story-paper/);
+assert.match(styleSrc, /deferDem/);
 
 assert.match(RESEARCH_MAP_ENGINE_COPY.mapbox, /tiles stay Story Home/i);
 

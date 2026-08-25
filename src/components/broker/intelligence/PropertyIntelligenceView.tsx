@@ -365,7 +365,7 @@ export function PropertyIntelligenceView({
   useEffect(() => {
     const id = window.requestAnimationFrame(() => mapRef.current?.resize());
     return () => window.cancelAnimationFrame(id);
-  }, [layout, drawerOpen, drawerW, expandedMap, sheetSnap]);
+  }, [layout, drawerOpen, drawerW, expandedMap]);
 
   const loadMatches = useCallback(async (property: ShiPropertyDetail) => {
     try {
