@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   LIVINGSTON_QA,
+  NAIP_60CM_MIN_ZOOM,
   RESEARCH_IMAGERY_ARCH,
   RESEARCH_QA_CAMERAS,
   activeImagerySource,
@@ -10,6 +11,7 @@ import {
   canvasResolutionMismatch,
   groundResolutionM,
   imageryOverzoom,
+  naip60cmSource,
   qualityTierForMotion,
   researchMapDebugEnabled,
   researchRenderPixelRatio,
@@ -22,19 +24,24 @@ import {
   cameraPitchForPreset,
 } from "../src/lib/shi/research-terrain.ts";
 
-assert.equal(RESEARCH_IMAGERY_ARCH, "research-imagery-v1");
+assert.equal(RESEARCH_IMAGERY_ARCH, "research-imagery-v2");
 assert.equal(LIVINGSTON_QA.name.includes("Polk"), true);
 assert.equal(RESEARCH_QA_CAMERAS.length, 6);
 assert.equal(RESEARCH_QA_CAMERAS[0]?.pitch, 0);
 assert.ok((RESEARCH_QA_CAMERAS[3]?.pitch ?? 0) > 55);
 
 const usgs = usgsImageryOnlySource();
-assert.equal(usgs.enabled, true);
+assert.equal(usgs.enabled, false);
 assert.equal(usgs.tileSize, 256);
 assert.equal(usgs.maxZoom, 18);
 assert.equal(usgs.highDpiSupported, false);
-assert.equal(activeImagerySource().id, "usgs-imagery-only");
+const naip = naip60cmSource();
+assert.equal(naip.enabled, true);
+assert.equal(naip.nativeResolutionM, 0.6);
+assert.equal(activeImagerySource().id, "naip-60cm");
+assert.match(activeImagerySource().tiles[0] ?? "", /v=n60/);
 assert.equal(allImagerySources().filter((s) => s.enabled).length, 1);
+assert.equal(NAIP_60CM_MIN_ZOOM, 14);
 assert.equal(
   allImagerySources().find((s) => s.id === "high-res-aerial")?.enabled,
   false,
@@ -61,6 +68,18 @@ assert.ok(cameraPitchForPreset("3d") <= 64);
 assert.ok(cameraPitchForPreset("ground") <= 64);
 
 const root = process.cwd();
+assert.match(
+  readFileSync(join(root, "src/lib/shi/launch7-tiles.ts"), "utf8"),
+  /USGSNAIPImagery\/ImageServer/,
+);
+assert.match(
+  readFileSync(join(root, "src/lib/shi/launch7-tiles.ts"), "utf8"),
+  /imageryUsesNaip60/,
+);
+assert.match(
+  readFileSync(join(root, "src/lib/shi/launch7-tiles.ts"), "utf8"),
+  /NaturalColor/,
+);
 const factory = readFileSync(
   join(root, "src/lib/shi/create-research-map.ts"),
   "utf8",

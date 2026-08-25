@@ -5,6 +5,7 @@ import type {
 import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
 import {
   absolutizeMapTileTemplate,
+  MAP_IMAGERY_SOURCE_MAX_ZOOM,
   MAP_STREETS_SOURCE_MAX_ZOOM,
 } from "@/lib/map-precision";
 import {
@@ -381,7 +382,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
-      "storyhome:satellite": "owned-imagery-api",
+      "storyhome:satellite": "owned-naip60",
       "storyhome:serve": "l7-3",
     },
     glyphs:
@@ -399,7 +400,7 @@ export function buildStoryMapStyle(opts?: {
         tiles: satelliteTiles,
         tileSize: imagery.tileSize,
         minzoom: imagery.minZoom,
-        maxzoom: imagery.maxZoom,
+        maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
         attribution: imagery.attribution,
       },
       labels: {

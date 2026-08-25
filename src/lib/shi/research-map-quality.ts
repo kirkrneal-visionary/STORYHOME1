@@ -3,7 +3,6 @@
  */
 
 import {
-  USGS_IMAGERY_NATIVE_MAX_ZOOM,
   activeImagerySource,
   canvasResolutionMismatch,
   groundResolutionM,
@@ -121,7 +120,7 @@ export function collectResearchMapQualityReport(opts: {
       tileSize: imagery.tileSize,
       configuredMinZoom: imagery.minZoom,
       configuredMaxZoom: imagery.maxZoom,
-      estimatedNativeMaxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+      estimatedNativeMaxZoom: imagery.maxZoom,
       currentRequestedTileZoom: tileZoom,
       overzoomAmount: imageryOverzoom(zoom, imagery.maxZoom),
       retina2x: imagery.highDpiSupported,
