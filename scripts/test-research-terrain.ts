@@ -55,9 +55,14 @@ assert.doesNotMatch(RESEARCH_SKY_HAZE, /#e8f2fb|#ffffff|#d5e6f5/i);
 assert.equal(researchWorldBackground(true), "#f8f4f0");
 assert.equal(researchWorldBackground(false), "#f8f4f0");
 assert.equal(researchSkyBandPct(0), 0);
-assert.ok(researchSkyBandPct(54) >= 28);
-assert.ok(researchSkyBandPct(54) <= 38);
+assert.ok(researchSkyBandPct(54, 14) >= 22);
+assert.ok(researchSkyBandPct(54, 14) <= 36);
+assert.ok(researchSkyBandPct(54, 17) < researchSkyBandPct(54, 14));
 assert.ok(researchSkyBandPct(64) > researchSkyBandPct(30));
+assert.doesNotMatch(
+  readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8"),
+  /rgba\(61,\s*134,\s*207,\s*0\)/,
+);
 {
   const paints: Record<string, unknown> = {};
   applyResearchWorldBackground(
@@ -165,6 +170,7 @@ const skyBlock = skyCss.slice(
 );
 assert.match(skyBlock, /--story-sky-band/);
 assert.match(skyBlock, /z-index:\s*2;/);
+assert.match(skyBlock, /#3d86cf/);
 assert.doesNotMatch(skyCss, /rgba\(186,\s*220,\s*240/);
 assert.doesNotMatch(skyBlock, /inset:\s*0/);
 

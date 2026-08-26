@@ -1267,7 +1267,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       let demTimedOut = false;
       const paintSky = () => {
         applyResearchWorldBackground(map, false);
-        setSkyBandPct(on ? researchSkyBandPct(map.getPitch()) : 0);
+        setSkyBandPct(
+          on ? researchSkyBandPct(map.getPitch(), map.getZoom()) : 0,
+        );
         applyResearchAtmosphere(map, {
           engine: engineRef.current,
           on,

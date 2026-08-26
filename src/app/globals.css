@@ -390,24 +390,18 @@ html[data-role="professional"] {
  * Idle = paper/ink on glass — never navy-on-black.
  */
 /**
- * Sky is a tight cap above the land — solid blue, short fade at the
- * horizon only. Never a wash over the photo.
+ * Sky is a tight solid cap. Hard edge — no fade over the photo.
  */
 .story-map-sky-layer {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  height: var(--story-sky-band, 32%);
+  height: var(--story-sky-band, 28%);
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    #2f7ec4 0%,
-    #3d86cf 78%,
-    #4a90d0 92%,
-    rgba(61, 134, 207, 0) 100%
-  );
+  background: #3d86cf;
+  box-shadow: inset 0 -1px 0 rgba(16, 42, 72, 0.28);
 }
 .story-map-sky-on .maplibregl-map,
 .story-map-sky-on .maplibregl-canvas-container,

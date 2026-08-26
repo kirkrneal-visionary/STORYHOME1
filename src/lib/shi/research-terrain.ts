@@ -142,10 +142,11 @@ export const RESEARCH_WORLD_PAPER = "#f8f4f0";
  * How much of the screen is sky. Pitch opens the void above the land.
  * Keep this a tight cap — a tall fade is the milky wash we removed.
  */
-export function researchSkyBandPct(pitch: number): number {
+export function researchSkyBandPct(pitch: number, zoom = 15): number {
   if (pitch < 10) return 0;
   const looking = Math.min(1, Math.max(0, (pitch - 10) / 54));
-  return Math.round(10 + looking * 26);
+  const close = Math.min(1, Math.max(0, (zoom - 13) / 5));
+  return Math.round((8 + looking * 26) * (1 - close * 0.28));
 }
 
 /**
