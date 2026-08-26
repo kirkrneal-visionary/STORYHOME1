@@ -2150,13 +2150,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               aria-hidden
             />
           ) : null}
-          {worldLabOn && landPainted ? (
-            <ResearchWorldLab
-              mode={worldLabMode}
-              onMode={setWorldLabMode}
-              engine={engine}
-            />
-          ) : null}
           <div
             ref={containerRef}
             className={cn(
@@ -2196,6 +2189,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         ) : null}
 
         <div className="pointer-events-none absolute inset-0 z-10">
+          {worldLabOn && landPainted ? (
+            <ResearchWorldLab
+              mode={worldLabMode}
+              onMode={setWorldLabMode}
+              engine={engine}
+            />
+          ) : null}
           <div
             data-map-basemap
             className="pointer-events-auto absolute left-3 flex flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
