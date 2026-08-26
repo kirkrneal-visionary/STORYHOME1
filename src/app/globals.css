@@ -390,20 +390,23 @@ html[data-role="professional"] {
  * Idle = paper/ink on glass — never navy-on-black.
  */
 /**
- * Sky sits BEHIND the land. Terrain tiles are opaque, so the horizon
- * is the mesh edge — land then sky — not a haze painted over the photo.
+ * Sky is a tight cap above the land — solid blue, short fade at the
+ * horizon only. Never a wash over the photo.
  */
 .story-map-sky-layer {
   position: absolute;
-  inset: 0;
-  z-index: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--story-sky-band, 32%);
+  z-index: 2;
   pointer-events: none;
   background: linear-gradient(
     180deg,
     #2f7ec4 0%,
-    #3d86cf 38%,
-    #4e8ec8 72%,
-    #5a9ad4 100%
+    #3d86cf 78%,
+    #4a90d0 92%,
+    rgba(61, 134, 207, 0) 100%
   );
 }
 .story-map-sky-on .maplibregl-map,

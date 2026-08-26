@@ -129,7 +129,7 @@ const fake = {
 };
 
 applyWorldLabSpec(fake, f, { engine: "mapbox" });
-assert.equal(paints["story-paper:background-color"], "#3d86cf");
+assert.equal(paints["story-paper:background-color"], "#f8f4f0");
 assert.equal(paints["base-satellite:raster-contrast"], f.raster["raster-contrast"]);
 assert.equal(layout["base-satellite:visibility"], "visible");
 assert.equal(

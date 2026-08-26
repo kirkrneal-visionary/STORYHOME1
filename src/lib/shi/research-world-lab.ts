@@ -163,7 +163,7 @@ export function applyWorldLabSpec(
     }
   }
 
-  applyResearchWorldBackground(map, spec.terrainOn);
+  applyResearchWorldBackground(map, false);
 
   const engine = opts?.engine ?? "maplibre";
   if (engine === "mapbox") {

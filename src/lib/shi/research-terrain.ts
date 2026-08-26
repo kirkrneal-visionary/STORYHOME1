@@ -139,11 +139,21 @@ export const RESEARCH_WORLD_BACKGROUND_LAYER = "story-paper";
 export const RESEARCH_WORLD_PAPER = "#f8f4f0";
 
 /**
- * Canvas fill behind the land. Blue when looking across; paper when overhead.
- * The photo stays opaque — this is only the void above the horizon.
+ * How much of the screen is sky. Pitch opens the void above the land.
+ * Keep this a tight cap — a tall fade is the milky wash we removed.
  */
-export function researchWorldBackground(on: boolean): string {
-  return on ? RESEARCH_SKY_BLUE : RESEARCH_WORLD_PAPER;
+export function researchSkyBandPct(pitch: number): number {
+  if (pitch < 10) return 0;
+  const looking = Math.min(1, Math.max(0, (pitch - 10) / 54));
+  return Math.round(10 + looking * 26);
+}
+
+/**
+ * Canvas fill stays paper. Sky-blue here punches holes when a photo
+ * tile is missing. The sky band is a CSS cap above the land.
+ */
+export function researchWorldBackground(_on: boolean): string {
+  return RESEARCH_WORLD_PAPER;
 }
 
 export function applyResearchWorldBackground(

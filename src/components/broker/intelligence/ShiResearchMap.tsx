@@ -90,6 +90,7 @@ import {
   RESEARCH_TERRAIN_COPY,
   RESEARCH_TERRAIN_SKY_OFF,
   applyResearchWorldBackground,
+  researchSkyBandPct,
   researchTerrainSkyForPitch,
   RESEARCH_VIEW_HEIGHT_DEFAULT,
   RESEARCH_VIEW_SKINS,
@@ -402,6 +403,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     );
     const [lidarHybrid, setLidarHybrid] = useState(false);
     const [lidar3d, setLidar3d] = useState(false);
+    const [skyBandPct, setSkyBandPct] = useState(32);
     const [worldLabOn, setWorldLabOn] = useState(false);
     const [worldLabMode, setWorldLabMode] = useState<WorldLabMode>("A");
     const worldLabOnRef = useRef(false);
@@ -1264,7 +1266,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       );
       let demTimedOut = false;
       const paintSky = () => {
-        applyResearchWorldBackground(map, on);
+        applyResearchWorldBackground(map, false);
+        setSkyBandPct(on ? researchSkyBandPct(map.getPitch()) : 0);
         applyResearchAtmosphere(map, {
           engine: engineRef.current,
           on,
@@ -2148,8 +2151,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           {lidar3d && landPainted && engine === "maplibre" ? (
             <div
               data-map-sky-wash
-              data-map-sky-behind="1"
+              data-map-sky-band={skyBandPct}
               className="story-map-sky-layer"
+              style={{ ["--story-sky-band" as string]: `${skyBandPct}%` }}
               aria-hidden
             />
           ) : null}

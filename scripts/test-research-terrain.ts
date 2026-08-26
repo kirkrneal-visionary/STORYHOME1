@@ -13,6 +13,7 @@ import {
   RESEARCH_TERRAIN_SKY,
   RESEARCH_VIEW_SKINS,
   applyResearchWorldBackground,
+  researchSkyBandPct,
   researchTerrainSkyForPitch,
   researchWorldBackground,
   archieTerrainRead,
@@ -51,8 +52,12 @@ assert.equal(RESEARCH_TERRAIN_SKY["fog-ground-blend"], 0);
 assert.ok((RESEARCH_TERRAIN_SKY["sky-horizon-blend"] as number) < 0.25);
 assert.equal(RESEARCH_SKY_BLUE, "#3d86cf");
 assert.doesNotMatch(RESEARCH_SKY_HAZE, /#e8f2fb|#ffffff|#d5e6f5/i);
-assert.equal(researchWorldBackground(true), RESEARCH_SKY_BLUE);
+assert.equal(researchWorldBackground(true), "#f8f4f0");
 assert.equal(researchWorldBackground(false), "#f8f4f0");
+assert.equal(researchSkyBandPct(0), 0);
+assert.ok(researchSkyBandPct(54) >= 28);
+assert.ok(researchSkyBandPct(54) <= 38);
+assert.ok(researchSkyBandPct(64) > researchSkyBandPct(30));
 {
   const paints: Record<string, unknown> = {};
   applyResearchWorldBackground(
@@ -64,7 +69,7 @@ assert.equal(researchWorldBackground(false), "#f8f4f0");
     },
     true,
   );
-  assert.equal(paints["story-paper:background-color"], RESEARCH_SKY_BLUE);
+  assert.equal(paints["story-paper:background-color"], "#f8f4f0");
 }
 assert.equal(isPhotoSkin("satellite"), true);
 assert.equal(isPhotoSkin("street"), false);
@@ -141,8 +146,9 @@ assert.match(map, /data-map-parcel-terrain/);
 assert.match(map, /data-map-sky/);
 assert.match(map, /data-map-engine/);
 assert.match(map, /data-map-sky-wash/);
-assert.match(map, /data-map-sky-behind/);
+assert.match(map, /data-map-sky-band/);
 assert.match(map, /story-map-sky-layer/);
+assert.match(map, /researchSkyBandPct/);
 assert.match(map, /applyResearchAtmosphere/);
 assert.match(map, /applyResearchWorldBackground/);
 assert.match(map, /researchMode/);
@@ -157,9 +163,10 @@ const skyBlock = skyCss.slice(
   skyCss.indexOf(".story-map-sky-layer"),
   skyCss.indexOf(".story-map-sky-on"),
 );
-assert.match(skyBlock, /z-index:\s*0;/);
-assert.doesNotMatch(skyBlock, /z-index:\s*2;/);
+assert.match(skyBlock, /--story-sky-band/);
+assert.match(skyBlock, /z-index:\s*2;/);
 assert.doesNotMatch(skyCss, /rgba\(186,\s*220,\s*240/);
+assert.doesNotMatch(skyBlock, /inset:\s*0/);
 
 const demRoute = readFileSync(
   join(root, "src/app/api/map/lidar/dem/[z]/[x]/[y]/route.ts"),
