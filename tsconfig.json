@@ -13,6 +13,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -43,6 +44,7 @@
     "scripts/test-research-map-engine.ts",
     "scripts/test-research-phone-chrome.ts",
     "scripts/test-research-map-paint.ts",
-    "scripts/test-research-imagery.ts"
+    "scripts/test-research-imagery.ts",
+    "scripts/test-research-world-lab.ts"
   ]
 }
