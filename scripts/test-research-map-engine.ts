@@ -75,7 +75,10 @@ const fog = researchMapboxFogForPitch(60);
 assert.equal(fog["high-color"], "#3d86cf");
 assert.equal(fog["star-intensity"], 0);
 assert.ok(fog.range[1] > fog.range[0]);
+assert.ok(fog.range[0] >= 7);
+assert.ok(fog["horizon-blend"] < 0.03);
 assert.ok((researchMapboxFogForPitch(0)["horizon-blend"] as number) < fog["horizon-blend"]);
+assert.doesNotMatch(fog.color, /#d2ddd4|#d7e0d8/);
 assert.equal(RESEARCH_MAPBOX_LIGHTS.length, 2);
 assert.equal(RESEARCH_MAPBOX_LIGHTS[1]?.type, "directional");
 

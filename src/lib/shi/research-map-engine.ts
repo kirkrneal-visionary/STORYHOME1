@@ -12,7 +12,7 @@
 
 export const RESEARCH_MAPBOX_TOKEN_ENV = "NEXT_PUBLIC_MAPBOX_TOKEN";
 export const RESEARCH_MAPBOX_SKY_BLUE = "#3d86cf";
-export const RESEARCH_MAPBOX_SKY_HAZE = "#e8f2fb";
+export const RESEARCH_MAPBOX_SKY_HAZE = "#5a9ad4";
 
 export type ResearchMapEngine = "mapbox" | "maplibre";
 
@@ -85,16 +85,17 @@ export type ResearchMapboxFog = {
 };
 
 /**
- * Daytime air. Pitch opens the horizon; never a night sky with stars.
+ * Daytime sky. Fog starts far so the land stays a photo until the
+ * horizon — a clean cut, not a milky wash. Never a night sky.
  */
 export function researchMapboxFogForPitch(pitch: number): ResearchMapboxFog {
   const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 55));
   return {
-    range: [1.1 + lookingOut * 0.3, 7 + lookingOut * 3],
-    color: "#d2ddd4",
+    range: [8 + lookingOut * 2, 16 + lookingOut * 4],
+    color: RESEARCH_MAPBOX_SKY_HAZE,
     "high-color": RESEARCH_MAPBOX_SKY_BLUE,
-    "space-color": "#5a9ad4",
-    "horizon-blend": 0.035 + lookingOut * 0.045,
+    "space-color": "#2f7ec4",
+    "horizon-blend": 0.008 + lookingOut * 0.01,
     "star-intensity": 0,
   };
 }

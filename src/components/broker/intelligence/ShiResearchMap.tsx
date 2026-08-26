@@ -89,6 +89,8 @@ import {
   RESEARCH_TERRAIN_CAMERA_MS,
   RESEARCH_TERRAIN_COPY,
   RESEARCH_TERRAIN_SKY_OFF,
+  applyResearchWorldBackground,
+  researchSkyBandPct,
   researchTerrainSkyForPitch,
   RESEARCH_VIEW_HEIGHT_DEFAULT,
   RESEARCH_VIEW_SKINS,
@@ -126,6 +128,12 @@ import {
 } from "@/lib/shi/research-map-paint";
 import type { ResearchModeId } from "@/lib/shi/research-modes";
 import { defaultMapToolGroup } from "@/lib/shi/research-workspace";
+import { ResearchWorldLab } from "@/components/broker/intelligence/ResearchWorldLab";
+import {
+  applyWorldLabMode,
+  researchWorldLabRequested,
+} from "@/lib/shi/research-world-lab";
+import type { WorldLabMode } from "@/lib/shi/research-world-profiles";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "mapbox-gl/dist/mapbox-gl.css";
 
@@ -395,6 +403,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     );
     const [lidarHybrid, setLidarHybrid] = useState(false);
     const [lidar3d, setLidar3d] = useState(false);
+    const [skyBandPct, setSkyBandPct] = useState(32);
+    const [worldLabOn, setWorldLabOn] = useState(false);
+    const [worldLabMode, setWorldLabMode] = useState<WorldLabMode>("A");
+    const worldLabOnRef = useRef(false);
+    worldLabOnRef.current = worldLabOn;
     const lidar3dPrevRef = useRef<boolean | null>(null);
     const [lidarElev, setLidarElev] = useState(RESEARCH_LIDAR_ELEV_DEFAULT);
     const [lidarCut, setLidarCut] = useState(false);
@@ -1253,6 +1266,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       );
       let demTimedOut = false;
       const paintSky = () => {
+        applyResearchWorldBackground(map, false);
+        setSkyBandPct(
+          on ? researchSkyBandPct(map.getPitch(), map.getZoom()) : 0,
+        );
         applyResearchAtmosphere(map, {
           engine: engineRef.current,
           on,
@@ -1263,6 +1280,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       };
       const apply = () => {
         try {
+          if (worldLabOnRef.current) return;
           if (on) {
             if (!landPaintedRef.current) return;
             if (!map.getSource(RESEARCH_LIDAR_DEM_SOURCE_ID)) {
@@ -1351,6 +1369,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready || !lidar3d) return;
+      if (worldLabOnRef.current) return;
       map.easeTo({
         pitch: cameraPitchForPreset("3d", viewHeight),
         duration: 260,
@@ -1359,6 +1378,38 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const id = window.setTimeout(() => map.resize(), 280);
       return () => window.clearTimeout(id);
     }, [ready, lidar3d, viewHeight]);
+
+    useEffect(() => {
+      if (typeof window === "undefined") return;
+      setWorldLabOn(
+        researchWorldLabRequested(window.location.search, {
+          NEXT_PUBLIC_STORY_WORLD_LAB: process.env.NEXT_PUBLIC_STORY_WORLD_LAB,
+        }),
+      );
+    }, []);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready || !worldLabOn || !landPainted) return;
+      if (base !== "satellite" && base !== "imageryLabels") {
+        setBase("satellite");
+        return;
+      }
+      applyWorldLabMode(map as never, worldLabMode, {
+        engine,
+        moveCamera: true,
+      });
+      const onPitch = () => {
+        applyWorldLabMode(map as never, worldLabMode, {
+          engine,
+          moveCamera: false,
+        });
+      };
+      map.on("pitch", onPitch);
+      return () => {
+        map.off("pitch", onPitch);
+      };
+    }, [ready, worldLabOn, worldLabMode, landPainted, engine, base]);
 
     useEffect(() => {
       if (!ready || !selected?.geojson) {
@@ -2088,6 +2139,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         data-map-land={landPainted ? "ready" : "loading"}
         data-map-sky={lidar3d ? "on" : "off"}
         data-map-engine={engine}
+        data-world-lab={worldLabOn ? "on" : "off"}
         data-map-tools={openGroup ?? "closed"}
         className={cn(
           "relative flex h-full w-full min-h-[240px] flex-col overflow-hidden story-surface",
@@ -2101,7 +2153,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           {lidar3d && landPainted && engine === "maplibre" ? (
             <div
               data-map-sky-wash
+              data-map-sky-band={skyBandPct}
               className="story-map-sky-layer"
+              style={{ ["--story-sky-band" as string]: `${skyBandPct}%` }}
               aria-hidden
             />
           ) : null}
@@ -2144,6 +2198,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         ) : null}
 
         <div className="pointer-events-none absolute inset-0 z-10">
+          {worldLabOn && landPainted ? (
+            <ResearchWorldLab
+              mode={worldLabMode}
+              onMode={setWorldLabMode}
+              engine={engine}
+            />
+          ) : null}
           <div
             data-map-basemap
             className="pointer-events-auto absolute left-3 flex flex-wrap gap-1 story-glass rounded-[var(--radius-md)] p-1"
