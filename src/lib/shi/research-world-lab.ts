@@ -14,6 +14,7 @@ import {
 } from "./research-lidar.ts";
 import {
   RESEARCH_TERRAIN_SKY_OFF,
+  applyResearchWorldBackground,
   researchTerrainSkyForPitch,
 } from "./research-terrain.ts";
 import {
@@ -161,6 +162,8 @@ export function applyWorldLabSpec(
       /* ok */
     }
   }
+
+  applyResearchWorldBackground(map, spec.terrainOn);
 
   const engine = opts?.engine ?? "maplibre";
   if (engine === "mapbox") {

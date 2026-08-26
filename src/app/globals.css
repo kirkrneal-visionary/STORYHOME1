@@ -390,22 +390,20 @@ html[data-role="professional"] {
  * Idle = paper/ink on glass — never navy-on-black.
  */
 /**
- * 3D world air. MapLibre sky only fills a sliver until pitch is extreme,
- * and it clears the canvas to transparent. This layer is the visible sky
- * the land meets — blue, then haze, then the mesh.
+ * Sky sits BEHIND the land. Terrain tiles are opaque, so the horizon
+ * is the mesh edge — land then sky — not a haze painted over the photo.
  */
 .story-map-sky-layer {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 0;
   pointer-events: none;
   background: linear-gradient(
     180deg,
-    #4a9adf 0%,
-    #6aade4 26%,
-    #9cccea 50%,
-    rgba(186, 220, 240, 0.42) 68%,
-    rgba(234, 244, 252, 0) 86%
+    #2f7ec4 0%,
+    #3d86cf 38%,
+    #4e8ec8 72%,
+    #5a9ad4 100%
   );
 }
 .story-map-sky-on .maplibregl-map,

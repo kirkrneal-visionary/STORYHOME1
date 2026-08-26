@@ -130,9 +130,9 @@ export const STORY_3D_PROFILE = {
 } as const;
 
 export const STORY_ATMOSPHERE_PROFILE = {
-  fogRangeNear: 0.8,
-  fogRangeFar: 12,
-  horizonBlend: 0.07,
+  fogRangeNear: 8,
+  fogRangeFar: 18,
+  horizonBlend: 0.012,
   hillshadeOverhead: 0.04,
   hillshadeAngled: 0.16,
   hillshadeOblique: 0.26,
@@ -227,11 +227,11 @@ export function worldLabFog(mode: WorldLabMode, pitch: number): ResearchMapboxFo
         STORY_ATMOSPHERE_PROFILE.fogRangeNear,
         STORY_ATMOSPHERE_PROFILE.fogRangeFar + looking * 2,
       ],
-      color: "#d7e0d8",
-      "high-color": "#4e8ec8",
-      "space-color": "#6aa3d4",
+      color: "#5a9ad4",
+      "high-color": "#3d86cf",
+      "space-color": "#2f7ec4",
       "horizon-blend":
-        STORY_ATMOSPHERE_PROFILE.horizonBlend + looking * 0.03,
+        STORY_ATMOSPHERE_PROFILE.horizonBlend + looking * 0.008,
       "star-intensity": 0,
     };
   }
@@ -315,14 +315,14 @@ export const WORLD_AUDIT_CURRENT = {
   obliqueTexture:
     "LINEAR only. No anisotropic filter. 256 tiles smear at pitch 50–64.",
   skyFog:
-    "Mapbox fog+lights when 3D is on. MapLibre sky. Fog is weak below ~60° pitch.",
+    "Sky sits behind the land. Mapbox fog starts far with a tight horizon. MapLibre sky does not wash the photo.",
   camera:
     "maxPitch 64, 3D pitch 54, first 3D relief = 1×. View height changes pitch only; zoomDelta is unused.",
   biggestSourceLimit: "Native NAIP 60 cm at parcel zoom.",
   biggestRenderLimit:
     "Untreated 256 tiles + no anisotropy + DPR stretch at oblique pitch.",
   biggestWorldLimit:
-    "3D is pitch + DEM drape. Hillshade is a separate dirt mode, not a photo composite. Horizon is a sky wash, not distance haze in the photo.",
+    "3D is pitch + DEM drape. Hillshade is a separate dirt mode, not a photo composite. Horizon is a land/sky cut, not a haze over the photo.",
   canLookBetter: "PARTIALLY" as const,
   estimatedGain: "MODERATE" as const,
   customWebglJustified: false,

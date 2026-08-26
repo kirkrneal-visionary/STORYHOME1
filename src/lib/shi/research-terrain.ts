@@ -133,22 +133,52 @@ export function cameraPitchForPreset(
 }
 
 export const RESEARCH_SKY_BLUE = "#3d86cf";
-export const RESEARCH_SKY_HAZE = "#e8f2fb";
+/** Horizon stays blue — not a white wash over the land. */
+export const RESEARCH_SKY_HAZE = "#5a9ad4";
+export const RESEARCH_WORLD_BACKGROUND_LAYER = "story-paper";
+export const RESEARCH_WORLD_PAPER = "#f8f4f0";
 
 /**
- * Native MapLibre sky. Pitch drives how much distant land fades into haze.
- * Fog is invisible in MapLibre below ~60° — 3D presets sit at or above that.
+ * Canvas fill behind the land. Blue when looking across; paper when overhead.
+ * The photo stays opaque — this is only the void above the horizon.
+ */
+export function researchWorldBackground(on: boolean): string {
+  return on ? RESEARCH_SKY_BLUE : RESEARCH_WORLD_PAPER;
+}
+
+export function applyResearchWorldBackground(
+  map: {
+    getLayer?: (id: string) => unknown;
+    setPaintProperty?: (layer: string, name: string, value: unknown) => unknown;
+  },
+  on: boolean,
+): void {
+  try {
+    if (!map.getLayer?.(RESEARCH_WORLD_BACKGROUND_LAYER)) return;
+    map.setPaintProperty?.(
+      RESEARCH_WORLD_BACKGROUND_LAYER,
+      "background-color",
+      researchWorldBackground(on),
+    );
+  } catch {
+    /* style still loading */
+  }
+}
+
+/**
+ * Native MapLibre sky. Fills the void above the mesh.
+ * Fog never paints the photo — horizon is a clean land/sky cut.
  */
 export function researchTerrainSkyForPitch(pitch: number): SkySpecification {
   const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 60));
   return {
     "sky-color": RESEARCH_SKY_BLUE,
     "horizon-color": RESEARCH_SKY_HAZE,
-    "fog-color": "#d5e6f5",
-    "sky-horizon-blend": 0.28 + lookingOut * 0.12,
-    "horizon-fog-blend": 0.12 + lookingOut * 0.12,
-    "fog-ground-blend": 0.02 + lookingOut * 0.05,
-    "atmosphere-blend": lookingOut,
+    "fog-color": RESEARCH_SKY_HAZE,
+    "sky-horizon-blend": 0.1 + lookingOut * 0.06,
+    "horizon-fog-blend": 0.04 + lookingOut * 0.04,
+    "fog-ground-blend": 0,
+    "atmosphere-blend": lookingOut * 0.42,
   };
 }
 

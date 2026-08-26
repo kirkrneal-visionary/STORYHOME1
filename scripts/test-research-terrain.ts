@@ -9,9 +9,12 @@ import {
   RESEARCH_TERRAIN_ENGINE,
   RESEARCH_TERRAIN_PITCH_3D,
   RESEARCH_SKY_BLUE,
+  RESEARCH_SKY_HAZE,
   RESEARCH_TERRAIN_SKY,
   RESEARCH_VIEW_SKINS,
+  applyResearchWorldBackground,
   researchTerrainSkyForPitch,
+  researchWorldBackground,
   archieTerrainRead,
   buildResearchParcelTerrainStats,
   cameraPitchForPreset,
@@ -42,11 +45,27 @@ assert.ok(Math.abs(storyCameraEase(0.5) - 0.5) < 0.02);
 assert.ok(storyCameraEase(0.2) < 0.2);
 assert.ok(storyCameraEase(0.8) > 0.8);
 assert.equal(researchTerrainSkyForPitch(0)["atmosphere-blend"], 0);
-assert.ok((researchTerrainSkyForPitch(60)["atmosphere-blend"] as number) > 0.8);
-assert.ok((RESEARCH_TERRAIN_SKY["fog-ground-blend"] as number) > 0);
-assert.ok((RESEARCH_TERRAIN_SKY["fog-ground-blend"] as number) < 0.25);
-assert.ok((RESEARCH_TERRAIN_SKY["sky-horizon-blend"] as number) < 0.7);
+assert.ok((researchTerrainSkyForPitch(60)["atmosphere-blend"] as number) > 0.2);
+assert.ok((researchTerrainSkyForPitch(60)["atmosphere-blend"] as number) < 0.55);
+assert.equal(RESEARCH_TERRAIN_SKY["fog-ground-blend"], 0);
+assert.ok((RESEARCH_TERRAIN_SKY["sky-horizon-blend"] as number) < 0.25);
 assert.equal(RESEARCH_SKY_BLUE, "#3d86cf");
+assert.doesNotMatch(RESEARCH_SKY_HAZE, /#e8f2fb|#ffffff|#d5e6f5/i);
+assert.equal(researchWorldBackground(true), RESEARCH_SKY_BLUE);
+assert.equal(researchWorldBackground(false), "#f8f4f0");
+{
+  const paints: Record<string, unknown> = {};
+  applyResearchWorldBackground(
+    {
+      getLayer: (id: string) => (id === "story-paper" ? {} : null),
+      setPaintProperty: (id: string, name: string, value: unknown) => {
+        paints[`${id}:${name}`] = value;
+      },
+    },
+    true,
+  );
+  assert.equal(paints["story-paper:background-color"], RESEARCH_SKY_BLUE);
+}
 assert.equal(isPhotoSkin("satellite"), true);
 assert.equal(isPhotoSkin("street"), false);
 assert.equal(researchTerrainLandDefault("land_development"), "satellite");
@@ -122,8 +141,10 @@ assert.match(map, /data-map-parcel-terrain/);
 assert.match(map, /data-map-sky/);
 assert.match(map, /data-map-engine/);
 assert.match(map, /data-map-sky-wash/);
+assert.match(map, /data-map-sky-behind/);
 assert.match(map, /story-map-sky-layer/);
 assert.match(map, /applyResearchAtmosphere/);
+assert.match(map, /applyResearchWorldBackground/);
 assert.match(map, /researchMode/);
 assert.doesNotMatch(map, /How dramatic the hills sit/);
 assert.doesNotMatch(map, />Photos</);
@@ -131,10 +152,14 @@ assert.match(readFileSync(join(root, "src/lib/shi/research-terrain.ts"), "utf8")
 
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /sky: RESEARCH_TERRAIN_SKY_OFF/);
-assert.match(
-  readFileSync(join(root, "src/app/globals.css"), "utf8"),
-  /story-map-sky-layer/,
+const skyCss = readFileSync(join(root, "src/app/globals.css"), "utf8");
+const skyBlock = skyCss.slice(
+  skyCss.indexOf(".story-map-sky-layer"),
+  skyCss.indexOf(".story-map-sky-on"),
 );
+assert.match(skyBlock, /z-index:\s*0;/);
+assert.doesNotMatch(skyBlock, /z-index:\s*2;/);
+assert.doesNotMatch(skyCss, /rgba\(186,\s*220,\s*240/);
 
 const demRoute = readFileSync(
   join(root, "src/app/api/map/lidar/dem/[z]/[x]/[y]/route.ts"),

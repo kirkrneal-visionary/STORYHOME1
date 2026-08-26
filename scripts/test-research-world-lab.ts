@@ -87,6 +87,8 @@ assert.equal(a.atmosphereOn, true);
 assert.equal(buildWorldLabSpec("D").atmosphereOn, false);
 assert.equal(buildWorldLabSpec("E").lightingOn, true);
 assert.ok((f.fog?.["horizon-blend"] ?? 0) > 0);
+assert.ok((f.fog?.["horizon-blend"] ?? 1) < 0.03);
+assert.ok((f.fog?.range[0] ?? 0) >= 7);
 
 assert.equal(viewHeightIsCameraNotRelief(), true);
 assert.equal(
@@ -106,7 +108,8 @@ const fake = {
   getPitch: () => 50,
   getZoom: () => 17.4,
   getSource: (id: string) => (id === "story-lidar" ? {} : null),
-  getLayer: (id: string) => (id === "parcels-fill" ? {} : null),
+  getLayer: (id: string) =>
+    id === "parcels-fill" || id === "story-paper" ? {} : null,
   addSource: () => {},
   addLayer: () => {},
   setPaintProperty: (layer: string, name: string, value: unknown) => {
@@ -126,6 +129,7 @@ const fake = {
 };
 
 applyWorldLabSpec(fake, f, { engine: "mapbox" });
+assert.equal(paints["story-paper:background-color"], "#3d86cf");
 assert.equal(paints["base-satellite:raster-contrast"], f.raster["raster-contrast"]);
 assert.equal(layout["base-satellite:visibility"], "visible");
 assert.equal(
@@ -139,6 +143,7 @@ applyWorldLabSpec(fake, buildWorldLabSpec("B"), {
   moveCamera: false,
 });
 assert.equal(terrain, null);
+assert.equal(paints["story-paper:background-color"], "#f8f4f0");
 assert.equal(paints["base-satellite:raster-resampling"], "nearest");
 
 assert.equal(WORLD_AUDIT_CURRENT.imageryGsdM, 0.6);
