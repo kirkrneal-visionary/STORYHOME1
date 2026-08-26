@@ -42,6 +42,7 @@ import {
   setBaseLayerVisibility,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
+import { escapeHtml } from "@/lib/security/html";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
@@ -260,9 +261,9 @@ export function MarketplaceMap({
         new maplibregl.Popup({ closeButton: true })
           .setLngLat(e.lngLat)
           .setHTML(
-            `<div style="font:700 12px system-ui;color:#17335e">${p.situs_address ?? "Parcel"}</div>` +
-              `<div style="font:400 11px system-ui;color:#333">Owner: ${p.owner_name ?? "—"}</div>` +
-              `<div style="font:400 11px system-ui;color:#333">${p.legal_acreage ?? "—"} ac · CAD #${p.prop_id ?? "—"}</div>`,
+            `<div style="font:700 12px system-ui;color:#17335e">${escapeHtml(p.situs_address ?? "Parcel")}</div>` +
+              `<div style="font:400 11px system-ui;color:#333">Owner: ${escapeHtml(p.owner_name ?? "—")}</div>` +
+              `<div style="font:400 11px system-ui;color:#333">${escapeHtml(p.legal_acreage ?? "—")} ac · CAD #${escapeHtml(p.prop_id ?? "—")}</div>`,
           )
           .addTo(map);
       });

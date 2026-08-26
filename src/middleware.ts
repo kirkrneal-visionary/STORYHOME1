@@ -1,6 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { normalizeSupabaseUrl } from "@/lib/supabase/url";
+import {
+  classifyApiPath,
+  clientIp,
+  consumeRateLimit,
+  rateLimitKey,
+  tooManyRequests,
+} from "@/lib/security/rate-limit";
 
 const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -8,8 +15,16 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 /**
  * Refreshes the Supabase auth session cookie on each request. No-ops when
  * Supabase isn't configured (demo mode), so the app keeps working locally.
+ * Tile routes are not rate-limited here.
  */
 export async function middleware(request: NextRequest) {
+  const cost = classifyApiPath(request.nextUrl.pathname);
+  if (cost) {
+    const ip = clientIp(request.headers);
+    const hit = consumeRateLimit(rateLimitKey(cost, ip), cost);
+    if (!hit.ok) return tooManyRequests(hit.retryAfterSec);
+  }
+
   const response = NextResponse.next({ request });
   if (!url || !anonKey) return response;
 

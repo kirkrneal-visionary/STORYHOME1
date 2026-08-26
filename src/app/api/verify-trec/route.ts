@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "verification failed" },
+      { error: "License check failed. Try again." },
       { status: 502 },
     );
   }

@@ -39,17 +39,14 @@ export async function fetchListingsByIds(ids: string[]): Promise<DemoListing[]> 
   return (data ?? []).map(rowToListing);
 }
 
-/** Find a live listing by its seller-portal access code. */
+/** Find a live listing by its seller-portal access code (RPC — not a public column filter). */
 export async function fetchListingByAccessCode(
   code: string,
 ): Promise<DemoListing | null> {
-  const { data, error } = await client()
-    .from("listings")
-    .select(LISTING_SELECT)
-    .eq("seller_access_code", code.trim().toUpperCase())
-    .maybeSingle();
-  if (error) return null;
-  return data ? rowToListing(data) : null;
+  const portal = await fetchSellerPortalByCode(code);
+  if (!portal?.listing?.id) return null;
+  const rows = await fetchListingsByIds([portal.listing.id]);
+  return rows[0] ?? null;
 }
 
 /**

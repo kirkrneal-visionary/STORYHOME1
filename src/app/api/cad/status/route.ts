@@ -14,9 +14,7 @@ const SELECT_LEGACY =
  */
 export async function GET() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
     return NextResponse.json(
       { error: "Supabase is not configured", counties: [] },
@@ -43,16 +41,16 @@ export async function GET() {
         .order("county_name");
       if (legacy.error) {
         return NextResponse.json(
-          { error: legacy.error.message, counties: [] },
+          { error: "CAD status unavailable", counties: [] },
           { status: 500 },
         );
       }
       rows = (legacy.data ?? []) as Record<string, unknown>[];
     } else if (full.error) {
       return NextResponse.json(
-        { error: full.error.message, counties: [] },
-        { status: 500 },
-      );
+          { error: "CAD status unavailable", counties: [] },
+          { status: 500 },
+        );
     } else {
       rows = (full.data ?? []) as Record<string, unknown>[];
     }
