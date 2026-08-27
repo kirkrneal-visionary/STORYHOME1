@@ -38,7 +38,7 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
     .maybeSingle();
 
   if (profileError) {
-    return { ok: false, status: 500, error: profileError.message };
+    return { ok: false, status: 500, error: "Unable to verify account" };
   }
 
   const accountKind = profile?.account_kind ?? "";

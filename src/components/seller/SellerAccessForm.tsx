@@ -56,7 +56,7 @@ export function SellerAccessForm() {
               setCode(e.target.value.toUpperCase());
               setError("");
             }}
-            placeholder="e.g. WILLOW-875"
+            placeholder="Listing access code"
             className="h-12 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 font-mono text-sm tracking-wide text-ink outline-none focus:border-gold"
             autoComplete="off"
             autoCapitalize="characters"

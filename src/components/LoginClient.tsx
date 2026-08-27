@@ -104,6 +104,7 @@ export function LoginClient() {
       </p>
 
       {supabaseConfigured &&
+        process.env.NODE_ENV !== "production" &&
         process.env.NEXT_PUBLIC_ENABLE_DEV_LOGIN === "true" && (
           <div className="mt-6 rounded-2xl border border-gold/40 bg-gold/10 p-4">
             <p className="font-mono text-[11px] font-bold tracking-wider text-gold uppercase">
@@ -229,9 +230,15 @@ export function LoginClient() {
         <h2 className="font-serif text-xl font-bold text-ink">
           Seller (realtor passcode)
         </h2>
-        <p className="mt-1 text-xs text-[var(--muted)]">
-          Demo codes: WILLOW-875 · RIDGE-1245
-        </p>
+        {!supabaseConfigured ? (
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Local demo only — not used in production.
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Enter the access code from your realtor.
+          </p>
+        )}
         <form
           onSubmit={onSellerSubmit}
           className="mt-3 flex flex-col gap-3 sm:flex-row"
