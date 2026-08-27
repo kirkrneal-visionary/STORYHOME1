@@ -22,7 +22,7 @@ Canonical live project: **storyhome-1-eqmg**. Ignore the other Vercel check.
 ## B. HIGH PRIORITY ISSUES
 
 1. Signup still trusts `account_kind` in user metadata (inspector/appraiser/lender can become `agent` without TREC). Lock stops *later* escalation, not the first insert.  
-2. Seller passcodes are still stored in plaintext on `listings`. This PR stops the app and (after 0039) PostgREST from selecting that column. Hashing + attempt limits still needed.  
+2. Seller passcodes are still stored in plaintext on `listings`. 0039’s column-only revoke did not hide them (table-level GRANT still wins). 0040 re-grants public columns only. Hashing + attempt limits still needed.  
 3. `seller_portal_by_code` is callable by logged-out users — brute-force risk.  
 4. `clerk_deed_transfers` / `clerk_county_coverage` had no RLS — any login could read the deed index. 0039 enables RLS.  
 5. Dev login emails/passwords exist in client code (now hidden in production builds). Never set `NEXT_PUBLIC_ENABLE_DEV_LOGIN` on eqmg.  
@@ -201,7 +201,8 @@ Restore the Supabase backup taken immediately before the wipe. Git cannot roll b
 - [x] Spatial frame caps already present (not weakened)  
 - [x] Payment boundary documented (no provider built)  
 - [x] 100k plan written (not executed)  
-- [ ] Migration 0039 applied in Supabase  
+- [x] Privilege lock applied in Supabase (account_kind + clerk/boost RLS)  
+- [ ] Seller passcode column hidden (0040 — table-level grant still exposes it)  
 - [ ] WAF rules in LOG on eqmg  
 - [ ] Turnstile on signup/reset  
 - [ ] Seller passcodes hashed  

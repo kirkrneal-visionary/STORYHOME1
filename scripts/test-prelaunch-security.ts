@@ -66,8 +66,12 @@ const mig = read("supabase/migrations/0039_prelaunch_security.sql");
 assert.match(mig, /profiles_lock_privilege_columns/);
 assert.match(mig, /boost_county_slot_overrides enable row level security/);
 assert.match(mig, /clerk_deed_transfers enable row level security/);
-assert.match(mig, /revoke select \(seller_access_code\)/i);
 assert.doesNotMatch(mig, /delete from public\.(profiles|listings|county_parcels)/i);
+const hide = read("supabase/migrations/0040_listings_hide_seller_passcode.sql");
+assert.match(hide, /revoke select on public.listings/i);
+assert.match(hide, /mh_hud_label/);
+assert.doesNotMatch(hide, /grant select \([\s\S]*seller_access_code/i);
+assert.doesNotMatch(hide, /delete from public\.(profiles|listings|county_parcels)/i);
 
 assert.match(read("docs/PRELAUNCH-SECURITY-AUDIT.md"), /storyhome-1-eqmg/);
 assert.match(read("docs/TEST-DATA-RESET-PLAN.md"), /DO NOT DELETE/);

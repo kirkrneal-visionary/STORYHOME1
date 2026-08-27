@@ -60,7 +60,5 @@ create policy listing_analytics_events_insert
     )
   );
 
--- 4) Seller passcodes are not a public listing column.
--- App listing reads use an explicit column list. After this revoke, SELECT *
--- from anon/authenticated fails — that is intended.
-revoke select (seller_access_code) on public.listings from anon, authenticated;
+-- 4) Column-only REVOKE is not enough against table-level GRANT SELECT.
+-- Follow with 0040_listings_hide_seller_passcode.sql.

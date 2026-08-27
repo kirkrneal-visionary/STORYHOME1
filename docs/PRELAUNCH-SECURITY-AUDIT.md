@@ -17,7 +17,7 @@ Status legend: OPEN = still needs work · SHIPPED = code in this PR · NEEDS SQL
 | `/` | No | — | Public | — | — | n/a | No | CDN | No | Yes | No | Low | OK | Keep public |
 | `/about` `/contact` `/privacy` `/terms` `/fair-housing` `/accessibility` | No | — | Public | — | — | n/a | No | CDN | No | Yes | No | Low | OK | Keep public |
 | `/login` | No | — | Public | Auth (Supabase) | Form | n/a | No | No | No | Yes | Email | High (signup/reset) | SHIPPED | Dev login blocked in production; demo passcodes hidden when Supabase is on |
-| `/marketplace` `/marketplace/[id]` | No | — | Public | — | id | listings public | No | — | No | Yes | Listing + agent profile | Medium | SHIPPED | App listing select omits `seller_access_code`; 0039 revokes the column |
+| `/marketplace` `/marketplace/[id]` | No | — | Public | — | id | listings public | No | — | No | Yes | Listing + agent profile | Medium | OPEN | App omits passcode; 0040 must re-grant columns (0039 column revoke was not enough) |
 | `/agents/[id]` `/b/[slug]` | No | — | Public | — | id/slug | profiles/brokerages public | No | — | No | Yes | Name, bio, **email if selected** | Medium | OPEN | Public profile must omit email |
 | `/home` `/saved` `/saved/[suiteId]` `/following` `/messages` `/referrals` `/network` `/profile` `/settings` | Client | Consumer+ | Logged-in UI | — | — | Per table | No | No | No | If logged in | Yes | Medium | OPEN | Add server layout guards later |
 | `/portal` `/portal/intelligence` | Client only | Pro/broker UI | Story Pro | App API | — | SHI tables | No | No | High | If they know URL | Yes | High | OPEN | Middleware still does not block the page shell; APIs stay Pro-gated |
