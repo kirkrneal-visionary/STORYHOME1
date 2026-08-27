@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { PropertyIntelligenceView } from "@/components/broker/intelligence/PropertyIntelligenceView";
@@ -70,13 +70,22 @@ export function ShiWorkspace() {
     () => section === "research",
   );
 
+  const openedRef = useRef(false);
+  const firstModuleRef = useRef(true);
+
   useEffect(() => {
+    if (openedRef.current) return;
+    openedRef.current = true;
     track("archie_opened", { network: "archie" });
   }, []);
 
   useEffect(() => {
     writeLastArchieModule(section);
     if (section === "research") setResearchVisited(true);
+    if (firstModuleRef.current) {
+      firstModuleRef.current = false;
+      return;
+    }
     const moduleProp: ArchieModuleProp = section;
     track("archie_module_selected", { module: moduleProp });
   }, [section]);
@@ -116,7 +125,10 @@ export function ShiWorkspace() {
       router.replace(q ? `/portal/intelligence?${q}` : "/portal/intelligence", {
         scroll: false,
       });
-      if (opts?.pick !== false) setPickingMode(false);
+      if (opts?.pick !== false) {
+        setPickingMode(false);
+        track("research_mode_changed", { research_mode: id });
+      }
     },
     [router, searchParams],
   );
@@ -227,7 +239,9 @@ export function ShiWorkspace() {
               <PropertyIntelligenceView
                 researchMode={urlMode ?? "general"}
                 onChangeResearchMode={() => setPickingMode(true)}
-                onRestoreResearchMode={(id) => setResearchMode(id)}
+                onRestoreResearchMode={(id) =>
+                  setResearchMode(id, { pick: false })
+                }
                 onOpenVault={() => selectSection("vault")}
                 onOpenFarms={() => selectSection("farms")}
               />

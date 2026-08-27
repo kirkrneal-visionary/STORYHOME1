@@ -58,6 +58,20 @@ export default function MarketplaceView() {
   const intent = searchParams.get("intent") || "sale";
   const listRef = useRef<HTMLDivElement | null>(null);
   const restoredRef = useRef(false);
+  const viewedRef = useRef(false);
+  const cachedMap = (() => {
+    if (typeof window === "undefined") return null;
+    const cached = readMarketplaceCache();
+    if (!cached || !marketplaceCacheFresh(cached)) return null;
+    return cached;
+  })();
+  const mapViewRef = useRef<{
+    center: { lat: number; lng: number } | null;
+    zoom: number | null;
+  }>({
+    center: cachedMap?.mapCenter ?? null,
+    zoom: cachedMap?.mapZoom ?? null,
+  });
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
     initialFiltersFromUrl(initialQuery, intent),
@@ -70,6 +84,8 @@ export default function MarketplaceView() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (viewedRef.current) return;
+    viewedRef.current = true;
     track("marketplace_viewed", { network: "marketplace" });
   }, []);
 
@@ -88,6 +104,12 @@ export default function MarketplaceView() {
     setBoundary(cached.boundary);
     setSelectedId(cached.selectedId);
     setMobileView(cached.mobileView);
+    if (cached.mapCenter && cached.mapZoom != null) {
+      mapViewRef.current = {
+        center: cached.mapCenter,
+        zoom: cached.mapZoom,
+      };
+    }
     requestAnimationFrame(() => {
       if (listRef.current && cached.listScrollTop > 0) {
         listRef.current.scrollTop = cached.listScrollTop;
@@ -104,8 +126,8 @@ export default function MarketplaceView() {
         selectedId,
         mobileView,
         listScrollTop: listRef.current?.scrollTop ?? 0,
-        mapCenter: null,
-        mapZoom: null,
+        mapCenter: mapViewRef.current.center,
+        mapZoom: mapViewRef.current.zoom,
       });
     };
     persist();
@@ -239,8 +261,8 @@ export default function MarketplaceView() {
                         selectedId: listing.id,
                         mobileView,
                         listScrollTop: listRef.current?.scrollTop ?? 0,
-                        mapCenter: null,
-                        mapZoom: null,
+                        mapCenter: mapViewRef.current.center,
+                        mapZoom: mapViewRef.current.zoom,
                       })
                     }
                   />
@@ -264,6 +286,11 @@ export default function MarketplaceView() {
             onSelect={setSelectedId}
             boundary={boundary}
             onBoundaryChange={setBoundary}
+            initialCenter={mapViewRef.current.center}
+            initialZoom={mapViewRef.current.zoom}
+            onViewIdle={(view) => {
+              mapViewRef.current = view;
+            }}
             className="h-full"
           />
         </section>

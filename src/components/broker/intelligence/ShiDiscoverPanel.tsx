@@ -15,6 +15,7 @@ import {
   shiFindSimilar,
   shiOwnerPortfolio,
 } from "@/lib/shi/client";
+import { track } from "@/lib/analytics";
 import { boundsAroundPoints } from "@/lib/shi/discover-bounds";
 import { DEFAULT_SIMILAR_CRITERIA } from "@/lib/shi/similar";
 import type {
@@ -282,8 +283,14 @@ export function ShiDiscoverPanel({
             centroidLat: s.centroidLat,
             centroidLng: s.centroidLng,
           });
-          if (res.created) created += 1;
-          else existing += 1;
+          if (res.created) {
+            created += 1;
+            track("prospect_created", {
+              county_fips: s.countyFips,
+              source_surface: "discover",
+              created: true,
+            });
+          } else existing += 1;
         } catch {
           failed += 1;
         }
@@ -341,6 +348,10 @@ export function ShiDiscoverPanel({
         boundary,
         mapCenterLat: property.centroidLat,
         mapCenterLng: property.centroidLng,
+      });
+      track("farm_created", {
+        county_fips: property.countyFips,
+        source_surface: "discover",
       });
       sound?.play("success", "study");
       setActMsg(`Farm “${name}” saved — open Farms to review.`);

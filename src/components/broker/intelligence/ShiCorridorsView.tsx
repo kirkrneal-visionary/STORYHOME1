@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStorySoundOptional } from "@/components/sound/SoundProvider";
+import { track } from "@/lib/analytics";
 import {
   Loader2,
   Route,
@@ -541,6 +542,7 @@ export function ShiCorridorsView({
             },
           },
         });
+        track("study_saved", { source_surface: "corridors" });
         setWorkflowNote(`Saved “${label}” to Study Vault (Corridors).`);
       } catch (e) {
         setWorkflowNote(
@@ -571,6 +573,13 @@ export function ShiCorridorsView({
           centroidLat: pick.lat,
           centroidLng: pick.lng,
         });
+        if (created) {
+          track("prospect_created", {
+            county_fips: pick.countyFips ?? county.fips,
+            source_surface: "corridors",
+            created: true,
+          });
+        }
         writeLastArchieModule("prospects");
         setWorkflowNote(
           created
@@ -605,6 +614,10 @@ export function ShiCorridorsView({
           mapCenterLat: pick.lat,
           mapCenterLng: pick.lng,
           mapZoom: 15,
+        });
+        track("farm_created", {
+          county_fips: county.fips,
+          source_surface: "corridors",
         });
         writeLastArchieModule("farms");
         setWorkflowNote("Farm created — opening…");
@@ -648,6 +661,7 @@ export function ShiCorridorsView({
         vaultFrameId: frame.id,
       });
       setSavedStudies(listCorridorStudies(county.fips));
+      track("study_saved", { source_surface: "corridors" });
       sound?.play("success", "study");
       setSaveNote(
         `Saved “${study.name}” to Study Vault (Corridors folder) and your corridor studies.`,

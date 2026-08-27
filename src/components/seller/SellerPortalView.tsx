@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -25,10 +25,12 @@ import {
 } from "@/lib/supabase/listings";
 import {
   formatAvgTime,
+  formatSellerMetric,
   type ListingAnalytics,
   type SellerListing,
 } from "@/lib/seller-portal";
 import { formatUsd } from "@/lib/demo-data";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type SellerPortalViewProps = {
@@ -47,6 +49,13 @@ export function SellerPortalView({
     string,
     TierAvailability
   > | null>(null);
+  const openedRef = useRef(false);
+
+  useEffect(() => {
+    if (openedRef.current) return;
+    openedRef.current = true;
+    track("seller_portal_opened", { network: "seller" });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +161,8 @@ export function SellerPortalView({
                 Listing activity preview
               </h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
-                Sample figures for this portal — not live marketplace traffic.
+                Views counted when someone opens this listing (once per visitor
+                per day). Other figures are not live marketplace traffic.
               </p>
             </div>
             {activeBoost && (
@@ -166,32 +176,45 @@ export function SellerPortalView({
             <Stat
               icon={<Eye className="h-4 w-4" />}
               label="Views"
-              value={analytics.views.toLocaleString()}
-              hint={`+${analytics.viewsThisWeek} this week`}
+              value={formatSellerMetric(analytics.views)}
+              hint={
+                analytics.viewsThisWeek.measured
+                  ? `+${analytics.viewsThisWeek.value ?? 0} this week`
+                  : "Once per visitor per day"
+              }
             />
             <Stat
               icon={<MousePointerClick className="h-4 w-4" />}
               label="Clicks"
-              value={analytics.clicks.toLocaleString()}
-              hint="Card & gallery opens"
+              value={formatSellerMetric(analytics.clicks)}
+              hint="Not measured yet"
             />
             <Stat
               icon={<Heart className="h-4 w-4" />}
               label="Saves"
-              value={analytics.saves.toLocaleString()}
-              hint={`+${analytics.savesThisWeek} this week`}
+              value={formatSellerMetric(analytics.saves)}
+              hint={
+                analytics.savesThisWeek.measured
+                  ? `+${analytics.savesThisWeek.value ?? 0} this week`
+                  : "Suite saves"
+              }
             />
             <Stat
               icon={<RefreshCcw className="h-4 w-4" />}
               label="Repeat viewers"
-              value={analytics.repeatViewers.toLocaleString()}
-              hint="Came back again"
+              value={formatSellerMetric(analytics.repeatViewers)}
+              hint="Not measured yet"
             />
             <Stat
               icon={<Clock3 className="h-4 w-4" />}
               label="Avg time viewed"
-              value={formatAvgTime(analytics.avgTimeViewedSeconds)}
-              hint="Per session"
+              value={
+                analytics.avgTimeViewedSeconds.measured &&
+                analytics.avgTimeViewedSeconds.value != null
+                  ? formatAvgTime(analytics.avgTimeViewedSeconds.value)
+                  : "—"
+              }
+              hint="Not measured yet"
               className="col-span-2 md:col-span-1"
             />
           </div>
@@ -206,11 +229,11 @@ export function SellerPortalView({
             </h2>
           </div>
           <p className="max-w-2xl text-sm leading-relaxed text-[var(--muted)]">
-            Increase visibility beyond standard marketing. Spots are limited{" "}
+            Boost changes placement in this county when it is later paid and
+            active. It does not guarantee buyers, a sale, or extra views.
+            Spots are limited{" "}
             <strong className="font-semibold text-ink">per county</strong> so
             every boost stays scarce and fair — not an unlimited ad auction.
-            Inventory is enforced against county capacity once MLS listings are
-            connected.
           </p>
           <p className="mt-2 font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase">
             Market segment · {listing.countyName} ({listing.state})

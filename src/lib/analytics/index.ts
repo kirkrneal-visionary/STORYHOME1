@@ -6,6 +6,8 @@ export {
   type AccountKindProp,
   type ArchieModuleProp,
   type PortalTabProp,
+  type ResearchModeProp,
+  type AnalyticsSourceSurface,
 } from "@/lib/analytics/events";
 export { scrubAnalyticsProps } from "@/lib/analytics/scrub";
 export {

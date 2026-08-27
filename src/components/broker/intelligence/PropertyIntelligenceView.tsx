@@ -801,6 +801,7 @@ export function PropertyIntelligenceView({
         mapCenterLng: view?.centerLng,
         mapZoom: view?.zoom,
       });
+      track("farm_created", { source_surface: "research" });
     } finally {
       setSaving(false);
     }
@@ -839,6 +840,7 @@ export function PropertyIntelligenceView({
         frameId: active.savedId,
         researchMode,
       });
+      track("study_saved", { source_surface: "research" });
       const savedCounty =
         saved.snapshot?.metrics?.countySource || active.countySource;
       setFrames((prev) =>
@@ -2063,6 +2065,13 @@ export function PropertyIntelligenceView({
                       centroidLng: selected.centroidLng,
                     })
                       .then((res) => {
+                        if (res.created) {
+                          track("prospect_created", {
+                            county_fips: selected.countyFips,
+                            source_surface: "research",
+                            created: true,
+                          });
+                        }
                         setProspectMsg(
                           res.created
                             ? "Saved to Prospects."
