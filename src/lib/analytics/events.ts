@@ -96,7 +96,7 @@ export type AnalyticsPropsMap = {
   archie_study_reopened: { has_folder: boolean };
   research_mode_changed: { research_mode: ResearchModeProp };
   prospect_created: {
-    county_fips: string;
+    county_fips?: string;
     source_surface: AnalyticsSourceSurface;
     created: boolean;
   };

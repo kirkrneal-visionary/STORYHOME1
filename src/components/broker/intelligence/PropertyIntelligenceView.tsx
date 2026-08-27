@@ -2067,7 +2067,7 @@ export function PropertyIntelligenceView({
                       .then((res) => {
                         if (res.created) {
                           track("prospect_created", {
-                            county_fips: selected.countyFips,
+                            county_fips: selected.countyFips || undefined,
                             source_surface: "research",
                             created: true,
                           });

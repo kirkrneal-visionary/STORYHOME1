@@ -286,7 +286,7 @@ export function ShiDiscoverPanel({
           if (res.created) {
             created += 1;
             track("prospect_created", {
-              county_fips: s.countyFips,
+              county_fips: s.countyFips || undefined,
               source_surface: "discover",
               created: true,
             });
@@ -350,7 +350,7 @@ export function ShiDiscoverPanel({
         mapCenterLng: property.centroidLng,
       });
       track("farm_created", {
-        county_fips: property.countyFips,
+        county_fips: property.countyFips || undefined,
         source_surface: "discover",
       });
       sound?.play("success", "study");
