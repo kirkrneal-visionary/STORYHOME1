@@ -79,6 +79,12 @@ type MarketplaceMapProps = {
   onSelect: (id: string) => void;
   boundary: DrawnBoundary | null;
   onBoundaryChange: (boundary: DrawnBoundary | null) => void;
+  initialCenter?: { lat: number; lng: number } | null;
+  initialZoom?: number | null;
+  onViewIdle?: (view: {
+    center: { lat: number; lng: number };
+    zoom: number;
+  }) => void;
   className?: string;
 };
 
@@ -148,6 +154,9 @@ export function MarketplaceMap({
   onSelect,
   boundary,
   onBoundaryChange,
+  initialCenter = null,
+  initialZoom = null,
+  onViewIdle,
   className,
 }: MarketplaceMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -156,6 +165,8 @@ export function MarketplaceMap({
   const draftRef = useRef<LatLng[]>([]);
   const freehandRef = useRef<FreehandSession>(emptyFreehandSession());
   const toolRef = useRef<DrawTool>("pan");
+  const onViewIdleRef = useRef(onViewIdle);
+  onViewIdleRef.current = onViewIdle;
 
   const [ready, setReady] = useState(false);
   const [tool, setTool] = useState<DrawTool>("pan");
@@ -184,16 +195,29 @@ export function MarketplaceMap({
     if (!containerRef.current) return;
     // Open over the 7 launch counties (not null island / Atlantic).
     const [west, south, east, north] = launch7UnionBbox();
+    const restore =
+      initialCenter &&
+      Number.isFinite(initialCenter.lat) &&
+      Number.isFinite(initialCenter.lng) &&
+      initialZoom != null &&
+      Number.isFinite(initialZoom);
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: buildStoryMapStyle(),
-      bounds: [
-        [west, south],
-        [east, north],
-      ],
-      fitBoundsOptions: { padding: 48, maxZoom: 10 },
-      center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
-      zoom: EAST_TEXAS_DEFAULT_ZOOM,
+      ...(restore
+        ? {
+            center: [initialCenter.lng, initialCenter.lat],
+            zoom: initialZoom,
+          }
+        : {
+            bounds: [
+              [west, south],
+              [east, north],
+            ],
+            fitBoundsOptions: { padding: 48, maxZoom: 10 },
+            center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
+            zoom: EAST_TEXAS_DEFAULT_ZOOM,
+          }),
       maxZoom: MAP_PRECISION_MAX_ZOOM,
       transformRequest: mapLibreTransformRequest,
       preserveDrawingBuffer: true,
@@ -365,6 +389,11 @@ export function MarketplaceMap({
     map.on("moveend", () => {
       if (toolRef.current === "pan") setShowSearchArea(true);
       setViewportVersion((v) => v + 1);
+      const c = map.getCenter();
+      onViewIdleRef.current?.({
+        center: { lat: c.lat, lng: c.lng },
+        zoom: map.getZoom(),
+      });
     });
 
     const ro = new ResizeObserver(() => map.resize());

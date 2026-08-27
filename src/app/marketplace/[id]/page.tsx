@@ -9,6 +9,8 @@ import { LISTING_SELECT, rowToListing } from "@/lib/listings-map";
 import { AnalyticsPageBeacon } from "@/components/analytics/AnalyticsPageBeacon";
 import { BackToMarketplace } from "@/components/marketplace/BackToMarketplace";
 import { InquireButton } from "@/components/marketplace/InquireButton";
+import { ListingSaveButton } from "@/components/marketplace/ListingSaveButton";
+import { ListingViewBeacon } from "@/components/marketplace/ListingViewBeacon";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -45,6 +47,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
         event="listing_opened"
         props={{ listing_id: listing.id }}
       />
+      <ListingViewBeacon listingId={listing.id} />
 
       {/* Full-bleed photo — overlays under living header (Instagram-class) */}
       <div
@@ -127,6 +130,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
               listingId={listing.id}
               agentId={listing.agentId}
               listingLabel={listing.addressSerif}
+            />
+            <ListingSaveButton
+              listingId={listing.id}
+              listingTitle={listing.addressSerif}
             />
             <Link
               href={`/agents/${agent.id}`}
