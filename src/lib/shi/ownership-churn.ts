@@ -44,10 +44,20 @@ export function hasSuccessiveObservation(
   return b - a >= 12 * 3600 * 1000;
 }
 
+export type CountyHealthForIndex =
+  | "current"
+  | "source_failed"
+  | "partial_pull"
+  | "refresh_delayed"
+  | "unknown"
+  | null;
+
 export function computeOwnershipChurnSignal(opts: {
   firstSeenAt: string | null;
   lastSeenAt: string | null;
   ownerEvents: OwnershipChangeEvent[];
+  /** When county pull health is failed/partial/stale, do not score as a quiet market. */
+  countyHealth?: CountyHealthForIndex;
 }): OwnershipChurnSignal {
   const ownerEvents = opts.ownerEvents.filter(
     (e) => e.field === "cad_owner_id" || e.field === "owner_name",
@@ -62,6 +72,32 @@ export function computeOwnershipChurnSignal(opts: {
           .sort()
           .at(-1) ?? null
       : null;
+
+  const blockedHealth =
+    opts.countyHealth === "source_failed" ||
+    opts.countyHealth === "partial_pull" ||
+    opts.countyHealth === "refresh_delayed";
+  if (blockedHealth) {
+    return {
+      index: null,
+      band: "building",
+      bandLabel:
+        opts.countyHealth === "source_failed"
+          ? "County source unavailable"
+          : opts.countyHealth === "partial_pull"
+            ? "Waiting on a full county observation"
+            : "County refresh delayed",
+      ownerChangeCount: 0,
+      trackingSince: opts.firstSeenAt,
+      lastOwnerChangeAt: null,
+      reasons: [
+        "Ownership Stability is not scored from a failed, partial, or delayed county pull.",
+        "Last verified county observation remains in use — this is not a quiet-market signal.",
+        "Archie only scores owner-field changes between verified full-source snapshots.",
+      ],
+      note: NOTE,
+    };
+  }
 
   if (!opts.firstSeenAt && changeCount === 0) {
     return {

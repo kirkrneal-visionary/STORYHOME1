@@ -242,6 +242,19 @@ export function ShiFarmsView() {
                 </p>
               </div>
 
+              {detail.observationReadiness &&
+              detail.observationReadiness.status !== "active" &&
+              detail.observationReadiness.status !== "quiet" ? (
+                <div className="rounded-xl border border-amber-700/35 bg-amber-500/10 p-3">
+                  <p className="font-mono text-[10px] font-bold text-gold uppercase">
+                    County data · {detail.observationReadiness.statusLabel}
+                  </p>
+                  <p className="mt-1 text-xs text-ink">
+                    {detail.observationReadiness.detail}
+                  </p>
+                </div>
+              ) : null}
+
               <div className="rounded-xl border border-gold/40 bg-[color-mix(in_srgb,var(--gold)_10%,transparent)] p-3">
                 <p className="font-mono text-[10px] font-bold text-gold uppercase">
                   Since your last review

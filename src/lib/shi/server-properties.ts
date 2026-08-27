@@ -7,6 +7,7 @@ import {
   computeOwnershipChurnSignal,
   type OwnershipChangeEvent,
 } from "@/lib/shi/ownership-churn";
+import { countyHealthFromStatus } from "@/lib/shi/observation-readiness";
 import type {
   ShiCountyFreshness,
   ShiPropertyDetail,
@@ -345,10 +346,35 @@ export async function getProperty(
     assessedValue: num(r.assessed_value),
   }));
 
+  let countyHealth: import("@/lib/shi/ownership-churn").CountyHealthForIndex =
+    null;
+  {
+    const { data: statusRow, error: statusErr } = await supabase
+      .from("cad_county_status")
+      .select(
+        "last_error, last_success_at, last_attempt_at, ingest_capped, refresh_interval_hours",
+      )
+      .eq("source", source)
+      .maybeSingle();
+    if (!statusErr && statusRow) {
+      countyHealth = countyHealthFromStatus({
+        last_error: (statusRow.last_error as string | null) ?? null,
+        last_success_at: (statusRow.last_success_at as string | null) ?? null,
+        last_attempt_at: (statusRow.last_attempt_at as string | null) ?? null,
+        ingest_capped: Boolean(statusRow.ingest_capped),
+        refresh_interval_hours:
+          statusRow.refresh_interval_hours == null
+            ? 72
+            : Number(statusRow.refresh_interval_hours),
+      });
+    }
+  }
+
   const ownershipChurn = computeOwnershipChurnSignal({
     firstSeenAt,
     lastSeenAt,
     ownerEvents,
+    countyHealth,
   });
 
   const detail: ShiPropertyDetail = {
