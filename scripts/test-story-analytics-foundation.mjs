@@ -23,6 +23,13 @@ const REQUIRED = [
   "archie_module_selected",
   "archie_parcel_opened",
   "archie_study_reopened",
+  "listing_saved",
+  "research_mode_changed",
+  "prospect_created",
+  "farm_created",
+  "study_saved",
+  "my_home_opened",
+  "seller_portal_opened",
 ];
 for (const name of REQUIRED) {
   assert.match(events, new RegExp(`"${name}"`));
@@ -68,6 +75,25 @@ const callSites = [
     "src/components/broker/intelligence/ShiWorkspace.tsx",
     "archie_study_reopened",
   ],
+  ["src/components/suites/SaveToSuiteModal.tsx", "listing_saved"],
+  [
+    "src/components/broker/intelligence/ShiWorkspace.tsx",
+    "research_mode_changed",
+  ],
+  [
+    "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
+    "prospect_created",
+  ],
+  [
+    "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
+    "farm_created",
+  ],
+  [
+    "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
+    "study_saved",
+  ],
+  ["src/components/home/MyHomeView.tsx", "my_home_opened"],
+  ["src/components/seller/SellerPortalView.tsx", "seller_portal_opened"],
 ];
 for (const [file, event] of callSites) {
   const src = read(file);
