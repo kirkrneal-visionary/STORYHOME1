@@ -34,7 +34,7 @@ assert.match(nav, /story-glass-nav/);
 assert.match(nav, /story-living-tagline/);
 assert.match(nav, /story-living-mark/);
 assert.match(nav, /--story-header-h|--story-safe-top/);
-assert.match(nav, /--story-bottom-nav-h/);
+assert.match(nav, /--story-bottom-nav-h|story-bottom-dock/);
 
 const hook = read("src/hooks/useLivingHeader.ts");
 assert.match(hook, /hysteresis|LivingHeaderState/);

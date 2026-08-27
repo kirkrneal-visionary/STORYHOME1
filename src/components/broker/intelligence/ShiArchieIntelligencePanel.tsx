@@ -415,7 +415,7 @@ function FocusCopy({
         {nearbySummary
           ? nearbySummary
           : parcelNeighbors?.available === false
-            ? "CAD polygon neighbors are not on the desk yet (RPC soft-fail or outside launch 7). Centroid same-owner search still uses owner matches when present. Archie does not invent adjoining boundaries."
+            ? "CAD polygon neighbors are not on the desk yet. Same-owner search still uses owner matches when present. Archie does not invent adjoining boundaries."
             : "No same-owner tracts within 1 mile with centroids on desk, and no CAD polygon neighbors loaded yet. Use owner portfolio below or Discover for broader search. Archie does not invent adjoining boundaries."}
       </p>
     );

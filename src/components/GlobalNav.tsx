@@ -117,11 +117,6 @@ export default function GlobalNav() {
             label: "Suites",
             active: pathname.startsWith("/saved"),
           },
-          {
-            href: "/following",
-            label: "Following",
-            active: pathname.startsWith("/following"),
-          },
         );
       }
     }
@@ -244,12 +239,6 @@ export default function GlobalNav() {
                     active={pathname.startsWith("/saved")}
                   >
                     Suites
-                  </NavLink>
-                  <NavLink
-                    href="/following"
-                    active={pathname.startsWith("/following")}
-                  >
-                    Following
                   </NavLink>
                 </>
               )}

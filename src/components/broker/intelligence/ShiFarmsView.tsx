@@ -68,7 +68,7 @@ export function ShiFarmsView() {
       setError(
         e instanceof Error
           ? e.message
-          : "Could not load farms. Apply migration 0026 if this is a new environment.",
+          : "Could not load farms. Try again.",
       );
       setFarms([]);
     } finally {
@@ -117,9 +117,16 @@ export function ShiFarmsView() {
       </div>
 
       {error ? (
-        <p className="story-well px-3 py-2 text-sm text-ink">
-          {error}
-        </p>
+        <div className="story-well flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+          <p className="text-sm text-ink">{error}</p>
+          <button
+            type="button"
+            onClick={() => void refreshList()}
+            className="story-press min-h-11 rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
+          >
+            Retry
+          </button>
+        </div>
       ) : null}
 
       <ShiCountyChangeFeed
@@ -147,6 +154,22 @@ export function ShiFarmsView() {
           {loading ? (
             <div className="flex justify-center py-16 text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
+            </div>
+          ) : error && farms.length === 0 ? (
+            <div className="px-4 py-14 text-center">
+              <p className="text-sm font-semibold text-ink">
+                Farms could not load
+              </p>
+              <p className="mx-auto mt-2 max-w-sm text-xs text-[var(--muted)]">
+                This is not an empty territory list. Try again.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refreshList()}
+                className="story-press mt-4 inline-flex h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy"
+              >
+                Retry
+              </button>
             </div>
           ) : farms.length === 0 ? (
             <div className="px-4 py-14 text-center">

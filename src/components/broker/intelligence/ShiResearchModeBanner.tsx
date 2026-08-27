@@ -49,8 +49,9 @@ export function ShiResearchModeBanner({
       <button
         type="button"
         onClick={onChangeMode}
-        className="shrink-0 rounded-lg border border-gold/40 px-3 py-1.5 font-mono text-[10px] font-bold tracking-wide text-gold uppercase"
+        className="story-press min-h-11 shrink-0 rounded-lg border border-gold/40 px-3 py-2 font-mono text-[10px] font-bold tracking-wide text-gold uppercase"
         data-change-research-mode
+        data-story-sound="select"
       >
         Change research mode
       </button>

@@ -16,10 +16,10 @@ export function formatShiVaultError(err: unknown): string {
       msg,
     )
   ) {
-    return "Study Vault is not set up on this database yet. Apply Supabase migration 0023_shi_market_frames.sql (tables + shi-studies storage), then retry.";
+    return "Study Vault is not set up on this account yet. Try again in a moment.";
   }
   if (/shi-studies|bucket|storage/i.test(msg)) {
-    return "Map Memory storage is not ready. Ensure the shi-studies bucket from migration 0023 is applied, then retry save.";
+    return "Map Memory photos could not be stored right now. Try saving again.";
   }
   if (/Sign in|Story Pro|403|401/i.test(msg)) {
     return msg;

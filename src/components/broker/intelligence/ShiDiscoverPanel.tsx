@@ -26,6 +26,7 @@ import type {
   ShiSimilarResult,
 } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
+import { useStorySoundOptional } from "@/components/sound/SoundProvider";
 
 const BULK_PROSPECT_CAP = 25;
 
@@ -99,6 +100,7 @@ export function ShiDiscoverPanel({
   onPortfolioRelated,
   onOpenFarms,
 }: Props) {
+  const sound = useStorySoundOptional();
   const [tab, setTab] = useState<"actions" | "similar" | "portfolio">("actions");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -295,6 +297,9 @@ export function ShiDiscoverPanel({
           failed ? ` · ${failed} failed` : ""
         }.${skipped}`,
       );
+      if ((created > 0 || existing > 0) && failed === 0) {
+        sound?.play("success", "study");
+      }
     } finally {
       setBusy("");
     }
@@ -337,6 +342,7 @@ export function ShiDiscoverPanel({
         mapCenterLat: property.centroidLat,
         mapCenterLng: property.centroidLng,
       });
+      sound?.play("success", "study");
       setActMsg(`Farm “${name}” saved — open Farms to review.`);
       setShowFarmForm(false);
       setFarmName("");
@@ -369,7 +375,7 @@ export function ShiDiscoverPanel({
           type="button"
           disabled={Boolean(busy)}
           onClick={() => void runSimilar()}
-          className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gold px-3 text-xs font-bold text-navy disabled:opacity-60"
+          className="story-press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl bg-gold px-3 text-xs font-bold text-navy disabled:opacity-60"
         >
           {busy === "similar" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -382,7 +388,7 @@ export function ShiDiscoverPanel({
           type="button"
           disabled={Boolean(busy)}
           onClick={() => void runPortfolio()}
-          className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl border border-hairline px-3 text-xs font-bold text-ink disabled:opacity-60"
+          className="story-press inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-hairline px-3 text-xs font-bold text-ink disabled:opacity-60"
         >
           {busy === "portfolio" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />

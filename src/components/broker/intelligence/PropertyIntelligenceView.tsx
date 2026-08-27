@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Search, Users } from "lucide-react";
+import { useStorySoundOptional } from "@/components/sound/SoundProvider";
 import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
 import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
 import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
@@ -172,6 +173,7 @@ export function PropertyIntelligenceView({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const sound = useStorySoundOptional();
   const [query, setQuery] = useState("");
   const [field, setField] = useState<CadSearchField>("all");
   const [source, setSource] = useState(() => readWorkspaceSnapshot()?.source ?? "");
@@ -2066,6 +2068,7 @@ export function PropertyIntelligenceView({
                             ? "Saved to Prospects."
                             : "Already in Prospects — opened existing.",
                         );
+                        sound?.play("success", "study");
                       })
                       .catch((e) =>
                         setProspectMsg(
@@ -2076,7 +2079,7 @@ export function PropertyIntelligenceView({
                       )
                       .finally(() => setSavingProspect(false));
                   }}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gold text-sm font-bold text-navy disabled:opacity-60"
+                  className="story-press inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gold text-sm font-bold text-navy disabled:opacity-60"
                 >
                   {savingProspect ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

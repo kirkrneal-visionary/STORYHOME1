@@ -30,7 +30,7 @@ export async function GET(request: Request) {
         error:
           e instanceof Error
             ? e.message
-            : "Could not load prospects (apply migration 0025?)",
+            : "Could not load prospects.",
         prospects: [],
         summary: { total: 0, byStatus: {} },
       },
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         error:
           e instanceof Error
             ? e.message
-            : "Could not save prospect (apply migration 0025?)",
+            : "Could not save prospect.",
       },
       { status: 400 },
     );

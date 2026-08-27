@@ -307,7 +307,7 @@ export function ShiCorridorsAnalysisPanel({
             type="button"
             onClick={onSaveStudy}
             disabled={saving}
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-40"
+            className="story-press inline-flex h-11 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-40"
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />

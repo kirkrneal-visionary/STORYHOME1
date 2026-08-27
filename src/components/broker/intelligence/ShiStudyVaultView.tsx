@@ -238,8 +238,15 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
       </div>
 
       {error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-800">
-          {error}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
+          <p className="text-xs font-semibold text-red-800">{error}</p>
+          <button
+            type="button"
+            onClick={() => void refreshFolders(countySource)}
+            className="story-press min-h-11 rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
+          >
+            Retry
+          </button>
         </div>
       ) : null}
 
@@ -283,6 +290,10 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
             <div className="mt-6 flex justify-center text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
+          ) : error && folders.length === 0 ? (
+            <p className="mt-6 text-sm text-ink">
+              Folders could not load. This is not an empty vault.
+            </p>
           ) : folders.length === 0 ? (
             <p className="mt-6 text-sm text-[var(--muted)]">
               No study folders yet. Save a Market Frame from Research, or create

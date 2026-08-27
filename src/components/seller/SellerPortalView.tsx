@@ -149,10 +149,10 @@ export function SellerPortalView({
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <h2 className="font-serif text-2xl font-bold text-ink">
-                How your home is performing online
+                Listing activity preview
               </h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
-                Live Story Home activity for buyers viewing your listing.
+                Sample figures for this portal — not live marketplace traffic.
               </p>
             </div>
             {activeBoost && (

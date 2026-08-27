@@ -210,7 +210,7 @@ export const INSIGHT_RULES: InsightRule[] = [
     build: (s) => ({
       tone: "good",
       title: "Signed-in people are finding you",
-      body: `${s.accountUniqueVisitors} different accounts have opened your world. These are the visitors most worth following up with in Messages.`,
+      body: `${s.accountUniqueVisitors} different accounts have opened your world. These are the visitors most worth a follow-up.`,
     }),
   },
 ];
