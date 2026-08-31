@@ -2,8 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { fetchSellerPortalByCode } from "@/lib/supabase/listings";
-import { TERMINAL_STATUSES } from "@/lib/seller-portal";
 
 export function SellerAccessForm() {
   const router = useRouter();
@@ -18,22 +16,22 @@ export function SellerAccessForm() {
     setPending(true);
     setError("");
     try {
-      const portal = await fetchSellerPortalByCode(raw);
-      if (!portal) {
-        setError(
-          "Code not found. Check with your agent for the latest access code.",
-        );
+      const res = await fetch("/api/seller/access", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code: raw }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        path?: string;
+      };
+      if (!res.ok || !data.ok || !data.path) {
+        setError("Unable to open this portal. Check the code and try again.");
         return;
       }
-      if (TERMINAL_STATUSES.has(portal.listing.status)) {
-        setError(
-          "This listing is sold or withdrawn — seller access has expired.",
-        );
-        return;
-      }
-      router.push(`/seller/portal/${portal.listing.accessCode.toLowerCase()}`);
+      router.push(data.path);
     } catch {
-      setError("Could not reach the server. Try again in a moment.");
+      setError("Unable to open this portal. Check the code and try again.");
     } finally {
       setPending(false);
     }

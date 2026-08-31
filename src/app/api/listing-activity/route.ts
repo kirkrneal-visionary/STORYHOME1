@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { isUuid } from "@/lib/security/validate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     typeof (body as { kind?: unknown }).kind === "string"
       ? (body as { kind: string }).kind.trim()
       : "";
-  if (!listingId || (kind !== "view" && kind !== "save")) {
+  if (!listingId || !isUuid(listingId) || (kind !== "view" && kind !== "save")) {
     return NextResponse.json({ ok: false, reason: "bad_request" }, { status: 400 });
   }
 

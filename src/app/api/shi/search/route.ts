@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicError } from "@/lib/security/validate";
 import { CAD_SEARCH_FIELDS, type CadSearchField } from "@/lib/cad-layers";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { searchProperties } from "@/lib/shi/server-properties";
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
   } catch (e) {
     return NextResponse.json(
       {
-        error: e instanceof Error ? e.message : "Search failed",
+        error: publicError(e, "Search failed"),
         results: [],
       },
       { status: 500 },

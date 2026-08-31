@@ -1,4 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { logSecurityEvent } from "@/lib/security/log-event";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export type ProGateOk = {
@@ -28,6 +29,7 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
+    logSecurityEvent({ kind: "authz_denied", status: 401, path: "/api/shi" });
     return { ok: false, status: 401, error: "Sign in required" };
   }
 
@@ -43,6 +45,7 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
 
   const accountKind = profile?.account_kind ?? "";
   if (accountKind !== "agent" && accountKind !== "broker") {
+    logSecurityEvent({ kind: "authz_denied", status: 403, path: "/api/shi" });
     return {
       ok: false,
       status: 403,

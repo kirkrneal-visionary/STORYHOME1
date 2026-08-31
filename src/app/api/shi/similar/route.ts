@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicError } from "@/lib/security/validate";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import {
   DEFAULT_SIMILAR_CRITERIA,
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Find Similar failed" },
+      { error: publicError(e, "Find Similar failed") },
       { status: 400 },
     );
   }

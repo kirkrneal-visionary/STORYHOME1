@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { DrawnBoundary } from "@/lib/geo";
+import { publicError } from "@/lib/security/validate";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { analyzeArea } from "@/lib/shi/area";
 
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ analysis, metrics: analysis });
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Area analysis failed" },
+      { error: publicError(e, "Area analysis failed") },
       { status: 400 },
     );
   }
