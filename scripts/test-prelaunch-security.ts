@@ -52,7 +52,7 @@ assert.match(read("src/app/api/cad/status/route.ts"), /CAD status unavailable/);
   assert.ok(select, "LISTING_SELECT string");
   assert.doesNotMatch(select[1], /seller_access_code/);
 }
-assert.match(read("src/middleware.ts"), /classifyApiPath/);
+assert.match(read("src/middleware.ts"), /classify(Api|Request)Path/);
 assert.match(read("next.config.ts"), /STORY_SECURITY_HEADERS/);
 assert.match(read("src/components/marketplace/MarketplaceMap.tsx"), /escapeHtml/);
 assert.doesNotMatch(read("src/lib/shi/require-pro.ts"), /profileError\.message/);
