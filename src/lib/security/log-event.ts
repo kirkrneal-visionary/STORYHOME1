@@ -11,7 +11,9 @@ export type SecurityEventKind =
   | "billing_webhook_rejected"
   | "billing_webhook_unconfigured"
   | "expensive_query_rejected"
-  | "origin_rejected";
+  | "origin_rejected"
+  | "labs_denied"
+  | "env_isolation_failed";
 
 export type SecurityEvent = {
   kind: SecurityEventKind;
