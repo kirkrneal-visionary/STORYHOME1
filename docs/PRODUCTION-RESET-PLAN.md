@@ -13,7 +13,9 @@ Outside-created accounts are **test accounts** unless the founder names one to k
 
 ## Inventory (founder SQL 2026-09-01)
 
-Read-only counts pasted by the founder. Founder approved the wipe on 2026-09-01 and said to delete the 1 listing. Keep-list: none. **Wipe is not executed until a backup exists and the founder pastes `docs/PRODUCTION-RESET-WIPE.sql`.**
+Read-only counts pasted by the founder. Founder approved the wipe on 2026-09-01 and said to delete the 1 listing. Keep-list: none.
+
+**Backup exists:** Scheduled backup **01 Sep 2026 08:01:18 (+0000)** on STORYHOME production (`main`). Storage files are not in that backup (test uploads only). Wipe SQL is ready to paste.
 
 | Item | Count | Source |
 |---|---|---|
@@ -125,7 +127,7 @@ CAD parcels/geometry, county normalization, MVT, ingest/observation history, tra
 
 ## Order (only after backup + APPROVE RESET)
 
-1. Record backup timestamp  
+1. Record backup timestamp — **01 Sep 2026 08:01:18 (+0000)**  
 2. Freeze signup if founder wants (temporary, not a business policy)  
 3. Delete dependent user rows  
 4. Delete test storage objects  
