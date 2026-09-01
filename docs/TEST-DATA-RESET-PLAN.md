@@ -8,9 +8,11 @@ Canonical project: **storyhome-1-eqmg**.
 
 ---
 
-## Counts (live — UNKNOWN until a snapshot query)
+## Counts (founder SQL 2026-09-01)
 
-The agent cannot see production Auth or Storage from this checkout. Run these in the Supabase SQL editor **read-only** to fill numbers. Do not run deletes.
+Read-only inventory pasted by the founder. **Nothing was deleted.** Wipe still waits for **APPROVE RESET** and a backup.
+
+The agent cannot see production Auth or Storage from this checkout. The query below is what filled the table. Do not run deletes.
 
 ```sql
 -- Read-only inventory
@@ -41,21 +43,24 @@ union all select 'county_parcels', count(*) from public.county_parcels;
 
 | Item | Count |
 |---|---|
-| Auth users | UNKNOWN — run query |
-| Consumer profiles | UNKNOWN |
-| Story Pro (agent) | UNKNOWN |
-| Brokers | UNKNOWN |
-| Prospects | UNKNOWN |
-| Farms | UNKNOWN |
-| Studies / frames | UNKNOWN |
-| My Home | UNKNOWN |
-| CRM buyers / sellers | UNKNOWN |
-| Messages | UNKNOWN |
-| Referrals | UNKNOWN |
+| Auth users | **23** |
+| Consumer profiles | **10** |
+| Story Pro (agent) | **10** |
+| Brokers | **3** |
+| Prospects | **4** |
+| Farms | **6** |
+| Studies / frames | **3 / 3** |
+| My Home | **7** |
+| CRM buyers / sellers | **0 / 0** |
+| Messages | **0** |
+| Referrals | **0** |
+| Inquiries | **1** |
+| Product analytics events | **1,904** |
+| `county_parcels` (must preserve) | **345,387** |
 | Storage objects | UNKNOWN — Storage UI |
 | Listings classified TEST | UNKNOWN |
 | Listings classified REAL | UNKNOWN |
-| Listings UNKNOWN | **All listings until founder classifies** |
+| Listings UNKNOWN | **1** — do not auto-wipe |
 
 ---
 

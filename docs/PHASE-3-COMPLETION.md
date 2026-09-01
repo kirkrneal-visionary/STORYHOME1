@@ -165,15 +165,15 @@ Not measured at scale. Tile origin + PostGIS minutes are the cost risk. Do not e
 
 ## V. PRODUCTION RESET BEFORE COUNTS
 
-UNKNOWN for users. CAD parcel counts recorded in `docs/PRODUCTION-RESET-PLAN.md`. Wipe **not** executed.
+Founder SQL 2026-09-01: 23 auth users (10 consumer, 10 agent, 3 broker), 1 listing, 4 prospects, 6 farms, 3 studies, 3 frames, 7 homes, 1 inquiry, 1,904 product analytics events, 0 messages/referrals/buyers/seller_clients/suites/follows/listing analytics. `county_parcels` = 345,387. Wipe **not** executed.
 
 ## W. PRODUCTION RESET AFTER COUNTS
 
-N/A — reset not run.
+Counts recorded. Reset **not** run. Waiting for founder **APPROVE RESET** and a backup.
 
 ## X. PLATFORM DATA VERIFIED PRESERVED
 
-No delete SQL in Phase 3 migrations. CAD status still readable on eqmg. Parcel counts listed in the reset plan.
+No delete SQL in Phase 3 migrations. CAD status still readable on eqmg. Founder SQL `county_parcels` = 345,387. Live county status sum = 345,385. Preserve table updated in `docs/PRODUCTION-RESET-PLAN.md`.
 
 ## Y. PHASE 1 REGRESSION RESULTS
 

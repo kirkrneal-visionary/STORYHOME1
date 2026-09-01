@@ -11,38 +11,48 @@ Outside-created accounts are **test accounts** unless the founder names one to k
 
 ---
 
-## Before counts (2026-08-31)
+## Inventory (founder SQL 2026-09-01)
 
-The agent cannot see Auth or Storage. Public CAD status is the only live count we trust without SQL.
+Read-only counts pasted by the founder. **Nothing was deleted.** Wipe still waits for **APPROVE RESET** and a backup.
 
 | Item | Count | Source |
 |---|---|---|
-| Auth users | **UNKNOWN** | Needs SQL |
-| Consumer profiles | **UNKNOWN** | Needs SQL |
-| Story Pro (agent) | **UNKNOWN** | Needs SQL |
-| Brokers | **UNKNOWN** | Needs SQL |
-| Prospects | **UNKNOWN** | Needs SQL |
-| Farms | **UNKNOWN** | Needs SQL |
-| Studies / frames | **UNKNOWN** | Needs SQL |
-| My Home / documents | **UNKNOWN** | Needs SQL |
-| CRM buyers / sellers | **UNKNOWN** | Needs SQL |
-| Community / messages / referrals | **UNKNOWN** | Needs SQL |
-| Seller sessions / analytics events | **UNKNOWN** | Needs SQL |
+| Auth users | **23** | Founder SQL |
+| Profiles | **23** | Founder SQL |
+| Consumer profiles | **10** | Founder SQL |
+| Story Pro (agent) | **10** | Founder SQL |
+| Brokers | **3** | Founder SQL |
+| Prospects | **4** | Founder SQL |
+| Farms | **6** | Founder SQL |
+| Studies | **3** | Founder SQL |
+| Frames | **3** | Founder SQL |
+| My Home | **7** | Founder SQL |
+| CRM buyers | **0** | Founder SQL |
+| CRM seller clients | **0** | Founder SQL |
+| Messages | **0** | Founder SQL |
+| Referrals | **0** | Founder SQL |
+| Suites | **0** | Founder SQL |
+| Follows | **0** | Founder SQL |
+| Inquiries | **1** | Founder SQL |
+| Listing analytics events | **0** | Founder SQL |
+| Product analytics events | **1,904** | Founder SQL |
 | Storage objects | **UNKNOWN** | Storage UI |
 | Listings TEST | **UNKNOWN** | Founder classifies |
 | Listings REAL / intended | **UNKNOWN** | Founder classifies |
-| Listings UNKNOWN | **All listings until classified** | Do not auto-wipe |
-| `county_parcels` (must preserve) | **See CAD table below** | `/api/cad/status` |
+| Listings UNKNOWN | **1** (all listings until classified) | Do not auto-wipe |
+| `county_parcels` (must preserve) | **345,387** | Founder SQL |
 
-### Platform truth to preserve (eqmg 2026-08-31)
+### Platform truth to preserve (eqmg 2026-09-01)
+
+SQL `county_parcels` = **345,387**. Live `/api/cad/status` county sum = **345,385** (2 rows not in the seven-county status totals). After a wipe, SQL must still be 345,387.
 
 | County | DB parcels | Last verified |
 |---|---|---|
-| Polk | 57,578 | 2026-08-28 |
-| Angelina | 54,251 | 2026-08-28 |
-| Trinity | 24,593 | 2026-08-28 |
-| Tyler | 23,508 | 2026-08-28 |
-| San Jacinto | 35,158 | 2026-08-28 |
+| Polk | 57,587 | 2026-09-01 |
+| Angelina | 54,251 | 2026-09-01 |
+| Trinity | 24,593 | 2026-09-01 |
+| Tyler | 23,508 | 2026-09-01 |
+| San Jacinto | 35,161 | 2026-09-01 |
 | Liberty | 114,678 | 2026-08-29 |
 | Walker | 35,607 | 2026-08-30 |
 
