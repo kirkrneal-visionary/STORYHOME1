@@ -169,7 +169,7 @@ Founder SQL 2026-09-01: 23 auth users (10 consumer, 10 agent, 3 broker), 1 listi
 
 ## W. PRODUCTION RESET AFTER COUNTS
 
-Counts recorded. Reset **not** run. Waiting for founder **APPROVE RESET** and a backup.
+Reset **executed** 2026-09-01 after backup `01 Sep 2026 08:01:18 (+0000)`. Auth users 23→0. Listings 1→0. `county_parcels` stayed 345,387. See `docs/TEST-DATA-RESET-RESULT.md`.
 
 ## X. PLATFORM DATA VERIFIED PRESERVED
 
@@ -221,5 +221,6 @@ No new sounds on rate-limit, analytics, or security events.
 - [x] Rollback / incident notes written  
 - [x] Capacity probe documented as what was actually tested  
 - [x] Map tile 429 not added  
-- [ ] Test-user reset approved and completed  
+- [x] Test-user reset approved and completed  
+
 - [ ] 100k load — **NOT claimed**

@@ -15,7 +15,9 @@ Outside-created accounts are **test accounts** unless the founder names one to k
 
 Read-only counts pasted by the founder. Founder approved the wipe on 2026-09-01 and said to delete the 1 listing. Keep-list: none.
 
-**Backup exists:** Scheduled backup **01 Sep 2026 08:01:18 (+0000)** on STORYHOME production (`main`). Storage files are not in that backup (test uploads only). Wipe SQL is ready to paste.
+**Backup exists:** Scheduled backup **01 Sep 2026 08:01:18 (+0000)** on STORYHOME production (`main`).
+
+**Wipe executed 2026-09-01.** Auth users 0. Listings 0. `county_parcels` still 345,387. See `docs/TEST-DATA-RESET-RESULT.md`.
 
 | Item | Count | Source |
 |---|---|---|
@@ -100,7 +102,7 @@ order by created_at;
 
 ---
 
-## Proposed for deletion (approved 2026-09-01 — not executed yet)
+## Proposed for deletion (approved and executed 2026-09-01)
 
 All 23 Auth users and owned rows. Founder named **no keep accounts**. Founder said **delete the 1 listing**.
 

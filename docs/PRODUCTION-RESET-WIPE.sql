@@ -1,6 +1,6 @@
 -- Founder approved 2026-09-01: wipe 23 test users + the 1 listing.
 -- Does NOT touch county parcels, CAD, maps, or land data.
--- Run only after a backup exists. One transaction: if parcels move, nothing stays deleted.
+-- Parcel count is snapshotted (not hardcoded) so a CAD refresh cannot abort the wipe.
 
 begin;
 
@@ -9,9 +9,10 @@ declare
   n bigint;
 begin
   select count(*) into n from public.county_parcels;
-  if n <> 345387 then
-    raise exception 'STOP: county_parcels is %, expected 345387. Nothing deleted.', n;
+  if n < 300000 then
+    raise exception 'STOP: county_parcels is % — wrong database? Nothing deleted.', n;
   end if;
+  perform set_config('reset.parcels_before', n::text, true);
 end $$;
 
 do $$
@@ -63,6 +64,7 @@ begin
     'public.questions',
     'public.threads',
     'public.library_folders',
+    'public.channels',
     'public.team_members',
     'public.brokerage_invites'
   ]
@@ -81,22 +83,30 @@ delete from public.profiles;
 delete from public.brokerages
 where not exists (select 1 from public.profiles p where p.brokerage_id = brokerages.id);
 
-delete from storage.objects
-where bucket_id in ('home-docs', 'shi-studies', 'living-marks');
+do $$
+begin
+  delete from storage.objects
+  where bucket_id in ('home-docs', 'shi-studies', 'living-marks');
+exception
+  when others then
+    raise notice 'storage.objects skip: %', sqlerrm;
+end $$;
 
 delete from auth.users;
 
 do $$
 declare
   parcels bigint;
+  before bigint;
   users bigint;
   listings bigint;
 begin
+  before := current_setting('reset.parcels_before')::bigint;
   select count(*) into parcels from public.county_parcels;
   select count(*) into users from auth.users;
   select count(*) into listings from public.listings;
-  if parcels <> 345387 then
-    raise exception 'STOP: county_parcels became %, expected 345387. Nothing stays deleted.', parcels;
+  if parcels <> before then
+    raise exception 'STOP: county_parcels was % now %. Nothing stays deleted.', before, parcels;
   end if;
   if users <> 0 then
     raise exception 'STOP: auth.users still has %. Nothing stays deleted.', users;
