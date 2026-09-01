@@ -4,6 +4,7 @@ import GlobalNav from "@/components/GlobalNav";
 import Footer from "@/components/Footer";
 import { AppShell } from "@/components/motion/AppShell";
 import { Providers } from "@/components/Providers";
+import { StoryLabsBanner } from "@/components/labs/StoryLabsBanner";
 import "./globals.css";
 
 // UI chrome — Poppins. Display headlines — Fraunces (expressive, not Inter).
@@ -66,6 +67,7 @@ export default function RootLayout({
         className={`${poppins.variable} ${fraunces.variable} ${ibmPlexMono.variable} antialiased`}
       >
         <Providers>
+          <StoryLabsBanner />
           <GlobalNav />
           <AppShell>{children}</AppShell>
           <Footer />
