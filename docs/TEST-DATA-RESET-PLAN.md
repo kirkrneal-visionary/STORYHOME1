@@ -10,7 +10,7 @@ Canonical project: **storyhome-1-eqmg**.
 
 ## Counts (founder SQL 2026-09-01)
 
-Read-only inventory pasted by the founder. **Nothing was deleted.** Wipe still waits for **APPROVE RESET** and a backup.
+Read-only inventory pasted by the founder. Wipe **executed** 2026-09-01. After: 0 users, 0 listings, 345,387 parcels. See `docs/TEST-DATA-RESET-RESULT.md`.
 
 The agent cannot see production Auth or Storage from this checkout. The query below is what filled the table. Do not run deletes.
 
