@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FolderPlus, Loader2, PlaySquare, Save } from "lucide-react";
+import { useStorySoundOptional } from "@/components/sound/SoundProvider";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
 import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
@@ -96,6 +97,7 @@ export function ShiMarketFramesPanel({
   const [farmName, setFarmName] = useState("");
   const [busy, setBusy] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const sound = useStorySoundOptional();
   const active = frames.find((f) => f.localId === activeFrameId) ?? null;
   const frameCounty = active?.countySource || countySource;
   const countyFolders = folders.filter((f) => f.countySource === frameCounty);
@@ -233,6 +235,7 @@ export function ShiMarketFramesPanel({
                 void (async () => {
                   try {
                     await onSaveAsFarm(name);
+                    sound?.play("success", "study");
                     setShowFarm(false);
                     setFarmName("");
                     onOpenFarms?.();
@@ -264,7 +267,7 @@ export function ShiMarketFramesPanel({
               <button
                 type="submit"
                 disabled={busy || saving}
-                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-gold text-xs font-bold text-navy disabled:opacity-50"
+                className="story-press inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gold text-xs font-bold text-navy disabled:opacity-50"
               >
                 {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                 Create farm
@@ -299,6 +302,7 @@ export function ShiMarketFramesPanel({
                     }
                     if (!id) throw new Error("Pick or create a folder");
                     await onSaveActive(name, id);
+                    sound?.play("success", "study");
                     setFrameName("");
                     setNewFolder("");
                     setFolderId("");
@@ -352,7 +356,7 @@ export function ShiMarketFramesPanel({
               <button
                 type="submit"
                 disabled={saving || busy || (!folderId && !newFolder.trim())}
-                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl bg-navy text-xs font-bold text-gold disabled:opacity-50"
+                className="story-press inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-navy text-xs font-bold text-gold disabled:opacity-50"
               >
                 {saving || busy ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />

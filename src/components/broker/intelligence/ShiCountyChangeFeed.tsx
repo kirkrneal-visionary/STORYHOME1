@@ -149,23 +149,35 @@ export function ShiCountyChangeFeed({
               "mb-3 story-well px-2.5 py-2",
               readiness.status === "active"
                 ? "border-emerald-700/30 bg-emerald-600/10"
-                : readiness.status === "migrations_needed"
-                  ? "border-amber-700/35 bg-amber-500/10"
-                  : "",
+                : readiness.status === "quiet"
+                  ? "border-emerald-700/20 bg-emerald-600/5"
+                  : readiness.status === "source_failed" ||
+                      readiness.status === "partial_pull"
+                    ? "border-amber-700/40 bg-amber-500/10"
+                    : readiness.status === "refresh_delayed" ||
+                        readiness.status === "migrations_needed" ||
+                        readiness.status === "awaiting_next_pull"
+                      ? "border-amber-700/35 bg-amber-500/10"
+                      : "",
             )}
           >
             <p className="font-mono text-[9px] font-bold uppercase text-gold">
-              Observation setup · {readiness.statusLabel}
+              Observation · {readiness.statusLabel}
             </p>
             <p className="mt-1 text-[11px] font-semibold text-ink">
               {readiness.detail}
             </p>
             <p className="mt-1 font-mono text-[10px] text-[var(--muted)]">
-              Last county pull {pullWhen(readiness.lastPullAt)}
+              Last verified {pullWhen(readiness.lastPullAt)}
               {readiness.parcelCount != null
                 ? ` · ${readiness.parcelCount.toLocaleString("en-US")} parcels`
                 : ""}
-              {readiness.pullStale ? " · stale" : ""}
+              {readiness.ingestCapped ? " · partial pull" : ""}
+              {readiness.health === "source_failed"
+                ? " · source unavailable"
+                : readiness.pullStale
+                  ? " · refresh delayed"
+                  : ""}
               {readiness.absentColumnAvailable
                 ? " · presence marking ready"
                 : " · presence marking needs 0028"}

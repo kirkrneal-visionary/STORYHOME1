@@ -2419,6 +2419,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
                     !lidar3d && "story-map-tool-active",
                   )}
+                  data-story-sound="select"
                 >
                   2D
                 </button>
@@ -2431,6 +2432,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
                     lidar3d && "story-map-tool-active",
                   )}
+                  data-story-sound="select"
                 >
                   3D
                 </button>

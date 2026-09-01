@@ -241,6 +241,8 @@ export type ShiFarmDetail = ShiFarm & {
   diff: import("@/lib/shi/farm-diff").ShiFarmDiffSummary | null;
   baselineAt: string | null;
   baselineParcelCount: number | null;
+  /** County observation health — “since last review” is only current when verified. */
+  observationReadiness?: import("@/lib/shi/observation-readiness").ObservationReadiness | null;
 };
 
 /** SHI-5 explainable similarity match — reasons are user-facing, not a fake %. */

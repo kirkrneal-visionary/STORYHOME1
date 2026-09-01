@@ -100,7 +100,7 @@ export function LoginClient() {
       <p className="mt-3 text-sm text-[var(--muted)]">
         {supabaseConfigured
           ? "Sign in or create your account. Your data syncs across devices."
-          : "Demo mode — pick an account type. Messages unlock after login. Buyers get Story Home Suites."}
+          : "Demo mode — pick an account type. Buyers get Story Home Suites."}
       </p>
 
       {supabaseConfigured &&

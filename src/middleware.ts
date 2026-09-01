@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { normalizeSupabaseUrl } from "@/lib/supabase/url";
+import { logSecurityEvent } from "@/lib/security/log-event";
+import { originAllowed, shouldCheckOrigin } from "@/lib/security/origin";
 import {
-  classifyApiPath,
+  classifyRequestPath,
   clientIp,
   consumeRateLimit,
   rateLimitKey,
@@ -13,16 +15,41 @@ const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
 /**
- * Refreshes the Supabase auth session cookie on each request. No-ops when
- * Supabase isn't configured (demo mode), so the app keeps working locally.
+ * Session refresh + app rate classes + Story Pro page session gate.
  * Tile routes are not rate-limited here.
  */
 export async function middleware(request: NextRequest) {
-  const cost = classifyApiPath(request.nextUrl.pathname);
+  const pathname = request.nextUrl.pathname;
+  const ip = clientIp(request.headers);
+
+  if (shouldCheckOrigin(pathname, request.method) && !originAllowed(request)) {
+    logSecurityEvent({
+      kind: "origin_rejected",
+      path: pathname,
+      status: 403,
+      ip,
+    });
+    return new NextResponse(
+      JSON.stringify({ error: "Request origin is not allowed" }),
+      {
+        status: 403,
+        headers: { "content-type": "application/json", "cache-control": "no-store" },
+      },
+    );
+  }
+
+  const cost = classifyRequestPath(pathname);
   if (cost) {
-    const ip = clientIp(request.headers);
     const hit = consumeRateLimit(rateLimitKey(cost, ip), cost);
-    if (!hit.ok) return tooManyRequests(hit.retryAfterSec);
+    if (!hit.ok) {
+      logSecurityEvent({
+        kind: "rate_limited",
+        path: pathname,
+        status: 429,
+        ip,
+      });
+      return tooManyRequests(hit.retryAfterSec);
+    }
   }
 
   const response = NextResponse.next({ request });
@@ -41,8 +68,22 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Touch the session so expired tokens refresh into the response cookies.
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (pathname.startsWith("/portal") && !user) {
+    const login = request.nextUrl.clone();
+    login.pathname = "/login";
+    login.search = "";
+    login.searchParams.set("next", pathname);
+    const redirect = NextResponse.redirect(login);
+    response.cookies.getAll().forEach((c) => {
+      redirect.cookies.set(c);
+    });
+    return redirect;
+  }
+
   return response;
 }
 

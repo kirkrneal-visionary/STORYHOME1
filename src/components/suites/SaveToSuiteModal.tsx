@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { useSuites } from "@/components/SuitesContext";
+import { track } from "@/lib/analytics";
+import { reportListingActivity } from "@/lib/listing-activity";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -91,7 +93,14 @@ export function SaveToSuiteModal({
                 type="button"
                 onClick={() => {
                   if (inSuite) removeListingFromSuite(suite.id, listingId);
-                  else addListingToSuite(suite.id, listingId);
+                  else {
+                    addListingToSuite(suite.id, listingId);
+                    track("listing_saved", {
+                      listing_id: listingId,
+                      source_surface: "marketplace",
+                    });
+                    reportListingActivity(listingId, "save");
+                  }
                 }}
                 className={cn(
                   "story-press flex w-full items-center justify-between rounded-[var(--radius-md)] border px-3 py-3 text-left transition-colors",
@@ -123,6 +132,11 @@ export function SaveToSuiteModal({
             if (!newName.trim()) return;
             const suite = createSuite(newName.trim());
             addListingToSuite(suite.id, listingId);
+            track("listing_saved", {
+              listing_id: listingId,
+              source_surface: "marketplace",
+            });
+            reportListingActivity(listingId, "save");
             setNewName("");
           }}
         >

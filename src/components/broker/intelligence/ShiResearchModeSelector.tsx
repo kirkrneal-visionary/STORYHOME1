@@ -43,13 +43,15 @@ export function ShiResearchModeSelector({
               }}
               data-research-mode-tile={mode.id}
               data-research-mode-enabled={disabled ? "no" : "yes"}
+              data-story-sound={disabled ? undefined : "select"}
+              aria-disabled={disabled}
               className={cn(
                 "group relative min-h-[168px] overflow-hidden rounded-2xl border border-hairline text-left transition",
                 "bg-gradient-to-br",
                 mode.accent,
                 disabled
                   ? "cursor-not-allowed opacity-55"
-                  : "hover:border-gold/50 hover:shadow-[0_12px_36px_rgba(0,0,0,0.28)]",
+                  : "story-press hover:border-gold/50 hover:shadow-[0_12px_36px_rgba(0,0,0,0.28)]",
               )}
             >
               <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_20%,rgba(8,10,14,0.72)_100%)]" />

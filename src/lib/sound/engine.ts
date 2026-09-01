@@ -97,24 +97,28 @@ export function playStorySound(
   cue: StorySoundCue,
   opts: PlayStorySoundOptions = {},
 ): boolean {
-  const ctx = getCtx();
-  if (!ctx || ctx.state !== "running") return false;
+  try {
+    const ctx = getCtx();
+    if (!ctx || ctx.state !== "running") return false;
 
-  const nowMs = performance.now();
-  if (!opts.force && nowMs - lastCueAt < MIN_GAP_MS) return false;
-  lastCueAt = nowMs;
+    const nowMs = performance.now();
+    if (!opts.force && nowMs - lastCueAt < MIN_GAP_MS) return false;
+    lastCueAt = nowMs;
 
-  const recipe = SOUND_CUES[cue];
-  if (!recipe) return false;
+    const recipe = SOUND_CUES[cue];
+    if (!recipe) return false;
 
-  const temp = opts.temperature ?? "home";
-  const scale = SOUND_TEMP_SCALE[temp] ?? SOUND_TEMP_SCALE.home;
-  const when = ctx.currentTime + 0.001;
+    const temp = opts.temperature ?? "home";
+    const scale = SOUND_TEMP_SCALE[temp] ?? SOUND_TEMP_SCALE.home;
+    const when = ctx.currentTime + 0.001;
 
-  for (const part of recipe.parts) {
-    schedulePart(ctx, part, when, scale.gain, scale.pitch);
+    for (const part of recipe.parts) {
+      schedulePart(ctx, part, when, scale.gain, scale.pitch);
+    }
+    return true;
+  } catch {
+    return false;
   }
-  return true;
 }
 
 /** Soft preview of the sound suite (Settings). */

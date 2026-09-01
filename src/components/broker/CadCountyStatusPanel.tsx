@@ -8,7 +8,31 @@ import {
   type CadCountyStatus,
 } from "@/lib/supabase/parcels";
 import { cadCoverageHonesty } from "@/lib/shi/county-ops-scale";
+import { countyHealthFromStatus } from "@/lib/shi/observation-readiness";
 import { cn } from "@/lib/utils";
+
+function opsHealthLabel(r: CadCountyStatus) {
+  const health = countyHealthFromStatus({
+    last_error: r.lastError,
+    last_success_at: r.lastSuccessAt,
+    last_attempt_at: r.lastAttemptAt,
+    ingest_capped: r.ingestCapped,
+    refresh_interval_hours: r.refreshIntervalHours,
+  });
+  if (health === "source_failed") {
+    return { label: "Source degraded", stale: true, health };
+  }
+  if (health === "partial_pull") {
+    return { label: "Partial pull", stale: true, health };
+  }
+  if (health === "refresh_delayed") {
+    return { label: "Delayed", stale: true, health };
+  }
+  if (health === "current") {
+    return { label: "Healthy", stale: false, health };
+  }
+  return { label: "Unknown", stale: true, health };
+}
 
 /**
  * Shows the 72-hour CAD refresh posture for the launch counties so agents can
@@ -38,9 +62,7 @@ export function CadCountyStatusPanel() {
 
   if (err || rows.length === 0) return null;
 
-  const staleCount = rows.filter((r) =>
-    cadFreshnessLabel(r.lastSuccessAt, r.refreshIntervalHours).stale,
-  ).length;
+  const staleCount = rows.filter((r) => opsHealthLabel(r).stale).length;
 
   return (
     <section className="story-surface p-4">
@@ -58,8 +80,8 @@ export function CadCountyStatusPanel() {
             <p className="text-xs text-[var(--muted)]">
               {rows.length} launch counties ·{" "}
               {staleCount === 0
-                ? "all within window"
-                : `${staleCount} need refresh / file drop`}
+                ? "all verified within window"
+                : `${staleCount} delayed or source degraded`}
             </p>
           </div>
         </div>
@@ -75,6 +97,7 @@ export function CadCountyStatusPanel() {
               r.lastSuccessAt,
               r.refreshIntervalHours,
             );
+            const ops = opsHealthLabel(r);
             const coverage = cadCoverageHonesty({
               parcelCount: r.parcelCount,
               dbParcelCount: r.dbParcelCount,
@@ -100,6 +123,15 @@ export function CadCountyStatusPanel() {
                   <p className="mt-0.5 text-[11px] leading-snug text-[var(--muted)]">
                     {coverage.line}
                   </p>
+                  <p className="mt-0.5 font-mono text-[10px] text-[var(--muted)]">
+                    Last verified{" "}
+                    {r.lastSuccessAt
+                      ? new Date(r.lastSuccessAt).toLocaleString()
+                      : "never"}
+                    {r.lastError
+                      ? ` · ${r.lastError.slice(0, 120)}`
+                      : ""}
+                  </p>
                   {r.notes && (
                     <p className="mt-0.5 text-[11px] text-[var(--muted)]">
                       {r.notes}
@@ -109,12 +141,15 @@ export function CadCountyStatusPanel() {
                 <span
                   className={cn(
                     "shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase",
-                    fresh.stale
-                      ? "bg-gold/15 text-gold"
-                      : "bg-teal-soft/20 text-teal-soft",
+                    ops.health === "current"
+                      ? "bg-teal-soft/20 text-teal-soft"
+                      : ops.health === "source_failed"
+                        ? "bg-red-500/15 text-red-300"
+                        : "bg-gold/15 text-gold",
                   )}
+                  title={fresh.label}
                 >
-                  {fresh.stale ? "Stale / pending" : "Fresh"}
+                  {ops.label}
                 </span>
               </li>
             );

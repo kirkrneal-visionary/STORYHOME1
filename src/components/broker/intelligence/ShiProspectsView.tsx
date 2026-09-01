@@ -123,7 +123,7 @@ export function ShiProspectsView({
       setError(
         e instanceof Error
           ? e.message
-          : "Could not load prospects. Apply migration 0025 if this is a new environment.",
+          : "Could not load prospects. Try again.",
       );
       setProspects([]);
     } finally {
@@ -186,7 +186,8 @@ export function ShiProspectsView({
     };
   }, [selectedId]);
 
-  const empty = !loading && prospects.length === 0;
+  const empty = !loading && !error && prospects.length === 0;
+  const loadFailed = !loading && Boolean(error) && prospects.length === 0;
 
   const statusOptions = useMemo(
     () => ["", ...SHI_PROSPECT_STATUSES] as const,
@@ -293,9 +294,16 @@ export function ShiProspectsView({
       </div>
 
       {error ? (
-        <p className="story-well px-3 py-2 text-sm text-ink">
-          {error}
-        </p>
+        <div className="story-well flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+          <p className="text-sm text-ink">{error}</p>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="story-press min-h-11 rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
+          >
+            Retry
+          </button>
+        </div>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
@@ -312,6 +320,22 @@ export function ShiProspectsView({
             <div className="flex justify-center py-16 text-[var(--muted)]">
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
+          ) : loadFailed ? (
+            <div className="px-4 py-14 text-center">
+              <p className="text-sm font-semibold text-ink">
+                Prospects could not load
+              </p>
+              <p className="mx-auto mt-2 max-w-sm text-xs text-[var(--muted)]">
+                This is not an empty pipeline. Try again.
+              </p>
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                className="story-press mt-4 inline-flex h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy"
+              >
+                Retry
+              </button>
+            </div>
           ) : empty ? (
             <div className="px-4 py-14 text-center">
               <p className="text-sm font-semibold text-ink">No prospects yet</p>
@@ -327,7 +351,7 @@ export function ShiProspectsView({
                     ? onOpenResearch()
                     : router.replace("/portal/intelligence", { scroll: false })
                 }
-                className="mt-4 inline-flex h-10 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy"
+                className="story-press mt-4 inline-flex h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy"
               >
                 Go to Research
               </button>

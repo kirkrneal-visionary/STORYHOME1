@@ -9,14 +9,20 @@ export type SellerListing = DemoListing & {
   daysOnMarket: number;
 };
 
+export type SellerMetric = {
+  /** Null means this metric is not measured yet. Zero means zero captured events. */
+  value: number | null;
+  measured: boolean;
+};
+
 export type ListingAnalytics = {
-  views: number;
-  clicks: number;
-  saves: number;
-  repeatViewers: number;
-  avgTimeViewedSeconds: number;
-  viewsThisWeek: number;
-  savesThisWeek: number;
+  views: SellerMetric;
+  clicks: SellerMetric;
+  saves: SellerMetric;
+  repeatViewers: SellerMetric;
+  avgTimeViewedSeconds: SellerMetric;
+  viewsThisWeek: SellerMetric;
+  savesThisWeek: SellerMetric;
 };
 
 export type SellerPortal = {
@@ -32,14 +38,23 @@ export const TERMINAL_STATUSES = new Set([
   "Expired",
 ]);
 
+function measured(n: number): SellerMetric {
+  return { value: n, measured: true };
+}
+
+function unknownMetric(): SellerMetric {
+  return { value: null, measured: false };
+}
+
+/** Views/saves are captured. Other seller figures stay unknown until wired. */
 export const ZERO_ANALYTICS: ListingAnalytics = {
-  views: 0,
-  clicks: 0,
-  saves: 0,
-  repeatViewers: 0,
-  avgTimeViewedSeconds: 0,
-  viewsThisWeek: 0,
-  savesThisWeek: 0,
+  views: measured(0),
+  clicks: unknownMetric(),
+  saves: measured(0),
+  repeatViewers: unknownMetric(),
+  avgTimeViewedSeconds: unknownMetric(),
+  viewsThisWeek: measured(0),
+  savesThisWeek: measured(0),
 };
 
 /**
@@ -61,16 +76,21 @@ export function mapSellerPortal(payload: any): SellerPortal | null {
   const a = payload?.analytics;
   const analytics: ListingAnalytics = a
     ? {
-        views: Number(a.views ?? 0),
-        clicks: Number(a.clicks ?? 0),
-        saves: Number(a.saves ?? 0),
-        repeatViewers: Number(a.repeat_viewers ?? 0),
-        avgTimeViewedSeconds: Number(a.avg_time_viewed_seconds ?? 0),
-        viewsThisWeek: Number(a.views_this_week ?? 0),
-        savesThisWeek: Number(a.saves_this_week ?? 0),
+        views: measured(Number(a.views ?? 0)),
+        clicks: unknownMetric(),
+        saves: measured(Number(a.saves ?? 0)),
+        repeatViewers: unknownMetric(),
+        avgTimeViewedSeconds: unknownMetric(),
+        viewsThisWeek: measured(Number(a.views_this_week ?? 0)),
+        savesThisWeek: measured(Number(a.saves_this_week ?? 0)),
       }
     : { ...ZERO_ANALYTICS };
   return { listing, analytics };
+}
+
+export function formatSellerMetric(metric: SellerMetric, format?: (n: number) => string) {
+  if (!metric.measured || metric.value == null) return "—";
+  return format ? format(metric.value) : metric.value.toLocaleString();
 }
 
 export function formatAvgTime(seconds: number) {

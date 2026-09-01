@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Banknote,
@@ -68,6 +68,7 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/broker/ui";
+import { track } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type Tab =
@@ -92,6 +93,7 @@ const DOC_TYPES = ["tax", "insurance", "warranty", "receipt", "deed", "other"];
 
 export function MyHomeView() {
   const { user } = useAuth();
+  const openedRef = useRef(false);
   const [homes, setHomes] = useState<Home[]>([]);
   const [activeId, setActiveId] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -124,6 +126,12 @@ export function MyHomeView() {
   useEffect(() => {
     void loadHomes();
   }, [loadHomes]);
+
+  useEffect(() => {
+    if (openedRef.current) return;
+    openedRef.current = true;
+    track("my_home_opened", { network: "my_home" });
+  }, []);
 
   const loadHomeData = useCallback(async () => {
     if (!activeId) {
@@ -169,9 +177,15 @@ export function MyHomeView() {
         <div className="mx-auto max-w-xl">
           <h1 className="font-serif text-3xl font-bold text-ink">My Home</h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Your private home file — like a CARFAX for your house. Log
-            renovations, track expenses, store documents, and choose exactly
-            which realtor (if any) can ever see it.
+            Your owned-home file — renovations, expenses, and documents. This
+            is not saved marketplace listings.
+          </p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Browsing homes you like? Save them to{" "}
+            <Link href="/saved" className="font-semibold text-gold underline">
+              Suites
+            </Link>
+            .
           </p>
           <div className="mt-6 rounded-2xl border border-hairline bg-[var(--surface)] p-6">
             <h2 className="font-serif text-xl font-bold text-ink">
@@ -199,7 +213,10 @@ export function MyHomeView() {
           <div>
             <h1 className="font-serif text-3xl font-bold text-ink">My Home</h1>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              Private homeowner vault — you control who sees it.
+              Private owned-home vault — not your saved marketplace listings.{" "}
+              <Link href="/saved" className="font-semibold text-gold underline">
+                Open Suites
+              </Link>
             </p>
           </div>
           <div className="flex items-center gap-2">

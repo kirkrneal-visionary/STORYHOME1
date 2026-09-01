@@ -9,12 +9,19 @@ export const ANALYTICS_EVENTS = [
   "marketplace_viewed",
   "listing_opened",
   "listing_inquire_submitted",
+  "listing_saved",
   "auth_login_succeeded",
   "portal_tab_opened",
   "archie_opened",
   "archie_module_selected",
   "archie_parcel_opened",
   "archie_study_reopened",
+  "research_mode_changed",
+  "prospect_created",
+  "farm_created",
+  "study_saved",
+  "my_home_opened",
+  "seller_portal_opened",
   "living_mark_play_started",
   "living_mark_play_completed",
   "living_mark_play_dropped",
@@ -50,6 +57,27 @@ export type PortalTabProp =
   | "community"
   | "other";
 
+export type ResearchModeProp =
+  | "general"
+  | "multifamily"
+  | "land_development"
+  | "gas_station"
+  | "strip_center"
+  | "medical_office"
+  | "energy_rei";
+
+export type AnalyticsSourceSurface =
+  | "marketplace"
+  | "listing"
+  | "research"
+  | "corridors"
+  | "discover"
+  | "farms"
+  | "vault"
+  | "my_home"
+  | "seller"
+  | "unknown";
+
 export type LivingMarkAudienceProp = "guest" | "account" | "own";
 
 export type AgentWorldCtaProp = "listings" | "inventory" | "find_agents";
@@ -59,12 +87,26 @@ export type AnalyticsPropsMap = {
   marketplace_viewed: { network: "marketplace" };
   listing_opened: { listing_id: string };
   listing_inquire_submitted: { listing_id: string };
+  listing_saved: { listing_id: string; source_surface: AnalyticsSourceSurface };
   auth_login_succeeded: { account_kind: AccountKindProp };
   portal_tab_opened: { tab: PortalTabProp };
   archie_opened: { network: "archie" };
   archie_module_selected: { module: ArchieModuleProp };
   archie_parcel_opened: { county_fips: string };
   archie_study_reopened: { has_folder: boolean };
+  research_mode_changed: { research_mode: ResearchModeProp };
+  prospect_created: {
+    county_fips?: string;
+    source_surface: AnalyticsSourceSurface;
+    created: boolean;
+  };
+  farm_created: {
+    county_fips?: string;
+    source_surface: AnalyticsSourceSurface;
+  };
+  study_saved: { source_surface: AnalyticsSourceSurface };
+  my_home_opened: { network: "my_home" };
+  seller_portal_opened: { network: "seller" };
   living_mark_play_started: {
     agent_id: string;
     audience: LivingMarkAudienceProp;

@@ -60,6 +60,12 @@ export function consumeRateLimit(
 }
 
 export function classifyApiPath(pathname: string): RateCost | null {
+  return classifyRequestPath(pathname);
+}
+
+/** API + seller-portal page paths. Tiles stay unclassified (no 429). */
+export function classifyRequestPath(pathname: string): RateCost | null {
+  if (pathname.startsWith("/seller/portal/")) return "medium";
   if (!pathname.startsWith("/api/")) return null;
   // Expensive lidar analytics live under /api/map/ — classify before the tile exemption.
   if (
@@ -97,7 +103,9 @@ export function classifyApiPath(pathname: string): RateCost | null {
     pathname.startsWith("/api/shi/") ||
     pathname.startsWith("/api/cad/overlay") ||
     pathname.startsWith("/api/verify-trec") ||
-    pathname.startsWith("/api/analytics")
+    pathname.startsWith("/api/analytics") ||
+    pathname.startsWith("/api/listing-activity") ||
+    pathname.startsWith("/api/seller/")
   ) {
     return "medium";
   }

@@ -20,7 +20,7 @@ export async function GET() {
         error:
           e instanceof Error
             ? e.message
-            : "Could not load farms (apply migration 0026?)",
+            : "Could not load farms.",
         farms: [],
       },
       { status: 500 },
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         error:
           e instanceof Error
             ? e.message
-            : "Could not create farm (apply migration 0026?)",
+            : "Could not create farm.",
       },
       { status: 400 },
     );

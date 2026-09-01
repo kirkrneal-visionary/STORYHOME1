@@ -8,6 +8,7 @@ import {
   type ShiFarmParcelSnap,
 } from "@/lib/shi/farm-diff";
 import type { ShiAreaAnalysis, ShiFarm, ShiFarmDetail } from "@/lib/shi/types";
+import { getObservationReadiness } from "@/lib/shi/observation-readiness";
 import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 
 type FarmRow = {
@@ -163,6 +164,13 @@ export async function createFarm(
   const farm = toFarm(data as FarmRow);
   await writeBaseline(supabase, agentId, farm.id, analysis);
 
+  let observationReadiness = null;
+  try {
+    observationReadiness = await getObservationReadiness(supabase, countySource);
+  } catch {
+    observationReadiness = null;
+  }
+
   return {
     ...farm,
     lastReviewedAt: farm.lastReviewedAt ?? new Date().toISOString(),
@@ -170,6 +178,7 @@ export async function createFarm(
     diff: null,
     baselineAt: farm.lastReviewedAt,
     baselineParcelCount: analysis.parcelCount,
+    observationReadiness,
   };
 }
 
@@ -237,12 +246,23 @@ export async function getFarmDetail(
     });
   }
 
+  let observationReadiness = null;
+  try {
+    observationReadiness = await getObservationReadiness(
+      supabase,
+      farm.countySource,
+    );
+  } catch {
+    observationReadiness = null;
+  }
+
   return {
     ...farm,
     live,
     diff,
     baselineAt: base?.captured_at ?? farm.lastReviewedAt,
     baselineParcelCount: base?.parcel_count ?? null,
+    observationReadiness,
   };
 }
 
@@ -264,6 +284,16 @@ export async function markFarmReviewed(
   const refreshed = await getFarm(supabase, agentId, farmId);
   if (!refreshed) throw new Error("Farm not found after review");
 
+  let observationReadiness = null;
+  try {
+    observationReadiness = await getObservationReadiness(
+      supabase,
+      refreshed.countySource,
+    );
+  } catch {
+    observationReadiness = null;
+  }
+
   // Freshly reviewed — no pending "since last review" deltas.
   return {
     ...refreshed,
@@ -271,5 +301,6 @@ export async function markFarmReviewed(
     diff: null,
     baselineAt: refreshed.lastReviewedAt,
     baselineParcelCount: live.parcelCount,
+    observationReadiness,
   };
 }

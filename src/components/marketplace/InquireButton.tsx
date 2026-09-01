@@ -29,7 +29,7 @@ export function InquireButton({
     return (
       <Link
         href={`/login?next=/marketplace/${listingId}`}
-        className="flex h-11 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]"
+        className="story-press flex h-11 items-center justify-center rounded-lg bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]"
       >
         Log in to contact agent
       </Link>
@@ -89,7 +89,6 @@ export function InquireButton({
             }
           }}
           className="story-press h-10 flex-1 rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy disabled:opacity-60"
-          data-story-sound="tap"
         >
           {busy ? "Sending…" : "Send message"}
         </button>

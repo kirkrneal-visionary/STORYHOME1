@@ -44,7 +44,6 @@ export function ListingCard({
   const { isListingInAnySuite } = useSuites();
   const saved = isListingInAnySuite(listing.id);
   const [suiteOpen, setSuiteOpen] = useState(false);
-  const [following, setFollowing] = useState(false);
 
   return (
     <article
@@ -156,18 +155,6 @@ export function ListingCard({
             </div>
           </div>
         </Link>
-        <button
-          type="button"
-          onClick={() => setFollowing((v) => !v)}
-          className={cn(
-            "story-press h-7 rounded-md border px-3 text-xs font-semibold transition-colors",
-            following
-              ? "border-teal bg-teal text-paper"
-              : "border-gold/50 text-gold hover:bg-gold hover:text-navy",
-          )}
-        >
-          {following ? "Following" : "Follow"}
-        </button>
       </div>
 
       <div className="flex items-center gap-4 font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase">

@@ -1,0 +1,156 @@
+# Production reset plan
+
+**DO NOT DELETE anything until the founder replies APPROVE RESET and a backup exists.**
+
+This is the plan. Nothing in this file is an instruction to wipe production.
+
+Canonical project: **storyhome-1-eqmg**.  
+Related: `docs/TEST-DATA-RESET-PLAN.md` (same gate).
+
+Outside-created accounts are **test accounts** unless the founder names one to keep.
+
+---
+
+## Inventory (founder SQL 2026-09-01)
+
+Read-only counts pasted by the founder. Founder approved the wipe on 2026-09-01 and said to delete the 1 listing. Keep-list: none.
+
+**Backup exists:** Scheduled backup **01 Sep 2026 08:01:18 (+0000)** on STORYHOME production (`main`).
+
+**Wipe executed 2026-09-01.** Auth users 0. Listings 0. `county_parcels` still 345,387. See `docs/TEST-DATA-RESET-RESULT.md`.
+
+| Item | Count | Source |
+|---|---|---|
+| Auth users | **23** | Founder SQL |
+| Profiles | **23** | Founder SQL |
+| Consumer profiles | **10** | Founder SQL |
+| Story Pro (agent) | **10** | Founder SQL |
+| Brokers | **3** | Founder SQL |
+| Prospects | **4** | Founder SQL |
+| Farms | **6** | Founder SQL |
+| Studies | **3** | Founder SQL |
+| Frames | **3** | Founder SQL |
+| My Home | **7** | Founder SQL |
+| CRM buyers | **0** | Founder SQL |
+| CRM seller clients | **0** | Founder SQL |
+| Messages | **0** | Founder SQL |
+| Referrals | **0** | Founder SQL |
+| Suites | **0** | Founder SQL |
+| Follows | **0** | Founder SQL |
+| Inquiries | **1** | Founder SQL |
+| Listing analytics events | **0** | Founder SQL |
+| Product analytics events | **1,904** | Founder SQL |
+| Storage objects | **UNKNOWN** | Storage UI |
+| Listings TEST | **UNKNOWN** | Founder classifies |
+| Listings REAL / intended | **UNKNOWN** | Founder classifies |
+| Listings UNKNOWN | **1** (all listings until classified) | Do not auto-wipe |
+| `county_parcels` (must preserve) | **345,387** | Founder SQL |
+
+### Platform truth to preserve (eqmg 2026-09-01)
+
+SQL `county_parcels` = **345,387**. Live `/api/cad/status` county sum = **345,385** (2 rows not in the seven-county status totals). After a wipe, SQL must still be 345,387.
+
+| County | DB parcels | Last verified |
+|---|---|---|
+| Polk | 57,587 | 2026-09-01 |
+| Angelina | 54,251 | 2026-09-01 |
+| Trinity | 24,593 | 2026-09-01 |
+| Tyler | 23,508 | 2026-09-01 |
+| San Jacinto | 35,161 | 2026-09-01 |
+| Liberty | 114,678 | 2026-08-29 |
+| Walker | 35,607 | 2026-08-30 |
+
+Also preserve: CAD observation history, MVT, traffic/AADT, TxDOT, flood, PUCT, wetlands, TIGER, LiDAR/DEM, imagery cache, source registries, evidence definitions, migrations, boost catalog.
+
+---
+
+## Read-only inventory SQL (fill UNKNOWN)
+
+Paste in the Supabase SQL editor. Do **not** run deletes.
+
+```sql
+select 'auth.users' as item, count(*)::bigint as n from auth.users
+union all select 'profiles', count(*) from public.profiles
+union all select 'profiles_consumer', count(*) from public.profiles where account_kind = 'consumer'
+union all select 'profiles_agent', count(*) from public.profiles where account_kind = 'agent'
+union all select 'profiles_broker', count(*) from public.profiles where account_kind = 'broker'
+union all select 'listings', count(*) from public.listings
+union all select 'shi_prospects', count(*) from public.shi_prospects
+union all select 'shi_farms', count(*) from public.shi_farms
+union all select 'shi_study_folders', count(*) from public.shi_study_folders
+union all select 'shi_market_frames', count(*) from public.shi_market_frames
+union all select 'homes', count(*) from public.homes
+union all select 'messages', count(*) from public.messages
+union all select 'referrals', count(*) from public.referrals
+union all select 'buyers', count(*) from public.buyers
+union all select 'seller_clients', count(*) from public.seller_clients
+union all select 'suites', count(*) from public.suites
+union all select 'follows', count(*) from public.follows
+union all select 'inquiries', count(*) from public.inquiries
+union all select 'listing_analytics_events', count(*) from public.listing_analytics_events
+union all select 'product_analytics_events', count(*) from public.product_analytics_events
+union all select 'county_parcels', count(*) from public.county_parcels;
+```
+
+Listing classification (do not delete UNKNOWN):
+
+```sql
+select id, address_serif, city, status, agent_id, created_at
+from public.listings
+order by created_at;
+```
+
+---
+
+## Proposed for deletion (approved and executed 2026-09-01)
+
+All 23 Auth users and owned rows. Founder named **no keep accounts**. Founder said **delete the 1 listing**.
+
+- profiles, suites, follows, My Home + `home-docs/{user_id}`
+- Prospects, notes, Farms, baselines, study folders/frames, map memory
+- CRM buyers, seller_clients, activities
+- Community content created by those users
+- Messages, referrals, inquiries
+- Seller analytics events for **TEST** listings only
+- `shi-studies` / `living-marks` objects under test user folders
+- Product analytics (optional — noisy test traffic)
+
+Deleting `auth.users` does **not** automatically clean every table. Children first.
+
+---
+
+## Must not be deleted
+
+CAD parcels/geometry, county normalization, MVT, ingest/observation history, traffic, TxDOT, flood, PUCT, wetlands, TIGER, LiDAR/DEM, imagery infrastructure, system config, evidence definitions, migrations, algorithms.
+
+**UNKNOWN listings require review. Never silently destroy them.**
+
+---
+
+## Order (only after backup + APPROVE RESET)
+
+1. Record backup timestamp — **01 Sep 2026 08:01:18 (+0000)**  
+2. Freeze signup if founder wants (temporary, not a business policy)  
+3. Delete dependent user rows  
+4. Delete test storage objects  
+5. Delete profiles  
+6. Delete Auth users (admin API)  
+7. Invalidate sessions  
+8. Confirm `county_parcels` counts unchanged vs the table above  
+9. Write `TEST-DATA-RESET-RESULT.md`  
+10. Smoke: marketplace, login, Research, empty states  
+
+## Rollback
+
+Restore the Supabase backup from step 1. Git cannot roll back the database.
+
+## After reset
+
+Empty production must look intentional: 0 consumers, 0 Pro users, 0 Prospects/Farms/Studies/CRM. Do not seed fake people.
+
+Signup gate after reset is a founder decision.
+
+## Human gate
+
+STOP. Present counts + keep-list + this plan.  
+Do not execute until the founder explicitly approves.

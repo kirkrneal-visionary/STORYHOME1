@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useStorySoundOptional } from "@/components/sound/SoundProvider";
+import { track } from "@/lib/analytics";
 import {
   Loader2,
   Route,
@@ -153,6 +155,7 @@ export function ShiCorridorsView({
   onOpenResearch?: () => void;
 }) {
   const router = useRouter();
+  const sound = useStorySoundOptional();
   const [county, setCounty] = useState<CorridorCounty>(() =>
     defaultCorridorCounty(),
   );
@@ -539,6 +542,7 @@ export function ShiCorridorsView({
             },
           },
         });
+        track("study_saved", { source_surface: "corridors" });
         setWorkflowNote(`Saved “${label}” to Study Vault (Corridors).`);
       } catch (e) {
         setWorkflowNote(
@@ -569,6 +573,13 @@ export function ShiCorridorsView({
           centroidLat: pick.lat,
           centroidLng: pick.lng,
         });
+        if (created) {
+          track("prospect_created", {
+            county_fips: pick.countyFips ?? county.fips,
+            source_surface: "corridors",
+            created: true,
+          });
+        }
         writeLastArchieModule("prospects");
         setWorkflowNote(
           created
@@ -603,6 +614,10 @@ export function ShiCorridorsView({
           mapCenterLat: pick.lat,
           mapCenterLng: pick.lng,
           mapZoom: 15,
+        });
+        track("farm_created", {
+          county_fips: county.fips,
+          source_surface: "corridors",
         });
         writeLastArchieModule("farms");
         setWorkflowNote("Farm created — opening…");
@@ -646,6 +661,8 @@ export function ShiCorridorsView({
         vaultFrameId: frame.id,
       });
       setSavedStudies(listCorridorStudies(county.fips));
+      track("study_saved", { source_surface: "corridors" });
+      sound?.play("success", "study");
       setSaveNote(
         `Saved “${study.name}” to Study Vault (Corridors folder) and your corridor studies.`,
       );
@@ -671,7 +688,7 @@ export function ShiCorridorsView({
     } finally {
       setSaving(false);
     }
-  }, [analysis, analysisBoundary, county]);
+  }, [analysis, analysisBoundary, county, sound]);
 
   const openReport = useCallback(() => {
     if (!analysis) return;
@@ -1996,7 +2013,7 @@ function ParcelSitePanel({
           type="button"
           onClick={onStudyLand}
           data-corridor-parcel-research
-          className="inline-flex h-9 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
+          className="story-press inline-flex h-11 items-center rounded-lg bg-gold px-3 text-xs font-bold text-navy"
         >
           Research
         </button>
@@ -2005,7 +2022,7 @@ function ParcelSitePanel({
           onClick={onProspect}
           disabled={workflowBusy}
           data-corridor-parcel-prospect
-          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
+          className="story-press inline-flex h-11 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
         >
           Prospects
         </button>
@@ -2014,7 +2031,7 @@ function ParcelSitePanel({
           onClick={onFarm}
           disabled={workflowBusy}
           data-corridor-parcel-farm
-          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
+          className="story-press inline-flex h-11 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
         >
           Farms
         </button>
@@ -2023,7 +2040,7 @@ function ParcelSitePanel({
           onClick={onSave}
           disabled={workflowBusy}
           data-corridor-parcel-save
-          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
+          className="story-press inline-flex h-11 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink disabled:opacity-40"
         >
           Save
         </button>
@@ -2031,7 +2048,7 @@ function ParcelSitePanel({
           type="button"
           onClick={() => onReport(intel)}
           data-corridor-parcel-report
-          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
+          className="story-press inline-flex h-11 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
         >
           Report
         </button>

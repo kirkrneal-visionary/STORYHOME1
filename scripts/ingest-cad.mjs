@@ -602,12 +602,52 @@ async function fetchPriorParcelState(sb, source, propIds) {
   return map;
 }
 
+function changeEventKey(e) {
+  return `${e.source}::${e.prop_id}::${e.field}::${e.observed_at}`;
+}
+
+/**
+ * Insert observation events. Same source+prop+field+observed_at is skipped
+ * so a replayed/retried ingest cannot manufacture duplicate change events.
+ */
 async function insertChangeEvents(sb, events) {
   if (!events.length) return;
+  const unique = [];
+  const seen = new Set();
+  for (const e of events) {
+    const k = changeEventKey(e);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    unique.push(e);
+  }
   const batch = 200;
-  for (let i = 0; i < events.length; i += batch) {
-    const chunk = events.slice(i, i + batch);
-    const { error } = await sb.from("county_parcel_change_events").insert(chunk);
+  for (let i = 0; i < unique.length; i += batch) {
+    const chunk = unique.slice(i, i + batch);
+    const source = chunk[0]?.source;
+    const observedAt = chunk[0]?.observed_at;
+    let existing = new Set();
+    if (source && observedAt) {
+      const propIds = [...new Set(chunk.map((e) => e.prop_id))];
+      const { data, error: selErr } = await sb
+        .from("county_parcel_change_events")
+        .select("source, prop_id, field, observed_at")
+        .eq("source", source)
+        .eq("observed_at", observedAt)
+        .in("prop_id", propIds);
+      if (selErr) {
+        if (/county_parcel_change_events|does not exist/i.test(selErr.message || "")) {
+          console.warn(
+            "[live] county_parcel_change_events missing — apply migration 0027",
+          );
+          return;
+        }
+        throw selErr;
+      }
+      existing = new Set((data ?? []).map(changeEventKey));
+    }
+    const fresh = chunk.filter((e) => !existing.has(changeEventKey(e)));
+    if (!fresh.length) continue;
+    const { error } = await sb.from("county_parcel_change_events").insert(fresh);
     if (error) {
       if (/county_parcel_change_events|does not exist/i.test(error.message || "")) {
         console.warn(
@@ -942,6 +982,30 @@ async function countDbParcels(source) {
   return count ?? 0;
 }
 
+function isUnderFetched(uniqueCount, priorDbCount) {
+  if (priorDbCount == null || priorDbCount < 500) return false;
+  if (uniqueCount == null) return false;
+  return uniqueCount < priorDbCount * 0.85;
+}
+
+async function fetchPriorStatus(source) {
+  const sb = await getSupabase();
+  if (!sb) return { dbParcelCount: null, lastSuccessAt: null };
+  const { data } = await sb
+    .from("cad_county_status")
+    .select("db_parcel_count, parcel_count, last_success_at")
+    .eq("source", source)
+    .maybeSingle();
+  const dbN =
+    data?.db_parcel_count == null ? null : Number(data.db_parcel_count);
+  const parcelN =
+    data?.parcel_count == null ? null : Number(data.parcel_count);
+  return {
+    dbParcelCount: dbN != null ? dbN : parcelN,
+    lastSuccessAt: data?.last_success_at ?? null,
+  };
+}
+
 async function recordStatus(
   src,
   {
@@ -952,6 +1016,7 @@ async function recordStatus(
     dbParcelCount,
     absenceCapHit,
     ingestCapped,
+    underFetched,
   },
 ) {
   const sb = await getSupabase();
@@ -964,18 +1029,28 @@ async function recordStatus(
     (r) => `${r.source}::${r.prop_id}`,
   );
   const unique = uniqueCount != null ? uniqueCount : deduped.length;
+  const proven = Boolean(ok) && !ingestCapped && !underFetched;
   const payload = {
     source: src.source,
     county_fips: src.countyFips,
     county_name: src.countyName,
     ingest_mode: src.mode,
     last_attempt_at: now,
-    last_error: ok ? null : String(error || "unknown"),
+    last_error: proven
+      ? null
+      : String(
+          error ||
+            (ingestCapped
+              ? "Ingest capped — last verified dataset remains in use"
+              : underFetched
+                ? "Under-fetched vs last verified count — last verified dataset remains in use"
+                : "unknown"),
+        ),
     source_url: src.serviceUrl || src.downloadUrl || null,
     notes: src.notes || null,
     updated_at: now,
   };
-  if (ok) {
+  if (proven) {
     payload.last_success_at = now;
     // Post-dedupe unique prop_ids — never raw ArcGIS feature length.
     payload.parcel_count = unique;
@@ -990,7 +1065,13 @@ async function recordStatus(
       dbParcelCount != null ? dbParcelCount : await countDbParcels(src.source);
     if (dbN != null) payload.db_parcel_count = dbN;
     payload.absence_cap_hit = Boolean(absenceCapHit);
-    payload.ingest_capped = Boolean(ingestCapped);
+    payload.ingest_capped = false;
+  } else {
+    // Failed / partial / under-fetched: never promote last_success_at.
+    payload.ingest_capped = Boolean(ingestCapped || underFetched);
+    console.error(
+      `[cad-ops] ${src.source} not promoted · proven=${proven} capped=${Boolean(ingestCapped)} under=${Boolean(underFetched)} error=${payload.last_error}`,
+    );
   }
   const { error: e } = await sb
     .from("cad_county_status")
@@ -1140,23 +1221,39 @@ async function main() {
       );
     }
 
+    const prior = await fetchPriorStatus(src.source);
+    const uniquePreview = dedupeByKey(
+      rows
+        .map((r) => ({ ...r, prop_id: normalizePropId(r.prop_id) }))
+        .filter((r) => r.prop_id),
+      (r) => `${r.source}::${r.prop_id}`,
+    ).length;
+    const underFetched = isUnderFetched(uniquePreview, prior.dbParcelCount);
+    if (underFetched) {
+      console.warn(
+        `[${src.source}] UNDER-FETCHED unique ${uniquePreview} vs last verified ${prior.dbParcelCount} — skip absences, do not promote last-known-good`,
+      );
+    }
+
     let liveStats = {
-      uniqueCount: null,
+      uniqueCount: uniquePreview,
       dbParcelCount: null,
       absenceCapHit: false,
     };
     if (!args.noLive) {
       try {
-        // Cap / targeted pulls must not mark absence — would false-flag the county.
+        // Cap / targeted / under-fetched pulls must not mark absence —
+        // would false-flag DISAPPEARED on a partial source observation.
         const markAbsent =
           Boolean(args.all) &&
           !ingestCapped &&
+          !underFetched &&
           !args.limit &&
           !args.where &&
           !args.propIds;
         const live = await upsertLive(rows, { markAbsent });
         liveStats = {
-          uniqueCount: live.uniqueCount,
+          uniqueCount: live.uniqueCount ?? uniquePreview,
           dbParcelCount: live.dbParcelCount,
           absenceCapHit: live.absenceCapHit,
         };
@@ -1166,12 +1263,13 @@ async function main() {
             : `[${src.source}] no service-role creds; skipped live upsert`,
         );
       } catch (e) {
-        console.error(`[${src.source}] live upsert failed: ${e.message}`);
+        console.error(`[cad-ops] ${src.source} live upsert failed: ${e.message}`);
         await recordStatus(src, {
           ok: false,
           error: e.message,
           rows,
           ingestCapped,
+          underFetched,
         });
         process.exitCode = 1;
         return;
@@ -1185,9 +1283,10 @@ async function main() {
       dbParcelCount: liveStats.dbParcelCount,
       absenceCapHit: liveStats.absenceCapHit,
       ingestCapped,
+      underFetched,
     });
   } catch (e) {
-    console.error(`[${src.source}] FAILED: ${e.message}`);
+    console.error(`[cad-ops] ${src.source} FAILED: ${e.message}`);
     await recordStatus(src, {
       ok: false,
       error: e.message,

@@ -46,7 +46,8 @@ export function CommunityView() {
         <div>
           <h2 className="font-serif text-2xl font-bold text-ink">Community</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            {brokerageLabel} · signed in as {member.name}
+            {brokerageLabel} · signed in as {member.name}. Empty rooms mean no
+            posts yet — not a public Story Home network.
           </p>
         </div>
         <span
@@ -68,7 +69,7 @@ export function CommunityView() {
             type="button"
             onClick={() => setSection(id)}
             className={cn(
-              "-mb-px inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors",
+              "story-press -mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors",
               section === id
                 ? "border-[var(--accent)] text-ink"
                 : "border-transparent text-[var(--muted)] hover:text-ink",

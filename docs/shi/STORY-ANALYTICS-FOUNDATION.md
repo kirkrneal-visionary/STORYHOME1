@@ -23,6 +23,15 @@ See [`STORY-ANALYTICS-DESTINATION.md`](./STORY-ANALYTICS-DESTINATION.md).
 - `archie_module_selected`
 - `archie_parcel_opened` (county FIPS only)
 - `archie_study_reopened`
+- `listing_saved`
+- `research_mode_changed`
+- `prospect_created`
+- `farm_created`
+- `study_saved`
+- `my_home_opened`
+- `seller_portal_opened`
+
+Canonical catalog: [`../STORY-HOME-ANALYTICS.md`](../STORY-HOME-ANALYTICS.md).
 
 ## Props policy
 Allowed: enums, listing UUID, county FIPS, booleans.  

@@ -12,11 +12,11 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] text-center md:px-6">
         <h1 className="font-serif text-3xl font-bold text-ink">Profile</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          Log in to manage your Story Home account, suites, and messages.
+          Log in to manage your Story Home account and suites.
         </p>
         <Link
           href="/login?next=/profile"
-          className="mt-8 inline-flex h-12 items-center rounded-xl bg-gold px-6 text-sm font-bold text-navy"
+          className="story-press mt-8 inline-flex h-12 items-center rounded-xl bg-gold px-6 text-sm font-bold text-navy"
         >
           Log in
         </Link>
@@ -43,10 +43,10 @@ export default function ProfilePage() {
 
         <p className="mt-6 max-w-xl text-sm leading-relaxed text-[var(--muted)]">
           {user.kind === "consumer"
-            ? "Build Story Home Suites, save homes into albums, and message agents when you’re ready."
+            ? "Build Story Home Suites and save homes into albums."
             : user.kind === "seller"
-              ? `Seller access via passcode ${user.sellerListingCode}. Open your listing portal for analytics and boosts.`
-              : "Manage your Story Pro workspace, public profile, listings, and referrals."}
+              ? `Seller access via passcode ${user.sellerListingCode}. Open your listing portal.`
+              : "Manage your Story Pro workspace, public profile, and listings."}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -54,7 +54,7 @@ export default function ProfilePage() {
             <>
               <Link
                 href="/home"
-                className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+                className="story-press rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
               >
                 My Home
               </Link>
@@ -70,7 +70,7 @@ export default function ProfilePage() {
             <>
               <Link
                 href="/portal"
-                className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+                className="story-press rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
               >
                 Story Pro
               </Link>
@@ -91,7 +91,7 @@ export default function ProfilePage() {
           {user.kind === "seller" && user.sellerListingCode && (
             <Link
               href={`/seller/portal/${user.sellerListingCode.toLowerCase()}`}
-              className="rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+              className="story-press rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
             >
               Seller portal
             </Link>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={logout}
-            className="rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-[var(--muted)]"
+            className="story-press rounded-lg border border-hairline px-4 py-2.5 text-sm font-semibold text-[var(--muted)]"
           >
             Log out
           </button>

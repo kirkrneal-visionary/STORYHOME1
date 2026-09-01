@@ -15,8 +15,6 @@ import {
   type ProRole,
   parseStoredUser,
 } from "@/lib/auth";
-import { TERMINAL_STATUSES } from "@/lib/seller-portal";
-import { fetchSellerPortalByCode } from "@/lib/supabase/listings";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
 import {
@@ -214,25 +212,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginSellerWithCode = useCallback(
     async (code: string): Promise<AuthResult> => {
-      const portal = await fetchSellerPortalByCode(code);
-      if (!portal) {
-        return { ok: false, error: "Invalid seller access code." };
-      }
-      if (TERMINAL_STATUSES.has(portal.listing.status)) {
+      try {
+        const res = await fetch("/api/seller/access", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          accessCode?: string;
+          addressLabel?: string;
+        };
+        if (!res.ok || !data.ok || !data.accessCode) {
+          return {
+            ok: false,
+            error: "Unable to open this portal. Check the code and try again.",
+          };
+        }
+        loginAs({
+          id: `seller-${data.accessCode}`,
+          name: `Seller · ${data.addressLabel || "listing"}`,
+          email: "seller@storyhome.app",
+          initials: "SE",
+          kind: "seller",
+          sellerListingCode: data.accessCode,
+        });
+        return { ok: true };
+      } catch {
         return {
           ok: false,
-          error: "This listing access code is no longer active.",
+          error: "Unable to open this portal. Check the code and try again.",
         };
       }
-      loginAs({
-        id: `seller-${portal.listing.accessCode}`,
-        name: `Seller · ${portal.listing.addressSerif}`,
-        email: "seller@storyhome.app",
-        initials: "SE",
-        kind: "seller",
-        sellerListingCode: portal.listing.accessCode,
-      });
-      return { ok: true };
     },
     [loginAs],
   );
@@ -244,7 +255,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
       });
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        return {
+          ok: false,
+          error: "Unable to sign in. Check your email and password.",
+        };
+      }
       return { ok: true };
     },
     [supabase],
@@ -282,7 +298,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         },
       });
-      if (error) return { ok: false, error: error.message };
+      if (error) {
+        return {
+          ok: false,
+          error: "Unable to create this account. Try again or sign in.",
+        };
+      }
       return { ok: true };
     },
     [supabase],

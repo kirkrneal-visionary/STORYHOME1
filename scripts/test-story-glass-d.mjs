@@ -42,7 +42,9 @@ assert.match(network, /--story-bottom-clearance/);
 assert.match(network, /story-glass|story-surface|story-well/);
 assert.doesNotMatch(network, /pt-\[96px\]/);
 
-const agents = read("src/app/agents/[id]/page.tsx");
+const agentsPage = read("src/app/agents/[id]/page.tsx");
+assert.match(agentsPage, /AgentWorldView/);
+const agents = read("src/components/agents/AgentWorldView.tsx");
 assert.match(agents, /--story-header-h|--story-safe-top/);
 assert.match(agents, /env-1|story-well/);
 assert.doesNotMatch(agents, /bg-navy md:h-52|pt-\[72px\]/);
