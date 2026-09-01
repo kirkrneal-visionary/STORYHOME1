@@ -13,7 +13,7 @@ Outside-created accounts are **test accounts** unless the founder names one to k
 
 ## Inventory (founder SQL 2026-09-01)
 
-Read-only counts pasted by the founder. **Nothing was deleted.** Wipe still waits for **APPROVE RESET** and a backup.
+Read-only counts pasted by the founder. Founder approved the wipe on 2026-09-01 and said to delete the 1 listing. Keep-list: none. **Wipe is not executed until a backup exists and the founder pastes `docs/PRODUCTION-RESET-WIPE.sql`.**
 
 | Item | Count | Source |
 |---|---|---|
@@ -98,9 +98,9 @@ order by created_at;
 
 ---
 
-## Proposed for deletion (after approval)
+## Proposed for deletion (approved 2026-09-01 — not executed yet)
 
-All Auth users and owned rows **except** accounts the founder names to keep:
+All 23 Auth users and owned rows. Founder named **no keep accounts**. Founder said **delete the 1 listing**.
 
 - profiles, suites, follows, My Home + `home-docs/{user_id}`
 - Prospects, notes, Farms, baselines, study folders/frames, map memory
