@@ -1,0 +1,22 @@
+# Fail the PR if Phase 1–3 or Story Labs isolation tests fail.
+# Does not deploy. Does not touch production data.
+name: Release gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:release-gate
+      - run: npm exec -- tsc --noEmit
