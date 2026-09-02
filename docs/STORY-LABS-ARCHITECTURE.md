@@ -70,6 +70,8 @@ Privileged production secrets must not be inherited by a Story Labs custom envir
 Implemented in `src/lib/labs/env.ts` and `src/middleware.ts`:
 
 - Staging + production Supabase host → refuse
+- Staging + any host that is not the founder Story Labs project (`jhgkhnojsuxpihtaugqp`) → refuse
+- Production + Story Labs host → refuse
 - Staging + `sk_live_` / `rk_live_` → refuse
 - Development + production host + service-role → refuse
 

@@ -13,6 +13,8 @@ import {
   parseEmailList,
   labsRoleForEmail,
   PRODUCTION_SUPABASE_HOSTS,
+  STORY_LABS_SUPABASE_HOSTS,
+  isStoryLabsSupabaseHost,
   resolveStoryHomeEnv,
   supabaseHostFromUrl,
 } from "../src/lib/labs/env.ts";
@@ -31,8 +33,12 @@ assert.equal(
 );
 
 const prodHost = PRODUCTION_SUPABASE_HOSTS[0];
+const labsHost = STORY_LABS_SUPABASE_HOSTS[0];
 assert.equal(supabaseHostFromUrl(`https://${prodHost}/rest/v1/`), prodHost);
 assert.equal(isProductionSupabaseHost(prodHost), true);
+assert.equal(isProductionSupabaseHost(labsHost), false);
+assert.equal(isStoryLabsSupabaseHost(labsHost), true);
+assert.notEqual(prodHost, labsHost);
 assert.equal(isProductionSupabaseHost("abcd.supabase.co"), false);
 assert.equal(looksLikeStripeLiveSecret("sk_live_abc"), true);
 assert.equal(looksLikeStripeLiveSecret("sk_test_abc"), false);
@@ -53,14 +59,14 @@ assert.equal(
 assert.equal(
   isolationFailures({
     storyHomeEnv: "staging",
-    supabaseUrl: "https://labs-xxxx.supabase.co",
+    supabaseUrl: `https://${labsHost}`,
   }).length,
   0,
 );
 assert.equal(
   isStoryLabs({
     storyHomeEnv: "staging",
-    supabaseUrl: "https://labs-xxxx.supabase.co",
+    supabaseUrl: `https://${labsHost}`,
   }),
   true,
 );
@@ -69,6 +75,22 @@ assert.equal(
   isolationFailures({
     storyHomeEnv: "staging",
     supabaseUrl: "https://labs-xxxx.supabase.co",
+  })[0]?.code,
+  "staging_uses_unknown_db",
+);
+
+assert.equal(
+  isolationFailures({
+    storyHomeEnv: "production",
+    supabaseUrl: `https://${labsHost}`,
+  })[0]?.code,
+  "production_uses_labs_db",
+);
+
+assert.equal(
+  isolationFailures({
+    storyHomeEnv: "staging",
+    supabaseUrl: `https://${labsHost}`,
     stripeSecret: "sk_live_nope",
   })[0]?.code,
   "staging_uses_stripe_live",
@@ -168,6 +190,8 @@ assert.match(layout, /StoryLabsBanner/);
 const refresh = read("scripts/refresh-cad.mjs");
 assert.match(refresh, /STORY_LABS_ISOLATION/);
 assert.match(refresh, /ksvllgzsnzyahqsjuove/);
+assert.match(refresh, /jhgkhnojsuxpihtaugqp/);
+assert.match(refresh, /CAD refresh is production only/);
 
 const envEx = read(".env.example");
 assert.match(envEx, /STORY_HOME_ENV/);
@@ -176,6 +200,7 @@ assert.doesNotMatch(envEx, /NEXT_PUBLIC_STORY_LABS_FOUNDER/);
 assert.doesNotMatch(envEx, /NEXT_PUBLIC_BILLING/);
 assert.doesNotMatch(envEx, /NEXT_PUBLIC_STRIPE_SECRET/);
 
+assert.match(read("src/lib/labs/env.ts"), /jhgkhnojsuxpihtaugqp\.supabase\.co/);
 assert.match(read("docs/STORY-LABS-ARCHITECTURE.md"), /Story Labs/);
 assert.match(read("docs/STORY-LABS-SECURITY.md"), /ACTION REQUIRED/);
 assert.match(read("docs/RELEASE-PROCEDURE.md"), /Founder approval/);

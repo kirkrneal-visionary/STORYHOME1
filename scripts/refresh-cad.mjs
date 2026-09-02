@@ -29,22 +29,23 @@ import { LAUNCH_COUNTY_KEYS, getSource } from "./cad-sources.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 const PRODUCTION_HOST = "ksvllgzsnzyahqsjuove.supabase.co";
+const LABS_HOST = "jhgkhnojsuxpihtaugqp.supabase.co";
 const envName = String(process.env.STORY_HOME_ENV || process.env.APP_ENV || "")
   .trim()
   .toLowerCase();
+let host = "";
+try {
+  host = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").hostname;
+} catch {
+  host = "";
+}
 if (envName === "staging" || envName === "labs" || envName === "story-labs") {
-  let host = "";
-  try {
-    host = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").hostname;
-  } catch {
-    host = "";
-  }
-  if (host === PRODUCTION_HOST) {
-    console.error(
-      "STORY_LABS_ISOLATION: CAD refresh refused — Story Labs is pointed at production.",
-    );
-    process.exit(1);
-  }
+  console.error("STORY_LABS_ISOLATION: CAD refresh is production only. Refusing Story Labs.");
+  process.exit(1);
+}
+if (host === LABS_HOST) {
+  console.error("STORY_LABS_ISOLATION: CAD refresh refused — this is the Story Labs database.");
+  process.exit(1);
 }
 
 /** Mirror of src/lib/shi/county-ops-scale.ts refreshRequiresForce (armor-synced). */

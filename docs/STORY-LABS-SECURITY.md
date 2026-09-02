@@ -47,7 +47,7 @@ Preview URLs on eqmg today can still reach the production database. That is the 
 
 `/internal` and `/api/internal` return **404** unless `isStoryLabs()` is true.
 
-Staging with a production database returns **503** for every request.
+Staging with the production database, or any database that is not the founder Story Labs project, returns **503** for every request. Production pointed at Story Labs also fails closed.
 
 Phase 3 origin checks and rate classes stay in place.
 

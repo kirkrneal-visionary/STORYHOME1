@@ -96,7 +96,7 @@ Documented (eqmg Instant Rollback + Supabase backup). Unchanged.
 
 ## W. CROSS-ENVIRONMENT TEST RESULTS
 
-**Not run.** There is no isolated Labs project yet. After the founder creates it, Cursor will insert/update in Labs and re-check production counts.
+**Not run.** The founder created an empty Story Labs project. Schema, keys, and a Labs Vercel environment are still needed before a write-in-Labs / check-production-counts test.
 
 ## X. PRODUCTION SECRET LEAK TEST
 
@@ -116,7 +116,12 @@ Must pass `npm run test:phase-3`.
 
 ## AB. MANUAL ACTIONS REQUIRED
 
-Founder created a separate Supabase project named **Story Labs** (MICRO, AWS us-east-1) next to production (NANO, us-east-2). MICRO vs NANO is only machine size. It does not change production.
+Founder created a separate Supabase project named **Story Labs**
+(`jhgkhnojsuxpihtaugqp.supabase.co`, MICRO, AWS us-east-1).
+Production remains `ksvllgzsnzyahqsjuove.supabase.co`.
+MICRO vs NANO is only machine size. It does not change production.
+The orange **PRODUCTION** label on the Story Labs home page is that empty
+project’s own default branch — not the live Story Home website.
 
 Still needed: Labs project API keys on a Vercel Story Labs environment, Cloudflare Access, GitHub `main` protection.
 

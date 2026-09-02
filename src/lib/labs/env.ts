@@ -20,6 +20,11 @@ export const PRODUCTION_SUPABASE_HOSTS = [
   "ksvllgzsnzyahqsjuove.supabase.co",
 ] as const;
 
+/** Founder-created Story Labs project (empty, isolated). Not production. */
+export const STORY_LABS_SUPABASE_HOSTS = [
+  "jhgkhnojsuxpihtaugqp.supabase.co",
+] as const;
+
 export const PRODUCTION_VERCEL_HOSTS = [
   "storyhome-1-eqmg.vercel.app",
 ] as const;
@@ -81,20 +86,30 @@ export function isProductionSupabaseHost(host: string | null | undefined): boole
   return (PRODUCTION_SUPABASE_HOSTS as readonly string[]).includes(host);
 }
 
+export function isStoryLabsSupabaseHost(host: string | null | undefined): boolean {
+  if (!host) return false;
+  return (STORY_LABS_SUPABASE_HOSTS as readonly string[]).includes(host);
+}
+
 export function looksLikeStripeLiveSecret(value: string | null | undefined): boolean {
   const v = (value ?? "").trim();
   return /^(sk_live_|rk_live_)/.test(v);
 }
 
 export type IsolationFailure = {
-  code: "staging_uses_production_db" | "dev_uses_production_db" | "staging_uses_stripe_live";
+  code:
+    | "staging_uses_production_db"
+    | "staging_uses_unknown_db"
+    | "production_uses_labs_db"
+    | "dev_uses_production_db"
+    | "staging_uses_stripe_live";
   message: string;
 };
 
 /**
  * Fail-closed isolation. Preview (Vercel PR) is not Story Labs — it may still
- * share production credentials until the founder creates an isolated project.
- * Explicit STORY_HOME_ENV=staging MUST NOT share the production database.
+ * share production credentials until Vercel is scoped to the Labs project.
+ * Explicit STORY_HOME_ENV=staging must use the founder Story Labs host only.
  */
 export function isolationFailures(snap: EnvSnapshot = processEnvSnapshot()): IsolationFailure[] {
   const env = resolveStoryHomeEnv(snap);
@@ -102,11 +117,27 @@ export function isolationFailures(snap: EnvSnapshot = processEnvSnapshot()): Iso
   const allow = (snap.allowProdDb ?? "").trim() === "1";
   const failures: IsolationFailure[] = [];
 
-  if (env === "staging" && isProductionSupabaseHost(host) && !allow) {
+  if (env === "staging" && host && !allow) {
+    if (isProductionSupabaseHost(host)) {
+      failures.push({
+        code: "staging_uses_production_db",
+        message:
+          "Story Labs is pointed at the production database. Refusing to start. Set a staging Supabase project.",
+      });
+    } else if (!isStoryLabsSupabaseHost(host)) {
+      failures.push({
+        code: "staging_uses_unknown_db",
+        message:
+          "Story Labs is pointed at an unknown database. Refusing to start. Use the founder-created Story Labs project.",
+      });
+    }
+  }
+
+  if (env === "production" && isStoryLabsSupabaseHost(host)) {
     failures.push({
-      code: "staging_uses_production_db",
+      code: "production_uses_labs_db",
       message:
-        "Story Labs is pointed at the production database. Refusing to start. Set a staging Supabase project.",
+        "Production is pointed at the Story Labs database. Refusing to start. Use the live project.",
     });
   }
 
