@@ -116,7 +116,9 @@ Must pass `npm run test:phase-3`.
 
 ## AB. MANUAL ACTIONS REQUIRED
 
-See the next founder message / `docs/STORY-LABS-SECURITY.md`. Nothing here is claimed done.
+Founder created a separate Supabase project named **Story Labs** (MICRO, AWS us-east-1) next to production (NANO, us-east-2). MICRO vs NANO is only machine size. It does not change production.
+
+Still needed: Labs project API keys on a Vercel Story Labs environment, Cloudflare Access, GitHub `main` protection.
 
 ## AC. REMAINING RISKS
 
