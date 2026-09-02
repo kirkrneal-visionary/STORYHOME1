@@ -96,7 +96,7 @@ Documented (eqmg Instant Rollback + Supabase backup). Unchanged.
 
 ## W. CROSS-ENVIRONMENT TEST RESULTS
 
-**Not run.** The founder created an empty Story Labs project. Schema, keys, and a Labs Vercel environment are still needed before a write-in-Labs / check-production-counts test.
+Schema paste ran on Story Labs (`jhgkhnojsuxpihtaugqp`) on 2026-09-02: `story labs tables ready`, **64** public tables. Cross-env write test still needs Labs keys and a Labs Vercel environment.
 
 ## X. PRODUCTION SECRET LEAK TEST
 
@@ -120,8 +120,9 @@ Founder created a separate Supabase project named **Story Labs**
 (`jhgkhnojsuxpihtaugqp.supabase.co`, MICRO, AWS us-east-1).
 Production remains `ksvllgzsnzyahqsjuove.supabase.co`.
 MICRO vs NANO is only machine size. It does not change production.
-The orange **PRODUCTION** label on the Story Labs home page is that empty
+The orange **PRODUCTION** label on the Story Labs home page is that
 project’s own default branch — not the live Story Home website.
+Founder applied the empty-project schema paste. Result: 64 public tables.
 
 Still needed: Labs project API keys on a Vercel Story Labs environment, Cloudflare Access, GitHub `main` protection.
 
