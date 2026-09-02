@@ -35,7 +35,9 @@ If Access is not configured, do not treat Labs as private.
 
 Official: [Deployment Protection](https://vercel.com/docs/deployment-protection)
 
-Recommended for Story Labs: **Standard Protection** + **Vercel Authentication** on a **Custom Environment** named `story-labs`, not on the public production domain.
+Recommended when Pro is available: **Standard Protection** + **Vercel Authentication** on a **Custom Environment** named `story-labs`, not on the public production domain.
+
+eqmg is Hobby today. Custom Environment asked **Upgrade to Pro**. Founder canceled. Use Preview variables on one git branch only until Pro exists. Do not import Production variables.
 
 Do not enable “All Deployments” on eqmg — that would lock the live site.
 

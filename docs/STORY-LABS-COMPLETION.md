@@ -124,7 +124,10 @@ The orange **PRODUCTION** label on the Story Labs home page is that
 project’s own default branch — not the live Story Home website.
 Founder applied the empty-project schema paste. Result: 64 public tables.
 
-Still needed: Labs project API keys on a Vercel Story Labs environment, Cloudflare Access, GitHub `main` protection.
+Vercel Custom Environment needs Pro. Founder canceled **Upgrade to Pro**.
+Hobby path: Preview env vars on one git branch only. Do not import Production.
+
+Still needed: those Labs-only keys, Cloudflare Access, GitHub `main` protection.
 
 ## AC. REMAINING RISKS
 
