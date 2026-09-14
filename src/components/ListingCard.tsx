@@ -78,16 +78,16 @@ export function ListingCard({
               sizes="(max-width: 768px) 100vw, 480px"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center font-mono text-xs text-paper/50">
+            <div className="type-meta flex h-full w-full items-center justify-center text-paper/50">
               No photo
             </div>
           )}
-          <span className="story-glass absolute bottom-3 left-3 rounded-[var(--radius-sm)] px-2.5 py-1 font-mono text-sm font-semibold text-paper">
+          <span className="story-glass type-control type-nums absolute bottom-3 left-3 rounded-[var(--radius-sm)] px-2.5 py-1 font-semibold text-paper">
             {formatUsd(listing.price)}
           </span>
           <span
             className={cn(
-              "absolute top-3 left-3 max-w-[70%] truncate rounded px-2 py-1 font-mono text-[10px] font-bold tracking-wide uppercase shadow-md",
+              "type-caption absolute top-3 left-3 max-w-[70%] truncate rounded px-2 py-1 font-semibold shadow-md",
               statusTone(listing.status),
             )}
           >
@@ -110,16 +110,16 @@ export function ListingCard({
         </div>
 
         <div className={cn("mt-3", dense ? "px-3 pb-3" : "mt-4")}>
-          <h3 className="font-serif text-xl font-bold text-ink">
+          <h3 className="type-card-title text-ink">
             {listing.addressSerif}
           </h3>
-          <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
+          <p className="type-meta mt-1 text-[var(--muted)]">
             {listing.city} · {listing.countyName.replace(" County", "")} ·{" "}
             {listing.propertyType}
           </p>
-          <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
-            {listing.beds} Beds · {listing.baths} Baths ·{" "}
-            {listing.sqft.toLocaleString()} Sqft · {listing.lotSize}
+          <p className="type-meta type-nums mt-1 text-[var(--muted)]">
+            {listing.beds} beds · {listing.baths} baths ·{" "}
+            {listing.sqft.toLocaleString()} sqft · {listing.lotSize}
             {listing.sqft > 0 && (
               <> · ${Math.round(listing.price / listing.sqft)}/sqft</>
             )}
@@ -151,15 +151,15 @@ export function ListingCard({
             </h4>
             <div className="-mt-0.5 flex items-center gap-1 text-xs font-medium text-[var(--muted)]">
               <Star className="h-3 w-3 fill-gold text-gold" />
-              <span className="font-mono">{agent.starRating.toFixed(2)}</span>
+              <span className="type-nums">{agent.starRating.toFixed(2)}</span>
             </div>
           </div>
         </Link>
       </div>
 
-      <div className="flex items-center gap-4 font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase">
-        <span>♡ {listing.likeCount} Likes</span>
-        <span>❑ {listing.saveCount + (saved ? 1 : 0)} Saves</span>
+      <div className="type-meta flex items-center gap-4 text-[var(--muted)]">
+        <span>♡ {listing.likeCount} likes</span>
+        <span>❑ {listing.saveCount + (saved ? 1 : 0)} saves</span>
         <span className="inline-flex items-center gap-1">
           <MessageSquare className="h-3 w-3" /> {listing.commentCount} Comments
         </span>

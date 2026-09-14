@@ -44,7 +44,7 @@ export function CommunityView() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-ink">Community</h2>
+          <h2 className="type-section text-ink">Community</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             {brokerageLabel} · signed in as {member.name}. Empty rooms mean no
             posts yet — not a public Story Home network.

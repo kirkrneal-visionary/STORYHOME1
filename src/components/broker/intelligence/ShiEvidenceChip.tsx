@@ -24,7 +24,7 @@ export function ShiEvidenceChip({
     <span className={cn("inline-flex flex-wrap items-center gap-1.5", className)}>
       <span
         data-evidence-tier={tier}
-        className="rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wide text-navy bg-gold/25"
+        className="type-evidence rounded px-1.5 py-0.5 text-navy bg-gold/25"
         title={EVIDENCE_TIER_COPY[tier]}
       >
         {tier}
@@ -32,7 +32,7 @@ export function ShiEvidenceChip({
       {asOf ? (
         <span
           data-evidence-asof={asOf}
-          className="font-mono text-[9px] text-[var(--muted)]"
+          className="type-caption text-[var(--muted)]"
         >
           as-of {asOf}
         </span>
@@ -51,7 +51,7 @@ export function ShiEvidenceSource({
   return (
     <p
       data-evidence-source={source}
-      className="mt-1 font-mono text-[9px] text-[var(--muted)]"
+      className="type-caption mt-1 text-[var(--muted)]"
     >
       {source}
       {extra ? ` · ${extra}` : ""}
@@ -74,7 +74,7 @@ export function ShiEvidenceHeader({
       className={cn("flex flex-wrap items-center gap-1.5", className)}
       data-evidence-header
     >
-      <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+      <p className="type-meta text-[var(--muted)]">
         {label}
       </p>
       <ShiEvidenceChip tier={chip.tier} asOf={chip.asOf} />

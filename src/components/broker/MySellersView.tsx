@@ -50,7 +50,7 @@ export function MySellersView() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-ink">My Sellers</h2>
+          <h2 className="type-section text-ink">My Sellers</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">{sellers.length} seller{sellers.length === 1 ? "" : "s"} in your book.</p>
         </div>
         <button type="button" onClick={() => setAdding((v) => !v)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-[var(--accent-contrast)]">
@@ -118,7 +118,7 @@ function SellerCard({ seller, agentId, onChanged }: { seller: SellerClient; agen
     <article className="story-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-serif text-lg font-bold text-ink">{seller.name}</p>
+          <p className="truncate type-card-title text-ink">{seller.name}</p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-[var(--muted)]">
             {seller.listPrice ? <span className="font-bold text-ink">{formatUsd(seller.listPrice)}</span> : null}
             {seller.source && <span className="rounded-full border border-hairline px-2 py-0.5">{seller.source}</span>}

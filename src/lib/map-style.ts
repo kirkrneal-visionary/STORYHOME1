@@ -385,6 +385,8 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:satellite": "owned-naip60",
       "storyhome:serve": "l7-3",
     },
+    // Geographic labels use the OpenFreeMap Noto Sans glyph atlas.
+    // Do not substitute CSS --font-ui names here or labels disappear.
     glyphs:
       liberty.glyphs ??
       "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",

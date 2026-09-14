@@ -126,7 +126,7 @@ export function SellerPortalView({
             <p className="font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
               Your listing · {listing.countyName}
             </p>
-            <h1 className="mt-2 font-serif text-3xl font-bold text-ink md:text-4xl">
+            <h1 className="mt-2 type-page-title text-ink md:text-4xl">
               {listing.addressSerif}
             </h1>
             <p className="mt-2 text-sm text-[var(--muted)]">
@@ -157,7 +157,7 @@ export function SellerPortalView({
         <section className="mt-10">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
-              <h2 className="font-serif text-2xl font-bold text-ink">
+              <h2 className="type-section text-ink">
                 Listing activity preview
               </h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
@@ -224,7 +224,7 @@ export function SellerPortalView({
         <section className="mt-12">
           <div className="mb-2 flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-gold" />
-            <h2 className="font-serif text-2xl font-bold text-ink">
+            <h2 className="type-section text-ink">
               Boost your listing
             </h2>
           </div>
@@ -265,7 +265,7 @@ export function SellerPortalView({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-serif text-xl font-bold text-ink">
+                      <p className="type-card-title text-ink">
                         {tier.name}
                       </p>
                       <p className="mt-1 font-mono text-sm font-semibold text-ink">
@@ -340,7 +340,7 @@ export function SellerPortalView({
       {confirmOpen && selected && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-4 sm:items-center">
           <div className="w-full max-w-md rounded-2xl border border-hairline bg-navy-soft p-6 text-paper shadow-xl">
-            <h3 className="font-serif text-2xl font-bold text-paper">
+            <h3 className="type-section text-paper">
               Confirm boost
             </h3>
             <p className="mt-2 text-sm text-paper/70">
@@ -400,7 +400,7 @@ function Stat({
           {label}
         </span>
       </div>
-      <p className="mt-3 font-serif text-3xl font-bold text-ink">{value}</p>
+      <p className="mt-3 type-page-title text-ink">{value}</p>
       <p className="mt-1 text-xs text-[var(--muted)]">{hint}</p>
     </div>
   );

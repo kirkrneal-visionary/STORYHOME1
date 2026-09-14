@@ -45,7 +45,7 @@ export function SuiteAlbumCard({ suite, onShare }: SuiteAlbumCardProps) {
             </div>
           ) : (
             <div className="flex h-full items-end p-5">
-              <p className="font-serif text-3xl font-bold text-paper/90">
+              <p className="type-page-title text-paper/90">
                 {suite.name.slice(0, 1)}
               </p>
             </div>
@@ -64,7 +64,7 @@ export function SuiteAlbumCard({ suite, onShare }: SuiteAlbumCardProps) {
         <div className="min-w-0">
           <Link
             href={`/saved/${suite.id}`}
-            className="truncate font-serif text-lg font-bold text-ink hover:text-gold"
+            className="truncate type-card-title text-ink hover:text-gold"
           >
             {suite.name}
           </Link>

@@ -50,7 +50,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
 
       {/* Roster */}
       <section>
-        <h3 className="mb-3 flex items-center gap-2 font-serif text-xl font-bold text-ink">
+        <h3 className="mb-3 flex items-center gap-2 type-card-title text-ink">
           <UserCog className="h-5 w-5" /> Roster &amp; team authorization
         </h3>
         <ul className="divide-y divide-hairline overflow-hidden story-surface">
@@ -101,7 +101,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
 
       {/* Teams */}
       <section>
-        <h3 className="mb-3 flex items-center gap-2 font-serif text-xl font-bold text-ink">
+        <h3 className="mb-3 flex items-center gap-2 type-card-title text-ink">
           <Users className="h-5 w-5" /> Teams
         </h3>
 
@@ -114,7 +114,7 @@ export function CommunityAdmin({ member }: { member: Member }) {
                 className="story-surface p-4"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-serif text-lg font-bold text-ink">
+                  <p className="type-card-title text-ink">
                     {t.name}
                   </p>
                   <span

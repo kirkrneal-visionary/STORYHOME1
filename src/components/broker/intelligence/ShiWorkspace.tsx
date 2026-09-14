@@ -212,7 +212,7 @@ export function ShiWorkspace() {
           <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-gold uppercase">
             {SHI_PRODUCT.fullName}
           </p>
-          <h2 className="font-serif text-2xl font-bold text-ink">{copy.title}</h2>
+          <h2 className="type-section text-ink">{copy.title}</h2>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
             {copy.blurb}
           </p>
