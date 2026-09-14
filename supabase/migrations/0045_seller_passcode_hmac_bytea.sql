@@ -6,7 +6,7 @@ returns jsonb
 language plpgsql
 volatile
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_norm text := upper(trim(coalesce(p_code, '')));
@@ -78,7 +78,7 @@ create or replace function public.ensure_seller_access_code(p_listing uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -135,7 +135,7 @@ create or replace function public.rotate_seller_access_code(p_listing uuid)
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   v_uid uuid := auth.uid();

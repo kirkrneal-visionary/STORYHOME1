@@ -177,6 +177,10 @@ const mig45 = read("supabase/migrations/0045_seller_passcode_hmac_bytea.sql");
 assert.match(mig45, /convert_to\(v_norm, 'UTF8'\)/);
 assert.doesNotMatch(mig45, /delete from public\.(profiles|listings|county_parcels)/i);
 
+const mig46 = read("supabase/migrations/0046_seller_passcode_extensions_path.sql");
+assert.match(mig46, /public, extensions/);
+assert.doesNotMatch(mig46, /delete from public\.(profiles|listings|county_parcels)/i);
+
 assert.match(read("docs/PHASE-3-BASELINE.md"), /storyhome-1-eqmg/);
 assert.match(read("docs/PHASE-3-ATTACK-SURFACE.md"), /seller_portal_by_code/);
 assert.match(read("docs/PRODUCTION-RESET-PLAN.md"), /DO NOT DELETE/);
