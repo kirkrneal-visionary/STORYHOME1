@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { portalPageAccess } from "@/lib/account/portal-gate";
 import { promoteSignedInPro } from "@/lib/account/promote-pro";
 
 export const dynamic = "force-dynamic";
@@ -15,10 +16,11 @@ export default async function PortalLayout({
   children: ReactNode;
 }) {
   const result = await promoteSignedInPro();
-  if (!result.ok) {
+  const access = portalPageAccess(result);
+  if (access === "login") {
     redirect("/login?next=/portal");
   }
-  if (result.accountKind !== "agent" && result.accountKind !== "broker") {
+  if (access === "refuse") {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] text-center">
         <h1 className="type-page-title text-ink">For realtors</h1>
