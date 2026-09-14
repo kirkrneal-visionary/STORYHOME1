@@ -169,6 +169,10 @@ assert.match(mig43, /seller_access_code_hash/);
 assert.match(mig43, /rotate_seller_access_code/);
 assert.doesNotMatch(mig43, /delete from public\.(profiles|listings|county_parcels)/i);
 
+const mig44 = read("supabase/migrations/0044_seller_passcode_hmac_cast.sql");
+assert.match(mig44, /sha256'::text/);
+assert.doesNotMatch(mig44, /delete from public\.(profiles|listings|county_parcels)/i);
+
 assert.match(read("docs/PHASE-3-BASELINE.md"), /storyhome-1-eqmg/);
 assert.match(read("docs/PHASE-3-ATTACK-SURFACE.md"), /seller_portal_by_code/);
 assert.match(read("docs/PRODUCTION-RESET-PLAN.md"), /DO NOT DELETE/);
