@@ -3,7 +3,14 @@
  * Same response for miss / throttle — do not enumerate codes.
  */
 
+import { createHash } from "node:crypto";
+
 type Bucket = { fails: number; resetAt: number };
+
+/** Store a hash of the IP — never the raw address. */
+export function sellerIpKey(ip: string): string {
+  return createHash("sha256").update(`seller-ip|${ip}`).digest("hex");
+}
 
 const WINDOW_MS = 15 * 60_000;
 const MAX_FAILS = 8;

@@ -10,7 +10,7 @@ import {
 import type { DemoListing } from "@/lib/demo-data";
 import type { ListingStatus } from "@/lib/listing-filters";
 import type { ProListing } from "@/lib/pro-listings";
-import { mapSellerPortal, type SellerPortal } from "@/lib/seller-portal";
+import type { SellerPortal } from "@/lib/seller-portal";
 
 function client() {
   const supabase = getBrowserSupabase();
@@ -39,29 +39,21 @@ export async function fetchListingsByIds(ids: string[]): Promise<DemoListing[]> 
   return (data ?? []).map(rowToListing);
 }
 
-/** Find a live listing by its seller-portal access code (RPC — not a public column filter). */
-export async function fetchListingByAccessCode(
-  code: string,
-): Promise<DemoListing | null> {
-  const portal = await fetchSellerPortalByCode(code);
-  if (!portal?.listing?.id) return null;
-  const rows = await fetchListingsByIds([portal.listing.id]);
-  return rows[0] ?? null;
-}
-
 /**
- * Resolve a seller portal (listing + real analytics) by access code. Uses the
- * code-gated SECURITY DEFINER RPC so an unauthenticated seller who holds the
- * code can read analytics that RLS otherwise reserves for the listing's agent.
+ * Browser clients must not call seller_portal_by_code. Use
+ * /api/seller/access (attempt-limited, service_role).
  */
 export async function fetchSellerPortalByCode(
-  code: string,
+  _code: string,
 ): Promise<SellerPortal | null> {
-  const { data, error } = await client().rpc("seller_portal_by_code", {
-    p_code: code,
-  });
-  if (error) return null;
-  return mapSellerPortal(data);
+  return null;
+}
+
+/** Find a live listing by its seller-portal access code. Server route only. */
+export async function fetchListingByAccessCode(
+  _code: string,
+): Promise<DemoListing | null> {
+  return null;
 }
 
 export type TierAvailability = {
@@ -98,18 +90,50 @@ export async function fetchCountyBoostAvailability(
   return out;
 }
 
+export type SellerCodeIssue =
+  | { ok: true; created: true; code: string }
+  | { ok: true; created: false; code: null }
+  | { ok: false };
+
+function parseSellerCodeIssue(data: unknown): SellerCodeIssue {
+  if (typeof data === "string" && data.trim()) {
+    return { ok: true, created: true, code: data.trim().toUpperCase() };
+  }
+  if (!data || typeof data !== "object") return { ok: false };
+  const row = data as { ok?: unknown; created?: unknown; code?: unknown };
+  if (row.ok === false) return { ok: false };
+  const code =
+    typeof row.code === "string" && row.code.trim()
+      ? row.code.trim().toUpperCase()
+      : null;
+  if (code) return { ok: true, created: true, code };
+  return { ok: true, created: false, code: null };
+}
+
 /**
- * Generate (once) and return the unique seller access code for a listing the
- * current agent/broker owns. Idempotent — returns the existing code if set.
+ * Create a seller listing code (once). After 0043 the plaintext is not stored,
+ * so a later call returns created: false — rotate to issue a new code.
  */
 export async function ensureSellerAccessCode(
   listingId: string,
-): Promise<string | null> {
+): Promise<SellerCodeIssue> {
   const { data, error } = await client().rpc("ensure_seller_access_code", {
     p_listing: listingId,
   });
   if (error) throw error;
-  return (data as string | null) ?? null;
+  return parseSellerCodeIssue(data);
+}
+
+/** Replace the seller listing code. The previous link stops working. */
+export async function rotateSellerAccessCode(
+  listingId: string,
+): Promise<string | null> {
+  const { data, error } = await client().rpc("rotate_seller_access_code", {
+    p_listing: listingId,
+  });
+  if (error) throw error;
+  const code = typeof data === "string" ? data.trim().toUpperCase() : "";
+  return code || null;
 }
 
 /** Listings owned by a specific agent. */

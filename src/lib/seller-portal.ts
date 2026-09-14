@@ -62,7 +62,10 @@ export const ZERO_ANALYTICS: ListingAnalytics = {
  * app's SellerListing + ListingAnalytics. Pure — safe on server and client.
  * Returns null when the code matched no listing.
  */
-export function mapSellerPortal(payload: any): SellerPortal | null {
+export function mapSellerPortal(
+  payload: any,
+  submittedCode = "",
+): SellerPortal | null {
   const l = payload?.listing;
   if (!l) return null;
   const base = rowToListing(l);
@@ -70,7 +73,8 @@ export function mapSellerPortal(payload: any): SellerPortal | null {
     ...base,
     countyFips: l.county_fips ?? "",
     state: l.state ?? "TX",
-    accessCode: l.seller_access_code ?? "",
+    // Never copy a stored secret. Use the code the caller already typed.
+    accessCode: submittedCode,
     daysOnMarket: Number(l.days_on_market ?? 0),
   };
   const a = payload?.analytics;

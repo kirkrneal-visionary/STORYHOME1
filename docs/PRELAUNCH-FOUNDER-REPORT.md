@@ -22,8 +22,8 @@ Canonical live project: **storyhome-1-eqmg**. Ignore the other Vercel check.
 ## B. HIGH PRIORITY ISSUES
 
 1. Signup still trusts `account_kind` in user metadata (inspector/appraiser/lender can become `agent` without TREC). Lock stops *later* escalation, not the first insert.  
-2. Seller passcodes are still stored in plaintext on `listings`. 0039’s column-only revoke did not hide them (table-level GRANT still wins). 0040 re-grants public columns only. Hashing + attempt limits still needed.  
-3. `seller_portal_by_code` is callable by logged-out users — brute-force risk.  
+2. Seller passcodes: 0040 hides the column from clients. 0043 hashes at rest and adds durable attempt lockouts. **Not live until 0043 is pasted in Supabase.**  
+3. `seller_portal_by_code` is service_role only after 0042. Browser clients must use `/api/seller/access`.  
 4. `clerk_deed_transfers` / `clerk_county_coverage` had no RLS — any login could read the deed index. 0039 enables RLS.  
 5. Dev login emails/passwords exist in client code (now hidden in production builds). Never set `NEXT_PUBLIC_ENABLE_DEV_LOGIN` on eqmg.  
 6. Unauthenticated tile / lidar / CAD overlay proxies can be crawled for cost. Tiles are not naively rate-limited (that would break the map). WAF LOG + cache next.  
@@ -202,10 +202,10 @@ Restore the Supabase backup taken immediately before the wipe. Git cannot roll b
 - [x] Payment boundary documented (no provider built)  
 - [x] 100k plan written (not executed)  
 - [x] Privilege lock applied in Supabase (account_kind + clerk/boost RLS)  
-- [ ] Seller passcode column hidden (0040 — table-level grant still exposes it)  
+- [x] Seller passcode column hidden (0040)  
 - [ ] WAF rules in LOG on eqmg  
 - [ ] Turnstile on signup/reset  
-- [ ] Seller passcodes hashed  
+- [ ] Seller passcodes hashed (0043 in repo — paste on live)  
 - [ ] Backup + founder approval + test-user reset  
 - [ ] Staged load test  
 - [ ] Post-reset smoke tests  

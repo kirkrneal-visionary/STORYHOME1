@@ -26,7 +26,7 @@ Phase 1 + Phase 2 are already on this branch (created from Phase 2 `ee3927e`).
 | Production deployment | https://storyhome-1-eqmg.vercel.app — do not treat this branch as live until merged + eqmg green |
 | Database backup | **NOT verified from this agent.** Founder must snapshot Supabase before any reset. |
 | Storage inventory | `home-docs` (private), `shi-studies` (private), `living-marks` (public brand) |
-| Migration head in repo | `0040_listings_hide_seller_passcode.sql` (Phase 3 adds `0041`, `0042`) |
+| Migration head in repo | `0043_seller_passcode_hash.sql` |
 | Env inventory | See `.env.example`. No `NEXT_PUBLIC_` service-role. Payment secrets not set. |
 
 Recovery: restore Git to `ee3927e`; restore Supabase from the snapshot taken before reset. Git cannot restore the database.

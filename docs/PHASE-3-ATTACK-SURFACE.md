@@ -64,8 +64,8 @@ Anonymous → 401. Consumer/seller → 403. Role query params and localStorage a
 
 | Function | Grant (after 0042) | Risk | Status |
 |---|---|---|---|
-| `seller_portal_by_code` | **service_role only** | Brute + analytics | Revoke in 0042 (needs SQL) |
-| `ensure_seller_access_code` | authenticated | Owner/broker | OK |
+| `seller_portal_by_code` | **service_role only** | Brute + analytics | 0042 revoke + 0043 hash |
+| `ensure_seller_access_code` / `rotate_seller_access_code` | authenticated | Owner/broker | Returns plaintext once; stores hash |
 | `parcels_mvt` | anon + auth | Owner scrape via tiles | WAF + cache |
 | `parcel_neighbors` / corridor RPCs | authenticated | Any login, not Pro-only | Remaining HIGH |
 | `handle_new_user` | trigger | Signup metadata can request agent | Remaining HIGH |
