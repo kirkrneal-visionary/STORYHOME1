@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
 import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { PendingEmailPanel } from "@/components/auth/PendingEmailPanel";
 import { RecoveryPasswordForm } from "@/components/auth/RecoveryPasswordForm";
 import {
@@ -690,15 +691,24 @@ function RealAuthForm({
         required
       />
       {mode !== "reset" && (
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className={inputCls}
-          required
-          minLength={6}
-        />
+        <div className="space-y-2">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className={inputCls}
+            required
+            minLength={6}
+          />
+          {mode === "signup" && (
+            <PasswordStrengthMeter
+              password={password}
+              name={fullName}
+              email={email}
+            />
+          )}
+        </div>
       )}
 
       {error && <p className="text-sm text-red-300">{error}</p>}

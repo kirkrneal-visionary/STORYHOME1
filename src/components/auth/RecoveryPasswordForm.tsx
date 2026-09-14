@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { signUpPublicMessage } from "@/lib/account/password-strength";
 
 export function RecoveryPasswordForm({
   onSaved,
@@ -31,7 +33,7 @@ export function RecoveryPasswordForm({
     const result = await updatePassword(password);
     setBusy(false);
     if (!result.ok) {
-      setError(result.error);
+      setError(signUpPublicMessage({ message: result.error }));
       return;
     }
     onSaved();
@@ -52,6 +54,7 @@ export function RecoveryPasswordForm({
         required
         minLength={6}
       />
+      <PasswordStrengthMeter password={password} />
       <input
         type="password"
         value={confirm}

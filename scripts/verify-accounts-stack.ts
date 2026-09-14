@@ -9,6 +9,7 @@ const scripts = [
   "scripts/test-accounts-wave-3.ts",
   "scripts/test-accounts-wave-4.ts",
   "scripts/test-accounts-delete-hide-email.ts",
+  "scripts/test-password-strength.ts",
 ];
 
 for (const file of scripts) {

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { KeyRound, Shield } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import {
   GENERIC_AUTH_SENT,
   mfaRequired,
@@ -398,6 +399,7 @@ export function SecuritySection({
             required
             minLength={6}
           />
+          <PasswordStrengthMeter password={newPassword} email={email} />
           <button
             type="submit"
             disabled={busy === "password"}
