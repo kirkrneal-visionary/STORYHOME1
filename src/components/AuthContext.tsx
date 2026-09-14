@@ -110,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let active = true;
 
+    const promoted = new Set<string>();
+
     async function applySession(userId: string | null, email: string | null) {
       if (!userId) {
         if (active) {
@@ -117,6 +119,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setReady(true);
         }
         return;
+      }
+      if (!promoted.has(userId)) {
+        promoted.add(userId);
+        try {
+          await fetch("/api/account/promote-pro", { method: "POST" });
+        } catch {
+          // Stay consumer until the next sign-in.
+        }
       }
       let name = email?.split("@")[0] ?? "Member";
       let kind: AccountKind = "consumer";
@@ -281,18 +291,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     ): Promise<AuthResult> => {
       if (!supabase) return { ok: false, error: "Auth is not configured." };
-      const account_kind =
-        opts.accountKind === "pro" ? "agent" : opts.accountKind;
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: opts.fullName,
-            account_kind,
+            account_kind: "consumer",
             professional_role: opts.professionalRole ?? null,
             trec_license: opts.trecLicense ?? null,
-            trec_status: opts.trecStatus ?? null,
             sponsor_license_number: opts.sponsorLicenseNumber ?? null,
             sponsor_name: opts.sponsorName ?? null,
           },

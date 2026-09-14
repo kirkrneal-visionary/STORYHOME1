@@ -181,6 +181,10 @@ const mig46 = read("supabase/migrations/0046_seller_passcode_extensions_path.sql
 assert.match(mig46, /public, extensions/);
 assert.doesNotMatch(mig46, /delete from public\.(profiles|listings|county_parcels)/i);
 
+const mig47 = read("supabase/migrations/0047_signup_account_kind_lock.sql");
+assert.match(mig47, /Ignores account_kind/);
+assert.doesNotMatch(mig47, /delete from public\.(profiles|listings|county_parcels)/i);
+
 assert.match(read("docs/PHASE-3-BASELINE.md"), /storyhome-1-eqmg/);
 assert.match(read("docs/PHASE-3-ATTACK-SURFACE.md"), /seller_portal_by_code/);
 assert.match(read("docs/PRODUCTION-RESET-PLAN.md"), /DO NOT DELETE/);

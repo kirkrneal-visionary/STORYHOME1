@@ -21,7 +21,7 @@ Canonical live project: **storyhome-1-eqmg**. Ignore the other Vercel check.
 
 ## B. HIGH PRIORITY ISSUES
 
-1. Signup still trusts `account_kind` in user metadata (inspector/appraiser/lender can become `agent` without TREC). Lock stops *later* escalation, not the first insert.  
+1. Signup metadata cannot set `account_kind`. 0047 always inserts `consumer`. Realtor/broker promotion is a server TREC check (`/api/account/promote-pro`). **Not live until 0047 is pasted.**  
 2. Seller passcodes: 0040 hides the column from clients. 0043 hashes at rest and adds durable attempt lockouts. **Not live until 0043 is pasted in Supabase.**  
 3. `seller_portal_by_code` is service_role only after 0042. Browser clients must use `/api/seller/access`.  
 4. `clerk_deed_transfers` / `clerk_county_coverage` had no RLS — any login could read the deed index. 0039 enables RLS.  
