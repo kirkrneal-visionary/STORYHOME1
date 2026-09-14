@@ -30,6 +30,8 @@
     "test:phase-2": "node scripts/test-phase-2-truth.mjs && node scripts/test-shi-obs-ops.mjs && node scripts/test-story-analytics-foundation.mjs && node scripts/test-phase-1-coherence.mjs",
     "test:prelaunch-security": "node --experimental-strip-types scripts/test-prelaunch-security.ts",
     "test:phase-3": "node --experimental-strip-types scripts/test-phase-3-launch.mjs && node --experimental-strip-types scripts/test-prelaunch-security.ts && npm run test:phase-2",
+    "test:story-labs": "node --experimental-strip-types scripts/test-story-labs.mjs",
+    "test:release-gate": "npm run test:phase-3 && npm run test:story-labs",
     "test:analytics": "node scripts/test-story-analytics-foundation.mjs && node scripts/test-story-analytics-destination.mjs",
     "test:corridors": "node scripts/test-corridors.mjs && node scripts/test-growth-watch.mjs && node scripts/test-growth-scenarios.mjs && node scripts/test-corridor-handoff.mjs && node scripts/test-traffic-memory.mjs && node scripts/test-corridor-presentation.mjs && node scripts/test-corridor-analysis.mjs && node scripts/test-corridor-compare.mjs && node scripts/test-corridor-nav-lock.mjs && node scripts/test-corridor-validation.mjs && node scripts/test-corridor-sources.mjs",
     "test:corridors-2a": "node scripts/test-corridors-2a.mjs",

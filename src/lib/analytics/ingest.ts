@@ -9,6 +9,7 @@ import {
   type AnalyticsEventName,
 } from "@/lib/analytics/events";
 import { scrubAnalyticsProps } from "@/lib/analytics/scrub";
+import { resolveStoryHomeEnv } from "@/lib/labs/env";
 
 const EVENT_SET = new Set<string>(ANALYTICS_EVENTS);
 
@@ -33,7 +34,10 @@ export async function ingestProductAnalyticsEvent(
     return { ok: false, reason: "unknown_event" };
   }
 
-  const props = scrubAnalyticsProps(opts.props);
+  const scrubbed = scrubAnalyticsProps(opts.props);
+  const rest = { ...scrubbed };
+  delete rest.env;
+  const props = { ...rest, env: resolveStoryHomeEnv() };
   const clientAt =
     opts.clientAt && !Number.isNaN(Date.parse(opts.clientAt))
       ? opts.clientAt
