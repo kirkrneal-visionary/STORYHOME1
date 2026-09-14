@@ -103,6 +103,7 @@ export function classifyRequestPath(pathname: string): RateCost | null {
     pathname.startsWith("/api/shi/") ||
     pathname.startsWith("/api/cad/overlay") ||
     pathname.startsWith("/api/verify-trec") ||
+    pathname.startsWith("/api/account/") ||
     pathname.startsWith("/api/analytics") ||
     pathname.startsWith("/api/listing-activity") ||
     pathname.startsWith("/api/seller/")

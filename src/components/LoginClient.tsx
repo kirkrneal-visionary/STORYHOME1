@@ -385,7 +385,6 @@ function RealAuthForm({
             professionalRole:
               resolvedKind === "pro" ? proRole : undefined,
             trecLicense: verified?.licenseNumber ?? undefined,
-            trecStatus: verified?.status ?? undefined,
             sponsorLicenseNumber: verified?.sponsorLicenseNumber ?? undefined,
             sponsorName: verified?.sponsorName ?? undefined,
           });
@@ -396,7 +395,9 @@ function RealAuthForm({
     }
     if (mode === "signup") {
       setNotice(
-        "Account created. If email confirmation is enabled, confirm via email, then sign in.",
+        requiresLicense
+          ? "Account created. Sign in to finish realtor access. If email confirmation is on, confirm first."
+          : "Account created. If email confirmation is enabled, confirm via email, then sign in.",
       );
       setMode("signin");
       return;

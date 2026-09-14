@@ -45,6 +45,7 @@
     "scripts/test-research-map-paint.ts",
     "scripts/test-research-imagery.ts",
     "scripts/test-prelaunch-security.ts",
-    "scripts/test-seller-passcode-hash.ts"
+    "scripts/test-seller-passcode-hash.ts",
+    "scripts/test-signup-account-lock.ts"
   ]
 }

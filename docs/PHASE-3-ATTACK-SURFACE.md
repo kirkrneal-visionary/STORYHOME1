@@ -68,7 +68,7 @@ Anonymous → 401. Consumer/seller → 403. Role query params and localStorage a
 | `ensure_seller_access_code` / `rotate_seller_access_code` | authenticated | Owner/broker | Returns plaintext once; stores hash |
 | `parcels_mvt` | anon + auth | Owner scrape via tiles | WAF + cache |
 | `parcel_neighbors` / corridor RPCs | authenticated | Any login, not Pro-only | Remaining HIGH |
-| `handle_new_user` | trigger | Signup metadata can request agent | Remaining HIGH |
+| `handle_new_user` | trigger | Always consumer; server TREC promote | 0047 |
 | `county_boost_availability` | anon | Low | OK |
 
 ---

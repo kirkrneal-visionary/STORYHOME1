@@ -26,7 +26,7 @@ Already documented in `docs/PRELAUNCH-FOUNDER-REPORT.md`, plus:
 - Auth errors could enumerate accounts
 - No payment webhook boundary
 - In-memory rate limits are per isolate (WAF still required)
-- Signup metadata can still insert `account_kind=agent` (lock is UPDATE-only)
+- Signup metadata cannot insert `account_kind=agent` (0047 — paste on live)
 - Corridor RPCs granted to any authenticated user
 - `profiles` email readable if a client selects it
 - Seller passcodes hashed in 0043 (column hidden from listings select; paste 0043 on live)
@@ -51,7 +51,7 @@ Already documented in `docs/PRELAUNCH-FOUNDER-REPORT.md`, plus:
 
 | Item | Severity | Notes |
 |---|---|---|
-| Signup metadata → first `account_kind` | HIGH | 0039 locks later updates only |
+| Signup metadata → first `account_kind` | HIGH | 0047 always consumer; server TREC promote |
 | Seller passcodes plaintext | HIGH | 0043 hashes; 0040 hides column; paste 0043 |
 | 0042 not applied until SQL | HIGH | Direct RPC remains until applied |
 | Corridor RPCs any login | HIGH | HTTP still Pro-gated |
