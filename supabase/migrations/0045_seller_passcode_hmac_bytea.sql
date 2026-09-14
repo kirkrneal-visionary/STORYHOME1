@@ -1,91 +1,5 @@
--- Hash seller listing codes at rest. Attempt lockouts survive serverless restarts.
+-- Repair seller-code lookup: this Postgres has hmac(bytea, bytea, text) only.
 -- Does NOT delete users, listings, or county/CAD truth data.
---
--- After this file: listings.seller_access_code is cleared. Portal lookup uses
--- bcrypt + a keyed lookup digest. Agents see a new code only when they create
--- or rotate one. Apply on live (ksvllgzsnzyahqsjuove), then Labs if you use it.
-
-create extension if not exists pgcrypto;
-
-create table if not exists public.seller_code_secrets (
-  id int primary key check (id = 1),
-  pepper text not null
-);
-
-insert into public.seller_code_secrets (id, pepper)
-values (1, encode(gen_random_bytes(32), 'hex'))
-on conflict (id) do nothing;
-
-alter table public.seller_code_secrets enable row level security;
-revoke all on public.seller_code_secrets from anon, authenticated, public;
-grant all on public.seller_code_secrets to service_role;
-
-create table if not exists public.seller_access_attempts (
-  ip_key text primary key,
-  fails int not null default 0,
-  reset_at timestamptz not null
-);
-
-alter table public.seller_access_attempts enable row level security;
-revoke all on public.seller_access_attempts from anon, authenticated, public;
-grant all on public.seller_access_attempts to service_role;
-
-alter table public.listings
-  add column if not exists seller_access_code_hash text,
-  add column if not exists seller_access_code_lookup text;
-
-create unique index if not exists listings_seller_access_code_lookup_uidx
-  on public.listings (seller_access_code_lookup)
-  where seller_access_code_lookup is not null;
-
--- Hash any leftover plaintext codes, then clear the readable column.
-do $$
-declare
-  v_pepper text;
-  r record;
-  v_norm text;
-begin
-  select pepper into v_pepper from public.seller_code_secrets where id = 1;
-  if v_pepper is null then
-    raise exception 'seller_code_secrets pepper missing';
-  end if;
-
-  for r in
-    select id, seller_access_code
-    from public.listings
-    where seller_access_code is not null
-      and btrim(seller_access_code) <> ''
-      and seller_access_code_hash is null
-  loop
-    v_norm := upper(trim(r.seller_access_code));
-    update public.listings
-    set
-      seller_access_code_hash = crypt(v_norm, gen_salt('bf', 10)),
-      seller_access_code_lookup = encode(hmac(convert_to(v_norm, 'UTF8'), convert_to(v_pepper, 'UTF8'), 'sha256'::text), 'hex')
-    where id = r.id;
-  end loop;
-
-  update public.listings
-  set seller_access_code = null
-  where seller_access_code is not null;
-end
-$$;
-
-create or replace function public.seller_listing_json(p_listing public.listings)
-returns jsonb
-language sql
-immutable
-as $$
-  select to_jsonb(p_listing)
-    - 'seller_access_code'
-    - 'seller_access_code_hash'
-    - 'seller_access_code_lookup';
-$$;
-
-revoke all on function public.seller_listing_json(public.listings)
-  from anon, authenticated, public;
-grant execute on function public.seller_listing_json(public.listings)
-  to service_role;
 
 create or replace function public.seller_portal_by_code(p_code text)
 returns jsonb
@@ -160,12 +74,7 @@ revoke execute on function public.seller_portal_by_code(text)
 grant execute on function public.seller_portal_by_code(text)
   to service_role;
 
-comment on function public.seller_portal_by_code(text) is
-  'Seller portal lookup against hashed codes. Execute revoked from anon/authenticated — use the rate-limited server route.';
-
-drop function if exists public.ensure_seller_access_code(uuid);
-
-create function public.ensure_seller_access_code(p_listing uuid)
+create or replace function public.ensure_seller_access_code(p_listing uuid)
 returns jsonb
 language plpgsql
 security definer
@@ -273,14 +182,3 @@ end;
 $$;
 
 grant execute on function public.rotate_seller_access_code(uuid) to authenticated;
-
-comment on column public.listings.seller_access_code is
-  'Deprecated plaintext. Cleared by 0043. Do not write.';
-comment on column public.listings.seller_access_code_hash is
-  'bcrypt of the seller listing code. Never grant to anon/authenticated.';
-comment on column public.listings.seller_access_code_lookup is
-  'Keyed digest for exact lookup. Never grant to anon/authenticated.';
-comment on table public.seller_access_attempts is
-  'Durable seller-code lockouts. Server-only.';
-comment on table public.seller_code_secrets is
-  'Pepper for seller-code lookup digest. Server-only.';

@@ -30,7 +30,7 @@ begin
     return null;
   end if;
 
-  v_lookup := encode(hmac(v_norm::text, v_pepper::text, 'sha256'::text), 'hex');
+  v_lookup := encode(hmac(convert_to(v_norm, 'UTF8'), convert_to(v_pepper, 'UTF8'), 'sha256'::text), 'hex');
 
   select * into l
   from public.listings
@@ -112,7 +112,7 @@ begin
   v_base := coalesce((regexp_match(upper(coalesce(v_addr, 'HOME')), '[A-Z]{3,}'))[1], 'HOME');
   loop
     v_code := v_base || '-' || lpad((floor(random() * 900) + 100)::int::text, 3, '0');
-    v_lookup := encode(hmac(v_code::text, v_pepper::text, 'sha256'::text), 'hex');
+    v_lookup := encode(hmac(convert_to(v_code, 'UTF8'), convert_to(v_pepper, 'UTF8'), 'sha256'::text), 'hex');
     exit when not exists (
       select 1
       from public.listings
@@ -164,7 +164,7 @@ begin
   v_base := coalesce((regexp_match(upper(coalesce(v_addr, 'HOME')), '[A-Z]{3,}'))[1], 'HOME');
   loop
     v_code := v_base || '-' || lpad((floor(random() * 900) + 100)::int::text, 3, '0');
-    v_lookup := encode(hmac(v_code::text, v_pepper::text, 'sha256'::text), 'hex');
+    v_lookup := encode(hmac(convert_to(v_code, 'UTF8'), convert_to(v_pepper, 'UTF8'), 'sha256'::text), 'hex');
     exit when not exists (
       select 1
       from public.listings
