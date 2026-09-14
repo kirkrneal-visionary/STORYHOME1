@@ -75,3 +75,14 @@ export function lastWord(name: string | null | undefined): string | undefined {
   const part = (name ?? "").trim().split(/\s+/).filter(Boolean).slice(-1)[0];
   return part || undefined;
 }
+
+/** Where a user lands after a finished login. */
+export function destForUser(user: {
+  kind: string;
+  purpose?: string | null;
+}): string {
+  if (mayManageBrokerage(user.purpose)) return "/settings";
+  if (mayUseStoryPro(user.purpose, user.kind)) return "/portal";
+  if (user.kind === "seller") return "/";
+  return "/home";
+}

@@ -70,6 +70,7 @@ assert.match(layout, /promoteSignedInPro/);
 assert.match(layout, /portalPageAccess/);
 assert.match(layout, /redirect\("\/login\?next=\/portal"\)/);
 assert.match(layout, /portalRefuseCopy/);
+assert.match(layout, /getAccountReadiness/);
 assert.match(read("src/lib/account/portal-gate.ts"), /For realtors/);
 assert.match(read("src/lib/account/portal-gate.ts"), /Office account/);
 assert.doesNotMatch(layout, /from "@\/components\/broker\/BrokerPortal"/);

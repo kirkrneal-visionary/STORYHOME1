@@ -15,6 +15,10 @@ import {
   type ProRole,
   parseStoredUser,
 } from "@/lib/auth";
+import {
+  parseAssuranceLevel,
+  signInPublicMessage,
+} from "@/lib/account/assurance";
 import type { AccountPurpose } from "@/lib/account/purpose";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
@@ -31,7 +35,9 @@ function accountKindForAnalytics(user: AuthUser): AccountKindProp {
   return "unknown";
 }
 
-type AuthResult = { ok: true } | { ok: false; error: string };
+export type AuthResult =
+  | { ok: true; needsMfa?: boolean; emailUnconfirmed?: boolean }
+  | { ok: false; error: string; emailUnconfirmed?: boolean };
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -56,6 +62,11 @@ type AuthContextType = {
       sponsorName?: string;
     },
   ) => Promise<AuthResult>;
+  resetPasswordForEmail: (email: string) => Promise<AuthResult>;
+  resendConfirmation: (email: string) => Promise<AuthResult>;
+  updatePassword: (password: string) => Promise<AuthResult>;
+  signOutEverywhere: () => Promise<void>;
+  refreshAssurance: () => Promise<void>;
   logout: () => void;
 };
 
@@ -121,7 +132,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return;
       }
-      if (!promoted.has(userId)) {
+
+      let emailConfirmed = false;
+      let aal: AuthUser["aal"];
+      let mfaEnrolled = false;
+      try {
+        const { data: authUser } = await supabase!.auth.getUser();
+        emailConfirmed = Boolean(authUser.user?.email_confirmed_at);
+        const { data: aalData } =
+          await supabase!.auth.mfa.getAuthenticatorAssuranceLevel();
+        aal = parseAssuranceLevel(aalData?.currentLevel) ?? undefined;
+        const { data: factors } = await supabase!.auth.mfa.listFactors();
+        mfaEnrolled = Boolean(
+          factors?.totp?.some((f) => f.status === "verified"),
+        );
+      } catch {
+        emailConfirmed = false;
+      }
+
+      if (emailConfirmed && !promoted.has(userId)) {
         promoted.add(userId);
         try {
           await fetch("/api/account/promote-pro", { method: "POST" });
@@ -157,6 +186,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         kind,
         purpose,
         proRole,
+        emailConfirmed,
+        aal,
+        mfaEnrolled,
       });
       setRole(
         kind === "consumer" && purpose !== "managing_broker"
@@ -274,12 +306,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
       if (error) {
+        const emailUnconfirmed =
+          error.message.toLowerCase().includes("not confirmed");
         return {
           ok: false,
-          error: "Unable to sign in. Check your email and password.",
+          error: signInPublicMessage(error.message),
+          emailUnconfirmed,
         };
       }
-      return { ok: true };
+      let emailUnconfirmed = false;
+      let needsMfa = false;
+      try {
+        const { data: authUser } = await supabase.auth.getUser();
+        emailUnconfirmed = !authUser.user?.email_confirmed_at;
+        const { data: aal } =
+          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        needsMfa =
+          aal?.nextLevel === "aal2" && aal?.currentLevel !== "aal2";
+      } catch {
+        // session still established
+      }
+      return { ok: true, needsMfa, emailUnconfirmed };
     },
     [supabase],
   );
@@ -319,14 +366,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: "Unable to create this account. Try again or sign in.",
         };
       }
+      return { ok: true, emailUnconfirmed: true };
+    },
+    [supabase],
+  );
+
+  const resetPasswordForEmail = useCallback(
+    async (email: string): Promise<AuthResult> => {
+      if (!supabase) return { ok: false, error: "Auth is not configured." };
+      const origin = window.location.origin;
+      await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/login?mode=recovery`,
+      });
       return { ok: true };
     },
     [supabase],
   );
 
+  const resendConfirmation = useCallback(
+    async (email: string): Promise<AuthResult> => {
+      if (!supabase) return { ok: false, error: "Auth is not configured." };
+      if (email.trim()) {
+        await supabase.auth.resend({ type: "signup", email: email.trim() });
+      } else {
+        await fetch("/api/account/resend-confirmation", { method: "POST" });
+      }
+      return { ok: true };
+    },
+    [supabase],
+  );
+
+  const updatePassword = useCallback(
+    async (password: string): Promise<AuthResult> => {
+      if (!supabase) return { ok: false, error: "Auth is not configured." };
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        return { ok: false, error: "Unable to set a new password." };
+      }
+      await supabase.auth.signOut({ scope: "others" });
+      return { ok: true };
+    },
+    [supabase],
+  );
+
+  const signOutEverywhere = useCallback(async () => {
+    if (supabase) {
+      await fetch("/api/account/sign-out-all", { method: "POST" });
+      await supabase.auth.signOut({ scope: "global" });
+    }
+    setUser(null);
+    persistUser(null);
+    setRole("consumer");
+  }, [supabase, setRole]);
+
+  const refreshAssurance = useCallback(async () => {
+    if (!supabase) return;
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    if (!session?.user) return;
+    try {
+      const { data: authUser } = await supabase.auth.getUser();
+      const { data: aal } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              email: authUser.user?.email ?? prev.email,
+              emailConfirmed: Boolean(authUser.user?.email_confirmed_at),
+              aal: parseAssuranceLevel(aal?.currentLevel) ?? prev.aal,
+              mfaEnrolled: Boolean(
+                factors?.totp?.some((f) => f.status === "verified"),
+              ),
+            }
+          : prev,
+      );
+    } catch {
+      // keep last known user
+    }
+  }, [supabase]);
+
   const logout = useCallback(() => {
     if (supabase) {
-      void supabase.auth.signOut();
+      void supabase.auth.signOut({ scope: "local" });
     }
     setUser(null);
     persistUser(null);
@@ -344,6 +467,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginConsumer,
       signInWithPassword,
       signUp,
+      resetPasswordForEmail,
+      resendConfirmation,
+      updatePassword,
+      signOutEverywhere,
+      refreshAssurance,
       logout,
     }),
     [
@@ -356,6 +484,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginConsumer,
       signInWithPassword,
       signUp,
+      resetPasswordForEmail,
+      resendConfirmation,
+      updatePassword,
+      signOutEverywhere,
+      refreshAssurance,
       logout,
     ],
   );

@@ -17,6 +17,9 @@ export type AuthUser = {
   purpose?: AccountPurpose;
   proRole?: ProRole;
   sellerListingCode?: string;
+  emailConfirmed?: boolean;
+  aal?: "aal1" | "aal2";
+  mfaEnrolled?: boolean;
 };
 
 export const AUTH_STORAGE_KEY = "story-home-auth-user";

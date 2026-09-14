@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { portalPageAccess, portalRefuseCopy } from "@/lib/account/portal-gate";
 import { promoteSignedInPro } from "@/lib/account/promote-pro";
+import { getAccountReadiness } from "@/lib/account/require-account-ready";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,16 @@ export default async function PortalLayout({
   const access = portalPageAccess(result);
   if (access === "login") {
     redirect("/login?next=/portal");
+  }
+  if (access === "allow") {
+    const ready = await getAccountReadiness({
+      purpose: result.ok ? result.accountPurpose : null,
+      kind: result.ok ? result.accountKind : null,
+      nextPath: "/portal",
+    });
+    if (!ready.ok && ready.redirectTo) {
+      redirect(ready.redirectTo);
+    }
   }
   if (access === "refuse") {
     const copy = portalRefuseCopy(result.ok ? result.accountPurpose : null);
