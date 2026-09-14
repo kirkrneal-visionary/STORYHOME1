@@ -48,8 +48,7 @@ export function OpenOfficeCard() {
       subtitle="This login becomes the office. Story Pro, Archie, and buyer view stay here."
     >
       <p className="text-sm text-[var(--muted)]">
-        Roster and branding are added to this login. You keep Story Pro on the
-        same account.
+        Roster and branding are added to this login. You keep Story Pro on the same account.
       </p>
       {!confirm ? (
         <button

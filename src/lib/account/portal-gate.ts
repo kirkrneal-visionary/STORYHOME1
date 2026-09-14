@@ -1,11 +1,15 @@
 import type { PromoteProResult } from "./promote-pro";
-import { mayUseStoryPro } from "./purpose";
 
 export type PortalPageAccess = "login" | "refuse" | "allow";
 
 export function portalPageAccess(result: PromoteProResult): PortalPageAccess {
   if (!result.ok) return "login";
-  if (mayUseStoryPro(result.accountPurpose, result.accountKind)) return "allow";
+  if (
+    result.accountPurpose === "individual_pro" ||
+    result.accountPurpose === "managing_broker"
+  ) {
+    return "allow";
+  }
   return "refuse";
 }
 
