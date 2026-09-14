@@ -84,6 +84,23 @@ export async function middleware(request: NextRequest) {
     return redirect;
   }
 
+  if (
+    pathname.startsWith("/portal") &&
+    user &&
+    !user.email_confirmed_at
+  ) {
+    const login = request.nextUrl.clone();
+    login.pathname = "/login";
+    login.search = "";
+    login.searchParams.set("pending", "email");
+    login.searchParams.set("next", pathname);
+    const redirect = NextResponse.redirect(login);
+    response.cookies.getAll().forEach((c) => {
+      redirect.cookies.set(c);
+    });
+    return redirect;
+  }
+
   return response;
 }
 

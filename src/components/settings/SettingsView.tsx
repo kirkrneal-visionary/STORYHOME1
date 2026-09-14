@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { BadgeCheck, Building2, Save, Trash2, UserPlus, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
@@ -30,8 +30,10 @@ import {
   type BrokerageInvite,
   type PendingInvite,
 } from "@/lib/supabase/roster";
+import { canAccessPrivateApp } from "@/lib/account/assurance";
 import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
+import { SecuritySection } from "@/components/settings/SecuritySection";
 
 const toList = (s: string) =>
   s.split(",").map((x) => x.trim()).filter(Boolean);
@@ -76,6 +78,17 @@ export function SettingsView() {
 
   const isPro = mayUseStoryPro(profile?.accountPurpose, profile?.accountKind);
   const isOffice = mayManageBrokerage(profile?.accountPurpose);
+  const demoSession =
+    user.emailConfirmed === undefined && user.aal === undefined;
+  const securityReady =
+    demoSession ||
+    canAccessPrivateApp({
+      emailConfirmed: user.emailConfirmed !== false,
+      purpose: profile?.accountPurpose ?? user.purpose,
+      kind: profile?.accountKind ?? user.kind,
+      enrolled: user.mfaEnrolled === true,
+      currentAal: user.aal,
+    });
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
@@ -113,16 +126,27 @@ export function SettingsView() {
             profileVideoUrl={profile?.livingMarkVideoUrl}
             onChanged={load}
           />
+          <Suspense fallback={null}>
+            <SecuritySection
+              purpose={profile?.accountPurpose ?? user.purpose}
+              kind={profile?.accountKind ?? user.kind}
+            />
+          </Suspense>
           {profile && <AccountSection profile={profile} onSaved={load} />}
           {isPro && profile && <ProSection profile={profile} onSaved={load} />}
           {isPro && profile && <LicenseSection profile={profile} />}
-          {isOffice && user && profile && (
+          {isOffice && user && profile && securityReady && (
             <BrokerageSection
               brokerId={user.id}
               brokerTrecLicense={profile.trecLicense}
               brokerage={brokerage}
               onSaved={load}
             />
+          )}
+          {isOffice && !securityReady && (
+            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+              Confirm your email and authenticator before office tools.
+            </p>
           )}
         </div>
       )}

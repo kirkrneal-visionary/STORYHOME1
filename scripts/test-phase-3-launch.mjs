@@ -151,7 +151,7 @@ assert.doesNotMatch(read("src/components/seller/SellerAccessForm.tsx"), /WILLOW-
 assert.match(read("src/components/seller/SellerAccessForm.tsx"), /\/api\/seller\/access/);
 assert.match(
   read("src/components/AuthContext.tsx"),
-  /Unable to sign in\. Check your email and password/,
+  /signInPublicMessage/,
 );
 
 const mig41 = read("supabase/migrations/0041_billing_boundary.sql");

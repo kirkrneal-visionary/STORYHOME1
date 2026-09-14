@@ -1,4 +1,6 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { decideReadiness } from "@/lib/account/assurance";
+import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { mayUseStoryPro } from "@/lib/account/purpose";
 import { logSecurityEvent } from "@/lib/security/log-event";
 import { getServerSupabase } from "@/lib/supabase/server";
@@ -54,6 +56,25 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
       ok: false,
       status: 403,
       error: "Archie's Intelligence is available to Story Pro accounts",
+    };
+  }
+
+  const session = await readSessionAssurance(supabase);
+  const ready = decideReadiness({
+    signedIn: true,
+    emailConfirmed: session.emailConfirmed,
+    purpose: accountPurpose,
+    kind: accountKind,
+    enrolled: session.enrolled,
+    currentAal: session.currentAal,
+    nextPath: "/portal",
+  });
+  if (!ready.ok) {
+    logSecurityEvent({ kind: "authz_denied", status: 403, path: "/api/shi" });
+    return {
+      ok: false,
+      status: 403,
+      error: "Finish account security first.",
     };
   }
 
