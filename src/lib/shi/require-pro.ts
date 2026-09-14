@@ -1,4 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { decideReadiness } from "@/lib/account/assurance";
+import { readSessionAssurance } from "@/lib/account/require-account-ready";
+import { mayUseStoryPro } from "@/lib/account/purpose";
 import { logSecurityEvent } from "@/lib/security/log-event";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -7,6 +10,7 @@ export type ProGateOk = {
   supabase: SupabaseClient;
   user: User;
   accountKind: string;
+  accountPurpose: string;
 };
 
 export type ProGateFail = {
@@ -16,7 +20,8 @@ export type ProGateFail = {
 };
 
 /**
- * Story Pro gate for SHI API routes (agent / broker account_kind).
+ * Story Pro gate for SHI API routes.
+ * Individual Pro only — managing-broker and other professionals are refused.
  */
 export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
   const supabase = await getServerSupabase();
@@ -35,7 +40,7 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("account_kind")
+    .select("account_kind, account_purpose")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -44,7 +49,8 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
   }
 
   const accountKind = profile?.account_kind ?? "";
-  if (accountKind !== "agent" && accountKind !== "broker") {
+  const accountPurpose = profile?.account_purpose ?? "";
+  if (!mayUseStoryPro(accountPurpose, accountKind)) {
     logSecurityEvent({ kind: "authz_denied", status: 403, path: "/api/shi" });
     return {
       ok: false,
@@ -53,5 +59,24 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
     };
   }
 
-  return { ok: true, supabase, user, accountKind };
+  const session = await readSessionAssurance(supabase);
+  const ready = decideReadiness({
+    signedIn: true,
+    emailConfirmed: session.emailConfirmed,
+    purpose: accountPurpose,
+    kind: accountKind,
+    enrolled: session.enrolled,
+    currentAal: session.currentAal,
+    nextPath: "/portal",
+  });
+  if (!ready.ok) {
+    logSecurityEvent({ kind: "authz_denied", status: 403, path: "/api/shi" });
+    return {
+      ok: false,
+      status: 403,
+      error: "Finish account security first.",
+    };
+  }
+
+  return { ok: true, supabase, user, accountKind, accountPurpose };
 }

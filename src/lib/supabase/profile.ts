@@ -1,5 +1,6 @@
 "use client";
 
+import type { AccountPurpose } from "@/lib/account/purpose";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 export type AccountKind = "consumer" | "agent" | "broker";
@@ -8,7 +9,9 @@ export type MyProfile = {
   id: string;
   email: string;
   fullName: string;
+  legalFullName: string | null;
   accountKind: AccountKind;
+  accountPurpose: AccountPurpose;
   professionalRole: string | null;
   brokerageId: string | null;
   photoUrl: string | null;
@@ -31,15 +34,17 @@ export type MyProfile = {
 };
 
 const SELECT =
-  "id, email, full_name, account_kind, professional_role, brokerage_id, photo_url, living_mark_video_url, bio, phone, website, primary_market_city, license_number, specialties, service_areas, languages, designations, socials, trec_license, trec_status, sponsor_name, sponsor_license_number";
+  "id, full_name, legal_full_name, account_kind, account_purpose, professional_role, brokerage_id, photo_url, living_mark_video_url, bio, phone, website, primary_market_city, license_number, specialties, service_areas, languages, designations, socials, trec_license, trec_status, sponsor_name, sponsor_license_number";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function toProfile(r: any): MyProfile {
   return {
     id: r.id,
-    email: r.email,
+    email: "",
     fullName: r.full_name ?? "",
+    legalFullName: r.legal_full_name ?? null,
     accountKind: (r.account_kind ?? "consumer") as AccountKind,
+    accountPurpose: (r.account_purpose ?? "consumer") as AccountPurpose,
     professionalRole: r.professional_role ?? null,
     brokerageId: r.brokerage_id ?? null,
     photoUrl: r.photo_url ?? null,

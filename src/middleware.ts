@@ -72,10 +72,26 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (pathname.startsWith("/portal") && !user) {
+  const gated =
+    pathname.startsWith("/portal") || pathname.startsWith("/office");
+
+  if (gated && !user) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = "";
+    login.searchParams.set("next", pathname);
+    const redirect = NextResponse.redirect(login);
+    response.cookies.getAll().forEach((c) => {
+      redirect.cookies.set(c);
+    });
+    return redirect;
+  }
+
+  if (gated && user && !user.email_confirmed_at) {
+    const login = request.nextUrl.clone();
+    login.pathname = "/login";
+    login.search = "";
+    login.searchParams.set("pending", "email");
     login.searchParams.set("next", pathname);
     const redirect = NextResponse.redirect(login);
     response.cookies.getAll().forEach((c) => {

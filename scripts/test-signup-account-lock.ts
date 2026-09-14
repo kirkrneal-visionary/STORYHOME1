@@ -10,9 +10,9 @@ import { classifyApiPath } from "../src/lib/security/rate-limit.ts";
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
-const mig = read("supabase/migrations/0047_signup_account_kind_lock.sql");
+const mig = read("supabase/migrations/0048_account_purpose_wave1.sql");
 assert.match(mig, /'consumer'/);
-assert.match(mig, /Ignores account_kind/);
+assert.match(mig, /Ignores account_kind, account_purpose/);
 assert.match(mig, /Does NOT delete users, listings, or county\/CAD/);
 assert.doesNotMatch(mig, /delete from public\.(profiles|listings|county_parcels)/i);
 assert.doesNotMatch(
@@ -30,6 +30,7 @@ const promote = read("src/lib/account/promote-pro.ts");
 assert.match(promote, /verifyTrecLicense/);
 assert.match(promote, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(promote, /account_kind: trec.accountKind/);
+assert.match(promote, /account_purpose: nextPurpose/);
 assert.doesNotMatch(promote, /opts\.accountKind/);
 
 const route = read("src/app/api/account/promote-pro/route.ts");

@@ -15,29 +15,66 @@ assert.equal(
   "login",
 );
 assert.equal(
-  portalPageAccess({ ok: true, accountKind: "consumer", promoted: false }),
+  portalPageAccess({
+    ok: true,
+    accountKind: "consumer",
+    accountPurpose: "consumer",
+    promoted: false,
+    demoted: false,
+  }),
   "refuse",
 );
 assert.equal(
-  portalPageAccess({ ok: true, accountKind: "agent", promoted: true }),
+  portalPageAccess({
+    ok: true,
+    accountKind: "agent",
+    accountPurpose: "individual_pro",
+    promoted: true,
+    demoted: false,
+  }),
   "allow",
 );
 assert.equal(
-  portalPageAccess({ ok: true, accountKind: "broker", promoted: false }),
+  portalPageAccess({
+    ok: true,
+    accountKind: "broker",
+    accountPurpose: "individual_pro",
+    promoted: false,
+    demoted: false,
+  }),
   "allow",
+);
+assert.equal(
+  portalPageAccess({
+    ok: true,
+    accountKind: "broker",
+    accountPurpose: "managing_broker",
+    promoted: false,
+    demoted: false,
+  }),
+  "refuse",
+);
+assert.equal(
+  portalPageAccess({
+    ok: true,
+    accountKind: "consumer",
+    accountPurpose: "other_professional",
+    promoted: false,
+    demoted: false,
+  }),
+  "refuse",
 );
 
 const layout = read("src/app/portal/layout.tsx");
 assert.match(layout, /promoteSignedInPro/);
 assert.match(layout, /portalPageAccess/);
 assert.match(layout, /redirect\("\/login\?next=\/portal"\)/);
-assert.match(layout, /For realtors/);
+assert.match(layout, /portalRefuseCopy/);
+assert.match(layout, /getAccountReadiness/);
+assert.match(read("src/lib/account/portal-gate.ts"), /For realtors/);
+assert.match(read("src/lib/account/portal-gate.ts"), /Office account/);
 assert.doesNotMatch(layout, /from "@\/components\/broker\/BrokerPortal"/);
 assert.doesNotMatch(layout, /useAuth/);
-
-const gate = read("src/lib/account/portal-gate.ts");
-assert.match(gate, /accountKind !== "agent"/);
-assert.match(gate, /accountKind !== "broker"/);
 
 const portalPage = read("src/app/portal/page.tsx");
 assert.match(portalPage, /BrokerPortal/);
@@ -46,6 +83,7 @@ const intel = read("src/app/portal/intelligence/page.tsx");
 assert.match(intel, /BrokerPortal/);
 
 const mw = read("src/middleware.ts");
-assert.match(mw, /pathname.startsWith\("\/portal"\) && !user/);
+assert.match(mw, /gated && !user/);
+assert.match(mw, /pathname.startsWith\("\/office"\)/);
 
 console.log("portal-server-gate: ok");

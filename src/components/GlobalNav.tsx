@@ -25,6 +25,7 @@ import { NetworkNode } from "@/components/nav/NetworkNode";
 import { useMotionOptional } from "@/components/motion/MotionProvider";
 import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
 import { useLivingHeader } from "@/hooks/useLivingHeader";
+import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
 import {
   isArchiePath,
@@ -33,7 +34,9 @@ import {
 } from "@/lib/navigation/networks";
 import { cn } from "@/lib/utils";
 
-function shortKind(kind?: string): string {
+function shortKind(kind?: string, purpose?: string): string {
+  if (purpose === "managing_broker") return "Office";
+  if (purpose === "other_professional") return "Pro";
   if (kind === "broker") return "Broker";
   if (kind === "pro") return "Pro";
   if (kind === "seller") return "Seller";
@@ -44,7 +47,8 @@ export default function GlobalNav() {
   const { role, setRole } = useApp();
   const { user, isLoggedIn } = useAuth();
   const pathname = usePathname();
-  const isProAccount = user?.kind === "pro" || user?.kind === "broker";
+  const isProAccount = mayUseStoryPro(user?.purpose, user?.kind);
+  const isOfficeAccount = mayManageBrokerage(user?.purpose);
   const isPro = isProAccount && role === "professional";
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerPath, setDrawerPath] = useState(pathname);
@@ -92,7 +96,13 @@ export default function GlobalNav() {
         label: "Marketplace",
         active: pathname.startsWith("/marketplace"),
       });
-      if (isPro && isLoggedIn) {
+      if (isOfficeAccount && isLoggedIn) {
+        links.push({
+          href: "/office",
+          label: "Office",
+          active: pathname.startsWith("/office"),
+        });
+      } else if (isPro && isLoggedIn) {
         links.push(
           {
             href: "/portal",
@@ -128,7 +138,7 @@ export default function GlobalNav() {
       });
     }
     return links;
-  }, [isHome, isLoggedIn, isPro, pathname]);
+  }, [isHome, isLoggedIn, isOfficeAccount, isPro, pathname]);
 
   if (isSellerPath) {
     return null;
@@ -317,7 +327,7 @@ export default function GlobalNav() {
                     {user.name.split(" ")[0]}
                   </span>
                   <span className="font-mono text-[9px] font-bold uppercase tracking-wide text-navy/70">
-                    {shortKind(user.kind)}
+                    {shortKind(user.kind, user.purpose)}
                   </span>
                 </span>
               </Link>

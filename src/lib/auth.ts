@@ -1,3 +1,5 @@
+import type { AccountPurpose } from "@/lib/account/purpose";
+
 export type AccountKind = "consumer" | "pro" | "seller" | "broker";
 
 export type ProRole =
@@ -12,8 +14,12 @@ export type AuthUser = {
   email: string;
   initials: string;
   kind: AccountKind;
+  purpose?: AccountPurpose;
   proRole?: ProRole;
   sellerListingCode?: string;
+  emailConfirmed?: boolean;
+  aal?: "aal1" | "aal2";
+  mfaEnrolled?: boolean;
 };
 
 export const AUTH_STORAGE_KEY = "story-home-auth-user";
@@ -32,6 +38,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "jordan@storyhome.demo",
     initials: "JH",
     kind: "consumer",
+    purpose: "consumer",
   },
   {
     id: "user-realtor",
@@ -39,6 +46,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "sarah@storyhome.demo",
     initials: "SJ",
     kind: "pro",
+    purpose: "individual_pro",
     proRole: "realtor_broker",
   },
   {
@@ -47,6 +55,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "chris@storyhome.demo",
     initials: "CN",
     kind: "pro",
+    purpose: "other_professional",
     proRole: "inspector",
   },
   {
@@ -55,6 +64,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "ava@storyhome.demo",
     initials: "AB",
     kind: "pro",
+    purpose: "other_professional",
     proRole: "appraiser",
   },
   {
@@ -63,14 +73,19 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "marcus@storyhome.demo",
     initials: "ML",
     kind: "pro",
+    purpose: "other_professional",
     proRole: "lender",
   },
 ];
 
 export function accountLabel(user: AuthUser) {
+  if (user.purpose === "managing_broker") return "Managing broker";
+  if (user.purpose === "other_professional") {
+    return PRO_ROLE_LABELS[user.proRole ?? "inspector"];
+  }
   if (user.kind === "consumer") return "Buyer / Consumer";
   if (user.kind === "seller") return "Seller (listing access)";
-  if (user.kind === "broker") return "Broker of Record";
+  if (user.kind === "broker") return "Individual broker";
   return PRO_ROLE_LABELS[user.proRole ?? "realtor_broker"];
 }
 
@@ -81,6 +96,7 @@ export const DEMO_BROKER: AuthUser = {
   email: "dana@storyhome.demo",
   initials: "DB",
   kind: "broker",
+  purpose: "managing_broker",
 };
 
 export function parseStoredUser(raw: string | null): AuthUser | null {

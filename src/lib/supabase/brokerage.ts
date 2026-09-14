@@ -23,6 +23,7 @@ export type BrokerageAgent = {
   professionalRole: string | null;
   photoUrl: string | null;
   primaryMarketCity: string | null;
+  teamLeaderAuthorized: boolean;
 };
 
 const SELECT =
@@ -78,19 +79,20 @@ export async function getBrokerageBySlug(slug: string): Promise<Brokerage | null
 
 /** Create a brokerage owned by the broker and link the broker's profile to it. */
 export async function createBrokerage(
-  brokerId: string,
+  _brokerId: string,
   name: string,
 ): Promise<Brokerage> {
   const s = getBrowserSupabase();
   if (!s) throw new Error("Not configured");
-  const { data, error } = await s
-    .from("brokerages")
-    .insert({ name, broker_id: brokerId, slug: slugify(name) })
-    .select(SELECT)
-    .single();
-  if (error) throw error;
-  await s.from("profiles").update({ brokerage_id: data.id }).eq("id", brokerId);
-  return toBrokerage(data);
+  const { data: created, error: rpcError } = await s.rpc(
+    "create_managed_brokerage",
+    { p_name: name },
+  );
+  if (rpcError) throw rpcError;
+  const id = created as string;
+  const row = await getBrokerageById(id);
+  if (!row) throw new Error("Brokerage was created but could not be loaded.");
+  return row;
 }
 
 export type BrokeragePatch = Partial<{
@@ -129,7 +131,7 @@ export async function listBrokerageAgents(brokerageId: string): Promise<Brokerag
   if (!s) return [];
   const { data, error } = await s
     .from("profiles")
-    .select("id, full_name, professional_role, photo_url, primary_market_city")
+    .select("id, full_name, professional_role, photo_url, primary_market_city, team_leader_authorized")
     .eq("brokerage_id", brokerageId);
   if (error) throw error;
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -139,6 +141,7 @@ export async function listBrokerageAgents(brokerageId: string): Promise<Brokerag
     professionalRole: r.professional_role ?? null,
     photoUrl: r.photo_url ?? null,
     primaryMarketCity: r.primary_market_city ?? null,
+    teamLeaderAuthorized: Boolean(r.team_leader_authorized),
   }));
   /* eslint-enable @typescript-eslint/no-explicit-any */
 }

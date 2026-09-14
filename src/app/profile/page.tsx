@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
+import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
 
 export default function ProfilePage() {
@@ -42,15 +43,27 @@ export default function ProfilePage() {
         </div>
 
         <p className="mt-6 max-w-xl text-sm leading-relaxed text-[var(--muted)]">
-          {user.kind === "consumer"
-            ? "Build Story Home Suites and save homes into albums."
-            : user.kind === "seller"
-              ? `Seller access via passcode ${user.sellerListingCode}. Open your listing portal.`
-              : "Manage your Story Pro workspace, public profile, and listings."}
+          {mayManageBrokerage(user.purpose)
+            ? "This login is the office account. Roster and branding live here. Story Pro stays on each realtor’s own login."
+            : user.purpose === "other_professional"
+              ? "This login is your professional profile. Story Pro and office tools are not on this account."
+              : user.kind === "consumer"
+                ? "Build Story Home Suites and save homes into albums."
+                : user.kind === "seller"
+                  ? `Seller access via passcode ${user.sellerListingCode}. Open your listing portal.`
+                  : "Manage your Story Pro workspace, public profile, and listings."}
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          {user.kind === "consumer" && (
+          {mayManageBrokerage(user.purpose) && (
+            <Link
+              href="/office"
+              className="story-press rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+            >
+              Office
+            </Link>
+          )}
+          {user.kind === "consumer" && !mayManageBrokerage(user.purpose) && (
             <>
               <Link
                 href="/home"
@@ -66,7 +79,7 @@ export default function ProfilePage() {
               </Link>
             </>
           )}
-          {(user.kind === "pro" || user.kind === "broker") && (
+          {mayUseStoryPro(user.purpose, user.kind) && (
             <>
               <Link
                 href="/portal"

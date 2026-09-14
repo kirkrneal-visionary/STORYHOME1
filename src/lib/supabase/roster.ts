@@ -78,6 +78,20 @@ export async function acceptInvite(brokerageId: string): Promise<boolean> {
   return Boolean(data);
 }
 
+export async function setTeamLeaderAuthorized(
+  agentId: string,
+  authorized: boolean,
+): Promise<boolean> {
+  const s = getBrowserSupabase();
+  if (!s) throw new Error("Not configured");
+  const { data, error } = await s.rpc("set_team_leader_authorized", {
+    p_agent: agentId,
+    p_authorized: authorized,
+  });
+  if (error) throw error;
+  return Boolean(data);
+}
+
 export async function removeAgent(agentId: string): Promise<boolean> {
   const s = getBrowserSupabase();
   if (!s) throw new Error("Not configured");

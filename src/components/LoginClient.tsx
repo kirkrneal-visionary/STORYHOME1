@@ -1,28 +1,35 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
+import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
+import { PendingEmailPanel } from "@/components/auth/PendingEmailPanel";
+import { RecoveryPasswordForm } from "@/components/auth/RecoveryPasswordForm";
 import {
   DEMO_ACCOUNTS,
   DEMO_BROKER,
   PRO_ROLE_LABELS,
   type ProRole,
 } from "@/lib/auth";
+import {
+  GENERIC_AUTH_SENT,
+  needsMfaChallenge,
+  needsMfaEnrollment,
+  shouldStayOnLogin,
+} from "@/lib/account/assurance";
+import { destForUser } from "@/lib/account/purpose";
 import { cn } from "@/lib/utils";
-
-/** Where a user lands after login, based on their account type. */
-function destForKind(kind: string): string {
-  if (kind === "pro" || kind === "broker") return "/portal";
-  if (kind === "seller") return "/";
-  return "/home";
-}
 
 export function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
+  const pendingParam = searchParams.get("pending");
+  const recoveryMode =
+    searchParams.get("mode") === "recovery" ||
+    searchParams.get("type") === "recovery";
   const {
     loginAs,
     loginSellerWithCode,
@@ -32,22 +39,83 @@ export function LoginClient() {
     supabaseConfigured,
     signInWithPassword,
     signUp,
+    resetPasswordForEmail,
+    resendConfirmation,
+    updatePassword,
+    refreshAssurance,
   } = useAuth();
   const [sellerCode, setSellerCode] = useState("");
   const [error, setError] = useState("");
+  const [recoverySaved, setRecoverySaved] = useState(false);
 
-  // Route to the correct home once signed in (fresh login or visiting /login
-  // while already authenticated). Respects an explicit ?next= destination.
+  const demoSession =
+    !!user &&
+    user.emailConfirmed === undefined &&
+    user.aal === undefined;
+  const pendingEmail =
+    pendingParam === "email" ||
+    (isLoggedIn && !demoSession && user?.emailConfirmed === false);
+  const pendingMfa =
+    pendingParam === "mfa" ||
+    (isLoggedIn &&
+      !demoSession &&
+      !!user &&
+      (needsMfaChallenge({
+        purpose: user.purpose,
+        kind: user.kind,
+        enrolled: user.mfaEnrolled === true,
+        currentAal: user.aal,
+      }) ||
+        needsMfaEnrollment({
+          purpose: user.purpose,
+          kind: user.kind,
+          enrolled: user.mfaEnrolled === true,
+        })));
+
+  const stay = shouldStayOnLogin({
+    recoveryMode: recoveryMode && !recoverySaved,
+    pendingEmail,
+    pendingMfa: pendingMfa && !needsMfaEnrollment({
+      purpose: user?.purpose,
+      kind: user?.kind,
+      enrolled: user?.mfaEnrolled === true,
+    }),
+  });
+
+  const enrollMfa =
+    isLoggedIn &&
+    !demoSession &&
+    !!user &&
+    needsMfaEnrollment({
+      purpose: user.purpose,
+      kind: user.kind,
+      enrolled: user.mfaEnrolled === true,
+    });
+
+  const continueTo = useMemo(() => {
+    if (!user) return next !== "/" ? next : "/";
+    return next !== "/" ? next : destForUser(user);
+  }, [next, user]);
+
+  // Route to the correct home once signed in — never hijack pending email,
+  // MFA, or password-recovery.
   useEffect(() => {
-    // Sellers navigate via their own passcode flow — don't hijack them here.
-    if (isLoggedIn && user && user.kind !== "seller") {
-      router.replace(next !== "/" ? next : destForKind(user.kind));
+    if (enrollMfa) {
+      router.replace("/settings?setup=mfa");
+      return;
     }
-  }, [isLoggedIn, user, next, router]);
+    if (isLoggedIn && user && user.kind !== "seller" && !stay) {
+      router.replace(continueTo);
+    }
+  }, [isLoggedIn, user, stay, enrollMfa, continueTo, router]);
 
   function goNext() {
-    if (!user) return; // the effect above redirects once the session resolves
-    router.push(next !== "/" ? next : destForKind(user.kind));
+    if (enrollMfa) {
+      router.push("/settings?setup=mfa");
+      return;
+    }
+    if (!user) return;
+    router.push(continueTo);
   }
 
   async function onSellerSubmit(e: FormEvent) {
@@ -58,6 +126,71 @@ export function LoginClient() {
       return;
     }
     router.push(`/seller/portal/${sellerCode.trim().toLowerCase()}`);
+  }
+
+  if (isLoggedIn && user && (stay || enrollMfa || recoveryMode)) {
+    return (
+      <div className="mx-auto max-w-lg px-4 pb-24 pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
+        <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
+          Finish signing in
+        </p>
+        <h1 className="type-page-title mt-2 text-ink">
+          {recoveryMode && !recoverySaved
+            ? "Set a new password"
+            : pendingEmail
+              ? "Confirm your email"
+              : enrollMfa
+                ? "Turn on authenticator"
+                : "Authenticator check"}
+        </h1>
+        {recoveryMode && !recoverySaved && (
+          <RecoveryPasswordForm
+            updatePassword={updatePassword}
+            onSaved={() => {
+              setRecoverySaved(true);
+              void refreshAssurance();
+            }}
+          />
+        )}
+        {(!recoveryMode || recoverySaved) && pendingEmail && (
+          <PendingEmailPanel
+            email={user.email}
+            onResend={resendConfirmation}
+          />
+        )}
+        {(!recoveryMode || recoverySaved) && !pendingEmail && enrollMfa && (
+          <div className="mt-4 space-y-3">
+            <p className="text-sm text-[var(--muted)]">
+              Realtor and office accounts need an authenticator app. Settings
+              stays open so you can finish this.
+            </p>
+            <Link
+              href="/settings?setup=mfa"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-gold px-5 text-sm font-bold text-navy"
+            >
+              Open settings
+            </Link>
+          </div>
+        )}
+        {(!recoveryMode || recoverySaved) &&
+          !pendingEmail &&
+          !enrollMfa &&
+          pendingMfa && (
+            <MfaChallengeForm
+              onVerified={() => {
+                void refreshAssurance().then(() => goNext());
+              }}
+            />
+          )}
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-6 h-11 rounded-xl border border-hairline px-5 text-sm font-semibold text-ink"
+        >
+          Log out
+        </button>
+      </div>
+    );
   }
 
   if (isLoggedIn && user) {
@@ -150,6 +283,7 @@ export function LoginClient() {
         <RealAuthForm
           signInWithPassword={signInWithPassword}
           signUp={signUp}
+          resetPasswordForEmail={resetPasswordForEmail}
           onDone={goNext}
         />
       )}
@@ -271,7 +405,9 @@ export function LoginClient() {
   );
 }
 
-type AuthResult = { ok: true } | { ok: false; error: string };
+type AuthResult =
+  | { ok: true; needsMfa?: boolean; emailUnconfirmed?: boolean }
+  | { ok: false; error: string; emailUnconfirmed?: boolean };
 
 type TrecResult = {
   found: boolean;
@@ -289,6 +425,7 @@ type TrecResult = {
 function RealAuthForm({
   signInWithPassword,
   signUp,
+  resetPasswordForEmail,
   onDone,
 }: {
   signInWithPassword: (email: string, password: string) => Promise<AuthResult>;
@@ -305,9 +442,10 @@ function RealAuthForm({
       sponsorName?: string;
     },
   ) => Promise<AuthResult>;
+  resetPasswordForEmail: (email: string) => Promise<AuthResult>;
   onDone: () => void;
 }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -361,6 +499,14 @@ function RealAuthForm({
     setError("");
     setNotice("");
 
+    if (mode === "reset") {
+      setBusy(true);
+      await resetPasswordForEmail(email);
+      setBusy(false);
+      setNotice(GENERIC_AUTH_SENT);
+      return;
+    }
+
     if (mode === "signup" && requiresLicense && !verified?.approved) {
       setError(
         "Please verify an ACTIVE TREC license before creating a pro account.",
@@ -391,13 +537,14 @@ function RealAuthForm({
     setBusy(false);
     if (!result.ok) {
       setError(result.error);
+      if (result.emailUnconfirmed) {
+        setNotice("Confirm your email to continue. Check your inbox for the link.");
+      }
       return;
     }
-    if (mode === "signup") {
+    if (mode === "signup" || result.emailUnconfirmed) {
       setNotice(
-        requiresLicense
-          ? "Account created. Sign in to finish realtor access. If email confirmation is on, confirm first."
-          : "Account created. If email confirmation is enabled, confirm via email, then sign in.",
+        "Check your email to confirm this account. We will not open your home until that mailbox is confirmed.",
       );
       setMode("signin");
       return;
@@ -542,15 +689,17 @@ function RealAuthForm({
         className={inputCls}
         required
       />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        className={inputCls}
-        required
-        minLength={6}
-      />
+      {mode !== "reset" && (
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          className={inputCls}
+          required
+          minLength={6}
+        />
+      )}
 
       {error && <p className="text-sm text-red-300">{error}</p>}
       {notice && <p className="text-sm text-teal-soft">{notice}</p>}
@@ -565,12 +714,28 @@ function RealAuthForm({
       >
         {busy
           ? "Working…"
-          : mode === "signin"
-            ? "Sign in"
-            : requiresLicense && !verified?.approved
-              ? "Verify license to continue"
-              : "Create account"}
+          : mode === "reset"
+            ? "Send reset email"
+            : mode === "signin"
+              ? "Sign in"
+              : requiresLicense && !verified?.approved
+                ? "Verify license to continue"
+                : "Create account"}
       </button>
+
+      {mode !== "signup" && (
+        <button
+          type="button"
+          onClick={() => {
+            setMode(mode === "reset" ? "signin" : "reset");
+            setError("");
+            setNotice("");
+          }}
+          className="w-full text-center text-xs font-semibold text-gold hover:underline"
+        >
+          {mode === "reset" ? "Back to sign in" : "Forgot password"}
+        </button>
+      )}
     </form>
   );
 }

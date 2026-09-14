@@ -27,7 +27,7 @@ const initialsOf = (name: string) =>
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function toMember(r: any): Member {
   const role: OrgRole = r.account_kind === "broker" ? "broker" : "agent";
-  const name = r.full_name || r.email || "Member";
+  const name = r.full_name || "Member";
   return {
     id: r.id,
     name,
@@ -105,7 +105,7 @@ const A_SELECT = "*, author:profiles!answers_author_id_fkey(full_name, credentia
 export async function fetchMyMember(userId: string): Promise<Member | null> {
   const { data, error } = await client()
     .from("profiles")
-    .select("id, full_name, email, initials, account_kind, professional_role, credential, brokerage_id, team_leader_authorized")
+    .select("id, full_name, initials, account_kind, professional_role, credential, brokerage_id, team_leader_authorized")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -115,7 +115,7 @@ export async function fetchMyMember(userId: string): Promise<Member | null> {
 export async function fetchRoster(brokerageId: string): Promise<Member[]> {
   const { data, error } = await client()
     .from("profiles")
-    .select("id, full_name, email, initials, account_kind, professional_role, credential, brokerage_id, team_leader_authorized")
+    .select("id, full_name, initials, account_kind, professional_role, credential, brokerage_id, team_leader_authorized")
     .eq("brokerage_id", brokerageId);
   if (error) throw error;
   return (data ?? []).map(toMember);

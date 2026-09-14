@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
+import { mayUseStoryPro } from "@/lib/account/purpose";
 import { MyToolsView } from "@/components/broker/MyToolsView";
 import { MyListingsView } from "@/components/broker/MyListingsView";
 import { MyBuyersView } from "@/components/broker/MyBuyersView";
@@ -103,7 +104,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
     router.replace(`/portal?${params.toString()}`, { scroll: false });
   }
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn || !user) {
     return (
       <Gate
         title="Story Pro"
@@ -113,7 +114,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
     );
   }
 
-  if (user?.kind !== "pro" && user?.kind !== "broker") {
+  if (!mayUseStoryPro(user.purpose, user.kind)) {
     return (
       <Gate
         title="For professionals"

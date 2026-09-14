@@ -15,6 +15,11 @@ import {
   type ProRole,
   parseStoredUser,
 } from "@/lib/auth";
+import {
+  parseAssuranceLevel,
+  signInPublicMessage,
+} from "@/lib/account/assurance";
+import { navRoleForAccount, type AccountPurpose } from "@/lib/account/purpose";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
 import {
@@ -30,7 +35,9 @@ function accountKindForAnalytics(user: AuthUser): AccountKindProp {
   return "unknown";
 }
 
-type AuthResult = { ok: true } | { ok: false; error: string };
+export type AuthResult =
+  | { ok: true; needsMfa?: boolean; emailUnconfirmed?: boolean }
+  | { ok: false; error: string; emailUnconfirmed?: boolean };
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -55,6 +62,11 @@ type AuthContextType = {
       sponsorName?: string;
     },
   ) => Promise<AuthResult>;
+  resetPasswordForEmail: (email: string) => Promise<AuthResult>;
+  resendConfirmation: (email: string) => Promise<AuthResult>;
+  updatePassword: (password: string) => Promise<AuthResult>;
+  signOutEverywhere: () => Promise<void>;
+  refreshAssurance: () => Promise<void>;
   logout: () => void;
 };
 
@@ -120,7 +132,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return;
       }
-      if (!promoted.has(userId)) {
+
+      let emailConfirmed = false;
+      let aal: AuthUser["aal"];
+      let mfaEnrolled = false;
+      try {
+        const { data: authUser } = await supabase!.auth.getUser();
+        emailConfirmed = Boolean(authUser.user?.email_confirmed_at);
+        const { data: aalData } =
+          await supabase!.auth.mfa.getAuthenticatorAssuranceLevel();
+        aal = parseAssuranceLevel(aalData?.currentLevel) ?? undefined;
+        const { data: factors } = await supabase!.auth.mfa.listFactors();
+        mfaEnrolled = Boolean(
+          factors?.totp?.some((f) => f.status === "verified"),
+        );
+      } catch {
+        emailConfirmed = false;
+      }
+
+      if (emailConfirmed && !promoted.has(userId)) {
         promoted.add(userId);
         try {
           await fetch("/api/account/promote-pro", { method: "POST" });
@@ -130,16 +160,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       let name = email?.split("@")[0] ?? "Member";
       let kind: AccountKind = "consumer";
+      let purpose: AccountPurpose | undefined;
       let proRole: ProRole | undefined;
       try {
         const { data } = await supabase!
           .from("profiles")
-          .select("full_name, account_kind, professional_role")
+          .select("full_name, account_kind, account_purpose, professional_role")
           .eq("id", userId)
           .maybeSingle();
         if (data) {
           name = data.full_name || name;
           kind = kindFromAccount(data.account_kind);
+          purpose = (data.account_purpose as AccountPurpose | null) ?? undefined;
           proRole = (data.professional_role as ProRole | null) ?? undefined;
         }
       } catch {
@@ -152,9 +184,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email ?? "",
         initials: initialsOf(name),
         kind,
+        purpose,
         proRole,
+        emailConfirmed,
+        aal,
+        mfaEnrolled,
       });
-      setRole(kind === "consumer" ? "consumer" : "professional");
+      setRole(navRoleForAccount(purpose, kind));
       setReady(true);
     }
 
@@ -181,11 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (next: AuthUser) => {
       setUser(next);
       persistUser(next);
-      setRole(
-        next.kind === "pro" || next.kind === "broker"
-          ? "professional"
-          : "consumer",
-      );
+      setRole(navRoleForAccount(next.purpose, next.kind));
       track("auth_login_succeeded", {
         account_kind: accountKindForAnalytics(next),
       });
@@ -266,12 +298,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
       if (error) {
+        const emailUnconfirmed =
+          error.message.toLowerCase().includes("not confirmed");
         return {
           ok: false,
-          error: "Unable to sign in. Check your email and password.",
+          error: signInPublicMessage(error.message),
+          emailUnconfirmed,
         };
       }
-      return { ok: true };
+      let emailUnconfirmed = false;
+      let needsMfa = false;
+      try {
+        const { data: authUser } = await supabase.auth.getUser();
+        emailUnconfirmed = !authUser.user?.email_confirmed_at;
+        const { data: aal } =
+          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        needsMfa =
+          aal?.nextLevel === "aal2" && aal?.currentLevel !== "aal2";
+      } catch {
+        // session still established
+      }
+      return { ok: true, needsMfa, emailUnconfirmed };
     },
     [supabase],
   );
@@ -311,14 +358,107 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: "Unable to create this account. Try again or sign in.",
         };
       }
+      return { ok: true, emailUnconfirmed: true };
+    },
+    [supabase],
+  );
+
+  const resetPasswordForEmail = useCallback(
+    async (email: string): Promise<AuthResult> => {
+      if (!supabase) return { ok: false, error: "Auth is not configured." };
+      const origin = window.location.origin;
+      await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${origin}/login?mode=recovery`,
+      });
       return { ok: true };
     },
     [supabase],
   );
 
+  const resendConfirmation = useCallback(
+    async (email: string): Promise<AuthResult> => {
+      if (!supabase) return { ok: false, error: "Auth is not configured." };
+      if (email.trim()) {
+        await supabase.auth.resend({ type: "signup", email: email.trim() });
+      } else {
+        await fetch("/api/account/resend-confirmation", { method: "POST" });
+      }
+      return { ok: true };
+    },
+    [supabase],
+  );
+
+  const updatePassword = useCallback(
+    async (password: string): Promise<AuthResult> => {
+      if (!supabase) return { ok: false, error: "Auth is not configured." };
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        return { ok: false, error: "Unable to set a new password." };
+      }
+      await supabase.auth.signOut({ scope: "others" });
+      return { ok: true };
+    },
+    [supabase],
+  );
+
+  const signOutEverywhere = useCallback(async () => {
+    if (supabase) {
+      await fetch("/api/account/sign-out-all", { method: "POST" });
+      await supabase.auth.signOut({ scope: "global" });
+    }
+    setUser(null);
+    persistUser(null);
+    setRole("consumer");
+  }, [supabase, setRole]);
+
+  const refreshAssurance = useCallback(async () => {
+    if (!supabase) return;
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    if (!session?.user) return;
+    try {
+      const { data: authUser } = await supabase.auth.getUser();
+      const { data: aal } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, account_kind, account_purpose, professional_role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      const purpose = (profile?.account_purpose as AccountPurpose | null) ?? undefined;
+      const kind = profile
+        ? kindFromAccount(profile.account_kind)
+        : undefined;
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: profile?.full_name || prev.name,
+              email: authUser.user?.email ?? prev.email,
+              emailConfirmed: Boolean(authUser.user?.email_confirmed_at),
+              aal: parseAssuranceLevel(aal?.currentLevel) ?? prev.aal,
+              mfaEnrolled: Boolean(
+                factors?.totp?.some((f) => f.status === "verified"),
+              ),
+              purpose: purpose ?? prev.purpose,
+              kind: kind ?? prev.kind,
+              proRole:
+                (profile?.professional_role as ProRole | null) ?? prev.proRole,
+            }
+          : prev,
+      );
+      if (kind || purpose) {
+        setRole(navRoleForAccount(purpose, kind ?? "consumer"));
+      }
+    } catch {
+      // keep last known user
+    }
+  }, [supabase, setRole]);
+
   const logout = useCallback(() => {
     if (supabase) {
-      void supabase.auth.signOut();
+      void supabase.auth.signOut({ scope: "local" });
     }
     setUser(null);
     persistUser(null);
@@ -336,6 +476,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginConsumer,
       signInWithPassword,
       signUp,
+      resetPasswordForEmail,
+      resendConfirmation,
+      updatePassword,
+      signOutEverywhere,
+      refreshAssurance,
       logout,
     }),
     [
@@ -348,6 +493,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginConsumer,
       signInWithPassword,
       signUp,
+      resetPasswordForEmail,
+      resendConfirmation,
+      updatePassword,
+      signOutEverywhere,
+      refreshAssurance,
       logout,
     ],
   );
