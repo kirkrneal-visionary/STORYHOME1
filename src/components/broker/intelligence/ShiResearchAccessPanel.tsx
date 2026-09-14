@@ -75,7 +75,7 @@ export function ShiResearchAccessPanel({
       ) : null}
 
       <p
-        className="mt-2 font-serif text-xl font-bold tabular-nums text-ink"
+        className="mt-2 type-card-title tabular-nums text-ink"
         data-research-access-frontage
       >
         {formatApproxFrontageFt(intel?.totalApproxFrontageFt ?? 0)}

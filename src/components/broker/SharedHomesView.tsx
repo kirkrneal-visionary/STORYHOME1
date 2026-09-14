@@ -50,7 +50,7 @@ export function SharedHomesView() {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="font-serif text-2xl font-bold text-ink">Client Homes</h2>
+        <h2 className="type-section text-ink">Client Homes</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
           Homeowner files shared with you. Read‑only, and only what each owner
           chose to share — they can revoke access anytime.
@@ -71,7 +71,7 @@ export function SharedHomesView() {
               className="flex items-center justify-between gap-3 story-surface p-4 text-left hover:border-gold/40"
             >
               <div className="min-w-0">
-                <p className="truncate font-serif text-lg font-bold text-ink">
+                <p className="truncate type-card-title text-ink">
                   {s.home.nickname}
                 </p>
                 <p className="truncate text-xs text-[var(--muted)]">
@@ -140,7 +140,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
         </div>
         <div className="p-5">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-serif text-2xl font-bold text-ink">{home.nickname}</h3>
+            <h3 className="type-section text-ink">{home.nickname}</h3>
             <span className={cn("rounded-full px-2.5 py-1 font-mono text-[10px] font-bold uppercase", scope === "full" ? "bg-teal-soft text-paper" : "border border-hairline text-[var(--muted)]")}>{scope === "full" ? "Full file" : "Report only"}</span>
           </div>
           <p className="mt-1 text-sm text-[var(--muted)]">
@@ -261,7 +261,7 @@ function SharedHomeDetail({ shared, onBack }: { shared: SharedHome; onBack: () =
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="story-surface p-5">
-      <h4 className="mb-3 font-serif text-lg font-bold text-ink">{title}</h4>
+      <h4 className="mb-3 type-card-title text-ink">{title}</h4>
       {children}
     </section>
   );

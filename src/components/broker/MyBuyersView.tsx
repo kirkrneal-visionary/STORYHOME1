@@ -77,7 +77,7 @@ export function MyBuyersView() {
 
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-ink">My pipeline</h2>
+          <h2 className="type-section text-ink">My pipeline</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             {buyers.length} buyer{buyers.length === 1 ? "" : "s"} in your CRM.
           </p>
@@ -201,7 +201,7 @@ function BuyerCard({ buyer, agentId, onChanged }: { buyer: Buyer; agentId: strin
     <article className="story-card p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-serif text-lg font-bold text-ink">{buyer.name}</p>
+          <p className="truncate type-card-title text-ink">{buyer.name}</p>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-[var(--muted)]">
             {buyer.preApproved && (<span className="inline-flex items-center gap-1 text-teal-soft"><BadgeCheck className="h-3.5 w-3.5" /> Pre-approved</span>)}
             {buyer.source && <span className="rounded-full border border-hairline px-2 py-0.5">{buyer.source}</span>}
@@ -285,7 +285,7 @@ function CampaignPanel({ agentId }: { agentId: string }) {
   return (
     <div className="story-surface">
       <button type="button" onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between p-4">
-        <span className="inline-flex items-center gap-2 font-serif text-lg font-bold text-ink"><Megaphone className="h-5 w-5 text-[var(--muted)]" /> Lead sources & campaigns</span>
+        <span className="inline-flex items-center gap-2 type-card-title text-ink"><Megaphone className="h-5 w-5 text-[var(--muted)]" /> Lead sources & campaigns</span>
         <ChevronDown className={cn("h-5 w-5 text-[var(--muted)] transition-transform", open && "rotate-180")} />
       </button>
       {open && (

@@ -74,14 +74,14 @@ export function HomeSearchHero() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,21,37,0.68)_0%,rgba(14,30,56,0.72)_48%,rgba(9,21,37,0.92)_100%)]" />
 
         <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-[calc(var(--story-safe-top)+3rem)] md:min-h-[85vh] md:px-6 md:pt-[calc(var(--story-safe-top)+4rem)]">
-          <p className="font-serif text-3xl font-bold tracking-[-0.03em] text-paper md:text-4xl">
+          <p className="story-wordmark text-[var(--type-brand)] text-paper">
             <span className="text-[var(--brand-word)]">STORY</span>
             <span className="text-[var(--brand-home)]">HOME</span>
           </p>
-          <h1 className="mt-4 max-w-3xl font-serif text-4xl font-semibold tracking-[-0.03em] text-paper md:text-6xl">
+          <h1 className="type-hero mt-4 max-w-3xl text-paper">
             Find your next home in East Texas.
           </h1>
-          <p className="mt-3 max-w-xl text-base text-paper/80 md:text-lg">
+          <p className="type-prose mt-3 max-w-xl text-paper/80">
             Search across seven launch counties — then grow with Story Home.
           </p>
 
@@ -99,7 +99,7 @@ export function HomeSearchHero() {
                   type="button"
                   onClick={() => setIntent(key)}
                   className={cn(
-                    "story-press flex-1 px-3 py-3 text-sm font-semibold transition-colors md:px-4",
+                    "story-press type-control min-h-11 flex-1 px-3 py-3 font-semibold transition-colors md:px-4",
                     intent === key
                       ? "bg-gold text-navy"
                       : "text-paper/75 hover:text-paper",
@@ -140,7 +140,7 @@ export function HomeSearchHero() {
       <section className="mx-auto max-w-6xl px-4 py-14 md:px-6">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="font-serif text-2xl font-bold text-paper md:text-3xl">
+            <h2 className="type-section text-paper">
               Launch counties
             </h2>
             <p className="mt-1 text-sm text-paper/65">
@@ -166,7 +166,7 @@ export function HomeSearchHero() {
               <p className="font-semibold text-paper">
                 {county.name.replace(" County", "")}
               </p>
-              <p className="mt-1 font-mono text-[11px] text-paper/50 uppercase">
+              <p className="type-meta mt-1 text-paper/50">
                 {county.hubCity}
               </p>
             </button>
@@ -191,7 +191,7 @@ export function HomeSearchHero() {
         <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
           <div className="mb-6 flex items-end justify-between">
             <div>
-              <h2 className="font-serif text-2xl font-bold text-paper md:text-3xl">
+              <h2 className="type-section text-paper">
                 Homes in East Texas right now
               </h2>
               <p className="mt-1 text-sm text-paper/65">
@@ -207,7 +207,7 @@ export function HomeSearchHero() {
           </div>
           {featuredLoaded && featured.length === 0 ? (
             <div className="story-well p-10 text-center">
-              <p className="font-serif text-xl font-bold text-paper">
+              <p className="type-card-title text-paper">
                 No listings yet
               </p>
               <p className="mt-2 text-sm text-paper/65">
@@ -261,7 +261,7 @@ function ToolCard({
 }) {
   return (
     <Link href={href} className="story-card story-press block p-6">
-      <h3 className="font-serif text-xl font-bold text-paper">{title}</h3>
+      <h3 className="type-card-title text-paper">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-paper/65">{body}</p>
       <span className="mt-5 inline-block text-sm font-semibold text-gold">
         {cta} →

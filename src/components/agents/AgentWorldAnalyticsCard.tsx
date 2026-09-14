@@ -41,7 +41,7 @@ export function AgentWorldAnalyticsCard({ summary }: Props) {
         <p className="font-mono text-[10px] tracking-[0.14em] text-gold uppercase">
           Your world · plain English
         </p>
-        <h2 className="mt-1 font-serif text-xl font-bold text-ink md:text-2xl">
+        <h2 className="mt-1 type-card-title text-ink md:text-2xl">
           How people meet you here
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">
@@ -136,7 +136,7 @@ function MetricGroup({
 }) {
   return (
     <div className="mt-6 border-t border-hairline pt-5">
-      <h3 className="font-serif text-lg font-bold text-ink">{title}</h3>
+      <h3 className="type-card-title text-ink">{title}</h3>
       <p className="mt-1 text-xs text-[var(--muted)]">{blurb}</p>
       <ul className="mt-4 space-y-4">{children}</ul>
     </div>
@@ -158,7 +158,7 @@ function MetricRow({
       className="flex gap-4"
     >
       <div className="w-16 shrink-0 text-right md:w-20">
-        <p className="font-serif text-3xl font-bold leading-none text-ink">
+        <p className="type-page-title leading-none text-ink">
           {value}
         </p>
         {pct != null ? (

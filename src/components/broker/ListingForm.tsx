@@ -194,7 +194,7 @@ export function ListingForm({
   return (
     <div className="space-y-6" data-unsaved={unsaved ? "true" : undefined}>
       <div className="flex items-center justify-between gap-4">
-        <h3 className="font-serif text-2xl font-bold text-ink">
+        <h3 className="type-section text-ink">
           {initial.streetAddress ? "Edit listing" : "New listing"}
         </h3>
         <button
@@ -570,7 +570,7 @@ function CompliancePanel({
         ) : (
           <AlertTriangle className="h-5 w-5 text-red-300" />
         )}
-        <h4 className="font-serif text-lg font-bold text-ink">
+        <h4 className="type-card-title text-ink">
           Compliance check
         </h4>
       </div>

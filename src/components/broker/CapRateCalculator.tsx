@@ -62,7 +62,7 @@ export function CapRateCalculator() {
           <TrendingUp className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="font-serif text-xl font-bold text-ink">
+          <h3 className="type-card-title text-ink">
             Cap rate &amp; NOI
           </h3>
           <p className="text-xs text-[var(--muted)]">

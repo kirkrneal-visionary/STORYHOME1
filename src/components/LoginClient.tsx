@@ -63,7 +63,7 @@ export function LoginClient() {
   if (isLoggedIn && user) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-24 pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
-        <h1 className="font-serif text-3xl font-bold text-ink">
+        <h1 className="type-page-title text-ink">
           You’re signed in
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
@@ -94,7 +94,7 @@ export function LoginClient() {
       <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
         Story Home access
       </p>
-      <h1 className="mt-2 font-serif text-4xl font-bold text-ink">
+      <h1 className="type-hero mt-2 text-ink">
         Log in to continue
       </h1>
       <p className="mt-3 text-sm text-[var(--muted)]">
@@ -157,7 +157,7 @@ export function LoginClient() {
       {!supabaseConfigured && (
         <>
       <section className="mt-10">
-        <h2 className="font-serif text-xl font-bold text-ink">
+        <h2 className="type-section text-ink">
           Consumer (Buyer)
         </h2>
         <button
@@ -173,7 +173,7 @@ export function LoginClient() {
       </section>
 
       <section className="mt-8">
-        <h2 className="font-serif text-xl font-bold text-ink">Pro accounts</h2>
+        <h2 className="type-section text-ink">Pro accounts</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {(
             ["realtor_broker", "inspector", "appraiser", "lender"] as ProRole[]
@@ -200,7 +200,7 @@ export function LoginClient() {
       </section>
 
       <section className="mt-8">
-        <h2 className="font-serif text-xl font-bold text-ink">
+        <h2 className="type-section text-ink">
           The Brokerage (Broker of Record)
         </h2>
         <p className="mt-1 text-xs text-[var(--muted)]">
@@ -227,7 +227,7 @@ export function LoginClient() {
       )}
 
       <section className="mt-8">
-        <h2 className="font-serif text-xl font-bold text-ink">
+        <h2 className="type-section text-ink">
           Seller (realtor passcode)
         </h2>
         {!supabaseConfigured ? (

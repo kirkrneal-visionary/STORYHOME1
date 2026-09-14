@@ -22,7 +22,6 @@ import { SharedHomesView } from "@/components/broker/SharedHomesView";
 import { CommunityView } from "@/components/broker/CommunityView";
 import { ShiWorkspace } from "@/components/broker/intelligence/ShiWorkspace";
 import { track, type PortalTabProp } from "@/lib/analytics";
-import { SHI_PRODUCT } from "@/lib/shi/waves";
 import { cn } from "@/lib/utils";
 
 type PortalTab =
@@ -149,7 +148,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
           <div className="mb-3">
             <Link
               href="/portal?tab=tools"
-              className="inline-flex w-fit items-center gap-1.5 font-mono text-[11px] font-semibold tracking-[0.12em] text-[var(--muted)] uppercase transition-colors hover:text-ink"
+              className="type-control inline-flex min-h-11 w-fit items-center gap-1.5 font-semibold text-[var(--muted)] transition-colors hover:text-ink"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               Story Pro
@@ -158,24 +157,19 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
           )
         ) : (
           <>
-            <header className="flex flex-col gap-1">
-              <p className="font-mono text-[11px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
+            <header className="flex flex-col gap-0.5">
+              <p className="type-meta text-[var(--muted)]">
                 Story Pro · {user.name}
               </p>
-              <h1 className="font-serif text-3xl font-bold text-ink md:text-4xl">
-                Story Pro
+              <h1 className="type-page-title text-ink">
+                {TABS.find((t) => t.id === tab)?.label ?? "Story Pro"}
               </h1>
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                List properties, manage clients, and run the numbers — your
-                agent workspace. Open {SHI_PRODUCT.fullName} from the top bar
-                network node.
-              </p>
             </header>
 
             <div
               role="tablist"
               aria-label="Broker portal sections"
-              className="story-chrome mt-6 flex items-center gap-2 overflow-x-auto rounded-[var(--radius-lg)] border p-1.5"
+              className="story-chrome mt-3 flex items-center gap-2 overflow-x-auto rounded-[var(--radius-lg)] border p-1.5"
             >
               {TABS.map(({ id, label, icon: Icon }) => {
                 const active = tab === id;
@@ -188,7 +182,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
                     aria-label={label}
                     onClick={() => selectTab(id)}
                     className={cn(
-                      "story-press inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3.5 text-sm font-semibold transition-colors",
+                      "story-press type-control inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3.5 font-semibold transition-colors",
                       active
                         ? "bg-navy text-gold"
                         : "text-[var(--muted)] hover:bg-white/10 hover:text-ink",
@@ -201,7 +195,7 @@ export function BrokerPortal({ initialTab }: BrokerPortalProps = {}) {
               })}
               <Link
                 href={`/agents/${user.id}`}
-                className="story-press inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3.5 text-sm font-semibold text-[var(--muted)] transition-colors hover:bg-white/10 hover:text-ink"
+                className="story-press type-control inline-flex min-h-11 shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3.5 font-semibold text-[var(--muted)] transition-colors hover:bg-white/10 hover:text-ink"
               >
                 <UserRound className="h-4 w-4" />
                 Public Profile
@@ -235,8 +229,8 @@ function Gate({
 }) {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-lg flex-col items-center justify-center px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] text-center">
-      <h1 className="font-serif text-3xl font-bold text-ink">{title}</h1>
-      <p className="mt-3 text-sm text-[var(--muted)]">{description}</p>
+      <h1 className="type-page-title text-ink">{title}</h1>
+      <p className="type-ui mt-3 text-[var(--muted)]">{description}</p>
       <Link
         href={cta.href}
         className="story-press mt-6 inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-navy px-5 text-sm font-bold text-gold"

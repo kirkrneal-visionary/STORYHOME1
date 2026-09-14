@@ -21,12 +21,13 @@ assert.match(css, /--radius-sheet/);
 assert.doesNotMatch(css, /#7c3aed|#a855f7/i); // no purple trap
 
 const layout = read("src/app/layout.tsx");
-assert.match(layout, /Fraunces/);
-assert.match(layout, /--font-fraunces/);
+assert.doesNotMatch(layout, /Fraunces|Poppins|IBM_Plex_Mono|next\/font/);
+assert.match(read("src/app/globals.css"), /--font-ui/);
+assert.match(read("src/app/globals.css"), /system-ui/);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /story-chrome|story-overlay-header/);
-assert.match(nav, /font-serif/);
+assert.match(nav, /story-wordmark/);
 
 const modal = read("src/components/suites/SaveToSuiteModal.tsx");
 assert.match(modal, /story-sheet/);

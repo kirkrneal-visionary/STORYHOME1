@@ -229,7 +229,7 @@ export function ShiFarmsView() {
                 <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
                   {detail.countyName}
                 </p>
-                <h3 className="mt-1 font-serif text-xl font-bold text-ink">
+                <h3 className="mt-1 type-card-title text-ink">
                   {detail.name}
                 </h3>
                 <p className="mt-1 text-sm text-[var(--muted)]">

@@ -263,7 +263,7 @@ export function StoryWalkComposer({
           <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
             Story Walk
           </p>
-          <h2 className="mt-1 font-serif text-xl font-bold text-ink">
+          <h2 className="mt-1 type-card-title text-ink">
             Your marketing film
           </h2>
           <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[var(--muted)]">

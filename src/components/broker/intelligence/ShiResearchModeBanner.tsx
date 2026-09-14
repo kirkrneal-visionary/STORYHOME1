@@ -20,7 +20,7 @@ export function ShiResearchModeBanner({
         <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
           Archie’s Intelligence · Research
         </p>
-        <h3 className="mt-0.5 font-serif text-xl font-bold text-ink">
+        <h3 className="mt-0.5 type-card-title text-ink">
           {cfg.displayName}
         </h3>
         {mode === "multifamily" ? (
@@ -28,7 +28,7 @@ export function ShiResearchModeBanner({
             <p className="font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
               {MULTIFAMILY_COPY.kicker}
             </p>
-            <p className="mt-0.5 font-serif text-lg font-bold text-ink">
+            <p className="mt-0.5 type-card-title text-ink">
               {MULTIFAMILY_COPY.headline}
             </p>
             <p className="mt-0.5 text-[12px] text-[var(--muted)]">

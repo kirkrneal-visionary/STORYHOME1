@@ -1953,7 +1953,7 @@ export function PropertyIntelligenceView({
                   </p>
                   <div className="mt-2 flex items-end justify-between gap-3">
                     <div>
-                      <p className="font-serif text-3xl font-bold text-ink">
+                      <p className="type-page-title text-ink">
                         {selected.ownershipChurn.index ?? "—"}
                       </p>
                       <p className="text-xs font-semibold text-ink">

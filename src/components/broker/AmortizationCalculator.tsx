@@ -44,7 +44,7 @@ export function AmortizationCalculator() {
           <Calculator className="h-5 w-5" />
         </span>
         <div>
-          <h3 className="font-serif text-xl font-bold text-ink">
+          <h3 className="type-card-title text-ink">
             Mortgage &amp; amortization
           </h3>
           <p className="text-xs text-[var(--muted)]">
@@ -143,7 +143,7 @@ export function AmortizationCalculator() {
             <span className="font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
               Estimated monthly payment
             </span>
-            <p className="mt-1 font-serif text-4xl font-bold text-ink tabular-nums">
+            <p className="mt-1 type-page-title text-ink tabular-nums">
               {usd(result.monthlyTotal, true)}
             </p>
 

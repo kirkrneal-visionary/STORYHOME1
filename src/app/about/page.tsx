@@ -6,7 +6,7 @@ export default function AboutPage() {
   return (
     <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">
       <div className="mx-auto max-w-3xl">
-        <h1 className="font-serif text-4xl font-bold text-ink">About Story Home</h1>
+        <h1 className="type-page-title text-ink">About Story Home</h1>
         <p className="mt-2 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
           Every home has a story.
         </p>
