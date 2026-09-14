@@ -11,7 +11,8 @@ export type SecurityNoticeKind =
   | "signed_out_everywhere"
   | "confirmation_resent"
   | "password_reset_requested"
-  | "office_opened";
+  | "office_opened"
+  | "account_deleted";
 
 export type SecurityNotice = {
   id: string;
@@ -41,6 +42,8 @@ export function noticeLabel(kind: SecurityNoticeKind): string {
       return "Password reset requested";
     case "office_opened":
       return "This login became the office account";
+    case "account_deleted":
+      return "Account deleted";
     default:
       return "Account security change";
   }

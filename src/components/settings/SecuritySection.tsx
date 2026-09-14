@@ -9,6 +9,7 @@ import {
   GENERIC_AUTH_SENT,
   mfaRequired,
 } from "@/lib/account/assurance";
+import { DELETE_CONFIRM_WORD, deleteWarning } from "@/lib/account/delete-account";
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 type Factor = { id: string; status: string; friendlyName?: string };
@@ -50,6 +51,8 @@ export function SecuritySection({
   const [enrollId, setEnrollId] = useState<string | null>(null);
   const [enrollCode, setEnrollCode] = useState("");
   const [needsStepUp, setNeedsStepUp] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState("");
   const [notices, setNotices] = useState<
     { id: string; label: string; at: string }[]
   >([]);
@@ -271,6 +274,40 @@ export function SecuritySection({
     }
   }
 
+  async function onDeleteAccount(e: FormEvent) {
+    e.preventDefault();
+    setBusy("delete");
+    setError("");
+    try {
+      const res = await fetch("/api/account/delete-account", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: deletePassword,
+          confirm: deleteConfirm,
+        }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        code?: string;
+      };
+      if (data.code === "needs_mfa") {
+        setNeedsStepUp(true);
+        setError(data.error ?? "Confirm your authenticator code first.");
+        return;
+      }
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? "Unable to delete this account.");
+        return;
+      }
+      await logout();
+      window.location.assign("/");
+    } finally {
+      setBusy("");
+    }
+  }
+
   if (!user) return null;
 
   const inputCls =
@@ -286,7 +323,7 @@ export function SecuritySection({
         <div>
           <h2 className="type-card-title text-ink">Sign-in &amp; security</h2>
           <p className="text-xs text-[var(--muted)]">
-            Email, password, authenticator, and this device.
+            Email, password, authenticator, this device, and delete account.
           </p>
         </div>
       </div>
@@ -480,6 +517,36 @@ export function SecuritySection({
             </button>
           </div>
         </div>
+
+        <form onSubmit={(e) => void onDeleteAccount(e)}>
+          <p className="text-xs font-semibold text-ink">Delete account</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            {deleteWarning(purpose)}
+          </p>
+          <input
+            type="password"
+            autoComplete="current-password"
+            placeholder="Password"
+            className={`${inputCls} mt-3`}
+            value={deletePassword}
+            onChange={(e) => setDeletePassword(e.target.value)}
+          />
+          <input
+            type="text"
+            autoComplete="off"
+            placeholder={`Type ${DELETE_CONFIRM_WORD}`}
+            className={`${inputCls} mt-2`}
+            value={deleteConfirm}
+            onChange={(e) => setDeleteConfirm(e.target.value)}
+          />
+          <button
+            type="submit"
+            disabled={busy === "delete"}
+            className="mt-3 h-10 rounded-xl border border-red-400/60 px-4 text-sm font-semibold text-red-300"
+          >
+            {busy === "delete" ? "Deleting…" : "Delete this account"}
+          </button>
+        </form>
 
         <div>
           <p className="text-xs font-semibold text-ink">Security notices</p>
