@@ -34,13 +34,13 @@ Canonical live project: **storyhome-1-eqmg**. Ignore the other Vercel check.
 
 ## C. MEDIUM PRIORITY ISSUES
 
-1. `/portal` is only gated in the browser. APIs still require Pro.  
+1. `/portal` is gated on the server (`src/app/portal/layout.tsx`) after TREC promote. APIs still require Pro.  
 2. `profiles` email is readable under the public read policy if a client asks for it.  
 3. Corridor RPCs granted to all `authenticated` users (not only Pro).  
 4. `/api/analytics` accepts catalog events from anyone (now rate-limited).  
 5. No durable (multi-instance) rate store — in-memory + WAF required.  
 6. No CSP/HSTS existed — added in `next.config.ts`.  
-7. Portal / consumer pages need server-side layout guards.
+7. `/portal` has a server layout guard. Other consumer pages still rely on browser checks where noted.
 
 ---
 
