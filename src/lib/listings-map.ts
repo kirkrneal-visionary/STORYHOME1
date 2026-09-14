@@ -9,8 +9,9 @@ import type { ProListing } from "@/lib/pro-listings";
 import { txCountyFipsByName } from "@/lib/tx-counties";
 
 /**
- * Public listing columns. Never include seller_access_code — that passcode
- * is issued only through ensure_seller_access_code / seller_portal_by_code.
+ * Public listing columns. Never include seller_access_code or the 0043
+ * hash/lookup columns. Codes are issued through ensure/rotate RPCs and
+ * checked only on the server via seller_portal_by_code.
  */
 export const LISTING_SELECT =
   "id, agent_id, brokerage_id, created_at, updated_at, mls_number, price, address_serif, city, county_name, county_fips, state, zip, beds, baths, sqft, acres, lot_size, year_built, description, property_type, status, has_office, has_garage, has_pool, has_hoa, photo_urls, lat, lng, listing_agent_name, listing_agent_license, brokerage_name, lead_paint_disclosure_provided, sellers_disclosure_provided, days_on_market, like_count, save_count, comment_count, cad_prop_id, mh_serial_number, mh_hud_label, agent:profiles(id, full_name, initials, professional_role, primary_market_city, reputation_score, star_rating, review_count, bio, avatar_url, photo_url)";

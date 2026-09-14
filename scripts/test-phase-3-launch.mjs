@@ -164,6 +164,11 @@ const mig42 = read("supabase/migrations/0042_seller_portal_rpc_lock.sql");
 assert.match(mig42, /revoke execute on function public.seller_portal_by_code/i);
 assert.doesNotMatch(mig42, /delete from public\.(profiles|listings|county_parcels)/i);
 
+const mig43 = read("supabase/migrations/0043_seller_passcode_hash.sql");
+assert.match(mig43, /seller_access_code_hash/);
+assert.match(mig43, /rotate_seller_access_code/);
+assert.doesNotMatch(mig43, /delete from public\.(profiles|listings|county_parcels)/i);
+
 assert.match(read("docs/PHASE-3-BASELINE.md"), /storyhome-1-eqmg/);
 assert.match(read("docs/PHASE-3-ATTACK-SURFACE.md"), /seller_portal_by_code/);
 assert.match(read("docs/PRODUCTION-RESET-PLAN.md"), /DO NOT DELETE/);

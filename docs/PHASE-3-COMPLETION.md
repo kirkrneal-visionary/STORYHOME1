@@ -29,7 +29,7 @@ Already documented in `docs/PRELAUNCH-FOUNDER-REPORT.md`, plus:
 - Signup metadata can still insert `account_kind=agent` (lock is UPDATE-only)
 - Corridor RPCs granted to any authenticated user
 - `profiles` email readable if a client selects it
-- Seller passcodes still plaintext in DB (column hidden from listings select)
+- Seller passcodes hashed in 0043 (column hidden from listings select; paste 0043 on live)
 
 ## C. CRITICAL ISSUES FIXED
 
@@ -52,7 +52,7 @@ Already documented in `docs/PRELAUNCH-FOUNDER-REPORT.md`, plus:
 | Item | Severity | Notes |
 |---|---|---|
 | Signup metadata → first `account_kind` | HIGH | 0039 locks later updates only |
-| Seller passcodes plaintext | HIGH | Hash after reset; 0040 hides column |
+| Seller passcodes plaintext | HIGH | 0043 hashes; 0040 hides column; paste 0043 |
 | 0042 not applied until SQL | HIGH | Direct RPC remains until applied |
 | Corridor RPCs any login | HIGH | HTTP still Pro-gated |
 | `profiles.email` selectable | MEDIUM | Agent page does not select it |
@@ -200,7 +200,7 @@ No new sounds on rate-limit, analytics, or security events.
 - [ ] Phase 1 + 2 PRs merged / eqmg green for this branch  
 - [ ] Apply 0041 + 0042 in Supabase (after service-role confirmed on eqmg)  
 - [ ] WAF rules in LOG on eqmg  
-- [ ] Seller passcode hashing after reset  
+- [ ] Seller passcode hashing (0043 — paste on live)  
 - [ ] Turnstile on signup/reset only  
 - [ ] Backup + founder **APPROVE RESET** + wipe + post-reset smoke  
 - [ ] Staged load beyond the public GET probe  

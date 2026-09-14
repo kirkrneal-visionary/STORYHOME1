@@ -10,6 +10,11 @@ import {
   noteSellerSuccess,
   sellerAttemptsOpen,
 } from "@/lib/security/seller-attempts";
+import {
+  durableNoteSellerFailure,
+  durableNoteSellerSuccess,
+  durableSellerAttemptsOpen,
+} from "@/lib/seller/attempt-store";
 import { normalizeSellerCode } from "@/lib/security/validate";
 
 export type SellerLookupFail = { ok: false; status: 404 | 429 | 503 };
@@ -55,11 +60,23 @@ export async function lookupSellerPortal(opts: {
     return { ok: false, status: 503 };
   }
 
+  const durableOpen = await durableSellerAttemptsOpen(sb, opts.ip);
+  if (durableOpen === false) {
+    logSecurityEvent({
+      kind: "seller_code_throttled",
+      ip: opts.ip,
+      path: opts.path,
+      status: 429,
+    });
+    return { ok: false, status: 429 };
+  }
+
   const { data, error } = await sb.rpc("seller_portal_by_code", {
     p_code: code,
   });
   if (error || !data) {
     noteSellerFailure(opts.ip);
+    await durableNoteSellerFailure(sb, opts.ip);
     logSecurityEvent({
       kind: "seller_code_denied",
       ip: opts.ip,
@@ -69,9 +86,10 @@ export async function lookupSellerPortal(opts: {
     return { ok: false, status: 404 };
   }
 
-  const portal = mapSellerPortal(data);
+  const portal = mapSellerPortal(data, code);
   if (!portal) {
     noteSellerFailure(opts.ip);
+    await durableNoteSellerFailure(sb, opts.ip);
     logSecurityEvent({
       kind: "seller_code_denied",
       ip: opts.ip,
@@ -83,9 +101,11 @@ export async function lookupSellerPortal(opts: {
 
   if (TERMINAL_STATUSES.has(portal.listing.status)) {
     noteSellerFailure(opts.ip);
+    await durableNoteSellerFailure(sb, opts.ip);
     return { ok: false, status: 404 };
   }
 
   noteSellerSuccess(opts.ip);
+  await durableNoteSellerSuccess(sb, opts.ip);
   return { ok: true, portal };
 }

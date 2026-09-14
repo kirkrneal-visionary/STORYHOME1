@@ -16,6 +16,7 @@ import {
 import { useAuth } from "@/components/AuthContext";
 import {
   ensureSellerAccessCode,
+  rotateSellerAccessCode,
   fetchAgentListings,
   saveListing,
   deleteListing,
@@ -387,12 +388,12 @@ function ListingCard({
 }
 
 /**
- * Generate + reveal the seller access code for a listing. The code is idempotent
- * server-side, so re-generating returns the same code. The agent copies the
- * portal link and shares it with their seller.
+ * Create or rotate the seller listing code. After 0043 the code is hashed at
+ * rest — this screen is the only time the agent sees the plaintext.
  */
 function SellerShare({ listingId }: { listingId: string }) {
   const [code, setCode] = useState<string | null>(null);
+  const [issued, setIssued] = useState(false);
   const [pending, setPending] = useState(false);
   const [copied, setCopied] = useState(false);
   const [err, setErr] = useState("");
@@ -401,11 +402,38 @@ function SellerShare({ listingId }: { listingId: string }) {
     setPending(true);
     setErr("");
     try {
-      const c = await ensureSellerAccessCode(listingId);
-      if (!c) setErr("Could not generate a code for this listing.");
-      else setCode(c);
+      const result = await ensureSellerAccessCode(listingId);
+      if (!result.ok) {
+        setErr("Could not generate a code for this listing.");
+        return;
+      }
+      if (result.created && result.code) {
+        setCode(result.code);
+        setIssued(true);
+        return;
+      }
+      setIssued(true);
+      setCode(null);
     } catch {
       setErr("Could not generate a code. Try again.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function rotate() {
+    setPending(true);
+    setErr("");
+    try {
+      const next = await rotateSellerAccessCode(listingId);
+      if (!next) {
+        setErr("Could not make a new code. Try again.");
+        return;
+      }
+      setCode(next);
+      setIssued(true);
+    } catch {
+      setErr("Could not make a new code. Try again.");
     } finally {
       setPending(false);
     }
@@ -425,7 +453,7 @@ function SellerShare({ listingId }: { listingId: string }) {
 
   return (
     <div className="border-t border-hairline bg-[var(--surface)] px-4 py-2.5">
-      {!code ? (
+      {!code && !issued ? (
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-[10px] tracking-wider text-[var(--muted)] uppercase">
             Seller portal
@@ -440,6 +468,22 @@ function SellerShare({ listingId }: { listingId: string }) {
             {pending ? "Generating…" : "Share with seller"}
           </button>
         </div>
+      ) : !code && issued ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-[var(--muted)]">
+            A seller code is already on this listing. Make a new code only if
+            you lost the old one — the old link will stop working.
+          </p>
+          <button
+            type="button"
+            onClick={rotate}
+            disabled={pending}
+            className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-semibold text-ink disabled:opacity-50"
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            {pending ? "Making new code…" : "Make a new code"}
+          </button>
+        </div>
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0">
@@ -450,6 +494,15 @@ function SellerShare({ listingId }: { listingId: string }) {
               {code}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={rotate}
+            disabled={pending}
+            className="inline-flex items-center gap-1.5 rounded-md border border-hairline px-3 py-1.5 text-xs font-semibold text-ink disabled:opacity-50"
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            {pending ? "Making new code…" : "Make a new code"}
+          </button>
           <button
             type="button"
             onClick={copyLink}

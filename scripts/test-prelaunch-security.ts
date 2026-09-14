@@ -72,6 +72,11 @@ assert.match(hide, /revoke select on public.listings/i);
 assert.match(hide, /mh_hud_label/);
 assert.doesNotMatch(hide, /grant select \([\s\S]*seller_access_code/i);
 assert.doesNotMatch(hide, /delete from public\.(profiles|listings|county_parcels)/i);
+const hash = read("supabase/migrations/0043_seller_passcode_hash.sql");
+assert.match(hash, /seller_access_code_hash/);
+assert.match(hash, /crypt\(/);
+assert.match(hash, /seller_access_attempts/);
+assert.doesNotMatch(hash, /delete from public\.(profiles|listings|county_parcels)/i);
 
 assert.match(read("docs/PRELAUNCH-SECURITY-AUDIT.md"), /storyhome-1-eqmg/);
 assert.match(read("docs/TEST-DATA-RESET-PLAN.md"), /DO NOT DELETE/);
