@@ -50,6 +50,9 @@ export function SecuritySection({
   const [enrollId, setEnrollId] = useState<string | null>(null);
   const [enrollCode, setEnrollCode] = useState("");
   const [needsStepUp, setNeedsStepUp] = useState(false);
+  const [notices, setNotices] = useState<
+    { id: string; label: string; at: string }[]
+  >([]);
 
   const mustMfa = mfaRequired(purpose, kind);
 
@@ -77,6 +80,18 @@ export function SecuritySection({
       }
     } catch {
       // keep last
+    }
+    try {
+      const noticeRes = await fetch("/api/account/security-notices");
+      const noticeData = (await noticeRes.json()) as {
+        ok?: boolean;
+        items?: { id: string; label: string; at: string }[];
+      };
+      if (noticeRes.ok && noticeData.ok) {
+        setNotices(noticeData.items ?? []);
+      }
+    } catch {
+      // inbox is optional
     }
     const supabase = getBrowserSupabase();
     if (!supabase) return;
@@ -212,6 +227,11 @@ export function SecuritySection({
       setEnrollSecret(null);
       setEnrollId(null);
       setEnrollCode("");
+      await fetch("/api/account/security-notices", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kind: "mfa_enrolled" }),
+      });
       await refreshAssurance();
       await loadStatus();
       flash("Authenticator is on.");
@@ -459,6 +479,27 @@ export function SecuritySection({
               Sign out everywhere
             </button>
           </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-ink">Security notices</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            This list is on this server only. Live email is not sent from here.
+          </p>
+          {notices.length === 0 ? (
+            <p className="mt-2 text-xs text-[var(--muted)]">No notices yet.</p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {notices.slice(0, 8).map((n) => (
+                <li key={n.id} className="text-xs text-ink">
+                  {n.label}
+                  <span className="ml-2 font-mono text-[10px] text-[var(--muted)]">
+                    {new Date(n.at).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {error && <p className="text-sm text-red-300">{error}</p>}
