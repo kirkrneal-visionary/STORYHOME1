@@ -7,13 +7,13 @@ export default function FollowingPage() {
   return (
     <div className="min-h-dvh px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
       <div className="mx-auto max-w-5xl">
-        <h1 className="font-serif text-3xl font-bold text-ink">Following</h1>
+        <h1 className="type-page-title text-ink">Following</h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
           Agent following is not available yet.
         </p>
 
         <div className="story-well mt-8 border-dashed p-10 text-center">
-          <p className="font-serif text-xl font-bold text-ink">
+          <p className="type-card-title text-ink">
             Not shipping yet
           </p>
           <p className="mt-2 text-sm text-[var(--muted)]">

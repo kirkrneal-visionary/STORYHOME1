@@ -46,7 +46,7 @@ export function NumberField({
 }) {
   return (
     <label htmlFor={id} className="block">
-      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+      <span className="type-control block text-[var(--muted)]">
         {label}
       </span>
       <span className="mt-1.5 flex items-center rounded-[var(--radius-md)] border border-hairline bg-[color-mix(in_srgb,var(--navy-deep)_70%,var(--background))] shadow-[var(--elev-deboss)] focus-within:border-gold focus-within:shadow-[var(--elev-deboss),var(--ring-focus)]">
@@ -61,14 +61,14 @@ export function NumberField({
           step={step}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-10 w-full bg-transparent px-3 text-sm text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="type-ui min-h-11 w-full bg-transparent px-3 text-ink outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none md:min-h-10"
         />
         {suffix && (
           <span className="pr-3 text-sm text-[var(--muted)]">{suffix}</span>
         )}
       </span>
       {hint && (
-        <span className="mt-1 block text-[11px] text-[var(--muted)]">{hint}</span>
+        <span className="type-caption mt-1 block text-[var(--muted)]">{hint}</span>
       )}
     </label>
   );
@@ -91,7 +91,7 @@ export function TextField({
 }) {
   return (
     <label htmlFor={id} className="block">
-      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+      <span className="type-control block text-[var(--muted)]">
         {label}
       </span>
       <input
@@ -103,7 +103,7 @@ export function TextField({
         className="field-input mt-1.5"
       />
       {hint && (
-        <span className="mt-1 block text-[11px] text-[var(--muted)]">{hint}</span>
+        <span className="type-caption mt-1 block text-[var(--muted)]">{hint}</span>
       )}
     </label>
   );
@@ -126,7 +126,7 @@ export function TextAreaField({
 }) {
   return (
     <label htmlFor={id} className="block">
-      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+      <span className="type-control block text-[var(--muted)]">
         {label}
       </span>
       <textarea
@@ -156,7 +156,7 @@ export function SelectField({
 }) {
   return (
     <label htmlFor={id} className="block">
-      <span className="block font-mono text-[11px] font-semibold tracking-wider text-[var(--muted)] uppercase">
+      <span className="type-control block text-[var(--muted)]">
         {label}
       </span>
       <select

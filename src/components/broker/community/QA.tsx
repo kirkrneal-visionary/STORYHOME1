@@ -70,7 +70,7 @@ export function CommunityQA({ member }: { member: Member }) {
     <div>
       <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
         <div>
-          <h3 className="font-serif text-xl font-bold text-ink">Pro Q&amp;A</h3>
+          <h3 className="type-card-title text-ink">Pro Q&amp;A</h3>
           <p className="mt-0.5 text-sm text-[var(--muted)]">
             Ask credentialed pros across brokerages — finance, inspection,
             appraisal, market, and more.
@@ -214,7 +214,7 @@ function QuestionDetail({
           {question.category}
           {question.tags.length > 0 && ` · ${question.tags.join(", ")}`}
         </p>
-        <h3 className="mt-1 font-serif text-2xl font-bold text-ink">
+        <h3 className="mt-1 type-section text-ink">
           {question.title}
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-ink">{question.body}</p>

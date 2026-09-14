@@ -15,7 +15,7 @@ Premium two-sided real estate marketplace and professional network.
 | Ink | `#20242C` | Body text |
 | Hairline | `rgba(21,42,78,0.14)` | Borders |
 
-**Typography:** Fraunces (display) · Inter (UI) · IBM Plex Mono (data/labels)
+**Typography:** Platform UI stack (`system-ui`, Segoe UI, Roboto, Helvetica, Arial). See `docs/DESIGN-TYPOGRAPHY.md`.
 
 **Wayfinding:** Consumer = warm Paper + Gold · Professional = cool Navy + Teal
 

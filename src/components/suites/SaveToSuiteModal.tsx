@@ -36,7 +36,7 @@ export function SaveToSuiteModal({
         />
         <div className="story-sheet relative z-[1] p-5 sm:p-6">
           <div className="story-sheet-handle" />
-          <h3 className="font-serif text-2xl font-bold">Save to a Suite</h3>
+          <h3 className="type-section">Save to a Suite</h3>
           <p className="mt-2 text-sm text-paper/70">
             Log in as a buyer to add homes to album-style collections.
           </p>
@@ -72,7 +72,7 @@ export function SaveToSuiteModal({
         <div className="story-sheet-handle" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-serif text-2xl font-bold">Add to Suite</h3>
+            <h3 className="type-section">Add to Suite</h3>
             <p className="mt-1 text-sm text-paper/65">{listingTitle}</p>
           </div>
           <button

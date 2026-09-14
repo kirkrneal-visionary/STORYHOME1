@@ -10,7 +10,7 @@ export default function ProfilePage() {
   if (!isLoggedIn || !user) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] text-center md:px-6">
-        <h1 className="font-serif text-3xl font-bold text-ink">Profile</h1>
+        <h1 className="type-page-title text-ink">Profile</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
           Log in to manage your Story Home account and suites.
         </p>
@@ -32,7 +32,7 @@ export default function ProfilePage() {
             {user.initials}
           </div>
           <div>
-            <h1 className="font-serif text-3xl font-bold text-ink">
+            <h1 className="type-page-title text-ink">
               {user.name}
             </h1>
             <p className="mt-1 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">

@@ -20,7 +20,7 @@ export function SuitesLibrary() {
         <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
           Story Home Suite
         </p>
-        <h1 className="mt-3 font-serif text-4xl font-bold text-ink">
+        <h1 className="mt-3 type-page-title text-ink">
           Your property albums live here
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-sm text-[var(--muted)]">
@@ -65,7 +65,7 @@ export function SuitesLibrary() {
           <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
             Story Home Suite
           </p>
-          <h1 className="mt-2 font-serif text-4xl font-bold text-ink">
+          <h1 className="mt-2 type-page-title text-ink">
             Your albums
           </h1>
           <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">

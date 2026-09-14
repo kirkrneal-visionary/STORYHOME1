@@ -146,7 +146,7 @@ export function ShiArchieIntelligencePanel({
         <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
           Archie Intelligence
         </p>
-        <p className="mt-1 font-serif text-lg font-bold text-ink">
+        <p className="mt-1 type-card-title text-ink">
           {brief.headline}
         </p>
         {brief.contextLines.length > 0 ? (

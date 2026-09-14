@@ -137,7 +137,7 @@ export function MyListingsView() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 md:flex-row md:items-end">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-ink">My Listings</h2>
+          <h2 className="type-section text-ink">My Listings</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
             List a property directly or import it from your MLS. Every listing is
             checked against Fair Housing and Texas disclosure rules before it can
@@ -288,7 +288,7 @@ function ListingCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate font-serif text-lg font-bold text-ink">
+              <p className="truncate type-card-title text-ink">
                 {listing.streetAddress || "Untitled listing"}
               </p>
               <p className="truncate text-xs text-[var(--muted)]">

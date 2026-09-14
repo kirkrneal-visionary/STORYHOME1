@@ -209,7 +209,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="font-serif text-xl font-bold text-ink">Study Vault</h3>
+          <h3 className="type-card-title text-ink">Study Vault</h3>
           <p className="mt-1 text-sm text-[var(--muted)]">
             Your Map Memory album — each file is a snap of the market you drew.
             Limit {SHI_CAPS.maxFoldersPerAgent} folders ·{" "}
@@ -492,7 +492,7 @@ export function ShiStudyVaultView({ onOpenInResearch }: Props) {
             <div className="flex items-start justify-between gap-3">
               <h3
                 id="shi-vault-dialog-title"
-                className="font-serif text-xl font-bold text-ink"
+                className="type-card-title text-ink"
               >
                 {dialogTitle}
               </h3>

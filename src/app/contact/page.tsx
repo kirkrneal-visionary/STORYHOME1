@@ -6,7 +6,7 @@ export default function ContactPage() {
   return (
     <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">
       <div className="mx-auto max-w-3xl">
-        <h1 className="font-serif text-4xl font-bold text-ink">Contact</h1>
+        <h1 className="type-page-title text-ink">Contact</h1>
         <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
           We&rsquo;d love to hear from you — whether you&rsquo;re a homeowner, a
           buyer, or an East Texas real estate professional.

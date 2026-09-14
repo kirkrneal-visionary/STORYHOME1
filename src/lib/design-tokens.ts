@@ -1,4 +1,6 @@
 /** Story Home design system tokens — keep in sync with globals.css */
+export { UI_FONT_STACK, TYPE_ROLES, SPACE } from "@/lib/typography";
+
 export const colors = {
   navy: "#17335E",
   gold: "#F5B71E",

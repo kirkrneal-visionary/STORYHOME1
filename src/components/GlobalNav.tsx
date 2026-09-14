@@ -162,24 +162,24 @@ export default function GlobalNav() {
           aria-label="StoryHome — Every home has a story"
         >
           <span className="story-living-mark h-9 w-9 items-center justify-center rounded-full bg-navy ring-1 ring-gold/50">
-            <span className="font-serif text-[10px] font-bold leading-none tracking-tighter text-paper">
+            <span className="story-wordmark text-[var(--type-caption)] text-paper">
               SH
             </span>
           </span>
           <span className="story-living-full flex min-w-0 flex-col">
-            <span className="flex items-center gap-0.5 tracking-tighter">
-              <span className="story-living-word font-serif text-[var(--type-brand)] font-bold tracking-[-0.03em] text-[var(--brand-word)]">
+            <span className="flex items-center gap-0.5">
+              <span className="story-living-word story-wordmark text-[var(--type-brand)] text-[var(--brand-word)]">
                 STORY
               </span>
-              <span className="story-living-word font-serif text-[var(--type-brand)] font-bold tracking-[-0.03em] text-[var(--brand-home)]">
+              <span className="story-living-word story-wordmark text-[var(--type-brand)] text-[var(--brand-home)]">
                 HOME
               </span>
-              <span className="mt-1 self-start text-[8px] font-bold text-[var(--brand-home)]">
+              <span className="mt-1 self-start text-[var(--type-caption)] font-semibold text-[var(--brand-home)]">
                 TM
               </span>
             </span>
-            <span className="story-living-tagline -mt-1 font-mono text-[9px] font-bold tracking-[0.12em] text-[var(--brand-word)]">
-              EVERY HOME HAS A STORY
+            <span className="story-living-tagline story-wordmark-tagline -mt-0.5 text-[var(--brand-word)]">
+              Every home has a story
             </span>
           </span>
         </Link>

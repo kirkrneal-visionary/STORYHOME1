@@ -14,23 +14,17 @@ export function ShiResearchModeSelector({
 }) {
   return (
     <section
-      className="story-surface overflow-hidden p-5 md:p-7"
+      className="story-surface overflow-hidden p-4 md:p-5"
       data-research-mode-selector="v1"
     >
-      <p className="font-mono text-[11px] font-bold tracking-[0.16em] text-gold uppercase">
-        {RESEARCH_MODE_LANDING.kicker}
-      </p>
-      <h2 className="mt-2 font-serif text-3xl font-bold text-ink md:text-4xl">
+      <h2 className="type-page-title text-ink">
         {RESEARCH_MODE_LANDING.title}
       </h2>
-      <p className="mt-2 max-w-2xl text-sm text-[var(--muted)]">
+      <p className="type-meta mt-1 max-w-2xl text-[var(--muted)]">
         {RESEARCH_MODE_LANDING.subtext}
       </p>
-      <p className="mt-3 max-w-2xl text-sm text-ink">
-        {RESEARCH_MODE_LANDING.line} {RESEARCH_MODE_LANDING.sameProperty}
-      </p>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {RESEARCH_MODE_LIST.map((mode) => {
           const disabled = !mode.enabled;
           return (
@@ -46,7 +40,7 @@ export function ShiResearchModeSelector({
               data-story-sound={disabled ? undefined : "select"}
               aria-disabled={disabled}
               className={cn(
-                "group relative min-h-[168px] overflow-hidden rounded-2xl border border-hairline text-left transition",
+                "group relative overflow-hidden rounded-xl border border-hairline text-left transition",
                 "bg-gradient-to-br",
                 mode.accent,
                 disabled
@@ -54,22 +48,22 @@ export function ShiResearchModeSelector({
                   : "story-press hover:border-gold/50 hover:shadow-[0_12px_36px_rgba(0,0,0,0.28)]",
               )}
             >
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_20%,rgba(8,10,14,0.72)_100%)]" />
-              <div className="relative flex h-full flex-col justify-end p-4">
-                <div className="flex items-center gap-2">
-                  <p className="font-serif text-xl font-bold text-[var(--paper,#f7f4ec)]">
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_8%,rgba(8,10,14,0.72)_100%)]" />
+              <div className="relative flex flex-col justify-end gap-1 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="type-card-title text-[var(--paper,#f7f4ec)]">
                     {mode.displayName}
                   </p>
                   {mode.badge ? (
-                    <span className="rounded-full border border-gold/40 px-2 py-0.5 font-mono text-[9px] font-bold tracking-wide text-gold uppercase">
+                    <span className="type-caption rounded-full border border-gold/40 px-2 py-0.5 font-semibold text-gold">
                       {mode.badge}
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1 text-[12px] leading-snug text-[rgba(247,244,236,0.78)]">
+                <p className="type-meta text-[rgba(247,244,236,0.78)]">
                   {mode.description}
                 </p>
-                <p className="mt-3 font-mono text-[10px] font-bold tracking-[0.12em] text-gold uppercase">
+                <p className="type-control mt-1 font-semibold text-gold">
                   {mode.cta}
                 </p>
               </div>

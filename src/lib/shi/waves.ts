@@ -603,7 +603,7 @@ export const SHI_WAVES: ShiWave[] = [
     status: "done",
     frontend: [
       "globals tokens: radius, elev-deboss/raise, atmosphere, story-well/sheet/chrome",
-      "Fraunces display + Poppins UI; GlobalNav/tabs story-chrome",
+      "Platform UI stack + type scale; GlobalNav/tabs story-chrome",
       "ListingCard + SaveToSuiteModal sheet language",
     ],
     backend: ["Armor scripts/test-story-feel-wave-1.mjs"],

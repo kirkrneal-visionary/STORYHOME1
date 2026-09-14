@@ -165,7 +165,7 @@ export function CountyRecordPanel({
         <div className="flex items-center gap-2">
           <Landmark className="h-5 w-5 text-[var(--muted)]" />
           <div>
-            <h4 className="font-serif text-lg font-bold text-ink">
+            <h4 className="type-card-title text-ink">
               County records (tracts)
             </h4>
             <p className="text-xs text-[var(--muted)]">

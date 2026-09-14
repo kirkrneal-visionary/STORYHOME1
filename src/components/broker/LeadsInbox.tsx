@@ -101,7 +101,7 @@ export function LeadsInbox() {
   return (
     <Panel>
       <div className="mb-3 flex items-center gap-2">
-        <h3 className="font-serif text-lg font-bold text-ink">Incoming leads</h3>
+        <h3 className="type-card-title text-ink">Incoming leads</h3>
         <span className="rounded-full bg-gold px-2 py-0.5 font-mono text-[10px] font-bold text-navy">{mine.length}</span>
       </div>
       {note && <p className="mb-3 text-sm text-teal-soft">{note}</p>}

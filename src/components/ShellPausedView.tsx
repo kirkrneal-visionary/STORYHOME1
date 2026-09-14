@@ -38,7 +38,7 @@ export function ShellPausedView({
         <div className="story-well mx-auto mt-4 flex h-14 w-14 items-center justify-center">
           <Icon className="h-6 w-6 text-[var(--muted)]" />
         </div>
-        <h1 className="mt-4 font-serif text-3xl font-bold text-ink">{title}</h1>
+        <h1 className="mt-4 type-page-title text-ink">{title}</h1>
         <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{body}</p>
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--muted)]">
           {honesty}
