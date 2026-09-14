@@ -33,14 +33,12 @@ export function mayUseStoryPro(
   purpose?: string | null,
   kind?: string | null,
 ): boolean {
-  if (
-    purpose === "managing_broker" ||
-    purpose === "other_professional" ||
-    purpose === "consumer"
-  ) {
+  if (purpose === "other_professional" || purpose === "consumer") {
     return false;
   }
-  if (purpose === "individual_pro") return true;
+  if (purpose === "individual_pro" || purpose === "managing_broker") {
+    return true;
+  }
   return kind === "agent" || kind === "broker" || kind === "pro";
 }
 
@@ -56,7 +54,7 @@ export function canOpenOfficeAccount(
   return purpose === "individual_pro" && kind === "broker";
 }
 
-/** Story Pro nav only. Office-admin is not a Pro preview. */
+/** Story Pro nav, including the office login. */
 export function navRoleForAccount(
   purpose?: string | null,
   kind?: string | null,

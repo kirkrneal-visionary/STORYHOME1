@@ -29,7 +29,7 @@ assert.equal(purposeAfterTrecPromote("managing_broker"), null);
 
 assert.equal(mayUseStoryPro("individual_pro", "agent"), true);
 assert.equal(mayUseStoryPro("individual_pro", "broker"), true);
-assert.equal(mayUseStoryPro("managing_broker", "broker"), false);
+assert.equal(mayUseStoryPro("managing_broker", "broker"), true);
 assert.equal(mayUseStoryPro("other_professional", "pro"), false);
 assert.equal(mayUseStoryPro("consumer", "consumer"), false);
 assert.equal(mayManageBrokerage("managing_broker"), true);

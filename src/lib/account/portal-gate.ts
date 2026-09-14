@@ -4,7 +4,12 @@ export type PortalPageAccess = "login" | "refuse" | "allow";
 
 export function portalPageAccess(result: PromoteProResult): PortalPageAccess {
   if (!result.ok) return "login";
-  if (result.accountPurpose === "individual_pro") return "allow";
+  if (
+    result.accountPurpose === "individual_pro" ||
+    result.accountPurpose === "managing_broker"
+  ) {
+    return "allow";
+  }
   return "refuse";
 }
 
@@ -17,9 +22,9 @@ export function portalRefuseCopy(purpose?: string | null): {
   if (purpose === "managing_broker") {
     return {
       title: "Office account",
-      body: "This login manages a brokerage. Story Pro stays with each realtor’s own account.",
-      href: "/office",
-      cta: "Open office",
+      body: "This login manages a brokerage. Story Pro, Archie, and buyer view stay on this same login.",
+      href: "/portal",
+      cta: "Open Story Pro",
     };
   }
   return {

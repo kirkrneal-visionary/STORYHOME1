@@ -4,18 +4,24 @@ import { redirect } from "next/navigation";
 import { portalPageAccess, portalRefuseCopy } from "@/lib/account/portal-gate";
 import { promoteSignedInPro } from "@/lib/account/promote-pro";
 import { getAccountReadiness } from "@/lib/account/require-account-ready";
+import { getServerSupabase } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Story Pro pages refuse regular users and office-admin sessions on the server.
- * Browser-only chrome is not the gate.
+ * Story Pro pages refuse regular users on the server. Office login keeps Story Pro.
+ * Demo mode (no Supabase) renders the page so local walkthroughs work.
  */
 export default async function PortalLayout({
   children,
 }: {
   children: ReactNode;
 }) {
+  const supabase = await getServerSupabase();
+  if (!supabase) {
+    return <>{children}</>;
+  }
+
   const result = await promoteSignedInPro();
   const access = portalPageAccess(result);
   if (access === "login") {

@@ -45,11 +45,10 @@ export function OpenOfficeCard() {
     <SettingsCard
       icon={Building2}
       title="Open office account"
-      subtitle="This login becomes the office. Story Pro stays on a separate realtor login."
+      subtitle="This login becomes the office. Story Pro, Archie, and buyer view stay here."
     >
       <p className="text-sm text-[var(--muted)]">
-        Do not use this if you still need Story Pro on this same login. An office
-        account is not a bigger Story Pro.
+        Roster and branding are added to this login. You keep Story Pro on the same account.
       </p>
       {!confirm ? (
         <button

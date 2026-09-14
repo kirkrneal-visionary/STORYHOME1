@@ -60,8 +60,8 @@ export function OfficeHome() {
       <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] text-center md:px-6">
         <h1 className="type-page-title text-ink">Office account</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
-          Office tools are not Story Pro. Use the managing-broker login, or open
-          an office account from settings if this login is a Story Pro broker.
+          Office tools live on the managing-broker login. Open an office
+          account from settings if this login is a Story Pro broker.
         </p>
         <Link
           href="/settings"
@@ -83,8 +83,8 @@ export function OfficeHome() {
           Brokerage office
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Roster and branding for this office login. Story Pro stays with each
-          realtor’s own account.
+          Roster and branding for this office. Story Pro, Archie, and buyer
+          view stay on this login.
         </p>
       </header>
       {loading ? (

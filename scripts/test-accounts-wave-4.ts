@@ -44,10 +44,11 @@ assert.match(GO_LIVE_BLOCKED, /separate human step/);
 assert.deepEqual(ACCOUNT_STACK_MIGRATIONS, [
   "0048_account_purpose_wave1.sql",
   "0049_open_office_account.sql",
+  "0051_office_keeps_story_pro.sql",
 ]);
 
 assert.equal(purposeAfterTrecPromote("managing_broker"), null);
-assert.equal(mayUseStoryPro("managing_broker", "broker"), false);
+assert.equal(mayUseStoryPro("managing_broker", "broker"), true);
 assert.equal(mayManageBrokerage("managing_broker"), true);
 assert.equal(canOpenOfficeAccount("individual_pro", "broker"), true);
 assert.equal(destForUser({ kind: "broker", purpose: "managing_broker" }), "/office");
