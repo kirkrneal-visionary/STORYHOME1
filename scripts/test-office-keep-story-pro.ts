@@ -56,6 +56,10 @@ assert.match(mig, /Story Pro and Archie stay on this same login/);
 assert.doesNotMatch(mig, /delete from public\.(profiles|listings|county_parcels)/i);
 assert.doesNotMatch(mig, /CLIENTSAGENTS/i);
 
+const portalLayout = read("src/app/portal/layout.tsx");
+assert.match(portalLayout, /getServerSupabase/);
+assert.match(portalLayout, /Office login keeps Story Pro/);
+
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /href: "\/office"/);
 assert.match(nav, /href: "\/portal"/);
