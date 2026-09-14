@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/AuthContext";
+import { mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
 
 export default function ProfilePage() {
@@ -66,7 +67,7 @@ export default function ProfilePage() {
               </Link>
             </>
           )}
-          {(user.kind === "pro" || user.kind === "broker") && (
+          {mayUseStoryPro(user.purpose, user.kind) && (
             <>
               <Link
                 href="/portal"

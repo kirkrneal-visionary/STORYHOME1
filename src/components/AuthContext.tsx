@@ -15,6 +15,7 @@ import {
   type ProRole,
   parseStoredUser,
 } from "@/lib/auth";
+import type { AccountPurpose } from "@/lib/account/purpose";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
 import {
@@ -130,16 +131,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       let name = email?.split("@")[0] ?? "Member";
       let kind: AccountKind = "consumer";
+      let purpose: AccountPurpose | undefined;
       let proRole: ProRole | undefined;
       try {
         const { data } = await supabase!
           .from("profiles")
-          .select("full_name, account_kind, professional_role")
+          .select("full_name, account_kind, account_purpose, professional_role")
           .eq("id", userId)
           .maybeSingle();
         if (data) {
           name = data.full_name || name;
           kind = kindFromAccount(data.account_kind);
+          purpose = (data.account_purpose as AccountPurpose | null) ?? undefined;
           proRole = (data.professional_role as ProRole | null) ?? undefined;
         }
       } catch {
@@ -152,9 +155,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email ?? "",
         initials: initialsOf(name),
         kind,
+        purpose,
         proRole,
       });
-      setRole(kind === "consumer" ? "consumer" : "professional");
+      setRole(
+        kind === "consumer" && purpose !== "managing_broker"
+          ? "consumer"
+          : "professional",
+      );
       setReady(true);
     }
 

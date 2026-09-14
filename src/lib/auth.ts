@@ -1,3 +1,5 @@
+import type { AccountPurpose } from "@/lib/account/purpose";
+
 export type AccountKind = "consumer" | "pro" | "seller" | "broker";
 
 export type ProRole =
@@ -12,6 +14,7 @@ export type AuthUser = {
   email: string;
   initials: string;
   kind: AccountKind;
+  purpose?: AccountPurpose;
   proRole?: ProRole;
   sellerListingCode?: string;
 };
@@ -68,9 +71,13 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
 ];
 
 export function accountLabel(user: AuthUser) {
+  if (user.purpose === "managing_broker") return "Managing broker";
+  if (user.purpose === "other_professional") {
+    return PRO_ROLE_LABELS[user.proRole ?? "inspector"];
+  }
   if (user.kind === "consumer") return "Buyer / Consumer";
   if (user.kind === "seller") return "Seller (listing access)";
-  if (user.kind === "broker") return "Broker of Record";
+  if (user.kind === "broker") return "Individual broker";
   return PRO_ROLE_LABELS[user.proRole ?? "realtor_broker"];
 }
 

@@ -30,6 +30,7 @@ import {
   type BrokerageInvite,
   type PendingInvite,
 } from "@/lib/supabase/roster";
+import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
 
 const toList = (s: string) =>
@@ -50,7 +51,9 @@ export function SettingsView() {
       setProfile(p);
       if (p?.brokerageId) setBrokerage(await getBrokerageById(p.brokerageId));
       else setBrokerage(null);
-      if (p?.accountKind === "agent") setPending(await myPendingInvite());
+      if (p?.accountPurpose === "individual_pro" && p.accountKind === "agent") {
+        setPending(await myPendingInvite());
+      }
       else setPending(null);
     } finally {
       setLoading(false);
@@ -71,8 +74,8 @@ export function SettingsView() {
     );
   }
 
-  const isPro = profile?.accountKind === "agent" || profile?.accountKind === "broker";
-  const isBroker = profile?.accountKind === "broker";
+  const isPro = mayUseStoryPro(profile?.accountPurpose, profile?.accountKind);
+  const isOffice = mayManageBrokerage(profile?.accountPurpose);
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
@@ -113,7 +116,7 @@ export function SettingsView() {
           {profile && <AccountSection profile={profile} onSaved={load} />}
           {isPro && profile && <ProSection profile={profile} onSaved={load} />}
           {isPro && profile && <LicenseSection profile={profile} />}
-          {isBroker && user && profile && (
+          {isOffice && user && profile && (
             <BrokerageSection
               brokerId={user.id}
               brokerTrecLicense={profile.trecLicense}
@@ -168,12 +171,17 @@ function AccountSection({ profile, onSaved }: { profile: MyProfile; onSaved: () 
     <Card icon={UserRound} title="Account" subtitle="Your name, contact, and public bio.">
       <form onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await updateMyProfile(profile.id, { ...f }); setNote("Saved."); setTimeout(() => setNote(""), 2000); onSaved(); } finally { setBusy(false); } }}>
         <div className="grid gap-3 sm:grid-cols-2">
-          <TextField id="s-name" label="Full name" value={f.fullName} onChange={(v) => setF((p) => ({ ...p, fullName: v }))} />
+          <TextField id="s-name" label="Display name" value={f.fullName} onChange={(v) => setF((p) => ({ ...p, fullName: v }))} />
           <TextField id="s-phone" label="Phone" value={f.phone} onChange={(v) => setF((p) => ({ ...p, phone: v }))} />
           <TextField id="s-web" label="Website" value={f.website} onChange={(v) => setF((p) => ({ ...p, website: v }))} />
         </div>
+        {profile.legalFullName && (
+          <p className="mt-2 text-[11px] text-[var(--muted)]">
+            Legal name on file (not editable here): {profile.legalFullName}
+          </p>
+        )}
         <p className="mt-2 text-[11px] text-[var(--muted)]">
-          Living Mark photo/video uploads live in the Living Mark library above — not a raw URL field.
+          Display name is public. It does not change a verified license. Living Mark uploads live in the library above.
         </p>
         <div className="mt-3">
           <TextAreaField id="s-bio" label="About / bio" rows={4} value={f.bio} onChange={(v) => setF((p) => ({ ...p, bio: v }))} />

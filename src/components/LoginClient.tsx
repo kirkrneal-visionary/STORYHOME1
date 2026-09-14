@@ -8,14 +8,17 @@ import {
   DEMO_ACCOUNTS,
   DEMO_BROKER,
   PRO_ROLE_LABELS,
+  type AuthUser,
   type ProRole,
 } from "@/lib/auth";
+import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
 import { cn } from "@/lib/utils";
 
 /** Where a user lands after login, based on their account type. */
-function destForKind(kind: string): string {
-  if (kind === "pro" || kind === "broker") return "/portal";
-  if (kind === "seller") return "/";
+function destForUser(user: Pick<AuthUser, "kind" | "purpose">): string {
+  if (mayManageBrokerage(user.purpose)) return "/settings";
+  if (mayUseStoryPro(user.purpose, user.kind)) return "/portal";
+  if (user.kind === "seller") return "/";
   return "/home";
 }
 
@@ -41,13 +44,13 @@ export function LoginClient() {
   useEffect(() => {
     // Sellers navigate via their own passcode flow — don't hijack them here.
     if (isLoggedIn && user && user.kind !== "seller") {
-      router.replace(next !== "/" ? next : destForKind(user.kind));
+      router.replace(next !== "/" ? next : destForUser(user));
     }
   }, [isLoggedIn, user, next, router]);
 
   function goNext() {
     if (!user) return; // the effect above redirects once the session resolves
-    router.push(next !== "/" ? next : destForKind(user.kind));
+    router.push(next !== "/" ? next : destForUser(user));
   }
 
   async function onSellerSubmit(e: FormEvent) {

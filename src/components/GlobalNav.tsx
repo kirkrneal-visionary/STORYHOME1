@@ -25,6 +25,7 @@ import { NetworkNode } from "@/components/nav/NetworkNode";
 import { useMotionOptional } from "@/components/motion/MotionProvider";
 import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
 import { useLivingHeader } from "@/hooks/useLivingHeader";
+import { mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
 import {
   isArchiePath,
@@ -44,7 +45,7 @@ export default function GlobalNav() {
   const { role, setRole } = useApp();
   const { user, isLoggedIn } = useAuth();
   const pathname = usePathname();
-  const isProAccount = user?.kind === "pro" || user?.kind === "broker";
+  const isProAccount = mayUseStoryPro(user?.purpose, user?.kind);
   const isPro = isProAccount && role === "professional";
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerPath, setDrawerPath] = useState(pathname);
