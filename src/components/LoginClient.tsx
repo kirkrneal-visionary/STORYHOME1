@@ -48,12 +48,17 @@ export function LoginClient() {
   const [error, setError] = useState("");
   const [recoverySaved, setRecoverySaved] = useState(false);
 
+  const demoSession =
+    !!user &&
+    user.emailConfirmed === undefined &&
+    user.aal === undefined;
   const pendingEmail =
     pendingParam === "email" ||
-    (isLoggedIn && user?.emailConfirmed === false);
+    (isLoggedIn && !demoSession && user?.emailConfirmed === false);
   const pendingMfa =
     pendingParam === "mfa" ||
     (isLoggedIn &&
+      !demoSession &&
       !!user &&
       (needsMfaChallenge({
         purpose: user.purpose,
@@ -79,6 +84,7 @@ export function LoginClient() {
 
   const enrollMfa =
     isLoggedIn &&
+    !demoSession &&
     !!user &&
     needsMfaEnrollment({
       purpose: user.purpose,

@@ -23,6 +23,7 @@ export type BrokerageAgent = {
   professionalRole: string | null;
   photoUrl: string | null;
   primaryMarketCity: string | null;
+  teamLeaderAuthorized: boolean;
 };
 
 const SELECT =
@@ -130,7 +131,7 @@ export async function listBrokerageAgents(brokerageId: string): Promise<Brokerag
   if (!s) return [];
   const { data, error } = await s
     .from("profiles")
-    .select("id, full_name, professional_role, photo_url, primary_market_city")
+    .select("id, full_name, professional_role, photo_url, primary_market_city, team_leader_authorized")
     .eq("brokerage_id", brokerageId);
   if (error) throw error;
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -140,6 +141,7 @@ export async function listBrokerageAgents(brokerageId: string): Promise<Brokerag
     professionalRole: r.professional_role ?? null,
     photoUrl: r.photo_url ?? null,
     primaryMarketCity: r.primary_market_city ?? null,
+    teamLeaderAuthorized: Boolean(r.team_leader_authorized),
   }));
   /* eslint-enable @typescript-eslint/no-explicit-any */
 }

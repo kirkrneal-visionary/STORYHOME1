@@ -38,6 +38,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "jordan@storyhome.demo",
     initials: "JH",
     kind: "consumer",
+    purpose: "consumer",
   },
   {
     id: "user-realtor",
@@ -45,6 +46,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "sarah@storyhome.demo",
     initials: "SJ",
     kind: "pro",
+    purpose: "individual_pro",
     proRole: "realtor_broker",
   },
   {
@@ -53,6 +55,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "chris@storyhome.demo",
     initials: "CN",
     kind: "pro",
+    purpose: "other_professional",
     proRole: "inspector",
   },
   {
@@ -61,6 +64,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "ava@storyhome.demo",
     initials: "AB",
     kind: "pro",
+    purpose: "other_professional",
     proRole: "appraiser",
   },
   {
@@ -69,6 +73,7 @@ export const DEMO_ACCOUNTS: AuthUser[] = [
     email: "marcus@storyhome.demo",
     initials: "ML",
     kind: "pro",
+    purpose: "other_professional",
     proRole: "lender",
   },
 ];
@@ -91,6 +96,7 @@ export const DEMO_BROKER: AuthUser = {
   email: "dana@storyhome.demo",
   initials: "DB",
   kind: "broker",
+  purpose: "managing_broker",
 };
 
 export function parseStoredUser(raw: string | null): AuthUser | null {

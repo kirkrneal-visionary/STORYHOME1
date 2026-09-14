@@ -9,7 +9,8 @@ export type SecurityNoticeKind =
   | "mfa_removed"
   | "signed_out_everywhere"
   | "confirmation_resent"
-  | "password_reset_requested";
+  | "password_reset_requested"
+  | "office_opened";
 
 export function notifySecurityChange(
   kind: SecurityNoticeKind,

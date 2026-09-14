@@ -152,7 +152,7 @@ assert.match(signInPublicMessage("Email not confirmed"), /Confirm your email/);
 assert.match(GENERIC_AUTH_SENT, /If that account exists/);
 
 assert.equal(destForUser({ kind: "pro", purpose: "individual_pro" }), "/portal");
-assert.equal(destForUser({ kind: "broker", purpose: "managing_broker" }), "/settings");
+assert.equal(destForUser({ kind: "broker", purpose: "managing_broker" }), "/office");
 assert.equal(destForUser({ kind: "consumer" }), "/home");
 
 assert.equal(

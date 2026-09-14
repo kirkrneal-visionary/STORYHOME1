@@ -49,6 +49,7 @@
     "scripts/test-signup-account-lock.ts",
     "scripts/test-portal-server-gate.ts",
     "scripts/test-accounts-wave-1.ts",
-    "scripts/test-accounts-wave-2.ts"
+    "scripts/test-accounts-wave-2.ts",
+    "scripts/test-accounts-wave-3.ts"
   ]
 }
