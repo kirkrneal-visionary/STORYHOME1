@@ -72,6 +72,8 @@ assert.match(hide, /revoke select on public.listings/i);
 assert.match(hide, /mh_hud_label/);
 assert.doesNotMatch(hide, /grant select \([\s\S]*seller_access_code/i);
 assert.doesNotMatch(hide, /delete from public\.(profiles|listings|county_parcels)/i);
+assert.match(read("src/app/portal/layout.tsx"), /promoteSignedInPro/);
+assert.match(read("src/app/portal/layout.tsx"), /For realtors/);
 const signup = read("supabase/migrations/0047_signup_account_kind_lock.sql");
 assert.match(signup, /Ignores account_kind/);
 assert.doesNotMatch(signup, /delete from public\.(profiles|listings|county_parcels)/i);
