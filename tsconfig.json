@@ -50,6 +50,8 @@
     "scripts/test-portal-server-gate.ts",
     "scripts/test-accounts-wave-1.ts",
     "scripts/test-accounts-wave-2.ts",
-    "scripts/test-accounts-wave-3.ts"
+    "scripts/test-accounts-wave-3.ts",
+    "scripts/test-accounts-wave-4.ts",
+    "scripts/verify-accounts-stack.ts"
   ]
 }
