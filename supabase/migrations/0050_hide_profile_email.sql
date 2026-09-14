@@ -2,6 +2,9 @@
 -- Does NOT delete users, listings, or county/CAD.
 -- Service role keeps full access. App email comes from Auth, not this table.
 
+alter table public.profiles
+  add column if not exists living_mark_video_url text;
+
 revoke select on table public.profiles from anon, authenticated;
 grant select (
   id,

@@ -45,6 +45,7 @@ assert.match(ui, /deleteWarning/);
 assert.match(ui, /Living email is not sent from here|Live email is not sent from here/);
 
 const sql = read("supabase/migrations/0050_hide_profile_email.sql");
+assert.match(sql, /add column if not exists living_mark_video_url/);
 assert.match(sql, /revoke select on table public.profiles/);
 assert.match(sql, /grant select \(/);
 assert.doesNotMatch(sql, /grant select \([\s\S]*\bemail\b/i);
