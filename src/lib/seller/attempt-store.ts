@@ -1,14 +1,11 @@
-import { createHash } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   SELLER_ATTEMPT_LIMIT,
   SELLER_ATTEMPT_WINDOW_MS,
+  sellerIpKey,
 } from "@/lib/security/seller-attempts";
 
-/** Store a hash of the IP — never the raw address. */
-export function sellerIpKey(ip: string): string {
-  return createHash("sha256").update(`seller-ip|${ip}`).digest("hex");
-}
+export { sellerIpKey };
 
 function isMissingRelation(error: { message?: string; code?: string } | null) {
   if (!error) return false;

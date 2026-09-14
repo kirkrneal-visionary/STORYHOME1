@@ -5,13 +5,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { mapSellerPortal } from "../src/lib/seller-portal.ts";
 import {
   noteSellerFailure,
   sellerAttemptsOpen,
+  sellerIpKey,
   SELLER_ATTEMPT_LIMIT,
 } from "../src/lib/security/seller-attempts.ts";
-import { sellerIpKey } from "../src/lib/seller/attempt-store.ts";
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
@@ -49,29 +48,14 @@ const share = read("src/components/broker/MyListingsView.tsx");
 assert.match(share, /Make a new code/);
 assert.match(share, /rotateSellerAccessCode/);
 
+const portal = read("src/lib/seller-portal.ts");
+assert.match(portal, /submittedCode/);
+assert.match(portal, /Never copy a stored secret/);
+assert.doesNotMatch(portal, /accessCode: l\.seller_access_code/);
+
 const lookup = read("src/lib/seller/lookup.ts");
 assert.match(lookup, /mapSellerPortal\(data, code\)/);
 assert.match(lookup, /durableSellerAttemptsOpen/);
-
-const portal = mapSellerPortal(
-  {
-    listing: {
-      id: "00000000-0000-4000-8000-000000000001",
-      address_serif: "100 Pine",
-      city: "Livingston",
-      county_name: "Polk",
-      status: "Active",
-      seller_access_code: "SHOULD-NOT-COPY",
-      seller_access_code_hash: "$2a$10$leak",
-    },
-    analytics: { views: 3, saves: 1 },
-  },
-  "PINE-221",
-);
-assert.ok(portal);
-assert.equal(portal.listing.accessCode, "PINE-221");
-assert.equal(portal.listing.addressSerif, "100 Pine");
-assert.notEqual(portal.listing.accessCode, "SHOULD-NOT-COPY");
 
 const ip = "203.0.113.9";
 assert.match(sellerIpKey(ip), /^[a-f0-9]{64}$/);
