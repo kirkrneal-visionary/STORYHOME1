@@ -12,13 +12,14 @@ export function mayAutoGoLive(): false {
 export const ACCOUNT_STACK_MIGRATIONS = [
   "0048_account_purpose_wave1.sql",
   "0049_open_office_account.sql",
+  "0051_office_keeps_story_pro.sql",
 ] as const;
 
 export const ACCOUNT_STACK_PROOF = {
   purposeSeparateFromLicense: true,
   trecNeverGrantsOffice: true,
   emailAndMfaGatePrivateApp: true,
-  officeIsNotStoryPro: true,
+  officeKeepsStoryPro: true,
   noProductionPeopleCopied: true,
   noLiveMailFromInbox: true,
   autoGoLive: false,

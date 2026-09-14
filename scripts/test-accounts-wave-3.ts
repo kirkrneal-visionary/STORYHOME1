@@ -19,13 +19,13 @@ import { classifyApiPath } from "../src/lib/security/rate-limit.ts";
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
-assert.equal(mayUseStoryPro("managing_broker", "broker"), false);
+assert.equal(mayUseStoryPro("managing_broker", "broker"), true);
 assert.equal(mayManageBrokerage("managing_broker"), true);
 assert.equal(canOpenOfficeAccount("individual_pro", "broker"), true);
 assert.equal(canOpenOfficeAccount("individual_pro", "agent"), false);
 assert.equal(canOpenOfficeAccount("managing_broker", "broker"), false);
 assert.equal(canOpenOfficeAccount("consumer", "broker"), false);
-assert.equal(navRoleForAccount("managing_broker", "broker"), "consumer");
+assert.equal(navRoleForAccount("managing_broker", "broker"), "professional");
 assert.equal(navRoleForAccount("individual_pro", "agent"), "professional");
 assert.equal(navRoleForAccount("other_professional", "pro"), "consumer");
 assert.equal(purposeLabel("managing_broker"), "Office account");
@@ -70,7 +70,7 @@ assert.doesNotMatch(settings, /Story Glass sound/);
 
 const office = read("src/components/office/OfficeHome.tsx");
 assert.match(office, /mayManageBrokerage/);
-assert.match(office, /Story Pro stays with each/);
+assert.match(office, /Story Pro, Archie, and buyer/);
 assert.doesNotMatch(office, /CLIENTSAGENTS/i);
 
 const roster = read("src/components/office/RosterManager.tsx");

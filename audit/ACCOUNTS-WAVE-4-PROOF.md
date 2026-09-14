@@ -8,7 +8,7 @@ This file is for the stack, not a to-do list.
 - Profile email is hidden from public select. Privilege columns are client-locked.
 - Home and Story Pro stay closed until email is confirmed and required MFA is done.
 - Password reset still needs the authenticator. Login stays open for pending steps.
-- Office is a separate login and `/office`. It is not a bigger Story Pro.
+- Office is a separate login and `/office`. That login also keeps Story Pro, Archie, and buyer view.
 - Roster invites only agents TREC shows you sponsor. No copied production people.
 - Security notices are a Labs inbox on this server. Live mail is not sent from it.
 - Go-live is not automatic.

@@ -40,7 +40,7 @@ export function OfficeWorkspace({
     <SettingsCard
       icon={Building2}
       title="Brokerage identity"
-      subtitle="Office name and branding. This is not Story Pro."
+      subtitle="Office name and branding. Story Pro stays on this login too."
     >
       <form
         onSubmit={async (e) => {

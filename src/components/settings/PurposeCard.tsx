@@ -33,7 +33,7 @@ export function PurposeCard({
     >
       <p className="text-sm text-ink">
         {office
-          ? "This login runs the office — roster, branding, and who belongs here. It is not Story Pro."
+          ? "This login runs the office — roster and branding. Story Pro, Archie, and buyer view stay here too."
           : pro
             ? "This login is your own Story Pro. Office tools stay on a separate office login."
             : purpose === "other_professional"
@@ -45,7 +45,7 @@ export function PurposeCard({
           Legal name on file (not editable here): {legalFullName}
         </p>
       )}
-      {pro && brokerageName && (
+      {pro && !office && brokerageName && (
         <p className="mt-2 text-sm text-[var(--muted)]">
           You belong to {brokerageName}. That does not turn this login into the
           office account.
@@ -62,7 +62,7 @@ export function PurposeCard({
       {canOpen && (
         <p className="mt-3 text-xs text-[var(--muted)]">
           Need office tools? You can turn this login into the office account
-          below. Story Pro will move off this login.
+          below. Story Pro stays on this login.
         </p>
       )}
     </SettingsCard>

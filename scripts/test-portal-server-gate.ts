@@ -52,7 +52,7 @@ assert.equal(
     promoted: false,
     demoted: false,
   }),
-  "refuse",
+  "allow",
 );
 assert.equal(
   portalPageAccess({

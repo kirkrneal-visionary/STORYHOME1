@@ -102,7 +102,8 @@ export default function GlobalNav() {
           label: "Office",
           active: pathname.startsWith("/office"),
         });
-      } else if (isPro && isLoggedIn) {
+      }
+      if (isPro && isLoggedIn) {
         links.push(
           {
             href: "/portal",
@@ -224,6 +225,14 @@ export default function GlobalNav() {
               >
                 Marketplace
               </NavLink>
+              {isOfficeAccount && isLoggedIn ? (
+                <NavLink
+                  href="/office"
+                  active={pathname.startsWith("/office")}
+                >
+                  Office
+                </NavLink>
+              ) : null}
               {isPro && isLoggedIn ? (
                 <>
                   <NavLink href="/portal" active={isStoryProPath(pathname)}>

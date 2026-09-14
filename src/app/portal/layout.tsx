@@ -8,7 +8,7 @@ import { getAccountReadiness } from "@/lib/account/require-account-ready";
 export const dynamic = "force-dynamic";
 
 /**
- * Story Pro pages refuse regular users and office-admin sessions on the server.
+ * Story Pro pages refuse regular users on the server. Office login keeps Story Pro.
  * Browser-only chrome is not the gate.
  */
 export default async function PortalLayout({
