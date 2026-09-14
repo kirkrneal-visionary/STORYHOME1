@@ -8,6 +8,7 @@ const scripts = [
   "scripts/test-accounts-wave-2.ts",
   "scripts/test-accounts-wave-3.ts",
   "scripts/test-accounts-wave-4.ts",
+  "scripts/test-accounts-delete-hide-email.ts",
 ];
 
 for (const file of scripts) {
