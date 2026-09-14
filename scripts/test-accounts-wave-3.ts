@@ -77,6 +77,10 @@ const roster = read("src/components/office/RosterManager.tsx");
 assert.match(roster, /does not copy people/);
 assert.match(roster, /setTeamLeaderAuthorized/);
 
+const login = read("src/components/LoginClient.tsx");
+assert.match(login, /demoSession/);
+assert.match(login, /!demoSession &&/);
+
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /href: \"\/office\"/);
 assert.match(nav, /isOfficeAccount/);
