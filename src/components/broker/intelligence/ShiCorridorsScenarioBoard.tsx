@@ -91,7 +91,7 @@ export function ShiCorridorsScenarioBoard({
           <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
             Current traffic → scenario
           </p>
-          <h3 className="font-serif text-xl font-bold text-ink">
+          <h3 className="type-card-title text-ink">
             If recent movement continues
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">
@@ -206,7 +206,7 @@ export function ShiCorridorsScenarioBoard({
               <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
                 {b.label} · {b.growthPct}%/yr
               </p>
-              <p className="mt-1 font-serif text-3xl font-bold text-ink">
+              <p className="mt-1 type-page-title text-ink">
                 {formatAadt(b.projectedAadt)}
               </p>
               <p className="text-xs text-[var(--muted)]">

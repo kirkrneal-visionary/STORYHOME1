@@ -39,7 +39,7 @@ export function BrokeragePublicView({ slug }: { slug: string }) {
   if (!brokerage) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] text-center">
-        <h1 className="font-serif text-3xl font-bold text-ink">Brokerage not found</h1>
+        <h1 className="type-page-title text-ink">Brokerage not found</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">This brokerage page doesn&apos;t exist yet.</p>
         <Link href="/marketplace" className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy">Browse listings</Link>
       </div>
@@ -62,7 +62,7 @@ export function BrokeragePublicView({ slug }: { slug: string }) {
           )}
         </div>
         <div className="min-w-0">
-          <h1 className="font-serif text-3xl font-bold text-ink md:text-4xl">{brokerage.name}</h1>
+          <h1 className="type-page-title text-ink md:text-4xl">{brokerage.name}</h1>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[var(--muted)]">
             {location && <span className="inline-flex items-center gap-1"><MapPin className="h-4 w-4" /> {location}</span>}
             {brokerage.phone && <span className="inline-flex items-center gap-1"><Phone className="h-4 w-4" /> {brokerage.phone}</span>}
@@ -77,13 +77,13 @@ export function BrokeragePublicView({ slug }: { slug: string }) {
 
       {brokerage.about && (
         <section className="mt-6 rounded-2xl border border-hairline bg-[var(--surface)] p-5">
-          <h2 className="font-serif text-lg font-bold text-ink">About the brokerage</h2>
+          <h2 className="type-card-title text-ink">About the brokerage</h2>
           <p className="mt-2 whitespace-pre-line text-sm text-[var(--muted)]">{brokerage.about}</p>
         </section>
       )}
 
       <section className="mt-6">
-        <h2 className="font-serif text-lg font-bold text-ink">
+        <h2 className="type-card-title text-ink">
           Agents{agents.length ? ` (${agents.length})` : ""}
         </h2>
         {agents.length === 0 ? (

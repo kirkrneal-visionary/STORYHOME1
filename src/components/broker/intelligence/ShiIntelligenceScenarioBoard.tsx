@@ -208,7 +208,7 @@ export function ShiIntelligenceScenarioBoard({
                 <p className="font-mono text-[9px] font-bold uppercase text-gold">
                   {b.label} · {formatStressPct(b.valueStressPct)}
                 </p>
-                <p className="mt-0.5 font-serif text-lg font-bold text-ink">
+                <p className="mt-0.5 type-card-title text-ink">
                   {money(b.monthlyPi)}
                   <span className="font-sans text-[10px] font-normal text-[var(--muted)]">
                     {" "}

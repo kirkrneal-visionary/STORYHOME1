@@ -16,7 +16,7 @@ export default function SellerAccessPage() {
         <p className="mt-1 font-mono text-[10px] font-bold tracking-[0.14em] text-[var(--muted)]">
           SELLER CLIENT PORTAL
         </p>
-        <h1 className="mt-8 font-serif text-3xl font-bold text-ink">
+        <h1 className="mt-8 type-page-title text-ink">
           See how your home is doing online
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">

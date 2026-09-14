@@ -154,7 +154,7 @@ function ChannelThreadList({
     <div>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 className="flex items-center gap-2 font-serif text-xl font-bold text-ink">
+          <h3 className="flex items-center gap-2 type-card-title text-ink">
             {channel.scope === "team" ? (
               <Users className="h-5 w-5" />
             ) : (
@@ -303,7 +303,7 @@ function ThreadDetail({
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-serif text-2xl font-bold text-ink">
+          <h3 className="type-section text-ink">
             {thread.title}
           </h3>
           <p className="mt-1 font-mono text-[11px] text-[var(--muted)] uppercase">

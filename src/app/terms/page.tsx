@@ -13,7 +13,7 @@ export default function TermsPage() {
           Effective date: [pending].
         </div>
 
-        <h1 className="mt-8 font-serif text-4xl font-bold text-ink">Terms of Use</h1>
+        <h1 className="mt-8 type-page-title text-ink">Terms of Use</h1>
 
         <div className="mt-6 space-y-6 text-base leading-relaxed text-[var(--muted)]">
           <Section title="Acceptance">
@@ -87,7 +87,7 @@ export default function TermsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="font-serif text-xl font-bold text-ink">{title}</h2>
+      <h2 className="type-card-title text-ink">{title}</h2>
       <div className="mt-2">{children}</div>
     </section>
   );

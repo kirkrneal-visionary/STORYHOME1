@@ -788,7 +788,7 @@ export function ShiCorridorsView({
         <p className="font-mono text-[10px] font-semibold tracking-[0.16em] text-gold uppercase">
           Corridors
         </p>
-        <h2 className="mt-1 font-serif text-2xl font-bold text-ink md:text-3xl">
+        <h2 className="mt-1 type-section text-ink md:text-3xl">
           {CORRIDORS_2_PURPOSE}
         </h2>
         <p className="mt-2 max-w-3xl text-sm text-[var(--muted)]">
@@ -1209,13 +1209,13 @@ export function ShiCorridorsView({
               <dl className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <dt className="text-[11px] text-[var(--muted)]">Stations</dt>
-                  <dd className="font-serif text-xl font-bold text-ink">
+                  <dd className="type-card-title text-ink">
                     {payload?.stationCount ?? "—"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-[11px] text-[var(--muted)]">Corridors</dt>
-                  <dd className="font-serif text-xl font-bold text-ink">
+                  <dd className="type-card-title text-ink">
                     {payload?.segmentCount ?? "—"}
                   </dd>
                 </div>
@@ -1555,7 +1555,7 @@ function WatchPanel({
 
       {selected ? (
         <div className="space-y-2 border-t border-hairline pt-3">
-          <h3 className="font-serif text-xl font-bold text-ink">
+          <h3 className="type-card-title text-ink">
             {selected.title}
           </h3>
           <ul className="space-y-2">
@@ -1826,7 +1826,7 @@ function ParcelSitePanel({
       <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[var(--muted)] uppercase">
         Location · parcel
       </p>
-      <h3 className="font-serif text-xl font-bold text-ink">
+      <h3 className="type-card-title text-ink">
         {formatAcres(parcel.legalAcreage)}
       </h3>
       <p className="text-sm text-ink">
@@ -1846,7 +1846,7 @@ function ParcelSitePanel({
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
           Commercial exposure
         </p>
-        <p className="mt-1 font-serif text-3xl font-bold tabular-nums text-ink">
+        <p className="mt-1 type-page-title tabular-nums text-ink">
           {commercial.score}
           <span className="text-lg text-[var(--muted)]">
             /{commercial.maxScore}
@@ -1878,7 +1878,7 @@ function ParcelSitePanel({
           Approx. frontage
         </p>
         <p
-          className="mt-1 font-serif text-2xl font-bold tabular-nums text-ink"
+          className="mt-1 type-section tabular-nums text-ink"
           data-corridor-frontage-ft
         >
           {intelLoading && !intel
@@ -1961,7 +1961,7 @@ function ParcelSitePanel({
         <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
           Traffic exposure
         </p>
-        <p className="mt-1 font-serif text-3xl font-bold tabular-nums text-ink">
+        <p className="mt-1 type-page-title tabular-nums text-ink">
           {summary.vehiclesLabel}
         </p>
         <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
@@ -2081,12 +2081,12 @@ function StationDetail({ station }: { station: TrafficStation }) {
 
   return (
     <div className="mt-2 space-y-3" data-corridor-traffic-dossier>
-      <h3 className="font-serif text-xl font-bold text-ink">
+      <h3 className="type-card-title text-ink">
         {station.onRoad || "Unnamed corridor"}
       </h3>
 
       <div>
-        <p className="font-serif text-3xl font-bold tabular-nums text-ink">
+        <p className="type-page-title tabular-nums text-ink">
           {formatAadt(station.latestAadt)}
         </p>
         <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">

@@ -61,7 +61,7 @@ export function ShiParcelPositionCard({
       <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
         {PARCEL_POSITION_COPY.whyStandsOut}
       </p>
-      <p className="mt-1 font-serif text-xl font-bold leading-tight text-ink">
+      <p className="mt-1 type-card-title leading-tight text-ink">
         {profile.roadPositionLabel}
       </p>
       <p className="mt-1.5 text-[13px] leading-snug text-ink">{lead}</p>

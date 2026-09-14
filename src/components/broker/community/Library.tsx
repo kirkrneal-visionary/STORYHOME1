@@ -65,7 +65,7 @@ export function CommunityLibrary({ member }: { member: Member }) {
     <div>
       <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
         <div>
-          <h3 className="font-serif text-xl font-bold text-ink">
+          <h3 className="type-card-title text-ink">
             Knowledge Library
           </h3>
           <p className="mt-0.5 text-sm text-[var(--muted)]">
@@ -237,7 +237,7 @@ function LibraryThreadReader({
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="font-serif text-2xl font-bold text-ink">
+          <h3 className="type-section text-ink">
             {thread.title}
           </h3>
           <p className="mt-1 font-mono text-[11px] text-[var(--muted)] uppercase">

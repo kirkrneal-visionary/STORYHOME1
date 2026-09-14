@@ -213,7 +213,7 @@ export function LivingMarkPresence({
               )}
             />
           ) : (
-            <span className="font-serif text-2xl font-bold text-navy md:text-3xl">
+            <span className="type-section text-navy md:text-3xl">
               {initials || "SH"}
             </span>
           )}

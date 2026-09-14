@@ -175,7 +175,7 @@ export function MyHomeView() {
     return (
       <Shell>
         <div className="mx-auto max-w-xl">
-          <h1 className="font-serif text-3xl font-bold text-ink">My Home</h1>
+          <h1 className="type-page-title text-ink">My Home</h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
             Your owned-home file — renovations, expenses, and documents. This
             is not saved marketplace listings.
@@ -188,7 +188,7 @@ export function MyHomeView() {
             .
           </p>
           <div className="mt-6 rounded-2xl border border-hairline bg-[var(--surface)] p-6">
-            <h2 className="font-serif text-xl font-bold text-ink">
+            <h2 className="type-card-title text-ink">
               Add your home to get started
             </h2>
             <HomeForm
@@ -211,7 +211,7 @@ export function MyHomeView() {
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div>
-            <h1 className="font-serif text-3xl font-bold text-ink">My Home</h1>
+            <h1 className="type-page-title text-ink">My Home</h1>
             <p className="mt-1 text-sm text-[var(--muted)]">
               Private owned-home vault — not your saved marketplace listings.{" "}
               <Link href="/saved" className="font-semibold text-gold underline">
@@ -423,7 +423,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
         {icon}
         <span className="font-mono text-[10px] font-semibold tracking-wider uppercase">{label}</span>
       </div>
-      <p className="mt-2 font-serif text-2xl font-bold text-ink tabular-nums">{value}</p>
+      <p className="mt-2 type-section text-ink tabular-nums">{value}</p>
     </div>
   );
 }
@@ -494,7 +494,7 @@ function Overview({
           </label>
         </div>
         <div className="p-5">
-          <h3 className="font-serif text-2xl font-bold text-ink">{home.nickname}</h3>
+          <h3 className="type-section text-ink">{home.nickname}</h3>
           <p className="mt-1 text-sm text-[var(--muted)]">
             {[home.address, home.city, home.countyName].filter(Boolean).join(", ")}
             {home.state ? `, ${home.state}` : ""} {home.zip}
@@ -682,7 +682,7 @@ function HistoryTab({ records, onAdd, onDelete, onUploadReceipt }: {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-serif text-xl font-bold text-ink">Home history</h3>
+        <h3 className="type-card-title text-ink">Home history</h3>
         <button type="button" onClick={() => setOpen((v) => !v)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-[var(--accent-contrast)]">
           <Plus className="h-4 w-4" /> Add record
         </button>
@@ -784,7 +784,7 @@ function ExpensesTab({ expenses, onAdd, onDelete, onUploadReceipt }: {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="font-serif text-xl font-bold text-ink">Expenses</h3>
+          <h3 className="type-card-title text-ink">Expenses</h3>
           <p className="text-xs text-[var(--muted)]">Tracked total: {formatUsd(total)}</p>
         </div>
         <button type="button" onClick={() => setOpen((v) => !v)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-[var(--accent-contrast)]">
@@ -877,7 +877,7 @@ function DocumentsTab({ docs, folders, onUpload, onDelete, onCreateFolder, onDel
 
   return (
     <div>
-      <h3 className="mb-3 font-serif text-xl font-bold text-ink">Documents vault</h3>
+      <h3 className="mb-3 type-card-title text-ink">Documents vault</h3>
 
       {/* Folders */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -981,7 +981,7 @@ function SharingTab({ grants, audit, onGrant, onRevoke, onExport, onDeleteHome }
       <div className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-teal-soft" />
-          <h3 className="font-serif text-xl font-bold text-ink">Share with a realtor</h3>
+          <h3 className="type-card-title text-ink">Share with a realtor</h3>
         </div>
         <p className="mt-1 text-sm text-[var(--muted)]">
           Your home data is private. Grant a specific realtor access — full file
@@ -1050,7 +1050,7 @@ function SharingTab({ grants, audit, onGrant, onRevoke, onExport, onDeleteHome }
 
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-hairline bg-[var(--surface)] p-5">
       <div className="mr-auto">
-        <h4 className="font-serif text-lg font-bold text-ink">Your data</h4>
+        <h4 className="type-card-title text-ink">Your data</h4>
         <p className="text-sm text-[var(--muted)]">It&rsquo;s yours — export it any time, or delete this home entirely.</p>
       </div>
       <button type="button" onClick={onExport} className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink">

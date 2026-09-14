@@ -6,7 +6,7 @@ export default function FairHousingPage() {
   return (
     <div className="story-room-pad min-h-dvh px-4 pb-[var(--story-bottom-clearance)] md:px-6">
       <div className="mx-auto max-w-3xl">
-        <h1 className="font-serif text-4xl font-bold text-ink">
+        <h1 className="type-page-title text-ink">
           Fair Housing Commitment
         </h1>
 
@@ -19,7 +19,7 @@ export default function FairHousingPage() {
           </p>
 
           <div className="rounded-xl border border-hairline bg-[var(--surface)] p-5">
-            <h2 className="font-serif text-xl font-bold text-ink">
+            <h2 className="type-card-title text-ink">
               Protected classes
             </h2>
             <p className="mt-2">
@@ -41,7 +41,7 @@ export default function FairHousingPage() {
             </ul>
           </div>
 
-          <h2 className="font-serif text-xl font-bold text-ink">
+          <h2 className="type-card-title text-ink">
             How we enforce it on Story Home
           </h2>
           <p>
@@ -53,7 +53,7 @@ export default function FairHousingPage() {
             review obligations.
           </p>
 
-          <h2 className="font-serif text-xl font-bold text-ink">Report a concern</h2>
+          <h2 className="type-card-title text-ink">Report a concern</h2>
           <p>
             If you believe you have experienced housing discrimination, you may
             file a complaint with the U.S. Department of Housing and Urban

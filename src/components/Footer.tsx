@@ -48,7 +48,7 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-paper">
               <EqualHousingLogo />
-              <span className="font-mono text-[11px] font-bold tracking-wider uppercase">
+              <span className="type-caption font-semibold">
                 Equal Housing
                 <br />
                 Opportunity
@@ -66,7 +66,7 @@ export default function Footer() {
             </p>
 
             <div className="space-y-1.5 border-t border-hairline pt-3 text-xs">
-              <p className="font-mono text-[10px] font-bold tracking-wider text-paper/50 uppercase">
+              <p className="type-caption font-semibold text-paper/50">
                 Texas Real Estate Commission
               </p>
               <p>
@@ -148,7 +148,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <h3 className="font-mono text-[11px] font-bold tracking-wider text-paper/50 uppercase">
+      <h3 className="type-caption font-semibold text-paper/50">
         {title}
       </h3>
       <ul className="mt-4 space-y-2 text-sm">

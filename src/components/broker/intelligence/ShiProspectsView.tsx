@@ -519,7 +519,7 @@ function ProspectDossier({
         >
           Prospect dossier
         </p>
-        <h3 className="mt-1 font-serif text-xl font-bold text-ink">
+        <h3 className="mt-1 type-card-title text-ink">
           {detail.label}
         </h3>
         <p className="mt-1 text-sm text-[var(--muted)]">
@@ -841,7 +841,7 @@ function SummaryChip({
       <p className="font-mono text-[10px] font-bold tracking-wider text-[var(--muted)] uppercase">
         {label}
       </p>
-      <p className="mt-1 font-serif text-2xl font-bold text-ink">{value}</p>
+      <p className="mt-1 type-section text-ink">{value}</p>
     </button>
   );
 }

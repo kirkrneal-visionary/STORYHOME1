@@ -170,7 +170,7 @@ export function ShiCorridorsAnalysisPanel({
       <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
         Corridor intelligence{slotLabel ? ` · ${slotLabel}` : ""}
       </p>
-      <h3 className="mt-1 font-serif text-2xl font-bold text-ink">
+      <h3 className="mt-1 type-section text-ink">
         What Archie found
       </h3>
       <p className="mt-1 text-sm text-[var(--muted)]">{result.statusLine}</p>
@@ -189,7 +189,7 @@ export function ShiCorridorsAnalysisPanel({
                 className="story-well px-3 py-2"
               >
                 <p className="text-[11px] text-[var(--muted)]">{f.label}</p>
-                <p className="font-serif text-lg font-bold text-ink">{f.value}</p>
+                <p className="type-card-title text-ink">{f.value}</p>
                 {f.detail ? (
                   <p className="mt-0.5 text-[10px] text-[var(--muted)]">
                     {f.detail}

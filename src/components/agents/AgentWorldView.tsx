@@ -101,7 +101,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
               <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
                 Agent World
               </p>
-              <h1 className="font-serif text-3xl font-bold tracking-[-0.02em] text-ink md:text-4xl">
+              <h1 className="type-page-title tracking-[-0.02em] text-ink md:text-4xl">
                 {agent.fullName}
               </h1>
               <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[var(--muted)]">
@@ -173,7 +173,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
             <p className="font-mono text-[9px] tracking-[0.12em] text-[var(--muted)] uppercase sm:text-[10px]">
               Reputation
             </p>
-            <p className="font-serif text-3xl font-bold text-ink sm:text-4xl md:text-5xl">
+            <p className="type-page-title text-ink sm:text-4xl md:text-5xl">
               {agent.reputationScore || "—"}
             </p>
           </div>
@@ -234,7 +234,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
         >
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="font-serif text-2xl font-bold text-ink">Listings</h2>
+              <h2 className="type-section text-ink">Listings</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">
                 Homes on this Agent World
               </p>

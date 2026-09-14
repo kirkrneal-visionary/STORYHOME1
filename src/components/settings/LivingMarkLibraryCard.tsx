@@ -88,7 +88,7 @@ export function LivingMarkLibraryCard({
       <div className="flex items-start gap-3">
         <Video className="mt-0.5 h-5 w-5 shrink-0 text-gold" aria-hidden />
         <div className="min-w-0 flex-1">
-          <h2 className="font-serif text-lg font-bold text-ink">Living Mark</h2>
+          <h2 className="type-card-title text-ink">Living Mark</h2>
           <p className="text-xs text-[var(--muted)]">
             Library upload for your Agent World circle — photo (temporary) or ~30s
             welcome video. No player buttons on the public mark.
@@ -113,7 +113,7 @@ export function LivingMarkLibraryCard({
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="font-serif text-3xl font-bold text-navy">
+            <span className="type-page-title text-navy">
               {initials || "SH"}
             </span>
           )}

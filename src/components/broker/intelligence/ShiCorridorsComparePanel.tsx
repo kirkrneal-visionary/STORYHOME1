@@ -22,7 +22,7 @@ export function ShiCorridorsComparePanel({ compare, onClear }: Props) {
           <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
             Compare areas
           </p>
-          <h3 className="mt-1 font-serif text-xl font-bold text-ink">
+          <h3 className="mt-1 type-card-title text-ink">
             {compare.leftLabel} · {compare.rightLabel}
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-[var(--muted)]">

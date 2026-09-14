@@ -64,7 +64,7 @@ export function SettingsView() {
   if (!isLoggedIn || !user) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] text-center md:px-6">
-        <h1 className="font-serif text-3xl font-bold text-ink">Settings</h1>
+        <h1 className="type-page-title text-ink">Settings</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">Log in to manage your account.</p>
         <Link href="/login?next=/settings" className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy">Log in</Link>
       </div>
@@ -78,7 +78,7 @@ export function SettingsView() {
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
       <header>
         <p className="font-mono text-[11px] tracking-[0.16em] text-gold uppercase">Account settings</p>
-        <h1 className="mt-2 font-serif text-3xl font-bold text-ink md:text-4xl">Settings</h1>
+        <h1 className="mt-2 type-page-title text-ink md:text-4xl">Settings</h1>
         <p className="mt-2 inline-flex items-center gap-2 text-sm text-[var(--muted)]">
           {user.name}
           <span className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink">
@@ -135,7 +135,7 @@ function Card({ icon: Icon, title, subtitle, children }: {
       <div className="flex items-center gap-2">
         <Icon className="h-5 w-5 text-[var(--muted)]" />
         <div>
-          <h2 className="font-serif text-lg font-bold text-ink">{title}</h2>
+          <h2 className="type-card-title text-ink">{title}</h2>
           {subtitle && <p className="text-xs text-[var(--muted)]">{subtitle}</p>}
         </div>
       </div>
@@ -382,7 +382,7 @@ function RosterManager({ brokerageId, brokerId, brokerTrecLicense }: {
 
   return (
     <div>
-      <h3 className="font-serif text-lg font-bold text-ink">Agent roster</h3>
+      <h3 className="type-card-title text-ink">Agent roster</h3>
       <p className="mt-1 text-xs text-[var(--muted)]">
         Add agents by TREC license #. Story Home confirms with TREC that the agent is actually sponsored by you before inviting them.
       </p>

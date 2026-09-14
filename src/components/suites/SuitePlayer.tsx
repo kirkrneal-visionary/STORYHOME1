@@ -50,7 +50,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
   if (!suite) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-        <h1 className="font-serif text-3xl font-bold text-ink">
+        <h1 className="type-page-title text-ink">
           Suite not found
         </h1>
         <Link href="/saved" className="mt-6 inline-block text-gold">
@@ -98,7 +98,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
           <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
             Story Home Suite
           </p>
-          <h1 className="mt-1 font-serif text-4xl font-bold text-ink">
+          <h1 className="mt-1 type-page-title text-ink">
             {suite.name}
           </h1>
           <p className="mt-2 text-sm text-[var(--muted)]">
@@ -120,7 +120,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
 
       {listings.length === 0 ? (
         <div className="story-well mt-12 px-6 py-16 text-center">
-          <p className="font-serif text-2xl font-bold text-ink">Empty album</p>
+          <p className="type-section text-ink">Empty album</p>
           <p className="mt-2 text-sm text-[var(--muted)]">
             Save homes from the marketplace into this suite.
           </p>
@@ -157,7 +157,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                     <p className="font-mono text-sm font-bold text-gold">
                       {formatUsd(current.price)}
                     </p>
-                    <h2 className="mt-2 font-serif text-3xl font-bold text-ink">
+                    <h2 className="mt-2 type-page-title text-ink">
                       {current.addressSerif}
                     </h2>
                     <p className="mt-2 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">

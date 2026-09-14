@@ -95,7 +95,7 @@ function HomeFactsSection({ home, onSaved }: { home: Home; onSaved: () => void }
   const [note, setNote] = useState("");
   return (
     <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
-      <h3 className="font-serif text-xl font-bold text-ink">Home facts</h3>
+      <h3 className="type-card-title text-ink">Home facts</h3>
       <p className="mt-1 text-xs text-[var(--muted)]">
         Editable anytime — these appear on your Overview. Mobile-home serials
         auto-fill from CAD when available; otherwise enter them here.
@@ -151,7 +151,7 @@ function LandSection({ home, onSaved }: { home: Home; onSaved: () => void }) {
   const [busy, setBusy] = useState(false);
   return (
     <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
-      <h3 className="font-serif text-xl font-bold text-ink">Land details</h3>
+      <h3 className="type-card-title text-ink">Land details</h3>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <NumberField id="p-acres" label="Lot size (acres)" step="0.01" value={String(f.lotAcres ?? "")} onChange={(v) => setF((p) => ({ ...p, lotAcres: Number(v) || null }))} />
         <TextField id="p-road" label="Road frontage" value={f.roadFrontage} onChange={(v) => setF((p) => ({ ...p, roadFrontage: v }))} />
@@ -190,7 +190,7 @@ function StructuresSection({
   return (
     <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-serif text-xl font-bold text-ink">Structures & outbuildings</h3>
+        <h3 className="type-card-title text-ink">Structures & outbuildings</h3>
         <button type="button" onClick={() => setOpen((v) => !v)} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--accent)] px-3 text-sm font-semibold text-[var(--accent-contrast)]"><Plus className="h-4 w-4" /> Add</button>
       </div>
       {open && (
@@ -245,7 +245,7 @@ function DisclosureSection({
     <section className="rounded-2xl border border-hairline bg-[var(--surface)] p-5">
       <div className="flex items-center gap-2">
         <Info className="h-5 w-5 text-gold" />
-        <h3 className="font-serif text-xl font-bold text-ink">Seller&rsquo;s disclosure (informational)</h3>
+        <h3 className="type-card-title text-ink">Seller&rsquo;s disclosure (informational)</h3>
       </div>
       <p className="mt-1 rounded-md border border-gold/40 bg-gold/10 p-2.5 text-xs text-ink">
         This is an informational record modeled on the TREC Seller&rsquo;s
