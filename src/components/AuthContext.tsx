@@ -19,7 +19,7 @@ import {
   parseAssuranceLevel,
   signInPublicMessage,
 } from "@/lib/account/assurance";
-import type { AccountPurpose } from "@/lib/account/purpose";
+import { navRoleForAccount, type AccountPurpose } from "@/lib/account/purpose";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
 import {
@@ -190,11 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         aal,
         mfaEnrolled,
       });
-      setRole(
-        kind === "consumer" && purpose !== "managing_broker"
-          ? "consumer"
-          : "professional",
-      );
+      setRole(navRoleForAccount(purpose, kind));
       setReady(true);
     }
 
@@ -221,11 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (next: AuthUser) => {
       setUser(next);
       persistUser(next);
-      setRole(
-        next.kind === "pro" || next.kind === "broker"
-          ? "professional"
-          : "consumer",
-      );
+      setRole(navRoleForAccount(next.purpose, next.kind));
       track("auth_login_succeeded", {
         account_kind: accountKindForAnalytics(next),
       });
@@ -429,23 +421,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: aal } =
         await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
       const { data: factors } = await supabase.auth.mfa.listFactors();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, account_kind, account_purpose, professional_role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      const purpose = (profile?.account_purpose as AccountPurpose | null) ?? undefined;
+      const kind = profile
+        ? kindFromAccount(profile.account_kind)
+        : undefined;
       setUser((prev) =>
         prev
           ? {
               ...prev,
+              name: profile?.full_name || prev.name,
               email: authUser.user?.email ?? prev.email,
               emailConfirmed: Boolean(authUser.user?.email_confirmed_at),
               aal: parseAssuranceLevel(aal?.currentLevel) ?? prev.aal,
               mfaEnrolled: Boolean(
                 factors?.totp?.some((f) => f.status === "verified"),
               ),
+              purpose: purpose ?? prev.purpose,
+              kind: kind ?? prev.kind,
+              proRole:
+                (profile?.professional_role as ProRole | null) ?? prev.proRole,
             }
           : prev,
       );
+      if (kind || purpose) {
+        setRole(navRoleForAccount(purpose, kind ?? "consumer"));
+      }
     } catch {
       // keep last known user
     }
-  }, [supabase]);
+  }, [supabase, setRole]);
 
   const logout = useCallback(() => {
     if (supabase) {

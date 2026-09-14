@@ -72,7 +72,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (pathname.startsWith("/portal") && !user) {
+  const gated =
+    pathname.startsWith("/portal") || pathname.startsWith("/office");
+
+  if (gated && !user) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = "";
@@ -84,11 +87,7 @@ export async function middleware(request: NextRequest) {
     return redirect;
   }
 
-  if (
-    pathname.startsWith("/portal") &&
-    user &&
-    !user.email_confirmed_at
-  ) {
+  if (gated && user && !user.email_confirmed_at) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = "";

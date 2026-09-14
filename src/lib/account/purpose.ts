@@ -48,6 +48,29 @@ export function mayManageBrokerage(purpose?: string | null): boolean {
   return purpose === "managing_broker";
 }
 
+/** Only an individual licensed broker can turn this login into the office account. */
+export function canOpenOfficeAccount(
+  purpose?: string | null,
+  kind?: string | null,
+): boolean {
+  return purpose === "individual_pro" && kind === "broker";
+}
+
+/** Story Pro nav only. Office-admin is not a Pro preview. */
+export function navRoleForAccount(
+  purpose?: string | null,
+  kind?: string | null,
+): "consumer" | "professional" {
+  return mayUseStoryPro(purpose, kind) ? "professional" : "consumer";
+}
+
+export function purposeLabel(purpose?: string | null): string {
+  if (purpose === "managing_broker") return "Office account";
+  if (purpose === "individual_pro") return "Story Pro";
+  if (purpose === "other_professional") return "Other professional";
+  return "Homeowner";
+}
+
 function norm(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -81,7 +104,7 @@ export function destForUser(user: {
   kind: string;
   purpose?: string | null;
 }): string {
-  if (mayManageBrokerage(user.purpose)) return "/settings";
+  if (mayManageBrokerage(user.purpose)) return "/office";
   if (mayUseStoryPro(user.purpose, user.kind)) return "/portal";
   if (user.kind === "seller") return "/";
   return "/home";

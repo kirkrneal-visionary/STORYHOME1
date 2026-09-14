@@ -18,8 +18,8 @@ export function portalRefuseCopy(purpose?: string | null): {
     return {
       title: "Office account",
       body: "This login manages a brokerage. Story Pro stays with each realtor’s own account.",
-      href: "/settings",
-      cta: "Open settings",
+      href: "/office",
+      cta: "Open office",
     };
   }
   return {
