@@ -74,8 +74,17 @@ export async function POST(request: Request) {
 
   const { error } = await auth.supabase.auth.updateUser({ password: newPassword });
   if (error) {
+    const weak =
+      error.code === "weak_password" ||
+      error.message.toLowerCase().includes("weak") ||
+      error.message.toLowerCase().includes("easy to guess");
     return NextResponse.json(
-      { ok: false, error: "Unable to update password." },
+      {
+        ok: false,
+        error: weak
+          ? "That password is too common. Use a longer phrase — not a name plus 1234."
+          : "Unable to update password.",
+      },
       { status: 400 },
     );
   }

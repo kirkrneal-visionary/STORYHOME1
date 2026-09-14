@@ -19,6 +19,7 @@ import {
   parseAssuranceLevel,
   signInPublicMessage,
 } from "@/lib/account/assurance";
+import { signUpPublicMessage } from "@/lib/account/password-strength";
 import { navRoleForAccount, type AccountPurpose } from "@/lib/account/purpose";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
@@ -355,7 +356,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         return {
           ok: false,
-          error: "Unable to create this account. Try again or sign in.",
+          error: signUpPublicMessage(error),
         };
       }
       return { ok: true, emailUnconfirmed: true };
@@ -393,7 +394,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!supabase) return { ok: false, error: "Auth is not configured." };
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        return { ok: false, error: "Unable to set a new password." };
+        return { ok: false, error: signUpPublicMessage(error) };
       }
       await supabase.auth.signOut({ scope: "others" });
       return { ok: true };
