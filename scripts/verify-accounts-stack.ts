@@ -11,6 +11,7 @@ const scripts = [
   "scripts/test-accounts-delete-hide-email.ts",
   "scripts/test-password-strength.ts",
   "scripts/test-office-keep-story-pro.ts",
+  "scripts/test-login-signup-separate.ts",
 ];
 
 for (const file of scripts) {
