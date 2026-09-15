@@ -57,11 +57,11 @@ assert.equal(
 
 const view = read("src/components/settings/SettingsView.tsx");
 assert.match(view, /STORY_PRO_SETTINGS_BLOCKED/);
-assert.match(view, /securityReady && profile/);
+assert.match(view, /showRealtorCards/);
+assert.match(view, /securityReady/);
 assert.match(view, /\/api\/account\/story-pro-profile/);
 assert.match(view, /AccountSection/);
 assert.match(view, /SecuritySection/);
-assert.doesNotMatch(view, /from "@\/components\/AppContext"/);
 
 const route = read("src/app/api/account/story-pro-profile/route.ts");
 assert.match(route, /canEditStoryProSettings/);

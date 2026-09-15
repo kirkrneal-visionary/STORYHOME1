@@ -15,6 +15,7 @@ const scripts = [
   "scripts/test-sign-out-everywhere-detect.ts",
   "scripts/test-forced-logout-server.ts",
   "scripts/test-settings-pro-auth.ts",
+  "scripts/test-settings-buyer-preview.ts",
 ];
 
 for (const file of scripts) {
