@@ -10,7 +10,7 @@ const root = process.cwd();
 const read = (rel) => readFileSync(join(root, rel), "utf8");
 
 const css = read("src/app/globals.css");
-assert.match(css, /--story-archie-ribbon-h:\s*40px/);
+assert.match(css, /--story-archie-ribbon-h:\s*2\.75rem/);
 
 const portal = read("src/components/broker/BrokerPortal.tsx");
 assert.match(portal, /--story-archie-ribbon-h/);

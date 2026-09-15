@@ -34,7 +34,7 @@ export const GLOBAL_NAV_HEIGHT_PX = 72;
 export const STORY_BOTTOM_CLEARANCE_PX = 76;
 
 /** Archie context ribbon height (px) — keep in sync with --story-archie-ribbon-h. */
-export const ARCHIE_RIBBON_HEIGHT_PX = 40;
+export const ARCHIE_RIBBON_HEIGHT_PX = 44;
 
 export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
   storyhome: {

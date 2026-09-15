@@ -14,6 +14,7 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-15 | Farm photos use existing `shi-studies` paths, no new SQL column | Avoid a founder SQL paste; old farms stay Photo pending | PR 192 |
 | 2026-09-15 | Failed map snap must not delete the study; hide LngLat text; Save does not jump to Vault | Founder: red lines, empty Vault, Save and Open are separate | PR 193 |
 | Standing | No billing provider | Not built | rundown / constitution |
+| 2026-09-15 | Menu tap repair before any bubble restyle | Misses were dead glass between dock pills + undersized chrome, not hosting | Founder work order |
 | Standing | Corridors finished inside Research Access | Do not rebuild | Founder directive in this charter |
 
 If a new change alters one of these, add a row and update the workflow contract.

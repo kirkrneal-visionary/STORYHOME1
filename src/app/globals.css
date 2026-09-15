@@ -86,7 +86,7 @@
 
   /* Shell insets — living overlay header + floating bottom nav + Archie ribbon */
   --story-header-h: 72px;
-  --story-archie-ribbon-h: 40px;
+  --story-archie-ribbon-h: 2.75rem;
   --story-safe-top: calc(var(--story-header-h) + env(safe-area-inset-top, 0px));
   --story-bottom-clearance: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   --story-bottom-nav-h: 3.35rem;
@@ -492,6 +492,26 @@ html[data-role="professional"] {
 }
 .story-press:active {
   transform: scale(0.985);
+}
+
+/* Wave 1 — full control is the hit target; do not navigate on touch-down */
+.story-nav-hit {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+}
+.story-nav-hit[data-nav-state="pending"] {
+  opacity: 0.82;
+}
+.story-nav-hit[data-nav-state="active"] {
+  opacity: 1;
+}
+.story-bottom-dock {
+  pointer-events: auto;
+}
+.story-bottom-dock a[data-nav-hit] {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
 }
 
 /* AW-POLISH — Agent World atmosphere + Living Mark presence (respect reduce-motion) */
