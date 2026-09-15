@@ -34,7 +34,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 
 **This wave does not:** restyle the smoked-glass bubble, change site type size, add View Transitions, add `scheduler.yield()`, or raise z-index over maps.
 
-**Verify:** isolated `npm run test:nav-touch` (also inside `test:project-memory`). Founder **GOOD** on a physical iPhone 2026-09-15 via the Wave 1 eqmg preview. Not merged to live.
+**Verify:** isolated `npm run test:nav-touch` (also inside `test:project-memory`). Founder **GOOD** on a physical iPhone 2026-09-15. Merged to live 2026-09-15.
 
 ## Wave 2 — Stabilize nav and header (`cursor/nav-header-6752`)
 
@@ -59,7 +59,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - One dark page behind search/filters and the list. Same `--env-0` as the site canvas.
 - Do not restyle card interiors, inputs, gold/navy, or the map.
 - Do not start integrated card edges (Wave 5) or video-glass on the dock (Wave 6).
-- Founder **GOOD** on the Wave 4 eqmg preview 2026-09-15. Not merged to live.
+- Founder **GOOD** on the Wave 4 eqmg preview 2026-09-15. Merged to live 2026-09-15.
 
 ## Wave 5 — Marketplace card and control edges (`cursor/market-edges-6752`)
 
@@ -67,7 +67,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Cards sit on the canvas: no raise puddle, thin `--market-edge`.
 - Do not restyle card interiors, gold/navy, the map, the header, or the dock.
 - Do not start video-glass on the dock (Wave 6).
-- Founder **GOOD** on the Wave 5 eqmg preview 2026-09-15. Not merged to live.
+- Founder **GOOD** on the Wave 5 eqmg preview 2026-09-15. Merged to live 2026-09-15.
 
 ## Wave 6 — Dock frost (`cursor/nav-frost-6752`)
 
@@ -75,7 +75,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Top-rim highlight only. No outline. No shadow puddle.
 - Icons stay sharp. Filled navy selection stays.
 - Do not restyle the header, cards, or map.
-- Founder **GOOD** on the Wave 6 eqmg preview 2026-09-15. Not merged to live.
+- Founder **GOOD** on the Wave 6 eqmg preview 2026-09-15. Merged to live 2026-09-15 with Waves 1–5 (PRs 196–201).
 
 ## After each wave
 
