@@ -1,0 +1,13 @@
+---
+description: Story Home UI, motion, and copy
+globs: src/components/**,src/app/**/*.tsx
+alwaysApply: false
+---
+
+# UI
+
+- User-facing intelligence name is **Archie’s Intelligence**. Do not show “SHI.”
+- Maps are sacred: chrome must not steal pan, draw, or tiles.
+- Story Glass sound stays original Web Audio. Do not mute by default or replace with stock SFX.
+- Typography and surfaces follow existing Story OS tokens. Do not redesign the brand unless asked.
+- After UI changes, verify the real click path, not only a screenshot.

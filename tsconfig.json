@@ -63,6 +63,8 @@
     "scripts/test-settings-db-locks.ts",
     "scripts/test-farm-map-memory.ts",
     "scripts/test-vault-snap-save.ts",
+    "scripts/test-project-memory.ts",
+    "scripts/test-workflow-contracts.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

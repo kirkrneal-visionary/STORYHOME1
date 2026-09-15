@@ -1,0 +1,16 @@
+---
+description: Account, session, and Story Pro access
+globs: src/lib/account/**,src/app/api/account/**,src/middleware.ts,src/app/login/**,src/app/signup/**,src/app/settings/**,src/app/portal/**,src/app/office/**
+alwaysApply: false
+---
+
+# Account and access
+
+Read `docs/memory/workflows/auth-and-access.md` before editing.
+
+- Access is decided on the server and in the database, not by a visible tab or `localStorage` “View as buyer.”
+- `mayUseStoryPro` / `requireStoryPro` gate Archie APIs. Consumers and `other_professional` do not get Intelligence.
+- TREC success never grants office (`managing_broker`). Office is a separate, explicit path.
+- Login and Create account must not share typed secrets.
+- Forced sign-out uses `forced_logout_at`. Other devices must honor it.
+- Preserve consumer / individual Pro / managing broker / other professional distinctions.

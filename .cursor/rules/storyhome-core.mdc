@@ -1,0 +1,22 @@
+---
+description: Story Home always-on development process and product protections
+alwaysApply: true
+---
+
+# Story Home — core
+
+Before changing product behavior:
+
+1. Read `docs/memory/PROJECT_OVERVIEW.md` and `docs/memory/CURRENT_WORK.md`.
+2. Read the workflow contract that matches the request (`docs/memory/WORKFLOWS.md`).
+3. Inspect the live code paths named in that contract. Do not specify implementation from memory alone.
+4. Name shared dependencies you might break (auth, map, CAD, saves, design system).
+5. Make the smallest complete change. Do not invent a Phase 4 or a runtime AI service.
+6. Verify the affected behavior. Update only the docs that changed.
+7. Report what was tested, what failed, and what is still unverified.
+
+**Talk to Kirk:** follow `AGENTS.md`. One job. Plain English. Never ask him to run npm.
+
+**Live site:** only https://storyhome-1-eqmg.vercel.app. Ignore red Vercel on plain `storyhome-1`. A PR is Ready when `Vercel – storyhome-1-eqmg` is green.
+
+**Do not:** grant office from TREC; copy people between accounts; add billing; reset production; treat CAD as MLS or deeds; invent seller scores or history; collapse Farms and Study Vault; infer access from a tab or “View as buyer.”
