@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation waves stay on test links — not live. Founder confirmed Wave 1 taps and Wave 2 tabs/light header GOOD on a real phone 2026-09-15. Next: Wave 3 (bottom bubble, no shadow). See `docs/memory/NAV-WAVES.md`.
+- Navigation Waves 1–3 founder-confirmed GOOD on iPhone 2026-09-15. Stay on test links — not live. Wave 4: unify Marketplace page canvas. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Verify Wave 3 on the Wave 3 test link (soft bottom bubble, no shadow, no outline).
+1. Build and verify Wave 4 (Marketplace page canvas). Do not start card-edge glass until Wave 4 is GOOD.
 2. Do not rename the `verify` job — that would drop the merge lock.
