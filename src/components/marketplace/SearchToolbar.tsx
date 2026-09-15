@@ -110,7 +110,7 @@ export function SearchToolbar({
               "story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-semibold",
               activeFilterCount > 0
                 ? "border-gold/50 bg-gold/15 text-ink"
-                : "border-hairline bg-[color-mix(in_srgb,var(--glass-bg)_80%,transparent)] text-ink",
+                : "border-hairline bg-[var(--market-control-bg)] text-ink",
             )}
           >
             <SlidersHorizontal
