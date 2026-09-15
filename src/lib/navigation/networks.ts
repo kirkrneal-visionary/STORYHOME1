@@ -103,19 +103,26 @@ export function isStoryProPath(pathname: string | null | undefined): boolean {
   return !isArchiePath(pathname);
 }
 
+/**
+ * Archie subsection from the query string.
+ * Access desk (`mode=access`) stays Research. Corridors is not a ribbon tab.
+ */
+export function archieModuleFromSearch(
+  section: string | null | undefined,
+  mode?: string | null,
+): ArchieModule {
+  if (section === "vault") return "vault";
+  if (section === "prospects") return "prospects";
+  if (section === "farms") return "farms";
+  if (section === "corridors") return "research";
+  if (mode === "access") return "research";
+  return "research";
+}
+
 export function isArchieModuleActive(
   module: ArchieModule,
   section: string | null | undefined,
+  mode?: string | null,
 ): boolean {
-  const current =
-    section === "vault"
-      ? "vault"
-      : section === "prospects"
-        ? "prospects"
-        : section === "farms"
-          ? "farms"
-          : section === "corridors"
-            ? "corridors"
-            : "research";
-  return current === module;
+  return archieModuleFromSearch(section, mode) === module;
 }

@@ -697,7 +697,11 @@ html[data-role="professional"] {
 .story-bottom-dock {
   left: max(0.75rem, env(safe-area-inset-left, 0px));
   right: max(0.75rem, env(safe-area-inset-right, 0px));
-  bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+  bottom: max(
+    0.65rem,
+    env(safe-area-inset-bottom, 0px),
+    var(--story-vv-bottom, 0px)
+  );
   height: var(--story-bottom-nav-h);
   padding-inline: 0.35rem;
 }
@@ -707,7 +711,7 @@ html[data-role="professional"] {
     right: auto;
     width: min(32rem, calc(100vw - 2.5rem));
     transform: translateX(-50%);
-    bottom: 1.1rem;
+    bottom: max(1.1rem, var(--story-vv-bottom, 0px));
   }
 }
 
@@ -716,22 +720,22 @@ html[data-role="professional"] {
  * content may extend underneath. Not a reserved website header band.
  */
 .story-overlay-header {
-  /* Instagram-class: light scrim only — never a solid black header band */
+  /* Readable band over page text — fade only the last sliver, no hole through the wordmark */
+  isolation: isolate;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--env-0) 28%, transparent) 0%,
-    color-mix(in srgb, var(--env-0) 10%, transparent) 55%,
-    transparent 100%
+    color-mix(in srgb, var(--env-0) 82%, transparent) 0%,
+    color-mix(in srgb, var(--env-0) 70%, transparent) 70%,
+    color-mix(in srgb, var(--env-0) 28%, transparent) 100%
   );
   border: none;
   border-bottom: none;
   box-shadow: none;
   outline: none;
-  /* Soft blur without a hard frosted bar edge */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  mask-image: none;
+  -webkit-mask-image: none;
   transition:
     height var(--motion-fast) var(--motion-ease-standard),
     background var(--motion-fast) linear,
@@ -741,9 +745,9 @@ html[data-header-state="compact"] .story-overlay-header,
 html[data-header-state="minimal"] .story-overlay-header {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--env-0) 42%, transparent) 0%,
-    color-mix(in srgb, var(--env-0) 14%, transparent) 65%,
-    transparent 100%
+    color-mix(in srgb, var(--env-0) 88%, transparent) 0%,
+    color-mix(in srgb, var(--env-0) 74%, transparent) 75%,
+    color-mix(in srgb, var(--env-0) 32%, transparent) 100%
   );
   border: none;
   border-bottom: none;

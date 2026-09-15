@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 
@@ -35,6 +35,8 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Snap failure keeps study | `studies.ts` no longer deletes frame on upload fail — **source-tested** |
 | Duplicate farm names | **Observed** allowed. Not blocked |
 | One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. iPhone not proven here |
+| Pro tab ≠ Archie tab | `primaryDockId` **source-tested** |
+| Header text does not punch through the wordmark | Mask removed; stronger band **source-tested**. Device keyboard lift **not** proven on iPhone |
 
 If a test fails, do not weaken it to go green.
 

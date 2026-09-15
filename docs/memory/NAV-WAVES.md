@@ -36,13 +36,14 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 
 **Verify:** isolated `npm run test:nav-touch` (also inside `test:project-memory`). Browser: Home / Pro / Archie / Profile / Marketplace, open-close drawer, scroll-across-tab, switch while a page is loading. **Emulated Chrome is not proof the iPhone bug is gone.**
 
-## Wave 2 — Stabilize nav and header (after Wave 1)
+## Wave 2 — Stabilize nav and header (`cursor/nav-header-6752`)
 
-- Keep the shared chrome mounted; do not keep every map mounted just to keep the dock.
-- Explicit active-tab map: Marketplace, Story Pro vs Archie, Archie sections.
-- Viewport, safe area, and keyboard — no one-phone bottom offset.
-- Research text must not read through the wordmark. Layering + content inset. Not a type-size pass.
-- Respect scroll restoration and unsaved-work guards.
+- Shared chrome stays in the root layout. Maps are not kept mounted just for the dock.
+- Explicit `primaryDockId` / `archieModuleFromSearch`: Marketplace listings, Pro ≠ Archie, Access desk = Research.
+- Dock bottom uses visual viewport + safe area. No one-phone offset.
+- Header band is opaque enough that page text does not read through the wordmark. Research mode picker sits below header + ribbon.
+- Swipe-back still honors `data-unsaved`. No indiscriminate form reset.
+- **Not this wave:** smoked-glass bubble (Wave 3).
 
 ## Wave 3 — Bubble and icons (after Wave 2)
 

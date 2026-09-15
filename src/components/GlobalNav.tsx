@@ -26,11 +26,20 @@ import { NetworkNode } from "@/components/nav/NetworkNode";
 import { NavIntentSettler, PrimaryNavLink } from "@/components/nav/PrimaryNavLink";
 import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
 import { useLivingHeader } from "@/hooks/useLivingHeader";
+import { useVisualViewportInset } from "@/hooks/useVisualViewportInset";
 import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
 import { accountLabel } from "@/lib/auth";
 import {
-  isArchiePath,
-  isStoryProPath,
+  isMarketplacePath,
+  isNetworkPath,
+  isOfficePath,
+  isProfilePath,
+  isProWorkspacePath,
+  isSettingsPath,
+  isSuitesPath,
+  primaryDockId,
+} from "@/lib/navigation/nav-active";
+import {
   NAVIGATION_NETWORKS,
 } from "@/lib/navigation/networks";
 import { cn } from "@/lib/utils";
@@ -55,6 +64,8 @@ export default function GlobalNav() {
   const [drawerPath, setDrawerPath] = useState(pathname);
   const archieEntryHref = useArchieEntryHref();
   const headerState = useLivingHeader(true);
+  useVisualViewportInset();
+  const dockId = primaryDockId(pathname);
 
   // Close the mobile drawer when the route changes (render-time adjust).
   if (drawerPath !== pathname) {
@@ -64,9 +75,9 @@ export default function GlobalNav() {
 
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
-  const isHome = pathname === "/";
+  const isHome = dockId === "home";
   const archie = NAVIGATION_NETWORKS.archie;
-  const archieActive = isArchiePath(pathname);
+  const archieActive = dockId === "archie";
   const showArchieNode = isPro && isLoggedIn;
   const isSellerPath = pathname.startsWith("/seller");
 
@@ -88,20 +99,20 @@ export default function GlobalNav() {
         {
           href: "/network",
           label: "Agents",
-          active: pathname.startsWith("/network"),
+          active: isNetworkPath(pathname),
         },
       );
     } else {
       links.push({
         href: "/marketplace",
         label: "Marketplace",
-        active: pathname.startsWith("/marketplace"),
+        active: isMarketplacePath(pathname),
       });
       if (isOfficeAccount && isLoggedIn) {
         links.push({
           href: "/office",
           label: "Office",
-          active: pathname.startsWith("/office"),
+          active: isOfficePath(pathname),
         });
       }
       if (isPro && isLoggedIn) {
@@ -109,12 +120,12 @@ export default function GlobalNav() {
           {
             href: "/portal",
             label: "Story Pro",
-            active: isStoryProPath(pathname),
+            active: isProWorkspacePath(pathname),
           },
           {
             href: "/network",
             label: "Network",
-            active: pathname.startsWith("/network"),
+            active: isNetworkPath(pathname),
           },
         );
       } else {
@@ -122,12 +133,12 @@ export default function GlobalNav() {
           {
             href: "/home",
             label: "My Home",
-            active: pathname.startsWith("/home"),
+            active: pathname === "/home" || Boolean(pathname?.startsWith("/home/")),
           },
           {
             href: "/saved",
             label: "Suites",
-            active: pathname.startsWith("/saved"),
+            active: isSuitesPath(pathname),
           },
         );
       }
@@ -136,7 +147,7 @@ export default function GlobalNav() {
       links.push({
         href: "/settings",
         label: "Settings",
-        active: pathname.startsWith("/settings"),
+        active: isSettingsPath(pathname),
       });
     }
     return links;
@@ -222,26 +233,26 @@ export default function GlobalNav() {
             <>
               <NavLink
                 href="/marketplace"
-                active={pathname.startsWith("/marketplace")}
+                active={isMarketplacePath(pathname)}
               >
                 Marketplace
               </NavLink>
               {isOfficeAccount && isLoggedIn ? (
                 <NavLink
                   href="/office"
-                  active={pathname.startsWith("/office")}
+                  active={isOfficePath(pathname)}
                 >
                   Office
                 </NavLink>
               ) : null}
               {isPro && isLoggedIn ? (
                 <>
-                  <NavLink href="/portal" active={isStoryProPath(pathname)}>
+                  <NavLink href="/portal" active={isProWorkspacePath(pathname)}>
                     Story Pro
                   </NavLink>
                   <NavLink
                     href="/network"
-                    active={pathname.startsWith("/network")}
+                    active={isNetworkPath(pathname)}
                   >
                     Network
                   </NavLink>
@@ -250,13 +261,13 @@ export default function GlobalNav() {
                 <>
                   <NavLink
                     href="/home"
-                    active={pathname.startsWith("/home")}
+                    active={pathname === "/home" || Boolean(pathname?.startsWith("/home/"))}
                   >
                     My Home
                   </NavLink>
                   <NavLink
                     href="/saved"
-                    active={pathname.startsWith("/saved")}
+                    active={isSuitesPath(pathname)}
                   >
                     Suites
                   </NavLink>
@@ -318,7 +329,7 @@ export default function GlobalNav() {
                 title="Settings"
                 className={cn(
                   "hidden h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:text-gold sm:flex",
-                  pathname.startsWith("/settings") && "text-gold",
+                  isSettingsPath(pathname) && "text-gold",
                 )}
               >
                 <Settings className="h-5 w-5" />
@@ -385,7 +396,7 @@ export default function GlobalNav() {
               href="/portal"
               label="Pro"
               icon={Briefcase}
-              active={isStoryProPath(pathname)}
+              active={dockId === "pro"}
             />
             <MobileTab
               href={archieEntryHref}
@@ -401,13 +412,13 @@ export default function GlobalNav() {
               href="/saved"
               label="Suites"
               icon={Bookmark}
-              active={pathname.startsWith("/saved")}
+              active={dockId === "suites"}
             />
             <MobileTab
               href="/marketplace"
               label="Search"
               icon={Search}
-              active={pathname.startsWith("/marketplace")}
+              active={dockId === "search"}
             />
           </>
         )}
@@ -415,9 +426,7 @@ export default function GlobalNav() {
           href={isLoggedIn ? "/profile" : "/login"}
           label={isLoggedIn ? "Profile" : "Log in"}
           icon={User}
-          active={
-            pathname.startsWith("/profile") || pathname.startsWith("/login")
-          }
+          active={dockId === "profile"}
         />
       </nav>
     </>

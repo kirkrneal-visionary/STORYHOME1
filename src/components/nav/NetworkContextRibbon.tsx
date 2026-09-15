@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 export function NetworkContextRibbon() {
   const searchParams = useSearchParams();
   const section = searchParams.get("section");
+  const mode = searchParams.get("mode");
   const archie = NAVIGATION_NETWORKS.archie;
 
   function onModuleClick(module: ArchieModule) {
@@ -43,7 +44,7 @@ export function NetworkContextRibbon() {
         <div className="flex items-center gap-0.5 sm:gap-1">
           {archie.modules.map((mod) => {
             const id = (mod.id ?? "research") as ArchieModule;
-            const active = isArchieModuleActive(id, section);
+            const active = isArchieModuleActive(id, section, mode);
             return (
               <PrimaryNavLink
                 key={id}
