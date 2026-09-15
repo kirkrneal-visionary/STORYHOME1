@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   STORY_PRO_SETTINGS_BLOCKED,
+  STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT,
   canEditStoryProSettings,
+  holdsRealtorSettingsPurpose,
 } from "@/lib/account/assurance";
 import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { requireSignedIn } from "@/lib/account/require-signed-in";
@@ -27,6 +29,12 @@ export async function POST(request: Request) {
 
   const purpose = profile?.account_purpose ?? null;
   const kind = profile?.account_kind ?? null;
+  if (!holdsRealtorSettingsPurpose(purpose)) {
+    return NextResponse.json(
+      { ok: false, error: STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT },
+      { status: 403 },
+    );
+  }
   if (
     !canEditStoryProSettings({
       emailConfirmed: session.emailConfirmed,

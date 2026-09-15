@@ -54,6 +54,16 @@ assert.equal(
   }),
   false,
 );
+assert.equal(
+  canEditStoryProSettings({
+    emailConfirmed: true,
+    purpose: "consumer",
+    kind: "consumer",
+    enrolled: false,
+    currentAal: "aal1",
+  }),
+  false,
+);
 
 const view = read("src/components/settings/SettingsView.tsx");
 assert.match(view, /STORY_PRO_SETTINGS_BLOCKED/);

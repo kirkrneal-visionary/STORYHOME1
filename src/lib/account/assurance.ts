@@ -60,6 +60,20 @@ export function canAccessPrivateApp(opts: {
   return true;
 }
 
+export const STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT =
+  "Story Pro settings cannot be changed on this account.";
+
+/** Realtor fields follow the account on file, not View as buyer. */
+export function holdsRealtorSettingsPurpose(
+  purpose: AccountPurpose | string | null | undefined,
+): boolean {
+  return (
+    purpose === "individual_pro" ||
+    purpose === "managing_broker" ||
+    purpose === "other_professional"
+  );
+}
+
 /** Professional profile and license cards. Settings itself stays open. */
 export function canEditStoryProSettings(opts: {
   emailConfirmed: boolean;
@@ -68,6 +82,7 @@ export function canEditStoryProSettings(opts: {
   enrolled: boolean;
   currentAal: AssuranceLevel | null | undefined;
 }): boolean {
+  if (!holdsRealtorSettingsPurpose(opts.purpose)) return false;
   return canAccessPrivateApp(opts);
 }
 
