@@ -34,6 +34,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Save retrievable after new session | Contract + code path. **Not** a live session test |
 | Snap failure keeps study | `studies.ts` no longer deletes frame on upload fail — **source-tested** |
 | Duplicate farm names | **Observed** allowed. Not blocked |
+| New farm photo on live eqmg | **Founder confirmed** 2026-09-15 after Save as Farm |
 
 If a test fails, do not weaken it to go green.
 

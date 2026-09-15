@@ -24,7 +24,7 @@
 - **Retry / duplicate:** creating again makes another farm (no unique name). **Observed.**
 - **Refresh:** list reload; old farms without a file show Photo pending — **defect for old rows, not a missing RLS paste**
 - **Tests:** `scripts/test-farm-map-memory.ts`, `test-shi-farms.mjs`, `test-vault-snap-save.ts` (snap must not cancel save)
-- **Unverified:** live JPEG appearing after a founder save on eqmg
+- **Live:** founder save on eqmg 2026-09-15 showed a map photo on the new farm (not Photo pending)
 
 ## Save Vault
 

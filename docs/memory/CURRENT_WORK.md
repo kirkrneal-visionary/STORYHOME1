@@ -12,7 +12,8 @@
 - PR 192 — farm map photo + Open on map (live). Old farms show Photo pending until saved again.
 - PR 193 — hide LngLat errors; snap failure keeps the save; Save stays on the map (live)
 - PR 194 — Cursor rules + project memory + isolated `test:project-memory`
-- Main requires GitHub check `verify` (workflow **Project memory checks**). Do not rename the job.
+- Main requires GitHub check `verify` (workflow **Project memory checks**). Do not rename the job. Admins cannot skip it.
+- Founder save on eqmg 2026-09-15: new farm shows a map photo, not Photo pending.
 
 ## Open defects (do not treat as intended)
 
@@ -22,7 +23,7 @@
 - Suites are device-local `localStorage`, not a server save
 - `docs/SITE-SYSTEM-MAP-FOR-CHATGPT.md` still says pages are not middleware-gated (stale)
 - Two-user RLS isolation against a disposable database is **not** automated here
-- Production Vault/Farm photo after PR 193 is **unverified** until a founder save is confirmed
+- Study Vault card photo on a new production save is still **unverified**
 
 ## Do not do
 
