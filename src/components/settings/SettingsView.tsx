@@ -22,7 +22,10 @@ import {
   myPendingInvite,
   type PendingInvite,
 } from "@/lib/supabase/roster";
-import { canAccessPrivateApp } from "@/lib/account/assurance";
+import {
+  STORY_PRO_SETTINGS_BLOCKED,
+  canAccessPrivateApp,
+} from "@/lib/account/assurance";
 import {
   canOpenOfficeAccount,
   mayManageBrokerage,
@@ -173,10 +176,15 @@ export function SettingsView() {
             onChanged={load}
           />
           {profile && <AccountSection profile={profile} onSaved={load} />}
-          {(isPro || isOther) && profile && (
+          {(isPro || isOther) && securityReady && profile && (
             <ProSection profile={profile} onSaved={load} />
           )}
-          {isPro && profile && <LicenseSection profile={profile} />}
+          {isPro && securityReady && profile && <LicenseSection profile={profile} />}
+          {(isPro || isOther) && !securityReady && (
+            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+              {STORY_PRO_SETTINGS_BLOCKED}
+            </p>
+          )}
           {canOpenOfficeAccount(purpose, kind) && securityReady && (
             <OpenOfficeCard />
           )}
@@ -253,7 +261,34 @@ function ProSection({ profile, onSaved }: { profile: MyProfile; onSaved: () => v
   const [note, setNote] = useState("");
   return (
     <SettingsCard icon={BadgeCheck} title="Professional profile" subtitle="Shown on your public profile. Separate items with commas.">
-      <form onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await updateMyProfile(profile.id, { specialties: toList(f.specialties), serviceAreas: toList(f.serviceAreas), languages: toList(f.languages), designations: toList(f.designations), primaryMarketCity: f.primaryMarketCity }); setNote("Saved."); setTimeout(() => setNote(""), 2000); onSaved(); } finally { setBusy(false); } }}>
+      <form onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setNote("");
+        try {
+          const res = await fetch("/api/account/story-pro-profile", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              specialties: toList(f.specialties),
+              serviceAreas: toList(f.serviceAreas),
+              languages: toList(f.languages),
+              designations: toList(f.designations),
+              primaryMarketCity: f.primaryMarketCity,
+            }),
+          });
+          const data = (await res.json()) as { ok?: boolean; error?: string };
+          if (!res.ok || !data.ok) {
+            setNote(data.error ?? STORY_PRO_SETTINGS_BLOCKED);
+            return;
+          }
+          setNote("Saved.");
+          setTimeout(() => setNote(""), 2000);
+          onSaved();
+        } finally {
+          setBusy(false);
+        }
+      }}>
         <div className="grid gap-3">
           <TextField id="s-market" label="Primary market (city)" value={f.primaryMarketCity} onChange={(v) => setF((p) => ({ ...p, primaryMarketCity: v }))} />
           <TextField id="s-spec" label="Specialties" value={f.specialties} onChange={(v) => setF((p) => ({ ...p, specialties: v }))} />
