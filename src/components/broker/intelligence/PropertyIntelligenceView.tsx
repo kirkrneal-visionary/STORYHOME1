@@ -43,6 +43,7 @@ import { AVAILABLE_COUNTIES } from "@/lib/supabase/parcels";
 import {
   consumeOpenSavedFrame,
   shiAddProspect,
+  shiGetFarm,
   shiAnalyzeArea,
   shiWorthALook,
   shiCreateFarm,
@@ -105,6 +106,11 @@ import {
 } from "@/lib/shi/corridor-property-compare";
 import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
+import {
+  buildFarmHandoffFrame,
+  farmHandoffHasLiveParcels,
+  isFarmHandoffId,
+} from "@/lib/shi/farm-map-memory";
 import {
   RESEARCH_WORKSPACE_VERSION,
   WORKSPACE_COPY,
@@ -792,6 +798,17 @@ export function PropertyIntelligenceView({
       const view = mapRef.current?.getView();
       const countyLabel =
         AVAILABLE_COUNTIES.find((c) => c.source === county)?.name ?? countyName;
+      let thumb =
+        (await mapRef.current?.captureMapMemory(active.boundary)) ??
+        mapRef.current?.captureThumbnail() ??
+        null;
+      if (thumb) {
+        try {
+          thumb = await fitThumbnailDataUrl(thumb);
+        } catch {
+          /* keep original snap */
+        }
+      }
       await shiCreateFarm({
         name,
         countySource: county,
@@ -800,6 +817,7 @@ export function PropertyIntelligenceView({
         mapCenterLat: view?.centerLat,
         mapCenterLng: view?.centerLng,
         mapZoom: view?.zoom,
+        thumbnailDataUrl: thumb,
       });
       track("farm_created", { source_surface: "research" });
     } finally {
@@ -895,6 +913,9 @@ export function PropertyIntelligenceView({
         setAreaError(`Map frame limit (${SHI_CAPS.maxFramesOnMap}).`);
         return;
       }
+      const useSnap =
+        Boolean(frame.snapshot?.metrics) &&
+        (!isFarmHandoffId(frame.id) || farmHandoffHasLiveParcels(frame));
       const local: ShiLocalFrame = {
         localId,
         savedId: frame.id,
@@ -904,12 +925,13 @@ export function PropertyIntelligenceView({
         acronym: frame.acronym,
         color: frame.color,
         boundary: frame.boundary,
-        analysis: frame.snapshot
-          ? ({
-              ...frame.snapshot.metrics,
-              parcels: frame.snapshot.metrics.parcels ?? [],
-            } as ShiAreaAnalysis)
-          : null,
+        analysis:
+          useSnap && frame.snapshot
+            ? ({
+                ...frame.snapshot.metrics,
+                parcels: frame.snapshot.metrics.parcels ?? [],
+              } as ShiAreaAnalysis)
+            : null,
       };
       setFrames((prev) => [...prev, local]);
       setActiveFrameId(localId);
@@ -918,7 +940,10 @@ export function PropertyIntelligenceView({
         void refreshFolders(local.countySource);
       }
     }
-    if (frame.snapshot?.metrics) {
+    const useSnap =
+      Boolean(frame.snapshot?.metrics) &&
+      (!isFarmHandoffId(frame.id) || farmHandoffHasLiveParcels(frame));
+    if (useSnap && frame.snapshot?.metrics) {
       setAnalysis({
         ...(frame.snapshot.metrics as ShiAreaAnalysis),
         parcels: frame.snapshot.metrics.parcels ?? [],
@@ -931,6 +956,7 @@ export function PropertyIntelligenceView({
     const params = new URLSearchParams(searchParams.toString());
     if (
       !params.has("openFrame") &&
+      !params.has("openFarm") &&
       !params.has("folderId") &&
       !params.has("handoff") &&
       !params.has("t")
@@ -938,6 +964,7 @@ export function PropertyIntelligenceView({
       return;
     }
     params.delete("openFrame");
+    params.delete("openFarm");
     params.delete("folderId");
     params.delete("handoff");
     params.delete("t");
@@ -1035,6 +1062,34 @@ export function PropertyIntelligenceView({
           scroll: false,
         });
       }
+      return () => {
+        cancelled = true;
+        if (timer) window.clearTimeout(timer);
+      };
+    }
+
+    const openFarm = searchParams.get("openFarm")?.trim() || "";
+    if (openFarm) {
+      setReopening(true);
+      void (async () => {
+        try {
+          const farm = await shiGetFarm(openFarm);
+          if (cancelled || !farm?.boundary) {
+            if (!cancelled) setReopening(false);
+            return;
+          }
+          applyFrame(buildFarmHandoffFrame(farm, farm.live));
+        } catch (e) {
+          if (!cancelled) {
+            setReopening(false);
+            setAreaError(
+              e instanceof Error ? e.message : "Could not reopen farm on the map",
+            );
+          }
+        } finally {
+          if (!cancelled) clearOpenFrameParams();
+        }
+      })();
       return () => {
         cancelled = true;
         if (timer) window.clearTimeout(timer);

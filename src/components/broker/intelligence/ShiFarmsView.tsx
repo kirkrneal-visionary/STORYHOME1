@@ -14,8 +14,9 @@ import {
   shiGetFarm,
   shiListFarms,
   shiMarkFarmReviewed,
+  shiThumbnailUrl,
 } from "@/lib/shi/client";
-import type { ShiFarm, ShiFarmDetail } from "@/lib/shi/types";
+import type { ShiAreaAnalysis, ShiFarm, ShiFarmDetail } from "@/lib/shi/types";
 import { cn } from "@/lib/utils";
 
 function when(iso: string | null | undefined) {
@@ -45,13 +46,19 @@ const KIND_LABEL: Record<string, string> = {
   acreage: "Acreage changed",
 };
 
+type Props = {
+  onOpenOnMap?: (farm: ShiFarm, live?: ShiAreaAnalysis | null) => void;
+};
+
 /**
  * Farms — persistent territories + since-last-review change feed (SHI-4.1).
  * Diffs are baseline vs live CAD — never claims deed dates.
+ * Map snaps are visual only. Clicking the farm name still opens the review.
  */
-export function ShiFarmsView() {
+export function ShiFarmsView({ onOpenOnMap }: Props = {}) {
   const router = useRouter();
   const [farms, setFarms] = useState<ShiFarm[]>([]);
+  const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -63,7 +70,22 @@ export function ShiFarmsView() {
     setLoading(true);
     setError("");
     try {
-      setFarms(await shiListFarms());
+      const list = await shiListFarms();
+      setFarms(list);
+      const next: Record<string, string> = {};
+      await Promise.all(
+        list.map(async (f) => {
+          const path = f.thumbnailPath;
+          if (!path) return;
+          try {
+            const url = await shiThumbnailUrl(path);
+            if (url) next[f.id] = url;
+          } catch {
+            /* optional snap */
+          }
+        }),
+      );
+      setThumbs(next);
     } catch (e) {
       setError(
         e instanceof Error
@@ -147,7 +169,8 @@ export function ShiFarmsView() {
             <h3 className="text-sm font-bold text-ink">Your farms</h3>
             <p className="mt-0.5 text-xs text-[var(--muted)]">
               Saved territories — not CAD copies. Membership is recomputed from
-              live county records.
+              live county records. The photo opens the drawing. The name opens
+              the review.
             </p>
           </div>
 
@@ -182,31 +205,65 @@ export function ShiFarmsView() {
             <ul className="divide-y divide-hairline">
               {farms.map((f) => {
                 const active = f.id === selectedId;
+                const snap = thumbs[f.id];
                 return (
                   <li key={f.id}>
-                    <button
-                      type="button"
-                      onClick={() => void openFarm(f.id)}
+                    <div
                       className={cn(
-                        "flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors",
+                        "flex items-stretch gap-3 px-4 py-3 transition-colors",
                         active
                           ? "bg-[color-mix(in_srgb,var(--gold)_12%,transparent)]"
                           : "hover:bg-white/5",
                       )}
                     >
-                      <div className="flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onOpenOnMap?.(f)}
+                        className="relative h-[4.25rem] w-[6.8rem] shrink-0 overflow-hidden rounded-lg bg-navy"
+                        title={`Open ${f.name} on the map`}
+                      >
+                        {snap ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={snap}
+                            alt={`Map drawing of ${f.name}`}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="absolute inset-0 flex flex-col items-center justify-center gap-0.5 px-1">
+                            <span className="font-mono text-[8px] font-bold tracking-wider text-white/60 uppercase">
+                              Photo pending
+                            </span>
+                            <span className="font-mono text-xs font-extrabold text-gold">
+                              {f.name.slice(0, 4).toUpperCase()}
+                            </span>
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void openFarm(f.id)}
+                        className="min-w-0 flex-1 text-left"
+                      >
                         <p className="truncate text-sm font-semibold text-ink">
                           {f.name}
                         </p>
-                        <MapPinned className="h-4 w-4 shrink-0 text-gold" />
-                      </div>
-                      <p className="text-xs text-[var(--muted)]">
-                        {f.countyName}
-                      </p>
-                      <p className="text-[10px] text-[var(--muted)]">
-                        Last review {when(f.lastReviewedAt)}
-                      </p>
-                    </button>
+                        <p className="text-xs text-[var(--muted)]">
+                          {f.countyName}
+                        </p>
+                        <p className="text-[10px] text-[var(--muted)]">
+                          Last review {when(f.lastReviewedAt)}
+                        </p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onOpenOnMap?.(f)}
+                        className="self-center rounded-lg p-2 text-gold hover:bg-gold/10"
+                        title="Open on map"
+                      >
+                        <MapPinned className="h-4 w-4" />
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -225,6 +282,21 @@ export function ShiFarmsView() {
             </div>
           ) : (
             <div className="space-y-4">
+              {thumbs[detail.id] ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenOnMap?.(detail, detail.live)}
+                  className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-navy"
+                  title={`Open ${detail.name} on the map`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={thumbs[detail.id]}
+                    alt={`Map drawing of ${detail.name}`}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </button>
+              ) : null}
               <div>
                 <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
                   {detail.countyName}
@@ -285,6 +357,14 @@ export function ShiFarmsView() {
               </div>
 
               <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => onOpenOnMap?.(detail, detail.live)}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-navy text-sm font-bold text-gold"
+                >
+                  <MapPinned className="h-4 w-4" />
+                  Open on map
+                </button>
                 <button
                   type="button"
                   disabled={busy === "review"}
