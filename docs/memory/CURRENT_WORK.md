@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Waves 1–5 founder-confirmed GOOD on iPhone 2026-09-15. Stay on test links — not live. Wave 6: see-through frost on the bottom menu. See `docs/memory/NAV-WAVES.md`.
+- Navigation Waves 1–6 founder-confirmed GOOD on iPhone 2026-09-15. Stay on test links — not live until founder says MERGE. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Build and verify Wave 6 (bottom-menu frost). Do not merge waves to live unless the founder says MERGE.
+1. Wait for founder: LEAVE ON TEST or MERGE. Do not merge unless they say MERGE.
 2. Do not rename the `verify` job — that would drop the merge lock.

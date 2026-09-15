@@ -75,6 +75,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Top-rim highlight only. No outline. No shadow puddle.
 - Icons stay sharp. Filled navy selection stays.
 - Do not restyle the header, cards, or map.
+- Founder **GOOD** on the Wave 6 eqmg preview 2026-09-15. Not merged to live.
 
 ## After each wave
 

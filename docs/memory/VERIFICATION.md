@@ -40,7 +40,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 3). Not live |
 | Marketplace page is one dark canvas | `--market-canvas` + toolbar no longer `story-glass` **source-tested**. Founder **GOOD** 2026-09-15 (Wave 4). Not live |
 | Marketplace cards sit on the canvas | `--market-edge` + no raise puddle **source-tested**. Founder **GOOD** 2026-09-15 (Wave 5). Not live |
-| Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Device look pending |
+| Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Founder **GOOD** 2026-09-15 (Wave 6). Not live |
 
 If a test fails, do not weaken it to go green.
 
