@@ -33,7 +33,7 @@ export function SearchToolbar({
   }
 
   return (
-    <div className="story-glass border-b-0 px-3 py-2.5 md:px-4 md:py-3">
+    <div className="story-market-toolbar px-3 py-2.5 md:px-4 md:py-3">
       <div className="flex flex-col gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <input

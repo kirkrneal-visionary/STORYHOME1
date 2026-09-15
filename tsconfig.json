@@ -68,6 +68,7 @@
     "scripts/test-nav-touch.ts",
     "scripts/test-nav-header.ts",
     "scripts/test-nav-bubble.ts",
+    "scripts/test-market-canvas.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

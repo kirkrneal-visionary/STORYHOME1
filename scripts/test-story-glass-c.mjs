@@ -14,7 +14,7 @@ assert.match(map, /story-glass/);
 assert.doesNotMatch(map, /bg-navy\/90/);
 
 const toolbar = read("src/components/marketplace/SearchToolbar.tsx");
-assert.match(toolbar, /story-glass/);
+assert.match(toolbar, /story-market-toolbar/);
 assert.match(toolbar, /field-input/);
 
 const market = read("src/components/MarketplaceView.tsx");

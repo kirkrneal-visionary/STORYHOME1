@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 
@@ -37,7 +37,8 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 1 preview). Not live |
 | Pro tab ≠ Archie tab | `primaryDockId` **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 2 preview). Not live |
 | Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (no black bar). Not live |
-| Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Phone look **not** proven on iPhone |
+| Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 3). Not live |
+| Marketplace page is one dark canvas | `--market-canvas` + toolbar no longer `story-glass` **source-tested**. Device look pending |
 
 If a test fails, do not weaken it to go green.
 
