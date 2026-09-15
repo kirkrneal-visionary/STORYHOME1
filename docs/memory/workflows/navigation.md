@@ -32,6 +32,12 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 - Dock `bottom` uses `max(safe-area, --story-vv-bottom)`. Keyboard and browser chrome move the dock. No one-phone offset.
 - Active tab comes from `primaryDockId` / `archieModuleFromSearch` only after the URL matches.
 
+## Dock bubble (Wave 3)
+
+- Bottom dock is a smoked-glass capsule (`--dock-*` tokens). Active cell is filled navy with a thin gold ring.
+- Archie dock mark uses official `ARCHIE_MARK_SRC`. Do not redraw the face.
+- Honor reduced motion and reduced transparency. No header restyle.
+
 ## Do not
 
 - Navigate on pointer-down
