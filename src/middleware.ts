@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { sessionWasForcedOut } from "@/lib/account/require-session-live";
 import { normalizeSupabaseUrl } from "@/lib/supabase/url";
 import { logSecurityEvent } from "@/lib/security/log-event";
 import { originAllowed, shouldCheckOrigin } from "@/lib/security/origin";
@@ -72,10 +73,18 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const gated =
-    pathname.startsWith("/portal") || pathname.startsWith("/office");
+  let signedIn = Boolean(user);
+  if (signedIn && (await sessionWasForcedOut(supabase))) {
+    await supabase.auth.signOut({ scope: "local" });
+    signedIn = false;
+  }
 
-  if (gated && !user) {
+  const gated =
+    pathname.startsWith("/portal") ||
+    pathname.startsWith("/office") ||
+    pathname.startsWith("/settings");
+
+  if (gated && !signedIn) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = "";
@@ -87,7 +96,7 @@ export async function middleware(request: NextRequest) {
     return redirect;
   }
 
-  if (gated && user && !user.email_confirmed_at) {
+  if (gated && signedIn && user && !user.email_confirmed_at) {
     const login = request.nextUrl.clone();
     login.pathname = "/login";
     login.search = "";

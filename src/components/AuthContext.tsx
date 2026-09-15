@@ -6,6 +6,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -22,6 +23,11 @@ import {
 import { signUpPublicMessage } from "@/lib/account/password-strength";
 import { stashLoginEmail } from "@/lib/account/auth-form-fields";
 import { navRoleForAccount, type AccountPurpose } from "@/lib/account/purpose";
+import {
+  parseJwtIssuedAtMs,
+  SESSION_LIVENESS_MS,
+  shouldForceLocalLogout,
+} from "@/lib/account/session-liveness";
 import { useApp } from "@/components/AppContext";
 import { track, type AccountKindProp } from "@/lib/analytics";
 import {
@@ -109,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const configured = isSupabaseConfigured();
   const supabase = useMemo(() => getBrowserSupabase(), []);
+  const issuedAtMsRef = useRef<number | null>(null);
 
   // Load session: real Supabase when configured, otherwise demo localStorage.
   useEffect(() => {
@@ -198,14 +205,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth
       .getSession()
-      .then(({ data }) =>
+      .then(({ data }) => {
+        issuedAtMsRef.current = parseJwtIssuedAtMs(data.session?.access_token);
         applySession(
           data.session?.user?.id ?? null,
           data.session?.user?.email ?? null,
-        ),
-      );
+        );
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      issuedAtMsRef.current = parseJwtIssuedAtMs(session?.access_token);
       applySession(session?.user?.id ?? null, session?.user?.email ?? null);
     });
 
@@ -214,6 +223,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sub.subscription.unsubscribe();
     };
   }, [configured, supabase, setRole]);
+
+  useEffect(() => {
+    if (!configured || !supabase || !user) return;
+    let cancelled = false;
+
+    async function check() {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        return;
+      }
+      const { data, error } = await supabase!.rpc("my_forced_logout_at");
+      if (cancelled || error) return;
+      const stamp =
+        typeof data === "string"
+          ? data
+          : data instanceof Date
+            ? data.toISOString()
+            : data
+              ? String(data)
+              : null;
+      if (!shouldForceLocalLogout(issuedAtMsRef.current, stamp)) return;
+      await supabase!.auth.signOut({ scope: "local" });
+      if (cancelled) return;
+      setUser(null);
+      persistUser(null);
+      setRole("consumer");
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.assign("/login");
+      }
+    }
+
+    const onWake = () => {
+      void check();
+    };
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
+    window.addEventListener("online", onWake);
+    window.addEventListener("pageshow", onWake);
+    const timer = window.setInterval(onWake, SESSION_LIVENESS_MS);
+    void check();
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
+      window.removeEventListener("online", onWake);
+      window.removeEventListener("pageshow", onWake);
+      window.clearInterval(timer);
+    };
+  }, [configured, supabase, user, setRole]);
 
   const loginAs = useCallback(
     (next: AuthUser) => {

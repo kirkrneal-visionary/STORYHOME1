@@ -8,6 +8,7 @@ import {
   type AccountPurpose,
 } from "@/lib/account/purpose";
 import { verifyTrecLicense } from "@/lib/trec";
+import { sessionWasForcedOut } from "@/lib/account/require-session-live";
 import { getServerSupabase } from "@/lib/supabase/server";
 import { normalizeSupabaseUrl } from "@/lib/supabase/url";
 
@@ -67,6 +68,9 @@ export async function promoteSignedInPro(): Promise<PromoteProResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    return { ok: false, status: 401, error: "Sign in required." };
+  }
+  if (await sessionWasForcedOut(supabase)) {
     return { ok: false, status: 401, error: "Sign in required." };
   }
 

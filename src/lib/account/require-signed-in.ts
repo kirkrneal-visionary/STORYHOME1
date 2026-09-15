@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sessionWasForcedOut } from "@/lib/account/require-session-live";
 import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -15,6 +16,9 @@ export async function requireSignedIn(): Promise<
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
+    return { ok: false, status: 401, error: "Sign in required." };
+  }
+  if (await sessionWasForcedOut(supabase)) {
     return { ok: false, status: 401, error: "Sign in required." };
   }
   return { ok: true, supabase, user };

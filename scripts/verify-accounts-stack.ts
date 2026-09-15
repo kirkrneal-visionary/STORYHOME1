@@ -12,6 +12,8 @@ const scripts = [
   "scripts/test-password-strength.ts",
   "scripts/test-office-keep-story-pro.ts",
   "scripts/test-login-signup-separate.ts",
+  "scripts/test-sign-out-everywhere-detect.ts",
+  "scripts/test-forced-logout-server.ts",
 ];
 
 for (const file of scripts) {
