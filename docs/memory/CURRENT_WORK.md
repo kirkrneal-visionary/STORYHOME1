@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Wave 2 PR #197 (`cursor/nav-header-6752`): active tabs + viewport dock. Solid header band reverted — founder rejected it. Wave 3 waits. See `docs/memory/NAV-WAVES.md`.
+- Navigation Wave 3 (`cursor/nav-bubble-6752`): smoked-glass dock bubble + official Archie mark. Header stays the light overlay. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -13,6 +13,7 @@
 - PR 193 — hide LngLat errors; snap failure keeps the save; Save stays on the map (live)
 - PR 194 — Cursor rules + project memory + isolated `test:project-memory`
 - Founder save on eqmg 2026-09-15: new farm shows a map photo, not Photo pending
+- PR 197 Wave 2 — active tabs + viewport dock. Solid header reverted.
 
 ## Open defects (do not treat as intended)
 
@@ -32,9 +33,9 @@
 - Billing
 - People-copy between accounts
 - Rebuilding Corridors
-- Wave 3 menu cosmetics before Wave 2 is verified
+- Restyling the overlay header (founder rejected the solid band)
 
 ## Next concrete action
 
-1. Confirm the solid header is gone, then Wave 3 (bubble) after founder says so.
+1. Verify Wave 3 dock bubble on a phone, then stop. No more nav waves after this.
 2. Do not rename the `verify` job — that would drop the merge lock.

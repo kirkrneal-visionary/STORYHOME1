@@ -40,6 +40,7 @@ import {
   primaryDockId,
 } from "@/lib/navigation/nav-active";
 import {
+  ARCHIE_MARK_SRC,
   NAVIGATION_NETWORKS,
 } from "@/lib/navigation/networks";
 import { cn } from "@/lib/utils";
@@ -478,34 +479,22 @@ function MobileTab({
       href={href}
       active={active}
       className={cn(
-        "relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-full",
+        "story-dock-tab relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-full",
         active ? "text-ink" : "text-[var(--muted)]",
       )}
     >
       {active ? (
-        <span
-          aria-hidden
-          className="absolute inset-y-1 inset-x-1 rounded-full bg-[color-mix(in_srgb,var(--navy)_55%,transparent)] ring-1 ring-gold/40"
-        />
+        <span aria-hidden className="story-dock-active-fill" />
       ) : null}
       <span className="relative z-[1] flex flex-col items-center gap-0.5">
         {mark ? (
-          <span
-            className={cn(
-              "relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-white ring-1",
-              active ? "ring-gold" : "ring-black/10",
-            )}
-          >
+          <span className="story-dock-mark">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/archie-intelligence-sm.png"
-              alt=""
-              className="h-full w-full object-cover"
-            />
+            <img src={ARCHIE_MARK_SRC} alt="" />
           </span>
         ) : (
           <Icon
-            className={cn("h-5 w-5", active && "text-gold")}
+            className={cn("story-dock-icon", active && "text-gold")}
             aria-hidden
           />
         )}

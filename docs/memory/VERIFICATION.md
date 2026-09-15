@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 
@@ -37,6 +37,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. iPhone not proven here |
 | Pro tab ≠ Archie tab | `primaryDockId` **source-tested** |
 | Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Device keyboard lift **not** proven on iPhone |
+| Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Phone look **not** proven on iPhone |
 
 If a test fails, do not weaken it to go green.
 

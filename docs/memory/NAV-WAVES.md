@@ -45,12 +45,13 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Swipe-back still honors `data-unsaved`. No indiscriminate form reset.
 - **Not this wave:** smoked-glass bubble (Wave 3).
 
-## Wave 3 — Bubble and icons (after Wave 2)
+## Wave 3 — Bubble and icons (`cursor/nav-bubble-6752`)
 
 - Soft capsule, smoked glass, filled navy selection, restrained gold.
-- Official Archie artwork; optical balance only — do not redraw the face.
+- Official Archie artwork (`archie-intelligence.png`); optical balance only — do not redraw the face.
 - Tokens for material, radius, spacing, icon size, motion.
 - Brief transform/opacity. Fallback if blur is expensive. Honor reduced motion.
+- Header stays the light overlay. No solid black band.
 - Before/after visuals required.
 
 ## After each wave

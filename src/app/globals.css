@@ -41,6 +41,17 @@
   --glass-elev: 0 10px 36px rgba(0, 0, 0, 0.42),
     0 0 0 1px var(--glass-border);
 
+  /* Wave 3 — bottom dock bubble only. Do not paint a header band. */
+  --dock-glass-bg: color-mix(in srgb, #0a0c10 70%, transparent);
+  --dock-glass-border: rgba(247, 244, 236, 0.16);
+  --dock-glass-blur: 20px;
+  --dock-radius: 1.7rem;
+  --dock-pad-x: 0.3rem;
+  --dock-icon: 1.25rem;
+  --dock-active-fill: var(--navy);
+  --dock-active-ring: color-mix(in srgb, var(--gold) 32%, transparent);
+  --dock-motion: 160ms;
+
   /* Platform UI stack — ordinary website and application text */
   --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
@@ -683,7 +694,7 @@ html[data-role="professional"] {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-/* Floating bottom nav — glass pill above the world (phone + desktop) */
+/* Floating bottom nav — smoked-glass capsule (phone + desktop) */
 .story-glass-nav {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -691,6 +702,71 @@ html[data-role="professional"] {
   box-shadow: var(--glass-elev);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+.story-bottom-dock.story-glass-nav {
+  background: var(--dock-glass-bg);
+  border: 1px solid var(--dock-glass-border);
+  border-radius: var(--dock-radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 8px 28px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(var(--dock-glass-blur));
+  -webkit-backdrop-filter: blur(var(--dock-glass-blur));
+  padding-inline: var(--dock-pad-x);
+}
+@supports not (
+  (backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))
+) {
+  .story-bottom-dock.story-glass-nav {
+    background: var(--env-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+.story-dock-icon {
+  width: var(--dock-icon);
+  height: var(--dock-icon);
+}
+.story-dock-mark {
+  position: relative;
+  display: flex;
+  width: var(--dock-icon);
+  height: var(--dock-icon);
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.story-dock-mark img {
+  width: 118%;
+  height: 118%;
+  object-fit: cover;
+  object-position: 50% 36%;
+}
+.story-dock-active-fill {
+  position: absolute;
+  inset: 0.2rem;
+  border-radius: 999px;
+  background: var(--dock-active-fill);
+  box-shadow: inset 0 0 0 1px var(--dock-active-ring);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .story-dock-active-fill {
+    animation: storyDockSelect var(--dock-motion) var(--motion-ease-standard)
+      both;
+  }
+}
+@keyframes storyDockSelect {
+  from {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* Dock placement — edge inset on phone; centered floating dock on desktop */
@@ -877,6 +953,7 @@ html[data-header-state="minimal"] .story-living-mark {
 @media (prefers-reduced-transparency: reduce) {
   .story-glass,
   .story-glass-nav,
+  .story-bottom-dock.story-glass-nav,
   .story-chrome,
   .story-overlay-header {
     backdrop-filter: none;
@@ -901,7 +978,8 @@ html[data-header-state="minimal"] .story-living-mark {
   .story-living-tagline,
   .story-app-shell::before,
   .agent-world-atmosphere-sheen,
-  .living-mark-presence {
+  .living-mark-presence,
+  .story-dock-active-fill {
     transition: none !important;
     animation: none !important;
     transform: none !important;
