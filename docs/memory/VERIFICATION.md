@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 
@@ -39,7 +39,8 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (no black bar). Not live |
 | Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 3). Not live |
 | Marketplace page is one dark canvas | `--market-canvas` + toolbar no longer `story-glass` **source-tested**. Founder **GOOD** 2026-09-15 (Wave 4). Not live |
-| Marketplace cards sit on the canvas | `--market-edge` + no raise puddle **source-tested**. Device look pending |
+| Marketplace cards sit on the canvas | `--market-edge` + no raise puddle **source-tested**. Founder **GOOD** 2026-09-15 (Wave 5). Not live |
+| Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Founder **GOOD** 2026-09-15 (Wave 6). Not live |
 
 If a test fails, do not weaken it to go green.
 

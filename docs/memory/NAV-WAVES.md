@@ -67,6 +67,15 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Cards sit on the canvas: no raise puddle, thin `--market-edge`.
 - Do not restyle card interiors, gold/navy, the map, the header, or the dock.
 - Do not start video-glass on the dock (Wave 6).
+- Founder **GOOD** on the Wave 5 eqmg preview 2026-09-15. Not merged to live.
+
+## Wave 6 — Dock frost (`cursor/nav-frost-6752`)
+
+- Stronger see-through frost on the bottom menu only. Page shows through the pill.
+- Top-rim highlight only. No outline. No shadow puddle.
+- Icons stay sharp. Filled navy selection stays.
+- Do not restyle the header, cards, or map.
+- Founder **GOOD** on the Wave 6 eqmg preview 2026-09-15. Not merged to live.
 
 ## After each wave
 

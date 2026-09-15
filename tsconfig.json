@@ -70,6 +70,7 @@
     "scripts/test-nav-bubble.ts",
     "scripts/test-market-canvas.ts",
     "scripts/test-market-edges.ts",
+    "scripts/test-nav-frost.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }
