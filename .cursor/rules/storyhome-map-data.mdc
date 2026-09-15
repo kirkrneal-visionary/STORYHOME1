@@ -1,0 +1,17 @@
+---
+description: Maps, CAD, Farms, and Study Vault
+globs: src/components/broker/intelligence/**,src/lib/shi/**,src/lib/geo.ts,src/app/api/shi/**,src/app/api/parcels/**,src/app/api/cad/**,src/app/api/map/**
+alwaysApply: false
+---
+
+# Map and county data
+
+Read `docs/memory/workflows/farms-and-vault.md` and `docs/memory/workflows/cad-observation.md`.
+
+- Archie is Story Pro only. Do not move or rebuild Corridors (live inside Research Access).
+- Never write `county_parcels` from Farms, Vault, Prospects, or CRM.
+- CAD is public tax-roll observation, not MLS and not verified deed history.
+- Keep evidence tiers: KNOWN / CALCULATED / ESTIMATED / OBSERVED / VERIFY / UNKNOWN.
+- Farms watch a territory and review changes. Study Vault stores studies and map photos. Different jobs.
+- Map camera errors (LngLat) must not appear as red code on screen. A failed photo snap must not delete the save.
+- Save to Vault stays on the map. Open Vault is its own click.

@@ -1,5 +1,9 @@
 # Agent notes (Story Home)
 
+## Project memory
+
+Before changing product behavior, read `docs/memory/CURRENT_WORK.md` and the matching file under `docs/memory/workflows/`. Cursor rules live in `.cursor/rules/` (core rule is always-apply). How to talk to Kirk stays in this file.
+
 ## Live target
 
 - **Only** https://storyhome-1-eqmg.vercel.app  
