@@ -14,15 +14,19 @@ export function parseJwtIssuedAtMs(
   try {
     const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
     const pad = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    const json =
-      typeof atob === "function"
-        ? atob(pad)
-        : Buffer.from(pad, "base64").toString("utf8");
+    const json = atob(pad);
     const payload = JSON.parse(json) as { iat?: number };
     return typeof payload.iat === "number" ? payload.iat * 1000 : null;
   } catch {
     return null;
   }
+}
+
+export function stampToIso(data: unknown): string | null {
+  if (data == null) return null;
+  if (typeof data === "string") return data;
+  if (data instanceof Date) return data.toISOString();
+  return String(data);
 }
 
 /** Stamp newer than this login means this device must sign out. */
