@@ -43,7 +43,6 @@
 
   /* Wave 3 — bottom dock bubble only. Do not paint a header band. */
   --dock-glass-bg: color-mix(in srgb, #0a0c10 70%, transparent);
-  --dock-glass-border: rgba(247, 244, 236, 0.16);
   --dock-glass-blur: 20px;
   --dock-radius: 1.7rem;
   --dock-pad-x: 0.3rem;
@@ -705,11 +704,11 @@ html[data-role="professional"] {
 }
 .story-bottom-dock.story-glass-nav {
   background: var(--dock-glass-bg);
-  border: 1px solid var(--dock-glass-border);
+  border: none;
+  outline: none;
   border-radius: var(--dock-radius);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 8px 28px rgba(0, 0, 0, 0.38);
+  box-shadow: none;
+  filter: none;
   backdrop-filter: blur(var(--dock-glass-blur));
   -webkit-backdrop-filter: blur(var(--dock-glass-blur));
   padding-inline: var(--dock-pad-x);

@@ -18,6 +18,15 @@ assert.match(css, /--dock-active-fill:\s*var\(--navy\)/);
 assert.match(css, /--dock-motion:\s*160ms/);
 assert.match(css, /\.story-dock-active-fill/);
 assert.match(css, /\.story-dock-mark/);
+assert.match(
+  css,
+  /\.story-bottom-dock\.story-glass-nav\s*\{[\s\S]*?border:\s*none/,
+);
+assert.match(
+  css,
+  /\.story-bottom-dock\.story-glass-nav\s*\{[\s\S]*?box-shadow:\s*none/,
+);
+assert.doesNotMatch(css, /--dock-glass-border/);
 assert.match(css, /@keyframes storyDockSelect/);
 assert.match(css, /prefers-reduced-motion:\s*reduce[\s\S]*story-dock-active-fill/);
 assert.match(css, /prefers-reduced-transparency/);
