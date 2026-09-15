@@ -9,7 +9,7 @@ GitHub Actions:
 | Workflow | When | Required to merge? |
 |---|---|---|
 | `.github/workflows/cad-refresh.yml` | Daily CAD refresh | No (ops, not PR) |
-| `.github/workflows/verify-project-memory.yml` | Push / PR (added this task) | **No** — added as a check that *runs*. Branch protection was not observed. A file is not a release gate. |
+| `.github/workflows/verify-project-memory.yml` | Push / PR | **Yes on main** — required check name is `verify`. Do not rename the job. |
 
 Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain `storyhome-1` failing is ignored (`AGENTS.md`).
 
@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 
@@ -34,6 +34,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Save retrievable after new session | Contract + code path. **Not** a live session test |
 | Snap failure keeps study | `studies.ts` no longer deletes frame on upload fail — **source-tested** |
 | Duplicate farm names | **Observed** allowed. Not blocked |
+| One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. iPhone not proven here |
 
 If a test fails, do not weaken it to go green.
 

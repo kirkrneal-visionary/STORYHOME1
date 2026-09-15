@@ -28,6 +28,8 @@ const required = [
   "docs/memory/workflows/farms-and-vault.md",
   "docs/memory/workflows/my-home.md",
   "docs/memory/workflows/cad-observation.md",
+  "docs/memory/workflows/navigation.md",
+  "docs/memory/NAV-WAVES.md",
   "AGENTS.md",
 ];
 
