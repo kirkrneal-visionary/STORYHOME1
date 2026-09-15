@@ -14,6 +14,7 @@ export async function POST() {
     );
   }
 
+  await auth.supabase.rpc("stamp_forced_logout");
   await auth.supabase.auth.signOut({ scope: "global" });
   notifySecurityChange("signed_out_everywhere", auth.user.id);
   return NextResponse.json({ ok: true });
