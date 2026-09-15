@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { BadgeCheck, Save, UserRound } from "lucide-react";
+import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
 import { TextField, TextAreaField } from "@/components/broker/ui";
 import { LivingMarkLibraryCard } from "@/components/settings/LivingMarkLibraryCard";
@@ -31,6 +32,10 @@ import {
   mayManageBrokerage,
   mayUseStoryPro,
 } from "@/lib/account/purpose";
+import {
+  settingsBuyerPreview,
+  settingsBuyerPreviewCopy,
+} from "@/lib/account/settings-preview";
 import { accountLabel } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +52,7 @@ export function SettingsView() {
     requested === "security" || searchParams.get("setup") === "mfa"
       ? "security"
       : "you";
+  const { role } = useApp();
   const { user, isLoggedIn } = useAuth();
   const [tab, setTab] = useState<SettingsTab>(initialTab);
   const [profile, setProfile] = useState<MyProfile | null>(null);
@@ -99,6 +105,11 @@ export function SettingsView() {
       enrolled: user.mfaEnrolled === true,
       currentAal: user.aal,
     });
+  const buyerPreview = settingsBuyerPreview({
+    role,
+    mayUseStoryPro: isPro,
+  });
+  const showRealtorCards = !buyerPreview && securityReady;
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
@@ -108,9 +119,14 @@ export function SettingsView() {
         <p className="mt-2 inline-flex items-center gap-2 text-sm text-[var(--muted)]">
           {user.name}
           <span className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink">
-            {accountLabel(user)}
+            {buyerPreview ? "Buyer / Consumer" : accountLabel(user)}
           </span>
         </p>
+        {buyerPreview && (
+          <p className="mt-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+            {settingsBuyerPreviewCopy(user.name, isOffice)}
+          </p>
+        )}
       </header>
 
       <div className="mt-6 flex gap-2">
@@ -129,7 +145,7 @@ export function SettingsView() {
             {t === "you" ? "You" : "Security"}
           </button>
         ))}
-        {isOffice && (
+        {isOffice && !buyerPreview && (
           <Link
             href="/office"
             className="inline-flex h-9 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold"
@@ -150,50 +166,56 @@ export function SettingsView() {
         </div>
       ) : (
         <div className="mt-8 space-y-6">
-          {pending && (
+          {pending && !buyerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}
-          <PurposeCard
-            purpose={purpose}
-            kind={kind}
-            legalFullName={profile?.legalFullName}
-            brokerageName={brokerage?.name}
-          />
-          <LivingMarkLibraryCard
-            userId={user.id}
-            initials={
-              profile?.fullName
-                ?.split(" ")
-                .map((p) => p[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase() ||
-              user.initials ||
-              "SH"
-            }
-            profileStillUrl={profile?.photoUrl}
-            profileVideoUrl={profile?.livingMarkVideoUrl}
-            onChanged={load}
-          />
+          {!buyerPreview && (
+            <PurposeCard
+              purpose={purpose}
+              kind={kind}
+              legalFullName={profile?.legalFullName}
+              brokerageName={brokerage?.name}
+            />
+          )}
+          {!buyerPreview && (
+            <LivingMarkLibraryCard
+              userId={user.id}
+              initials={
+                profile?.fullName
+                  ?.split(" ")
+                  .map((p) => p[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase() ||
+                user.initials ||
+                "SH"
+              }
+              profileStillUrl={profile?.photoUrl}
+              profileVideoUrl={profile?.livingMarkVideoUrl}
+              onChanged={load}
+            />
+          )}
           {profile && <AccountSection profile={profile} onSaved={load} />}
-          {(isPro || isOther) && securityReady && profile && (
+          {(isPro || isOther) && showRealtorCards && profile && (
             <ProSection profile={profile} onSaved={load} />
           )}
-          {isPro && securityReady && profile && <LicenseSection profile={profile} />}
-          {(isPro || isOther) && !securityReady && (
+          {isPro && showRealtorCards && profile && (
+            <LicenseSection profile={profile} />
+          )}
+          {(isPro || isOther) && !buyerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               {STORY_PRO_SETTINGS_BLOCKED}
             </p>
           )}
-          {canOpenOfficeAccount(purpose, kind) && securityReady && (
+          {canOpenOfficeAccount(purpose, kind) && showRealtorCards && (
             <OpenOfficeCard />
           )}
-          {canOpenOfficeAccount(purpose, kind) && !securityReady && (
+          {canOpenOfficeAccount(purpose, kind) && !buyerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before opening an office account.
             </p>
           )}
-          {isOffice && !securityReady && (
+          {isOffice && !buyerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before office tools.
             </p>
