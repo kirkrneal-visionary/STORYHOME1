@@ -409,6 +409,7 @@ export async function shiCreateFarm(input: {
   mapCenterLat?: number | null;
   mapCenterLng?: number | null;
   mapZoom?: number | null;
+  thumbnailDataUrl?: string | null;
 }): Promise<ShiFarmDetail> {
   const body = await shiFetch<{ farm: ShiFarmDetail }>("/api/shi/farms", {
     method: "POST",

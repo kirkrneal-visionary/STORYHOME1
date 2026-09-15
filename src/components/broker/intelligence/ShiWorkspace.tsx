@@ -14,7 +14,9 @@ import {
   type ArchieModule,
 } from "@/lib/navigation/archieMemory";
 import { track, type ArchieModuleProp } from "@/lib/analytics";
-import type { ShiSavedFrame } from "@/lib/shi/types";
+import { queueOpenSavedFrame } from "@/lib/shi/client";
+import { buildFarmHandoffFrame } from "@/lib/shi/farm-map-memory";
+import type { ShiAreaAnalysis, ShiFarm, ShiSavedFrame } from "@/lib/shi/types";
 import {
   parseResearchMode,
   RESEARCH_MODE_STORAGE_KEY,
@@ -108,6 +110,7 @@ export function ShiWorkspace() {
   const deepLink =
     Boolean(searchParams.get("propId")) ||
     Boolean(searchParams.get("openFrame")) ||
+    Boolean(searchParams.get("openFarm")) ||
     searchParams.get("mode") === "access";
   const [pickingMode, setPickingMode] = useState(() => !urlMode && !deepLink);
 
@@ -145,6 +148,7 @@ export function ShiWorkspace() {
       else {
         params.set("section", next);
         params.delete("openFrame");
+        params.delete("openFarm");
         params.delete("folderId");
       }
       const q = params.toString();
@@ -168,6 +172,23 @@ export function ShiWorkspace() {
           ?.researchMode,
       );
       params.set("researchMode", savedMode ?? "general");
+      const base = pathname?.includes("/intelligence")
+        ? "/portal/intelligence"
+        : "/portal/intelligence";
+      router.replace(`${base}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router],
+  );
+
+  const openFarmOnMap = useCallback(
+    (farm: ShiFarm, live?: ShiAreaAnalysis | null) => {
+      const frame = buildFarmHandoffFrame(farm, live);
+      queueOpenSavedFrame(frame);
+      track("archie_study_reopened", { has_folder: false });
+      writeLastArchieModule("research");
+      const params = new URLSearchParams();
+      params.set("openFarm", farm.id);
+      params.set("researchMode", "general");
       const base = pathname?.includes("/intelligence")
         ? "/portal/intelligence"
         : "/portal/intelligence";
@@ -260,7 +281,7 @@ export function ShiWorkspace() {
 
         {section === "farms" ? (
           <div className="motion-safe:animate-[archieModuleIn_180ms_ease-out]">
-            <ShiFarmsView />
+            <ShiFarmsView onOpenOnMap={openFarmOnMap} />
           </div>
         ) : null}
 

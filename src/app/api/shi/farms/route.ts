@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     mapCenterLat?: number | null;
     mapCenterLng?: number | null;
     mapZoom?: number | null;
+    thumbnailDataUrl?: string | null;
   };
   try {
     body = await request.json();
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
       mapCenterLat: body.mapCenterLat,
       mapCenterLng: body.mapCenterLng,
       mapZoom: body.mapZoom,
+      thumbnailDataUrl: body.thumbnailDataUrl,
     });
     return NextResponse.json({ farm }, { status: 201 });
   } catch (e) {

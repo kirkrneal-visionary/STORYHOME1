@@ -233,6 +233,8 @@ export type ShiFarm = {
   lastReviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Signed later via shi-studies/{agent}/farms/{id}.jpg — omitted when no snap yet. */
+  thumbnailPath?: string | null;
 };
 
 export type ShiFarmDetail = ShiFarm & {
