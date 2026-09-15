@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Waves 1–3 founder-confirmed GOOD on iPhone 2026-09-15. Stay on test links — not live. Wave 4: unify Marketplace page canvas. See `docs/memory/NAV-WAVES.md`.
+- Navigation Waves 1–4 founder-confirmed GOOD on iPhone 2026-09-15. Stay on test links — not live. Wave 5: quieter Marketplace card/control edges. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Build and verify Wave 4 (Marketplace page canvas). Do not start card-edge glass until Wave 4 is GOOD.
+1. Build and verify Wave 5 (Marketplace card/control edges). Do not start dock video-glass until Wave 5 is GOOD.
 2. Do not rename the `verify` job — that would drop the merge lock.

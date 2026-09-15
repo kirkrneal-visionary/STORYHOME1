@@ -59,6 +59,14 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - One dark page behind search/filters and the list. Same `--env-0` as the site canvas.
 - Do not restyle card interiors, inputs, gold/navy, or the map.
 - Do not start integrated card edges (Wave 5) or video-glass on the dock (Wave 6).
+- Founder **GOOD** on the Wave 4 eqmg preview 2026-09-15. Not merged to live.
+
+## Wave 5 — Marketplace card and control edges (`cursor/market-edges-6752`)
+
+- Quieter edges on Marketplace listing cards and search/filter controls.
+- Cards sit on the canvas: no raise puddle, thin `--market-edge`.
+- Do not restyle card interiors, gold/navy, the map, the header, or the dock.
+- Do not start video-glass on the dock (Wave 6).
 
 ## After each wave
 

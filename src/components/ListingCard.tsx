@@ -51,10 +51,11 @@ export function ListingCard({
       onMouseEnter={onSelect}
       className={cn(
         "group overflow-hidden story-surface",
-        dense ? "rounded-[var(--radius-md)] p-0" : "p-4 hover:-translate-y-0.5",
-        selected
+        dense ? "story-market-card rounded-[var(--radius-md)] p-0" : "p-4 hover:-translate-y-0.5",
+        selected && !dense
           ? "border-[color-mix(in_srgb,var(--gold)_70%,var(--hairline))] shadow-[var(--elev-raise),var(--ring-focus)]"
           : "",
+        selected && dense ? "story-market-card-selected" : "",
       )}
     >
       <Link
