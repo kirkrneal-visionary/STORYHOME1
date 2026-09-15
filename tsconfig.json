@@ -61,6 +61,8 @@
     "scripts/test-settings-pro-auth.ts",
     "scripts/test-settings-buyer-preview.ts",
     "scripts/test-settings-db-locks.ts",
+    "scripts/test-farm-map-memory.ts",
+    "scripts/test-vault-snap-save.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }
