@@ -697,7 +697,11 @@ html[data-role="professional"] {
 .story-bottom-dock {
   left: max(0.75rem, env(safe-area-inset-left, 0px));
   right: max(0.75rem, env(safe-area-inset-right, 0px));
-  bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
+  bottom: max(
+    0.65rem,
+    env(safe-area-inset-bottom, 0px),
+    var(--story-vv-bottom, 0px)
+  );
   height: var(--story-bottom-nav-h);
   padding-inline: 0.35rem;
 }
@@ -707,7 +711,7 @@ html[data-role="professional"] {
     right: auto;
     width: min(32rem, calc(100vw - 2.5rem));
     transform: translateX(-50%);
-    bottom: 1.1rem;
+    bottom: max(1.1rem, var(--story-vv-bottom, 0px));
   }
 }
 

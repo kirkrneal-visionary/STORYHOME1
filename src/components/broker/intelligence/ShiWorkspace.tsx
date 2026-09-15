@@ -252,9 +252,11 @@ export function ShiWorkspace() {
             aria-hidden={section !== "research" && section !== "corridors"}
           >
             {pickingMode ? (
-              <ShiResearchModeSelector
-                onSelect={(id) => setResearchMode(id)}
-              />
+              <div className="px-4 pt-[calc(var(--story-safe-top)+var(--story-archie-ribbon-h)+0.75rem)] pb-[var(--story-bottom-clearance)] md:px-6">
+                <ShiResearchModeSelector
+                  onSelect={(id) => setResearchMode(id)}
+                />
+              </div>
             ) : null}
             <div className={cn(pickingMode && "hidden")}>
               <PropertyIntelligenceView
