@@ -36,7 +36,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Duplicate farm names | **Observed** allowed. Not blocked |
 | One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. iPhone not proven here |
 | Pro tab ≠ Archie tab | `primaryDockId` **source-tested** |
-| Header text does not punch through the wordmark | Mask removed; stronger band **source-tested**. Device keyboard lift **not** proven on iPhone |
+| Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Device keyboard lift **not** proven on iPhone |
 
 If a test fails, do not weaken it to go green.
 

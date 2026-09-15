@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Wave 2 PR #197 (`cursor/nav-header-6752`) Ready — header band, active tabs, visual-viewport dock. `verify` + `Vercel – storyhome-1-eqmg` green. Ignore red `storyhome-1`. Wave 3 waits on founder phone look. See `docs/memory/NAV-WAVES.md`.
+- Navigation Wave 2 PR #197 (`cursor/nav-header-6752`): active tabs + viewport dock. Solid header band reverted — founder rejected it. Wave 3 waits. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -36,5 +36,5 @@
 
 ## Next concrete action
 
-1. Verify Wave 2 (header + tabs + phone bar), then Wave 3 (bubble).
+1. Confirm the solid header is gone, then Wave 3 (bubble) after founder says so.
 2. Do not rename the `verify` job — that would drop the merge lock.

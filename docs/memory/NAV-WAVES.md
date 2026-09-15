@@ -41,7 +41,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Shared chrome stays in the root layout. Maps are not kept mounted just for the dock.
 - Explicit `primaryDockId` / `archieModuleFromSearch`: Marketplace listings, Pro ≠ Archie, Access desk = Research.
 - Dock bottom uses visual viewport + safe area. No one-phone offset.
-- Header band is opaque enough that page text does not read through the wordmark. Research mode picker sits below header + ribbon.
+- Keep the existing light overlay header (no solid black band). Research mode picker sits below header + ribbon.
 - Swipe-back still honors `data-unsaved`. No indiscriminate form reset.
 - **Not this wave:** smoked-glass bubble (Wave 3).
 

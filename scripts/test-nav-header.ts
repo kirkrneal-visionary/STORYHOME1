@@ -35,14 +35,18 @@ assert.match(networks, /section === "corridors"\) return "research"/);
 
 const css = read("src/app/globals.css");
 assert.match(css, /--story-vv-bottom/);
-assert.match(css, /isolation:\s*isolate/);
+assert.match(css, /never a solid black header band/);
 assert.match(
   css,
-  /\.story-overlay-header\s*\{[\s\S]*?mask-image:\s*none/,
+  /\.story-overlay-header\s*\{[\s\S]*?mask-image:\s*linear-gradient/,
+);
+assert.match(
+  css,
+  /color-mix\(in srgb, var\(--env-0\) 28%, transparent\)/,
 );
 assert.doesNotMatch(
   css,
-  /\.story-overlay-header\s*\{[\s\S]*?mask-image:\s*linear-gradient/,
+  /\.story-overlay-header\s*\{[\s\S]*?color-mix\(in srgb, var\(--env-0\) 82%/,
 );
 assert.match(css, /border-bottom:\s*none/);
 

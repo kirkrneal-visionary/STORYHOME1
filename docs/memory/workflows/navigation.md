@@ -27,7 +27,7 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 
 ## Header and viewport (Wave 2)
 
-- Header band must keep page text from reading through the wordmark. Not a type-size change.
+- Overlay header stays a light scrim — never a solid black band. Not a type-size change.
 - Research mode picker is padded under header + ribbon. Live map sheet still hides chrome.
 - Dock `bottom` uses `max(safe-area, --story-vv-bottom)`. Keyboard and browser chrome move the dock. No one-phone offset.
 - Active tab comes from `primaryDockId` / `archieModuleFromSearch` only after the URL matches.
