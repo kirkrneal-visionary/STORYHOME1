@@ -1,6 +1,6 @@
 # Isolated contract checks. Does not use production secrets.
-# This workflow RUNS on push/PR. It is NOT a required merge gate unless
-# branch protection is configured in GitHub (not part of this file).
+# GitHub check run name: verify
+# Required on main (confirmed 2026-09-15). Do not rename the job.
 name: Project memory checks
 
 on:
