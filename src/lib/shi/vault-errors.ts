@@ -1,15 +1,30 @@
-/** User-facing Study Vault errors (never dump internal CAD keys). */
-export function formatShiVaultError(err: unknown): string {
-  let msg = "Unknown error";
-  if (err instanceof Error) msg = err.message;
-  else if (typeof err === "string") msg = err;
-  else if (
+/** Raw Mapbox/MapLibre camera errors — never show these on screen. */
+export function isRawMapEngineError(msg: string): boolean {
+  return /LngLatLike|LngLat instance|Invalid LngLat|lat must be between|lng must be between/i.test(
+    msg,
+  );
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  if (
     err &&
     typeof err === "object" &&
     "message" in err &&
     typeof (err as { message: unknown }).message === "string"
   ) {
-    msg = (err as { message: string }).message;
+    return (err as { message: string }).message;
+  }
+  return "Unknown error";
+}
+
+/** User-facing Study Vault errors (never dump internal CAD keys). */
+export function formatShiVaultError(err: unknown): string {
+  if (err == null || err === "") return "";
+  const msg = errorMessage(err);
+  if (isRawMapEngineError(msg)) {
+    return "";
   }
   if (
     /shi_study_folders|shi_market_frames|shi_frame_snapshots|schema cache|does not exist|relation/i.test(

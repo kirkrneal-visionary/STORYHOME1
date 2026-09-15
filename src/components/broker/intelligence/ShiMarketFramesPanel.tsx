@@ -217,11 +217,15 @@ export function ShiMarketFramesPanel({
             </p>
           ) : null}
 
-          {analyzeError ? (
-            <p className="text-xs font-semibold text-red-700">{analyzeError}</p>
+          {formatShiVaultError(analyzeError) ? (
+            <p className="text-xs font-semibold text-red-700">
+              {formatShiVaultError(analyzeError)}
+            </p>
           ) : null}
-          {saveError ? (
-            <p className="text-xs font-semibold text-red-700">{saveError}</p>
+          {formatShiVaultError(saveError) ? (
+            <p className="text-xs font-semibold text-red-700">
+              {formatShiVaultError(saveError)}
+            </p>
           ) : null}
 
           {showFarm && active && analysis && onSaveAsFarm ? (
@@ -307,7 +311,6 @@ export function ShiMarketFramesPanel({
                     setNewFolder("");
                     setFolderId("");
                     setShowSave(false);
-                    onOpenVault();
                   } catch (err) {
                     setSaveError(formatShiVaultError(err));
                   } finally {
@@ -363,7 +366,7 @@ export function ShiMarketFramesPanel({
                 ) : (
                   <Save className="h-3.5 w-3.5" />
                 )}
-                {saving || busy ? "Capturing Map Memory…" : "Save + open Vault"}
+                {saving || busy ? "Saving…" : "Save"}
               </button>
             </form>
           ) : null}

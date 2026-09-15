@@ -798,10 +798,19 @@ export function PropertyIntelligenceView({
       const view = mapRef.current?.getView();
       const countyLabel =
         AVAILABLE_COUNTIES.find((c) => c.source === county)?.name ?? countyName;
-      let thumb =
-        (await mapRef.current?.captureMapMemory(active.boundary)) ??
-        mapRef.current?.captureThumbnail() ??
-        null;
+      let thumb: string | null = null;
+      try {
+        thumb =
+          (await mapRef.current?.captureMapMemory(active.boundary)) ??
+          mapRef.current?.captureThumbnail() ??
+          null;
+      } catch {
+        try {
+          thumb = mapRef.current?.captureThumbnail() ?? null;
+        } catch {
+          thumb = null;
+        }
+      }
       if (thumb) {
         try {
           thumb = await fitThumbnailDataUrl(thumb);
@@ -832,11 +841,20 @@ export function PropertyIntelligenceView({
     setSaving(true);
     setAreaError("");
     try {
-      // Map Memory: fit frame → snap → downscale to vault byte cap → restore camera.
-      let thumb =
-        (await mapRef.current?.captureMapMemory(active.boundary)) ??
-        mapRef.current?.captureThumbnail() ??
-        null;
+      // Map Memory: fit frame → snap → downscale. Snap failure must not cancel save.
+      let thumb: string | null = null;
+      try {
+        thumb =
+          (await mapRef.current?.captureMapMemory(active.boundary)) ??
+          mapRef.current?.captureThumbnail() ??
+          null;
+      } catch {
+        try {
+          thumb = mapRef.current?.captureThumbnail() ?? null;
+        } catch {
+          thumb = null;
+        }
+      }
       if (thumb) {
         try {
           thumb = await fitThumbnailDataUrl(thumb);
