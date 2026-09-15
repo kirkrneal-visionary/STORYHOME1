@@ -20,6 +20,8 @@ assert.equal(
   true,
 );
 
+assert.doesNotMatch(read("src/lib/account/session-liveness.ts"), /\bBuffer\b/);
+
 const live = read("src/lib/account/require-session-live.ts");
 assert.match(live, /sessionWasForcedOut/);
 assert.match(live, /my_forced_logout_at/);
