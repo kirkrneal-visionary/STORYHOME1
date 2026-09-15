@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Waves 1–6 founder-confirmed GOOD on iPhone 2026-09-15. Stay on test links — not live until founder says MERGE. See `docs/memory/NAV-WAVES.md`.
+- Navigation Waves 1–6 founder-confirmed GOOD and merged to live 2026-09-15 (PRs 196–201). Live target: https://storyhome-1-eqmg.vercel.app
 
 ## Just shipped (do not rewind)
 
@@ -24,7 +24,7 @@
 - `docs/SITE-SYSTEM-MAP-FOR-CHATGPT.md` still says pages are not middleware-gated (stale)
 - Two-user RLS isolation against a disposable database is **not** automated here
 - Study Vault card photo on a new production save is still **unverified**
-- Menu tap repair founder-confirmed GOOD on a physical iPhone 2026-09-15 (Wave 1 test link). Not live yet.
+- Menu tap repair founder-confirmed GOOD on a physical iPhone 2026-09-15. Live with Waves 1–6.
 
 ## Do not do
 
@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Wait for founder: LEAVE ON TEST or MERGE. Do not merge unless they say MERGE.
+1. Founder pull-to-refresh live site to confirm Waves 1–6. Do not start a new visual wave unless asked.
 2. Do not rename the `verify` job — that would drop the merge lock.

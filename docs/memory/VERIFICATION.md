@@ -34,13 +34,13 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Save retrievable after new session | Contract + code path. **Not** a live session test |
 | Snap failure keeps study | `studies.ts` no longer deletes frame on upload fail — **source-tested** |
 | Duplicate farm names | **Observed** allowed. Not blocked |
-| One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 1 preview). Not live |
-| Pro tab ≠ Archie tab | `primaryDockId` **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 2 preview). Not live |
-| Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (no black bar). Not live |
-| Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 3). Not live |
-| Marketplace page is one dark canvas | `--market-canvas` + toolbar no longer `story-glass` **source-tested**. Founder **GOOD** 2026-09-15 (Wave 4). Not live |
-| Marketplace cards sit on the canvas | `--market-edge` + no raise puddle **source-tested**. Founder **GOOD** 2026-09-15 (Wave 5). Not live |
-| Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Founder **GOOD** 2026-09-15 (Wave 6). Not live |
+| One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. Founder **GOOD** on iPhone 2026-09-15. Live |
+| Pro tab ≠ Archie tab | `primaryDockId` **source-tested**. Founder **GOOD** on iPhone 2026-09-15. Live |
+| Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (no black bar). Live |
+| Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Founder **GOOD** on iPhone 2026-09-15. Live |
+| Marketplace page is one dark canvas | `--market-canvas` + toolbar no longer `story-glass` **source-tested**. Founder **GOOD** 2026-09-15. Live |
+| Marketplace cards sit on the canvas | `--market-edge` + no raise puddle **source-tested**. Founder **GOOD** 2026-09-15. Live |
+| Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Founder **GOOD** 2026-09-15. Live |
 
 If a test fails, do not weaken it to go green.
 
