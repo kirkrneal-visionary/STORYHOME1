@@ -43,6 +43,9 @@ export function needsMfaChallenge(opts: {
   return opts.currentAal !== "aal2";
 }
 
+export const STORY_PRO_SETTINGS_BLOCKED =
+  "Confirm your email and authenticator before Story Pro settings.";
+
 /** Portal, home, and private APIs after login. */
 export function canAccessPrivateApp(opts: {
   emailConfirmed: boolean;
@@ -55,6 +58,17 @@ export function canAccessPrivateApp(opts: {
   if (needsMfaEnrollment(opts)) return false;
   if (needsMfaChallenge(opts)) return false;
   return true;
+}
+
+/** Professional profile and license cards. Settings itself stays open. */
+export function canEditStoryProSettings(opts: {
+  emailConfirmed: boolean;
+  purpose: AccountPurpose | string | null | undefined;
+  kind: string | null | undefined;
+  enrolled: boolean;
+  currentAal: AssuranceLevel | null | undefined;
+}): boolean {
+  return canAccessPrivateApp(opts);
 }
 
 /** Settings + login stay reachable so the user can finish email / MFA. */

@@ -58,6 +58,7 @@
     "scripts/test-login-signup-separate.ts",
     "scripts/test-sign-out-everywhere-detect.ts",
     "scripts/test-forced-logout-server.ts",
+    "scripts/test-settings-pro-auth.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }
