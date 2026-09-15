@@ -7,6 +7,7 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Workflow | File |
 |---|---|
 | Registration, login, recovery, Pro access | [workflows/auth-and-access.md](./workflows/auth-and-access.md) |
+| Shared dock / Archie chrome taps | [workflows/navigation.md](./workflows/navigation.md) |
 | Research → Farm | [workflows/farms-and-vault.md](./workflows/farms-and-vault.md) |
 | Research → Study Vault → reopen | [workflows/farms-and-vault.md](./workflows/farms-and-vault.md) |
 | Consumer My Home | [workflows/my-home.md](./workflows/my-home.md) |

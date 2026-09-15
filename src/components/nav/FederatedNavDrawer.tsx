@@ -2,10 +2,10 @@
 
 import { useEffect, useId, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
-import { useMotionOptional } from "@/components/motion/MotionProvider";
+import { NavPressButton } from "@/components/nav/NavPressButton";
+import { PrimaryNavLink } from "@/components/nav/PrimaryNavLink";
 import {
   writeLastArchieModule,
   type ArchieModule,
@@ -46,7 +46,6 @@ export function FederatedNavDrawer({
 }: FederatedNavDrawerProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const motion = useMotionOptional();
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const archie = NAVIGATION_NETWORKS.archie;
@@ -99,15 +98,15 @@ export function FederatedNavDrawer({
               Story Home
             </p>
           </div>
-          <button
+          <NavPressButton
             ref={closeRef}
-            type="button"
             onClick={onClose}
             aria-label="Close network menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:text-gold"
+            traceName="close-menu"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:text-gold"
           >
             <X className="h-5 w-5" />
-          </button>
+          </NavPressButton>
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
@@ -116,15 +115,13 @@ export function FederatedNavDrawer({
           </p>
           <nav aria-label="Story Home" className="flex flex-col gap-0.5">
             {hostLinks.map((link) => (
-              <Link
+              <PrimaryNavLink
                 key={`${link.href}-${link.label}`}
                 href={link.href}
-                onClick={() => {
-                  motion?.markNavigate(link.href);
-                  onClose();
-                }}
+                active={link.active}
+                onNavigate={onClose}
                 className={cn(
-                  "relative flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
+                  "relative flex min-h-11 items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
                   link.active
                     ? "bg-[color-mix(in_srgb,var(--gold)_14%,transparent)] text-gold"
                     : "text-[var(--brand-word)] hover:bg-white/5 hover:text-ink",
@@ -134,7 +131,7 @@ export function FederatedNavDrawer({
                 {link.unread ? (
                   <span className="h-2 w-2 rounded-full bg-gold" />
                 ) : null}
-              </Link>
+              </PrimaryNavLink>
             ))}
           </nav>
 
@@ -147,15 +144,12 @@ export function FederatedNavDrawer({
               <p className="mb-2 px-2 font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
                 Connected intelligence
               </p>
-              <Link
+              <PrimaryNavLink
                 href={archieEntryHref}
-                onClick={() => {
-                  motion?.markNavigate(archieEntryHref);
-                  onClose();
-                }}
-                aria-current={archieActive ? "page" : undefined}
+                active={archieActive}
+                onNavigate={onClose}
                 className={cn(
-                  "flex items-center gap-3 rounded-2xl border px-3 py-3 transition-[border-color,background-color] duration-200",
+                  "flex min-h-11 items-center gap-3 rounded-2xl border px-3 py-3 transition-[border-color,background-color] duration-200",
                   archieActive
                     ? "border-gold bg-[color-mix(in_srgb,var(--gold)_14%,transparent)]"
                     : "border-[color-mix(in_srgb,var(--brand-word)_28%,transparent)] bg-transparent hover:border-[color-mix(in_srgb,var(--gold)_55%,transparent)]",
@@ -183,7 +177,7 @@ export function FederatedNavDrawer({
                     {archie.label}
                   </span>
                 </span>
-              </Link>
+              </PrimaryNavLink>
 
               <div className="mt-2 flex flex-col gap-0.5 pl-1">
                 {archie.modules.map((mod) => {
@@ -191,24 +185,23 @@ export function FederatedNavDrawer({
                   const active =
                     archieActive && isArchieModuleActive(id, section);
                   return (
-                    <Link
+                    <PrimaryNavLink
                       key={id}
                       href={mod.href}
-                      onClick={() => {
-                        motion?.markNavigate(mod.href);
+                      active={active}
+                      onNavigate={() => {
                         writeLastArchieModule(id);
                         onClose();
                       }}
-                      aria-current={active ? "page" : undefined}
                       className={cn(
-                        "rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
+                        "flex min-h-11 items-center rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors",
                         active
                           ? "bg-[color-mix(in_srgb,var(--gold)_16%,transparent)] text-gold"
                           : "text-[var(--brand-word)]/80 hover:bg-white/5 hover:text-gold",
                       )}
                     >
                       {mod.label}
-                    </Link>
+                    </PrimaryNavLink>
                   );
                 })}
               </div>

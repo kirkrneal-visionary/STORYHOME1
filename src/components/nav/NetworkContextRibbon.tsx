@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { PrimaryNavLink } from "@/components/nav/PrimaryNavLink";
 import {
   isArchieModuleActive,
   NAVIGATION_NETWORKS,
@@ -45,13 +45,13 @@ export function NetworkContextRibbon() {
             const id = (mod.id ?? "research") as ArchieModule;
             const active = isArchieModuleActive(id, section);
             return (
-              <Link
+              <PrimaryNavLink
                 key={id}
                 href={mod.href}
-                onClick={() => onModuleClick(id)}
-                aria-current={active ? "page" : undefined}
+                active={active}
+                onNavigate={() => onModuleClick(id)}
                 className={cn(
-                  "relative inline-flex h-8 shrink-0 items-center rounded-md px-3 text-xs font-semibold tracking-wide transition-[color,background-color,transform] duration-200",
+                  "relative inline-flex h-11 min-h-11 shrink-0 items-center rounded-md px-3 text-xs font-semibold tracking-wide transition-[color,background-color,transform] duration-200",
                   active
                     ? "bg-[color-mix(in_srgb,var(--gold)_16%,transparent)] text-gold"
                     : "text-[var(--brand-word)]/75 hover:bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] hover:text-gold",
@@ -64,7 +64,7 @@ export function NetworkContextRibbon() {
                     className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-gold motion-safe:animate-[archieGoldRail_240ms_ease-out]"
                   />
                 ) : null}
-              </Link>
+              </PrimaryNavLink>
             );
           })}
         </div>

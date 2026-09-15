@@ -65,6 +65,7 @@
     "scripts/test-vault-snap-save.ts",
     "scripts/test-project-memory.ts",
     "scripts/test-workflow-contracts.ts",
+    "scripts/test-nav-touch.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

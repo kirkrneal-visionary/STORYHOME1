@@ -19,10 +19,11 @@ import {
   FederatedNavDrawer,
   type FederatedDrawerLink,
 } from "@/components/nav/FederatedNavDrawer";
+import { NavPressButton } from "@/components/nav/NavPressButton";
 import { NetworkContextRibbon } from "@/components/nav/NetworkContextRibbon";
 import { NetworkDivider } from "@/components/nav/NetworkDivider";
 import { NetworkNode } from "@/components/nav/NetworkNode";
-import { useMotionOptional } from "@/components/motion/MotionProvider";
+import { NavIntentSettler, PrimaryNavLink } from "@/components/nav/PrimaryNavLink";
 import { useArchieEntryHref } from "@/hooks/useArchieEntryHref";
 import { useLivingHeader } from "@/hooks/useLivingHeader";
 import { mayManageBrokerage, mayUseStoryPro } from "@/lib/account/purpose";
@@ -157,15 +158,15 @@ export default function GlobalNav() {
         }}
       >
         {/* Mobile: menu left · brand center · actions right (Instagram placement) */}
-        <button
-          type="button"
-          className="story-press inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold xl:hidden"
+        <NavPressButton
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-ink transition-colors hover:text-gold xl:hidden"
           aria-label="Open network menu"
           aria-expanded={drawerOpen}
+          traceName="open-menu"
           onClick={() => setDrawerOpen(true)}
         >
           <Menu className="h-5 w-5" />
-        </button>
+        </NavPressButton>
 
         <Link
           href="/"
@@ -369,11 +370,13 @@ export default function GlobalNav() {
         />
       </Suspense>
 
+      <NavIntentSettler />
+
       {/* Same glass pill language phone → desktop (centered dock on md+) */}
       <nav
         aria-label="Primary"
         data-story-bottom-dock
-        className="story-glass-nav story-bottom-dock fixed z-50 grid grid-cols-4 items-center justify-items-center"
+        className="story-glass-nav story-bottom-dock fixed z-50 grid grid-cols-4 items-stretch justify-items-stretch"
       >
         <MobileTab href="/" label="Home" icon={Home} active={isHome} />
         {isPro && isLoggedIn ? (
@@ -432,19 +435,18 @@ function NavLink({
   children: React.ReactNode;
   className?: string;
 }) {
-  const motion = useMotionOptional();
   return (
-    <Link
+    <PrimaryNavLink
       href={href}
-      onClick={() => motion?.markNavigate(href)}
+      active={active}
       className={cn(
-        "transition-colors",
+        "inline-flex min-h-11 items-center transition-colors",
         active ? "text-ink" : "text-[var(--muted)] hover:text-ink",
         className,
       )}
     >
       {children}
-    </Link>
+    </PrimaryNavLink>
   );
 }
 
@@ -462,14 +464,12 @@ function MobileTab({
   /** Use Archie brand mark instead of lucide icon */
   mark?: boolean;
 }) {
-  const motion = useMotionOptional();
   return (
-    <Link
+    <PrimaryNavLink
       href={href}
-      onClick={() => motion?.markNavigate(href)}
-      aria-current={active ? "page" : undefined}
+      active={active}
       className={cn(
-        "story-press relative flex h-11 w-full max-w-[4.5rem] flex-col items-center justify-center gap-0.5 rounded-full",
+        "relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-full",
         active ? "text-ink" : "text-[var(--muted)]",
       )}
     >
@@ -502,6 +502,6 @@ function MobileTab({
         )}
         <span className="text-[9px] font-semibold tracking-wide">{label}</span>
       </span>
-    </Link>
+    </PrimaryNavLink>
   );
 }
