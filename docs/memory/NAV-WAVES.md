@@ -34,7 +34,7 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 
 **This wave does not:** restyle the smoked-glass bubble, change site type size, add View Transitions, add `scheduler.yield()`, or raise z-index over maps.
 
-**Verify:** isolated `npm run test:nav-touch` (also inside `test:project-memory`). Browser: Home / Pro / Archie / Profile / Marketplace, open-close drawer, scroll-across-tab, switch while a page is loading. **Emulated Chrome is not proof the iPhone bug is gone.**
+**Verify:** isolated `npm run test:nav-touch` (also inside `test:project-memory`). Founder **GOOD** on a physical iPhone 2026-09-15 via the Wave 1 eqmg preview. Not merged to live.
 
 ## Wave 2 — Stabilize nav and header (`cursor/nav-header-6752`)
 

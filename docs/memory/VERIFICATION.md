@@ -34,7 +34,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Save retrievable after new session | Contract + code path. **Not** a live session test |
 | Snap failure keeps study | `studies.ts` no longer deletes frame on upload fail — **source-tested** |
 | Duplicate farm names | **Observed** allowed. Not blocked |
-| One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. iPhone not proven here |
+| One dock tap reaches the link | Dead-zone + 44px contracts **source-tested**. Founder **GOOD** on iPhone 2026-09-15 (Wave 1 preview). Not live |
 | Pro tab ≠ Archie tab | `primaryDockId` **source-tested** |
 | Overlay header stays a light scrim | Light gradient + fade mask **source-tested**. Device keyboard lift **not** proven on iPhone |
 | Dock is smoked glass + filled navy | `--dock-*` tokens + official Archie mark **source-tested**. Phone look **not** proven on iPhone |

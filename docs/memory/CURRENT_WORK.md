@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Wave 3 (`cursor/nav-bubble-6752`): smoked-glass dock bubble + official Archie mark. Header stays the light overlay. See `docs/memory/NAV-WAVES.md`.
+- Navigation waves stay on test links — not live. Founder confirmed Wave 1 taps GOOD on a real phone 2026-09-15. Next: Wave 2 (tabs + light top name). See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -24,7 +24,7 @@
 - `docs/SITE-SYSTEM-MAP-FOR-CHATGPT.md` still says pages are not middleware-gated (stale)
 - Two-user RLS isolation against a disposable database is **not** automated here
 - Study Vault card photo on a new production save is still **unverified**
-- Menu tap repair is **not** proven on a physical iPhone in this session
+- Menu tap repair founder-confirmed GOOD on a physical iPhone 2026-09-15 (Wave 1 test link). Not live yet.
 
 ## Do not do
 
@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Verify Wave 3 dock bubble on a phone, then stop. No more nav waves after this.
+1. Verify Wave 2 on the Wave 2 test link (gold tab matches the page; top name stays the light fade).
 2. Do not rename the `verify` job — that would drop the merge lock.
