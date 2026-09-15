@@ -2,6 +2,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { decideReadiness } from "@/lib/account/assurance";
 import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { mayUseStoryPro } from "@/lib/account/purpose";
+import { sessionWasForcedOut } from "@/lib/account/require-session-live";
 import { logSecurityEvent } from "@/lib/security/log-event";
 import { getServerSupabase } from "@/lib/supabase/server";
 
@@ -34,6 +35,10 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
     error: authError,
   } = await supabase.auth.getUser();
   if (authError || !user) {
+    logSecurityEvent({ kind: "authz_denied", status: 401, path: "/api/shi" });
+    return { ok: false, status: 401, error: "Sign in required" };
+  }
+  if (await sessionWasForcedOut(supabase)) {
     logSecurityEvent({ kind: "authz_denied", status: 401, path: "/api/shi" });
     return { ok: false, status: 401, error: "Sign in required" };
   }

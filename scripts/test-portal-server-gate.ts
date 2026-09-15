@@ -85,7 +85,7 @@ const intel = read("src/app/portal/intelligence/page.tsx");
 assert.match(intel, /BrokerPortal/);
 
 const mw = read("src/middleware.ts");
-assert.match(mw, /gated && !user/);
+assert.match(mw, /gated && !signedIn/);
 assert.match(mw, /pathname.startsWith\("\/office"\)/);
 
 console.log("portal-server-gate: ok");

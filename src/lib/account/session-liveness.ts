@@ -25,6 +25,13 @@ export function parseJwtIssuedAtMs(
   }
 }
 
+export function stampToIso(data: unknown): string | null {
+  if (data == null) return null;
+  if (typeof data === "string") return data;
+  if (data instanceof Date) return data.toISOString();
+  return String(data);
+}
+
 /** Stamp newer than this login means this device must sign out. */
 export function shouldForceLocalLogout(
   issuedAtMs: number | null,
