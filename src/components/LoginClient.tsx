@@ -20,6 +20,11 @@ import {
   needsMfaEnrollment,
   shouldStayOnLogin,
 } from "@/lib/account/assurance";
+import {
+  draftAfterModeChange,
+  readStashedLoginEmail,
+  type AuthFormMode,
+} from "@/lib/account/auth-form-fields";
 import { destForUser } from "@/lib/account/purpose";
 import { cn } from "@/lib/utils";
 
@@ -446,8 +451,9 @@ function RealAuthForm({
   resetPasswordForEmail: (email: string) => Promise<AuthResult>;
   onDone: () => void;
 }) {
-  const [mode, setMode] = useState<"signin" | "signup" | "reset">("signin");
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<AuthFormMode>("signin");
+  const [signInEmail, setSignInEmail] = useState(readStashedLoginEmail);
+  const [email, setEmail] = useState(signInEmail);
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [accountKind, setAccountKind] = useState<"consumer" | "pro" | "broker">(
@@ -547,6 +553,11 @@ function RealAuthForm({
       setNotice(
         "Check your email to confirm this account. We will not open your home until that mailbox is confirmed.",
       );
+      setSignInEmail(email.trim());
+      setPassword("");
+      setFullName("");
+      setLicense("");
+      setVerified(null);
       setMode("signin");
       return;
     }
@@ -556,6 +567,26 @@ function RealAuthForm({
   const inputCls =
     "h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold";
 
+  function switchMode(next: AuthFormMode) {
+    const nextState = draftAfterModeChange({
+      next,
+      leaving: mode,
+      draft: { email, password, fullName, license },
+      signInEmail,
+    });
+    setSignInEmail(nextState.signInEmail);
+    setEmail(nextState.draft.email);
+    setPassword(nextState.draft.password);
+    setFullName(nextState.draft.fullName);
+    setLicense(nextState.draft.license);
+    setVerified(null);
+    setAccountKind("consumer");
+    setProRole("realtor_broker");
+    setMode(next);
+    setError("");
+    setNotice("");
+  }
+
   return (
     <form onSubmit={submit} className="mt-8 space-y-3 rounded-2xl border border-hairline bg-[var(--surface)] p-5">
       <div className="flex gap-2">
@@ -563,11 +594,7 @@ function RealAuthForm({
           <button
             key={m}
             type="button"
-            onClick={() => {
-              setMode(m);
-              setError("");
-              setNotice("");
-            }}
+            onClick={() => switchMode(m)}
             className={cn(
               "h-9 flex-1 rounded-lg text-sm font-semibold",
               mode === m
@@ -586,6 +613,7 @@ function RealAuthForm({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Full name"
+            autoComplete="name"
             className={inputCls}
             required
           />
@@ -639,6 +667,7 @@ function RealAuthForm({
                     setVerified(null);
                   }}
                   placeholder="e.g. 724479"
+                  autoComplete="off"
                   className={inputCls}
                   inputMode="numeric"
                 />
@@ -687,16 +716,20 @@ function RealAuthForm({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Email"
+        autoComplete={mode === "signup" ? "email" : "username"}
         className={inputCls}
         required
       />
       {mode !== "reset" && (
         <div className="space-y-2">
           <input
+            key={`${mode}-password`}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
+            name={mode === "signup" ? "new-password" : "current-password"}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             className={inputCls}
             required
             minLength={6}
@@ -736,11 +769,7 @@ function RealAuthForm({
       {mode !== "signup" && (
         <button
           type="button"
-          onClick={() => {
-            setMode(mode === "reset" ? "signin" : "reset");
-            setError("");
-            setNotice("");
-          }}
+          onClick={() => switchMode(mode === "reset" ? "signin" : "reset")}
           className="w-full text-center text-xs font-semibold text-gold hover:underline"
         >
           {mode === "reset" ? "Back to sign in" : "Forgot password"}

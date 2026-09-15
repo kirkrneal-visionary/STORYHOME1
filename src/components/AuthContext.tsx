@@ -21,6 +21,7 @@ import {
   signInPublicMessage,
 } from "@/lib/account/assurance";
 import { signUpPublicMessage } from "@/lib/account/password-strength";
+import { stashLoginEmail } from "@/lib/account/auth-form-fields";
 import { navRoleForAccount, type AccountPurpose } from "@/lib/account/purpose";
 import {
   parseJwtIssuedAtMs,
@@ -460,6 +461,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOutEverywhere = useCallback(async () => {
+    stashLoginEmail(user?.email);
     if (supabase) {
       await fetch("/api/account/sign-out-all", { method: "POST" });
       await supabase.auth.signOut({ scope: "global" });
@@ -467,7 +469,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     persistUser(null);
     setRole("consumer");
-  }, [supabase, setRole]);
+  }, [supabase, setRole, user?.email]);
 
   const refreshAssurance = useCallback(async () => {
     if (!supabase) return;
@@ -515,13 +517,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase, setRole]);
 
   const logout = useCallback(() => {
+    stashLoginEmail(user?.email);
     if (supabase) {
       void supabase.auth.signOut({ scope: "local" });
     }
     setUser(null);
     persistUser(null);
     setRole("consumer");
-  }, [supabase, setRole]);
+  }, [supabase, setRole, user?.email]);
 
   const value = useMemo(
     () => ({
