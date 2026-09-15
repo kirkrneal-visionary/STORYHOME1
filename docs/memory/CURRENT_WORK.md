@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Wave 2 (`cursor/nav-header-6752`): header layering, active tabs, viewport. Wave 3 waits. See `docs/memory/NAV-WAVES.md`.
+- Navigation Wave 2 PR #197 (`cursor/nav-header-6752`) Ready — header band, active tabs, visual-viewport dock. `verify` + `Vercel – storyhome-1-eqmg` green. Ignore red `storyhome-1`. Wave 3 waits on founder phone look. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
