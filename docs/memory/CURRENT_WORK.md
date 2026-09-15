@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation Wave 1 (`cursor/nav-touch-6752`): missed/delayed menu taps. Waves 2–3 wait. See `docs/memory/NAV-WAVES.md`.
+- Navigation Wave 2 PR #197 (`cursor/nav-header-6752`): active tabs + viewport dock. Solid header band reverted — founder rejected it. Wave 3 waits. See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -32,9 +32,9 @@
 - Billing
 - People-copy between accounts
 - Rebuilding Corridors
-- Wave 2/3 menu cosmetics before Wave 1 is verified
+- Wave 3 menu cosmetics before Wave 2 is verified
 
 ## Next concrete action
 
-1. Verify Wave 1, then Wave 2 (header/viewport), then Wave 3 (bubble).
+1. Confirm the solid header is gone, then Wave 3 (bubble) after founder says so.
 2. Do not rename the `verify` job — that would drop the merge lock.

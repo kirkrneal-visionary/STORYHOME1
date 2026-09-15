@@ -51,6 +51,7 @@ export function FederatedNavDrawer({
   const archie = NAVIGATION_NETWORKS.archie;
   const archieActive = isArchiePath(pathname);
   const section = searchParams.get("section");
+  const mode = searchParams.get("mode");
 
   useEffect(() => {
     if (!open) return;
@@ -183,7 +184,7 @@ export function FederatedNavDrawer({
                 {archie.modules.map((mod) => {
                   const id = (mod.id ?? "research") as ArchieModule;
                   const active =
-                    archieActive && isArchieModuleActive(id, section);
+                    archieActive && isArchieModuleActive(id, section, mode);
                   return (
                     <PrimaryNavLink
                       key={id}
