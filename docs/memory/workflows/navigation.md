@@ -38,6 +38,12 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 - Archie dock mark uses official `ARCHIE_MARK_SRC`. Do not redraw the face.
 - Honor reduced motion and reduced transparency. No header restyle.
 
+## Marketplace canvas and edges (Waves 4–5)
+
+- Marketplace page is one `--env-0` canvas. Search/filters are not a glass strip.
+- Listing cards and toolbar controls use quieter `--market-edge`. No raise puddle.
+- Map chrome, overlay header, and dock stay as they are.
+
 ## Do not
 
 - Navigate on pointer-down
