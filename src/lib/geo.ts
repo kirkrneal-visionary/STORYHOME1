@@ -29,8 +29,28 @@ export const EAST_TEXAS_DEFAULT_ZOOM = 8;
  */
 export function hasUsableMapPin(lat: number, lng: number): boolean {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return false;
   if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) return false;
   return true;
+}
+
+/** Keep only real [lng, lat] pairs a map camera can use. */
+export function usableLngLatRing(
+  ring: Array<number[] | null | undefined> | null | undefined,
+): [number, number][] {
+  const out: [number, number][] = [];
+  for (const c of ring ?? []) {
+    const lng = c?.[0];
+    const lat = c?.[1];
+    if (
+      typeof lng === "number" &&
+      typeof lat === "number" &&
+      hasUsableMapPin(lat, lng)
+    ) {
+      out.push([lng, lat]);
+    }
+  }
+  return out;
 }
 
 export function pointInPolygon(point: LatLng, polygon: LatLng[]) {

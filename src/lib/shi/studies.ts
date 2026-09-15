@@ -465,7 +465,6 @@ export async function saveMarketFrame(
   }
 
   let thumbnailPath: string | null = null;
-  const isNew = !opts.frameId;
   if (opts.thumbnailDataUrl?.startsWith("data:image")) {
     try {
       thumbnailPath = await uploadThumbnail(
@@ -474,16 +473,9 @@ export async function saveMarketFrame(
         frameId!,
         opts.thumbnailDataUrl,
       );
-    } catch (e) {
-      // Don't leave an orphan frame when Map Memory storage is missing.
-      if (isNew && frameId) {
-        await supabase
-          .from("shi_market_frames")
-          .delete()
-          .eq("id", frameId)
-          .eq("owner_id", ownerId);
-      }
-      throw e;
+    } catch {
+      // Keep the study even if the photo cannot be stored.
+      thumbnailPath = null;
     }
   } else if (opts.frameId) {
     // Keep prior Map Memory if this save had no new image.

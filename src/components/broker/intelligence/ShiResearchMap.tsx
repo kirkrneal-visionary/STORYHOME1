@@ -13,6 +13,7 @@ import { Circle, Grid3x3, Hand, Layers, LocateFixed, Mountain, PenTool, Route, S
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
+  usableLngLatRing,
   type DrawnBoundary,
   type LatLng,
 } from "@/lib/geo";
@@ -488,17 +489,35 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       captureMapMemory: (boundary: DrawnBoundary) => {
         const map = mapRef.current;
         if (!map) return Promise.resolve(null);
-        const ring = boundaryRing(boundary);
-        if (!ring?.length) return Promise.resolve(null);
+        const ring = usableLngLatRing(boundaryRing(boundary));
+        const snapNow = () => {
+          try {
+            const url = map.getCanvas().toDataURL("image/jpeg", 0.8);
+            return url.startsWith("data:image") && url.length > 64 ? url : null;
+          } catch {
+            return null;
+          }
+        };
+        if (ring.length < 2) return Promise.resolve(snapNow());
 
         const bounds = new maplibregl.LngLatBounds();
-        for (const c of ring) {
-          bounds.extend([c[0]!, c[1]!]);
+        try {
+          for (const c of ring) {
+            bounds.extend(c);
+          }
+        } catch {
+          return Promise.resolve(snapNow());
         }
-        if (bounds.isEmpty()) return Promise.resolve(null);
+        if (bounds.isEmpty()) return Promise.resolve(snapNow());
 
-        const prevCenter = map.getCenter();
-        const prevZoom = map.getZoom();
+        let prevCenter: { lng: number; lat: number };
+        let prevZoom: number;
+        try {
+          prevCenter = map.getCenter();
+          prevZoom = map.getZoom();
+        } catch {
+          return Promise.resolve(snapNow());
+        }
 
         return new Promise<string | null>((resolve) => {
           let settled = false;
@@ -516,21 +535,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           const snap = () => {
             try {
               map.triggerRepaint();
-              // Double-rAF so WebGL presents a readable frame after fit.
               requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                  try {
-                    const url = map
-                      .getCanvas()
-                      .toDataURL("image/jpeg", 0.8);
-                    finish(
-                      url.startsWith("data:image") && url.length > 64
-                        ? url
-                        : null,
-                    );
-                  } catch {
-                    finish(null);
-                  }
+                  finish(snapNow());
                 });
               });
             } catch {
@@ -538,7 +545,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             }
           };
 
-          // Timeout if tiles never idle — still try a snap.
           const timer = window.setTimeout(() => {
             map.off("idle", onIdle);
             snap();
@@ -549,16 +555,20 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             window.setTimeout(snap, 140);
           };
 
-          map.once("idle", onIdle);
-
-          // Instant fit — readable padding, capped zoom (not nose-on-pixel).
-          map.fitBounds(bounds, {
-            padding: { top: 72, bottom: 88, left: 72, right: 72 },
-            maxZoom: 15,
-            duration: 0,
-            pitch: map.getPitch(),
-            bearing: map.getBearing(),
-          });
+          try {
+            map.once("idle", onIdle);
+            map.fitBounds(bounds, {
+              padding: { top: 72, bottom: 88, left: 72, right: 72 },
+              maxZoom: 15,
+              duration: 0,
+              pitch: map.getPitch(),
+              bearing: map.getBearing(),
+            });
+          } catch {
+            window.clearTimeout(timer);
+            map.off("idle", onIdle);
+            finish(snapNow());
+          }
         });
       },
       getView: () => {
@@ -573,13 +583,14 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       fitBoundary: (boundary: DrawnBoundary) => {
         const map = mapRef.current;
         if (!map) return;
-        const ring = boundaryRing(boundary);
-        if (!ring?.length) return;
-        const bounds = new maplibregl.LngLatBounds();
-        for (const c of ring) {
-          bounds.extend([c[0]!, c[1]!]);
-        }
-        if (!bounds.isEmpty()) {
+        const ring = usableLngLatRing(boundaryRing(boundary));
+        if (ring.length < 2) return;
+        try {
+          const bounds = new maplibregl.LngLatBounds();
+          for (const c of ring) {
+            bounds.extend(c);
+          }
+          if (bounds.isEmpty()) return;
           map.fitBounds(bounds, {
             padding: { top: 72, bottom: 88, left: 72, right: 72 },
             maxZoom: 17,
@@ -590,6 +601,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           map.once("idle", () => {
             map.triggerRepaint();
           });
+        } catch {
+          /* never leak camera errors into the Research card */
         }
       },
     }));
