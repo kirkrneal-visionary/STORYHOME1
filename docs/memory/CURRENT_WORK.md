@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Navigation waves stay on test links — not live. Founder confirmed Wave 1 taps GOOD on a real phone 2026-09-15. Next: Wave 2 (tabs + light top name). See `docs/memory/NAV-WAVES.md`.
+- Navigation waves stay on test links — not live. Founder confirmed Wave 1 taps and Wave 2 tabs/light header GOOD on a real phone 2026-09-15. Next: Wave 3 (bottom bubble, no shadow). See `docs/memory/NAV-WAVES.md`.
 
 ## Just shipped (do not rewind)
 
@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Verify Wave 2 on the Wave 2 test link (gold tab matches the page; top name stays the light fade).
+1. Verify Wave 3 on the Wave 3 test link (soft bottom bubble, no shadow, no outline).
 2. Do not rename the `verify` job — that would drop the merge lock.
