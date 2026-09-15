@@ -9,7 +9,7 @@ GitHub Actions:
 | Workflow | When | Required to merge? |
 |---|---|---|
 | `.github/workflows/cad-refresh.yml` | Daily CAD refresh | No (ops, not PR) |
-| `.github/workflows/verify-project-memory.yml` | Push / PR (added this task) | **No** — added as a check that *runs*. Branch protection was not observed. A file is not a release gate. |
+| `.github/workflows/verify-project-memory.yml` | Push / PR | **Yes on main** — required check name is `verify`. Do not rename the job. Vercel is not required. |
 
 Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain `storyhome-1` failing is ignored (`AGENTS.md`).
 

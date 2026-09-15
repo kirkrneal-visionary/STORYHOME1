@@ -1,6 +1,6 @@
 # Isolated contract checks. Does not use production secrets.
 # GitHub check run name: verify
-# This workflow RUNS on push/PR. Merge-blocking only if main requires "verify".
+# Required on main (confirmed 2026-09-15). Do not rename the job.
 name: Project memory checks
 
 on:

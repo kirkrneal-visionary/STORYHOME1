@@ -14,6 +14,7 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-15 | Farm photos use existing `shi-studies` paths, no new SQL column | Avoid a founder SQL paste; old farms stay Photo pending | PR 192 |
 | 2026-09-15 | Failed map snap must not delete the study; hide LngLat text; Save does not jump to Vault | Founder: red lines, empty Vault, Save and Open are separate | PR 193 |
 | Standing | No billing provider | Not built | rundown / constitution |
+| 2026-09-15 | Main merge requires GitHub check `verify` | Lock memory/workflow contracts so Merge cannot skip them | Founder lock-in after PR 194 |
 | Standing | Corridors finished inside Research Access | Do not rebuild | Founder directive in this charter |
 
 If a new change alters one of these, add a row and update the workflow contract.
