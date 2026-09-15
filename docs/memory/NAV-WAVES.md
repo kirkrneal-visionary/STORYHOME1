@@ -54,6 +54,12 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Header stays the light overlay. No solid black band.
 - Before/after visuals required.
 
+## Wave 4 — Marketplace canvas (`cursor/market-canvas-6752`)
+
+- One dark page behind search/filters and the list. Same `--env-0` as the site canvas.
+- Do not restyle card interiors, inputs, gold/navy, or the map.
+- Do not start integrated card edges (Wave 5) or video-glass on the dock (Wave 6).
+
 ## After each wave
 
 Update `CURRENT_WORK.md` and `workflows/navigation.md`. Do not weaken a failing test to go green.
