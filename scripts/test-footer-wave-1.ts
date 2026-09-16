@@ -1,5 +1,5 @@
 /**
- * Footer Wave 1 — room above the dock + fade. Same words and columns.
+ * Footer Wave 1 — room above the dock + fade. Clearance and fade stay.
  * Isolated. No browser. No production data.
  * Run: node --experimental-strip-types scripts/test-footer-wave-1.ts
  */
@@ -15,14 +15,10 @@ assert.match(footer, /story-site-footer/);
 assert.match(footer, /bg-\[var\(--background\)\]/);
 assert.doesNotMatch(footer, /story-site-footer[^>]*border-t/);
 assert.doesNotMatch(footer, /bg-\[var\(--nav-surface\)\]/);
-assert.match(footer, /grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4/);
-assert.match(footer, /Company/);
-assert.match(footer, /Buyers & Sellers/);
-assert.match(footer, /For Professionals/);
 assert.match(footer, /\[Pending\]/);
 assert.match(footer, /blank form — placeholder/);
 assert.match(footer, /Equal Housing/);
-assert.match(footer, /Information About Brokerage Services/);
+assert.match(footer, /TREC Information About Brokerage Services|Information About Brokerage Services/);
 assert.match(footer, /TREC Consumer Protection Notice/);
 
 const css = read("src/app/globals.css");

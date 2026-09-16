@@ -929,6 +929,18 @@ html[data-role="professional"] {
   );
 }
 
+/* Footer Wave 2 — compact row. TREC stays 16px and in the open. Not the header. */
+.story-footer-trec {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  font-size: 1rem;
+  line-height: 1.375rem;
+}
+.story-footer-explore {
+  background: var(--env-1);
+}
+
 /*
  * Overlay top chrome — Instagram-class: floats above the world,
  * content may extend underneath. Not a reserved website header band.
