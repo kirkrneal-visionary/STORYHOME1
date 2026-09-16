@@ -905,6 +905,31 @@ html[data-role="professional"] {
 }
 
 /*
+ * Footer Wave 1 — same dark wall, fade into the page, room above the dock.
+ * Same words and columns. Not the header. Not the dock.
+ */
+.story-site-footer {
+  position: relative;
+  border-top: none;
+  background: var(--background);
+  padding-bottom: calc(3rem + var(--story-bottom-clearance));
+}
+.story-site-footer::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--background) 100%
+  );
+}
+
+/*
  * Overlay top chrome — Instagram-class: floats above the world,
  * content may extend underneath. Not a reserved website header band.
  */
