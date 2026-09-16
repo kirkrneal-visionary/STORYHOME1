@@ -23,6 +23,13 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { getSource, listSources } from "./cad-sources.mjs";
 import {
+  isUnderFetched,
+  nextCheckpointOffset,
+  resumeOffset,
+  shouldMarkAbsences,
+  shouldPromoteLastSuccess,
+} from "./cad-refresh-policy.mjs";
+import {
   categorizeProperty,
   extractMhFields,
   looksLikeMobileHome,
@@ -47,7 +54,8 @@ function parseArgs(argv) {
       a.emitSql = v;
       a.emitSqlExplicit = true;
       i++;
-    } else if (k === "--no-live") a.noLive = true;
+    }     else if (k === "--no-live") a.noLive = true;
+    else if (k === "--fresh") a.fresh = true;
     else if (k === "--limit") (a.limit = Number(v)), i++;
     else if (k === "--list") a.list = true;
   }
@@ -982,20 +990,34 @@ async function countDbParcels(source) {
   return count ?? 0;
 }
 
-function isUnderFetched(uniqueCount, priorDbCount) {
-  if (priorDbCount == null || priorDbCount < 500) return false;
-  if (uniqueCount == null) return false;
-  return uniqueCount < priorDbCount * 0.85;
-}
-
 async function fetchPriorStatus(source) {
   const sb = await getSupabase();
-  if (!sb) return { dbParcelCount: null, lastSuccessAt: null };
-  const { data } = await sb
+  if (!sb) {
+    return { dbParcelCount: null, lastSuccessAt: null, checkpointOffset: 0 };
+  }
+  const { data, error } = await sb
     .from("cad_county_status")
-    .select("db_parcel_count, parcel_count, last_success_at")
+    .select(
+      "db_parcel_count, parcel_count, last_success_at, ingest_checkpoint_offset",
+    )
     .eq("source", source)
     .maybeSingle();
+  if (error && /ingest_checkpoint_offset/i.test(error.message || "")) {
+    const { data: legacy } = await sb
+      .from("cad_county_status")
+      .select("db_parcel_count, parcel_count, last_success_at")
+      .eq("source", source)
+      .maybeSingle();
+    const dbN =
+      legacy?.db_parcel_count == null ? null : Number(legacy.db_parcel_count);
+    const parcelN =
+      legacy?.parcel_count == null ? null : Number(legacy.parcel_count);
+    return {
+      dbParcelCount: dbN != null ? dbN : parcelN,
+      lastSuccessAt: legacy?.last_success_at ?? null,
+      checkpointOffset: 0,
+    };
+  }
   const dbN =
     data?.db_parcel_count == null ? null : Number(data.db_parcel_count);
   const parcelN =
@@ -1003,7 +1025,30 @@ async function fetchPriorStatus(source) {
   return {
     dbParcelCount: dbN != null ? dbN : parcelN,
     lastSuccessAt: data?.last_success_at ?? null,
+    checkpointOffset: resumeOffset(data?.ingest_checkpoint_offset, false),
   };
+}
+
+async function writeCheckpoint(source, offset) {
+  const sb = await getSupabase();
+  if (!sb) return;
+  const now = new Date().toISOString();
+  const { error } = await sb
+    .from("cad_county_status")
+    .update({
+      ingest_checkpoint_offset: offset,
+      ingest_checkpoint_at: now,
+      last_attempt_at: now,
+      updated_at: now,
+    })
+    .eq("source", source);
+  if (error && /ingest_checkpoint/i.test(error.message || "")) {
+    console.warn(
+      `[${source}] checkpoint column missing — apply 0055 later; page upserts still commit`,
+    );
+  } else if (error) {
+    console.warn(`[${source}] checkpoint write skipped: ${error.message}`);
+  }
 }
 
 async function recordStatus(
@@ -1017,6 +1062,7 @@ async function recordStatus(
     absenceCapHit,
     ingestCapped,
     underFetched,
+    incomplete,
   },
 ) {
   const sb = await getSupabase();
@@ -1029,7 +1075,12 @@ async function recordStatus(
     (r) => `${r.source}::${r.prop_id}`,
   );
   const unique = uniqueCount != null ? uniqueCount : deduped.length;
-  const proven = Boolean(ok) && !ingestCapped && !underFetched;
+  const proven = shouldPromoteLastSuccess({
+    ok,
+    ingestCapped,
+    underFetched,
+    incomplete,
+  });
   const payload = {
     source: src.source,
     county_fips: src.countyFips,
@@ -1044,6 +1095,8 @@ async function recordStatus(
               ? "Ingest capped — last verified dataset remains in use"
               : underFetched
                 ? "Under-fetched vs last verified count — last verified dataset remains in use"
+                : incomplete
+                  ? "Incomplete page run — last verified dataset remains in use"
                 : "unknown"),
         ),
     source_url: src.serviceUrl || src.downloadUrl || null,
@@ -1066,6 +1119,8 @@ async function recordStatus(
     if (dbN != null) payload.db_parcel_count = dbN;
     payload.absence_cap_hit = Boolean(absenceCapHit);
     payload.ingest_capped = false;
+    payload.ingest_checkpoint_offset = null;
+    payload.ingest_checkpoint_at = null;
   } else {
     // Failed / partial / under-fetched: never promote last_success_at.
     payload.ingest_capped = Boolean(ingestCapped || underFetched);
@@ -1078,11 +1133,17 @@ async function recordStatus(
     .upsert(payload, { onConflict: "source" });
   if (e) {
     // Soft-fail when migration 0031 columns are missing — retry core fields.
-    if (/db_parcel_count|absence_cap_hit|ingest_capped/i.test(e.message || "")) {
+    if (
+      /db_parcel_count|absence_cap_hit|ingest_capped|ingest_checkpoint/i.test(
+        e.message || "",
+      )
+    ) {
       const legacy = { ...payload };
       delete legacy.db_parcel_count;
       delete legacy.absence_cap_hit;
       delete legacy.ingest_capped;
+      delete legacy.ingest_checkpoint_offset;
+      delete legacy.ingest_checkpoint_at;
       const { error: e2 } = await sb
         .from("cad_county_status")
         .upsert(legacy, { onConflict: "source" });
@@ -1119,6 +1180,67 @@ async function fetchArcgisRows(src, where, limit) {
     );
   }
   return rows;
+}
+
+/**
+ * Fetch one ArcGIS page, upsert it, checkpoint the offset.
+ * Timeout mid-county keeps last-known-good and can resume later.
+ */
+async function fetchAndUpsertArcgisPages(src, where, opts = {}) {
+  const pageSize = src.pageSize || 2000;
+  let offset = resumeOffset(opts.checkpointOffset, opts.fresh);
+  const resumed = offset > 0;
+  const rows = [];
+  const seen = new Set();
+  let ingestCapped = false;
+  const limit = opts.limit ?? null;
+  const t0 = Date.now();
+
+  if (resumed) {
+    console.log(`[${src.source}] resume ArcGIS offset=${offset}`);
+  }
+
+  for (;;) {
+    const json = await queryArcgis(src.serviceUrl, where, offset, pageSize);
+    const feats = json.features ?? [];
+    const pageRows = [];
+    for (const f of feats) {
+      const row = mapFeature(f, src);
+      if (!row) continue;
+      pageRows.push(row);
+      const id = normalizePropId(row.prop_id);
+      if (id) seen.add(id);
+      if (limit && rows.length + pageRows.length >= limit) {
+        ingestCapped = true;
+        break;
+      }
+    }
+    rows.push(...pageRows);
+
+    if (!opts.noLive && pageRows.length) {
+      await upsertLive(pageRows, { markAbsent: false });
+    }
+
+    offset = nextCheckpointOffset(offset, feats.length);
+    await writeCheckpoint(src.source, offset);
+    const rate = Math.round((rows.length / Math.max(1, Date.now() - t0)) * 1000);
+    console.log(
+      `[${src.source}] page upsert ${rows.length} this run · ${rate}/s · offset=${offset}`,
+    );
+
+    if (ingestCapped) break;
+    if (!json.exceededTransferLimit || feats.length === 0) break;
+  }
+
+  return {
+    rows,
+    uniqueCount: seen.size,
+    seen,
+    ingestCapped,
+    resumed,
+    incomplete: Boolean(ingestCapped),
+    pagesFinished: !ingestCapped,
+  };
 }
 
 async function fetchFileRows(src, args) {
@@ -1162,7 +1284,11 @@ async function main() {
 
   const rowBudget = softIngestLimit(args.limit);
   let ingestCapped = false;
+  let incomplete = false;
+  let resumed = false;
+  let paged = null;
   let rows = [];
+  const prior = await fetchPriorStatus(src.source);
   try {
     if (src.mode === "arcgis") {
       if (!src.serviceUrl) throw new Error("Missing serviceUrl");
@@ -1173,8 +1299,27 @@ async function main() {
           `[${src.source}] soft ingest budget ${rowBudget} rows (CAD_MAX_INGEST_ROWS / --limit)`,
         );
       }
-      rows = await fetchArcgisRows(src, where, rowBudget);
-      if (rowBudget != null && rows.length >= rowBudget) ingestCapped = true;
+      const pageFullCounty =
+        Boolean(args.all) &&
+        !args.where &&
+        !args.propIds &&
+        !args.num &&
+        !args.street;
+      if (pageFullCounty) {
+        paged = await fetchAndUpsertArcgisPages(src, where, {
+          checkpointOffset: prior.checkpointOffset,
+          limit: rowBudget,
+          noLive: args.noLive,
+          fresh: args.fresh,
+        });
+        rows = paged.rows;
+        ingestCapped = paged.ingestCapped;
+        incomplete = paged.incomplete;
+        resumed = paged.resumed;
+      } else {
+        rows = await fetchArcgisRows(src, where, rowBudget);
+        if (rowBudget != null && rows.length >= rowBudget) ingestCapped = true;
+      }
     } else if (src.mode === "file") {
       const fileArgs =
         rowBudget != null ? { ...args, limit: rowBudget } : args;
@@ -1221,17 +1366,21 @@ async function main() {
       );
     }
 
-    const prior = await fetchPriorStatus(src.source);
-    const uniquePreview = dedupeByKey(
-      rows
-        .map((r) => ({ ...r, prop_id: normalizePropId(r.prop_id) }))
-        .filter((r) => r.prop_id),
-      (r) => `${r.source}::${r.prop_id}`,
-    ).length;
-    const underFetched = isUnderFetched(uniquePreview, prior.dbParcelCount);
+    const uniquePreview = paged
+      ? paged.uniqueCount
+      : dedupeByKey(
+          rows
+            .map((r) => ({ ...r, prop_id: normalizePropId(r.prop_id) }))
+            .filter((r) => r.prop_id),
+          (r) => `${r.source}::${r.prop_id}`,
+        ).length;
+    const gateCount = resumed
+      ? ((await countDbParcels(src.source)) ?? uniquePreview)
+      : uniquePreview;
+    const underFetched = isUnderFetched(gateCount, prior.dbParcelCount);
     if (underFetched) {
       console.warn(
-        `[${src.source}] UNDER-FETCHED unique ${uniquePreview} vs last verified ${prior.dbParcelCount} — skip absences, do not promote last-known-good`,
+        `[${src.source}] UNDER-FETCHED unique ${gateCount} vs last verified ${prior.dbParcelCount} — skip absences, do not promote last-known-good`,
       );
     }
 
@@ -1240,28 +1389,57 @@ async function main() {
       dbParcelCount: null,
       absenceCapHit: false,
     };
+    // Cap / targeted / under-fetched pulls must not mark absence —
+    // shouldMarkAbsences requires !ingestCapped and !underFetched.
+    const markAbsent = shouldMarkAbsences({
+      all: args.all,
+      ingestCapped,
+      underFetched,
+      limit: args.limit,
+      where: args.where,
+      propIds: args.propIds,
+      incomplete,
+      resumed,
+    });
     if (!args.noLive) {
       try {
-        // Cap / targeted / under-fetched pulls must not mark absence —
-        // would false-flag DISAPPEARED on a partial source observation.
-        const markAbsent =
-          Boolean(args.all) &&
-          !ingestCapped &&
-          !underFetched &&
-          !args.limit &&
-          !args.where &&
-          !args.propIds;
-        const live = await upsertLive(rows, { markAbsent });
-        liveStats = {
-          uniqueCount: live.uniqueCount ?? uniquePreview,
-          dbParcelCount: live.dbParcelCount,
-          absenceCapHit: live.absenceCapHit,
-        };
-        console.log(
-          live.ok
-            ? `[${src.source}] live upsert OK (unique ${live.uniqueCount} · db ${live.dbParcelCount ?? "?"} · mapped ${rows.length})`
-            : `[${src.source}] no service-role creds; skipped live upsert`,
-        );
+        if (paged) {
+          if (markAbsent && paged.seen?.size) {
+            const sb = await getSupabase();
+            if (sb) {
+              const abs = await markAbsencesForFullPull(
+                sb,
+                src.source,
+                paged.seen,
+                new Date().toISOString(),
+              );
+              liveStats.absenceCapHit = Boolean(abs.capHit);
+              if (abs.marked) {
+                console.log(
+                  `[${src.source}] marked ${abs.marked} parcels absent${
+                    abs.capHit ? " · ABSENCE CAP HIT" : ""
+                  }`,
+                );
+              }
+            }
+          }
+          liveStats.dbParcelCount = await countDbParcels(src.source);
+          console.log(
+            `[${src.source}] live page upsert OK (unique this run ${liveStats.uniqueCount} · db ${liveStats.dbParcelCount ?? "?"} · mapped ${rows.length})`,
+          );
+        } else {
+          const live = await upsertLive(rows, { markAbsent });
+          liveStats = {
+            uniqueCount: live.uniqueCount ?? uniquePreview,
+            dbParcelCount: live.dbParcelCount,
+            absenceCapHit: live.absenceCapHit,
+          };
+          console.log(
+            live.ok
+              ? `[${src.source}] live upsert OK (unique ${live.uniqueCount} · db ${live.dbParcelCount ?? "?"} · mapped ${rows.length})`
+              : `[${src.source}] no service-role creds; skipped live upsert`,
+          );
+        }
       } catch (e) {
         console.error(`[cad-ops] ${src.source} live upsert failed: ${e.message}`);
         await recordStatus(src, {
@@ -1270,6 +1448,7 @@ async function main() {
           rows,
           ingestCapped,
           underFetched,
+          incomplete: true,
         });
         process.exitCode = 1;
         return;
@@ -1284,6 +1463,7 @@ async function main() {
       absenceCapHit: liveStats.absenceCapHit,
       ingestCapped,
       underFetched,
+      incomplete,
     });
   } catch (e) {
     console.error(`[cad-ops] ${src.source} FAILED: ${e.message}`);
@@ -1292,6 +1472,7 @@ async function main() {
       error: e.message,
       rows,
       ingestCapped,
+      incomplete: true,
     });
     process.exitCode = 1;
   }

@@ -1,11 +1,11 @@
 # Current work
 
 **Recorded:** 2026-09-16  
-**Base:** Wave 3 `cursor/wave-3-analyze-6752`
+**Base:** Wave 4 `cursor/wave-4-suites-6752`
 
 ## In progress
 
-- Pre-launch Wave 4: Suites on the account (this branch). Confirm import. Never auto-assign this-phone albums to the next login.
+- Pre-launch Wave 5: county refresh reliability (this branch). Page upsert. Last-known-good stays. Montgomery stays off the daily list.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)
@@ -37,5 +37,6 @@
 
 ## Next concrete action
 
-1. Wave 4 needs additive SQL `0054` on the live project before account albums persist. Do not auto-assign local albums.
+1. Do not paste Wave 4 or Wave 5 SQL until the waves are done and you want live account/CAD extras.
 2. Do not rename the `verify` job — that would drop the merge lock.
+3. Do not add Montgomery to the daily CAD keys.

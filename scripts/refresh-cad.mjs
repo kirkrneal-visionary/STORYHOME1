@@ -25,6 +25,7 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { LAUNCH_COUNTY_KEYS, getSource } from "./cad-sources.mjs";
+import { refreshJobOutcome } from "./cad-refresh-policy.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -218,15 +219,21 @@ async function main() {
       r.action !== "skip_fresh" &&
       r.action !== "blocked_force",
   );
+  const outcome = refreshJobOutcome(results);
   console.log(
-    `[refresh] done. ${results.length} checked · ${ok.length} ingested · ${skipped.length} skipped(fresh) · ${blocked.length} blocked(force) · ${failed.length} failed.`,
+    `[refresh] done. ${results.length} checked · ${ok.length} ingested · ${skipped.length} skipped(fresh) · ${blocked.length} blocked(force) · ${failed.length} failed · ${outcome.kind}.`,
   );
   if (failed.length) {
-    console.error(
-      `[refresh] failed counties: ${failed.map((f) => f.key).join(", ")}`,
+    console.warn(
+      `[refresh] failed counties (others kept running): ${failed.map((f) => f.key).join(", ")}`,
     );
-    process.exitCode = 1;
   }
+  if (outcome.kind === "partial") {
+    console.warn(
+      "[refresh] PARTIAL — last-known-good stays on failed counties; job is not a wipe.",
+    );
+  }
+  process.exitCode = outcome.exitCode;
 }
 
 main().catch((e) => {
