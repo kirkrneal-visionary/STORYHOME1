@@ -1,11 +1,11 @@
 # Current work
 
 **Recorded:** 2026-09-16  
-**Base:** Wave 4 `cursor/wave-4-suites-6752`
+**Base:** Wave 5 `cursor/wave-5-cad-6752`
 
 ## In progress
 
-- Pre-launch Wave 5: county refresh reliability (this branch). Page upsert. Last-known-good stays. Montgomery stays off the daily list.
+- Pre-launch Wave 6: isolated capacity. Simulate 20 → 100 → 1,000. Refuse live www / eqmg / live Supabase. No 10M or 100k claim.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)
@@ -37,6 +37,8 @@
 
 ## Next concrete action
 
-1. Do not paste Wave 4 or Wave 5 SQL until the waves are done and you want live account/CAD extras.
-2. Do not rename the `verify` job — that would drop the merge lock.
-3. Do not add Montgomery to the daily CAD keys.
+1. Do not paste Wave 4 or Wave 5 SQL until you want live account/CAD extras.
+2. Do not merge Waves 1–6 unless you say MERGE.
+3. Do not rename the `verify` job — that would drop the merge lock.
+4. Do not add Montgomery to the daily CAD keys.
+5. Do not fire a load test at www or eqmg.
