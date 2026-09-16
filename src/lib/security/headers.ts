@@ -1,4 +1,8 @@
-/** Production security headers. CSP lists services we actually use. */
+/**
+ * Production security headers. CSP lists services we actually use.
+ * Wave 5: do not drop `unsafe-inline` / `unsafe-eval` — Next, Mapbox, and
+ * auth still need them. Prove any tighter CSP in a preview first.
+ */
 
 export const STORY_SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",

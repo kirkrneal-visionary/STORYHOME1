@@ -5,9 +5,8 @@
 
 ## In progress
 
-- Harden Wave 4: bounded CAD APIs + SHI service-role table reads. `0057` is in the repo and **not pasted**. Tiles stay public.
-- Harden Wave 5 (next): delivery hygiene after Wave 4 is verified.
-- Harden Waves 1–3 stay stacked. Do not merge unless you say MERGE.
+- Harden Wave 5: Archie workspace is route-split; DevPass is out of the login bundle; source maps stay off and `.map` 404s. CSP left compatible with Mapbox/auth.
+- Harden Waves 1–4 stay stacked. `0056` / `0057` are repo-only until pasted.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)

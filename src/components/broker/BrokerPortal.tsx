@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentType } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -21,7 +22,13 @@ import { MyBuyersView } from "@/components/broker/MyBuyersView";
 import { MySellersView } from "@/components/broker/MySellersView";
 import { SharedHomesView } from "@/components/broker/SharedHomesView";
 import { CommunityView } from "@/components/broker/CommunityView";
-import { ShiWorkspace } from "@/components/broker/intelligence/ShiWorkspace";
+const ShiWorkspace = dynamic(
+  () =>
+    import("@/components/broker/intelligence/ShiWorkspace").then((m) => ({
+      default: m.ShiWorkspace,
+    })),
+  { ssr: false },
+);
 import { track, type PortalTabProp } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
