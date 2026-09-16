@@ -75,6 +75,7 @@
     "scripts/test-map-dock-clear.ts",
     "scripts/test-home-footer.ts",
     "scripts/test-footer-wave-1.ts",
+    "scripts/test-footer-wave-2.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }
