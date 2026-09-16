@@ -126,4 +126,10 @@ assert.match(fixture, /ksvllgzsnzyahqsjuove/);
 assert.match(fixture, /agent_id = auth\.uid\(\)/);
 assert.match(fixture, /is_broker_of/);
 
+const tsconfig = read("tsconfig.json");
+assert.match(tsconfig, /scripts\/test-wave-2-isolation\.ts/);
+assert.match(tsconfig, /scripts\/wave-2-isolation-harness\.ts/);
+assert.match(tsconfig, /scripts\/wave-2-guard\.ts/);
+assert.match(tsconfig, /scripts\/wave-2-rls-engine\.ts/);
+
 console.log("wave-2-isolation: ok");
