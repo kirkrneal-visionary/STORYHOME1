@@ -171,7 +171,7 @@ export default function Footer() {
           <span>Equal Housing Opportunity</span>
         </Link>
 
-        <div className="mt-5 flex flex-col gap-1">
+        <div className="story-copy mt-5 flex flex-col gap-1">
           <a
             href="/legal/trec-information-about-brokerage-services.pdf"
             target="_blank"
@@ -193,7 +193,7 @@ export default function Footer() {
           <p className="text-sm text-paper/65">TREC License #: {BROKER_LICENSE}</p>
         </div>
 
-        <div className="mt-8 space-y-1 text-xs text-paper/50">
+        <div className="story-copy mt-8 space-y-1 text-xs text-paper/50">
           <p>© 2026 Story Home. All rights reserved.</p>
           <p>{SERVICE_COUNTIES}</p>
           <p className="max-w-3xl">

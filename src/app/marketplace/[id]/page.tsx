@@ -74,7 +74,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
       </div>
 
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-7 md:grid-cols-[1fr_300px] md:gap-10 md:px-6 md:py-8">
-        <div>
+        <div className="story-copy">
           <p className="font-mono text-sm font-semibold text-gold">
             {formatUsd(listing.price)}
           </p>
@@ -111,7 +111,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--gold)_28%,var(--paper))] font-bold text-navy">
               {agent.initials}
             </div>
-            <div>
+            <div className="story-copy">
               <Link
                 href={`/agents/${agent.id}`}
                 className="font-semibold text-ink hover:underline"

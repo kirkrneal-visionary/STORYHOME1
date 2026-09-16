@@ -1339,3 +1339,43 @@ html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
   min-width: 0;
   overflow-x: hidden;
 }
+
+/*
+  Chrome integrity — UX only. Not a security control.
+  Application chrome should not highlight like a document.
+  Property facts stay copyable via .story-copy and form fields.
+*/
+.story-overlay-header,
+.story-bottom-dock,
+.story-glass-nav,
+.story-nav-hit,
+.story-press,
+.story-map-tool,
+.story-map-tool-muted,
+.story-living-brand,
+.story-market-toolbar,
+.story-footer-explore,
+.story-footer-housing,
+.story-sheet-handle,
+.maplibregl-ctrl,
+.maplibregl-ctrl-group,
+.maplibregl-ctrl button,
+[data-nav-hit] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.story-market-toolbar input,
+.story-market-toolbar textarea,
+.story-map-tool-input,
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.story-copy,
+.story-copy * {
+  -webkit-user-select: text;
+  user-select: text;
+}
