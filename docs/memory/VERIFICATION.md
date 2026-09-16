@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`, `test-dock-jump`
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 

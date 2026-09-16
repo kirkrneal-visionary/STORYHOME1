@@ -514,6 +514,19 @@ html[data-role="professional"] {
 .story-press:active {
   transform: scale(0.985);
 }
+/* Dock: never shrink the tab — that jumps the icon. */
+.story-bottom-dock .story-press {
+  transition: opacity var(--motion-micro) linear;
+}
+.story-bottom-dock .story-press:active {
+  transform: none;
+}
+.story-bottom-dock .story-nav-hit[data-nav-state="pending"] {
+  opacity: 1;
+}
+.story-bottom-dock [data-nav-pending-cue] {
+  display: none;
+}
 
 /* Wave 1 — full control is the hit target; do not navigate on touch-down */
 .story-nav-hit {
@@ -834,21 +847,15 @@ html[data-role="professional"] {
   border-radius: 999px;
   background: var(--dock-active-fill);
   box-shadow: inset 0 0 0 1px var(--dock-active-ring);
+  opacity: 0;
+  pointer-events: none;
+}
+.story-dock-active-fill-on {
+  opacity: 1;
 }
 @media (prefers-reduced-motion: no-preference) {
   .story-dock-active-fill {
-    animation: storyDockSelect var(--dock-motion) var(--motion-ease-standard)
-      both;
-  }
-}
-@keyframes storyDockSelect {
-  from {
-    opacity: 0.55;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+    transition: opacity var(--dock-motion) var(--motion-ease-standard);
   }
 }
 
