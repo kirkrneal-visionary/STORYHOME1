@@ -20,6 +20,7 @@ assert.match(css, /\.type-hero/);
 assert.match(css, /\.story-market-toolbar[\s\S]*?user-select:\s*none/);
 assert.match(css, /\.story-map-tool[\s\S]*?user-select:\s*none/);
 assert.match(css, /\.maplibregl-ctrl[\s\S]*?user-select:\s*none/);
+assert.match(css, /user-select:\s*none !important/);
 assert.match(css, /\.story-copy[\s\S]*?user-select:\s*text/);
 assert.match(css, /\.story-market-toolbar input[\s\S]*?user-select:\s*text/);
 assert.doesNotMatch(css, /right-click|contextmenu|devtools|oncontextmenu/i);

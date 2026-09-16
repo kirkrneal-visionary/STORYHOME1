@@ -1370,8 +1370,9 @@ html[data-research-live][data-workspace-layout="sheet"] .story-bottom-dock {
 .maplibregl-ctrl-group,
 .maplibregl-ctrl button,
 [data-nav-hit] {
-  -webkit-user-select: none;
-  user-select: none;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none;
 }
 
 .story-market-toolbar input,
