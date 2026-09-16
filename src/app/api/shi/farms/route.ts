@@ -42,6 +42,8 @@ export async function POST(request: Request) {
     mapCenterLng?: number | null;
     mapZoom?: number | null;
     thumbnailDataUrl?: string | null;
+    claimedCounty?: string | null;
+    claimedFingerprint?: string | null;
   };
   try {
     body = await request.json();
@@ -58,6 +60,8 @@ export async function POST(request: Request) {
       mapCenterLng: body.mapCenterLng,
       mapZoom: body.mapZoom,
       thumbnailDataUrl: body.thumbnailDataUrl,
+      claimedCounty: body.claimedCounty,
+      claimedFingerprint: body.claimedFingerprint,
     });
     return NextResponse.json({ farm }, { status: 201 });
   } catch (e) {

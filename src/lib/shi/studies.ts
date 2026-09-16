@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DrawnBoundary } from "@/lib/geo";
 import { analyzeArea } from "@/lib/shi/area";
+import { claimedContextMatches } from "@/lib/shi/analyze-context";
 import { makeShiAcronym } from "@/lib/shi/acronym";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
@@ -367,6 +368,8 @@ export async function saveMarketFrame(
     thumbnailDataUrl?: string | null;
     frameId?: string;
     researchMode?: string;
+    claimedCounty?: string | null;
+    claimedFingerprint?: string | null;
   },
 ): Promise<ShiSavedFrame> {
   const name = opts.name.trim();
@@ -383,6 +386,15 @@ export async function saveMarketFrame(
     .maybeSingle();
   if (folderErr) throw new Error(formatShiVaultError(folderErr));
   if (!folder) throw new Error("Folder not found");
+
+  const folderCounty = folder.county_source as string;
+  const claimed = claimedContextMatches({
+    countySource: folderCounty,
+    boundary: opts.boundary,
+    claimedCounty: opts.claimedCounty ?? folderCounty,
+    claimedFingerprint: opts.claimedFingerprint,
+  });
+  if (!claimed.ok) throw new Error(claimed.error);
 
   // Always recompute on the server for the folder's county — never trust browser metrics.
   const analysis = await analyzeArea(supabase, {

@@ -47,6 +47,8 @@ export const WORKSPACE_COPY = {
   idleTitle: "Search or tap a parcel",
   idleBody: "Search an address or tap a parcel on the map.",
   frameReady: "Area drawn",
+  analyzePending: "Analyzing…",
+  analyzeStale: "Draw or Analyze this frame",
   analyzeCta: "Analyze this area",
   expandMap: "Expand map",
   exitMap: "Exit map",

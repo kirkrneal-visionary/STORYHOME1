@@ -35,6 +35,14 @@ import {
 import type { DrawnBoundary } from "@/lib/geo";
 import { track } from "@/lib/analytics";
 import { makeShiAcronym } from "@/lib/shi/acronym";
+import {
+  analysisForDisplay,
+  attachAnalyzeContext,
+  boundaryFingerprint,
+  canSaveCurrentAnalysis,
+  nextAnalyzeGeneration,
+  shouldApplyAnalysis,
+} from "@/lib/shi/analyze-context";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import { nextFrameColor } from "@/lib/shi/frame-colors";
@@ -256,6 +264,8 @@ export function PropertyIntelligenceView({
   const [analysis, setAnalysis] = useState<ShiAreaAnalysis | null>(null);
   const [areaError, setAreaError] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const analyzeGenRef = useRef(0);
+  const [analyzeGen, setAnalyzeGen] = useState(0);
   const [folders, setFolders] = useState<ShiStudyFolder[]>([]);
   const [saving, setSaving] = useState(false);
   const [freshness, setFreshness] = useState<ShiCountyFreshness[]>([]);
@@ -711,15 +721,29 @@ export function PropertyIntelligenceView({
       setSource(frameCounty);
       void refreshFolders(frameCounty);
     }
+    const requestId = analyzeGenRef.current;
+    const resultFingerprint = boundaryFingerprint(active.boundary, frameCounty);
     setAnalyzing(true);
     setAreaError("");
     setWorthALook(null);
     setLookCandidates([]);
     try {
-      const result = await shiAnalyzeArea({
+      const raw = await shiAnalyzeArea({
         boundary: active.boundary,
         source: frameCounty,
       });
+      const result = attachAnalyzeContext(raw, {
+        requestId,
+        countySource: frameCounty,
+        boundary: active.boundary,
+      });
+      const stillCurrent = shouldApplyAnalysis({
+        currentId: analyzeGenRef.current,
+        resultId: requestId,
+        currentFingerprint: resultFingerprint,
+        resultFingerprint,
+      });
+      if (!stillCurrent) return;
       setAnalysis(result);
       setFrames((prev) =>
         prev.map((f) =>
@@ -747,6 +771,7 @@ export function PropertyIntelligenceView({
             })),
             objective: lookObjectiveRef.current,
           });
+          if (analyzeGenRef.current !== requestId) return;
           setLookCandidates(look.candidates ?? []);
           setWorthALook(
             look.candidates?.length
@@ -756,19 +781,21 @@ export function PropertyIntelligenceView({
               : look.worthALook,
           );
         } catch {
+          if (analyzeGenRef.current !== requestId) return;
           setWorthALook(null);
           setLookCandidates([]);
         } finally {
-          setWorthLoading(false);
+          if (analyzeGenRef.current === requestId) setWorthLoading(false);
         }
       }
     } catch (e) {
+      if (analyzeGenRef.current !== requestId) return;
       setAnalysis(null);
       setWorthALook(null);
       setLookCandidates([]);
       setAreaError(e instanceof Error ? e.message : "Area analysis failed");
     } finally {
-      setAnalyzing(false);
+      if (analyzeGenRef.current === requestId) setAnalyzing(false);
     }
   }
 
@@ -789,9 +816,16 @@ export function PropertyIntelligenceView({
   async function saveActiveAsFarm(name: string) {
     const active = frames.find((f) => f.localId === activeFrameId);
     if (!active) throw new Error("Select a market frame first");
-    if (!active.analysis) throw new Error("Analyze the frame before saving");
     const county = active.countySource || source;
     if (!county) throw new Error("Pick a county before saving a farm");
+    const fp = boundaryFingerprint(active.boundary, county);
+    const gate = canSaveCurrentAnalysis({
+      analyzing,
+      analysis: active.analysis ?? analysis,
+      currentFingerprint: fp,
+      currentCounty: county,
+    });
+    if (!gate.ok) throw new Error("Analyze this frame before saving");
     setSaving(true);
     setAreaError("");
     try {
@@ -827,6 +861,8 @@ export function PropertyIntelligenceView({
         mapCenterLng: view?.centerLng,
         mapZoom: view?.zoom,
         thumbnailDataUrl: thumb,
+        claimedCounty: county,
+        claimedFingerprint: fp,
       });
       track("farm_created", { source_surface: "research" });
     } finally {
@@ -837,7 +873,16 @@ export function PropertyIntelligenceView({
   async function saveActiveFrame(name: string, folderId: string) {
     const active = frames.find((f) => f.localId === activeFrameId);
     if (!active) throw new Error("Select a market frame first");
-    if (!active.analysis) throw new Error("Analyze the frame before saving");
+    const folder = folders.find((f) => f.id === folderId);
+    const county = folder?.countySource || active.countySource || source;
+    const fp = boundaryFingerprint(active.boundary, county);
+    const gate = canSaveCurrentAnalysis({
+      analyzing,
+      analysis: active.analysis ?? analysis,
+      currentFingerprint: fp,
+      currentCounty: county,
+    });
+    if (!gate.ok) throw new Error("Analyze this frame before saving");
     setSaving(true);
     setAreaError("");
     try {
@@ -868,13 +913,15 @@ export function PropertyIntelligenceView({
         name,
         color: active.color,
         boundary: active.boundary,
-        analysis: active.analysis,
+        analysis: active.analysis ?? undefined,
         mapCenterLat: view?.centerLat,
         mapCenterLng: view?.centerLng,
         mapZoom: view?.zoom,
         thumbnailDataUrl: thumb,
         frameId: active.savedId,
         researchMode,
+        claimedCounty: county,
+        claimedFingerprint: fp,
       });
       track("study_saved", { source_surface: "research" });
       const savedCounty =
@@ -900,9 +947,15 @@ export function PropertyIntelligenceView({
         ),
       );
       if (saved.snapshot?.metrics) {
+        const savedCountySource = savedCounty || county;
         setAnalysis({
           ...(saved.snapshot.metrics as ShiAreaAnalysis),
           parcels: saved.snapshot.metrics.parcels ?? [],
+          countySource: savedCountySource,
+          boundaryFingerprint: boundaryFingerprint(
+            active.boundary,
+            savedCountySource,
+          ),
         });
       }
       await refreshFolders(savedCounty || source);
@@ -948,6 +1001,11 @@ export function PropertyIntelligenceView({
             ? ({
                 ...frame.snapshot.metrics,
                 parcels: frame.snapshot.metrics.parcels ?? [],
+                countySource: countyFromSnap || source,
+                boundaryFingerprint: boundaryFingerprint(
+                  frame.boundary,
+                  countyFromSnap || source,
+                ),
               } as ShiAreaAnalysis)
             : null,
       };
@@ -962,9 +1020,12 @@ export function PropertyIntelligenceView({
       Boolean(frame.snapshot?.metrics) &&
       (!isFarmHandoffId(frame.id) || farmHandoffHasLiveParcels(frame));
     if (useSnap && frame.snapshot?.metrics) {
+      const snapCounty = countyFromSnap || source;
       setAnalysis({
         ...(frame.snapshot.metrics as ShiAreaAnalysis),
         parcels: frame.snapshot.metrics.parcels ?? [],
+        countySource: snapCounty,
+        boundaryFingerprint: boundaryFingerprint(frame.boundary, snapCounty),
       });
     }
     mapRef.current?.fitBoundary(frame.boundary);
@@ -1154,6 +1215,29 @@ export function PropertyIntelligenceView({
     );
 
   const activeFrame = frames.find((f) => f.localId === activeFrameId) ?? null;
+  const analyzeCounty = activeFrame?.countySource || source;
+  const currentFingerprint = activeFrame
+    ? boundaryFingerprint(activeFrame.boundary, analyzeCounty)
+    : "";
+  const analyzeContextKey = `${activeFrameId ?? ""}:${currentFingerprint}`;
+
+  useEffect(() => {
+    const next = nextAnalyzeGeneration(analyzeGenRef.current);
+    analyzeGenRef.current = next;
+    setAnalyzeGen(next);
+  }, [analyzeContextKey]);
+
+  const displayAnalysis = analysisForDisplay({
+    analysis,
+    currentFingerprint,
+    currentCounty: analyzeCounty,
+  });
+  const saveGate = canSaveCurrentAnalysis({
+    analyzing,
+    analysis,
+    currentFingerprint,
+    currentCounty: analyzeCounty,
+  });
 
   const launchFips =
     selected?.countyFips ||
@@ -1456,7 +1540,7 @@ export function PropertyIntelligenceView({
   const sheetCtx = workspaceContext({
     hasProperty: Boolean(selected),
     hasFrame: Boolean(activeFrame?.boundary),
-    hasAnalysis: Boolean(analysis || mfReview || modeReview),
+    hasAnalysis: Boolean(displayAnalysis || mfReview || modeReview),
     askOpen: accessDeskTab === "ask" && Boolean(askAnswer),
   });
 
@@ -1599,8 +1683,8 @@ export function PropertyIntelligenceView({
                     `CAD #${selected?.propId}`
                   : sheetCtx === "analysis"
                     ? strongestNote ||
-                      (analysis
-                        ? `${analysis.parcelCount.toLocaleString("en-US")} parcels in this area`
+                      (displayAnalysis
+                        ? `${displayAnalysis.parcelCount.toLocaleString("en-US")} parcels in this area`
                         : "")
                     : sheetCtx === "frame"
                       ? activeFrame?.name ?? "Drawn area"
@@ -1727,13 +1811,17 @@ export function PropertyIntelligenceView({
           className="absolute inset-0 h-full w-full min-h-0"
         />
 
-      {activeFrame?.boundary && !analysis ? (
+      {activeFrame?.boundary && !displayAnalysis ? (
         <div
           data-workspace-frame-toast
           className="pointer-events-auto absolute top-[4.75rem] left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
         >
           <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
-            {WORKSPACE_COPY.frameReady}
+            {analyzing
+              ? WORKSPACE_COPY.analyzePending
+              : analysis
+                ? WORKSPACE_COPY.analyzeStale
+                : WORKSPACE_COPY.frameReady}
           </p>
           <p className="mt-0.5 text-[12px] text-ink">{activeFrame.name}</p>
           <button
@@ -1742,7 +1830,7 @@ export function PropertyIntelligenceView({
             disabled={analyzing}
             className="mt-2 inline-flex h-8 items-center rounded-lg bg-navy px-3 text-[11px] font-bold text-gold disabled:opacity-50"
           >
-            {analyzing ? "Analyzing…" : WORKSPACE_COPY.analyzeCta}
+            {analyzing ? WORKSPACE_COPY.analyzePending : WORKSPACE_COPY.analyzeCta}
           </button>
         </div>
       ) : null}
@@ -2068,7 +2156,7 @@ export function PropertyIntelligenceView({
 
               <ShiCadEvidencePanel
                 property={selected}
-                frameAnalysis={analysis}
+                frameAnalysis={displayAnalysis}
               />
 
               <div>
@@ -2244,8 +2332,9 @@ export function PropertyIntelligenceView({
           setAreaError("");
           if (f?.boundary) mapRef.current?.fitBoundary(f.boundary);
         }}
-        analysis={analysis}
+        analysis={displayAnalysis}
         analyzing={analyzing}
+        canSave={saveGate.ok}
         analyzeError={areaError}
         onAnalyze={() => void runAreaAnalyze()}
         worthALook={worthALook}

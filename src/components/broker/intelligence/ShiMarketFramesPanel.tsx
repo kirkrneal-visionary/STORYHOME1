@@ -37,6 +37,7 @@ type Props = {
   onSelectFrame: (id: string) => void;
   analysis: ShiAreaAnalysis | null;
   analyzing: boolean;
+  canSave?: boolean;
   analyzeError: string;
   onAnalyze: () => void;
   folders: ShiStudyFolder[];
@@ -74,6 +75,7 @@ export function ShiMarketFramesPanel({
   onSelectFrame,
   analysis,
   analyzing,
+  canSave = false,
   analyzeError,
   onAnalyze,
   folders,
@@ -187,7 +189,7 @@ export function ShiMarketFramesPanel({
                 setShowFarm(false);
                 setShowSave((v) => !v);
               }}
-              disabled={!active || !analysis || !frameCounty}
+              disabled={!active || !analysis || !frameCounty || !canSave}
               className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-navy px-3 text-xs font-bold text-navy disabled:opacity-50"
             >
               <Save className="h-3.5 w-3.5" />
@@ -202,7 +204,7 @@ export function ShiMarketFramesPanel({
                   setFarmName(active?.name || "");
                   setShowFarm((v) => !v);
                 }}
-                disabled={!active || !analysis || !frameCounty}
+                disabled={!active || !analysis || !frameCounty || !canSave}
                 className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-gold px-3 text-xs font-bold text-gold disabled:opacity-50"
               >
                 Save as Farm

@@ -139,6 +139,10 @@ export type ShiAreaAnalysis = {
   parcels: ShiAreaParcel[];
   /** Research Mode lens when this frame was saved. Older studies omit it. */
   researchMode?: string;
+  /** Client request generation. Late Analyze must not apply if this is stale. */
+  requestId?: number;
+  /** County + geometry key used to bind display/save to the current drawing. */
+  boundaryFingerprint?: string;
 };
 
 /** @deprecated use ShiAreaAnalysis */

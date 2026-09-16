@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DrawnBoundary } from "@/lib/geo";
 import { analyzeArea } from "@/lib/shi/area";
+import { claimedContextMatches } from "@/lib/shi/analyze-context";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import {
   diffFarmBaseline,
@@ -211,6 +212,8 @@ export type CreateFarmInput = {
   mapZoom?: number | null;
   /** Optional map snap. Farm still saves if the photo cannot be stored. */
   thumbnailDataUrl?: string | null;
+  claimedCounty?: string | null;
+  claimedFingerprint?: string | null;
 };
 
 export async function createFarm(
@@ -223,6 +226,13 @@ export async function createFarm(
   if (!name) throw new Error("Farm name is required");
   if (!countySource) throw new Error("County is required");
   if (!input.boundary) throw new Error("Farm boundary is required");
+  const claimed = claimedContextMatches({
+    countySource,
+    boundary: input.boundary,
+    claimedCounty: input.claimedCounty,
+    claimedFingerprint: input.claimedFingerprint,
+  });
+  if (!claimed.ok) throw new Error(claimed.error);
 
   const countyName =
     input.countyName?.trim() ||

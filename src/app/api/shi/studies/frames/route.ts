@@ -106,6 +106,8 @@ export async function POST(request: Request) {
     thumbnailDataUrl?: string | null;
     frameId?: string;
     researchMode?: string;
+    claimedCounty?: string | null;
+    claimedFingerprint?: string | null;
   };
   try {
     body = await request.json();
@@ -134,6 +136,8 @@ export async function POST(request: Request) {
       thumbnailDataUrl: body.thumbnailDataUrl,
       frameId: body.frameId,
       researchMode: body.researchMode,
+      claimedCounty: body.claimedCounty,
+      claimedFingerprint: body.claimedFingerprint,
     });
     return NextResponse.json({ frame });
   } catch (e) {
