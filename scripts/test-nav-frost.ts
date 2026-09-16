@@ -15,6 +15,11 @@ assert.match(css, /--dock-glass-bg:/);
 assert.match(css, /--dock-glass-blur:\s*32px/);
 assert.match(css, /--dock-glass-saturate:/);
 assert.match(css, /--dock-rim:/);
+assert.match(css, /--dock-plate:/);
+assert.match(
+  css,
+  /\.story-bottom-dock\.story-glass-nav::after\s*\{[\s\S]*?var\(--dock-plate\)/,
+);
 assert.match(
   css,
   /\.story-bottom-dock\.story-glass-nav\s*\{[\s\S]*?border:\s*none/,

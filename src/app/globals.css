@@ -42,9 +42,10 @@
     0 0 0 1px var(--glass-border);
 
   /* Wave 3 — bottom dock bubble only. Do not paint a header band. */
-  --dock-glass-bg: color-mix(in srgb, #0a0c10 46%, transparent);
+  --dock-glass-bg: color-mix(in srgb, #0c1016 72%, transparent);
   --dock-glass-blur: 32px;
   --dock-glass-saturate: 1.35;
+  --dock-plate: color-mix(in srgb, #161b24 52%, transparent);
   --dock-rim: rgba(247, 244, 236, 0.22);
   --dock-radius: 1.7rem;
   --dock-pad-x: 0.3rem;
@@ -770,7 +771,23 @@ html[data-role="professional"] {
     saturate(var(--dock-glass-saturate));
   padding-inline: var(--dock-pad-x);
 }
-/* Wave 6 — top-rim highlight only. Page shows through. Not the header. */
+/* Smoked plate — frost without relying on the map. Not the header. */
+.story-bottom-dock.story-glass-nav::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(247, 244, 236, 0.08) 0%,
+      transparent 38%
+    ),
+    var(--dock-plate);
+  z-index: 0;
+}
+/* Wave 6 — top-rim highlight only. Not the header. */
 .story-bottom-dock.story-glass-nav::before {
   content: "";
   pointer-events: none;
@@ -1032,7 +1049,8 @@ html[data-header-state="minimal"] .story-living-mark {
     border-bottom: none;
     box-shadow: none;
   }
-  .story-bottom-dock.story-glass-nav::before {
+  .story-bottom-dock.story-glass-nav::before,
+  .story-bottom-dock.story-glass-nav::after {
     content: none;
   }
 }
