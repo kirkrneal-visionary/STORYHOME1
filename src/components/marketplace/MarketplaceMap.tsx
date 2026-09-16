@@ -723,6 +723,7 @@ export function MarketplaceMap({
     <div
       data-marketplace-map
       data-no-swipe-back
+      data-map-expanded={expanded ? "" : undefined}
       className={cn(
         "relative isolate h-full min-h-[360px] w-full",
         expanded && "fixed inset-0 z-[1200] h-dvh",
@@ -858,8 +859,8 @@ export function MarketplaceMap({
         </button>
       )}
 
-      {/* Info / measure readout (bottom-left) */}
-      <div className="story-glass absolute bottom-3 left-3 z-[500] max-w-[260px] rounded-[var(--radius-md)] px-3 py-2 text-[11px] text-paper">
+      {/* Info / measure readout — lifted above the dock. Not on Suites/Search. */}
+      <div className="story-glass story-map-dock-hint absolute left-3 z-[500] max-w-[260px] rounded-[var(--radius-md)] px-3 py-2 text-[11px] text-paper">
         {tool === "measure" ? (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">

@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Dock tap jump: fade one navy oval. Do not rebuild it or shrink the icon.
+1. Marketplace map help card + +/− sit above the dock so they do not paint through Suites/Search.
 2. Do not rename the `verify` job — that would drop the merge lock.

@@ -77,6 +77,12 @@ Live target stays `storyhome-1-eqmg`. No SQL, RLS, billing, or account changes.
 - Do not restyle the header, cards, or map.
 - Founder **GOOD** on the Wave 6 eqmg preview 2026-09-15. Merged to live 2026-09-15 with Waves 1–5 (PRs 196–201).
 
+## Map chrome off the dock (`cursor/map-dock-clear-6752`)
+
+- Search map help card and MapLibre +/− sit above `--story-bottom-clearance`.
+- Map canvas stays under the pill. Do not pad or darken the map. Not the header.
+- Fullscreen map (`data-map-expanded`) keeps chrome at the bottom.
+
 ## After each wave
 
 Update `CURRENT_WORK.md` and `workflows/navigation.md`. Do not weaken a failing test to go green.

@@ -884,6 +884,27 @@ html[data-role="professional"] {
 }
 
 /*
+ * Marketplace map chrome sits above the dock.
+ * The map canvas stays under the pill (frost). Do not pad the map.
+ * Not the header. Do not darken the map.
+ */
+[data-marketplace-map] {
+  --map-dock-lift: var(--story-bottom-clearance);
+}
+[data-marketplace-map][data-map-expanded] {
+  --map-dock-lift: 0px;
+}
+[data-marketplace-map] .story-map-dock-hint {
+  bottom: calc(var(--map-dock-lift) + 0.75rem);
+}
+[data-marketplace-map] .maplibregl-ctrl-bottom-left,
+[data-marketplace-map] .maplibregl-ctrl-bottom-right,
+[data-marketplace-map] .mapboxgl-ctrl-bottom-left,
+[data-marketplace-map] .mapboxgl-ctrl-bottom-right {
+  bottom: calc(var(--map-dock-lift) + 0.5rem);
+}
+
+/*
  * Overlay top chrome — Instagram-class: floats above the world,
  * content may extend underneath. Not a reserved website header band.
  */
