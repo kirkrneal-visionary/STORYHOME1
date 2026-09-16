@@ -70,13 +70,13 @@ Connects a user action to what actually runs. Statements are tagged.
 
 | Data | Who reads | Who writes |
 |---|---|---|
-| `county_parcels` | Anyone (public record) | Service-role ingest only |
+| `county_parcels` | Service-role + bounded `/api/parcels/*` + `parcels_mvt` | Service-role ingest only |
 | `shi_farms` / studies / prospects | Owning agent | Owning agent |
 | `homes` / `home-docs` | Owner | Owner |
 | `suites` / `suite_items` | Owner. Share RPC: name + listing ids | Owner |
 | Archie HTTP (`/api/shi/*`) | Story Pro session | Story Pro session |
 
-**Assumption:** PostgREST on `county_parcels` remains world-readable by design. Archie HTTP is a separate Pro gate.
+**Assumption:** After `0057` is applied, PostgREST on `county_parcels` is service-role only. Map tiles stay public via `parcels_mvt`. Public search/lookup is `/api/parcels/search` and `/api/parcels/lookup` (capped). Archie HTTP is a separate Pro gate.
 
 ## Stale warning
 

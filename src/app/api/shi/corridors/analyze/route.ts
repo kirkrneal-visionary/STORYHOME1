@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { DrawnBoundary } from "@/lib/geo";
 import { composeCorridorAnalysis } from "@/lib/shi/corridor-analysis";
 import { isLaunchCorridorFips, resolveCorridorCounty } from "@/lib/shi/corridors";
-import { analyzeArea } from "@/lib/shi/area";
+import { analyzeArea, slimAreaForClient } from "@/lib/shi/area";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
 import { fetchTxdotProjectsNear } from "@/lib/shi/txdot-projects";
@@ -123,5 +123,13 @@ export async function POST(request: Request) {
     cadPulseNote,
   });
 
-  return NextResponse.json({ analysis: result });
+  return NextResponse.json({
+    analysis: {
+      ...result,
+      evidence: {
+        ...result.evidence,
+        area: slimAreaForClient(result.evidence.area),
+      },
+    },
+  });
 }

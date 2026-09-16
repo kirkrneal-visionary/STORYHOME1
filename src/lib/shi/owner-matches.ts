@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cadReader } from "@/lib/cad/service";
 import { txCountyNameByFips } from "@/lib/tx-counties";
 import type { ShiOwnerMatch, ShiOwnerMatchTier } from "@/lib/shi/types";
 
@@ -108,10 +109,11 @@ export async function findOwnerMatches(
 
   const matches: ShiOwnerMatch[] = [];
   const seen = new Set<string>([`${source}:${excludePropId}`]);
+  const sb = cadReader(supabase);
 
   // EXACT — CAD owner id (indexed).
   if (ownerId) {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from("county_parcels")
       .select(LIST_SELECT)
       .eq("source", source)
@@ -133,7 +135,7 @@ export async function findOwnerMatches(
   // POSSIBLE — normalized name only (never upgrade to EXACT).
   const norm = ownerName ? normalizeOwnerName(ownerName) : "";
   if (norm.length >= 3 && matches.length < limit) {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from("county_parcels")
       .select(LIST_SELECT)
       .eq("source", source)

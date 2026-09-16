@@ -6,6 +6,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cadReader } from "@/lib/cad/service";
 
 export type ObservationReadinessStatus =
   | "migrations_needed"
@@ -276,9 +277,10 @@ export async function getObservationReadiness(
     lastEventAt = (data?.[0]?.observed_at as string | undefined) ?? null;
   }
 
+  const cad = cadReader(supabase);
   let absentColumnAvailable = true;
   {
-    const { error } = await supabase
+    const { error } = await cad
       .from("county_parcels")
       .select("absent_at")
       .eq("source", src)
@@ -292,7 +294,7 @@ export async function getObservationReadiness(
 
   let trackingStarted = false;
   {
-    const { count, error } = await supabase
+    const { count, error } = await cad
       .from("county_parcels")
       .select("id", { count: "exact", head: true })
       .eq("source", src)
@@ -309,7 +311,7 @@ export async function getObservationReadiness(
   /** Evidence Archie compared a later pull (last_seen meaningfully after first_seen). */
   let successivePullSeen = false;
   if (trackingStarted) {
-    const { data, error } = await supabase
+    const { data, error } = await cad
       .from("county_parcels")
       .select("first_seen_at, last_seen_at")
       .eq("source", src)

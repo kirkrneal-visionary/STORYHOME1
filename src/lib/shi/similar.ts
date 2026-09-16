@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cadReader } from "@/lib/cad/service";
 import { distanceMiles, type LatLng } from "@/lib/geo";
 import { getProperty } from "@/lib/shi/server-properties";
 import type {
@@ -143,7 +144,7 @@ export async function findSimilarProperties(
   };
   const deg = milesToDeg(criteria.maxMiles);
 
-  let query = supabase
+  let query = cadReader(supabase)
     .from("county_parcels")
     .select(SELECT)
     .eq("source", subject.source)

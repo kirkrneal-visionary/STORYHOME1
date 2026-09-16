@@ -5,10 +5,9 @@ import type { CadSearchField } from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
 
 /**
- * County parcel data access (public record). Wave L4 sources cover the 7
- * launch counties (Polk ArcGIS, Angelina ArcGIS, Tyler shapefile, plus
- * file/manual counties). Read-only from the client — only the service role
- * writes via the ingest/refresh scripts.
+ * County parcel data access. Wave L4 sources cover the 7 launch counties.
+ * Browser search/lookup goes through bounded `/api/parcels/*` (service role).
+ * Only the ingest/refresh scripts write the warehouse.
  *
  * Wave L6 adds advanced CAD search facets (Owner / Address / Property ID /
  * Owner ID / Geographic ID / Property Type / Tax Year).
@@ -150,45 +149,6 @@ export function schoolLabel(code: string | null): string | null {
   return SCHOOL_LABELS[c] ?? c;
 }
 
-const SELECT =
-  "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, geojson, centroid_lat, centroid_lng, source_url";
-
-function toParcel(r: any): CountyParcel {
-  return {
-    id: r.id,
-    source: r.source,
-    countyFips: r.county_fips ?? null,
-    propId: r.prop_id,
-    geoId: r.geo_id,
-    cadOwnerId: r.cad_owner_id ?? null,
-    ownerName: r.owner_name,
-    situsAddress: r.situs_address,
-    situsCity: r.situs_city,
-    situsState: r.situs_state,
-    situsZip: r.situs_zip,
-    legalDescription: r.legal_description,
-    tractOrLot: r.tract_or_lot,
-    abstractSubdivisionCode: r.abstract_subdivision_code,
-    legalAcreage: r.legal_acreage == null ? null : Number(r.legal_acreage),
-    landValue: r.land_value == null ? null : Number(r.land_value),
-    improvementValue:
-      r.improvement_value == null ? null : Number(r.improvement_value),
-    marketValue: r.market_value == null ? null : Number(r.market_value),
-    taxYear: r.tax_year == null ? null : Number(r.tax_year),
-    schoolCode: r.school_code,
-    propertyCategory: (r.property_category as PropertyCategory) ?? null,
-    mhSerialNumber: r.mh_serial_number ?? null,
-    mhHudLabel: r.mh_hud_label ?? null,
-    detailLevel: (r.detail_level as ParcelDetailLevel) ?? "full",
-    needsAgentDetail: Boolean(r.needs_agent_detail),
-    ingestedAt: r.ingested_at ?? null,
-    geojson: (r.geojson as GeoJsonPolygon) ?? null,
-    centroidLat: r.centroid_lat == null ? null : Number(r.centroid_lat),
-    centroidLng: r.centroid_lng == null ? null : Number(r.centroid_lng),
-    sourceUrl: r.source_url,
-  };
-}
-
 /** Split "243 Faith Ln" into a leading house number + a street keyword. */
 export function parseAddress(line: string): {
   num: string | null;
@@ -288,73 +248,23 @@ export async function searchCadParcels(
   query: string,
   opts: CadSearchOpts = {},
 ): Promise<CountyParcel[]> {
-  const s = getBrowserSupabase();
   const q = query.trim();
-  if (!s || !q) return [];
-  const field: CadSearchField = opts.field ?? "all";
-  const limit = opts.limit ?? 30;
-  let req = s.from("county_parcels").select(SELECT);
-  if (opts.source) req = req.eq("source", opts.source);
-
-  const like = `%${q}%`;
-  const digits = q.replace(/[^\d]/g, "");
-
-  switch (field) {
-    case "owner":
-      req = req.ilike("owner_name", like);
-      break;
-    case "address":
-      req = req.or(
-        `situs_address.ilike.${like},situs_street.ilike.${like}`,
-      );
-      break;
-    case "prop_id":
-      req = req.ilike("prop_id", `%${digits || q}%`);
-      break;
-    case "owner_id":
-      req = req.ilike("cad_owner_id", like);
-      break;
-    case "geo_id":
-      req = req.ilike("geo_id", `%${digits || q}%`);
-      break;
-    case "property_type": {
-      const cat = q.toLowerCase().startsWith("p") ? "personal" : "real";
-      if (/^(real|personal|r|p)$/i.test(q.trim())) {
-        req = req.eq("property_category", cat);
-      } else {
-        req = req.ilike("property_category", like);
-      }
-      break;
-    }
-    case "tax_year": {
-      const year = Number(digits || q);
-      if (Number.isFinite(year) && year > 1900) req = req.eq("tax_year", year);
-      else return [];
-      break;
-    }
-    default: {
-      const ors = [
-        `owner_name.ilike.${like}`,
-        `situs_address.ilike.${like}`,
-        `situs_street.ilike.${like}`,
-        `mh_serial_number.ilike.${like}`,
-        `mh_hud_label.ilike.${like}`,
-        `legal_description.ilike.${like}`,
-        `cad_owner_id.ilike.${like}`,
-      ];
-      if (digits) {
-        ors.push(
-          `prop_id.ilike.%${digits}%`,
-          `geo_id.ilike.%${digits}%`,
-        );
-      }
-      req = req.or(ors.join(","));
-    }
+  if (!q) return [];
+  const params = new URLSearchParams();
+  params.set("q", q);
+  if (opts.source) params.set("source", opts.source);
+  if (opts.field) params.set("field", opts.field);
+  if (opts.limit) params.set("limit", String(opts.limit));
+  const res = await fetch(`/api/parcels/search?${params.toString()}`, {
+    credentials: "same-origin",
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      typeof body?.error === "string" ? body.error : "Parcel search failed",
+    );
   }
-
-  const { data, error } = await req.limit(limit);
-  if (error) throw error;
-  return (data ?? []).map(toParcel);
+  return Array.isArray(body.parcels) ? (body.parcels as CountyParcel[]) : [];
 }
 
 /**
@@ -373,13 +283,12 @@ export async function fetchParcelByPropIdAny(
   propId: string,
   countyFips?: string | null,
 ): Promise<CountyParcel | null> {
-  const s = getBrowserSupabase();
-  if (!s || !propId) return null;
-  let q = s.from("county_parcels").select(SELECT).eq("prop_id", propId);
-  if (countyFips) q = q.eq("county_fips", countyFips);
-  const { data, error } = await q.limit(1);
-  if (error || !data?.length) return null;
-  return toParcel(data[0]);
+  if (!propId) return null;
+  const parcels = await lookupParcels({
+    propId,
+    countyFips: countyFips ?? undefined,
+  });
+  return parcels[0] ?? null;
 }
 
 /**
@@ -399,45 +308,25 @@ export async function fetchParcelByPropId(
   propId: string,
   source = "polk_cad",
 ): Promise<CountyParcel | null> {
-  const s = getBrowserSupabase();
-  if (!s || !propId) return null;
-  const { data, error } = await s
-    .from("county_parcels")
-    .select(SELECT)
-    .eq("source", source)
-    .eq("prop_id", propId)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? toParcel(data) : null;
+  if (!propId) return null;
+  const parcels = await lookupParcels({ propId, source });
+  return parcels[0] ?? null;
 }
 
 /** Full parcels (incl. geometry) for a set of prop ids across any county. */
 export async function fetchParcelsByPropIdsAny(
   propIds: string[],
 ): Promise<CountyParcel[]> {
-  const s = getBrowserSupabase();
-  if (!s || propIds.length === 0) return [];
-  const { data, error } = await s
-    .from("county_parcels")
-    .select(SELECT)
-    .in("prop_id", propIds);
-  if (error) throw error;
-  return (data ?? []).map(toParcel);
+  if (propIds.length === 0) return [];
+  return lookupParcels({ propIds });
 }
 
 export async function fetchParcelsByPropIds(
   propIds: string[],
   source = "polk_cad",
 ): Promise<CountyParcel[]> {
-  const s = getBrowserSupabase();
-  if (!s || propIds.length === 0) return [];
-  const { data, error } = await s
-    .from("county_parcels")
-    .select(SELECT)
-    .eq("source", source)
-    .in("prop_id", propIds);
-  if (error) throw error;
-  return (data ?? []).map(toParcel);
+  if (propIds.length === 0) return [];
+  return lookupParcels({ propIds, source });
 }
 
 /**
@@ -449,43 +338,84 @@ export async function fetchParcelsByAddress(
   addressLine: string,
   zip: string,
 ): Promise<CountyParcel[]> {
-  const s = getBrowserSupabase();
-  if (!s) return [];
   const { num, streetKeyword } = parseAddress(addressLine);
   if (!num || !streetKeyword) return [];
-  let q = s.from("county_parcels").select(SELECT).eq("situs_num", num);
-  if (zip?.trim()) q = q.eq("situs_zip", zip.trim());
-  q = q.ilike("situs_street", `%${streetKeyword}%`);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []).map(toParcel);
+  const res = await fetch("/api/parcels/lookup", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ addressLine, zip }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      typeof body?.error === "string" ? body.error : "Parcel lookup failed",
+    );
+  }
+  return Array.isArray(body.parcels) ? (body.parcels as CountyParcel[]) : [];
 }
 
 export async function fetchParcelValues(
   propId: string,
   source = "polk_cad",
 ): Promise<ParcelValue[]> {
-  const s = getBrowserSupabase();
-  if (!s) return [];
-  const { data, error } = await s
-    .from("county_parcel_values")
-    .select(
-      "tax_year, land_value, improvement_value, market_value, appraised_value, assessed_value",
-    )
-    .eq("source", source)
-    .eq("prop_id", propId)
-    .order("tax_year", { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((r: any) => ({
-    taxYear: Number(r.tax_year),
-    landValue: r.land_value == null ? null : Number(r.land_value),
-    improvementValue:
-      r.improvement_value == null ? null : Number(r.improvement_value),
-    marketValue: r.market_value == null ? null : Number(r.market_value),
-    appraisedValue:
-      r.appraised_value == null ? null : Number(r.appraised_value),
-    assessedValue: r.assessed_value == null ? null : Number(r.assessed_value),
-  }));
+  if (!propId) return [];
+  const res = await fetch("/api/parcels/lookup", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ propId, source, values: true }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) return [];
+  return Array.isArray(body.values) ? (body.values as ParcelValue[]) : [];
+}
+
+const LOOKUP_CHUNK = 40;
+
+async function lookupParcels(opts: {
+  propIds?: string[];
+  propId?: string;
+  source?: string;
+  countyFips?: string;
+}): Promise<CountyParcel[]> {
+  const ids = (opts.propIds ?? []).map((id) => id.trim()).filter(Boolean);
+  if (ids.length > LOOKUP_CHUNK) {
+    const out: CountyParcel[] = [];
+    for (let i = 0; i < ids.length; i += LOOKUP_CHUNK) {
+      const chunk = await lookupParcelsOnce({
+        ...opts,
+        propIds: ids.slice(i, i + LOOKUP_CHUNK),
+      });
+      out.push(...chunk);
+    }
+    return out;
+  }
+  return lookupParcelsOnce({
+    ...opts,
+    propIds: ids.length > 0 ? ids : undefined,
+  });
+}
+
+async function lookupParcelsOnce(opts: {
+  propIds?: string[];
+  propId?: string;
+  source?: string;
+  countyFips?: string;
+}): Promise<CountyParcel[]> {
+  const res = await fetch("/api/parcels/lookup", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(
+      typeof body?.error === "string" ? body.error : "Parcel lookup failed",
+    );
+  }
+  return Array.isArray(body.parcels) ? (body.parcels as CountyParcel[]) : [];
 }
 
 /** Per-county CAD refresh status (72h loop). */

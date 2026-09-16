@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cadReader } from "@/lib/cad/service";
 import {
   distanceMiles,
   pointInBounds,
@@ -61,7 +62,8 @@ export async function analyzeArea(
   // Fetch one past the cap so "capped" means the bbox scan was truncated
   // (not that we happened to land on exactly N rows).
   const scanLimit = SHI_CAPS.maxParcelsPerAnalyze + 1;
-  const { data, error } = await supabase
+  const sb = cadReader(supabase);
+  const { data, error } = await sb
     .from("county_parcels")
     .select(AREA_SELECT)
     .eq("source", opts.source)
@@ -135,6 +137,16 @@ export async function analyzeArea(
       ? `Incomplete estimate: the map-box scan hit the safety cap (${SHI_CAPS.maxParcelsPerAnalyze} parcels) before every parcel in the frame could be checked. Draw a smaller frame for a full count.`
       : `Estimated area value sums CAD market_value on ${valuedParcelCount} valued parcels inside the frame (centroids).`,
     parcels,
+  };
+}
+
+/** Keep aggregates; send only the list the UI actually paints. */
+export function slimAreaForClient(analysis: ShiAreaAnalysis): ShiAreaAnalysis {
+  const max = SHI_CAPS.maxParcelsReturned;
+  if (analysis.parcels.length <= max) return analysis;
+  return {
+    ...analysis,
+    parcels: analysis.parcels.slice(0, max),
   };
 }
 

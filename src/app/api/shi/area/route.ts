@@ -3,7 +3,7 @@ import type { DrawnBoundary } from "@/lib/geo";
 import { publicError } from "@/lib/security/validate";
 import { boundaryFingerprint } from "@/lib/shi/analyze-context";
 import { requireStoryPro } from "@/lib/shi/require-pro";
-import { analyzeArea } from "@/lib/shi/area";
+import { analyzeArea, slimAreaForClient } from "@/lib/shi/area";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,7 +56,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const analysis = await analyzeArea(gate.supabase, { boundary, source });
+    const analysis = slimAreaForClient(
+      await analyzeArea(gate.supabase, { boundary, source }),
+    );
     const context = {
       countySource: source,
       boundaryFingerprint: boundaryFingerprint(boundary, source),

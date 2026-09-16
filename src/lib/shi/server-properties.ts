@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cadReader } from "@/lib/cad/service";
 import type { CadSearchField } from "@/lib/cad-layers";
 import { txCountyNameByFips } from "@/lib/tx-counties";
 import { buildCadEvidenceLane } from "@/lib/shi/cad-evidence";
@@ -200,7 +201,8 @@ export async function searchProperties(
   const field: CadSearchField = params.field ?? "all";
   const limit = Math.min(Math.max(params.limit ?? 30, 1), 50);
 
-  let req = supabase.from("county_parcels").select(LIST_SELECT) as unknown as ParcelQuery;
+  const sb = cadReader(supabase);
+  let req = sb.from("county_parcels").select(LIST_SELECT) as unknown as ParcelQuery;
   if (params.source) req = req.eq("source", params.source);
 
   const filtered = applySearchFilter(req, q, field);
@@ -255,8 +257,9 @@ export async function getProperty(
   const propId = opts.propId.trim();
   if (!propId) return null;
 
+  const sb = cadReader(supabase);
   async function fetchDetailRows(selectCols: string) {
-    let req = supabase
+    let req = sb
       .from("county_parcels")
       .select(selectCols)
       .eq("prop_id", propId);
@@ -320,7 +323,7 @@ export async function getProperty(
   const absentAt =
     "absent_at" in row ? ((row.absent_at as string | null) ?? null) : null;
 
-  const { data: valueRows } = await supabase
+  const { data: valueRows } = await sb
     .from("county_parcel_values")
     .select(
       "tax_year, land_value, improvement_value, market_value, appraised_value, assessed_value",

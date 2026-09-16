@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cadReader } from "@/lib/cad/service";
 import {
   FRONTAGE_BUFFER_M,
   INTERSECTION_JOIN_M,
@@ -183,7 +184,7 @@ export async function GET(req: NextRequest) {
   if (!intel) {
     let parcelGeo: ParcelGeo | null = null;
     try {
-      const { data: row } = await gate.supabase
+      const { data: row } = await cadReader(gate.supabase)
         .from("county_parcels")
         .select("geojson")
         .eq("prop_id", propId)
@@ -341,7 +342,7 @@ export async function GET(req: NextRequest) {
     marketValue: null,
   };
   try {
-    const { data: row } = await gate.supabase
+    const { data: row } = await cadReader(gate.supabase)
       .from("county_parcels")
       .select("prop_id, source, owner_name, situs_address, legal_acreage, market_value")
       .eq("prop_id", propId)
