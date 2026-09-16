@@ -22,5 +22,6 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-16 | CAD refresh pages then upserts; one failed county is a partial job | Timeout must not wipe last-known-good or stop the other counties | Pre-launch plan Wave 5 |
 | 2026-09-16 | Capacity is isolated simulate only; claim is “held N concurrent scripted users” | Live load and 10M/100k numbers are not evidence | Pre-launch plan Wave 6 |
 | 2026-09-16 | Chrome selection is UX only; brains stay a later harden wave | Highlighting the page is not a privilege bypass | Founder harden GO ALL |
+| 2026-09-16 | Neighbor/frontage RPCs assert Story Pro in SQL | UI, View as buyer, and `/api/shi` are not the authority | Founder harden Wave 2 |
 
 If a new change alters one of these, add a row and update the workflow contract.

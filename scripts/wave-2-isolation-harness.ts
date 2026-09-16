@@ -5,6 +5,7 @@
  */
 import { decideReadiness } from "../src/lib/account/assurance.ts";
 import { destForUser, mayUseStoryPro } from "../src/lib/account/purpose.ts";
+import { decideStoryProRpc } from "../src/lib/account/rpc-authority.ts";
 import {
   isLiveSupabaseUrl,
   readStagingEnv,
@@ -210,6 +211,62 @@ export function runWave2Harness(): HarnessReport {
     "officeN",
     "deny:Under Contract",
     `${officeNUpdatesC.ok ? "ok" : "deny"}:${officeNUpdatesC.listing?.status ?? "missing"}`,
+  );
+
+  check(
+    cases,
+    "Consumer RPC neighbor/frontage deny even with Pro overlay",
+    "homeA",
+    "deny",
+    decideStoryProRpc({
+      role: "authenticated",
+      purpose: ACTORS.homeA.purpose,
+      overlay: {
+        viewAsBuyer: false,
+        navRole: "professional",
+        requestPurpose: "managing_broker",
+        roleLabel: "Story Pro",
+      },
+    }),
+  );
+  check(
+    cases,
+    "Pro A RPC allow even in buyer preview",
+    "proA",
+    "allow",
+    decideStoryProRpc({
+      role: "authenticated",
+      purpose: ACTORS.proA.purpose,
+      overlay: { viewAsBuyer: true, navRole: "consumer" },
+    }),
+  );
+  check(
+    cases,
+    "Office M RPC allow",
+    "officeM",
+    "allow",
+    decideStoryProRpc({
+      role: "authenticated",
+      purpose: ACTORS.officeM.purpose,
+    }),
+  );
+  check(
+    cases,
+    "Other-professional RPC deny",
+    "otherE",
+    "deny",
+    decideStoryProRpc({
+      role: "authenticated",
+      purpose: ACTORS.otherE.purpose,
+      overlay: { localKind: "pro", requestPurpose: "individual_pro" },
+    }),
+  );
+  check(
+    cases,
+    "Anon RPC deny",
+    "anon",
+    "deny",
+    decideStoryProRpc({ role: "anon", purpose: "individual_pro" }),
   );
 
   check(cases, "Office M SHI gate", "officeM", "200", String(shiStatus(ACTORS.officeM)));

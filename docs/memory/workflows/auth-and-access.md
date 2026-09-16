@@ -37,6 +37,7 @@
 
 - Settings writes: `canEditStoryProSettings`
 - Archie APIs: `requireStoryPro`
+- Neighbor / frontage RPCs: `assert_story_pro_rpc` (purpose on the profile row)
 
 ## Tests / evidence
 

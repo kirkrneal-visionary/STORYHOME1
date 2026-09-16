@@ -336,7 +336,7 @@ AUTH
 | Rate limit easy to bypass | In-memory, one Vercel instance at a time |
 | `/portal` URL works logged out until JS runs | Client-only gate |
 | Inspector signup → full Archie | No TREC, still `agent` |
-| Anyone logged in can call some PostgREST RPCs (`parcel_neighbors`, corridor helpers) | HTTP Archie is Pro-only; raw database functions are wider |
+| Neighbor / frontage RPCs (`parcel_neighbors`, corridor helpers) | Story Pro at the SQL layer (`0056` `assert_story_pro_rpc`). Anon revoked. HTTP Archie still Pro-gated. |
 | Anyone can read `county_parcels` via Supabase | Public record by design; Archie HTTP is not the only door |
 | Tile / lidar cost if scraped | Public, no naive per-tile 429 |
 | Seller password brute force | RPC is public; no attempt cap |
