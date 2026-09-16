@@ -19,7 +19,7 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`, `test-dock-jump`, `test-map-dock-clear`, `test-home-footer`, `test-footer-wave-1`, `test-footer-wave-2`, `test-footer-wave-3`, `test-wave-1-mls`, `test-wave-2-isolation`, `test-wave-3-analyze`, `test-wave-4-suites`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`, `test-dock-jump`, `test-map-dock-clear`, `test-home-footer`, `test-footer-wave-1`, `test-footer-wave-2`, `test-footer-wave-3`, `test-wave-1-mls`, `test-wave-2-isolation`, `test-wave-3-analyze`, `test-wave-4-suites`, `test-wave-5-cad`
 
 These are **isolated**. They do not write production. Wave 2 runs two disposable logins against an in-memory store that mirrors owner/broker RLS and refuses the live project.
 

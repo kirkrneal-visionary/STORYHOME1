@@ -27,7 +27,8 @@ assert.match(ingest, /not promoted/);
 assert.match(ingest, /changeEventKey/);
 assert.match(ingest, /viewer_fingerprint|observed_at/);
 assert.match(ingest, /!underFetched/);
-assert.match(ingest, /const proven = Boolean\(ok\) && !ingestCapped && !underFetched/);
+assert.match(ingest, /shouldPromoteLastSuccess/);
+assert.match(ingest, /const proven = shouldPromoteLastSuccess/);
 assert.match(ingest, /if \(proven\)/);
 assert.match(ingest, /payload\.last_success_at = now/);
 

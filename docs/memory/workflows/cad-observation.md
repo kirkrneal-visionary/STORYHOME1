@@ -38,9 +38,11 @@
 
 ## Tests
 
-- `scripts/test-phase-2-truth.mjs`, `test-shi-obs-ops.mjs`, `test-shi-county-ops.mjs`
+- `scripts/test-phase-2-truth.mjs`, `test-shi-obs-ops.mjs`, `test-shi-county-ops.mjs`, `test-wave-5-cad.mjs`
 - GitHub Action `.github/workflows/cad-refresh.yml` — scheduled ingest, **not** a PR test gate
+- Wave 5: page-then-upsert, resume checkpoint (0055, optional), one failed county does not fail the whole job, concurrency lock
 - **Do not** run ingest against production from this memory task
+- Montgomery stays optional. Not on the daily key list.
 
 ## Business reason
 
