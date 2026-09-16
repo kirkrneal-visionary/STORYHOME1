@@ -2,7 +2,6 @@
 
 import { use } from "react";
 import { SuitePlayer } from "@/components/suites/SuitePlayer";
-import { RequireAuth } from "@/components/RequireAuth";
 
 type PageProps = {
   params: Promise<{ suiteId: string }>;
@@ -13,12 +12,7 @@ export default function SuiteDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-dvh pt-[var(--story-safe-top)]">
-      <RequireAuth
-        title="Suites need an account"
-        description="Log in as a buyer to open and share your Story Home Suite albums."
-      >
-        <SuitePlayer suiteId={suiteId} />
-      </RequireAuth>
+      <SuitePlayer suiteId={suiteId} />
     </div>
   );
 }

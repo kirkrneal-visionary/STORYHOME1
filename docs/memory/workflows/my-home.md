@@ -28,7 +28,7 @@
 
 ## Related
 
-- Suites are **observed** as `localStorage` (`src/lib/suites.ts`). That is not My Home and is not durable across devices.
+- Suites are a different product (`/saved`). Account albums after Wave 4. Not My Home.
 - Listing inquire is a different write (`inquiries`).
 
 ## Tests

@@ -36,7 +36,7 @@
 ## Related
 
 - Not CAD ingest. Not a production load test.
-- Suites stay device-local in the app until Wave 4. The harness still checks the unused table’s owner policy.
+- Suites are account-owned after Wave 4. The harness still checks owner policy. Share cards use `suite_share` (name + listing ids), not another user’s private GET.
 
 ## Tests
 

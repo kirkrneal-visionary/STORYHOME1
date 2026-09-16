@@ -13,13 +13,14 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Consumer My Home | [workflows/my-home.md](./workflows/my-home.md) |
 | CAD ingest and observation | [workflows/cad-observation.md](./workflows/cad-observation.md) |
 | Isolation (your stuff is yours) | [workflows/isolation.md](./workflows/isolation.md) |
+| Suites (albums on the account) | [workflows/suites.md](./workflows/suites.md) |
 
 ## Inventoried, not equally deep
 
 | Area | Notes |
 |---|---|
 | Marketplace browse / inquire | Public listings. Inquire writes `inquiries`. |
-| Suites | **Observed:** browser `localStorage` (`SUITES_STORAGE_KEY`). Not a server vault. |
+| Suites | **Account-owned** after Wave 4. Local drafts offer import; default Don't add. See [workflows/suites.md](./workflows/suites.md). |
 | Seller passcode portal | HMAC passcode; no Archie. |
 | Office roster / invites | Managing broker only (`mayManageBrokerage`). |
 | Prospects | Pro-only; references CAD; does not write CAD. |

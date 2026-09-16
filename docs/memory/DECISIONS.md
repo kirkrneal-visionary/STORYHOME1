@@ -18,5 +18,6 @@ Only material product/architecture choices. Not a transcript.
 | Standing | Corridors finished inside Research Access | Do not rebuild | Founder directive in this charter |
 | 2026-09-16 | Wave 2 isolation never uses the live Supabase project | Labs/demo cannot take synthetic writes; live customers stay untouched | Pre-launch plan Wave 2 |
 | 2026-09-16 | Analyze display and Save bind to county + drawing fingerprint | Late HTTP must not paint or persist another frame | Pre-launch plan Wave 3 |
+| 2026-09-16 | Suites persist on the account; local albums import only after confirm | Device-only albums vanish on a new phone; never auto-assign to the next login | Pre-launch plan Wave 4 |
 
 If a new change alters one of these, add a row and update the workflow contract.

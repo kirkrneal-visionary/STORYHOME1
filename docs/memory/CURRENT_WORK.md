@@ -1,11 +1,11 @@
 # Current work
 
-**Recorded:** 2026-09-15  
-**Base:** `origin/main` `80fb812` (PR 194 merged)
+**Recorded:** 2026-09-16  
+**Base:** Wave 3 `cursor/wave-3-analyze-6752`
 
 ## In progress
 
-- Pre-launch Wave 3: Analyze / Save match the current drawing (this branch). Late Analyze cannot paint or save another frame.
+- Pre-launch Wave 4: Suites on the account (this branch). Confirm import. Never auto-assign this-phone albums to the next login.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)
@@ -21,7 +21,6 @@
 - Old farms / empty Vault folders from failed snaps before PR 193 — need a **new** save to get a photo or a study row
 - Liberty + San Jacinto CAD last pull timed out (live `/api/cad/status` 2026-09-15); last good data remains
 - Montgomery CAD not ingested
-- Suites are device-local `localStorage`, not a server save
 - `docs/SITE-SYSTEM-MAP-FOR-CHATGPT.md` still says pages are not middleware-gated (stale)
 - Two-user RLS isolation against a **hosted** spare Supabase is not run here. Wave 2 proves the same owner/broker rules on a disposable in-memory store and refuses the live project.
 - Study Vault card photo on a new production save is still **unverified**
@@ -38,5 +37,5 @@
 
 ## Next concrete action
 
-1. Footer Waves 1–3 are live. Do not invent a broker name or IABS. Do not restyle the header or dock.
+1. Wave 4 needs additive SQL `0054` on the live project before account albums persist. Do not auto-assign local albums.
 2. Do not rename the `verify` job — that would drop the merge lock.

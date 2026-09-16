@@ -59,6 +59,13 @@ Connects a user action to what actually runs. Statements are tagged.
 2. Listings table + optional CAD pin
 3. **Intended:** listing CAD pin ≠ full Archie
 
+### Suites (albums)
+
+1. Logged-in `/saved` → `GET /api/suites` as this user
+2. Save modal writes `/api/suites` + `/items` (caps 50 / 80)
+3. Local drafts may offer import. Default Don't add. Never auto-assign.
+4. Share URL `/saved/[id]` uses `suite_share` (name + listing ids). Visitors are not gated by login.
+
 ## Authorization boundary
 
 | Data | Who reads | Who writes |
@@ -66,6 +73,7 @@ Connects a user action to what actually runs. Statements are tagged.
 | `county_parcels` | Anyone (public record) | Service-role ingest only |
 | `shi_farms` / studies / prospects | Owning agent | Owning agent |
 | `homes` / `home-docs` | Owner | Owner |
+| `suites` / `suite_items` | Owner. Share RPC: name + listing ids | Owner |
 | Archie HTTP (`/api/shi/*`) | Story Pro session | Story Pro session |
 
 **Assumption:** PostgREST on `county_parcels` remains world-readable by design. Archie HTTP is a separate Pro gate.

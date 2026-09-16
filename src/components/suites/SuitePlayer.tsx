@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useSuites } from "@/components/SuitesContext";
 import { formatUsd, type DemoListing } from "@/lib/demo-data";
+import { apiShareSuite } from "@/lib/suites-api";
+import type { StorySuite } from "@/lib/suites";
 import { fetchListingsByIds } from "@/lib/supabase/listings";
 import { cn } from "@/lib/utils";
 
@@ -19,26 +21,68 @@ type SuitePlayerProps = {
   suiteId: string;
 };
 
+type ListingSlot =
+  | { kind: "home"; listing: DemoListing }
+  | { kind: "missing"; id: string };
+
 export function SuitePlayer({ suiteId }: SuitePlayerProps) {
-  const { suites, removeListingFromSuite } = useSuites();
-  const suite = suites.find((s) => s.id === suiteId);
-  const [listings, setListings] = useState<DemoListing[]>([]);
+  const { suites, status, removeListingFromSuite } = useSuites();
+  const owned = suites.find((s) => s.id === suiteId) ?? null;
+  const [shared, setShared] = useState<StorySuite | null>(null);
+  const [shareTried, setShareTried] = useState(false);
+  const suite = owned ?? shared;
+  const canEdit = Boolean(owned);
+  const [slots, setSlots] = useState<ListingSlot[]>([]);
+
+  useEffect(() => {
+    if (owned) {
+      setShared(null);
+      setShareTried(true);
+      return;
+    }
+    if (status === "loading") return;
+    let active = true;
+    setShareTried(false);
+    apiShareSuite(suiteId)
+      .then((row) => {
+        if (!active) return;
+        setShared(row);
+        setShareTried(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setShared(null);
+        setShareTried(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [owned, status, suiteId]);
 
   useEffect(() => {
     const ids = suite?.listingIds ?? [];
     if (ids.length === 0) {
-      setListings([]);
+      setSlots([]);
       return;
     }
     let active = true;
     fetchListingsByIds(ids)
       .then((rows) => {
         if (!active) return;
-        // Preserve the saved order.
         const byId = new Map(rows.map((r) => [r.id, r]));
-        setListings(ids.map((id) => byId.get(id)).filter(Boolean) as DemoListing[]);
+        setSlots(
+          ids.map((id) => {
+            const listing = byId.get(id);
+            return listing
+              ? { kind: "home" as const, listing }
+              : { kind: "missing" as const, id };
+          }),
+        );
       })
-      .catch(() => active && setListings([]));
+      .catch(() => {
+        if (!active) return;
+        setSlots(ids.map((id) => ({ kind: "missing" as const, id })));
+      });
     return () => {
       active = false;
     };
@@ -46,6 +90,14 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
 
   const [index, setIndex] = useState(0);
   const [shareNote, setShareNote] = useState("");
+
+  if (!owned && (status === "loading" || !shareTried)) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+        <p className="text-sm text-[var(--muted)]">Loading suite…</p>
+      </div>
+    );
+  }
 
   if (!suite) {
     return (
@@ -61,7 +113,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
   }
 
   const activeSuite = suite;
-  const current = listings[index] ?? null;
+  const current = slots[index] ?? null;
 
   async function share() {
     const url = window.location.href;
@@ -118,7 +170,7 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
         <p className="mt-3 text-sm text-gold">{shareNote}</p>
       )}
 
-      {listings.length === 0 ? (
+      {slots.length === 0 ? (
         <div className="story-well mt-12 px-6 py-16 text-center">
           <p className="type-section text-ink">Empty album</p>
           <p className="mt-2 text-sm text-[var(--muted)]">
@@ -134,13 +186,13 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
       ) : (
         <>
           <div className="story-surface relative mt-8 overflow-hidden">
-            {current && (
+            {current?.kind === "home" && (
               <div className="grid md:grid-cols-[1.2fr_0.8fr]">
                 <div className="relative aspect-[4/3] bg-[var(--nav-surface)] md:aspect-auto md:min-h-[420px]">
-                  {current.photoUrl ? (
+                  {current.listing.photoUrl ? (
                     <Image
-                      src={current.photoUrl}
-                      alt={current.addressSerif}
+                      src={current.listing.photoUrl}
+                      alt={current.listing.addressSerif}
                       fill
                       className="object-cover"
                       sizes="(max-width: 768px) 100vw, 60vw"
@@ -155,37 +207,82 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                 <div className="flex flex-col justify-between p-6 md:p-8">
                   <div>
                     <p className="font-mono text-sm font-bold text-gold">
-                      {formatUsd(current.price)}
+                      {formatUsd(current.listing.price)}
                     </p>
                     <h2 className="mt-2 type-page-title text-ink">
-                      {current.addressSerif}
+                      {current.listing.addressSerif}
                     </h2>
                     <p className="mt-2 font-mono text-xs tracking-wider text-[var(--muted)] uppercase">
-                      {current.city} · {current.beds} bd · {current.baths} ba ·{" "}
-                      {current.sqft.toLocaleString()} sqft
+                      {current.listing.city} · {current.listing.beds} bd ·{" "}
+                      {current.listing.baths} ba ·{" "}
+                      {current.listing.sqft.toLocaleString()} sqft
                     </p>
                     <p className="mt-4 text-sm leading-relaxed text-[var(--muted)]">
-                      {current.description}
+                      {current.listing.description}
                     </p>
                   </div>
                   <div className="mt-8 flex flex-wrap gap-2">
                     <Link
-                      href={`/marketplace/${current.id}`}
+                      href={`/marketplace/${current.listing.id}`}
                       className="inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy"
                     >
                       Open listing
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        removeListingFromSuite(suite.id, current.id);
-                        setIndex((i) => Math.max(0, Math.min(i, listings.length - 2)));
-                      }}
-                      className="story-press inline-flex h-11 items-center gap-2 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-[var(--muted)]"
-                    >
-                      <Trash2 className="h-4 w-4" /> Remove
-                    </button>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void removeListingFromSuite(
+                            suite.id,
+                            current.listing.id,
+                          );
+                          setIndex((i) =>
+                            Math.max(0, Math.min(i, slots.length - 2)),
+                          );
+                        }}
+                        className="story-press inline-flex h-11 items-center gap-2 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-[var(--muted)]"
+                      >
+                        <Trash2 className="h-4 w-4" /> Remove
+                      </button>
+                    )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {current?.kind === "missing" && (
+              <div className="grid md:grid-cols-[1.2fr_0.8fr]">
+                <div className="flex aspect-[4/3] items-center justify-center bg-[var(--nav-surface)] md:aspect-auto md:min-h-[420px]">
+                  <p className="font-mono text-xs text-paper/50">
+                    Home no longer listed
+                  </p>
+                </div>
+                <div className="flex flex-col justify-between p-6 md:p-8">
+                  <div>
+                    <h2 className="type-page-title text-ink">
+                      This home is no longer listed
+                    </h2>
+                    <p className="mt-3 text-sm text-[var(--muted)]">
+                      The album slot stays. The listing left the market or
+                      cannot be shown.
+                    </p>
+                  </div>
+                  {canEdit && (
+                    <div className="mt-8">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void removeListingFromSuite(suite.id, current.id);
+                          setIndex((i) =>
+                            Math.max(0, Math.min(i, slots.length - 2)),
+                          );
+                        }}
+                        className="story-press inline-flex h-11 items-center gap-2 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-[var(--muted)]"
+                      >
+                        <Trash2 className="h-4 w-4" /> Remove
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -200,13 +297,13 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                 <ChevronLeft className="h-4 w-4" /> Prev
               </button>
               <p className="font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase">
-                {index + 1} / {listings.length}
+                {index + 1} / {slots.length}
               </p>
               <button
                 type="button"
-                disabled={index >= listings.length - 1}
+                disabled={index >= slots.length - 1}
                 onClick={() =>
-                  setIndex((i) => Math.min(listings.length - 1, i + 1))
+                  setIndex((i) => Math.min(slots.length - 1, i + 1))
                 }
                 className="inline-flex h-10 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-ink disabled:opacity-30"
               >
@@ -216,9 +313,9 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
           </div>
 
           <div className="mt-6 flex gap-3 overflow-x-auto pb-2">
-            {listings.map((listing, i) => (
+            {slots.map((slot, i) => (
               <button
-                key={listing.id}
+                key={slot.kind === "home" ? slot.listing.id : slot.id}
                 type="button"
                 onClick={() => setIndex(i)}
                 className={cn(
@@ -226,14 +323,18 @@ export function SuitePlayer({ suiteId }: SuitePlayerProps) {
                   i === index ? "border-gold" : "border-hairline opacity-70",
                 )}
               >
-                {listing.photoUrl && (
+                {slot.kind === "home" && slot.listing.photoUrl ? (
                   <Image
-                    src={listing.photoUrl}
+                    src={slot.listing.photoUrl}
                     alt=""
                     fill
                     className="object-cover"
                     sizes="112px"
                   />
+                ) : (
+                  <span className="flex h-full items-center justify-center px-1 text-center font-mono text-[9px] text-paper/50 uppercase">
+                    Gone
+                  </span>
                 )}
               </button>
             ))}
