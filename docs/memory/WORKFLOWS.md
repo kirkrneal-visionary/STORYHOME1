@@ -14,6 +14,7 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | CAD ingest and observation | [workflows/cad-observation.md](./workflows/cad-observation.md) |
 | Isolation (your stuff is yours) | [workflows/isolation.md](./workflows/isolation.md) |
 | Suites (albums on the account) | [workflows/suites.md](./workflows/suites.md) |
+| Capacity (isolated simulate) | [workflows/capacity.md](./workflows/capacity.md) |
 
 ## Inventoried, not equally deep
 

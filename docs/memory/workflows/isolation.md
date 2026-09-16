@@ -35,7 +35,7 @@
 
 ## Related
 
-- Not CAD ingest. Not a production load test.
+- Not CAD ingest. Not a production load test. Wave 6 capacity is isolated simulate only (`scripts/wave-6-capacity.mjs`).
 - Suites are account-owned after Wave 4. The harness still checks owner policy. Share cards use `suite_share` (name + listing ids), not another user’s private GET.
 
 ## Tests

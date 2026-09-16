@@ -4,6 +4,12 @@
 
 Canonical project: **storyhome-1-eqmg**. Use a staging clone or a scheduled off-peak window with WAF LOG first.
 
+## Wave 6 (this program)
+
+Isolated simulate only (`scripts/wave-6-capacity.mjs`). Stages **20 → 100 → 1,000** scripted users. Same mix and stop rules as below. CI must stay short — do not run 15-minute live stages on GitHub. Refuse `www.storyhome.app`, eqmg production/preview, and live Supabase `ksvllgzsnzyahqsjuove`.
+
+Allowed sentence after a completed stage: “This isolated stack held N concurrent scripted users.”
+
 ---
 
 ## Traffic mix (per simulated user-minute)

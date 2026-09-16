@@ -13,5 +13,6 @@ Short, maintained documents for future sessions. Older briefs in `docs/` still e
 | [CAPACITY.md](./CAPACITY.md) | Traffic targets vs unknowns |
 | [RECONCILIATION.md](./RECONCILIATION.md) | How AGENTS.md and Cursor rules fit together |
 | [workflows/isolation.md](./workflows/isolation.md) | Two-user isolation harness (Wave 2) |
+| [workflows/capacity.md](./workflows/capacity.md) | Isolated capacity simulate (Wave 6) |
 
 Do not copy secrets, customer records, or production logs here.

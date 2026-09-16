@@ -20,5 +20,6 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-16 | Analyze display and Save bind to county + drawing fingerprint | Late HTTP must not paint or persist another frame | Pre-launch plan Wave 3 |
 | 2026-09-16 | Suites persist on the account; local albums import only after confirm | Device-only albums vanish on a new phone; never auto-assign to the next login | Pre-launch plan Wave 4 |
 | 2026-09-16 | CAD refresh pages then upserts; one failed county is a partial job | Timeout must not wipe last-known-good or stop the other counties | Pre-launch plan Wave 5 |
+| 2026-09-16 | Capacity is isolated simulate only; claim is “held N concurrent scripted users” | Live load and 10M/100k numbers are not evidence | Pre-launch plan Wave 6 |
 
 If a new change alters one of these, add a row and update the workflow contract.
