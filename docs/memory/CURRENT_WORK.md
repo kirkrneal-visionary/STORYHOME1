@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Marketplace map help card + +/− sit above the dock so they do not paint through Suites/Search.
+1. Footer paint matches the page wall (`--background`). Do not change `--nav-surface`, the header, or the dock.
 2. Do not rename the `verify` job — that would drop the merge lock.
