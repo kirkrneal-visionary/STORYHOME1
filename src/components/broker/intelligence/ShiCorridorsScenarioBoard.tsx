@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Printer } from "lucide-react";
+import { shiGrowthScenario } from "@/lib/shi/client";
 import {
   formatAadt,
   type TrafficStation,
@@ -11,8 +12,8 @@ import {
   DEFAULT_SCENARIO_ASSUMPTIONS,
   GROWTH_SCENARIO_HONESTY,
   formatScenarioPct,
-  runGrowthScenario,
   scenarioMeetingLines,
+  type GrowthScenarioResult,
   type ScenarioAssumptions,
 } from "@/lib/shi/growth-scenarios";
 import { cn } from "@/lib/utils";
@@ -38,24 +39,33 @@ export function ShiCorridorsScenarioBoard({
   const [assumptions, setAssumptions] = useState<ScenarioAssumptions>(
     DEFAULT_SCENARIO_ASSUMPTIONS,
   );
+  const [result, setResult] = useState<GrowthScenarioResult | null>(null);
 
-  const result = useMemo(
-    () =>
-      runGrowthScenario({
+  useEffect(() => {
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      void shiGrowthScenario({
         countyName,
         assumptions,
         watch,
         station,
         countyStations: stations,
-      }),
-    [countyName, assumptions, watch, station, stations],
-  );
+      }).then((body) => {
+        if (!cancelled) setResult(body.result);
+      });
+    }, 150);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [countyName, assumptions, watch, station, stations]);
 
   function patch(partial: Partial<ScenarioAssumptions>) {
     setAssumptions((prev) => ({ ...prev, ...partial }));
   }
 
   function printPack() {
+    if (!result) return;
     const lines = scenarioMeetingLines(result);
     const w = window.open("", "_blank", "noopener,noreferrer,width=720,height=900");
     if (!w) return;
@@ -77,6 +87,17 @@ export function ShiCorridorsScenarioBoard({
     w.document.close();
     w.focus();
     w.print();
+  }
+
+  if (!result) {
+    return (
+      <section className="story-surface p-4 md:p-5" data-scenario-board>
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+          Current traffic → scenario
+        </p>
+        <p className="mt-2 text-sm text-[var(--muted)]">Reading this scenario…</p>
+      </section>
+    );
   }
 
   const disabled = result.coverage.baseAadt <= 0;

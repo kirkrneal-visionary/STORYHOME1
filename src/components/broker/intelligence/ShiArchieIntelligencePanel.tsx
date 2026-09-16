@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { shiArchieBrief } from "@/lib/shi/client";
 import {
   ARCHIE_DECISION_DISCLAIMER,
   archieTruthLabel,
-  buildArchiePropertyBrief,
   type ArchieFocusChip,
   type ArchieFinding,
+  type ArchiePropertyBrief,
 } from "@/lib/shi/archie-phase1";
 import {
   ARCHIE_REASONING_MEMORY_HONESTY,
@@ -63,18 +64,16 @@ export function ShiArchieIntelligencePanel({
   onAskAccess?: () => void;
   className?: string;
 }) {
-  const brief = useMemo(
-    () =>
-      buildArchiePropertyBrief({
-        property,
-        exactOwnerCount,
-        possibleOwnerCount,
-        matches,
-        accessIntel,
-        stations,
-        parcelNeighbors,
-      }),
-    [
+  const [brief, setBrief] = useState<ArchiePropertyBrief | null>(null);
+  const [focus, setFocus] = useState<ArchieFocusChip | null>(null);
+  const [showConclusionDetail, setShowConclusionDetail] = useState(false);
+  const [memoryDiff, setMemoryDiff] = useState<ArchieReasoningDiff | null>(
+    null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void shiArchieBrief({
       property,
       exactOwnerCount,
       possibleOwnerCount,
@@ -82,19 +81,31 @@ export function ShiArchieIntelligencePanel({
       accessIntel,
       stations,
       parcelNeighbors,
-    ],
-  );
+    })
+      .then((body) => {
+        if (!cancelled) setBrief(body.brief);
+      })
+      .catch(() => {
+        if (!cancelled) setBrief(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    property,
+    exactOwnerCount,
+    possibleOwnerCount,
+    matches,
+    accessIntel,
+    stations,
+    parcelNeighbors,
+  ]);
 
-  const [focus, setFocus] = useState<ArchieFocusChip | null>(null);
-  const [showConclusionDetail, setShowConclusionDetail] = useState(false);
-  const [memoryDiff, setMemoryDiff] = useState<ArchieReasoningDiff | null>(
-    null,
-  );
-
-  const findingKey = brief.findings.map((f) => f.id).join("|");
-  const conclusion = brief.conclusion;
+  const findingKey = brief?.findings.map((f) => f.id).join("|") ?? "";
+  const conclusion = brief?.conclusion;
 
   useEffect(() => {
+    if (!brief) return;
     const prior = readArchieReasoningMemory(property.source, property.propId);
     const current = fingerprintFromBrief({
       conclusion: brief.conclusion,
@@ -113,13 +124,12 @@ export function ShiArchieIntelligencePanel({
     property.propId,
     property.countyFips,
     findingKey,
-    conclusion.kind,
-    conclusion.statement,
-    conclusion.confidence,
-    conclusion.confidenceBand,
-    conclusion.nextAction,
-    brief.conclusion,
-    brief.findings,
+    conclusion?.kind,
+    conclusion?.statement,
+    conclusion?.confidence,
+    conclusion?.confidenceBand,
+    conclusion?.nextAction,
+    brief,
   ]);
 
   function runFocus(chip: ArchieFocusChip, finding?: ArchieFinding) {
@@ -133,6 +143,22 @@ export function ShiArchieIntelligencePanel({
     if (chip === "ask") {
       onAskAccess?.();
     }
+  }
+
+  if (!brief || !conclusion) {
+    return (
+      <section
+        data-archie-intelligence="p4"
+        className={cn("story-well space-y-3 px-3 py-3", className)}
+      >
+        <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
+          Archie Intelligence
+        </p>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Reading this parcel…
+        </p>
+      </section>
+    );
   }
 
   return (

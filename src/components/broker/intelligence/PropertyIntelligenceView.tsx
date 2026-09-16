@@ -66,9 +66,13 @@ import {
   shiCorridorsTraffic,
   shiCorridorsParcelLocation,
   shiAttachPositionToRankedSites,
+  shiCorridorsAsk,
   shiCorridorsStrongestSites,
   shiMultifamilyParcel,
   shiMultifamilyReview,
+  shiResearchCompareSites,
+  shiResearchModeReview,
+  shiResearchPick,
   shiParcelNeighbors,
   shiListFolders,
   shiOwnerMatches,
@@ -82,18 +86,14 @@ import type {
 } from "@/lib/shi/corridors";
 import type { ParcelLocationIntel } from "@/lib/shi/corridor-frontage";
 import type { ParcelNeighborsResult } from "@/lib/shi/parcel-neighbors";
-import {
-  answerCorridorAsk,
-  type CorridorAskAnswer,
-} from "@/lib/shi/corridor-ask";
+import type { CorridorAskAnswer } from "@/lib/shi/corridor-ask";
 import type { WorthALookItem } from "@/lib/shi/parcel-position-area";
 import type { ParcelPositionRecord } from "@/lib/shi/parcel-position";
 import type { ParcelPositionProfile } from "@/lib/shi/parcel-position-profile";
 import type { ParcelPositionContext } from "@/lib/shi/parcel-position-context";
-import {
-  pickFromCandidates,
-  type LookCandidate,
-  type PositionObjective,
+import type {
+  LookCandidate,
+  PositionObjective,
 } from "@/lib/shi/parcel-position-objective";
 import type { RankedSite } from "@/lib/shi/corridor-exposure";
 import {
@@ -102,15 +102,12 @@ import {
   type ResearchModeChip,
   type ResearchModeId,
 } from "@/lib/shi/research-modes";
-import {
-  modeReviewFromRankedFacts,
-  type ModeReviewResult,
-} from "@/lib/shi/research-mode-reason";
+import type { ModeReviewResult } from "@/lib/shi/research-mode-reason";
 import type { MultifamilyRead } from "@/lib/shi/multifamily-read";
 import type { MultifamilyReviewResult } from "@/lib/shi/multifamily-review";
 import {
-  comparePropertySites,
   toggleCompareSite,
+  type PropertyCompareResult,
 } from "@/lib/shi/corridor-property-compare";
 import type { CorridorParcelPick } from "@/lib/shi/corridor-parcel-traffic";
 import { formatShiVaultError } from "@/lib/shi/vault-errors";
@@ -223,6 +220,8 @@ export function PropertyIntelligenceView({
   const [strongestLoading, setStrongestLoading] = useState(false);
   const [strongestNote, setStrongestNote] = useState("");
   const [comparePicks, setComparePicks] = useState<CorridorParcelPick[]>([]);
+  const [propertyCompare, setPropertyCompare] =
+    useState<PropertyCompareResult | null>(null);
   const [compareIntelById, setCompareIntelById] = useState<
     Record<string, ParcelLocationIntel | null>
   >({});
@@ -773,13 +772,7 @@ export function PropertyIntelligenceView({
           });
           if (analyzeGenRef.current !== requestId) return;
           setLookCandidates(look.candidates ?? []);
-          setWorthALook(
-            look.candidates?.length
-              ? pickFromCandidates(look.candidates, {
-                  objective: lookObjectiveRef.current,
-                })
-              : look.worthALook,
-          );
+          setWorthALook(look.worthALook);
         } catch {
           if (analyzeGenRef.current !== requestId) return;
           setWorthALook(null);
@@ -1274,17 +1267,30 @@ export function PropertyIntelligenceView({
     void ensureAccessStations();
   }, [selected?.propId, launchFips, ensureAccessStations, selected]);
 
-  const propertyCompare = useMemo(() => {
-    if (comparePicks.length < 2) return null;
-    return comparePropertySites(
-      comparePicks.map((pick) => ({
+  useEffect(() => {
+    if (comparePicks.length < 2) {
+      setPropertyCompare(null);
+      return;
+    }
+    let cancelled = false;
+    void shiResearchCompareSites({
+      sites: comparePicks.map((pick) => ({
         pick,
         intel: compareIntelById[pick.propId] ?? null,
         position: comparePositionById[pick.propId] ?? null,
       })),
-      accessStations,
-      researchMode,
-    );
+      stations: accessStations,
+      mode: researchMode,
+    })
+      .then((body) => {
+        if (!cancelled) setPropertyCompare(body.compare);
+      })
+      .catch(() => {
+        if (!cancelled) setPropertyCompare(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [comparePicks, compareIntelById, comparePositionById, accessStations, researchMode]);
 
   const runAsk = useCallback(
@@ -1307,26 +1313,30 @@ export function PropertyIntelligenceView({
               geojson: null,
             }
           : null;
-      const answer = answerCorridorAsk(q, {
-        countyName:
-          selected?.countyName ||
-          AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ||
-          "County",
-        stations: accessStations,
-        watchAreas: [],
-        selectedParcel: pick,
-        selectedStation: null,
-        parcelIntel: accessIntel,
-        rankedSites,
-        hasAnalysisBoundary: Boolean(activeFrame?.boundary),
-        compareCount: comparePicks.length,
-        flood: floodFact,
-        utilities: utilitiesFact,
-        environment: environmentDesk,
+      void shiCorridorsAsk({
+        q,
+        context: {
+          countyName:
+            selected?.countyName ||
+            AVAILABLE_COUNTIES.find((c) => c.source === source)?.name ||
+            "County",
+          stations: accessStations,
+          watchAreas: [],
+          selectedParcel: pick,
+          selectedStation: null,
+          parcelIntel: accessIntel,
+          rankedSites,
+          hasAnalysisBoundary: Boolean(activeFrame?.boundary),
+          compareCount: comparePicks.length,
+          flood: floodFact,
+          utilities: utilitiesFact,
+          environment: environmentDesk,
+        },
+      }).then(({ answer }) => {
+        setAskAnswer(answer);
+        if (answer.hint === "run_strongest") setAccessDeskTab("sites");
+        if (answer.hint === "open_compare") setAccessDeskTab("compare");
       });
-      setAskAnswer(answer);
-      if (answer.hint === "run_strongest") setAccessDeskTab("sites");
-      if (answer.hint === "open_compare") setAccessDeskTab("compare");
     },
     [
       ensureAccessStations,
@@ -1364,7 +1374,9 @@ export function PropertyIntelligenceView({
       const sites = body.sites.length
         ? await shiAttachPositionToRankedSites(body.sites, launchFips)
         : body.sites;
-      const review = modeReviewFromRankedFacts(researchMode, sites, {
+      const { review } = await shiResearchModeReview({
+        mode: researchMode,
+        sites,
         parcelCount: body.parcelCount,
         totalAcres: activeFrame.analysis?.totalAcres ?? null,
         medianAcres: activeFrame.analysis?.medianAcres ?? null,
@@ -1492,19 +1504,30 @@ export function PropertyIntelligenceView({
 
   useEffect(() => {
     if (rankedSites.length === 0) return;
-    const review = modeReviewFromRankedFacts(researchMode, rankedSites, {
+    let cancelled = false;
+    void shiResearchModeReview({
+      mode: researchMode,
+      sites: rankedSites,
       parcelCount: analysis?.parcelCount,
       totalAcres: analysis?.totalAcres ?? null,
       medianAcres: analysis?.medianAcres ?? null,
+    }).then(({ review }) => {
+      if (cancelled) return;
+      const ordered = review.items
+        .map((item) => rankedSites.find((s) => s.propId === item.propId))
+        .filter((s): s is RankedSite => Boolean(s));
+      setModeReview(review);
+      if (researchMode !== "multifamily") setMfReview(null);
+      if (
+        ordered.length &&
+        ordered.map((s) => s.propId).join() !== rankedSites.map((s) => s.propId).join()
+      ) {
+        setRankedSites(ordered);
+      }
     });
-    const ordered = review.items
-      .map((item) => rankedSites.find((s) => s.propId === item.propId))
-      .filter((s): s is RankedSite => Boolean(s));
-    setModeReview(review);
-    if (researchMode !== "multifamily") setMfReview(null);
-    if (ordered.length && ordered.map((s) => s.propId).join() !== rankedSites.map((s) => s.propId).join()) {
-      setRankedSites(ordered);
-    }
+    return () => {
+      cancelled = true;
+    };
   }, [researchMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onModeChip = useCallback(
@@ -2343,9 +2366,10 @@ export function PropertyIntelligenceView({
         onLookObjective={(next) => {
           setLookObjective(next);
           if (lookCandidates.length > 0) {
-            setWorthALook(
-              pickFromCandidates(lookCandidates, { objective: next }),
-            );
+            void shiResearchPick({
+              candidates: lookCandidates,
+              objective: next,
+            }).then((body) => setWorthALook(body.worthALook));
           }
         }}
         onOpenProperty={(opts) => {
