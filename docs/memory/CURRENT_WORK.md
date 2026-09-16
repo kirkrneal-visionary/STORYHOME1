@@ -5,7 +5,8 @@
 
 ## In progress
 
-- Harden Wave 1: chrome selection (UX only, not security). Keep listing/address copy.
+- Harden Wave 2: Story Pro RPC authority. UI is not the gate. `county_parcels` stays open until Wave 4.
+- Harden Wave 1 chrome selection is on its own PR (UX only, not security).
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)

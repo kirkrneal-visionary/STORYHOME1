@@ -81,8 +81,8 @@ No webhook routes exist.
 | `seller_portal_by_code` | anon + auth | Code only | Brute force + analytics | Rate-limit wrapper; hash later |
 | `ensure_seller_access_code` | auth | Agent | OK | Keep |
 | `parcels_mvt` | anon + auth | Public | Owner scrape via tiles | WAF + cache |
-| `parcel_neighbors` | authenticated | Any login | Consumer bypass of SHI HTTP | Assert Pro inside RPC (follow-up) |
-| `corridor_parcel_frontage` / `corridor_parcel_intersection_distance` | authenticated | Any login | Same | Same |
+| `parcel_neighbors` | authenticated + service_role | Story Pro RPC (`0056`) | Consumer JWT is privilege denied | `assert_story_pro_rpc` |
+| `corridor_parcel_frontage` / `corridor_parcel_intersection_distance` | authenticated + service_role | Story Pro RPC (`0056`) | Same | Same |
 | `handle_new_user` | trigger | Signup metadata | Client can request agent/broker | Lock after insert (0039); signup still trusts metadata |
 | `county_boost_availability` | anon | Public | Low | OK |
 

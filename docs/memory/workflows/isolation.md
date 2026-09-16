@@ -14,6 +14,7 @@
 
 - RLS as written in `0002`, `0003`, `0023`, `0025`, `0026`, `0048`, `0051`
 - App gates: `requireStoryPro`, `mayUseStoryPro`, `decideReadiness`
+- Neighbor / frontage RPCs: `assert_story_pro_rpc` (`0056`). `decideStoryProRpc` mirrors that rule.
 
 ## Durable changes
 

@@ -64,7 +64,15 @@ const report = runWave2Harness();
 assert.equal(report.liveRefused, true);
 assert.equal(report.cleanup.remainingWave2Rows, 0);
 assert.equal(report.passed, true, JSON.stringify(report.cases.filter((c) => !c.pass), null, 2));
-assert.ok(report.cases.length >= 16);
+assert.ok(report.cases.length >= 21);
+const rpcCases = report.cases.filter((c) => c.name.includes("RPC"));
+assert.ok(rpcCases.length >= 5);
+assert.equal(rpcCases.every((c) => c.pass), true);
+
+const authorityMig = read("supabase/migrations/0056_story_pro_rpc_authority.sql");
+assert.match(authorityMig, /assert_story_pro_rpc/);
+assert.match(authorityMig, /may_use_story_pro/);
+assert.doesNotMatch(authorityMig, /alter table public\.county_parcels/i);
 
 assert.equal(mayUseStoryPro("managing_broker", "broker"), true);
 assert.equal(mayUseStoryPro("consumer", "consumer"), false);
@@ -119,6 +127,10 @@ assert.match(guard, /refuses the live Story Home database/);
 const harness = read("scripts/wave-2-isolation-harness.ts");
 assert.doesNotMatch(harness, /from\("county_parcels"\)\.insert/);
 assert.match(harness, /cleanupWave2/);
+assert.match(harness, /decideStoryProRpc/);
+
+const rpcAuth = read("src/lib/account/rpc-authority.ts");
+assert.match(rpcAuth, /Overlay fields never change the result/);
 
 const fixture = read("scripts/wave-2-fixture.sql");
 assert.match(fixture, /Do not paste this into the live Story Home SQL editor/);
