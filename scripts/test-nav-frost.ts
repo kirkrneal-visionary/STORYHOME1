@@ -15,6 +15,11 @@ assert.match(css, /--dock-glass-bg:/);
 assert.match(css, /--dock-glass-blur:\s*32px/);
 assert.match(css, /--dock-glass-saturate:/);
 assert.match(css, /--dock-rim:/);
+assert.match(css, /--dock-plate:/);
+assert.match(
+  css,
+  /\.story-bottom-dock\.story-glass-nav::after\s*\{[\s\S]*?var\(--dock-plate\)/,
+);
 assert.match(
   css,
   /\.story-bottom-dock\.story-glass-nav\s*\{[\s\S]*?border:\s*none/,
@@ -35,6 +40,8 @@ assert.match(css, /prefers-reduced-transparency[\s\S]*story-bottom-dock\.story-g
 assert.match(css, /never a solid black header band/);
 assert.match(css, /Not the header/);
 assert.doesNotMatch(css, /--dock-glass-border/);
+assert.match(css, /transform kills backdrop frost on desktop/);
+assert.doesNotMatch(css, /translateX\(-50%\)/);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /story-bottom-dock/);

@@ -12,7 +12,9 @@ const read = (rel) => readFileSync(join(root, rel), "utf8");
 const css = read("src/app/globals.css");
 assert.match(css, /\.story-glass-nav/);
 assert.match(css, /\.story-bottom-dock/);
-assert.match(css, /@media \(min-width:\s*768px\)[\s\S]*?\.story-bottom-dock[\s\S]*?translateX\(-50%\)/);
+assert.match(css, /@media \(min-width:\s*768px\)[\s\S]*?\.story-bottom-dock[\s\S]*?margin-inline:\s*auto/);
+assert.match(css, /@media \(min-width:\s*768px\)[\s\S]*?\.story-bottom-dock[\s\S]*?transform:\s*none/);
+assert.doesNotMatch(css, /translateX\(-50%\)/);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /data-story-bottom-dock/);
