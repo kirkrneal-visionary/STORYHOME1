@@ -12,6 +12,7 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Research → Study Vault → reopen | [workflows/farms-and-vault.md](./workflows/farms-and-vault.md) |
 | Consumer My Home | [workflows/my-home.md](./workflows/my-home.md) |
 | CAD ingest and observation | [workflows/cad-observation.md](./workflows/cad-observation.md) |
+| Isolation (your stuff is yours) | [workflows/isolation.md](./workflows/isolation.md) |
 
 ## Inventoried, not equally deep
 

@@ -41,7 +41,8 @@
 ## Tests / evidence
 
 - **Tested (isolated):** `scripts/test-portal-server-gate.ts`, `test-login-signup-separate.ts`, `test-sign-out-everywhere-detect.ts`, `test-forced-logout-server.ts`, `test-office-keep-story-pro.ts`, `test-settings-pro-auth.ts`, `test-settings-buyer-preview.ts`, `test-settings-db-locks.ts`, `test-signup-account-lock.ts`
-- **Not tested here:** live two-account isolation against production
+- **Wave 2:** disposable two-login isolation harness (`test-wave-2-isolation`). Live production is refused.
+- **Not tested here:** hosted spare Supabase JWTs against a second project
 - **Business reason:** Founder required Story Pro before settings cards and office to keep Pro. **Unknown:** original signup copy rationale beyond “do not share typed secrets.”
 
 ## Discrepancy

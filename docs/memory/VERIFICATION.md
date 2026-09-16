@@ -19,9 +19,9 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 1. `scripts/test-project-memory.ts` — rules/docs present; protected strings still in code
 2. `scripts/test-workflow-contracts.ts` — high-risk workflow contracts vs code
-3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`, `test-dock-jump`, `test-map-dock-clear`, `test-home-footer`, `test-footer-wave-1`, `test-footer-wave-2`, `test-footer-wave-3`, `test-wave-1-mls`
+3. Existing: `test-portal-server-gate`, `test-settings-db-locks`, `test-vault-snap-save`, `test-farm-map-memory`, `test-nav-touch`, `test-nav-header`, `test-nav-bubble`, `test-market-canvas`, `test-market-edges`, `test-nav-frost`, `test-dock-jump`, `test-map-dock-clear`, `test-home-footer`, `test-footer-wave-1`, `test-footer-wave-2`, `test-footer-wave-3`, `test-wave-1-mls`, `test-wave-2-isolation`
 
-These are **isolated**. They are not production HTTP tests and not two-user database tests.
+These are **isolated**. They do not write production. Wave 2 runs two disposable logins against an in-memory store that mirrors owner/broker RLS and refuses the live project.
 
 ## Priority claims vs evidence
 
@@ -30,7 +30,7 @@ These are **isolated**. They are not production HTTP tests and not two-user data
 | Consumer cannot use portal page helper | `portalPageAccess` unit test **ran** |
 | Buyer preview does not unlock DB writes | `canEditStoryProSettings` unit test **ran** |
 | LngLat errors hidden; Save ≠ Open Vault | source + formatter test **ran** |
-| One user cannot read another user’s farms | RLS **intended** (`agent_id = auth.uid()`). **Not** executed on a database here |
+| One user cannot read another user’s farms | Wave 2 harness **ran** (Pro B / Office M empty on Pro A’s farm). Hosted spare Supabase still optional |
 | Save retrievable after new session | Contract + code path. **Not** a live session test |
 | Snap failure keeps study | `studies.ts` no longer deletes frame on upload fail — **source-tested** |
 | Duplicate farm names | **Observed** allowed. Not blocked |

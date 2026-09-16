@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Pre-launch Wave 1: remove fake “Scan MLS for sold” (this branch). Manual listing status stays.
+- Pre-launch Wave 2: isolation harness (this branch). Live database is refused. Manual listing status stays from Wave 1.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)
@@ -23,7 +23,7 @@
 - Montgomery CAD not ingested
 - Suites are device-local `localStorage`, not a server save
 - `docs/SITE-SYSTEM-MAP-FOR-CHATGPT.md` still says pages are not middleware-gated (stale)
-- Two-user RLS isolation against a disposable database is **not** automated here
+- Two-user RLS isolation against a **hosted** spare Supabase is not run here. Wave 2 proves the same owner/broker rules on a disposable in-memory store and refuses the live project.
 - Study Vault card photo on a new production save is still **unverified**
 - Menu tap repair founder-confirmed GOOD on a physical iPhone 2026-09-15. Live with Waves 1–6.
 

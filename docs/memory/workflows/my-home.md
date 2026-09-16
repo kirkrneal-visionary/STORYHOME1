@@ -33,5 +33,5 @@
 
 ## Tests
 
-- **Missing:** isolated two-user home isolation test against a disposable database. RLS is **intended** owner-only; **not demonstrated** in this install.
+- **Wave 2:** Homeowner B cannot read Homeowner A’s home or file row (`test-wave-2-isolation`). Hosted spare Supabase still optional.
 - **Business reason:** unknown beyond “consumer vault.”

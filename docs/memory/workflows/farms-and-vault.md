@@ -23,7 +23,7 @@
 - **Snap failure:** farm must still save (PR 193)
 - **Retry / duplicate:** creating again makes another farm (no unique name). **Observed.**
 - **Refresh:** list reload; old farms without a file show Photo pending — **defect for old rows, not a missing RLS paste**
-- **Tests:** `scripts/test-farm-map-memory.ts`, `test-shi-farms.mjs`, `test-vault-snap-save.ts` (snap must not cancel save)
+- **Tests:** `scripts/test-farm-map-memory.ts`, `test-shi-farms.mjs`, `test-vault-snap-save.ts` (snap must not cancel save), `test-wave-2-isolation.ts` (Pro B / office cannot read Pro A’s farm)
 - **Unverified:** live JPEG appearing after a founder save on eqmg
 
 ## Save Vault

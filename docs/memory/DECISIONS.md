@@ -16,5 +16,6 @@ Only material product/architecture choices. Not a transcript.
 | Standing | No billing provider | Not built | rundown / constitution |
 | 2026-09-15 | Menu tap repair before any bubble restyle | Misses were dead glass between dock pills + undersized chrome, not hosting | Founder work order |
 | Standing | Corridors finished inside Research Access | Do not rebuild | Founder directive in this charter |
+| 2026-09-16 | Wave 2 isolation never uses the live Supabase project | Labs/demo cannot take synthetic writes; live customers stay untouched | Pre-launch plan Wave 2 |
 
 If a new change alters one of these, add a row and update the workflow contract.
