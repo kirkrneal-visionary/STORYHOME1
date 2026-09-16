@@ -6,6 +6,7 @@
 ## In progress
 
 - Navigation Waves 1–6 founder-confirmed GOOD and merged to live 2026-09-15 (PRs 196–201). Live target: https://storyhome-1-eqmg.vercel.app
+- Footer dark + Waves 1–3 founder-confirmed GOOD and merged to live 2026-09-16 (PRs 206–209). Live target: https://storyhome-1-eqmg.vercel.app
 
 ## Just shipped (do not rewind)
 
@@ -37,5 +38,5 @@
 
 ## Next concrete action
 
-1. Footer Waves 1–3 founder GOOD on the test link 2026-09-16 (PRs 207–209, stacked on home-footer-dark #206). Leave on test until MERGE. Do not invent a broker name or IABS. Do not restyle the header or dock.
+1. Footer Waves 1–3 are live. Do not invent a broker name or IABS. Do not restyle the header or dock.
 2. Do not rename the `verify` job — that would drop the merge lock.
