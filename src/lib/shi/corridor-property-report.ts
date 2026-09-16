@@ -163,7 +163,7 @@ ${evidenceLegendHtml()}
 
 <h2>What the numbers mean for this land</h2>
 <p>${escapeHtml(
-    assoc.kind === "estimated"
+    assoc?.kind === "estimated"
       ? assoc.detail
       : "Published traffic near this parcel is limited — use as directional context only.",
   )}</p>
