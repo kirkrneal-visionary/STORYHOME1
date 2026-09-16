@@ -1956,12 +1956,13 @@ function ParcelSitePanel({
           className="mt-2 font-mono text-[10px] font-semibold tracking-wide uppercase text-ink"
           data-parcel-traffic-kind
         >
-          {assoc.kind === "estimated"
+          {assoc?.kind === "estimated"
             ? `${assoc.label} · ${assoc.confidence} confidence`
-            : assoc.label}
+            : assoc?.label ?? (intelLoading ? "…" : "—")}
         </p>
         <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
-          {assoc.detail}
+          {assoc?.detail ??
+            (intelLoading ? "Reading published counts…" : "")}
         </p>
         {summary.intensity || summary.status ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
