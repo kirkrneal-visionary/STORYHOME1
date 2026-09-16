@@ -29,6 +29,7 @@ const required = [
   "docs/memory/workflows/my-home.md",
   "docs/memory/workflows/cad-observation.md",
   "docs/memory/workflows/navigation.md",
+  "docs/memory/workflows/isolation.md",
   "docs/memory/NAV-WAVES.md",
   "src/lib/navigation/nav-active.ts",
   "AGENTS.md",
