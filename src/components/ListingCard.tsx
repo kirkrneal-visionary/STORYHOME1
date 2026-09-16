@@ -110,7 +110,7 @@ export function ListingCard({
           </button>
         </div>
 
-        <div className={cn("mt-3", dense ? "px-3 pb-3" : "mt-4")}>
+        <div className={cn("story-copy mt-3", dense ? "px-3 pb-3" : "mt-4")}>
           <h3 className="type-card-title text-ink">
             {listing.addressSerif}
           </h3>
@@ -146,7 +146,7 @@ export function ListingCard({
           >
             {agent.initials}
           </div>
-          <div className="min-w-0">
+          <div className="story-copy min-w-0">
             <h4 className="truncate text-sm font-semibold text-ink">
               {agent.fullName}
             </h4>
