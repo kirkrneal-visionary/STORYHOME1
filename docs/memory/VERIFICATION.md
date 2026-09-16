@@ -23,6 +23,8 @@ Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain 
 
 These are **isolated**. They are not production HTTP tests and not two-user database tests.
 
+**Pre-launch proof plan:** `docs/memory/PRELAUNCH-ENGINEERING-PLAN.md`. Wave 2 is the first place two JWTs run. Labs inbox and demo mode are **not** that place.
+
 ## Priority claims vs evidence
 
 | Claim | Evidence |

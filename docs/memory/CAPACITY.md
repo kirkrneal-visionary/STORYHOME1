@@ -23,3 +23,5 @@ These are **not** simultaneous users. They are **not** “everyone runs Archie a
 ## Rule
 
 Do not recommend a rewrite, new region, or paid cluster **because** of line count or the 10M/100k targets. Reuse tile caching. Never cache private SHI payloads as public.
+
+Staged isolated load (20 → 100 → 1,000 scripted actives) is **Wave 6** in `PRELAUNCH-ENGINEERING-PLAN.md`, after correctness. Not a production load test.

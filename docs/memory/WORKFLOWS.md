@@ -12,13 +12,14 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Research → Study Vault → reopen | [workflows/farms-and-vault.md](./workflows/farms-and-vault.md) |
 | Consumer My Home | [workflows/my-home.md](./workflows/my-home.md) |
 | CAD ingest and observation | [workflows/cad-observation.md](./workflows/cad-observation.md) |
+| Suites albums | [workflows/suites.md](./workflows/suites.md) |
 
 ## Inventoried, not equally deep
 
 | Area | Notes |
 |---|---|
 | Marketplace browse / inquire | Public listings. Inquire writes `inquiries`. |
-| Suites | **Observed:** browser `localStorage` (`SUITES_STORAGE_KEY`). Not a server vault. |
+| Suites | **Intended:** account albums. **Observed:** `localStorage`. Contract: [workflows/suites.md](./workflows/suites.md). Plan: Wave 4 in `PRELAUNCH-ENGINEERING-PLAN.md`. |
 | Seller passcode portal | HMAC passcode; no Archie. |
 | Office roster / invites | Managing broker only (`mayManageBrokerage`). |
 | Prospects | Pro-only; references CAD; does not write CAD. |

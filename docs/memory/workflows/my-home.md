@@ -28,7 +28,7 @@
 
 ## Related
 
-- Suites are **observed** as `localStorage` (`src/lib/suites.ts`). That is not My Home and is not durable across devices.
+- Suites are a different product (`workflows/suites.md`). They are still local today; account persistence is Wave 4 of the pre-launch plan. Not My Home.
 - Listing inquire is a different write (`inquiries`).
 
 ## Tests

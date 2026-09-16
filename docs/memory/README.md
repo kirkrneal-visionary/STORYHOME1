@@ -11,6 +11,7 @@ Short, maintained documents for future sessions. Older briefs in `docs/` still e
 | [CURRENT_WORK.md](./CURRENT_WORK.md) | What is in flight and known defects |
 | [VERIFICATION.md](./VERIFICATION.md) | What checks run, what they prove |
 | [CAPACITY.md](./CAPACITY.md) | Traffic targets vs unknowns |
+| [PRELAUNCH-ENGINEERING-PLAN.md](./PRELAUNCH-ENGINEERING-PLAN.md) | **Authoritative** 6-wave pre-launch correction plan |
 | [RECONCILIATION.md](./RECONCILIATION.md) | How AGENTS.md and Cursor rules fit together |
 
 Do not copy secrets, customer records, or production logs here.
