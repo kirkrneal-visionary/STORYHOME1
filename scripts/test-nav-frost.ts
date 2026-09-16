@@ -35,6 +35,8 @@ assert.match(css, /prefers-reduced-transparency[\s\S]*story-bottom-dock\.story-g
 assert.match(css, /never a solid black header band/);
 assert.match(css, /Not the header/);
 assert.doesNotMatch(css, /--dock-glass-border/);
+assert.match(css, /transform kills backdrop frost on desktop/);
+assert.doesNotMatch(css, /translateX\(-50%\)/);
 
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /story-bottom-dock/);

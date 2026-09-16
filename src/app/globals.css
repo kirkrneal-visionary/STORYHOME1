@@ -848,11 +848,13 @@ html[data-role="professional"] {
   padding-inline: 0.35rem;
 }
 @media (min-width: 768px) {
+  /* Center without transform — transform kills backdrop frost on desktop. */
   .story-bottom-dock {
-    left: 50%;
-    right: auto;
+    left: 0;
+    right: 0;
     width: min(32rem, calc(100vw - 2.5rem));
-    transform: translateX(-50%);
+    margin-inline: auto;
+    transform: none;
     bottom: max(1.1rem, var(--story-vv-bottom, 0px));
   }
 }

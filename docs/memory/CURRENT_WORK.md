@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Founder pull-to-refresh live site to confirm Waves 1–6. Do not start a new visual wave unless asked.
+1. Desktop frost: center the dock without transform so backdrop-filter works. Phone already good.
 2. Do not rename the `verify` job — that would drop the merge lock.
