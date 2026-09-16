@@ -1,42 +1,40 @@
 # Current work
 
-**Recorded:** 2026-09-15  
-**Base:** `origin/main` `80fb812` (PR 194 merged)
+**Recorded:** 2026-09-16  
+**Base:** `origin/main` `ecd47c8`
 
 ## In progress
 
-- Navigation Waves 1–6 founder-confirmed GOOD and merged to live 2026-09-15 (PRs 196–201). Live target: https://storyhome-1-eqmg.vercel.app
-- Footer dark + Waves 1–3 founder-confirmed GOOD and merged to live 2026-09-16 (PRs 206–209). Live target: https://storyhome-1-eqmg.vercel.app
+- **Pre-launch engineering plan** — `docs/memory/PRELAUNCH-ENGINEERING-PLAN.md` (6 waves). Planning only; no implementation in the planning assignment.
+- Public live: https://www.storyhome.app. Ship check: Vercel `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)
 
-- PR 192 — farm map photo + Open on map (live). Old farms show Photo pending until saved again.
-- PR 193 — hide LngLat errors; snap failure keeps the save; Save stays on the map (live)
-- PR 194 — Cursor rules + project memory + isolated `test:project-memory`
-- Founder save on eqmg 2026-09-15: new farm shows a map photo, not Photo pending
-- PR 197 Wave 2 — active tabs + viewport dock. Solid header reverted.
+- Navigation Waves 1–6 and footer Waves 1–3 (founder GOOD).
+- PR 185 — office keeps Story Pro / Archie (do not reverse).
+- PR 192–194 — farm photo, snap-safe Vault, project memory.
 
 ## Open defects (do not treat as intended)
 
-- Old farms / empty Vault folders from failed snaps before PR 193 — need a **new** save to get a photo or a study row
-- Liberty + San Jacinto CAD last pull timed out (live `/api/cad/status` 2026-09-15); last good data remains
-- Montgomery CAD not ingested
-- Suites are device-local `localStorage`, not a server save
-- `docs/SITE-SYSTEM-MAP-FOR-CHATGPT.md` still says pages are not middleware-gated (stale)
-- Two-user RLS isolation against a disposable database is **not** automated here
-- Study Vault card photo on a new production save is still **unverified**
-- Menu tap repair founder-confirmed GOOD on a physical iPhone 2026-09-15. Live with Waves 1–6.
+- “Scan MLS for sold” writes a real `listings.status` (Wave 1)
+- Late Analyze can paint the previous drawing (Wave 3)
+- Suites are `localStorage`; account sync is required, not a device-only label (Wave 4)
+- Two-user RLS / save-relogin **not** proven (Wave 2)
+- Liberty / Angelina / San Jacinto CAD timeouts; last-good remains; Montgomery optional empty (Wave 5)
+- Old farms / empty Vault folders from pre-193 snaps
+- Study Vault new-save photo on production still unverified
+- August system map still says pages are not middleware-gated (stale)
 
 ## Do not do
 
-- Phase 4, company redesign, runtime AI orchestrator
-- Production reset / CAD wipe
-- Billing
-- People-copy between accounts
-- Rebuilding Corridors
-- Restyling the overlay header (founder rejected the solid band)
+- Remove Story Pro from the office login
+- Auto-assign every browser Suites album to the next login
+- Mass-revert Sold listings
+- Put Montgomery on the daily CAD key list
+- Phase 4, billing, people-copy, CAD wipe, header restyle, rename `verify`
 
 ## Next concrete action
 
-1. Footer Waves 1–3 are live. Do not invent a broker name or IABS. Do not restyle the header or dock.
-2. Do not rename the `verify` job — that would drop the merge lock.
+1. Review `PRELAUNCH-ENGINEERING-PLAN.md`.
+2. First implementation wave when approved: remove the MLS scan button (Wave 1).
+3. Do not rename the `verify` job.
