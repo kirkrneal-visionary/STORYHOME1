@@ -17,6 +17,6 @@ Before changing product behavior:
 
 **Talk to Kirk:** follow `AGENTS.md`. One job. Plain English. Never ask him to run npm.
 
-**Live site:** only https://storyhome-1-eqmg.vercel.app. Ignore red Vercel on plain `storyhome-1`. A PR is Ready when `Vercel – storyhome-1-eqmg` is green.
+**Live site:** https://www.storyhome.app. Ship check is `Vercel – storyhome-1-eqmg`. Ignore red Vercel on plain `storyhome-1`. A PR is Ready when eqmg is green.
 
 **Do not:** grant office from TREC; copy people between accounts; add billing; reset production; treat CAD as MLS or deeds; invent seller scores or history; collapse Farms and Study Vault; infer access from a tab or “View as buyer.”

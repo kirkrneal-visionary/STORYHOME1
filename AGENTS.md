@@ -6,9 +6,9 @@ Before changing product behavior, read `docs/memory/CURRENT_WORK.md` and the mat
 
 ## Live target
 
-- **Only** https://storyhome-1-eqmg.vercel.app  
-- **Ignore** red Vercel checks on plain `storyhome-1`  
-- A PR is **ready** when `Vercel – storyhome-1-eqmg` is green — mark Ready for review; do not leave it Draft because the other project is red
+- **Public live site:** https://www.storyhome.app (`storyhome.app` sends people there)
+- **Vercel project that ships it:** `storyhome-1-eqmg` — a PR is **ready** when `Vercel – storyhome-1-eqmg` is green
+- **Ignore** red Vercel checks on plain `storyhome-1`
 
 ## How to talk to the human operator (HARD RULE)
 

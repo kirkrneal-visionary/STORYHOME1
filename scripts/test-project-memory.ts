@@ -43,11 +43,14 @@ assert.match(core, /alwaysApply:\s*true/);
 assert.match(core, /docs\/memory\/CURRENT_WORK\.md/);
 assert.match(core, /AGENTS\.md/);
 assert.match(core, /storyhome-1-eqmg/);
+assert.match(core, /www\.storyhome\.app/);
 assert.match(core, /Do not invent a Phase 4/);
 
 const agents = read("AGENTS.md");
 assert.match(agents, /docs\/memory\//);
 assert.match(agents, /How to talk to the human operator/);
+assert.match(agents, /www\.storyhome\.app/);
+assert.match(agents, /storyhome-1-eqmg/);
 
 const overview = read("docs/memory/PROJECT_OVERVIEW.md");
 assert.match(overview, /\*\*Intended:\*\*/);

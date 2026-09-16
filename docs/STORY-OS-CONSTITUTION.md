@@ -3,7 +3,7 @@
 **Status:** Approved rules for all future UI, motion, features, backend, and security work.  
 **Scope:** Product operating system — not a page redesign.  
 **Brand:** Story Home (marketplace + agent OS). Intelligence brand: **Archie’s Intelligence** (never “SHI” in UI).  
-**Live app:** https://storyhome-1-eqmg.vercel.app  
+**Live app:** https://www.storyhome.app (ships from Vercel `storyhome-1-eqmg`)  
 
 Companion research: [`STORY-OS-COMPETITION.md`](./STORY-OS-COMPETITION.md)  
 Motion physics: [`MOTION.md`](./MOTION.md)
@@ -26,7 +26,7 @@ Story Home is one continuous East Texas housing environment: consumers browse an
 6. **Maps are sacred** — motion/UI never steal pan/draw/tiles.  
 7. **Story Glass sound is sacred** — original Web Audio synthesis, always on; do not strip, mute-by-default, or replace with stock SFX. See [`shi/STORY-GLASS-SOUND.md`](./shi/STORY-GLASS-SOUND.md).  
 8. **New features inherit Story OS** — no one-off chrome, motion, or auth patterns.  
-9. **Wrong deploy URL is a product bug** — ship/verify on `storyhome-1-eqmg` unless production alias is explicitly changed.
+9. **Wrong deploy URL is a product bug** — public live is `https://www.storyhome.app`. Ship/verify on Vercel `storyhome-1-eqmg`. Ignore plain `storyhome-1`.
 
 ---
 

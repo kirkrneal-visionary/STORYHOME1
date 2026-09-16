@@ -5,8 +5,9 @@
 
 ## In progress
 
-- Navigation Waves 1–6 founder-confirmed GOOD and merged to live 2026-09-15 (PRs 196–201). Live target: https://storyhome-1-eqmg.vercel.app
-- Footer dark + Waves 1–3 founder-confirmed GOOD and merged to live 2026-09-16 (PRs 206–209). Live target: https://storyhome-1-eqmg.vercel.app
+- Navigation Waves 1–6 founder-confirmed GOOD and merged to live 2026-09-15 (PRs 196–201). Public live: https://www.storyhome.app
+- Footer dark + Waves 1–3 founder-confirmed GOOD and merged to live 2026-09-16 (PRs 206–209). Public live: https://www.storyhome.app
+- Founder attached `www.storyhome.app` to live 2026-09-16 (no code). Apex `storyhome.app` redirects to www.
 
 ## Just shipped (do not rewind)
 
@@ -38,5 +39,5 @@
 
 ## Next concrete action
 
-1. Footer Waves 1–3 are live. Do not invent a broker name or IABS. Do not restyle the header or dock.
+1. Public live is https://www.storyhome.app. Do not invent a broker name or IABS. Do not restyle the header or dock.
 2. Do not rename the `verify` job — that would drop the merge lock.

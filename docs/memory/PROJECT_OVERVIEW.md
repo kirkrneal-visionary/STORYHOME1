@@ -2,8 +2,8 @@
 
 **Product:** Story Home — East Texas marketplace + Story Pro workspace. Intelligence brand: **Archie’s Intelligence**.
 
-**Live (canonical):** https://storyhome-1-eqmg.vercel.app  
-**Ignore:** red Vercel on plain `storyhome-1`.
+**Live (canonical):** https://www.storyhome.app  
+**Ship check:** Vercel `storyhome-1-eqmg`. Ignore red Vercel on plain `storyhome-1`.
 
 **Intended:** Two products in one app. Consumers browse and keep a home. Story Pro researches county tax-roll truth and watches territories. Archie is Pro only.
 
