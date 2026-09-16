@@ -21,7 +21,7 @@ assert.match(footer, /story-footer-trec/);
 assert.match(footer, /Privacy Policy/);
 assert.match(footer, /Terms of Use/);
 assert.match(footer, /Accessibility Statement/);
-assert.match(footer, /Full housing statement/);
+assert.match(footer, /Equal Housing Opportunity/);
 assert.match(footer, /href="\/fair-housing"/);
 assert.match(footer, /\[Pending\]/);
 assert.match(footer, /blank form — placeholder/);

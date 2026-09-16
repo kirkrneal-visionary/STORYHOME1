@@ -163,16 +163,13 @@ export default function Footer() {
           />
         </div>
 
-        <div className="mt-6 flex items-start gap-2 text-paper">
+        <Link
+          href="/fair-housing"
+          className="story-footer-housing mt-6 inline-flex min-h-11 items-center gap-2 text-paper hover:text-gold"
+        >
           <EqualHousingLogo />
-          <p className="text-sm leading-relaxed text-paper/70">
-            Equal Housing Opportunity.{" "}
-            <Link href="/fair-housing" className="text-gold hover:underline">
-              Full housing statement
-            </Link>
-            .
-          </p>
-        </div>
+          <span>Equal Housing Opportunity</span>
+        </Link>
 
         <div className="mt-5 flex flex-col gap-1">
           <a

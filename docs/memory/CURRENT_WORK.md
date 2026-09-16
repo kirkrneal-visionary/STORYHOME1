@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Footer Wave 2: compact row + Explore. TREC stays 16px in the open. Do not restyle the header or dock.
+1. Footer Wave 3: Fair Housing essay on /fair-housing. Footer keeps the Equal Housing mark. TREC stays 16px in the open. Do not restyle the header or dock.
 2. Do not rename the `verify` job — that would drop the merge lock.
