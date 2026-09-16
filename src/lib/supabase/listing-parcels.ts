@@ -1,7 +1,10 @@
 "use client";
 
 import { getBrowserSupabase } from "@/lib/supabase/client";
-import { fetchParcelsByPropIdsAny } from "@/lib/supabase/parcels";
+import {
+  fetchParcelsByPropIdsAny,
+  type CountyParcel,
+} from "@/lib/supabase/parcels";
 
 /**
  * A CAD tract linked to a listing. `source`/`propId`/`countyFips`/`isPrimary`
@@ -26,6 +29,30 @@ export type LinkedParcel = {
   ingestedAt: string | null;
   propertyCategory: "real" | "personal" | null;
 };
+
+export function linkedFromCountyParcel(
+  p: CountyParcel,
+  isPrimary: boolean,
+): LinkedParcel {
+  return {
+    source: p.source,
+    propId: p.propId,
+    countyFips: p.countyFips,
+    isPrimary,
+    situsAddress: p.situsAddress,
+    situsCity: p.situsCity,
+    situsZip: p.situsZip,
+    legalAcreage: p.legalAcreage,
+    improvementValue: p.improvementValue,
+    legalDescription: p.legalDescription,
+    mhSerialNumber: p.mhSerialNumber,
+    mhHudLabel: p.mhHudLabel,
+    detailLevel: p.detailLevel,
+    needsAgentDetail: p.needsAgentDetail,
+    ingestedAt: p.ingestedAt,
+    propertyCategory: p.propertyCategory,
+  };
+}
 
 function client() {
   const s = getBrowserSupabase();

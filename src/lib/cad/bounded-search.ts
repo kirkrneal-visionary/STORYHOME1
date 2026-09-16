@@ -1,12 +1,22 @@
 import type { CadSearchField } from "@/lib/cad-layers";
+import {
+  CAD_SEARCH_MIN_CHARS,
+  isSequentialNumericIdBatch,
+} from "@/lib/cad/public-access";
+import { CAD_LOOKUP_SELECT, CAD_SEARCH_SELECT } from "@/lib/cad/search-shape";
 import { requireCadService } from "@/lib/cad/service";
 import type { CountyParcel, ParcelValue } from "@/lib/supabase/parcels";
 
 export const CAD_SEARCH_MAX = 30;
-export const CAD_LOOKUP_MAX = 40;
+export const CAD_LOOKUP_MAX = 12;
 
-const SELECT =
-  "id, source, county_fips, prop_id, geo_id, cad_owner_id, owner_name, situs_address, situs_city, situs_state, situs_zip, legal_description, tract_or_lot, abstract_subdivision_code, legal_acreage, land_value, improvement_value, market_value, tax_year, school_code, property_category, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, geojson, centroid_lat, centroid_lng, source_url";
+export class CadLookupRejectedError extends Error {
+  readonly status = 400;
+  constructor(message: string) {
+    super(message);
+    this.name = "CadLookupRejectedError";
+  }
+}
 
 function toParcel(r: Record<string, unknown>): CountyParcel {
   return {
@@ -82,11 +92,11 @@ export async function boundedCadSearch(opts: {
   limit?: number;
 }): Promise<CountyParcel[]> {
   const q = opts.query.trim();
-  if (!q) return [];
+  if (q.length < CAD_SEARCH_MIN_CHARS) return [];
   const sb = requireCadService();
   const field: CadSearchField = opts.field ?? "all";
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), CAD_SEARCH_MAX);
-  let req = sb.from("county_parcels").select(SELECT);
+  let req = sb.from("county_parcels").select(CAD_SEARCH_SELECT);
   if (opts.source) req = req.eq("source", opts.source);
 
   const like = `%${q}%`;
@@ -158,8 +168,11 @@ export async function boundedCadLookup(opts: {
     .slice(0, CAD_LOOKUP_MAX);
   const single = (opts.propId ?? "").trim();
   if (ids.length === 0 && !single) return [];
+  if (ids.length >= 4 && isSequentialNumericIdBatch(ids)) {
+    throw new CadLookupRejectedError("Lookup batch looks like an ID walk");
+  }
 
-  let req = sb.from("county_parcels").select(SELECT);
+  let req = sb.from("county_parcels").select(CAD_LOOKUP_SELECT);
   if (opts.source) req = req.eq("source", opts.source);
   if (opts.countyFips) req = req.eq("county_fips", opts.countyFips);
   if (ids.length > 0) req = req.in("prop_id", ids);
@@ -181,7 +194,7 @@ export async function boundedCadAddressMatch(opts: {
   const streetKeyword = m?.[2]?.match(/[A-Za-z]+/)?.[0] ?? null;
   if (!num || !streetKeyword) return [];
   const sb = requireCadService();
-  let req = sb.from("county_parcels").select(SELECT).eq("situs_num", num);
+  let req = sb.from("county_parcels").select(CAD_LOOKUP_SELECT).eq("situs_num", num);
   const zip = (opts.zip ?? "").trim();
   if (zip) req = req.eq("situs_zip", zip);
   const { data, error } = await req

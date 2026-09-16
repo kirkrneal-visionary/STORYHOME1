@@ -27,6 +27,7 @@ import {
 import {
   AVAILABLE_COUNTIES,
   cadFreshnessLabel,
+  hydrateParcel,
   searchParcels,
   searchParcelsStatewide,
   type CountyParcel,
@@ -37,6 +38,7 @@ import {
   type CadSearchField,
 } from "@/lib/cad-layers";
 import {
+  linkedFromCountyParcel,
   summarizeTracts,
   type LinkedParcel,
 } from "@/lib/supabase/listing-parcels";
@@ -659,8 +661,14 @@ function TractManager({
         ? await searchParcels(countyFilter, query, searchField)
         : await searchParcelsStatewide(query, searchField);
       setResults(next);
-      // Auto pin-drop the best match as soon as CAD returns results.
-      onPreview?.(next[0] ?? null);
+      // Slim search has centroid only. Lookup the first hit for lot outline.
+      if (next[0]) {
+        onPreview?.(next[0]);
+        const full = await hydrateParcel(next[0]);
+        onPreview?.(full);
+      } else {
+        onPreview?.(null);
+      }
     } catch {
       setResults([]);
       onPreview?.(null);
@@ -669,26 +677,10 @@ function TractManager({
     }
   }
 
-  function addTract(p: CountyParcel) {
+  async function addTract(p: CountyParcel) {
     if (tracts.some((t) => t.source === p.source && t.propId === p.propId)) return;
-    const linked: LinkedParcel = {
-      source: p.source,
-      propId: p.propId,
-      countyFips: p.countyFips,
-      isPrimary: tracts.length === 0,
-      situsAddress: p.situsAddress,
-      situsCity: p.situsCity,
-      situsZip: p.situsZip,
-      legalAcreage: p.legalAcreage,
-      improvementValue: p.improvementValue,
-      legalDescription: p.legalDescription,
-      mhSerialNumber: p.mhSerialNumber,
-      mhHudLabel: p.mhHudLabel,
-      detailLevel: p.detailLevel,
-      needsAgentDetail: p.needsAgentDetail,
-      ingestedAt: p.ingestedAt,
-      propertyCategory: p.propertyCategory,
-    };
+    const full = await hydrateParcel(p);
+    const linked = linkedFromCountyParcel(full, tracts.length === 0);
     onChange([...tracts, linked]);
     onPreview?.(null);
     setResults([]);
@@ -795,8 +787,14 @@ function TractManager({
             return (
               <li
                 key={`${p.source}-${p.propId}`}
-                onMouseEnter={() => onPreview?.(p)}
-                onFocus={() => onPreview?.(p)}
+                onMouseEnter={() => {
+                  onPreview?.(p);
+                  void hydrateParcel(p).then((full) => onPreview?.(full));
+                }}
+                onFocus={() => {
+                  onPreview?.(p);
+                  void hydrateParcel(p).then((full) => onPreview?.(full));
+                }}
                 className="flex items-center justify-between gap-3 story-well p-2.5"
               >
                 <div className="min-w-0">

@@ -371,7 +371,16 @@ export async function fetchParcelValues(
   return Array.isArray(body.values) ? (body.values as ParcelValue[]) : [];
 }
 
-const LOOKUP_CHUNK = 40;
+const LOOKUP_CHUNK = 12;
+
+/** Fill a slim search hit from bounded lookup (geojson, values, MLS fields). */
+export async function hydrateParcel(
+  parcel: CountyParcel,
+): Promise<CountyParcel> {
+  if (parcel.geojson) return parcel;
+  const full = await fetchParcelByPropIdAny(parcel.propId, parcel.countyFips);
+  return full ?? parcel;
+}
 
 async function lookupParcels(opts: {
   propIds?: string[];
