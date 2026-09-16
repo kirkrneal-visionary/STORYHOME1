@@ -14,7 +14,11 @@ export default function FairHousingPage() {
           <p>
             Story Home is committed to the letter and spirit of the U.S. policy
             for the achievement of equal housing opportunity throughout the
-            nation. We comply with the federal Fair Housing Act and the Texas
+            nation. We support the Fair Housing Act and do not discriminate
+            based on any protected class.
+          </p>
+          <p>
+            We comply with the federal Fair Housing Act and the Texas
             fair housing laws.
           </p>
 

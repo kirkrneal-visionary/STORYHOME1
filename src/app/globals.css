@@ -941,6 +941,13 @@ html[data-role="professional"] {
   background: var(--env-1);
 }
 
+/* Footer Wave 3 — housing mark only. Full Fair Housing copy lives on /fair-housing. */
+.story-footer-housing {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
 /*
  * Overlay top chrome — Instagram-class: floats above the world,
  * content may extend underneath. Not a reserved website header band.
