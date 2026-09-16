@@ -9,10 +9,22 @@ import { SuiteAlbumCard } from "@/components/suites/SuiteAlbumCard";
 
 export function SuitesLibrary() {
   const { isLoggedIn } = useAuth();
-  const { suites, createSuite } = useSuites();
+  const {
+    suites,
+    drafts,
+    status,
+    pending,
+    importOffer,
+    createSuite,
+    retry,
+    dismissImport,
+    importLocalSuites,
+  } = useSuites();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [shareNote, setShareNote] = useState("");
+  const [selectedImport, setSelectedImport] = useState<string[]>([]);
+  const [importing, setImporting] = useState(false);
 
   if (!isLoggedIn) {
     return (
@@ -88,15 +100,111 @@ export function SuitesLibrary() {
         </p>
       )}
 
+      {status === "failed" && (
+        <div className="story-well mt-6 flex flex-wrap items-center justify-between gap-2 px-3 py-3">
+          <p className="text-sm text-ink">
+            Could not load albums on your account.
+            {drafts.length > 0
+              ? " Albums on this device stay here until we can reach your account. They are not uploaded."
+              : ""}
+          </p>
+          <button
+            type="button"
+            onClick={retry}
+            className="story-press min-h-11 rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {importOffer && importOffer.length > 0 && (
+        <div className="story-surface mt-6 p-4">
+          <p className="type-section text-ink">Albums on this device</p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            These stay on this phone unless you add them to this account. They
+            are not added automatically.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {importOffer.map((suite) => {
+              const checked = selectedImport.includes(suite.id);
+              return (
+                <li key={suite.id}>
+                  <label className="flex items-center gap-3 text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setSelectedImport((prev) =>
+                          checked
+                            ? prev.filter((id) => id !== suite.id)
+                            : [...prev, suite.id],
+                        )
+                      }
+                    />
+                    <span>
+                      {suite.name || "Untitled Suite"}
+                      <span className="ml-2 font-mono text-[10px] text-[var(--muted)] uppercase">
+                        {suite.listingIds.length} homes
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedImport([]);
+                dismissImport();
+              }}
+              className="story-press h-11 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy"
+            >
+              Don&apos;t add
+            </button>
+            <button
+              type="button"
+              disabled={selectedImport.length === 0 || importing || pending}
+              onClick={async () => {
+                setImporting(true);
+                try {
+                  await importLocalSuites(selectedImport);
+                  setSelectedImport([]);
+                } catch (err) {
+                  setShareNote(
+                    err instanceof Error
+                      ? err.message
+                      : "Could not add albums to this account.",
+                  );
+                } finally {
+                  setImporting(false);
+                }
+              }}
+              className="story-press h-11 rounded-[var(--radius-md)] border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-40"
+            >
+              Add selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {creating && (
         <form
           className="story-surface mt-6 flex flex-col gap-3 p-4 sm:flex-row"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            const suite = createSuite(name);
-            setName("");
-            setCreating(false);
-            window.location.href = `/saved/${suite.id}`;
+            try {
+              const suite = await createSuite(name);
+              setName("");
+              setCreating(false);
+              window.location.href = `/saved/${suite.id}`;
+            } catch (err) {
+              setShareNote(
+                err instanceof Error ? err.message : "Could not create album.",
+              );
+            }
           }}
         >
           <input
@@ -108,7 +216,8 @@ export function SuitesLibrary() {
           />
           <button
             type="submit"
-            className="story-press h-11 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy"
+            disabled={pending}
+            className="story-press h-11 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:opacity-40"
           >
             Create album
           </button>
@@ -122,15 +231,32 @@ export function SuitesLibrary() {
         </form>
       )}
 
-      <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-        {suites.map((suite) => (
-          <SuiteAlbumCard
-            key={suite.id}
-            suite={suite}
-            onShare={() => shareSuite(suite.id, suite.name)}
-          />
-        ))}
-      </div>
+      {status === "loading" && (
+        <p className="mt-10 text-sm text-[var(--muted)]">
+          Loading your albums…
+        </p>
+      )}
+
+      {status === "ready" && suites.length === 0 && !creating && (
+        <div className="story-well mt-10 px-6 py-16 text-center">
+          <p className="type-section text-ink">No albums yet</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Create one here, or save a home from the marketplace.
+          </p>
+        </div>
+      )}
+
+      {status !== "loading" && suites.length > 0 && (
+        <div className="mt-10 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+          {suites.map((suite) => (
+            <SuiteAlbumCard
+              key={suite.id}
+              suite={suite}
+              onShare={() => shareSuite(suite.id, suite.name)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
