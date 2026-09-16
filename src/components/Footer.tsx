@@ -41,8 +41,8 @@ export default function Footer() {
   }
 
   return (
-    <footer className="border-t border-hairline bg-[var(--background)] text-paper/80">
-      <div className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+    <footer className="story-site-footer bg-[var(--background)] text-paper/80">
+      <div className="mx-auto max-w-7xl px-4 pt-12 md:px-6">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Column 1 — Legal & Compliance */}
           <div className="space-y-4">

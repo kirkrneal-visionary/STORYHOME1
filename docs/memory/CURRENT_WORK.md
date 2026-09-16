@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Footer paint matches the page wall (`--background`). Do not change `--nav-surface`, the header, or the dock.
+1. Footer Wave 1: fade + room above the dock. Same words and columns. Do not restyle the header or dock.
 2. Do not rename the `verify` job — that would drop the merge lock.
