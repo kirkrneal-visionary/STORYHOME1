@@ -5,8 +5,8 @@
 
 ## In progress
 
-- Navigation Waves 1–6 founder-confirmed GOOD and merged to live 2026-09-15 (PRs 196–201). Live target: https://storyhome-1-eqmg.vercel.app
-- Footer dark + Waves 1–3 founder-confirmed GOOD and merged to live 2026-09-16 (PRs 206–209). Live target: https://storyhome-1-eqmg.vercel.app
+- Pre-launch Wave 1: remove fake “Scan MLS for sold” (this branch). Manual listing status stays.
+- Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)
 

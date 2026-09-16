@@ -47,7 +47,6 @@ export function MyListingsView() {
   const [editing, setEditing] = useState<ProListing | null>(null);
   const [editingTracts, setEditingTracts] = useState<LinkedParcel[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [scanNote, setScanNote] = useState("");
 
   const refresh = useCallback(async () => {
     if (!user) return;
@@ -104,21 +103,6 @@ export function MyListingsView() {
     setEditingTracts([]);
   }
 
-  // Simulate the site scanning the MLS for external status changes and
-  // auto-de-listing anything that has sold since it was published.
-  async function scanMls() {
-    const target = live.find((l) => l.status === "Under Contract") ?? null;
-    if (!target) {
-      setScanNote("MLS scan complete — no new sold listings detected.");
-      return;
-    }
-    await updateListingStatus(target.id, "Sold");
-    await refresh();
-    setScanNote(
-      `MLS scan: “${target.streetAddress}” closed and was auto-de-listed.`,
-    );
-  }
-
   if (mode === "edit" && editing) {
     return (
       <ListingForm
@@ -148,13 +132,6 @@ export function MyListingsView() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={scanMls}
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            <RefreshCcw className="h-4 w-4" /> Scan MLS for sold
-          </button>
-          <button
-            type="button"
             onClick={startCreate}
             className="inline-flex h-10 items-center gap-2 rounded-lg bg-[var(--accent)] px-4 text-sm font-semibold text-[var(--accent-contrast)]"
           >
@@ -162,12 +139,6 @@ export function MyListingsView() {
           </button>
         </div>
       </div>
-
-      {scanNote && (
-        <p className="story-well px-4 py-2.5 text-sm text-ink">
-          {scanNote}
-        </p>
-      )}
 
       <section>
         <h3 className="mb-3 font-mono text-[11px] font-bold tracking-wider text-[var(--muted)] uppercase">
