@@ -5,9 +5,9 @@
 
 ## In progress
 
-- Harden Wave 3: Category C scoring/briefs run on the server. Same answers. `county_parcels` stays open until Wave 4.
-- Harden Wave 2: Story Pro RPC authority. UI is not the gate.
-- Harden Wave 1 chrome selection is on its own PR (UX only, not security).
+- Harden Wave 4: bounded CAD APIs + SHI service-role table reads. `0057` is in the repo and **not pasted**. Tiles stay public.
+- Harden Wave 5 (next): delivery hygiene after Wave 4 is verified.
+- Harden Waves 1–3 stay stacked. Do not merge unless you say MERGE.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)

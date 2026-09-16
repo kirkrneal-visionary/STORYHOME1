@@ -8,7 +8,7 @@ alwaysApply: false
 
 Read `docs/memory/workflows/cad-observation.md` and `docs/memory/workflows/my-home.md`.
 
-- RLS: public CAD is world-readable public record. Agent studies, farms, prospects, and home docs are owner-only.
+- RLS: processed CAD warehouse is service-role after Wave 4 (`0057`). Public users use `/api/parcels/*` and `parcels_mvt`. Agent studies, farms, prospects, and home docs are owner-only.
 - Storage folders are `{owner_id}/...` in `home-docs` and `shi-studies`.
 - Do not run production SQL, wipes, or ingest from an agent session unless the founder explicitly asked and pasted.
 - Isolated tests must not default to production credentials.

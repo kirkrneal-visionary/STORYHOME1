@@ -86,6 +86,7 @@
     "scripts/wave-2-rls-engine.ts",
     "scripts/test-harden-wave-2-authority.ts",
     "scripts/test-harden-wave-3-brain.ts",
+    "scripts/test-harden-wave-4-warehouse.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

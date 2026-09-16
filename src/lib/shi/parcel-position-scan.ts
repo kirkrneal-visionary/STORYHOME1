@@ -5,6 +5,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cadReader } from "@/lib/cad/service";
 import {
   approxFrontageFromGeojson,
   approxIntersectionDistanceFromGeojson,
@@ -213,7 +214,7 @@ export async function scanAreaPositions(opts: {
   const ids = [...new Set(incoming.map((p) => p.propId.trim()))];
   let rows: Array<Record<string, unknown>> = [];
   try {
-    const { data, error } = await opts.supabase
+    const { data, error } = await cadReader(opts.supabase)
       .from("county_parcels")
       .select(CAD_SCAN_SELECT)
       .eq("source", opts.context.source)

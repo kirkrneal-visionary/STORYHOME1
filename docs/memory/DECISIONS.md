@@ -24,5 +24,6 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-16 | Chrome selection is UX only; brains stay a later harden wave | Highlighting the page is not a privilege bypass | Founder harden GO ALL |
 | 2026-09-16 | Neighbor/frontage RPCs assert Story Pro in SQL | UI, View as buyer, and `/api/shi` are not the authority | Founder harden Wave 2 |
 | 2026-09-16 | Archie/Corridors scoring executes on the server | Browser gets the parcel-specific answer, not the recipe | Founder harden Wave 3 |
+| 2026-09-16 | Processed `county_parcels` is a product warehouse | Public users get bounded search/lookup + tiles; anon/authenticated table SELECT is revoked only after those paths are live | Founder harden Wave 4 |
 
 If a new change alters one of these, add a row and update the workflow contract.

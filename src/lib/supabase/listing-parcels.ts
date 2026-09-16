@@ -1,11 +1,12 @@
 "use client";
 
 import { getBrowserSupabase } from "@/lib/supabase/client";
+import { fetchParcelsByPropIdsAny } from "@/lib/supabase/parcels";
 
 /**
  * A CAD tract linked to a listing. `source`/`propId`/`countyFips`/`isPrimary`
  * are persisted in `listing_parcels`; the remaining fields are cached from
- * `county_parcels` for display + client-side aggregation.
+ * `/api/parcels/lookup` for display + client-side aggregation.
  */
 export type LinkedParcel = {
   source: string;
@@ -45,18 +46,13 @@ export async function listListingParcels(
   const rows = (data ?? []) as any[];
   if (rows.length === 0) return [];
 
-  const { data: pdata } = await s
-    .from("county_parcels")
-    .select(
-      "source, prop_id, county_fips, situs_address, situs_city, situs_zip, legal_acreage, improvement_value, legal_description, mh_serial_number, mh_hud_label, detail_level, needs_agent_detail, ingested_at, property_category",
-    )
-    .in(
-      "prop_id",
-      rows.map((r) => r.prop_id),
-    );
-  const facts = new Map(
-    ((pdata ?? []) as any[]).map((p) => [`${p.source}:${p.prop_id}`, p]),
-  );
+  let pdata: Awaited<ReturnType<typeof fetchParcelsByPropIdsAny>> = [];
+  try {
+    pdata = await fetchParcelsByPropIdsAny(rows.map((r) => String(r.prop_id)));
+  } catch {
+    pdata = [];
+  }
+  const facts = new Map(pdata.map((p) => [`${p.source}:${p.propId}`, p]));
 
   return rows.map((r) => {
     const f = facts.get(`${r.source}:${r.prop_id}`);
@@ -65,19 +61,18 @@ export async function listListingParcels(
       propId: r.prop_id,
       countyFips: r.county_fips,
       isPrimary: r.is_primary,
-      situsAddress: f?.situs_address ?? null,
-      situsCity: f?.situs_city ?? null,
-      situsZip: f?.situs_zip ?? null,
-      legalAcreage: f?.legal_acreage != null ? Number(f.legal_acreage) : null,
-      improvementValue:
-        f?.improvement_value != null ? Number(f.improvement_value) : null,
-      legalDescription: f?.legal_description ?? null,
-      mhSerialNumber: f?.mh_serial_number ?? null,
-      mhHudLabel: f?.mh_hud_label ?? null,
-      detailLevel: f?.detail_level ?? null,
-      needsAgentDetail: Boolean(f?.needs_agent_detail),
-      ingestedAt: f?.ingested_at ?? null,
-      propertyCategory: f?.property_category ?? null,
+      situsAddress: f?.situsAddress ?? null,
+      situsCity: f?.situsCity ?? null,
+      situsZip: f?.situsZip ?? null,
+      legalAcreage: f?.legalAcreage ?? null,
+      improvementValue: f?.improvementValue ?? null,
+      legalDescription: f?.legalDescription ?? null,
+      mhSerialNumber: f?.mhSerialNumber ?? null,
+      mhHudLabel: f?.mhHudLabel ?? null,
+      detailLevel: f?.detailLevel ?? null,
+      needsAgentDetail: Boolean(f?.needsAgentDetail),
+      ingestedAt: f?.ingestedAt ?? null,
+      propertyCategory: f?.propertyCategory ?? null,
     };
   });
 }

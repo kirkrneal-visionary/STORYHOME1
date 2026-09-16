@@ -2,7 +2,7 @@
 
 **Who / why:** Keep launch-county tax-roll parcels current so Archie can analyze and Farms can diff.
 
-**Intended:** Public record in `county_parcels`. Ingest is service-role. Agent workflows never write CAD. Observation is “what changed between our pulls,” not a deed date.
+**Intended:** Processed CAD lives in `county_parcels`. Ingest is service-role. Browser search/lookup is bounded `/api/parcels/*`. Tiles stay `parcels_mvt`. Agent workflows never write CAD. Observation is “what changed between our pulls,” not a deed date.
 
 ## Preconditions
 

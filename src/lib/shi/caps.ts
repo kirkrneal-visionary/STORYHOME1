@@ -7,6 +7,8 @@ export const SHI_CAPS = {
   maxFramesPerFolder: 40,
   maxFramesOnMap: 25,
   maxParcelsPerAnalyze: 1500,
+  /** HTTP Analyze / Corridor evidence list. Scan stays at maxParcelsPerAnalyze. */
+  maxParcelsReturned: 80,
   /** Reject oversized market frames (degrees). */
   maxAreaSpanDegrees: 0.45,
   minAreaSpanDegrees: 0.0003,

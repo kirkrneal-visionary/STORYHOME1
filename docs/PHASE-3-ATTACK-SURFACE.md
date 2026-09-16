@@ -36,7 +36,9 @@ No `"use server"` actions exist.
 | `/api/map/lidar/parcel` | POST | No | High | polygon | No | No | Raster | No | High | Caps |
 | `/api/map/lidar/read` | GET | No | Medium | lat/lng | No | No | Point | No | Medium | OK |
 | `/api/map/lidar/profile` | GET | No | High | 2 points | No | No | Slice | No | High | OK |
-| `/api/parcels/{z}/{x}/{y}` | GET | No | None | z/x/y | No | 1h | PostGIS MVT | Owner names z≥13 | High scrape | Public record; WAF LOG |
+| `/api/parcels/{z}/{x}/{y}` | GET | No | None | z/x/y | No | 1h | PostGIS MVT | Owner names z≥13 | High scrape | Public tiles; `parcels_mvt` stays executable |
+| `/api/parcels/search` | GET | No | Medium | q + facet + limit≤30 | **SR read** | 30s | CAD search | Owner/address | Bounded | Wave 4 replacement for table dump |
+| `/api/parcels/lookup` | POST | No | Medium | ids≤40 / address | **SR read** | 60s | CAD lookup | Owner/address | Bounded | Wave 4 replacement for table dump |
 | `/api/cad/overlay` | GET | No | Medium | bbox ≤1.5° | No | 120s | ArcGIS | CAD attrs | High | OK |
 | `/api/cad/status` | GET | No | Low | — | **Forbidden** | No | No | last_error (coverage honesty) | Low | Fail closed. Keep last_error for Phase 2 truth |
 | `/api/verify-trec` | GET | No | Medium | license | No | 1h | TREC | License name | High enum | OK |
