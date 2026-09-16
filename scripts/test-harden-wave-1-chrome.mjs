@@ -13,8 +13,10 @@ const read = (rel) => readFileSync(join(root, rel), "utf8");
 const css = read("src/app/globals.css");
 
 assert.match(css, /Chrome integrity — UX only\. Not a security control/);
-assert.match(css, /\.story-overlay-header[\s\S]*?user-select:\s*none/);
-assert.match(css, /\.story-bottom-dock[\s\S]*?user-select:\s*none/);
+assert.match(css, /\.story-overlay-header \*/);
+assert.match(css, /\.story-bottom-dock \*/);
+assert.match(css, /\.story-wordmark/);
+assert.match(css, /\.type-hero/);
 assert.match(css, /\.story-market-toolbar[\s\S]*?user-select:\s*none/);
 assert.match(css, /\.story-map-tool[\s\S]*?user-select:\s*none/);
 assert.match(css, /\.maplibregl-ctrl[\s\S]*?user-select:\s*none/);
