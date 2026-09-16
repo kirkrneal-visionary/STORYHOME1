@@ -27,7 +27,8 @@ assert.match(
   /\.story-bottom-dock\.story-glass-nav\s*\{[\s\S]*?box-shadow:\s*none/,
 );
 assert.doesNotMatch(css, /--dock-glass-border/);
-assert.match(css, /@keyframes storyDockSelect/);
+assert.doesNotMatch(css, /@keyframes storyDockSelect/);
+assert.match(css, /\.story-dock-active-fill-on/);
 assert.match(css, /prefers-reduced-motion:\s*reduce[\s\S]*story-dock-active-fill/);
 assert.match(css, /prefers-reduced-transparency/);
 assert.match(css, /@supports not \(/);

@@ -514,6 +514,19 @@ html[data-role="professional"] {
 .story-press:active {
   transform: scale(0.985);
 }
+/* Dock: never shrink the tab — that jumps the icon. */
+.story-bottom-dock .story-press {
+  transition: opacity var(--motion-micro) linear;
+}
+.story-bottom-dock .story-press:active {
+  transform: none;
+}
+.story-bottom-dock .story-nav-hit[data-nav-state="pending"] {
+  opacity: 1;
+}
+.story-bottom-dock [data-nav-pending-cue] {
+  display: none;
+}
 
 /* Wave 1 — full control is the hit target; do not navigate on touch-down */
 .story-nav-hit {
@@ -834,21 +847,15 @@ html[data-role="professional"] {
   border-radius: 999px;
   background: var(--dock-active-fill);
   box-shadow: inset 0 0 0 1px var(--dock-active-ring);
+  opacity: 0;
+  pointer-events: none;
+}
+.story-dock-active-fill-on {
+  opacity: 1;
 }
 @media (prefers-reduced-motion: no-preference) {
   .story-dock-active-fill {
-    animation: storyDockSelect var(--dock-motion) var(--motion-ease-standard)
-      both;
-  }
-}
-@keyframes storyDockSelect {
-  from {
-    opacity: 0.55;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+    transition: opacity var(--dock-motion) var(--motion-ease-standard);
   }
 }
 
@@ -874,6 +881,27 @@ html[data-role="professional"] {
     transform: none;
     bottom: max(1.1rem, var(--story-vv-bottom, 0px));
   }
+}
+
+/*
+ * Marketplace map chrome sits above the dock.
+ * The map canvas stays under the pill (frost). Do not pad the map.
+ * Not the header. Do not darken the map.
+ */
+[data-marketplace-map] {
+  --map-dock-lift: var(--story-bottom-clearance);
+}
+[data-marketplace-map][data-map-expanded] {
+  --map-dock-lift: 0px;
+}
+[data-marketplace-map] .story-map-dock-hint {
+  bottom: calc(var(--map-dock-lift) + 0.75rem);
+}
+[data-marketplace-map] .maplibregl-ctrl-bottom-left,
+[data-marketplace-map] .maplibregl-ctrl-bottom-right,
+[data-marketplace-map] .mapboxgl-ctrl-bottom-left,
+[data-marketplace-map] .mapboxgl-ctrl-bottom-right {
+  bottom: calc(var(--map-dock-lift) + 0.5rem);
 }
 
 /*

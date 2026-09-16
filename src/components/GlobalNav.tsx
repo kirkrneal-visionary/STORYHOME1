@@ -478,14 +478,19 @@ function MobileTab({
     <PrimaryNavLink
       href={href}
       active={active}
+      pendingCue={false}
       className={cn(
         "story-dock-tab relative flex h-full min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-full",
         active ? "text-ink" : "text-[var(--muted)]",
       )}
     >
-      {active ? (
-        <span aria-hidden className="story-dock-active-fill" />
-      ) : null}
+      <span
+        aria-hidden
+        className={cn(
+          "story-dock-active-fill",
+          active && "story-dock-active-fill-on",
+        )}
+      />
       <span className="relative z-[1] flex flex-col items-center gap-0.5">
         {mark ? (
           <span className="story-dock-mark">

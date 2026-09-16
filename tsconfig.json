@@ -71,6 +71,8 @@
     "scripts/test-market-canvas.ts",
     "scripts/test-market-edges.ts",
     "scripts/test-nav-frost.ts",
+    "scripts/test-dock-jump.ts",
+    "scripts/test-map-dock-clear.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

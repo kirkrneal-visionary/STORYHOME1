@@ -42,6 +42,8 @@ type PrimaryNavLinkProps = {
   children: React.ReactNode;
   className?: string;
   onNavigate?: () => void;
+  /** Dock tabs keep one oval — do not paint a second pending blob. */
+  pendingCue?: boolean;
   "aria-label"?: string;
   title?: string;
 };
@@ -56,6 +58,7 @@ export function PrimaryNavLink({
   children,
   className,
   onNavigate,
+  pendingCue = true,
   "aria-label": ariaLabel,
   title,
 }: PrimaryNavLinkProps) {
@@ -116,7 +119,7 @@ export function PrimaryNavLink({
       data-nav-state={state}
       className={cn("story-nav-hit story-press", className)}
     >
-      <NavPendingCue />
+      {pendingCue ? <NavPendingCue /> : null}
       {children}
     </Link>
   );

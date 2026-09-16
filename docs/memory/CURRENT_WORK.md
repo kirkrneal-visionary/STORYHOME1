@@ -37,5 +37,5 @@
 
 ## Next concrete action
 
-1. Desktop frost: smoked plate on the dock so computer and phone match. Do not depend on the map blurring through.
+1. Marketplace map help card + +/− sit above the dock so they do not paint through Suites/Search.
 2. Do not rename the `verify` job — that would drop the merge lock.

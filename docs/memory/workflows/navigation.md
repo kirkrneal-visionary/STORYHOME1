@@ -43,7 +43,8 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 
 - Marketplace page is one `--env-0` canvas. Search/filters are not a glass strip.
 - Listing cards and toolbar controls use quieter `--market-edge`. No raise puddle.
-- Map chrome, overlay header, and dock stay as they are.
+- Overlay header and dock stay as they are.
+- Marketplace map help card and +/− lift above `--story-bottom-clearance` so they do not sit on Suites/Search. Map canvas stays under the pill. Fullscreen map does not lift.
 
 ## Do not
 
