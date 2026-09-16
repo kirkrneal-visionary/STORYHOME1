@@ -40,5 +40,5 @@
 
 ## Related
 
-- Analyze: `POST /api/shi/area` — server recomputes parcels; never trust client totals
+- Analyze: `POST /api/shi/area` — server recomputes parcels; never trust client totals. Wave 3 drops a late result if the county or drawing changed (`analyze-context.ts`). Save stays off until the shown analysis matches the active frame.
 - Corridors handoff uses the same open-frame queue; do not rebuild Corridors

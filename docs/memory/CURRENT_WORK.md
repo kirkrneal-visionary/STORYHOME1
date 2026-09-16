@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Pre-launch Wave 2: isolation harness (this branch). Live database is refused. Manual listing status stays from Wave 1.
+- Pre-launch Wave 3: Analyze / Save match the current drawing (this branch). Late Analyze cannot paint or save another frame.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
 
 ## Just shipped (do not rewind)

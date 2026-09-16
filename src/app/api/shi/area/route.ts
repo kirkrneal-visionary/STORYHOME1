@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { DrawnBoundary } from "@/lib/geo";
 import { publicError } from "@/lib/security/validate";
+import { boundaryFingerprint } from "@/lib/shi/analyze-context";
 import { requireStoryPro } from "@/lib/shi/require-pro";
 import { analyzeArea } from "@/lib/shi/area";
 
@@ -56,7 +57,15 @@ export async function POST(request: Request) {
 
   try {
     const analysis = await analyzeArea(gate.supabase, { boundary, source });
-    return NextResponse.json({ analysis, metrics: analysis });
+    const context = {
+      countySource: source,
+      boundaryFingerprint: boundaryFingerprint(boundary, source),
+    };
+    return NextResponse.json({
+      analysis: { ...analysis, ...context },
+      context,
+      metrics: analysis,
+    });
   } catch (e) {
     return NextResponse.json(
       { error: publicError(e, "Area analysis failed") },

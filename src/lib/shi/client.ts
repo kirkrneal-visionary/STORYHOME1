@@ -115,7 +115,10 @@ export async function shiAnalyzeArea(opts: {
   boundary: DrawnBoundary;
   source: string;
 }): Promise<ShiAreaAnalysis> {
-  const body = await shiFetch<{ analysis: ShiAreaAnalysis }>("/api/shi/area", {
+  const body = await shiFetch<{
+    analysis: ShiAreaAnalysis;
+    context?: { countySource: string; boundaryFingerprint: string };
+  }>("/api/shi/area", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -123,7 +126,12 @@ export async function shiAnalyzeArea(opts: {
       source: opts.source,
     }),
   });
-  return body.analysis;
+  return {
+    ...body.analysis,
+    countySource: body.context?.countySource ?? body.analysis.countySource,
+    boundaryFingerprint:
+      body.context?.boundaryFingerprint ?? body.analysis.boundaryFingerprint,
+  };
 }
 
 /** Phase 4/5 — short "worth a look" list after Analyze (not a score). */
@@ -228,6 +236,8 @@ export async function shiSaveFrame(opts: {
   mapZoom?: number;
   thumbnailDataUrl?: string | null;
   frameId?: string;
+  claimedCounty?: string | null;
+  claimedFingerprint?: string | null;
 }) {
   const body = await shiFetch<{ frame: ShiSavedFrame }>(
     "/api/shi/studies/frames",
@@ -410,6 +420,8 @@ export async function shiCreateFarm(input: {
   mapCenterLng?: number | null;
   mapZoom?: number | null;
   thumbnailDataUrl?: string | null;
+  claimedCounty?: string | null;
+  claimedFingerprint?: string | null;
 }): Promise<ShiFarmDetail> {
   const body = await shiFetch<{ farm: ShiFarmDetail }>("/api/shi/farms", {
     method: "POST",
