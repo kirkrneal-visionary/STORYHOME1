@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import type { CadSearchField } from "@/lib/cad-layers";
 import { CAD_SEARCH_FIELDS } from "@/lib/cad-layers";
 import { boundedCadSearch, CAD_SEARCH_MAX } from "@/lib/cad/bounded-search";
+import { CAD_SEARCH_MIN_CHARS } from "@/lib/cad/public-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
   const limitRaw = Number(req.nextUrl.searchParams.get("limit") ?? 25);
   const limit = Number.isFinite(limitRaw) ? limitRaw : 25;
 
-  if (!q) {
+  if (q.length < CAD_SEARCH_MIN_CHARS) {
     return NextResponse.json({ parcels: [] });
   }
 

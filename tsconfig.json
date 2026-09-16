@@ -87,6 +87,7 @@
     "scripts/test-harden-wave-2-authority.ts",
     "scripts/test-harden-wave-3-brain.ts",
     "scripts/test-harden-wave-4-warehouse.ts",
+    "scripts/test-harden-wave-4b-enumeration.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

@@ -8,6 +8,7 @@ import {
   AVAILABLE_COUNTIES,
   cadFreshnessLabel,
   fetchParcelsByPropIdsAny,
+  hydrateParcel,
   searchParcels,
   searchParcelsStatewide,
   type CountyParcel,
@@ -92,30 +93,31 @@ export function CountyRecordPanel({
     if (tracts.some((t) => t.source === p.source && t.propId === p.propId)) return;
     setBusy(true);
     try {
+      const full = await hydrateParcel(p);
       const isPrimary = tracts.length === 0;
       await addHomeParcel(home.id, {
-        source: p.source,
-        propId: p.propId,
-        countyFips: p.countyFips,
+        source: full.source,
+        propId: full.propId,
+        countyFips: full.countyFips,
         isPrimary,
       });
       if (isPrimary) {
         await updateHome(home.id, {
-          address: p.situsAddress || home.address,
-          city: p.situsCity || home.city,
-          countyName: txCountyNameByFips(p.countyFips) || home.countyName,
-          zip: p.situsZip || home.zip,
-          mhSerialNumber: p.mhSerialNumber || home.mhSerialNumber,
-          mhHudLabel: p.mhHudLabel || home.mhHudLabel,
+          address: full.situsAddress || home.address,
+          city: full.situsCity || home.city,
+          countyName: txCountyNameByFips(full.countyFips) || home.countyName,
+          zip: full.situsZip || home.zip,
+          mhSerialNumber: full.mhSerialNumber || home.mhSerialNumber,
+          mhHudLabel: full.mhHudLabel || home.mhHudLabel,
           propertyType:
-            p.propertyCategory === "personal" || p.mhSerialNumber
+            full.propertyCategory === "personal" || full.mhSerialNumber
               ? "Mobile / Manufactured"
               : home.propertyType,
         });
-      } else if (p.mhSerialNumber && !home.mhSerialNumber) {
+      } else if (full.mhSerialNumber && !home.mhSerialNumber) {
         await updateHome(home.id, {
-          mhSerialNumber: p.mhSerialNumber,
-          mhHudLabel: p.mhHudLabel || home.mhHudLabel,
+          mhSerialNumber: full.mhSerialNumber,
+          mhHudLabel: full.mhHudLabel || home.mhHudLabel,
           propertyType: "Mobile / Manufactured",
         });
       }
