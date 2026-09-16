@@ -11,7 +11,7 @@ GitHub Actions:
 | `.github/workflows/cad-refresh.yml` | Daily CAD refresh | No (ops, not PR) |
 | `.github/workflows/verify-project-memory.yml` | Push / PR | **Yes on main** — required check name is `verify`. Do not rename the job. |
 
-Vercel `storyhome-1-eqmg` production deploy is the practical ship signal. Plain `storyhome-1` failing is ignored (`AGENTS.md`).
+Public live is https://www.storyhome.app. Vercel `storyhome-1-eqmg` production deploy is the ship signal. Plain `storyhome-1` failing is ignored (`AGENTS.md`).
 
 ## What this install adds
 

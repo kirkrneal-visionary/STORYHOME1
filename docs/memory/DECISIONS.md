@@ -4,7 +4,7 @@ Only material product/architecture choices. Not a transcript.
 
 | Date | Decision | Why (if known) | Source |
 |---|---|---|---|
-| Standing | Live target is `storyhome-1-eqmg` only | Wrong URL is a product bug | `AGENTS.md`, constitution |
+| Standing | Public live site is `https://www.storyhome.app`. Ship on `storyhome-1-eqmg` | Founder attached the domain 2026-09-16. Wrong Vercel project is still a product bug | `AGENTS.md`, constitution |
 | Standing | Archie is Story Pro only | Founder requirement | constitution, `requireStoryPro` |
 | Standing | TREC never grants office | Founder requirement | `purposeAfterTrecPromote` |
 | Standing | CAD is observation, not deeds/MLS | Honesty contract | `docs/PHASE-2-DATA-TRUTH.md` |
