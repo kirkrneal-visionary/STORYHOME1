@@ -11,6 +11,10 @@ import {
   rateLimitKey,
   tooManyRequests,
 } from "@/lib/security/rate-limit";
+import {
+  classifyCadPublicPath,
+  consumeCadAccess,
+} from "@/lib/cad/public-access";
 
 const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -43,6 +47,21 @@ export async function middleware(request: NextRequest) {
         headers: { "content-type": "application/json", "cache-control": "no-store" },
       },
     );
+  }
+
+  const cadLane = classifyCadPublicPath(pathname);
+  if (cadLane) {
+    const cadHit = consumeCadAccess({ lane: cadLane, ip });
+    if (!cadHit.ok) {
+      logSecurityEvent({
+        kind: "rate_limited",
+        path: pathname,
+        status: 429,
+        ip,
+        subject: `cad:${cadLane}:${cadHit.windowId}`,
+      });
+      return tooManyRequests(cadHit.retryAfterSec);
+    }
   }
 
   const cost = classifyRequestPath(pathname);

@@ -55,7 +55,7 @@ assert.match(lookup, /boundedCadAddressMatch/);
 
 const bounded = read("src/lib/cad/bounded-search.ts");
 assert.match(bounded, /export const CAD_SEARCH_MAX = 30/);
-assert.match(bounded, /export const CAD_LOOKUP_MAX = 40/);
+assert.match(bounded, /export const CAD_LOOKUP_MAX = 12/);
 assert.match(bounded, /requireCadService/);
 assert.match(bounded, /boundedCadAddressMatch/);
 

@@ -81,6 +81,7 @@ export function classifyRequestPath(pathname: string): RateCost | null {
     return "low";
   }
   // Tiles: pan/zoom volume is high; do not 429.
+  // Public CAD search/lookup are classified separately in cad/public-access.
   if (
     pathname.startsWith("/api/map/") ||
     pathname.startsWith("/api/parcels/")

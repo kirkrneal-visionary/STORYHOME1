@@ -4,6 +4,7 @@ import {
   boundedCadLookup,
   boundedCadValues,
   CAD_LOOKUP_MAX,
+  CadLookupRejectedError,
 } from "@/lib/cad/bounded-search";
 
 export const runtime = "nodejs";
@@ -68,6 +69,9 @@ export async function POST(request: Request) {
       { headers: { "Cache-Control": "public, max-age=60" } },
     );
   } catch (e) {
+    if (e instanceof CadLookupRejectedError) {
+      return NextResponse.json({ error: e.message }, { status: e.status });
+    }
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Parcel lookup failed" },
       { status: 503 },
