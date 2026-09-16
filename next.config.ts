@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { STORY_SECURITY_HEADERS } from "./src/lib/security/headers";
 
 const nextConfig: NextConfig = {
+  productionBrowserSourceMaps: false,
   // Next.js 16 blocks cross-origin /_next/* in `next dev` by default.
   // Without this, the seller portal SSR-renders but never hydrates — buttons do nothing.
   allowedDevOrigins: [

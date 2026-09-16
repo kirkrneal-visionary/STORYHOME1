@@ -25,6 +25,12 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (pathname.endsWith(".map")) {
+    return new NextResponse("Not found", {
+      status: 404,
+      headers: { "cache-control": "no-store" },
+    });
+  }
   const ip = clientIp(request.headers);
 
   if (shouldCheckOrigin(pathname, request.method) && !originAllowed(request)) {
@@ -134,5 +140,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/:path*.map",
   ],
 };

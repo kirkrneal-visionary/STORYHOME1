@@ -41,7 +41,9 @@ assert.equal(
 
 const login = read("src/components/LoginClient.tsx");
 assert.match(login, /NODE_ENV !== "production"/);
+assert.doesNotMatch(login, /DevPass123!/);
 assert.doesNotMatch(login, /Demo codes: WILLOW-875/);
+assert.match(read("src/components/auth/DevLoginButtons.tsx"), /DevPass123!/);
 
 assert.doesNotMatch(read("src/components/seller/SellerAccessForm.tsx"), /WILLOW-875/);
 assert.doesNotMatch(read("src/app/api/cad/status/route.ts"), /SUPABASE_SERVICE_ROLE_KEY/);
