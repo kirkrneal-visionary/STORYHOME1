@@ -16,17 +16,17 @@ import {
   type ParcelLocationIntel,
 } from "@/lib/shi/corridor-frontage";
 import {
-  associateParcelTraffic,
   formatAcres,
   type CorridorParcelPick,
+  type ParcelTrafficAssociation,
 } from "@/lib/shi/corridor-parcel-traffic";
 import {
   exposureBandLabel,
-  scoreCommercialExposure,
+  type CommercialExposureScore,
 } from "@/lib/shi/corridor-exposure";
-import {
-  comparePropertySites,
-  type PropertyCompareSite,
+import type {
+  PropertyCompareResult,
+  PropertyCompareSite,
 } from "@/lib/shi/corridor-property-compare";
 import { CORRIDOR_REPORT_HONESTY } from "@/lib/shi/corridor-report";
 import { evidenceLegendHtml, formatEvidenceTag } from "@/lib/shi/evidence-tier";
@@ -47,23 +47,21 @@ export type PropertyReportInput = {
   stations: TrafficStation[];
   intel?: ParcelLocationIntel | null;
   compareSites?: PropertyCompareSite[];
+  commercial?: CommercialExposureScore | null;
+  trafficAssoc?: ParcelTrafficAssociation | null;
+  compare?: PropertyCompareResult | null;
 };
 
 export function buildPropertyLocationReportHtml(
   input: PropertyReportInput,
 ): string {
-  const { pick, stations, intel, countyName } = input;
-  const assoc = associateParcelTraffic(pick, stations);
-  const station = assoc.kind === "estimated" ? assoc.station : null;
+  const { pick, intel, countyName } = input;
+  const assoc = input.trafficAssoc ?? null;
+  const station = assoc?.kind === "estimated" ? assoc.station : null;
   const status = station
     ? corridorStatusFromHistory(station.history)
     : null;
-  const commercial = scoreCommercialExposure({
-    pick,
-    stations,
-    intel,
-    legalAcreage: pick.legalAcreage,
-  });
+  const commercial = input.commercial ?? null;
   const title =
     pick.situsAddress?.trim() || `CAD #${pick.propId} · ${countyName}`;
   const vehicles =
@@ -86,8 +84,8 @@ export function buildPropertyLocationReportHtml(
           : "Not indicated from mapped roads";
 
   let compareBlock = "";
-  if (input.compareSites && input.compareSites.length >= 2) {
-    const cmp = comparePropertySites(input.compareSites, stations);
+  if (input.compare) {
+    const cmp = input.compare;
     const head = cmp.columns
       .map((c) => `<th>${escapeHtml(c.label)}</th>`)
       .join("");
@@ -109,7 +107,7 @@ export function buildPropertyLocationReportHtml(
 </table>`;
   }
 
-  const why = commercial.factors
+  const why = (commercial?.factors ?? [])
     .map(
       (f) =>
         `<tr><td>${escapeHtml(f.label)}</td><td class="mono">${f.points}/${f.maxPoints}</td><td class="muted">${escapeHtml(f.detail)}</td></tr>`,
@@ -154,8 +152,10 @@ export function buildPropertyLocationReportHtml(
   )}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "TxDOT history" }))}</span></td></tr>
 <tr><td>Approx. frontage</td><td><strong>${escapeHtml(frontage)}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "Mapped roads · APPROX" }))}</span></td></tr>
 <tr><td>Intersection</td><td><strong>${escapeHtml(intersection)}</strong><br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "Mapped roads" }))}</span></td></tr>
-<tr><td>Commercial exposure</td><td><strong>${commercial.score}/${commercial.maxScore}</strong> · ${escapeHtml(
-    exposureBandLabel(commercial.band),
+<tr><td>Commercial exposure</td><td><strong>${
+    commercial ? `${commercial.score}/${commercial.maxScore}` : "—"
+  }</strong> · ${escapeHtml(
+    commercial ? exposureBandLabel(commercial.band) : "—",
   )}<br/><span class="mono">${escapeHtml(formatEvidenceTag({ tier: "CALCULATED", source: "commercial-exposure-v1" }))}</span></td></tr>
 </table>
 
@@ -163,7 +163,7 @@ ${evidenceLegendHtml()}
 
 <h2>What the numbers mean for this land</h2>
 <p>${escapeHtml(
-    assoc.kind === "estimated"
+    assoc?.kind === "estimated"
       ? assoc.detail
       : "Published traffic near this parcel is limited — use as directional context only.",
   )}</p>

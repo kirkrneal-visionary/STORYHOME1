@@ -54,7 +54,7 @@ Anonymous → 401. Consumer/seller → 403. Role query params and localStorage a
 | Route | Methods | Rate | PII | Expensive | Notes |
 |---|---|---|---|---|---|
 | `/api/shi/search` `/property` `/freshness` `/changes` `/neighbors` `/deeds` `/flood` `/environment` `/utilities` | GET | Medium | Owner/address | Medium | Gate OK |
-| `/api/shi/area` `/similar` `/portfolio` `/owner-matches` `/corridors/analyze` `/strongest-sites` `/research/worth-a-look` `/multifamily/review` | POST | High | Owners | Yes | Geometry/parcel caps |
+| `/api/shi/area` `/similar` `/portfolio` `/owner-matches` `/corridors/analyze` `/strongest-sites` `/research/worth-a-look` `/multifamily/review` `/archie/brief` `/corridors/ask` `/research/pick` | POST | High | Owners | Yes | Geometry/parcel caps. Scoring runs here, not in the browser |
 | `/api/shi/prospects` `.../[id]` `.../notes` `/farms` `.../[id]` `/studies/*` | CRUD | Medium | CRM / studies | Low | RLS `agent_id = auth.uid()` |
 | `/api/shi/corridors/traffic` `/projects` `/parcel-location` `/multifamily/parcel` | GET | Medium | Low | TxDOT | Gate OK |
 

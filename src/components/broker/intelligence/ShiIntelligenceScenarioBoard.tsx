@@ -1,15 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Printer } from "lucide-react";
+import { shiIntelligenceScenario } from "@/lib/shi/client";
 import type { CadLookalikeBand } from "@/lib/shi/cad-evidence";
 import {
   DEFAULT_INTELLIGENCE_SCENARIO_ASSUMPTIONS,
   INTELLIGENCE_SCENARIO_HONESTY,
   formatStressPct,
   intelligenceScenarioMeetingLines,
-  runIntelligenceScenario,
   type IntelligenceScenarioAssumptions,
+  type IntelligenceScenarioResult,
 } from "@/lib/shi/intelligence-scenarios";
 import { cn } from "@/lib/utils";
 
@@ -41,23 +42,32 @@ export function ShiIntelligenceScenarioBoard({
     useState<IntelligenceScenarioAssumptions>(
       DEFAULT_INTELLIGENCE_SCENARIO_ASSUMPTIONS,
     );
+  const [result, setResult] = useState<IntelligenceScenarioResult | null>(null);
 
-  const result = useMemo(
-    () =>
-      runIntelligenceScenario({
+  useEffect(() => {
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      void shiIntelligenceScenario({
         subjectCadValue,
         taxYearCount,
         lookalike,
         assumptions,
-      }),
-    [subjectCadValue, taxYearCount, lookalike, assumptions],
-  );
+      }).then((body) => {
+        if (!cancelled) setResult(body.result);
+      });
+    }, 150);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [subjectCadValue, taxYearCount, lookalike, assumptions]);
 
   function patch(partial: Partial<IntelligenceScenarioAssumptions>) {
     setAssumptions((prev) => ({ ...prev, ...partial }));
   }
 
   function printPack() {
+    if (!result) return;
     const lines = intelligenceScenarioMeetingLines(result);
     const w = window.open(
       "",
@@ -82,6 +92,20 @@ export function ShiIntelligenceScenarioBoard({
     w.document.close();
     w.focus();
     w.print();
+  }
+
+  if (!result) {
+    return (
+      <section
+        className="mt-3 border-t border-hairline pt-3"
+        data-intelligence-scenario-board
+      >
+        <p className="font-mono text-[9px] font-bold uppercase text-gold">
+          Scenario board
+        </p>
+        <p className="mt-2 text-sm text-[var(--muted)]">Reading this scenario…</p>
+      </section>
+    );
   }
 
   const disabled = !result.coverage.hasCadValue;

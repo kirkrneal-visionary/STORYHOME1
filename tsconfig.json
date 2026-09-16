@@ -85,6 +85,7 @@
     "scripts/wave-2-isolation-harness.ts",
     "scripts/wave-2-rls-engine.ts",
     "scripts/test-harden-wave-2-authority.ts",
+    "scripts/test-harden-wave-3-brain.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

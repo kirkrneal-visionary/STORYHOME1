@@ -32,6 +32,12 @@ import {
   stationsFromCachedObservations,
 } from "@/lib/shi/traffic-observation-cache";
 import { fetchCountyTraffic } from "@/lib/shi/traffic-txdot";
+import { scoreCommercialExposure } from "@/lib/shi/corridor-exposure";
+import {
+  associateParcelTraffic,
+  parcelTrafficSummary,
+  type CorridorParcelPick,
+} from "@/lib/shi/corridor-parcel-traffic";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -387,12 +393,35 @@ export async function GET(req: NextRequest) {
     projects,
   });
 
+  const pick: CorridorParcelPick = {
+    propId,
+    source: parcelSource,
+    countyFips,
+    situsAddress: cad.situsAddress,
+    ownerName: cad.ownerName,
+    legalAcreage: cad.legalAcreage,
+    marketValue: cad.marketValue,
+    lat: Number.isFinite(lat) ? lat : 0,
+    lng: Number.isFinite(lng) ? lng : 0,
+  };
+  const trafficAssoc = associateParcelTraffic(pick, stations);
+  const trafficSummary = parcelTrafficSummary(trafficAssoc);
+  const commercial = scoreCommercialExposure({
+    pick,
+    stations,
+    intel,
+    legalAcreage: cad.legalAcreage,
+  });
+
   return NextResponse.json(
     {
       intel,
       position,
       profile,
       context,
+      commercial,
+      trafficAssoc,
+      trafficSummary,
       honesty: {
         frontageLabel: "APPROX",
         surveyed: false,

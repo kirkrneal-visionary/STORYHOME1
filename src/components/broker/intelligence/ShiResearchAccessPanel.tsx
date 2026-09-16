@@ -5,8 +5,6 @@ import {
   formatApproxFrontageFt,
   formatApproxIntersectionM,
 } from "@/lib/shi/corridor-frontage";
-import { associateParcelTraffic } from "@/lib/shi/corridor-parcel-traffic";
-import type { TrafficStation } from "@/lib/shi/corridors";
 import { formatAadt } from "@/lib/shi/corridors";
 import { cn } from "@/lib/utils";
 
@@ -17,42 +15,17 @@ import { cn } from "@/lib/utils";
 export function ShiResearchAccessPanel({
   intel,
   loading,
-  stations = [],
-  lat,
-  lng,
   className,
 }: {
   intel: ParcelLocationIntel | null | undefined;
   loading?: boolean;
-  stations?: TrafficStation[];
+  stations?: unknown;
   lat?: number | null;
   lng?: number | null;
   className?: string;
 }) {
-  const assoc =
-    lat != null &&
-    lng != null &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    stations.length > 0
-      ? associateParcelTraffic(
-          {
-            propId: "_",
-            source: "_",
-            countyFips: "_",
-            lat,
-            lng,
-            situsAddress: null,
-            ownerName: null,
-            legalAcreage: null,
-            marketValue: null,
-            geojson: null,
-          },
-          stations,
-        )
-      : null;
-
-  const station = assoc?.kind === "estimated" ? assoc.station : null;
+  const stationAadt = intel?.roads?.find((r) => r.aadt != null)?.aadt ?? null;
+  const stationRoad = intel?.roads?.find((r) => r.aadt != null)?.routeId ?? null;
 
   return (
     <section
@@ -138,14 +111,13 @@ export function ShiResearchAccessPanel({
         </p>
       ) : null}
 
-      {station?.latestAadt != null ? (
+      {stationAadt != null ? (
         <p className="mt-2 text-[11px] text-ink" data-research-access-traffic>
           <span className="font-semibold">
-            Nearby count · {formatAadt(station.latestAadt)}/day
+            Nearby count · {formatAadt(stationAadt)}/day
           </span>
           <span className="text-[var(--muted)]">
-            {station.onRoad ? ` · ${station.onRoad}` : ""}
-            {station.latestYear != null ? ` · ${station.latestYear}` : ""}
+            {stationRoad ? ` · ${stationRoad}` : ""}
             {" · planning AADT"}
           </span>
         </p>

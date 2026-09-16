@@ -616,9 +616,90 @@ export async function shiCorridorsParcelLocation(opts: {
     position: import("@/lib/shi/parcel-position").ParcelPositionRecord;
     profile: import("@/lib/shi/parcel-position-profile").ParcelPositionProfile;
     context: import("@/lib/shi/parcel-position-context").ParcelPositionContext;
+    commercial: import("@/lib/shi/corridor-exposure").CommercialExposureScore;
+    trafficAssoc: import("@/lib/shi/corridor-parcel-traffic").ParcelTrafficAssociation;
+    trafficSummary: ReturnType<
+      typeof import("@/lib/shi/corridor-parcel-traffic").parcelTrafficSummary
+    >;
     honesty: { frontageLabel: string; surveyed: boolean; note: string };
     cacheNote: string | null;
   }>(`/api/shi/corridors/parcel-location?${params.toString()}`);
+}
+
+export async function shiCorridorsAsk(opts: {
+  q: string;
+  context: import("@/lib/shi/corridor-ask").CorridorAskContext;
+}) {
+  return shiFetch<{
+    answer: import("@/lib/shi/corridor-ask").CorridorAskAnswer;
+  }>("/api/shi/corridors/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiArchieBrief(opts: {
+  property: ShiPropertyDetail;
+  exactOwnerCount: number;
+  possibleOwnerCount: number;
+  matches: ShiOwnerMatch[];
+  accessIntel?: import("@/lib/shi/corridor-frontage").ParcelLocationIntel | null;
+  stations?: import("@/lib/shi/corridors").TrafficStation[];
+  parcelNeighbors?: import("@/lib/shi/parcel-neighbors").ParcelNeighborsResult | null;
+}) {
+  return shiFetch<{
+    brief: import("@/lib/shi/archie-phase1").ArchiePropertyBrief;
+  }>("/api/shi/archie/brief", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiCorridorsCompare(opts: {
+  left: import("@/lib/shi/corridor-analysis").CorridorAnalysisResult;
+  right: import("@/lib/shi/corridor-analysis").CorridorAnalysisResult;
+  labels?: { left?: string; right?: string };
+}) {
+  return shiFetch<{
+    compare: import("@/lib/shi/corridor-compare").CorridorCompareResult;
+  }>("/api/shi/corridors/compare", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiGrowthScenario(opts: {
+  countyName: string;
+  assumptions: import("@/lib/shi/growth-scenarios").ScenarioAssumptions;
+  watch: import("@/lib/shi/growth-watch").GrowthWatchArea | null;
+  station: import("@/lib/shi/corridors").TrafficStation | null;
+  countyStations: import("@/lib/shi/corridors").TrafficStation[];
+}) {
+  return shiFetch<{
+    result: import("@/lib/shi/growth-scenarios").GrowthScenarioResult;
+  }>("/api/shi/corridors/growth-scenario", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiIntelligenceScenario(opts: {
+  subjectCadValue: number | null | undefined;
+  taxYearCount: number;
+  lookalike: import("@/lib/shi/cad-evidence").CadLookalikeBand | null;
+  assumptions: import("@/lib/shi/intelligence-scenarios").IntelligenceScenarioAssumptions;
+}) {
+  return shiFetch<{
+    result: import("@/lib/shi/intelligence-scenarios").IntelligenceScenarioResult;
+  }>("/api/shi/intelligence/scenario", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
 }
 
 /** After ranking — load THIS parcel's position so Sites/Compare can differ. */
@@ -729,6 +810,49 @@ export async function shiMultifamilyReview(opts: {
   review: import("@/lib/shi/multifamily-review").MultifamilyReviewResult;
 }> {
   return shiFetch("/api/shi/multifamily/review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiResearchPick(opts: {
+  candidates: import("@/lib/shi/parcel-position-objective").LookCandidate[];
+  objective?: import("@/lib/shi/parcel-position-objective").PositionObjective;
+}) {
+  return shiFetch<{
+    worthALook: import("@/lib/shi/parcel-position-area").WorthALookItem[];
+  }>("/api/shi/research/pick", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiResearchModeReview(opts: {
+  mode: import("@/lib/shi/research-modes").ResearchModeId;
+  sites: import("@/lib/shi/corridor-exposure").RankedSite[];
+  parcelCount?: number;
+  totalAcres?: number | null;
+  medianAcres?: number | null;
+}) {
+  return shiFetch<{
+    review: import("@/lib/shi/research-mode-reason").ModeReviewResult;
+  }>("/api/shi/research/mode-review", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(opts),
+  });
+}
+
+export async function shiResearchCompareSites(opts: {
+  sites: import("@/lib/shi/corridor-property-compare").PropertyCompareSite[];
+  stations: import("@/lib/shi/corridors").TrafficStation[];
+  mode?: import("@/lib/shi/research-modes").ResearchModeId;
+}) {
+  return shiFetch<{
+    compare: import("@/lib/shi/corridor-property-compare").PropertyCompareResult;
+  }>("/api/shi/research/compare-sites", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(opts),

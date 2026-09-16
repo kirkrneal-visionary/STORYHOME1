@@ -23,5 +23,6 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-16 | Capacity is isolated simulate only; claim is “held N concurrent scripted users” | Live load and 10M/100k numbers are not evidence | Pre-launch plan Wave 6 |
 | 2026-09-16 | Chrome selection is UX only; brains stay a later harden wave | Highlighting the page is not a privilege bypass | Founder harden GO ALL |
 | 2026-09-16 | Neighbor/frontage RPCs assert Story Pro in SQL | UI, View as buyer, and `/api/shi` are not the authority | Founder harden Wave 2 |
+| 2026-09-16 | Archie/Corridors scoring executes on the server | Browser gets the parcel-specific answer, not the recipe | Founder harden Wave 3 |
 
 If a new change alters one of these, add a row and update the workflow contract.

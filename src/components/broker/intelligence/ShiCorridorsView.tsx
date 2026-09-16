@@ -23,7 +23,10 @@ import { ShiCorridorsPropertyComparePanel } from "@/components/broker/intelligen
 import { ShiCorridorsScenarioBoard } from "@/components/broker/intelligence/ShiCorridorsScenarioBoard";
 import {
   shiAddProspect,
-  shiAnalyzeArea,
+  shiCorridorsAnalyze,
+  shiCorridorsAsk,
+  shiCorridorsCompare,
+  shiResearchCompareSites,
   shiCorridorsParcelLocation,
   shiAttachPositionToRankedSites,
   shiCorridorsProjects,
@@ -56,25 +59,18 @@ import {
   PRESENTATION_HONESTY,
 } from "@/lib/shi/corridor-presentation";
 import {
-  comparePropertySites,
   PROPERTY_COMPARE_MAX,
   toggleCompareSite,
+  type PropertyCompareResult,
 } from "@/lib/shi/corridor-property-compare";
-import {
-  answerCorridorAsk,
-  type CorridorAskAnswer,
-} from "@/lib/shi/corridor-ask";
+import type { CorridorAskAnswer } from "@/lib/shi/corridor-ask";
 import { openPropertyLocationReport } from "@/lib/shi/corridor-property-report";
 import { boundsAroundPoints } from "@/lib/shi/discover-bounds";
 import {
-  composeCorridorAnalysis,
   CORRIDOR_ANALYSIS_HONESTY,
   type CorridorAnalysisResult,
 } from "@/lib/shi/corridor-analysis";
-import {
-  compareCorridorAnalyses,
-  type CorridorCompareResult,
-} from "@/lib/shi/corridor-compare";
+import type { CorridorCompareResult } from "@/lib/shi/corridor-compare";
 import { openDevelopmentIntelligenceReport } from "@/lib/shi/corridor-report";
 import {
   listCorridorStudies,
@@ -106,15 +102,12 @@ import {
   vehiclesPerDayCaption,
 } from "@/lib/shi/corridor-language";
 import {
-  associateParcelTraffic,
   formatAcres,
-  parcelTrafficSummary,
   type CorridorParcelPick,
+  type ParcelTrafficAssociation,
 } from "@/lib/shi/corridor-parcel-traffic";
+import { parcelTrafficSummary } from "@/lib/shi/corridor-parcel-traffic";
 import {
-  approxFrontageFromGeojson,
-  approxIntersectionDistanceFromGeojson,
-  buildParcelLocationIntel,
   formatApproxFrontageFt,
   formatApproxIntersectionM,
   type ParcelLocationIntel,
@@ -122,7 +115,7 @@ import {
 import {
   exposureBandLabel,
   rankedSiteFactLine,
-  scoreCommercialExposure,
+  type CommercialExposureScore,
   type RankedSite,
 } from "@/lib/shi/corridor-exposure";
 import type { ParcelPositionRecord } from "@/lib/shi/parcel-position";
@@ -213,6 +206,8 @@ export function ShiCorridorsView({
   const [strongestLoading, setStrongestLoading] = useState(false);
   const [strongestNote, setStrongestNote] = useState("");
   const [comparePicks, setComparePicks] = useState<CorridorParcelPick[]>([]);
+  const [propertyCompare, setPropertyCompare] =
+    useState<PropertyCompareResult | null>(null);
   const [compareIntelById, setCompareIntelById] = useState<
     Record<string, ParcelLocationIntel | null>
   >({});
@@ -349,36 +344,21 @@ export function ShiCorridorsView({
       setTool("pan");
       setRevealStations(false);
       try {
-        const area = await shiAnalyzeArea({
+        const result = await shiCorridorsAnalyze({
           boundary,
-          source: county.source,
+          countyFips: county.fips,
         });
         setAnalyzeStatus(
-          `Found ${area.parcelCount.toLocaleString("en-US")} parcels — organizing traffic signals…`,
+          `Found ${result.evidence.parcelCount.toLocaleString("en-US")} parcels — organizing traffic signals…`,
         );
-        const cadPulse = payload?.watch?.cadPulse;
-        const result = composeCorridorAnalysis({
-          countyName: county.name,
-          countyFips: county.fips,
-          boundary,
-          area,
-          stations: payload?.stations ?? [],
-          watchAreas: payload?.watch?.areas ?? [],
-          trafficAvailable: Boolean(payload),
-          trafficError: payload ? null : error || "Traffic not loaded",
-          projectCount: projects.length,
-          projectsAvailable,
-          cadPulseAvailable: Boolean(cadPulse?.available),
-          cadPulseNote: cadPulse?.note ?? null,
-        });
         if (compareMode && analysis) {
+          const compared = await shiCorridorsCompare({
+            left: analysis,
+            right: result,
+            labels: { left: "Area A", right: "Area B" },
+          });
           setAnalysisB(result);
-          setCompare(
-            compareCorridorAnalyses(analysis, result, {
-              left: "Area A",
-              right: "Area B",
-            }),
-          );
+          setCompare(compared.compare);
           setCompareMode(false);
           setAnalyzeStatus(result.statusLine);
         } else {
@@ -448,16 +428,29 @@ export function ShiCorridorsView({
     }
   }, [analysisBoundary, county.fips]);
 
-  const propertyCompare = useMemo(() => {
-    if (comparePicks.length < 2) return null;
-    return comparePropertySites(
-      comparePicks.map((pick) => ({
+  useEffect(() => {
+    if (comparePicks.length < 2) {
+      setPropertyCompare(null);
+      return;
+    }
+    let cancelled = false;
+    void shiResearchCompareSites({
+      sites: comparePicks.map((pick) => ({
         pick,
         intel: compareIntelById[pick.propId] ?? null,
         position: comparePositionById[pick.propId] ?? null,
       })),
-      payload?.stations ?? [],
-    );
+      stations: payload?.stations ?? [],
+    })
+      .then((body) => {
+        if (!cancelled) setPropertyCompare(body.compare);
+      })
+      .catch(() => {
+        if (!cancelled) setPropertyCompare(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [comparePicks, compareIntelById, comparePositionById, payload?.stations]);
 
   const addParcelToCompare = useCallback(
@@ -1068,35 +1061,37 @@ export function ShiCorridorsView({
               <ShiCorridorsAskPanel
                 answer={askAnswer}
                 onAsk={(q) => {
-                  const answer = answerCorridorAsk(q, {
-                    countyName: county.name,
-                    stations: payload?.stations ?? [],
-                    watchAreas: payload?.watch?.areas ?? [],
-                    selectedParcel,
-                    selectedStation: selected,
-                    parcelIntel,
-                    rankedSites,
-                    hasAnalysisBoundary: Boolean(analysisBoundary),
-                    compareCount: comparePicks.length,
-                    flood: deskFlood,
-                    utilities: deskUtilities,
-                    environment: deskEnvironment,
+                  void shiCorridorsAsk({
+                    q,
+                    context: {
+                      countyName: county.name,
+                      stations: payload?.stations ?? [],
+                      watchAreas: payload?.watch?.areas ?? [],
+                      selectedParcel,
+                      selectedStation: selected,
+                      parcelIntel,
+                      rankedSites,
+                      hasAnalysisBoundary: Boolean(analysisBoundary),
+                      compareCount: comparePicks.length,
+                      flood: deskFlood,
+                      utilities: deskUtilities,
+                      environment: deskEnvironment,
+                    },
+                  }).then(({ answer }) => {
+                    setAskAnswer(answer);
+                    if (answer.hint === "draw_area") {
+                      setTool("freehand");
+                    } else if (answer.hint === "run_strongest") {
+                      void findStrongestSites();
+                    } else if (answer.hint === "select_parcel") {
+                      setTool("pan");
+                      setPanel("site");
+                    } else if (answer.hint === "select_station") {
+                      setTool("traffic");
+                      setRevealStations(true);
+                      setPanel("station");
+                    }
                   });
-                  setAskAnswer(answer);
-                  if (answer.hint === "draw_area") {
-                    setTool("freehand");
-                  } else if (answer.hint === "run_strongest") {
-                    void findStrongestSites();
-                  } else if (answer.hint === "select_parcel") {
-                    setTool("pan");
-                    setPanel("site");
-                  } else if (answer.hint === "select_station") {
-                    setTool("traffic");
-                    setRevealStations(true);
-                    setPanel("station");
-                  } else if (answer.hint === "open_compare") {
-                    /* stay — compare panel is below */
-                  }
                 }}
               />
             ) : null}
@@ -1163,20 +1158,16 @@ export function ShiCorridorsView({
                   if (!selectedParcel) return;
                   void createParcelFarm(selectedParcel);
                 }}
-                onReport={(intel) => {
+                onReport={(intel, commercial, trafficAssoc) => {
                   if (!selectedParcel) return;
                   openPropertyLocationReport({
                     countyName: county.name,
                     pick: selectedParcel,
                     stations: payload?.stations ?? [],
                     intel,
-                    compareSites:
-                      comparePicks.length >= 2
-                        ? comparePicks.map((pick) => ({
-                            pick,
-                            intel: compareIntelById[pick.propId] ?? null,
-                          }))
-                        : undefined,
+                    commercial,
+                    trafficAssoc,
+                    compare: propertyCompare,
                   });
                 }}
               />
@@ -1646,10 +1637,19 @@ function ParcelSitePanel({
   onSave: () => void;
   onProspect: () => void;
   onFarm: () => void;
-  onReport: (intel: ParcelLocationIntel | null) => void;
+  onReport: (
+    intel: ParcelLocationIntel | null,
+    commercial: CommercialExposureScore | null,
+    trafficAssoc: ParcelTrafficAssociation | null,
+  ) => void;
 }) {
   const [intel, setIntel] = useState<ParcelLocationIntel | null>(null);
   const [intelLoading, setIntelLoading] = useState(false);
+  const [commercial, setCommercial] = useState<CommercialExposureScore | null>(
+    null,
+  );
+  const [trafficAssoc, setTrafficAssoc] =
+    useState<ParcelTrafficAssociation | null>(null);
   const [floodFact, setFloodFact] = useState<FloodFact | null>(null);
   const [utilitiesFact, setUtilitiesFact] = useState<UtilitiesFact | null>(
     null,
@@ -1669,6 +1669,8 @@ function ParcelSitePanel({
   useEffect(() => {
     if (!parcel) {
       setIntel(null);
+      setCommercial(null);
+      setTrafficAssoc(null);
       setFloodFact(null);
       setUtilitiesFact(null);
       setEnvironmentDesk(null);
@@ -1677,30 +1679,10 @@ function ParcelSitePanel({
       return;
     }
 
-    /* Immediate client approx when map gave us a polygon + live segments. */
-    if (parcel.geojson && segments.length > 0) {
-      const roads = approxFrontageFromGeojson({
-        parcelGeojson: parcel.geojson,
-        segments,
-      });
-      const ixHit = approxIntersectionDistanceFromGeojson({
-        parcelGeojson: parcel.geojson,
-        segments,
-      });
-      const next = buildParcelLocationIntel({
-        roads,
-        source: "client_approx",
-        observationYear: new Date().getFullYear(),
-        stationNearby: roads.length > 0,
-        intersection: ixHit,
-        intersectionTier: ixHit ? "ESTIMATED" : null,
-      });
-      setIntel(next);
-      onIntelChange?.(next);
-    } else {
-      setIntel(null);
-      onIntelChange?.(null);
-    }
+    setIntel(null);
+    setCommercial(null);
+    setTrafficAssoc(null);
+    onIntelChange?.(null);
 
     let cancelled = false;
     setIntelLoading(true);
@@ -1717,18 +1699,10 @@ function ParcelSitePanel({
     })
       .then((body) => {
         if (cancelled || !body.intel) return;
-        setIntel((prev) => {
-          let next = body.intel;
-          if (body.intel.source === "postgis") next = body.intel;
-          else if (
-            prev &&
-            prev.totalApproxFrontageFt > body.intel.totalApproxFrontageFt
-          ) {
-            next = prev;
-          }
-          onIntelChange?.(next);
-          return next;
-        });
+        setIntel(body.intel);
+        onIntelChange?.(body.intel);
+        if (body.commercial) setCommercial(body.commercial);
+        if (body.trafficAssoc) setTrafficAssoc(body.trafficAssoc);
       })
       .catch(() => {
         /* Soft-fail — station estimate still shows. */
@@ -1811,15 +1785,21 @@ function ParcelSitePanel({
     );
   }
 
-  const assoc = associateParcelTraffic(parcel, stations);
-  const summary = parcelTrafficSummary(assoc);
-  const confidenceLabel = (intel?.confidence ?? assoc.confidence).toUpperCase();
-  const commercial = scoreCommercialExposure({
-    pick: parcel,
-    stations,
-    intel,
-    legalAcreage: parcel.legalAcreage,
-  });
+  const assoc = trafficAssoc;
+  const summary = assoc
+    ? parcelTrafficSummary(assoc)
+    : {
+        vehiclesLabel: intelLoading ? "…" : "—",
+        caption: intelLoading ? "Reading published counts…" : "Traffic not loaded.",
+        intensity: null,
+        status: null,
+        statusWhy: null,
+      };
+  const confidenceLabel = (
+    intel?.confidence ??
+    assoc?.confidence ??
+    "limited"
+  ).toUpperCase();
 
   return (
     <div className="space-y-3" data-corridor-parcel-panel>
@@ -1847,30 +1827,34 @@ function ParcelSitePanel({
           Commercial exposure
         </p>
         <p className="mt-1 type-page-title tabular-nums text-ink">
-          {commercial.score}
-          <span className="text-lg text-[var(--muted)]">
-            /{commercial.maxScore}
-          </span>
+          {commercial ? commercial.score : intelLoading ? "…" : "—"}
+          {commercial ? (
+            <span className="text-lg text-[var(--muted)]">
+              /{commercial.maxScore}
+            </span>
+          ) : null}
         </p>
         <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
-          {exposureBandLabel(commercial.band)}
+          {commercial ? exposureBandLabel(commercial.band) : "—"}
         </p>
-        <details className="mt-2" data-corridor-exposure-why>
-          <summary className="cursor-pointer text-[11px] font-semibold text-gold">
-            WHY?
-          </summary>
-          <ul className="mt-2 space-y-1.5">
-            {commercial.factors.map((f) => (
-              <li key={f.id} className="text-[11px] leading-snug text-[var(--muted)]">
-                <span className="font-semibold text-ink">
-                  {f.label} · {f.points}/{f.maxPoints}
-                </span>
-                <br />
-                {f.detail}
-              </li>
-            ))}
-          </ul>
-        </details>
+        {commercial ? (
+          <details className="mt-2" data-corridor-exposure-why>
+            <summary className="cursor-pointer text-[11px] font-semibold text-gold">
+              WHY?
+            </summary>
+            <ul className="mt-2 space-y-1.5">
+              {commercial.factors.map((f) => (
+                <li key={f.id} className="text-[11px] leading-snug text-[var(--muted)]">
+                  <span className="font-semibold text-ink">
+                    {f.label} · {f.points}/{f.maxPoints}
+                  </span>
+                  <br />
+                  {f.detail}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ) : null}
       </div>
 
       <div className="story-well px-3 py-2.5" data-corridor-frontage-block>
@@ -1972,12 +1956,13 @@ function ParcelSitePanel({
           className="mt-2 font-mono text-[10px] font-semibold tracking-wide uppercase text-ink"
           data-parcel-traffic-kind
         >
-          {assoc.kind === "estimated"
+          {assoc?.kind === "estimated"
             ? `${assoc.label} · ${assoc.confidence} confidence`
-            : assoc.label}
+            : assoc?.label ?? (intelLoading ? "…" : "—")}
         </p>
         <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
-          {assoc.detail}
+          {assoc?.detail ??
+            (intelLoading ? "Reading published counts…" : "")}
         </p>
         {summary.intensity || summary.status ? (
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -2046,7 +2031,7 @@ function ParcelSitePanel({
         </button>
         <button
           type="button"
-          onClick={() => onReport(intel)}
+          onClick={() => onReport(intel, commercial, trafficAssoc)}
           data-corridor-parcel-report
           className="story-press inline-flex h-11 items-center rounded-lg border border-hairline px-3 text-xs font-semibold text-ink"
         >
