@@ -229,6 +229,7 @@ assert.match(advanced, /overflow-hidden/);
 assert.match(advanced, /Escape/);
 assert.match(advanced, /story-bottom-clearance/);
 assert.match(advanced, /visualViewport/);
+assert.match(advanced, /preventScroll/);
 assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
 
 const fixtures: DemoListing[] = [

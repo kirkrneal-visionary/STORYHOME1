@@ -45,9 +45,11 @@ export function HomeAdvancedSearch({
     const root = panelRef.current;
     const narrow = window.matchMedia("(max-width: 767px)").matches;
     if (narrow) {
-      root?.focus();
+      root?.focus({ preventScroll: true });
     } else {
-      root?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+      root
+        ?.querySelector<HTMLElement>(FOCUSABLE)
+        ?.focus({ preventScroll: true });
     }
 
     const fit = () => {
