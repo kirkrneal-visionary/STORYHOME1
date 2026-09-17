@@ -473,6 +473,7 @@ function PrimaryAction({ children }: { children: string }) {
     <button
       type="submit"
       data-story-sound="tap"
+      data-primary-action={children.toLowerCase()}
       className="story-home-search-submit story-press inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
     >
       {children}
