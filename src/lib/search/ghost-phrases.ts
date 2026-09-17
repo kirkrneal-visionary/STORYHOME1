@@ -35,6 +35,12 @@ export const GHOST_STATIC_HINT = {
   narrow: "Search homes or describe what you want…",
 } as const;
 
+/** Rent has no inventory — do not animate Buy examples under Rent. */
+export const GHOST_RENT_HINT = {
+  full: "Rentals are not listed yet",
+  narrow: "Rentals are not listed yet",
+} as const;
+
 export const GHOST_PHRASES: GhostPhrase[] = [
   {
     id: "polk-corrigan-acres",

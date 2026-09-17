@@ -3,10 +3,12 @@
 import { memo, useEffect, useRef, useState } from "react";
 import {
   createGhostRotation,
+  GHOST_RENT_HINT,
   GHOST_STATIC_HINT,
   type GhostPhrase,
 } from "@/lib/search/ghost-phrases";
 import { useAnimatedSearchExamples } from "@/lib/search/ghost-preference";
+import type { TransactionMode } from "@/lib/search/transaction";
 
 export { GHOST_PHRASES, GHOST_PHRASES_NARROW } from "@/lib/search/ghost-phrases";
 
@@ -28,8 +30,10 @@ function phraseText(phrase: GhostPhrase, narrow: boolean) {
  */
 export const HomeGhostHint = memo(function HomeGhostHint({
   active,
+  mode = "buy",
 }: {
   active: boolean;
+  mode?: TransactionMode;
 }) {
   const [shown, setShown] = useState("");
   const [narrow, setNarrow] = useState(false);
@@ -52,6 +56,12 @@ export const HomeGhostHint = memo(function HomeGhostHint({
     window.clearTimeout(timer.current);
     if (!active) {
       setShown("");
+      phase.current = "type";
+      pos.current = 0;
+      return;
+    }
+    if (mode === "rent") {
+      setShown(narrow ? GHOST_RENT_HINT.narrow : GHOST_RENT_HINT.full);
       phase.current = "type";
       pos.current = 0;
       return;
@@ -118,7 +128,7 @@ export const HomeGhostHint = memo(function HomeGhostHint({
       window.clearTimeout(timer.current);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [active, examplesOn, narrow]);
+  }, [active, examplesOn, narrow, mode]);
 
   if (!active) return null;
 
@@ -129,7 +139,7 @@ export const HomeGhostHint = memo(function HomeGhostHint({
     >
       <span className="max-w-full text-[15px] leading-tight text-paper/45 sm:whitespace-nowrap">
         {shown}
-        {examplesOn && shown ? (
+        {examplesOn && mode === "buy" && shown ? (
           <span className="ml-px inline-block h-[1em] w-px translate-y-[1px] bg-gold/70" />
         ) : null}
       </span>

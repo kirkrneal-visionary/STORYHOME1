@@ -3,13 +3,17 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
+import { HomeFilterGroups } from "@/components/home/HomeFilterGroups";
 import {
-  DEFAULT_SEARCH_FILTERS,
   countActiveFiltersInGroup,
   type FilterGroupId,
   type SearchFilters,
 } from "@/lib/listing-filters";
+import {
+  RENTAL_INVENTORY_AVAILABLE,
+  RENT_UNAVAILABLE,
+  type TransactionMode,
+} from "@/lib/search/transaction";
 import { cn } from "@/lib/utils";
 
 const GROUPS: { id: FilterGroupId; label: string }[] = [
@@ -18,7 +22,7 @@ const GROUPS: { id: FilterGroupId; label: string }[] = [
   { id: "features", label: "Features" },
 ];
 
-const CLOSE_MS = 280;
+const CLOSE_MS = 420;
 
 function dockTop(): number {
   const dock = document.querySelector("[data-story-bottom-dock]");
@@ -46,22 +50,25 @@ function searchBarBox() {
   return node.getBoundingClientRect();
 }
 
-export function HomeAdvancedSearch({
+export function HomeFilterWing({
   open,
   onClose,
-  draft,
-  onDraftChange,
-  onApply,
+  filters,
+  onChange,
+  onClear,
+  mode,
+  resetToken,
 }: {
   open: boolean;
   onClose: () => void;
-  draft: SearchFilters;
-  onDraftChange: (next: SearchFilters) => void;
-  onApply: (next: SearchFilters) => void;
+  filters: SearchFilters;
+  onChange: (next: SearchFilters) => void;
+  onClear: () => void;
+  mode: TransactionMode;
+  resetToken: number;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const previousFocus = useRef<HTMLElement | null>(null);
   const closeTimer = useRef<number>(0);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -85,7 +92,6 @@ export function HomeAdvancedSearch({
   useEffect(() => {
     window.clearTimeout(closeTimer.current);
     if (open) {
-      previousFocus.current = document.activeElement as HTMLElement | null;
       setPresent(true);
       const raf = window.requestAnimationFrame(() => setShown(true));
       return () => window.cancelAnimationFrame(raf);
@@ -121,14 +127,21 @@ export function HomeAdvancedSearch({
           top,
           left,
           width,
-          originX: trigger && bar ? `${Math.max(12, trigger.left - left + trigger.width / 2)}px` : "18%",
+          originX:
+            trigger && bar
+              ? `${Math.max(12, trigger.left - left + trigger.width / 2)}px`
+              : "18%",
           originY: "0%",
-          maxBody: Math.max(0, available - 132),
+          maxBody: Math.max(0, available - 128),
         });
         return;
       }
 
-      const rowBottom = Math.max(trigger?.bottom ?? 0, bar?.bottom ?? 0, search?.bottom ?? 0);
+      const rowBottom = Math.max(
+        trigger?.bottom ?? 0,
+        bar?.bottom ?? 0,
+        search?.bottom ?? 0,
+      );
       const top = rowBottom + 8;
       const searchLeft = search ? search.left - 12 : window.innerWidth - 24;
       const preferredWidth = Math.min(26 * 16, Math.max(280, searchLeft - 16));
@@ -148,18 +161,15 @@ export function HomeAdvancedSearch({
         width,
         originX,
         originY: "0%",
-        maxBody: available > 420 ? 0 : Math.max(0, available - 132),
+        maxBody: available > 420 ? 0 : Math.max(0, available - 128),
       });
     };
 
-    const frame = window.requestAnimationFrame(() => {
-      fit();
-      if (open && !panelRef.current?.contains(document.activeElement)) {
-        panelRef.current?.focus({ preventScroll: true });
-      }
-    });
+    const frame = window.requestAnimationFrame(fit);
     window.addEventListener("resize", fit);
+    window.addEventListener("scroll", fit, true);
     window.visualViewport?.addEventListener("resize", fit);
+    window.visualViewport?.addEventListener("scroll", fit);
     media.addEventListener("change", fit);
 
     const onKey = (e: KeyboardEvent) => {
@@ -189,20 +199,14 @@ export function HomeAdvancedSearch({
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
       window.removeEventListener("resize", fit);
+      window.removeEventListener("scroll", fit, true);
       window.visualViewport?.removeEventListener("resize", fit);
+      window.visualViewport?.removeEventListener("scroll", fit);
       media.removeEventListener("change", fit);
-      if (!open) previousFocus.current?.focus();
     };
-  }, [present, open]);
+  }, [present]);
 
   if (!mounted || !present) return null;
-
-  function resetDraft() {
-    onDraftChange({
-      ...DEFAULT_SEARCH_FILTERS,
-      query: draft.query,
-    });
-  }
 
   const ui = (
     <div
@@ -210,11 +214,11 @@ export function HomeAdvancedSearch({
       role="dialog"
       aria-modal="false"
       aria-labelledby={titleId}
-      tabIndex={-1}
       data-story-filter-wing
       data-advanced-chrome="pinned"
       data-open={shown ? "true" : "false"}
-      className="story-filter-wing fixed z-[55] outline-none"
+      data-transaction-mode={mode}
+      className="story-filter-wing fixed outline-none"
       style={{
         top: box.top,
         left: box.left,
@@ -242,7 +246,7 @@ export function HomeAdvancedSearch({
             className="flex min-w-0 flex-1 flex-wrap gap-1"
           >
             {GROUPS.map((row) => {
-              const active = countActiveFiltersInGroup(draft, row.id);
+              const active = countActiveFiltersInGroup(filters, row.id);
               return (
                 <button
                   key={row.id}
@@ -278,47 +282,46 @@ export function HomeAdvancedSearch({
             type="button"
             onClick={onClose}
             className="story-press inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-paper/70 hover:bg-paper/10 hover:text-paper"
-            aria-label="Cancel filters"
+            aria-label="Close filters"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
+        {mode === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
+          <p
+            data-rent-unavailable
+            className="shrink-0 border-b border-hairline px-3 py-2 text-[11px] leading-snug text-paper/65"
+          >
+            {RENT_UNAVAILABLE.title}. {RENT_UNAVAILABLE.detail}
+          </p>
+        ) : null}
         <div
           data-advanced-body
-          className="min-h-0 px-3 py-3"
+          className="min-h-[13.5rem] px-3 py-3"
           style={
             box.maxBody > 0
               ? { maxHeight: box.maxBody, overflowY: "auto" }
               : undefined
           }
         >
-          <SearchFiltersPanel
-            title=""
-            compact
+          <HomeFilterGroups
             group={group}
-            filters={draft}
-            onChange={onDraftChange}
-            resultCount={0}
-            showResultCount={false}
+            filters={filters}
+            onChange={onChange}
+            mode={mode}
+            resetToken={resetToken}
           />
         </div>
         <div
           data-advanced-footer
-          className="flex min-h-[3.75rem] shrink-0 gap-2 border-t border-hairline bg-[var(--env-1)] px-3 py-3"
+          className="flex min-h-[3rem] shrink-0 items-center justify-end border-t border-hairline bg-[var(--env-1)] px-3 py-2"
         >
           <button
             type="button"
-            onClick={resetDraft}
-            className="story-press h-11 flex-1 rounded-[var(--radius-md)] border border-hairline text-sm font-semibold text-paper"
+            onClick={onClear}
+            className="story-press h-9 rounded-full px-3 text-xs font-semibold text-paper/60 hover:text-paper"
           >
-            Reset
-          </button>
-          <button
-            type="button"
-            onClick={() => onApply(draft)}
-            className="story-press h-11 flex-1 rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy"
-          >
-            Apply
+            Clear filters
           </button>
         </div>
       </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { Search } from "lucide-react";
-import { HomeAdvancedSearch } from "@/components/home/HomeAdvancedSearch";
+import { HomeFilterWing } from "@/components/home/HomeFilterWing";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import { ListingCard } from "@/components/ListingCard";
 import type { DemoListing } from "@/lib/demo-data";
@@ -19,6 +19,17 @@ import {
   planToMarketplaceParams,
 } from "@/lib/search/interpret";
 import { allowlistedAdvanced } from "@/lib/search/plan";
+import {
+  EMPTY_PRICE,
+  RENTAL_INVENTORY_AVAILABLE,
+  SALE_SEARCH_STATUSES,
+  asPriceBounds,
+  readPrice,
+  storedTransactionMode,
+  withPrice,
+  type PriceBounds,
+  type TransactionMode,
+} from "@/lib/search/transaction";
 import { fetchMarketplaceListings } from "@/lib/supabase/listings";
 import {
   DEFAULT_MARKET,
@@ -28,18 +39,18 @@ import {
 } from "@/lib/markets";
 import { cn } from "@/lib/utils";
 
-type Intent = "sale" | "sold";
-
 const HOME_SEARCH_STATE_KEY = "story-home-wave-a-search";
 
 export function HomeSearchHero() {
   const router = useRouter();
-  const [intent, setIntent] = useState<Intent>("sale");
+  const [mode, setMode] = useState<TransactionMode>("buy");
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
-  const [draft, setDraft] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
+  const [buyPrice, setBuyPrice] = useState<PriceBounds>(EMPTY_PRICE);
+  const [rentPrice, setRentPrice] = useState<PriceBounds>(EMPTY_PRICE);
+  const [resetToken, setResetToken] = useState(0);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -50,19 +61,35 @@ export function HomeSearchHero() {
       if (raw) {
         const row = JSON.parse(raw) as {
           query?: unknown;
+          mode?: unknown;
           intent?: unknown;
           filters?: unknown;
+          buyPrice?: unknown;
+          rentPrice?: unknown;
         };
         if (typeof row.query === "string") setQuery(row.query);
-        if (row.intent === "sale" || row.intent === "sold") setIntent(row.intent);
-        if (row.filters) {
-          const next = {
-            ...DEFAULT_SEARCH_FILTERS,
-            ...allowlistedAdvanced(row.filters),
-          };
-          setFilters(next);
-          setDraft(next);
-        }
+        const nextMode = storedTransactionMode(
+          row.mode ?? (row.intent === "rent" ? "rent" : "buy"),
+        );
+        setMode(nextMode);
+        const nextFilters = {
+          ...DEFAULT_SEARCH_FILTERS,
+          ...(row.filters ? allowlistedAdvanced(row.filters) : {}),
+          statuses: DEFAULT_SEARCH_FILTERS.statuses,
+        };
+        const storedBuy = asPriceBounds(row.buyPrice);
+        const storedRent = asPriceBounds(row.rentPrice);
+        const buy =
+          storedBuy.min || storedBuy.max
+            ? storedBuy
+            : nextMode === "buy"
+              ? readPrice(nextFilters)
+              : EMPTY_PRICE;
+        const rent =
+          storedRent.min || storedRent.max ? storedRent : EMPTY_PRICE;
+        setBuyPrice(buy);
+        setRentPrice(rent);
+        setFilters(withPrice(nextFilters, nextMode === "buy" ? buy : rent));
       }
     } catch {
       /* ignore broken session rows */
@@ -76,12 +103,18 @@ export function HomeSearchHero() {
     try {
       sessionStorage.setItem(
         HOME_SEARCH_STATE_KEY,
-        JSON.stringify({ query, intent, filters }),
+        JSON.stringify({
+          query,
+          mode,
+          filters,
+          buyPrice,
+          rentPrice,
+        }),
       );
     } catch {
       /* private mode */
     }
-  }, [sessionReady, query, intent, filters]);
+  }, [sessionReady, query, mode, filters, buyPrice, rentPrice]);
 
   useEffect(() => {
     let active = true;
@@ -100,48 +133,73 @@ export function HomeSearchHero() {
     };
   }, []);
 
-  function submitPlan(raw: string, nextFilters: SearchFilters = filters) {
-    // Local first-party plan. Marketplace stays usable if APIs or a future paid interpreter are off.
+  function changeMode(next: TransactionMode) {
+    if (next === mode) return;
+    const current = readPrice(filters);
+    const nextBuy = mode === "buy" ? current : buyPrice;
+    const nextRent = mode === "rent" ? current : rentPrice;
+    setBuyPrice(nextBuy);
+    setRentPrice(nextRent);
+    setMode(next);
+    setFilters(withPrice(filters, next === "buy" ? nextBuy : nextRent));
+  }
+
+  function changeFilters(next: SearchFilters) {
+    setFilters(next);
+    const price = readPrice(next);
+    if (mode === "buy") setBuyPrice(price);
+    else setRentPrice(price);
+  }
+
+  function clearFilters() {
+    setBuyPrice(EMPTY_PRICE);
+    setRentPrice(EMPTY_PRICE);
+    setFilters({
+      ...DEFAULT_SEARCH_FILTERS,
+      query,
+    });
+    setResetToken((n) => n + 1);
+  }
+
+  function submitBuy(raw: string, nextFilters: SearchFilters = filters) {
     const plan = authorizeSearchInput({
       q: raw,
       advanced: {
         ...nextFilters,
         query: nextFilters.query,
-        statuses:
-          intent === "sold"
-            ? ["Sold"]
-            : nextFilters.statuses.length
-              ? nextFilters.statuses
-              : ["Active", "Option Pending Continue to Show"],
+        priceMin: nextFilters.priceMin,
+        priceMax: nextFilters.priceMax,
+        statuses: [...SALE_SEARCH_STATUSES],
       },
     });
     router.push(`/marketplace?${planToMarketplaceParams(plan).toString()}`);
   }
 
-  function commitDraft(next: SearchFilters) {
-    setFilters(next);
-    if (next.query.trim()) setQuery(next.query);
+  function submitRent() {
+    router.push("/rent");
   }
 
   function onSearch(e: FormEvent) {
     e.preventDefault();
-    const next = filtersOpen ? draft : filters;
-    if (filtersOpen) {
-      commitDraft(next);
-      setFiltersOpen(false);
+    if (filtersOpen) setFiltersOpen(false);
+    if (mode === "rent") {
+      submitRent();
+      return;
     }
-    const raw = query.trim() || next.query;
-    submitPlan(raw, next);
+    const raw = query.trim() || filters.query;
+    submitBuy(raw, filters);
   }
 
   function searchArea(area: string) {
-    submitPlan(`${area}, TX`);
+    if (mode === "rent") {
+      submitRent();
+      return;
+    }
+    submitBuy(`${area}, TX`);
   }
 
   const ghostActive =
-    !focused &&
-    !filtersOpen &&
-    query.trim().length === 0;
+    !focused && !filtersOpen && query.trim().length === 0;
   const filterCount = countActiveFilters(filters);
 
   return (
@@ -164,29 +222,43 @@ export function HomeSearchHero() {
             </h1>
 
             <div className="relative mx-auto mt-5 w-full max-w-3xl text-left md:mt-6">
-              <div className="story-home-search story-glass rounded-[var(--radius-lg)]">
+              <div
+                className="story-home-search story-glass rounded-[var(--radius-lg)]"
+                data-transaction-mode={mode}
+              >
                 <form
                   onSubmit={onSearch}
                   className="flex flex-col gap-1.5 p-2 md:flex-row md:items-center md:gap-2 md:p-2"
                 >
                   <div
                     role="group"
-                    aria-label="Listing status"
+                    aria-label="What you want to do"
                     className="flex w-fit shrink-0 rounded-full border border-hairline p-0.5"
                   >
                     {(
                       [
-                        ["sale", "For sale"],
-                        ["sold", "Sold"],
+                        ["buy", "Buy"],
+                        ["rent", "Rent"],
                       ] as const
                     ).map(([key, label]) => (
                       <button
                         key={key}
                         type="button"
-                        onClick={() => setIntent(key)}
+                        data-available={
+                          key === "rent" && !RENTAL_INVENTORY_AVAILABLE
+                            ? "false"
+                            : "true"
+                        }
+                        aria-pressed={mode === key}
+                        aria-label={
+                          key === "rent" && !RENTAL_INVENTORY_AVAILABLE
+                            ? "Rent, not yet available"
+                            : label
+                        }
+                        onClick={() => changeMode(key)}
                         className={cn(
                           "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
-                          intent === key
+                          mode === key
                             ? "bg-gold text-navy"
                             : "text-paper/70 hover:text-paper",
                         )}
@@ -208,7 +280,7 @@ export function HomeSearchHero() {
                         className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-3 text-base text-paper outline-none md:h-14 md:text-[1.05rem]"
                         aria-label="Search homes or describe what you want"
                       />
-                      <HomeGhostHint active={ghostActive} />
+                      <HomeGhostHint active={ghostActive} mode={mode} />
                     </div>
                   </div>
                   <div className="grid grid-cols-[auto_1fr] items-center gap-1.5 md:flex md:shrink-0 md:gap-2">
@@ -217,18 +289,10 @@ export function HomeSearchHero() {
                       aria-expanded={filtersOpen}
                       aria-label={
                         filterCount > 0
-                          ? `Filters, ${filterCount} applied`
+                          ? `Filters, ${filterCount} selected`
                           : "Filters"
                       }
-                      onClick={() => {
-                        if (!filtersOpen) {
-                          setDraft({
-                            ...filters,
-                            query: query || filters.query,
-                          });
-                        }
-                        setFiltersOpen((v) => !v);
-                      }}
+                      onClick={() => setFiltersOpen((v) => !v)}
                       className="story-home-filters-trigger story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper"
                     >
                       <span className="text-[10px] font-bold leading-none tracking-wide">
@@ -250,15 +314,14 @@ export function HomeSearchHero() {
                   </div>
                 </form>
               </div>
-              <HomeAdvancedSearch
+              <HomeFilterWing
                 open={filtersOpen}
                 onClose={() => setFiltersOpen(false)}
-                draft={draft}
-                onDraftChange={setDraft}
-                onApply={(next) => {
-                  commitDraft(next);
-                  setFiltersOpen(false);
-                }}
+                filters={filters}
+                onChange={changeFilters}
+                onClear={clearFilters}
+                mode={mode}
+                resetToken={resetToken}
               />
             </div>
           </div>

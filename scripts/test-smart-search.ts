@@ -35,9 +35,21 @@ import {
 } from "../src/lib/listing-filters.ts";
 import {
   GHOST_PHRASES,
+  GHOST_RENT_HINT,
   GHOST_STATIC_HINT,
   createGhostRotation,
 } from "../src/lib/search/ghost-phrases.ts";
+import {
+  BUY_PRICE_PRESETS,
+  EMPTY_PRICE,
+  RENTAL_INVENTORY_AVAILABLE,
+  RENT_PRICE_PRESETS,
+  boundsFromPreset,
+  matchPreset,
+  parseBound,
+  rangeError,
+  withPrice,
+} from "../src/lib/search/transaction.ts";
 import type { DemoListing } from "../src/lib/demo-data.ts";
 
 const root = process.cwd();
@@ -214,7 +226,15 @@ assert.doesNotMatch(hero, />Advanced</);
 assert.doesNotMatch(hero, /story-wordmark/);
 assert.match(hero, /story-home-wave-a-search/);
 assert.match(hero, /countActiveFilters/);
-assert.match(hero, /["']sold["']/);
+assert.match(hero, /\["buy", "Buy"\]/);
+assert.match(hero, /\["rent", "Rent"\]/);
+assert.match(hero, /HomeFilterWing/);
+assert.match(hero, /submitRent/);
+assert.match(hero, /\/rent/);
+assert.match(hero, /SALE_SEARCH_STATUSES/);
+assert.doesNotMatch(hero, /["']sold["']/);
+assert.doesNotMatch(hero, /HomeAdvancedSearch/);
+assert.doesNotMatch(hero, /onApply|setDraft/);
 assert.match(hero, /authorizeSearchInput/);
 assert.doesNotMatch(hero, /\/api\/smart-search/);
 assert.doesNotMatch(hero, /unsplash/i);
@@ -229,6 +249,8 @@ assert.match(ghost, /HOLD_MS/);
 assert.match(ghost, /visibilitychange/);
 assert.match(ghost, /useAnimatedSearchExamples/);
 assert.match(ghost, /GHOST_STATIC_HINT/);
+assert.match(ghost, /GHOST_RENT_HINT/);
+assert.match(ghost, /mode === "rent"/);
 assert.doesNotMatch(ghost, /setQuery|value=\{/);
 assert.doesNotMatch(ghost, /fetch\(|openai|anthropic/i);
 assert.doesNotMatch(ghost, /setInterval/);
@@ -255,6 +277,7 @@ assert.match(phrasesSrc, /3 bed in Onalaska under \$350k/);
 assert.equal(GHOST_PHRASES.length, 14);
 assert.equal(new Set(GHOST_PHRASES.map((row) => row.county)).size, 7);
 assert.match(GHOST_STATIC_HINT.full, /Search homes/);
+assert.match(GHOST_RENT_HINT.full, /Rentals are not listed yet/);
 
 function seeded(start: number) {
   let seed = start;
@@ -290,25 +313,40 @@ const drawer = read("src/components/nav/FederatedNavDrawer.tsx");
 assert.match(drawer, /GhostExamplesControl/);
 assert.match(drawer, /xl:hidden/);
 
-const advanced = read("src/components/home/HomeAdvancedSearch.tsx");
-assert.match(advanced, />\s*Apply\s*</);
-assert.match(advanced, /story-filter-wing/);
-assert.match(advanced, /Price & land/);
-assert.match(advanced, /onApply/);
-assert.match(advanced, /Escape/);
-assert.match(advanced, /visualViewport/);
-assert.match(advanced, /preventScroll/);
-assert.match(advanced, /createPortal/);
-assert.match(advanced, /data-advanced-chrome="pinned"/);
-assert.match(advanced, /flex h-fit flex-col/);
-assert.match(advanced, /min-h-\[3\.75rem\]/);
-assert.match(advanced, /story-home-search-submit/);
-assert.doesNotMatch(advanced, /inset-0/);
-assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
-assert.doesNotMatch(advanced, /aria-modal="true"/);
+const wing = read("src/components/home/HomeFilterWing.tsx");
+assert.match(wing, /Clear filters/);
+assert.match(wing, /story-filter-wing/);
+assert.match(wing, /Price & land/);
+assert.match(wing, /HomeFilterGroups/);
+assert.match(wing, /Escape/);
+assert.match(wing, /visualViewport/);
+assert.match(wing, /createPortal/);
+assert.match(wing, /data-advanced-chrome="pinned"/);
+assert.match(wing, /flex h-fit flex-col/);
+assert.match(wing, /story-home-search-submit/);
+assert.match(wing, /420/);
+assert.doesNotMatch(wing, />\s*Apply\s*</);
+assert.doesNotMatch(wing, /onApply/);
+assert.doesNotMatch(wing, /SearchFiltersPanel/);
+assert.doesNotMatch(wing, /inset-0/);
+assert.doesNotMatch(wing, /bg-\[var\(--paper\)\]/);
+assert.doesNotMatch(wing, /aria-modal="true"/);
+assert.doesNotMatch(wing, /preventScroll/);
+
+const groups = read("src/components/home/HomeFilterGroups.tsx");
+assert.match(groups, /Purchase price/);
+assert.match(groups, /Monthly rent/);
+assert.match(groups, /BUY_PRICE_PRESETS/);
+assert.match(groups, /RENT_PRICE_PRESETS/);
+assert.match(groups, /Custom/);
+assert.match(groups, /inputMode/);
+assert.doesNotMatch(groups, /City, county, ZIP/);
+assert.doesNotMatch(groups, /Listing status/);
 
 assert.match(css, /story-filter-wing/);
-assert.match(css, /280ms/);
+assert.match(css, /420ms/);
+assert.match(css, /z-index: 40/);
+assert.doesNotMatch(css, /transform 280ms/);
 
 const phrasePlans = [
   {
@@ -532,5 +570,28 @@ assert.ok(reset.length >= 2);
 const rentPage = read("src/app/rent/page.tsx");
 assert.match(rentPage, /does not have rental inventory/);
 assert.doesNotMatch(rentPage, /intent=rent/);
+
+assert.equal(RENTAL_INVENTORY_AVAILABLE, false);
+assert.equal(parseBound(""), null);
+assert.equal(parseBound("0"), 0);
+assert.equal(rangeError("500000", "200000"), "Minimum is higher than maximum.");
+assert.equal(rangeError("200000", "500000"), null);
+const buyPreset = BUY_PRICE_PRESETS.find((row) => row.id === "350-500");
+const rentPreset = RENT_PRICE_PRESETS.find((row) => row.id === "1500-2000");
+assert.ok(buyPreset && rentPreset);
+assert.deepEqual(boundsFromPreset(buyPreset), { min: "350000", max: "500000" });
+assert.deepEqual(boundsFromPreset(rentPreset), { min: "1500", max: "2000" });
+assert.equal(matchPreset(BUY_PRICE_PRESETS, "350000", "500000"), "350-500");
+assert.equal(matchPreset(RENT_PRICE_PRESETS, "350000", "500000"), "custom");
+const isolated = withPrice(DEFAULT_SEARCH_FILTERS, EMPTY_PRICE);
+assert.equal(isolated.priceMin, "");
+assert.equal(isolated.priceMax, "");
+const demoSrc = read("src/lib/demo-data.ts");
+assert.doesNotMatch(demoSrc, /monthlyRent|leaseType|forRent/);
+const filterSrc = read("src/lib/listing-filters.ts");
+assert.doesNotMatch(filterSrc, /monthlyRent|transactionMode/);
+// RENTAL FILTERING NOT IMPLEMENTED — no rental classifier exists.
+// Sale fixtures cannot prove Buy/Rent isolation until a follow-up adds
+// a listing transaction field plus a monthly-rent value that is not CAD.
 
 console.log("smart-search armor: ok");
