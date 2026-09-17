@@ -61,7 +61,7 @@ export function HomeSearchHero() {
       q: raw,
       advanced: {
         ...filters,
-        query: raw.trim() || filters.query,
+        query: filters.query,
         statuses:
           intent === "sold"
             ? ["Sold"]

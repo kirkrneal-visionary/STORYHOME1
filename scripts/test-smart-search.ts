@@ -30,12 +30,21 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
 const livingston = authorizeSearchInput({
   q: "10+ acre properties around Livingston",
+  advanced: {
+    query: "",
+    acresMin: "",
+    priceMax: "",
+    statuses: ["Active", "Option Pending Continue to Show"],
+  },
 });
 assert.equal(livingston.geography.labels[0], "Livingston");
 assert.equal(livingston.geography.cadSource, "polk_cad");
 assert.equal(livingston.geography.cadQuery, "Livingston");
 assert.equal(livingston.filters.acresMin, "10");
+assert.equal(livingston.filters.query, "Livingston");
 assert.equal(livingston.recordsEligible, true);
+assert.equal(planToMarketplaceParams(livingston).get("acresMin"), "10");
+assert.equal(planToMarketplaceParams(livingston).get("q"), "Livingston");
 assert.ok(livingston.geography.cadQuery && livingston.geography.cadQuery.length >= 2);
 
 const price = authorizeSearchInput({

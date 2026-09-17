@@ -95,6 +95,32 @@ const UNKNOWN_RULES: { re: RegExp; note: string; pref?: SearchPreference }[] = [
   },
 ];
 
+function compactAdvanced(extra: Partial<SearchFilters>): Partial<SearchFilters> {
+  const out: Partial<SearchFilters> = {};
+  if (extra.query?.trim()) out.query = extra.query.trim();
+  if (extra.keyword?.trim()) out.keyword = extra.keyword.trim();
+  for (const key of [
+    "priceMin",
+    "priceMax",
+    "sqftMin",
+    "sqftMax",
+    "acresMin",
+    "acresMax",
+    "beds",
+    "baths",
+  ] as const) {
+    const v = extra[key];
+    if (typeof v === "string" && v.trim() && v !== "Any") out[key] = v;
+  }
+  if (extra.office) out.office = true;
+  if (extra.garage) out.garage = true;
+  if (extra.pool) out.pool = true;
+  if (extra.hoa && extra.hoa !== "any") out.hoa = extra.hoa;
+  if (extra.propertyTypes?.length) out.propertyTypes = extra.propertyTypes;
+  if (extra.statuses?.length) out.statuses = extra.statuses;
+  return out;
+}
+
 function followedBySize(q: string, matched: string): boolean {
   const after = q.slice(q.toLowerCase().indexOf(matched.toLowerCase()) + matched.length);
   return /^\s*(acre|acres|bed|beds|bedroom|bath|baths)\b/i.test(after);
@@ -363,7 +389,7 @@ export function interpretSearch(
   advanced?: unknown,
 ): SearchPlan {
   const q = clampQuery(raw);
-  const extra = allowlistedAdvanced(advanced);
+  const extra = compactAdvanced(allowlistedAdvanced(advanced));
   const geography = parseGeography(q);
   const parsed = parseFilters(q);
   const preferences: SearchPreference[] = [];
@@ -381,9 +407,13 @@ export function interpretSearch(
   }
   if (geography.kind === "between") preferences.push("betweenTowns");
 
+  const extraQuery = extra.query?.trim() ?? "";
   const queryForFilters =
-    extra.query?.trim() ||
-    (geography.labels.length ? geography.labels.join(" ") : q);
+    extraQuery && extraQuery !== q
+      ? extraQuery
+      : geography.labels.length
+        ? geography.labels.join(" ")
+        : q;
 
   const filters = mergeFilters(DEFAULT_SEARCH_FILTERS, {
     ...parsed,
