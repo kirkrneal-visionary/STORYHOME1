@@ -1132,25 +1132,57 @@ html[data-header-state="minimal"] .story-living-mark {
 
 /*
  * Homepage layers — one scheme:
- * header + dock 50, filter wing 40, search hub 20, page content 0.
+ * header + dock 50, search shell 20, page content 0.
+ * Shared Search/Advanced footprint (proposed adjustment so rollers fit
+ * without shrinking targets): 16.25rem phone / 14.75rem desktop.
  */
+html[data-home-hub] .story-route-page {
+  will-change: auto;
+  transform: none;
+}
+html[data-home-hub] .story-route-surface {
+  overflow: visible;
+}
+.story-home-search-shell {
+  position: sticky;
+  top: var(--story-safe-top);
+  z-index: 20;
+  height: 16.25rem;
+}
+@media (min-width: 768px) {
+  .story-home-search-shell {
+    height: 14.75rem;
+  }
+}
 .story-home-search {
   position: relative;
   z-index: 20;
 }
-.story-filter-wing {
-  z-index: 40;
-  transform-origin: var(--wing-ox, 92%) var(--wing-oy, 0%);
-  perspective: 920px;
+.story-home-modes {
+  display: grid;
+  grid-template-areas: "stack";
 }
-.story-filter-wing-surface {
-  border-radius: 1.15rem;
-  transform: rotateY(-16deg) rotateX(7deg) scale(0.94);
+.story-home-mode {
+  grid-area: stack;
+  min-height: 0;
   opacity: 0;
-  transform-origin: inherit;
-  transition:
-    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 280ms ease;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+.story-home-mode[data-active="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.story-home-search-shell[data-reduced="true"] .story-home-mode {
+  transition: none;
+}
+.story-home-roller {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+.story-home-roller::-webkit-scrollbar {
+  display: none;
 }
 .story-home-filter-input {
   height: 2.25rem;
@@ -1169,10 +1201,6 @@ html[data-header-state="minimal"] .story-living-mark {
 .story-home-filter-input:focus {
   border-color: color-mix(in srgb, var(--gold) 65%, var(--hairline));
 }
-.story-filter-wing[data-open="true"] .story-filter-wing-surface {
-  transform: none;
-  opacity: 1;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .story-press,
@@ -1188,8 +1216,7 @@ html[data-header-state="minimal"] .story-living-mark {
   .agent-world-atmosphere-sheen,
   .living-mark-presence,
   .story-dock-active-fill,
-  .story-filter-wing,
-  .story-filter-wing-surface {
+  .story-home-mode {
     transition: none !important;
     animation: none !important;
     transform: none !important;

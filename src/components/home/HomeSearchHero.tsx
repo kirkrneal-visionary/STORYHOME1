@@ -3,15 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
-import { HomeFilterWing } from "@/components/home/HomeFilterWing";
-import { HomeGhostHint } from "@/components/home/HomeGhostHint";
+import { useEffect, useState } from "react";
+import { HomeSearchHub } from "@/components/home/HomeSearchHub";
 import { ListingCard } from "@/components/ListingCard";
 import type { DemoListing } from "@/lib/demo-data";
 import {
   DEFAULT_SEARCH_FILTERS,
-  countActiveFilters,
   type SearchFilters,
 } from "@/lib/listing-filters";
 import {
@@ -21,7 +18,6 @@ import {
 import { allowlistedAdvanced } from "@/lib/search/plan";
 import {
   EMPTY_PRICE,
-  RENTAL_INVENTORY_AVAILABLE,
   SALE_SEARCH_STATUSES,
   asPriceBounds,
   readPrice,
@@ -37,7 +33,6 @@ import {
   REGION_CITIES,
   SERVICE_COUNTIES,
 } from "@/lib/markets";
-import { cn } from "@/lib/utils";
 
 const HOME_SEARCH_STATE_KEY = "story-home-wave-a-search";
 
@@ -45,12 +40,9 @@ export function HomeSearchHero() {
   const router = useRouter();
   const [mode, setMode] = useState<TransactionMode>("buy");
   const [query, setQuery] = useState("");
-  const [focused, setFocused] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [buyPrice, setBuyPrice] = useState<PriceBounds>(EMPTY_PRICE);
   const [rentPrice, setRentPrice] = useState<PriceBounds>(EMPTY_PRICE);
-  const [resetToken, setResetToken] = useState(0);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -76,6 +68,7 @@ export function HomeSearchHero() {
           ...DEFAULT_SEARCH_FILTERS,
           ...(row.filters ? allowlistedAdvanced(row.filters) : {}),
           statuses: DEFAULT_SEARCH_FILTERS.statuses,
+          keyword: "",
         };
         const storedBuy = asPriceBounds(row.buyPrice);
         const storedRent = asPriceBounds(row.rentPrice);
@@ -145,20 +138,11 @@ export function HomeSearchHero() {
   }
 
   function changeFilters(next: SearchFilters) {
-    setFilters(next);
-    const price = readPrice(next);
+    const clean = { ...next, keyword: "", query };
+    setFilters(clean);
+    const price = readPrice(clean);
     if (mode === "buy") setBuyPrice(price);
     else setRentPrice(price);
-  }
-
-  function clearFilters() {
-    setBuyPrice(EMPTY_PRICE);
-    setRentPrice(EMPTY_PRICE);
-    setFilters({
-      ...DEFAULT_SEARCH_FILTERS,
-      query,
-    });
-    setResetToken((n) => n + 1);
   }
 
   function submitBuy(raw: string, nextFilters: SearchFilters = filters) {
@@ -167,6 +151,7 @@ export function HomeSearchHero() {
       advanced: {
         ...nextFilters,
         query: nextFilters.query,
+        keyword: "",
         priceMin: nextFilters.priceMin,
         priceMax: nextFilters.priceMax,
         statuses: [...SALE_SEARCH_STATUSES],
@@ -179,15 +164,13 @@ export function HomeSearchHero() {
     router.push("/rent");
   }
 
-  function onSearch(e: FormEvent) {
-    e.preventDefault();
-    if (filtersOpen) setFiltersOpen(false);
+  function onSearch(nextFilters: SearchFilters = filters) {
     if (mode === "rent") {
       submitRent();
       return;
     }
-    const raw = query.trim() || filters.query;
-    submitBuy(raw, filters);
+    const raw = query.trim() || nextFilters.query;
+    submitBuy(raw, { ...nextFilters, keyword: "" });
   }
 
   function searchArea(area: string) {
@@ -198,21 +181,19 @@ export function HomeSearchHero() {
     submitBuy(`${area}, TX`);
   }
 
-  const ghostActive =
-    !focused && !filtersOpen && query.trim().length === 0;
-  const filterCount = countActiveFilters(filters);
-
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
-      <section className="relative min-h-[20.5rem] overflow-hidden md:min-h-[26rem]">
-        <Image
-          src="/brand/home-hero-meadow.png"
-          alt="East Texas pine meadow at first light"
-          fill
-          priority
-          className="object-cover object-[26%_36%] md:object-[42%_40%]"
-          sizes="100vw"
-        />
+      <section className="relative min-h-[20.5rem] md:min-h-[26rem]">
+        <div className="absolute inset-0 overflow-hidden">
+          <Image
+            src="/brand/storyhome-meadow-hero.png"
+            alt="East Texas pine meadow at first light"
+            fill
+            priority
+            className="object-cover object-[22%_72%] md:object-[28%_60%]"
+            sizes="(max-width: 390px) 390px, (max-width: 768px) 768px, (max-width: 1440px) 1440px, 1672px"
+          />
+        </div>
 
         <div className="relative z-10 flex items-center justify-center px-4 pb-8 pt-[calc(var(--story-safe-top)+1.25rem)] md:px-6 md:pb-10 md:pt-[calc(var(--story-safe-top)+2.25rem)]">
           <div className="relative mx-auto w-full max-w-3xl text-center">
@@ -222,106 +203,14 @@ export function HomeSearchHero() {
             </h1>
 
             <div className="relative mx-auto mt-5 w-full max-w-3xl text-left md:mt-6">
-              <div
-                className="story-home-search story-glass rounded-[var(--radius-lg)]"
-                data-transaction-mode={mode}
-              >
-                <form
-                  onSubmit={onSearch}
-                  className="flex flex-col gap-1.5 p-2 md:flex-row md:items-center md:gap-2 md:p-2"
-                >
-                  <div
-                    role="group"
-                    aria-label="What you want to do"
-                    className="flex w-fit shrink-0 rounded-full border border-hairline p-0.5"
-                  >
-                    {(
-                      [
-                        ["buy", "Buy"],
-                        ["rent", "Rent"],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        data-available={
-                          key === "rent" && !RENTAL_INVENTORY_AVAILABLE
-                            ? "false"
-                            : "true"
-                        }
-                        aria-pressed={mode === key}
-                        aria-label={
-                          key === "rent" && !RENTAL_INVENTORY_AVAILABLE
-                            ? "Rent, not yet available"
-                            : label
-                        }
-                        onClick={() => changeMode(key)}
-                        className={cn(
-                          "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
-                          mode === key
-                            ? "bg-gold text-navy"
-                            : "text-paper/70 hover:text-paper",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="relative min-w-0 flex-1 md:min-w-[18rem]">
-                    <div className="relative rounded-[var(--radius-md)] bg-[var(--env-0)] ring-1 ring-hairline">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold" />
-                      <input
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onFocus={() => setFocused(true)}
-                        onBlur={() => setFocused(false)}
-                        placeholder=""
-                        autoComplete="off"
-                        className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-3 text-base text-paper outline-none md:h-14 md:text-[1.05rem]"
-                        aria-label="Search homes or describe what you want"
-                      />
-                      <HomeGhostHint active={ghostActive} mode={mode} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-[auto_1fr] items-center gap-1.5 md:flex md:shrink-0 md:gap-2">
-                    <button
-                      type="button"
-                      aria-expanded={filtersOpen}
-                      aria-label={
-                        filterCount > 0
-                          ? `Filters, ${filterCount} selected`
-                          : "Filters"
-                      }
-                      onClick={() => setFiltersOpen((v) => !v)}
-                      className="story-home-filters-trigger story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper"
-                    >
-                      <span className="text-[10px] font-bold leading-none tracking-wide">
-                        Filters
-                      </span>
-                      {filterCount > 0 ? (
-                        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[9px] font-bold text-navy">
-                          {filterCount}
-                        </span>
-                      ) : null}
-                    </button>
-                    <button
-                      type="submit"
-                      data-story-sound="tap"
-                      className="story-home-search-submit story-press inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
-                    >
-                      Search
-                    </button>
-                  </div>
-                </form>
-              </div>
-              <HomeFilterWing
-                open={filtersOpen}
-                onClose={() => setFiltersOpen(false)}
+              <HomeSearchHub
+                transaction={mode}
+                onTransaction={changeMode}
+                query={query}
+                onQuery={setQuery}
                 filters={filters}
-                onChange={changeFilters}
-                onClear={clearFilters}
-                mode={mode}
-                resetToken={resetToken}
+                onFilters={changeFilters}
+                onSubmitSearch={onSearch}
               />
             </div>
           </div>

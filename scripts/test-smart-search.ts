@@ -50,6 +50,11 @@ import {
   rangeError,
   withPrice,
 } from "../src/lib/search/transaction.ts";
+import {
+  BUY_PRICE_STEPS,
+  RENT_PRICE_STEPS,
+  withExactStep,
+} from "../src/lib/search/rollers.ts";
 import type { DemoListing } from "../src/lib/demo-data.ts";
 
 const root = process.cwd();
@@ -210,13 +215,8 @@ assert.doesNotMatch(css, /\.story-home-search\.story-glass[\s\S]{0,80}--paper/);
 assert.doesNotMatch(css, /storyGhostIn/);
 
 const hero = read("src/components/home/HomeSearchHero.tsx");
-assert.match(hero, /home-hero-meadow/);
-assert.match(hero, /HomeGhostHint/);
-assert.match(hero, /Filters/);
-assert.match(hero, /story-home-filters-trigger/);
-assert.match(hero, /story-home-search-submit/);
-assert.match(hero, /story-home-search/);
-assert.match(hero, /story-glass/);
+assert.match(hero, /storyhome-meadow-hero/);
+assert.match(hero, /HomeSearchHub/);
 assert.match(hero, /items-center justify-center/);
 assert.match(hero, /whitespace-nowrap/);
 assert.doesNotMatch(hero, /Pause examples/);
@@ -225,16 +225,13 @@ assert.doesNotMatch(hero, /Play|Pause/);
 assert.doesNotMatch(hero, />Advanced</);
 assert.doesNotMatch(hero, /story-wordmark/);
 assert.match(hero, /story-home-wave-a-search/);
-assert.match(hero, /countActiveFilters/);
-assert.match(hero, /\["buy", "Buy"\]/);
-assert.match(hero, /\["rent", "Rent"\]/);
-assert.match(hero, /HomeFilterWing/);
+assert.match(hero, /keyword: ""/);
 assert.match(hero, /submitRent/);
 assert.match(hero, /\/rent/);
 assert.match(hero, /SALE_SEARCH_STATUSES/);
 assert.doesNotMatch(hero, /["']sold["']/);
 assert.doesNotMatch(hero, /HomeAdvancedSearch/);
-assert.doesNotMatch(hero, /onApply|setDraft/);
+assert.doesNotMatch(hero, /HomeFilterWing/);
 assert.match(hero, /authorizeSearchInput/);
 assert.doesNotMatch(hero, /\/api\/smart-search/);
 assert.doesNotMatch(hero, /unsplash/i);
@@ -314,40 +311,36 @@ const drawer = read("src/components/nav/FederatedNavDrawer.tsx");
 assert.match(drawer, /GhostExamplesControl/);
 assert.match(drawer, /xl:hidden/);
 
-const wing = read("src/components/home/HomeFilterWing.tsx");
-assert.match(wing, /Clear filters/);
-assert.match(wing, /story-filter-wing/);
-assert.match(wing, /Price & land/);
-assert.match(wing, /HomeFilterGroups/);
-assert.match(wing, /Escape/);
-assert.match(wing, /visualViewport/);
-assert.match(wing, /createPortal/);
-assert.match(wing, /data-advanced-chrome="pinned"/);
-assert.match(wing, /flex h-fit flex-col/);
-assert.match(wing, /story-home-search-submit/);
-assert.match(wing, /420/);
-assert.doesNotMatch(wing, />\s*Apply\s*</);
-assert.doesNotMatch(wing, /onApply/);
-assert.doesNotMatch(wing, /SearchFiltersPanel/);
-assert.doesNotMatch(wing, /inset-0/);
-assert.doesNotMatch(wing, /bg-\[var\(--paper\)\]/);
-assert.doesNotMatch(wing, /aria-modal="true"/);
-assert.doesNotMatch(wing, /preventScroll/);
+const hub = read("src/components/home/HomeSearchHub.tsx");
+assert.match(hub, /story-home-search/);
+assert.match(hub, /Clear filters/);
+assert.match(hub, />Apply</);
+assert.match(hub, />Search</);
+assert.match(hub, /\["buy", "Buy"\]/);
+assert.match(hub, /\["rent", "Rent"\]/);
+assert.match(hub, /Price & land/);
+assert.match(hub, /HomeBoundRollers/);
+assert.match(hub, /HOME_CROSSFADE_MS = 240/);
+assert.match(hub, /inert/);
+assert.match(hub, /keyword: ""/);
+assert.doesNotMatch(hub, /Optional — extra detail/);
+assert.doesNotMatch(hub, /City, county, ZIP/);
+assert.doesNotMatch(hub, /Listing status/);
+assert.doesNotMatch(hub, /createPortal/);
+assert.doesNotMatch(hub, /story-filter-wing/);
+assert.doesNotMatch(hub, /SearchFiltersPanel/);
+assert.doesNotMatch(hub, /aria-modal="true"/);
 
-const groups = read("src/components/home/HomeFilterGroups.tsx");
-assert.match(groups, /Purchase price/);
-assert.match(groups, /Monthly rent/);
-assert.match(groups, /BUY_PRICE_PRESETS/);
-assert.match(groups, /RENT_PRICE_PRESETS/);
-assert.match(groups, /Custom/);
-assert.match(groups, /inputMode/);
-assert.doesNotMatch(groups, /City, county, ZIP/);
-assert.doesNotMatch(groups, /Listing status/);
+const rollers = read("src/components/home/HomeValueRoller.tsx");
+assert.match(rollers, /role="listbox"/);
+assert.match(rollers, /overscroll-contain/);
+assert.doesNotMatch(rollers, /<select/);
 
-assert.match(css, /story-filter-wing/);
-assert.match(css, /420ms/);
-assert.match(css, /z-index: 40/);
-assert.doesNotMatch(css, /transform 280ms/);
+assert.match(css, /story-home-search-shell/);
+assert.match(css, /240ms/);
+assert.match(css, /position: sticky/);
+assert.doesNotMatch(css, /transform 420ms/);
+assert.doesNotMatch(css, /story-filter-wing/);
 
 const phrasePlans = [
   {
@@ -573,6 +566,11 @@ assert.match(rentPage, /does not have rental inventory/);
 assert.doesNotMatch(rentPage, /intent=rent/);
 
 assert.equal(RENTAL_INVENTORY_AVAILABLE, false);
+assert.equal(BUY_PRICE_STEPS[0].value, "");
+assert.equal(BUY_PRICE_STEPS[0].label, "Any");
+assert.ok(BUY_PRICE_STEPS.length < 40);
+assert.ok(RENT_PRICE_STEPS.length < 20);
+assert.ok(withExactStep(BUY_PRICE_STEPS, "375000").some((row) => row.value === "375000"));
 assert.equal(parseBound(""), null);
 assert.equal(parseBound("0"), 0);
 assert.equal(rangeError("500000", "200000"), "Minimum is higher than maximum.");
