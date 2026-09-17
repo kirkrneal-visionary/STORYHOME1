@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useAnimatedSearchExamples } from "@/lib/search/ghost-preference";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ export function GhostExamplesControl({
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <p id={labelId} className="text-sm font-semibold text-ink">
+      <p id={labelId} className="text-sm font-semibold text-paper">
         Animated search examples
       </p>
       <div
@@ -28,7 +29,7 @@ export function GhostExamplesControl({
           onClick={() => setEnabled(true)}
           className={cn(
             "story-press h-9 min-w-11 rounded-full px-3 text-sm font-semibold",
-            enabled ? "bg-gold text-navy" : "text-[var(--muted)] hover:text-ink",
+            enabled ? "bg-gold text-navy" : "text-paper/65 hover:text-paper",
           )}
         >
           On
@@ -39,7 +40,7 @@ export function GhostExamplesControl({
           onClick={() => setEnabled(false)}
           className={cn(
             "story-press h-9 min-w-11 rounded-full px-3 text-sm font-semibold",
-            !enabled ? "bg-gold text-navy" : "text-[var(--muted)] hover:text-ink",
+            !enabled ? "bg-gold text-navy" : "text-paper/65 hover:text-paper",
           )}
         >
           Off
@@ -55,13 +56,39 @@ export function HeaderMotionMenu({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const [pos, setPos] = useState({ top: 64, right: 16 });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const btn = buttonRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      setPos({
+        top: r.bottom + 8,
+        right: Math.max(12, window.innerWidth - r.right),
+      });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const node = e.target as Node;
+      if (buttonRef.current?.contains(node)) return;
+      if (panelRef.current?.contains(node)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -75,29 +102,35 @@ export function HeaderMotionMenu({
   }, [open]);
 
   return (
-    <div ref={rootRef} className={cn("relative", className)}>
+    <div className={cn("relative", className)}>
       <button
+        ref={buttonRef}
         type="button"
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-controls={open ? titleId : undefined}
         onClick={() => setOpen((v) => !v)}
+        data-story-motion-menu
         className="inline-flex h-10 items-center rounded-full px-3 text-sm font-semibold text-ink transition-colors hover:text-gold"
       >
         Motion
       </button>
-      {open ? (
-        <div
-          role="dialog"
-          aria-labelledby={titleId}
-          className="absolute right-0 top-[calc(100%+0.4rem)] z-[70] w-[min(20rem,calc(100vw-1.5rem))] rounded-[var(--radius-lg)] border border-hairline bg-[var(--env-1)] p-4 text-paper shadow-[var(--glass-elev)]"
-        >
-          <p id={titleId} className="sr-only">
-            Motion settings
-          </p>
-          <GhostExamplesControl />
-        </div>
-      ) : null}
+      {mounted && open
+        ? createPortal(
+            <div
+              ref={panelRef}
+              role="dialog"
+              aria-labelledby={titleId}
+              className="fixed z-[80] w-[min(20rem,calc(100vw-1.5rem))] rounded-[var(--radius-lg)] border border-hairline bg-[var(--env-1)] p-4 text-paper shadow-[var(--glass-elev)]"
+              style={{ top: pos.top, right: pos.right }}
+            >
+              <p id={titleId} className="sr-only">
+                Motion settings
+              </p>
+              <GhostExamplesControl />
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

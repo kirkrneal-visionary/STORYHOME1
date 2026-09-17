@@ -291,7 +291,7 @@ export default function GlobalNav() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          <HeaderMotionMenu className="hidden md:block" />
+          <HeaderMotionMenu />
           {showArchieNode ? (
             <NetworkNode
               href={archieEntryHref}
