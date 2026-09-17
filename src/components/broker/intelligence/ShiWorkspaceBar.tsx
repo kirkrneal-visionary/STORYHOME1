@@ -32,7 +32,7 @@ export function ShiWorkspaceBar({
   return (
     <header
       data-workspace-bar
-      className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center gap-2 px-2 pt-[max(0.45rem,env(safe-area-inset-top))] pb-1.5"
+      className="pointer-events-none absolute inset-x-0 top-[var(--story-workspace-top)] z-30 flex items-center gap-2 px-2 pt-1.5 pb-1.5"
     >
       <NavPressButton
         onClick={onExit}

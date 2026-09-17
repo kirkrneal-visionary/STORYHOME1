@@ -2150,7 +2150,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               </p>
               <p className="mt-2 text-sm leading-relaxed text-ink">
                 This browser can’t start the Research map (often WebGL). Search,
-                property record, and the Access desk below still work.
+                property record, and Roads & Traffic below still work.
               </p>
             </div>
           </div>

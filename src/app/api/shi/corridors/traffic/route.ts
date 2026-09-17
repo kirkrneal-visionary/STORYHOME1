@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const fallback = resolveCorridorCounty(null);
     return NextResponse.json(
       {
-        error: `Corridors supports the launch 7 counties only. Try countyFips=${fallback.fips} (${fallback.name}).`,
+        error: `Roads & Traffic supports the launch 7 counties only. Try countyFips=${fallback.fips} (${fallback.name}).`,
       },
       { status: 400 },
     );

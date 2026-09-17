@@ -427,8 +427,8 @@ function FocusCopy({
           ? `${property.legalAcreage.toLocaleString("en-US", { maximumFractionDigits: 2 })} acres on record. `
           : "Acreage not listed. "}
         {ft > 0
-          ? `About ${Math.round(ft).toLocaleString("en-US")} ft estimated mapped-road frontage on the Access desk. `
-          : "No mapped-road frontage on the Access desk yet. "}
+          ? `About ${Math.round(ft).toLocaleString("en-US")} ft estimated mapped-road frontage under Roads & Traffic. `
+          : "No mapped-road frontage under Roads & Traffic yet. "}
         Utility capacity, access, and restrictions still need Verify before any
         use conclusion. Archie will not invent zoning or entitlements.
       </p>
@@ -449,7 +449,7 @@ function FocusCopy({
   return (
     <p className="text-xs leading-relaxed text-ink">
       <span className="font-semibold">Ask Archie. </span>
-      For traffic, frontage, strongest sites, and compare — use the Access desk
+      For traffic, frontage, strongest sites, and compare — use Roads & Traffic
       under Research (Ask · Sites · Compare). Property facts stay on this panel.
       Archie will not invent missing county data.
     </p>

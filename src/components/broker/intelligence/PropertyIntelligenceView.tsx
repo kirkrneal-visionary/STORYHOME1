@@ -1837,7 +1837,7 @@ export function PropertyIntelligenceView({
       {activeFrame?.boundary && !displayAnalysis ? (
         <div
           data-workspace-frame-toast
-          className="pointer-events-auto absolute top-[4.75rem] left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
+          className="pointer-events-auto absolute top-[calc(var(--story-workspace-top)+3.75rem)] left-2 z-20 max-w-[18rem] rounded-xl story-glass px-3 py-2"
         >
           <p className="font-mono text-[10px] font-bold tracking-wide text-gold uppercase">
             {analyzing

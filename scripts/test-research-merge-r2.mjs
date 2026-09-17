@@ -29,8 +29,8 @@ const view = read(
 );
 assert.match(view, /ShiResearchAccessDesk/);
 assert.match(view, /shiCorridorsStrongestSites/);
-assert.match(view, /answerCorridorAsk/);
-assert.match(view, /comparePropertySites/);
+assert.match(view, /shiCorridorsAsk|answerCorridorAsk/);
+assert.match(view, /shiResearchCompareSites|comparePropertySites/);
 assert.match(view, /mode === "access"|get\("mode"\)/);
 
 const researchMap = read(
@@ -53,7 +53,7 @@ assert.doesNotMatch(workspace, /ShiCorridorsView/);
 
 const nav = read("src/lib/navigation/networks.ts");
 assert.doesNotMatch(nav, /id: "corridors"/);
-assert.match(nav, /soft-hidden|Access desk is inside Research/);
+assert.match(nav, /soft-hidden|Roads & Traffic is inside Research|Access desk is inside Research/);
 
 const mem = read("src/lib/navigation/archieMemory.ts");
 assert.match(mem, /mode=access/);

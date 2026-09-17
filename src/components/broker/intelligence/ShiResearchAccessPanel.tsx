@@ -36,15 +36,15 @@ export function ShiResearchAccessPanel({
       )}
     >
       <p className="font-mono text-[10px] font-semibold tracking-wide text-gold uppercase">
-        Access · roads & traffic
+        Roads & Traffic
       </p>
       <p className="mt-1 text-[11px] leading-snug text-[var(--muted)]">
-        Mapped-road frontage and planning counts — same facts as the Access desk.
-        Not a survey. Not live congestion.
+        Mapped-road frontage and planning counts. Not a survey. Not live
+        congestion.
       </p>
 
       {loading && !intel ? (
-        <p className="mt-2 text-xs text-[var(--muted)]">Loading access…</p>
+        <p className="mt-2 text-xs text-[var(--muted)]">Loading roads & traffic…</p>
       ) : null}
 
       <p

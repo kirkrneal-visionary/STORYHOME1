@@ -386,7 +386,7 @@ export function comparePropertySites(
     },
     {
       id: "access",
-      label: "Access",
+      label: "Roads & Traffic",
       values: columns.map((c) => c.access),
     },
     {

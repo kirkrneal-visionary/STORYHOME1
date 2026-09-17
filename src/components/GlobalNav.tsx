@@ -366,7 +366,7 @@ export default function GlobalNav() {
         </div>
       </nav>
 
-      {archieActive ? (
+      {archieActive && showArchieNode ? (
         <Suspense fallback={null}>
           <NetworkContextRibbon />
         </Suspense>
