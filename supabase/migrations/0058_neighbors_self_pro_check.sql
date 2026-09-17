@@ -44,6 +44,8 @@ grant execute on function public.may_use_story_pro(uuid) to authenticated, servi
 -- parcel_neighbors — same geometry and Pro assert as 0056.
 -- Qualify county_parcels columns so plpgsql RETURNS TABLE (source, prop_id)
 -- does not collide (42702 column reference "source" is ambiguous).
+-- Cast legal_acreage numeric(12,4) → double precision (plpgsql is stricter
+-- than the original LANGUAGE sql function).
 -- ---------------------------------------------------------------------------
 create or replace function public.parcel_neighbors(
   p_prop_id text,
@@ -101,7 +103,7 @@ begin
     n.county_fips,
     n.owner_name,
     n.cad_owner_id,
-    n.legal_acreage,
+    n.legal_acreage::double precision,
     case
       when ST_Touches(b.geom, n.geom) then 'touches'
       else 'near'

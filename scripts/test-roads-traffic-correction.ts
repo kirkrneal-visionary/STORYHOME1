@@ -24,6 +24,7 @@ assert.match(mig58, /auth\.role\(\) = 'service_role'/);
 assert.match(mig58, /#variable_conflict use_column/);
 assert.match(mig58, /cp\.source as parcel_source/);
 assert.match(mig58, /n\.source = b\.parcel_source/);
+assert.match(mig58, /n\.legal_acreage::double precision/);
 assert.match(mig58, /perform public\.assert_story_pro_rpc/);
 assert.match(mig58, /revoke execute on function public\.parcel_neighbors/);
 assert.match(mig58, /revoke execute on function public\.may_use_story_pro/);
