@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
 import {
@@ -20,6 +21,17 @@ function dockTop(): number {
   return window.innerHeight - 76;
 }
 
+function searchBarBox(): {
+  left: number;
+  width: number;
+  bottom: number;
+} | null {
+  const bar = document.querySelector(".story-home-search");
+  if (!(bar instanceof HTMLElement)) return null;
+  const r = bar.getBoundingClientRect();
+  return { left: r.left, width: r.width, bottom: r.bottom };
+}
+
 export function HomeAdvancedSearch({
   open,
   onClose,
@@ -35,37 +47,89 @@ export function HomeAdvancedSearch({
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const [draft, setDraft] = useState<SearchFilters>(applied);
+  const [mounted, setMounted] = useState(false);
+  const [placed, setPlaced] = useState(false);
+  const [narrow, setNarrow] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(max-width: 767px)").matches
+      : false,
+  );
+  const [anchor, setAnchor] = useState({ left: 16, width: 320, bottom: 200 });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) setDraft(applied);
   }, [open, applied]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setPlaced(false);
+      return;
+    }
     previousFocus.current = document.activeElement as HTMLElement | null;
     const root = panelRef.current;
-    const narrow = window.matchMedia("(max-width: 767px)").matches;
-    if (narrow) {
-      root?.focus({ preventScroll: true });
-    } else {
-      root
-        ?.querySelector<HTMLElement>(FOCUSABLE)
-        ?.focus({ preventScroll: true });
-    }
+    const media = window.matchMedia("(max-width: 767px)");
 
     const fit = () => {
+      const isNarrow = media.matches;
+      setNarrow(isNarrow);
+      const box = searchBarBox();
+      if (box) setAnchor(box);
       if (!root) return;
-      if (window.matchMedia("(max-width: 767px)").matches) {
+      const body = root.querySelector<HTMLElement>("[data-advanced-body]");
+      const header = root.querySelector<HTMLElement>("[data-advanced-header]");
+      const footer = root.querySelector<HTMLElement>("[data-advanced-footer]");
+      const chrome =
+        (header?.offsetHeight ?? 52) + (footer?.offsetHeight ?? 60);
+      if (isNarrow) {
+        root.style.top = "";
+        root.style.left = "";
+        root.style.width = "";
         root.style.maxHeight = "";
+        const sheetCap = Math.min(
+          Math.floor(window.innerHeight * 0.7),
+          Math.floor(
+            window.innerHeight -
+              (window.innerHeight - dockTop()) -
+              64,
+          ),
+        );
+        if (body) {
+          body.style.maxHeight = `${Math.max(120, sheetCap - chrome)}px`;
+        }
+        setPlaced(true);
         return;
       }
-      const top = root.getBoundingClientRect().top;
-      const available = dockTop() - top - 8;
-      root.style.maxHeight = `${Math.max(200, Math.floor(available))}px`;
+      const next = box ?? searchBarBox();
+      if (!next) return;
+      const top = next.bottom + 8;
+      const available = Math.max(220, Math.floor(dockTop() - top - 8));
+      root.style.top = `${top}px`;
+      root.style.left = `${next.left}px`;
+      root.style.width = `${next.width}px`;
+      root.style.maxHeight = `${available}px`;
+      if (body) {
+        body.style.maxHeight = `${Math.max(120, available - chrome)}px`;
+      }
+      setPlaced(true);
     };
-    const frame = window.requestAnimationFrame(fit);
+
+    const frame = window.requestAnimationFrame(() => {
+      fit();
+      if (media.matches) {
+        root?.focus({ preventScroll: true });
+      } else {
+        root
+          ?.querySelector<HTMLElement>(FOCUSABLE)
+          ?.focus({ preventScroll: true });
+      }
+    });
     window.addEventListener("resize", fit);
     window.visualViewport?.addEventListener("resize", fit);
+    media.addEventListener("change", fit);
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -94,11 +158,12 @@ export function HomeAdvancedSearch({
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", fit);
       window.visualViewport?.removeEventListener("resize", fit);
+      media.removeEventListener("change", fit);
       previousFocus.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open, onClose, mounted]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   function resetDraft() {
     setDraft({
@@ -107,12 +172,15 @@ export function HomeAdvancedSearch({
     });
   }
 
-  return (
+  const ui = (
     <>
       <button
         type="button"
         aria-label="Close advanced search"
-        className="fixed inset-0 z-40 bg-navy/25 md:absolute md:inset-x-0 md:top-0 md:bottom-auto md:h-0 md:bg-transparent"
+        className={cn(
+          "fixed inset-0 z-[54] bg-navy/35",
+          !narrow && "bg-navy/15",
+        )}
         onClick={onClose}
       />
       <div
@@ -121,13 +189,30 @@ export function HomeAdvancedSearch({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
+        data-advanced-chrome="pinned"
         className={cn(
-          "story-glass z-50 grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden overscroll-contain bg-[var(--glass-bg-strong)] text-paper outline-none",
-          "fixed inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]",
-          "md:absolute md:inset-x-0 md:bottom-auto md:top-full md:mt-2 md:rounded-[var(--radius-lg)]",
+          "fixed z-[55] flex h-fit flex-col overflow-hidden overscroll-contain outline-none",
+          "bg-[var(--env-1)] text-paper shadow-[var(--glass-elev)]",
+          "story-glass border border-[var(--glass-border)]",
+          !placed && "invisible",
+          narrow
+            ? "inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]"
+            : "rounded-[var(--radius-lg)]",
         )}
+        style={
+          narrow
+            ? undefined
+            : {
+                top: anchor.bottom + 8,
+                left: anchor.left,
+                width: anchor.width,
+              }
+        }
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+        <div
+          data-advanced-header
+          className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline px-4 py-3"
+        >
           <p className="type-card-title text-paper">Filters</p>
           <button
             type="button"
@@ -138,7 +223,10 @@ export function HomeAdvancedSearch({
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-3">
+        <div
+          data-advanced-body
+          className="min-h-0 overflow-y-auto overscroll-contain px-4 py-3"
+        >
           <SearchFiltersPanel
             title=""
             compact
@@ -148,7 +236,10 @@ export function HomeAdvancedSearch({
             showResultCount={false}
           />
         </div>
-        <div className="flex min-h-[3.75rem] gap-2 border-t border-hairline bg-[var(--glass-bg-strong)] px-4 py-3">
+        <div
+          data-advanced-footer
+          className="flex min-h-[3.75rem] shrink-0 gap-2 border-t border-hairline bg-[var(--env-1)] px-4 py-3"
+        >
           <span id={titleId} className="sr-only">
             Advanced search
           </span>
@@ -170,4 +261,6 @@ export function HomeAdvancedSearch({
       </div>
     </>
   );
+
+  return createPortal(ui, document.body);
 }

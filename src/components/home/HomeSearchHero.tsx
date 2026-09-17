@@ -159,40 +159,33 @@ export function HomeSearchHero() {
                   onSubmit={onSearch}
                   className="flex flex-col gap-1.5 p-2 md:flex-row md:items-center md:gap-2 md:p-2"
                 >
-                  <div className="flex items-center justify-between gap-2 md:contents">
-                    <div
-                      role="group"
-                      aria-label="Listing status"
-                      className="flex shrink-0 rounded-full border border-hairline p-0.5"
-                    >
-                      {(
-                        [
-                          ["sale", "For sale"],
-                          ["sold", "Sold"],
-                        ] as const
-                      ).map(([key, label]) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setIntent(key)}
-                          className={cn(
-                            "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
-                            intent === key
-                              ? "bg-gold text-navy"
-                              : "text-paper/70 hover:text-paper",
-                          )}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    <GhostPauseButton
-                      paused={ghostPaused}
-                      onToggle={() => setGhostPaused((v) => !v)}
-                      className="md:hidden"
-                    />
+                  <div
+                    role="group"
+                    aria-label="Listing status"
+                    className="flex w-fit shrink-0 rounded-full border border-hairline p-0.5"
+                  >
+                    {(
+                      [
+                        ["sale", "For sale"],
+                        ["sold", "Sold"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setIntent(key)}
+                        className={cn(
+                          "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
+                          intent === key
+                            ? "bg-gold text-navy"
+                            : "text-paper/70 hover:text-paper",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="relative min-w-0 flex-1">
+                  <div className="relative min-w-0 flex-1 md:min-w-[18rem]">
                     <div className="relative rounded-[var(--radius-md)] bg-[var(--env-0)] ring-1 ring-hairline">
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold" />
                       <input
@@ -202,14 +195,14 @@ export function HomeSearchHero() {
                         onBlur={() => setFocused(false)}
                         placeholder=""
                         autoComplete="off"
-                        className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-11 text-base text-paper outline-none"
+                        className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-12 text-base text-paper outline-none md:h-14 md:text-[1.05rem]"
                         aria-label="Search homes or describe what you want"
                       />
                       <HomeGhostHint active={ghostActive} />
                       <GhostPauseButton
                         paused={ghostPaused}
                         onToggle={() => setGhostPaused((v) => !v)}
-                        className="absolute right-1 top-1/2 hidden -translate-y-1/2 md:inline-flex"
+                        className="absolute right-1 top-1/2 -translate-y-1/2"
                       />
                     </div>
                   </div>
@@ -382,7 +375,7 @@ function GhostPauseButton({
       title={paused ? "Play examples" : "Pause examples"}
       onClick={onToggle}
       className={cn(
-        "story-press inline-flex h-9 w-9 items-center justify-center rounded-full text-paper/80 hover:bg-paper/10 hover:text-paper",
+        "story-press inline-flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper hover:bg-paper/20",
         className,
       )}
     >

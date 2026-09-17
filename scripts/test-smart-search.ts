@@ -232,7 +232,10 @@ assert.match(advanced, /Escape/);
 assert.match(advanced, /story-bottom-clearance/);
 assert.match(advanced, /visualViewport/);
 assert.match(advanced, /preventScroll/);
-assert.match(advanced, /grid-rows-\[auto_minmax\(0,1fr\)_auto\]/);
+assert.match(advanced, /createPortal/);
+assert.match(advanced, /data-advanced-chrome="pinned"/);
+assert.match(advanced, /flex h-fit flex-col/);
+assert.match(advanced, /min-h-\[3\.75rem\]/);
 assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
 
 const fixtures: DemoListing[] = [
