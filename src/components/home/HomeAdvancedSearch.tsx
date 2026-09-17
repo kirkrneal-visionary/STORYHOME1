@@ -192,8 +192,8 @@ export function HomeAdvancedSearch({
         data-advanced-chrome="pinned"
         className={cn(
           "fixed z-[55] flex h-fit flex-col overflow-hidden overscroll-contain outline-none",
-          "bg-[var(--env-1)] text-paper shadow-[var(--glass-elev)]",
-          "story-glass border border-[var(--glass-border)]",
+          "story-glass !bg-[var(--env-1)] ![backdrop-filter:none] text-paper",
+          "border border-[var(--glass-border)] shadow-[var(--glass-elev)]",
           !placed && "invisible",
           narrow
             ? "inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]"
