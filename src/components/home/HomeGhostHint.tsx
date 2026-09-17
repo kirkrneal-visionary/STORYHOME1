@@ -1,55 +1,138 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
-export const SMART_SEARCH_GHOST_PHRASES = [
-  "Somewhere private with 10 acres, but still close to town…",
-  "Older home where the land matters more than the house…",
-  "Land with strong road frontage worth exploring…",
-  "Something between Livingston and Lufkin with a shop…",
+/** Supported-filter demos only. Not live searches. */
+export const GHOST_PHRASES = [
+  "10+ acres in Livingston",
+  "Homes under $400,000",
+  "Sold homes in Lufkin",
+  "77351",
 ] as const;
 
+export const GHOST_PHRASES_NARROW = [
+  "10+ acres Livingston",
+  "Homes under $400k",
+  "Sold in Lufkin",
+  "77351",
+] as const;
+
+const TYPE_MS = 65;
+const ERASE_MS = 40;
+const HOLD_MS = 1500;
+const GAP_MS = 280;
+
+type Phase = "type" | "hold" | "erase" | "gap";
+
 /**
- * Decorative idle hint. Never writes into the input. Never focuses it.
+ * Idle type → hold → erase. Never writes the real input. No network.
  */
-export function HomeGhostHint({ active }: { active: boolean }) {
-  const [index, setIndex] = useState(0);
+export const HomeGhostHint = memo(function HomeGhostHint({
+  active,
+}: {
+  active: boolean;
+}) {
+  const [shown, setShown] = useState("");
   const [reduced, setReduced] = useState(false);
+  const [narrow, setNarrow] = useState(false);
+  const phase = useRef<Phase>("type");
+  const index = useRef(0);
+  const pos = useRef(0);
+  const timer = useRef<number>(0);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReduced(mq.matches);
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const width = window.matchMedia("(max-width: 640px)");
+    const sync = () => {
+      setReduced(motion.matches);
+      setNarrow(width.matches);
+    };
     sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
+    motion.addEventListener("change", sync);
+    width.addEventListener("change", sync);
+    return () => {
+      motion.removeEventListener("change", sync);
+      width.removeEventListener("change", sync);
+    };
   }, []);
 
   useEffect(() => {
-    if (!active || reduced) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % SMART_SEARCH_GHOST_PHRASES.length);
-    }, 4200);
-    return () => window.clearInterval(id);
-  }, [active, reduced]);
+    window.clearTimeout(timer.current);
+    if (!active || reduced) {
+      setShown(reduced ? GHOST_PHRASES[0] : "");
+      phase.current = "type";
+      pos.current = 0;
+      return;
+    }
+
+    const phrases = narrow ? GHOST_PHRASES_NARROW : GHOST_PHRASES;
+    let cancelled = false;
+
+    const tick = () => {
+      if (cancelled || document.hidden) return;
+      const phrase = phrases[index.current % phrases.length];
+      if (phase.current === "type") {
+        pos.current += 1;
+        setShown(phrase.slice(0, pos.current));
+        if (pos.current >= phrase.length) {
+          phase.current = "hold";
+          timer.current = window.setTimeout(tick, HOLD_MS);
+        } else {
+          timer.current = window.setTimeout(tick, TYPE_MS);
+        }
+        return;
+      }
+      if (phase.current === "hold") {
+        phase.current = "erase";
+        timer.current = window.setTimeout(tick, ERASE_MS);
+        return;
+      }
+      if (phase.current === "erase") {
+        pos.current = Math.max(0, pos.current - 1);
+        setShown(phrase.slice(0, pos.current));
+        if (pos.current <= 0) {
+          phase.current = "gap";
+          timer.current = window.setTimeout(tick, GAP_MS);
+        } else {
+          timer.current = window.setTimeout(tick, ERASE_MS);
+        }
+        return;
+      }
+      index.current = (index.current + 1) % phrases.length;
+      phase.current = "type";
+      pos.current = 0;
+      timer.current = window.setTimeout(tick, TYPE_MS);
+    };
+
+    const onVis = () => {
+      if (document.hidden) {
+        window.clearTimeout(timer.current);
+      } else {
+        timer.current = window.setTimeout(tick, TYPE_MS);
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    timer.current = window.setTimeout(tick, TYPE_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer.current);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [active, reduced, narrow]);
 
   if (!active) return null;
-  const text = SMART_SEARCH_GHOST_PHRASES[reduced ? 0 : index];
 
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute inset-y-0 left-11 right-3 flex items-center"
+      className="pointer-events-none absolute inset-y-0 left-10 right-3 flex items-center"
     >
-      <span
-        key={text}
-        className={
-          reduced
-            ? "truncate text-[15px] text-navy/50"
-            : "story-ghost-phrase truncate text-[15px] text-navy/50"
-        }
-      >
-        {text}
+      <span className="max-w-full truncate text-[15px] text-paper/45">
+        {shown}
+        {!reduced && shown ? (
+          <span className="ml-px inline-block h-[1em] w-px translate-y-[1px] bg-gold/70" />
+        ) : null}
       </span>
     </span>
   );
-}
+});

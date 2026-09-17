@@ -24,6 +24,12 @@ import {
 } from "../src/lib/search/provider.ts";
 import { filtersFromSearchParams } from "../src/lib/search/url.ts";
 import { classifyApiPath } from "../src/lib/security/rate-limit.ts";
+import {
+  DEFAULT_SEARCH_FILTERS,
+  applySearchFilters,
+  countActiveFilters,
+} from "../src/lib/listing-filters.ts";
+import type { DemoListing } from "../src/lib/demo-data.ts";
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
@@ -179,14 +185,19 @@ const rate = read("src/lib/security/rate-limit.ts");
 assert.match(rate, /\/api\/smart-search\//);
 
 const css = read("src/app/globals.css");
-assert.match(css, /\.story-home-search\.story-glass/);
-assert.match(css, /--paper/);
+assert.doesNotMatch(css, /\.story-home-search\.story-glass[\s\S]{0,80}--paper/);
+assert.doesNotMatch(css, /storyGhostIn/);
 
 const hero = read("src/components/home/HomeSearchHero.tsx");
 assert.match(hero, /home-hero-meadow/);
 assert.match(hero, /HomeGhostHint/);
 assert.match(hero, /Advanced/);
 assert.match(hero, /story-home-search/);
+assert.match(hero, /story-glass/);
+assert.match(hero, /items-center justify-center/);
+assert.match(hero, /whitespace-nowrap/);
+assert.match(hero, /Pause examples/);
+assert.match(hero, /countActiveFilters/);
 assert.match(hero, /["']sold["']/);
 assert.match(hero, /authorizeSearchInput/);
 assert.doesNotMatch(hero, /\/api\/smart-search/);
@@ -196,6 +207,124 @@ assert.doesNotMatch(hero, /rgba\(9,21,37,0\.68\)/);
 
 const ghost = read("src/components/home/HomeGhostHint.tsx");
 assert.match(ghost, /aria-hidden/);
+assert.match(ghost, /TYPE_MS/);
+assert.match(ghost, /ERASE_MS/);
+assert.match(ghost, /HOLD_MS/);
+assert.match(ghost, /visibilitychange/);
+assert.match(ghost, /prefers-reduced-motion/);
 assert.doesNotMatch(ghost, /setQuery|value=\{/);
+assert.doesNotMatch(ghost, /fetch\(|openai|anthropic/i);
+assert.doesNotMatch(ghost, /setInterval/);
+
+const advanced = read("src/components/home/HomeAdvancedSearch.tsx");
+assert.match(advanced, /Apply filters/);
+assert.match(advanced, /story-glass/);
+assert.match(advanced, /onApply/);
+assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
+
+const fixtures: DemoListing[] = [
+  {
+    id: "keep",
+    agentId: "a",
+    price: 350000,
+    addressSerif: "1 Pine",
+    city: "Livingston",
+    countyName: "Polk County",
+    beds: 3,
+    baths: 2,
+    sqft: 1800,
+    acres: 12,
+    lotSize: "12 acres",
+    yearBuilt: 1990,
+    description: "Land",
+    status: "Active",
+    propertyType: "Farm and Ranch",
+    hasOffice: false,
+    hasGarage: true,
+    hasPool: false,
+    hasHoa: false,
+    photoUrl: "",
+    likeCount: 0,
+    saveCount: 0,
+    commentCount: 0,
+    lat: 30.7,
+    lng: -94.9,
+  },
+  {
+    id: "drop-price",
+    agentId: "a",
+    price: 900000,
+    addressSerif: "2 Pine",
+    city: "Livingston",
+    countyName: "Polk County",
+    beds: 3,
+    baths: 2,
+    sqft: 1800,
+    acres: 14,
+    lotSize: "14 acres",
+    yearBuilt: 1990,
+    description: "Land",
+    status: "Active",
+    propertyType: "Farm and Ranch",
+    hasOffice: false,
+    hasGarage: true,
+    hasPool: false,
+    hasHoa: false,
+    photoUrl: "",
+    likeCount: 0,
+    saveCount: 0,
+    commentCount: 0,
+    lat: 30.7,
+    lng: -94.9,
+  },
+  {
+    id: "drop-acres",
+    agentId: "a",
+    price: 300000,
+    addressSerif: "3 Pine",
+    city: "Livingston",
+    countyName: "Polk County",
+    beds: 3,
+    baths: 2,
+    sqft: 1800,
+    acres: 2,
+    lotSize: "2 acres",
+    yearBuilt: 1990,
+    description: "Land",
+    status: "Active",
+    propertyType: "Farm and Ranch",
+    hasOffice: false,
+    hasGarage: true,
+    hasPool: false,
+    hasHoa: false,
+    photoUrl: "",
+    likeCount: 0,
+    saveCount: 0,
+    commentCount: 0,
+    lat: 30.7,
+    lng:  -94.9,
+  },
+];
+
+const applied = {
+  ...DEFAULT_SEARCH_FILTERS,
+  acresMin: "10",
+  priceMax: "400000",
+};
+assert.ok(countActiveFilters(applied) >= 2);
+const handed = authorizeSearchInput({
+  q: "Livingston",
+  advanced: applied,
+});
+const params = planToMarketplaceParams(handed);
+const received = filtersFromSearchParams(params);
+assert.equal(received.query, "Livingston");
+assert.equal(received.acresMin, "10");
+assert.equal(received.priceMax, "400000");
+const matched = applySearchFilters(fixtures, received);
+assert.deepEqual(
+  matched.map((row) => row.id),
+  ["keep"],
+);
 
 console.log("smart-search armor: ok");

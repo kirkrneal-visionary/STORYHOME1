@@ -68,6 +68,19 @@ export default function MarketplaceView() {
   const [filters, setFilters] = useState<SearchFilters>(() =>
     initialFiltersFromUrl(searchParams),
   );
+  const urlKey = searchParams.toString();
+  useEffect(() => {
+    if (
+      searchParams.has("q") ||
+      searchParams.has("intent") ||
+      searchParams.has("acresMin") ||
+      searchParams.has("priceMax") ||
+      searchParams.has("priceMin") ||
+      searchParams.has("types")
+    ) {
+      setFilters(filtersFromSearchParams(searchParams));
+    }
+  }, [searchParams, urlKey]);
   const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -89,7 +102,12 @@ export default function MarketplaceView() {
     if (!cached || !marketplaceCacheFresh(cached)) return;
     // Fresh URL search from home hero wins over stale cache query when q/intent present.
     const hasFreshQuery =
-      searchParams.has("q") || searchParams.has("intent");
+      searchParams.has("q") ||
+      searchParams.has("intent") ||
+      searchParams.has("acresMin") ||
+      searchParams.has("priceMax") ||
+      searchParams.has("priceMin") ||
+      searchParams.has("types");
     if (!hasFreshQuery) {
       setFilters(cached.filters);
     }

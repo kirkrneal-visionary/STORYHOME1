@@ -15,6 +15,8 @@ type SearchFiltersPanelProps = {
   onChange: (next: SearchFilters) => void;
   resultCount: number;
   showResultCount?: boolean;
+  title?: string;
+  compact?: boolean;
   className?: string;
 };
 
@@ -41,6 +43,8 @@ export function SearchFiltersPanel({
   onChange,
   resultCount,
   showResultCount = true,
+  title = "Find Your Story",
+  compact = false,
   className,
 }: SearchFiltersPanelProps) {
   function patch(partial: Partial<SearchFilters>) {
@@ -48,28 +52,37 @@ export function SearchFiltersPanel({
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn(compact ? "space-y-4" : "space-y-6", className)}>
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="font-serif text-2xl font-semibold text-ink">
-            Find Your Story
+          <h2
+            className={cn(
+              "font-semibold text-ink",
+              compact ? "type-card-title" : "font-serif text-2xl",
+            )}
+          >
+            {title}
           </h2>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            Filter East Texas homes by what matters.
-          </p>
+          {compact ? null : (
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Filter East Texas homes by what matters.
+            </p>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            onChange({
-              ...DEFAULT_SEARCH_FILTERS,
-              query: filters.query,
-            })
-          }
-          className="shrink-0 text-xs font-semibold text-gold hover:underline"
-        >
-          Reset
-        </button>
+        {compact ? null : (
+          <button
+            type="button"
+            onClick={() =>
+              onChange({
+                ...DEFAULT_SEARCH_FILTERS,
+                query: filters.query,
+              })
+            }
+            className="shrink-0 text-xs font-semibold text-gold hover:underline"
+          >
+            Reset
+          </button>
+        )}
       </div>
 
       <Field label="Location">
@@ -92,6 +105,7 @@ export function SearchFiltersPanel({
         />
       </Field>
 
+      <div className={compact ? "grid gap-4 md:grid-cols-2" : "contents"}>
       <Field label="Price range">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -136,6 +150,7 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      </div>
 
       <Field label="Bedrooms">
         <div className="grid grid-cols-6 gap-1">

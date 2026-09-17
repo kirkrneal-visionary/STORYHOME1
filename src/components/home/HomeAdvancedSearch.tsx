@@ -1,21 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId, useState } from "react";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
-import type { SearchFilters } from "@/lib/listing-filters";
+import {
+  DEFAULT_SEARCH_FILTERS,
+  type SearchFilters,
+} from "@/lib/listing-filters";
 import { cn } from "@/lib/utils";
 
 export function HomeAdvancedSearch({
   open,
   onClose,
-  filters,
-  onChange,
+  applied,
+  onApply,
 }: {
   open: boolean;
   onClose: () => void;
-  filters: SearchFilters;
-  onChange: (next: SearchFilters) => void;
+  applied: SearchFilters;
+  onApply: (next: SearchFilters) => void;
 }) {
+  const titleId = useId();
+  const [draft, setDraft] = useState<SearchFilters>(applied);
+
+  useEffect(() => {
+    if (open) setDraft(applied);
+  }, [open, applied]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -27,36 +37,60 @@ export function HomeAdvancedSearch({
 
   if (!open) return null;
 
+  function resetDraft() {
+    setDraft({
+      ...DEFAULT_SEARCH_FILTERS,
+      query: draft.query,
+    });
+  }
+
   return (
     <>
       <button
         type="button"
         aria-label="Close advanced search"
-        className="fixed inset-0 z-40 bg-navy/20 md:absolute md:inset-0 md:bg-transparent"
+        className="fixed inset-0 z-40 bg-navy/25 md:absolute md:inset-x-0 md:top-0 md:bottom-auto md:h-0 md:bg-transparent"
         onClick={onClose}
       />
       <div
         role="dialog"
-        aria-label="Advanced search"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className={cn(
-          "z-50 overflow-y-auto bg-[var(--paper)] text-navy shadow-[var(--elev-2)]",
-          "fixed inset-x-0 bottom-0 max-h-[78vh] rounded-t-[var(--radius-sheet)] p-4 pb-[calc(1rem+var(--story-bottom-clearance))]",
-          "md:absolute md:inset-auto md:top-full md:right-0 md:mt-2 md:max-h-[min(32rem,70vh)] md:w-[min(28rem,100%)] md:rounded-[var(--radius-lg)] md:pb-4",
+          "story-glass z-50 flex flex-col text-paper",
+          "fixed inset-x-0 bottom-0 max-h-[min(78vh,36rem)] rounded-t-[var(--radius-sheet)]",
+          "md:absolute md:inset-x-0 md:bottom-auto md:top-full md:mt-2 md:max-h-[min(28rem,calc(100dvh-var(--story-safe-top)-8rem))] md:rounded-[var(--radius-lg)]",
         )}
       >
-        <SearchFiltersPanel
-          filters={filters}
-          onChange={onChange}
-          resultCount={0}
-          showResultCount={false}
-        />
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-3 h-11 w-full rounded-[var(--radius-md)] bg-navy text-sm font-bold text-paper md:hidden"
-        >
-          Done
-        </button>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4">
+          <SearchFiltersPanel
+            title="Filters"
+            compact
+            filters={draft}
+            onChange={setDraft}
+            resultCount={0}
+            showResultCount={false}
+          />
+        </div>
+        <div className="flex shrink-0 gap-2 border-t border-hairline bg-[var(--glass-bg-strong)] px-4 py-3 pb-[calc(0.75rem+var(--story-bottom-clearance))] md:pb-3">
+          <button
+            type="button"
+            onClick={resetDraft}
+            className="story-press h-11 flex-1 rounded-[var(--radius-md)] border border-hairline text-sm font-semibold text-paper"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={() => onApply(draft)}
+            className="story-press h-11 flex-1 rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy"
+          >
+            Apply filters
+          </button>
+        </div>
+        <span id={titleId} className="sr-only">
+          Advanced search
+        </span>
       </div>
     </>
   );

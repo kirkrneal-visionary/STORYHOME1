@@ -11,6 +11,7 @@ import { ListingCard } from "@/components/ListingCard";
 import type { DemoListing } from "@/lib/demo-data";
 import {
   DEFAULT_SEARCH_FILTERS,
+  countActiveFilters,
   type SearchFilters,
 } from "@/lib/listing-filters";
 import {
@@ -34,6 +35,7 @@ export function HomeSearchHero() {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [ghostPaused, setGhostPaused] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
@@ -83,7 +85,11 @@ export function HomeSearchHero() {
   }
 
   const ghostActive =
-    !focused && !advancedOpen && query.trim().length === 0;
+    !focused &&
+    !advancedOpen &&
+    !ghostPaused &&
+    query.trim().length === 0;
+  const advancedCount = countActiveFilters(filters);
 
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
@@ -97,86 +103,106 @@ export function HomeSearchHero() {
           sizes="100vw"
         />
 
-        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-end px-4 pb-14 pt-[calc(var(--story-safe-top)+2.5rem)] md:min-h-[85vh] md:justify-center md:px-6 md:pt-[calc(var(--story-safe-top)+4rem)] md:pb-20">
-          <div className="max-w-xl">
+        <div className="relative z-10 flex min-h-[78vh] items-center justify-center px-4 pb-16 pt-[calc(var(--story-safe-top)+2rem)] md:min-h-[85vh] md:px-6">
+          <div className="relative w-full max-w-3xl text-center">
             <p className="story-wordmark text-[var(--type-brand)]">
               <span className="text-[var(--brand-word)] !text-navy">STORY</span>
               <span className="text-[var(--brand-home)]">HOME</span>
             </p>
-            <h1 className="type-hero mt-3 max-w-lg text-navy">
-              Find your next place in East Texas.
+            <h1 className="type-hero mx-auto mt-3 max-w-3xl text-navy">
+              Find your next place in{" "}
+              <span className="whitespace-nowrap">East Texas.</span>
             </h1>
-          </div>
 
-          <div className="relative mt-8 w-full max-w-xl">
-            <div className="story-home-search story-glass overflow-hidden rounded-[var(--radius-lg)] border border-navy/10 shadow-[var(--elev-2)]">
-              <div className="flex border-b border-navy/10">
-                {(
-                  [
-                    ["sale", "For sale"],
-                    ["sold", "Sold"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setIntent(key)}
-                    className={cn(
-                      "story-press type-control min-h-11 flex-1 px-3 py-3 font-semibold transition-colors md:px-4",
-                      intent === key
-                        ? "bg-gold text-navy"
-                        : "text-navy/80 hover:text-navy",
-                    )}
+            <div className="relative mx-auto mt-7 w-full max-w-3xl text-left">
+              <div className="story-home-search story-glass overflow-hidden rounded-[var(--radius-lg)]">
+                <form
+                  onSubmit={onSearch}
+                  className="flex flex-col gap-2 p-2.5 sm:flex-row sm:items-center"
+                >
+                  <div
+                    role="group"
+                    aria-label="Listing status"
+                    className="flex shrink-0 self-start rounded-full border border-hairline p-0.5 sm:self-center"
                   >
-                    {label}
-                  </button>
-                ))}
+                    {(
+                      [
+                        ["sale", "For sale"],
+                        ["sold", "Sold"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setIntent(key)}
+                        className={cn(
+                          "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
+                          intent === key
+                            ? "bg-gold text-navy"
+                            : "text-paper/70 hover:text-paper",
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="relative min-w-0 flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onFocus={() => setFocused(true)}
+                      onBlur={() => setFocused(false)}
+                      placeholder=""
+                      autoComplete="off"
+                      className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-2 text-base text-paper outline-none"
+                      aria-label="Search homes or describe what you want"
+                    />
+                    <HomeGhostHint active={ghostActive} />
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      aria-expanded={advancedOpen}
+                      onClick={() => setAdvancedOpen((v) => !v)}
+                      className="story-press inline-flex h-11 items-center justify-center gap-1 rounded-[var(--radius-md)] border border-hairline px-2.5 text-xs font-semibold text-paper"
+                    >
+                      Advanced
+                      {advancedCount > 0 ? (
+                        <span className="rounded-full bg-gold px-1.5 text-[10px] font-bold text-navy">
+                          {advancedCount}
+                        </span>
+                      ) : (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <button
+                      type="submit"
+                      data-story-sound="tap"
+                      className="story-press inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
+                    >
+                      Search
+                    </button>
+                  </div>
+                </form>
               </div>
-
-              <form
-                onSubmit={onSearch}
-                className="flex flex-col gap-2 p-3 md:flex-row md:items-center"
+              <HomeAdvancedSearch
+                open={advancedOpen}
+                onClose={() => setAdvancedOpen(false)}
+                applied={filters}
+                onApply={(next) => {
+                  setFilters(next);
+                  setAdvancedOpen(false);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setGhostPaused((v) => !v)}
+                className="mt-2 text-[11px] font-medium text-navy/70 hover:text-navy"
               >
-                <div className="relative flex min-h-12 flex-1 items-center">
-                  <Search className="pointer-events-none absolute left-3 h-4 w-4 text-gold" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
-                    placeholder=""
-                    autoComplete="off"
-                    className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-11 pr-3 text-base text-navy outline-none"
-                    aria-label="Search homes or describe what you want"
-                  />
-                  <HomeGhostHint active={ghostActive} />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    aria-expanded={advancedOpen}
-                    onClick={() => setAdvancedOpen((v) => !v)}
-                    className="story-press inline-flex h-12 items-center justify-center gap-1 rounded-[var(--radius-md)] border border-navy/15 px-3 text-sm font-semibold text-navy"
-                  >
-                    Advanced
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="submit"
-                    data-story-sound="tap"
-                    className="story-press inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy md:flex-none"
-                  >
-                    Search
-                  </button>
-                </div>
-              </form>
+                {ghostPaused ? "Play examples" : "Pause examples"}
+              </button>
             </div>
-            <HomeAdvancedSearch
-              open={advancedOpen}
-              onClose={() => setAdvancedOpen(false)}
-              filters={filters}
-              onChange={setFilters}
-            />
           </div>
         </div>
       </section>
