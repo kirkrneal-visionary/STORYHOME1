@@ -54,4 +54,12 @@ const modes = read("src/lib/shi/research-modes.ts");
 assert.match(modes, /label: "Roads & Traffic"/);
 assert.doesNotMatch(modes, /label: "Access"/);
 
+const report = read("src/lib/shi/corridor-property-report.ts");
+assert.match(report, /Roads & Traffic · Location intelligence/);
+assert.doesNotMatch(report, /Corridors · Location intelligence/);
+
+const ask = read("src/lib/shi/corridor-ask.ts");
+assert.match(ask, /this Roads & Traffic desk/);
+assert.doesNotMatch(ask, /this Corridors desk/);
+
 console.log("roads-traffic-correction armor: ok");

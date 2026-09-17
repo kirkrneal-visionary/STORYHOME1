@@ -1106,7 +1106,7 @@ export function answerCorridorAsk(
       honesty: CORRIDOR_ASK_HONESTY,
       ruleVersion: CORRIDOR_ASK_RULE_VERSION,
       summary:
-        "Try a canned question below. Archie only answers from data already on this Corridors desk — no invented counts.",
+        "Try a canned question below. Archie only answers from data already on this Roads & Traffic desk — no invented counts.",
       facts: CORRIDOR_ASK_INTENTS.map((i) => ({
         label: i.chip,
         value: i.label,
