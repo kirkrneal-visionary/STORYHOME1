@@ -229,9 +229,9 @@ export function HomeSearchHero() {
                         }
                         setFiltersOpen((v) => !v);
                       }}
-                      className="story-home-filters-trigger story-press relative inline-flex h-11 w-11 flex-col items-center justify-center rounded-full border border-hairline text-paper md:h-12 md:w-12"
+                      className="story-home-filters-trigger story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper"
                     >
-                      <span className="text-[9px] font-bold leading-none tracking-wide">
+                      <span className="text-[10px] font-bold leading-none tracking-wide">
                         Filters
                       </span>
                       {filterCount > 0 ? (
