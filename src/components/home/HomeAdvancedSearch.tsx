@@ -62,7 +62,7 @@ export function HomeAdvancedSearch({
       const available = dockTop() - top - 8;
       root.style.maxHeight = `${Math.max(200, Math.floor(available))}px`;
     };
-    fit();
+    const frame = window.requestAnimationFrame(fit);
     window.addEventListener("resize", fit);
     window.visualViewport?.addEventListener("resize", fit);
 
@@ -89,6 +89,7 @@ export function HomeAdvancedSearch({
     };
     window.addEventListener("keydown", onKey);
     return () => {
+      window.cancelAnimationFrame(frame);
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", fit);
       window.visualViewport?.removeEventListener("resize", fit);
@@ -120,12 +121,12 @@ export function HomeAdvancedSearch({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "story-glass z-50 flex flex-col overflow-hidden overscroll-contain bg-[var(--glass-bg-strong)] text-paper outline-none",
+          "story-glass z-50 grid grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-contain bg-[var(--glass-bg-strong)] text-paper outline-none",
           "fixed inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]",
           "md:absolute md:inset-x-0 md:bottom-auto md:top-full md:mt-2 md:rounded-[var(--radius-lg)]",
         )}
       >
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4">
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pt-4">
           <SearchFiltersPanel
             title="Filters"
             compact
@@ -135,7 +136,10 @@ export function HomeAdvancedSearch({
             showResultCount={false}
           />
         </div>
-        <div className="flex shrink-0 gap-2 border-t border-hairline bg-[var(--glass-bg-strong)] px-4 py-3">
+        <div className="flex min-h-[3.75rem] gap-2 border-t border-hairline bg-[var(--glass-bg-strong)] px-4 py-3">
+          <span id={titleId} className="sr-only">
+            Advanced search
+          </span>
           <button
             type="button"
             onClick={resetDraft}
@@ -151,9 +155,6 @@ export function HomeAdvancedSearch({
             Apply filters
           </button>
         </div>
-        <span id={titleId} className="sr-only">
-          Advanced search
-        </span>
       </div>
     </>
   );

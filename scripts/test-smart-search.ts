@@ -230,6 +230,7 @@ assert.match(advanced, /Escape/);
 assert.match(advanced, /story-bottom-clearance/);
 assert.match(advanced, /visualViewport/);
 assert.match(advanced, /preventScroll/);
+assert.match(advanced, /grid-rows-\[minmax\(0,1fr\)_auto\]/);
 assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
 
 const fixtures: DemoListing[] = [
