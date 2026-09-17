@@ -11,6 +11,14 @@ import { cn } from "@/lib/utils";
 const FOCUSABLE =
   "input, button, select, textarea, [tabindex]:not([tabindex='-1'])";
 
+function dockTop(): number {
+  const dock = document.querySelector("[data-story-bottom-dock]");
+  if (dock instanceof HTMLElement) {
+    return dock.getBoundingClientRect().top;
+  }
+  return window.innerHeight - 76;
+}
+
 export function HomeAdvancedSearch({
   open,
   onClose,
@@ -35,8 +43,26 @@ export function HomeAdvancedSearch({
     if (!open) return;
     previousFocus.current = document.activeElement as HTMLElement | null;
     const root = panelRef.current;
-    const first = root?.querySelector<HTMLElement>(FOCUSABLE);
-    first?.focus();
+    const narrow = window.matchMedia("(max-width: 767px)").matches;
+    if (narrow) {
+      root?.focus();
+    } else {
+      root?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    }
+
+    const fit = () => {
+      if (!root) return;
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        root.style.maxHeight = "";
+        return;
+      }
+      const top = root.getBoundingClientRect().top;
+      const available = dockTop() - top - 8;
+      root.style.maxHeight = `${Math.max(200, Math.floor(available))}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    window.visualViewport?.addEventListener("resize", fit);
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -59,14 +85,11 @@ export function HomeAdvancedSearch({
         start.focus();
       }
     };
-
-    const lockScroll = window.matchMedia("(max-width: 767px)").matches;
-    const prevOverflow = document.body.style.overflow;
-    if (lockScroll) document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
-      if (lockScroll) document.body.style.overflow = prevOverflow;
+      window.removeEventListener("resize", fit);
+      window.visualViewport?.removeEventListener("resize", fit);
       previousFocus.current?.focus();
     };
   }, [open, onClose]);
@@ -93,10 +116,11 @@ export function HomeAdvancedSearch({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className={cn(
-          "story-glass z-50 flex flex-col overflow-hidden overscroll-contain text-paper",
-          "fixed inset-x-0 bottom-0 max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-4rem))] rounded-t-[var(--radius-sheet)]",
-          "md:absolute md:inset-x-0 md:bottom-auto md:top-full md:mt-2 md:max-h-[min(26rem,calc(100dvh-var(--story-safe-top)-var(--story-bottom-clearance)-9rem))] md:rounded-[var(--radius-lg)]",
+          "story-glass z-50 flex flex-col overflow-hidden overscroll-contain bg-[var(--glass-bg-strong)] text-paper outline-none",
+          "fixed inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]",
+          "md:absolute md:inset-x-0 md:bottom-auto md:top-full md:mt-2 md:rounded-[var(--radius-lg)]",
         )}
       >
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pt-4">
@@ -109,7 +133,7 @@ export function HomeAdvancedSearch({
             showResultCount={false}
           />
         </div>
-        <div className="flex shrink-0 gap-2 border-t border-hairline bg-[var(--glass-bg-strong)] px-4 py-3 pb-[calc(0.75rem+var(--story-bottom-clearance))] md:pb-3">
+        <div className="flex shrink-0 gap-2 border-t border-hairline bg-[var(--glass-bg-strong)] px-4 py-3">
           <button
             type="button"
             onClick={resetDraft}
