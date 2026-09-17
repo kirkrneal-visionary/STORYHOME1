@@ -22,7 +22,10 @@ import {
   SMART_SEARCH_USAGE_USD,
   paidInterpretStatus,
 } from "../src/lib/search/provider.ts";
-import { filtersFromSearchParams } from "../src/lib/search/url.ts";
+import {
+  filtersFromSearchParams,
+  hasMarketplaceHandoffParams,
+} from "../src/lib/search/url.ts";
 import { classifyApiPath } from "../src/lib/security/rate-limit.ts";
 import {
   DEFAULT_SEARCH_FILTERS,
@@ -197,6 +200,7 @@ assert.match(hero, /story-glass/);
 assert.match(hero, /items-center justify-center/);
 assert.match(hero, /whitespace-nowrap/);
 assert.match(hero, /Pause examples/);
+assert.match(hero, /story-home-wave-a-search/);
 assert.match(hero, /countActiveFilters/);
 assert.match(hero, /["']sold["']/);
 assert.match(hero, /authorizeSearchInput/);
@@ -215,11 +219,14 @@ assert.match(ghost, /prefers-reduced-motion/);
 assert.doesNotMatch(ghost, /setQuery|value=\{/);
 assert.doesNotMatch(ghost, /fetch\(|openai|anthropic/i);
 assert.doesNotMatch(ghost, /setInterval/);
+assert.doesNotMatch(ghost, /truncate/);
 
 const advanced = read("src/components/home/HomeAdvancedSearch.tsx");
 assert.match(advanced, /Apply filters/);
 assert.match(advanced, /story-glass/);
 assert.match(advanced, /onApply/);
+assert.match(advanced, /overflow-hidden/);
+assert.match(advanced, /Escape/);
 assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
 
 const fixtures: DemoListing[] = [
@@ -310,21 +317,29 @@ const applied = {
   ...DEFAULT_SEARCH_FILTERS,
   acresMin: "10",
   priceMax: "400000",
+  beds: "3",
+  keyword: "Land",
 };
-assert.ok(countActiveFilters(applied) >= 2);
+assert.ok(countActiveFilters(applied) >= 3);
 const handed = authorizeSearchInput({
   q: "Livingston",
   advanced: applied,
 });
 const params = planToMarketplaceParams(handed);
+assert.equal(hasMarketplaceHandoffParams(new URLSearchParams()), false);
+assert.equal(hasMarketplaceHandoffParams(params), true);
 const received = filtersFromSearchParams(params);
 assert.equal(received.query, "Livingston");
 assert.equal(received.acresMin, "10");
 assert.equal(received.priceMax, "400000");
+assert.equal(received.beds, "3");
+assert.equal(received.keyword, "Land");
 const matched = applySearchFilters(fixtures, received);
 assert.deepEqual(
   matched.map((row) => row.id),
   ["keep"],
 );
+const reset = applySearchFilters(fixtures, DEFAULT_SEARCH_FILTERS);
+assert.ok(reset.length >= 2);
 
 console.log("smart-search armor: ok");

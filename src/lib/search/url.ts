@@ -20,6 +20,33 @@ function csv(raw: string | null): string[] {
     .filter(Boolean);
 }
 
+const HANDOFF_KEYS = [
+  "q",
+  "intent",
+  "keyword",
+  "priceMin",
+  "priceMax",
+  "sqftMin",
+  "sqftMax",
+  "acresMin",
+  "acresMax",
+  "beds",
+  "baths",
+  "types",
+  "office",
+  "garage",
+  "pool",
+  "hoa",
+  "statuses",
+] as const;
+
+/** Homepage Apply → Search writes these. Fresh URL wins over marketplace cache. */
+export function hasMarketplaceHandoffParams(params: {
+  has(name: string): boolean;
+}): boolean {
+  return HANDOFF_KEYS.some((key) => params.has(key));
+}
+
 export function filtersFromSearchParams(
   params: { get(name: string): string | null },
 ): SearchFilters {

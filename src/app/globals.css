@@ -200,6 +200,9 @@ html[data-role="professional"] {
       border-color var(--motion-fast) linear,
       box-shadow var(--motion-fast) var(--motion-ease-standard);
   }
+  .field-input::placeholder {
+    color: var(--muted);
+  }
   .field-input:focus {
     border-color: color-mix(in srgb, var(--gold) 65%, var(--hairline));
     box-shadow: var(--elev-deboss), var(--ring-focus);

@@ -18,6 +18,7 @@ import {
   authorizeSearchInput,
   planToMarketplaceParams,
 } from "@/lib/search/interpret";
+import { allowlistedAdvanced } from "@/lib/search/plan";
 import { fetchMarketplaceListings } from "@/lib/supabase/listings";
 import {
   DEFAULT_MARKET,
@@ -29,6 +30,8 @@ import { cn } from "@/lib/utils";
 
 type Intent = "sale" | "sold";
 
+const HOME_SEARCH_STATE_KEY = "story-home-wave-a-search";
+
 export function HomeSearchHero() {
   const router = useRouter();
   const [intent, setIntent] = useState<Intent>("sale");
@@ -39,6 +42,46 @@ export function HomeSearchHero() {
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(HOME_SEARCH_STATE_KEY);
+      if (raw) {
+        const row = JSON.parse(raw) as {
+          query?: unknown;
+          intent?: unknown;
+          filters?: unknown;
+          ghostPaused?: unknown;
+        };
+        if (typeof row.query === "string") setQuery(row.query);
+        if (row.intent === "sale" || row.intent === "sold") setIntent(row.intent);
+        if (row.filters) {
+          setFilters({
+            ...DEFAULT_SEARCH_FILTERS,
+            ...allowlistedAdvanced(row.filters),
+          });
+        }
+        if (row.ghostPaused === true) setGhostPaused(true);
+      }
+    } catch {
+      /* ignore broken session rows */
+    } finally {
+      setSessionReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    try {
+      sessionStorage.setItem(
+        HOME_SEARCH_STATE_KEY,
+        JSON.stringify({ query, intent, filters, ghostPaused }),
+      );
+    } catch {
+      /* private mode */
+    }
+  }, [sessionReady, query, intent, filters, ghostPaused]);
 
   useEffect(() => {
     let active = true;
@@ -118,7 +161,7 @@ export function HomeSearchHero() {
               <div className="story-home-search story-glass overflow-hidden rounded-[var(--radius-lg)]">
                 <form
                   onSubmit={onSearch}
-                  className="flex flex-col gap-2 p-2.5 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-2 p-2.5 md:flex-row md:items-center"
                 >
                   <div
                     role="group"
@@ -189,16 +232,18 @@ export function HomeSearchHero() {
               <HomeAdvancedSearch
                 open={advancedOpen}
                 onClose={() => setAdvancedOpen(false)}
-                applied={filters}
+                applied={{ ...filters, query: query || filters.query }}
                 onApply={(next) => {
                   setFilters(next);
+                  if (next.query.trim()) setQuery(next.query);
                   setAdvancedOpen(false);
                 }}
               />
               <button
                 type="button"
+                aria-pressed={ghostPaused}
                 onClick={() => setGhostPaused((v) => !v)}
-                className="mt-2 text-[11px] font-medium text-navy/70 hover:text-navy"
+                className="mt-2 text-[11px] font-semibold text-navy underline decoration-navy/30 underline-offset-2 hover:text-navy"
               >
                 {ghostPaused ? "Play examples" : "Pause examples"}
               </button>

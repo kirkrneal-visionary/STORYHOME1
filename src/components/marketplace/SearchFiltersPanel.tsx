@@ -52,7 +52,7 @@ export function SearchFiltersPanel({
   }
 
   return (
-    <div className={cn(compact ? "space-y-4" : "space-y-6", className)}>
+    <div className={cn(compact ? "space-y-3" : "space-y-6", className)}>
       <div className="flex items-end justify-between gap-3">
         <div>
           <h2
@@ -85,6 +85,7 @@ export function SearchFiltersPanel({
         )}
       </div>
 
+      <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
       <Field label="Location">
         <input
           type="text"
@@ -104,8 +105,9 @@ export function SearchFiltersPanel({
           className="field-input"
         />
       </Field>
+      </div>
 
-      <div className={compact ? "grid gap-4 md:grid-cols-2" : "contents"}>
+      <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
       <Field label="Price range">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -178,6 +180,7 @@ export function SearchFiltersPanel({
         </div>
       </Field>
 
+      <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
       <Field label="Features">
         <div className="grid grid-cols-3 gap-2">
           <Toggle
@@ -216,6 +219,7 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      </div>
 
       <Field label="Property type">
         <div className="flex flex-wrap gap-2">

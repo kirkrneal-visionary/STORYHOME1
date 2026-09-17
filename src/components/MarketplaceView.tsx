@@ -16,7 +16,10 @@ import {
   type SearchFilters,
 } from "@/lib/listing-filters";
 import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
-import { filtersFromSearchParams } from "@/lib/search/url";
+import {
+  filtersFromSearchParams,
+  hasMarketplaceHandoffParams,
+} from "@/lib/search/url";
 import { track } from "@/lib/analytics";
 import {
   marketplaceCacheFresh,
@@ -70,14 +73,7 @@ export default function MarketplaceView() {
   );
   const urlKey = searchParams.toString();
   useEffect(() => {
-    if (
-      searchParams.has("q") ||
-      searchParams.has("intent") ||
-      searchParams.has("acresMin") ||
-      searchParams.has("priceMax") ||
-      searchParams.has("priceMin") ||
-      searchParams.has("types")
-    ) {
+    if (hasMarketplaceHandoffParams(searchParams)) {
       setFilters(filtersFromSearchParams(searchParams));
     }
   }, [searchParams, urlKey]);
@@ -100,15 +96,8 @@ export default function MarketplaceView() {
     restoredRef.current = true;
     const cached = readMarketplaceCache();
     if (!cached || !marketplaceCacheFresh(cached)) return;
-    // Fresh URL search from home hero wins over stale cache query when q/intent present.
-    const hasFreshQuery =
-      searchParams.has("q") ||
-      searchParams.has("intent") ||
-      searchParams.has("acresMin") ||
-      searchParams.has("priceMax") ||
-      searchParams.has("priceMin") ||
-      searchParams.has("types");
-    if (!hasFreshQuery) {
+    // Fresh URL search from home hero wins over stale marketplace cache.
+    if (!hasMarketplaceHandoffParams(searchParams)) {
       setFilters(cached.filters);
     }
     setBoundary(cached.boundary);
