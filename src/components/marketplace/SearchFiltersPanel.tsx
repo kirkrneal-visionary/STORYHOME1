@@ -53,8 +53,10 @@ export function SearchFiltersPanel({
 
   return (
     <div className={cn(compact ? "space-y-3" : "space-y-6", className)}>
+      {title || !compact ? (
       <div className="flex items-end justify-between gap-3">
         <div>
+          {title ? (
           <h2
             className={cn(
               "font-semibold text-ink",
@@ -63,6 +65,7 @@ export function SearchFiltersPanel({
           >
             {title}
           </h2>
+          ) : null}
           {compact ? null : (
             <p className="mt-1 text-xs text-[var(--muted)]">
               Filter East Texas homes by what matters.
@@ -84,6 +87,7 @@ export function SearchFiltersPanel({
           </button>
         )}
       </div>
+      ) : null}
 
       <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
       <Field label="Location">

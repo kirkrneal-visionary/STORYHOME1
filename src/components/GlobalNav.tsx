@@ -92,7 +92,7 @@ export default function GlobalNav() {
           active: false,
         },
         {
-          href: "/marketplace?q=Lufkin%2C%20TX&intent=rent",
+          href: "/rent",
           label: "Rent",
           active: false,
         },
@@ -218,7 +218,7 @@ export default function GlobalNav() {
                 Buy
               </NavLink>
               <NavLink
-                href="/marketplace?q=Lufkin%2C%20TX&intent=rent"
+                href="/rent"
                 active={false}
               >
                 Rent

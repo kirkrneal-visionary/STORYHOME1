@@ -200,6 +200,8 @@ assert.match(hero, /story-glass/);
 assert.match(hero, /items-center justify-center/);
 assert.match(hero, /whitespace-nowrap/);
 assert.match(hero, /Pause examples/);
+assert.match(hero, /GhostPauseButton/);
+assert.doesNotMatch(hero, /story-wordmark/);
 assert.match(hero, /story-home-wave-a-search/);
 assert.match(hero, /countActiveFilters/);
 assert.match(hero, /["']sold["']/);
@@ -230,7 +232,7 @@ assert.match(advanced, /Escape/);
 assert.match(advanced, /story-bottom-clearance/);
 assert.match(advanced, /visualViewport/);
 assert.match(advanced, /preventScroll/);
-assert.match(advanced, /grid-rows-\[minmax\(0,1fr\)_auto\]/);
+assert.match(advanced, /grid-rows-\[auto_minmax\(0,1fr\)_auto\]/);
 assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
 
 const fixtures: DemoListing[] = [
@@ -345,5 +347,12 @@ assert.deepEqual(
 );
 const reset = applySearchFilters(fixtures, DEFAULT_SEARCH_FILTERS);
 assert.ok(reset.length >= 2);
+
+const nav = read("src/components/GlobalNav.tsx");
+assert.match(nav, /href=\"\/rent\"/);
+assert.doesNotMatch(nav, /intent=rent/);
+const rentPage = read("src/app/rent/page.tsx");
+assert.match(rentPage, /does not have rental inventory/);
+assert.doesNotMatch(rentPage, /intent=rent/);
 
 console.log("smart-search armor: ok");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
 import {
   DEFAULT_SEARCH_FILTERS,
@@ -121,14 +122,25 @@ export function HomeAdvancedSearch({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "story-glass z-50 grid grid-rows-[minmax(0,1fr)_auto] overflow-hidden overscroll-contain bg-[var(--glass-bg-strong)] text-paper outline-none",
+          "story-glass z-50 grid grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden overscroll-contain bg-[var(--glass-bg-strong)] text-paper outline-none",
           "fixed inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]",
           "md:absolute md:inset-x-0 md:bottom-auto md:top-full md:mt-2 md:rounded-[var(--radius-lg)]",
         )}
       >
-        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 pt-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline px-4 py-3">
+          <p className="type-card-title text-paper">Filters</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="story-press inline-flex h-9 w-9 items-center justify-center rounded-full text-paper/70 hover:bg-paper/10 hover:text-paper"
+            aria-label="Close advanced search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-3">
           <SearchFiltersPanel
-            title="Filters"
+            title=""
             compact
             filters={draft}
             onChange={setDraft}

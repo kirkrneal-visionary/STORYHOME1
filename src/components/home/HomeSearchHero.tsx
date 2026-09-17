@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Pause, Play, Search } from "lucide-react";
 import { HomeAdvancedSearch } from "@/components/home/HomeAdvancedSearch";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import { ListingCard } from "@/components/ListingCard";
@@ -136,7 +136,7 @@ export function HomeSearchHero() {
 
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
-      <section className="relative min-h-[78vh] overflow-hidden md:min-h-[85vh]">
+      <section className="relative min-h-[20.5rem] overflow-hidden md:min-h-[26rem]">
         <Image
           src="/brand/home-hero-meadow.png"
           alt="East Texas pine meadow at first light"
@@ -146,64 +146,74 @@ export function HomeSearchHero() {
           sizes="100vw"
         />
 
-        <div className="relative z-10 flex min-h-[78vh] items-center justify-center px-4 pb-16 pt-[calc(var(--story-safe-top)+2rem)] md:min-h-[85vh] md:px-6">
-          <div className="relative w-full max-w-3xl text-center">
-            <p className="story-wordmark text-[var(--type-brand)]">
-              <span className="text-[var(--brand-word)] !text-navy">STORY</span>
-              <span className="text-[var(--brand-home)]">HOME</span>
-            </p>
-            <h1 className="type-hero mx-auto mt-3 max-w-3xl text-navy">
+        <div className="relative z-10 flex items-center justify-center px-4 pb-8 pt-[calc(var(--story-safe-top)+1.25rem)] md:px-6 md:pb-10 md:pt-[calc(var(--story-safe-top)+2.25rem)]">
+          <div className="relative mx-auto w-full max-w-3xl text-center">
+            <h1 className="type-hero mx-auto max-w-3xl text-navy">
               Find your next place in{" "}
               <span className="whitespace-nowrap">East Texas.</span>
             </h1>
 
-            <div className="relative mx-auto mt-7 w-full max-w-3xl text-left">
-              <div className="story-home-search story-glass overflow-hidden rounded-[var(--radius-lg)]">
+            <div className="relative mx-auto mt-5 w-full max-w-3xl text-left md:mt-6">
+              <div className="story-home-search story-glass rounded-[var(--radius-lg)]">
                 <form
                   onSubmit={onSearch}
-                  className="flex flex-col gap-2 p-2.5 md:flex-row md:items-center"
+                  className="flex flex-col gap-1.5 p-2 md:flex-row md:items-center md:gap-2 md:p-2"
                 >
-                  <div
-                    role="group"
-                    aria-label="Listing status"
-                    className="flex shrink-0 self-start rounded-full border border-hairline p-0.5 sm:self-center"
-                  >
-                    {(
-                      [
-                        ["sale", "For sale"],
-                        ["sold", "Sold"],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setIntent(key)}
-                        className={cn(
-                          "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
-                          intent === key
-                            ? "bg-gold text-navy"
-                            : "text-paper/70 hover:text-paper",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between gap-2 md:contents">
+                    <div
+                      role="group"
+                      aria-label="Listing status"
+                      className="flex shrink-0 rounded-full border border-hairline p-0.5"
+                    >
+                      {(
+                        [
+                          ["sale", "For sale"],
+                          ["sold", "Sold"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setIntent(key)}
+                          className={cn(
+                            "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
+                            intent === key
+                              ? "bg-gold text-navy"
+                              : "text-paper/70 hover:text-paper",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <GhostPauseButton
+                      paused={ghostPaused}
+                      onToggle={() => setGhostPaused((v) => !v)}
+                      className="md:hidden"
+                    />
                   </div>
                   <div className="relative min-w-0 flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold" />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onFocus={() => setFocused(true)}
-                      onBlur={() => setFocused(false)}
-                      placeholder=""
-                      autoComplete="off"
-                      className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-2 text-base text-paper outline-none"
-                      aria-label="Search homes or describe what you want"
-                    />
-                    <HomeGhostHint active={ghostActive} />
+                    <div className="relative rounded-[var(--radius-md)] bg-[var(--env-0)] ring-1 ring-hairline">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold" />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onFocus={() => setFocused(true)}
+                        onBlur={() => setFocused(false)}
+                        placeholder=""
+                        autoComplete="off"
+                        className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-11 text-base text-paper outline-none"
+                        aria-label="Search homes or describe what you want"
+                      />
+                      <HomeGhostHint active={ghostActive} />
+                      <GhostPauseButton
+                        paused={ghostPaused}
+                        onToggle={() => setGhostPaused((v) => !v)}
+                        className="absolute right-1 top-1/2 hidden -translate-y-1/2 md:inline-flex"
+                      />
+                    </div>
                   </div>
-                  <div className="flex shrink-0 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5 md:flex md:shrink-0 md:gap-2">
                     <button
                       type="button"
                       aria-expanded={advancedOpen}
@@ -239,20 +249,12 @@ export function HomeSearchHero() {
                   setAdvancedOpen(false);
                 }}
               />
-              <button
-                type="button"
-                aria-pressed={ghostPaused}
-                onClick={() => setGhostPaused((v) => !v)}
-                className="mt-2 text-[11px] font-semibold text-navy underline decoration-navy/30 underline-offset-2 hover:text-navy"
-              >
-                {ghostPaused ? "Play examples" : "Pause examples"}
-              </button>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-14 md:px-6">
+      <section className="mx-auto max-w-6xl px-4 pb-10 pt-8 md:px-6 md:pt-10">
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="type-section text-paper">
@@ -360,6 +362,36 @@ export function HomeSearchHero() {
         />
       </section>
     </div>
+  );
+}
+
+function GhostPauseButton({
+  paused,
+  onToggle,
+  className,
+}: {
+  paused: boolean;
+  onToggle: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={paused}
+      aria-label={paused ? "Play examples" : "Pause examples"}
+      title={paused ? "Play examples" : "Pause examples"}
+      onClick={onToggle}
+      className={cn(
+        "story-press inline-flex h-9 w-9 items-center justify-center rounded-full text-paper/80 hover:bg-paper/10 hover:text-paper",
+        className,
+      )}
+    >
+      {paused ? (
+        <Play className="h-3.5 w-3.5 fill-current" />
+      ) : (
+        <Pause className="h-3.5 w-3.5" />
+      )}
+    </button>
   );
 }
 

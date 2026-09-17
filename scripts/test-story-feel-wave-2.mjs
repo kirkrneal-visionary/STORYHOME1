@@ -9,10 +9,13 @@ import { join } from "node:path";
 const root = process.cwd();
 const read = (rel) => readFileSync(join(root, rel), "utf8");
 
+const nav = read("src/components/GlobalNav.tsx");
+assert.match(nav, /brand-word/);
+assert.match(nav, /story-living-word[\s\S]*STORY/);
+assert.match(nav, /story-living-word[\s\S]*HOME/);
+
 const hero = read("src/components/home/HomeSearchHero.tsx");
-assert.match(hero, /brand-word/);
-assert.match(hero, />STORY</);
-assert.match(hero, />HOME</);
+assert.doesNotMatch(hero, /story-wordmark/);
 assert.match(hero, /story-surface|story-glass/);
 assert.match(hero, /story-well/);
 assert.doesNotMatch(hero, /Home Values →/);
