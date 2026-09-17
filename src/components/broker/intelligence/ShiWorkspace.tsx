@@ -34,12 +34,12 @@ const MODULE_COPY: Record<
   research: {
     title: "Research",
     blurb:
-      "Choose a research mode, then search · map · property · Access desk. Same facts — a different professional lens.",
+      "Choose a research mode, then search · map · property · Roads & Traffic. Same facts — a different professional lens.",
   },
   corridors: {
-    title: "Access",
+    title: "Roads & Traffic",
     blurb:
-      "Redirects into Research Access desk. Same facts — one room.",
+      "Redirects into Research Roads & Traffic. Same facts — one room.",
   },
   prospects: {
     title: "Prospects",
@@ -92,7 +92,7 @@ export function ShiWorkspace() {
     track("archie_module_selected", { module: moduleProp });
   }, [section]);
 
-  /* R2 — soft-hide Access tab: old Corridors deep links land in Research Access desk */
+  /* R2 — old Corridors deep links land in Research Roads & Traffic (mode=access). */
   useEffect(() => {
     if (section !== "corridors") return;
     setResearchVisited(true);

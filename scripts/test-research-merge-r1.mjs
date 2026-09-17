@@ -54,7 +54,7 @@ assert.match(view, /isLaunchCorridorFips/);
 
 const nav = read("src/lib/navigation/networks.ts");
 assert.match(nav, /label: "Research"/);
-assert.match(nav, /Access desk is inside Research|soft-hidden/i);
+assert.match(nav, /Roads & Traffic is inside Research|Access desk is inside Research|soft-hidden/i);
 
 const workspace = read(
   "src/components/broker/intelligence/ShiWorkspace.tsx",

@@ -58,7 +58,7 @@ export const NAVIGATION_NETWORKS: Record<NetworkId, NetworkDefinition> = {
         label: "Research",
         match: "/portal/intelligence",
       },
-      /* R2 — Access desk is inside Research (mode=access). Corridors tab soft-hidden. */
+      /* R2 — Roads & Traffic is inside Research (mode=access). Corridors tab soft-hidden. */
       {
         id: "prospects",
         href: archieHrefForModule("prospects"),
@@ -105,7 +105,7 @@ export function isStoryProPath(pathname: string | null | undefined): boolean {
 
 /**
  * Archie subsection from the query string.
- * Access desk (`mode=access`) stays Research. Corridors is not a ribbon tab.
+ * Roads & Traffic (`mode=access`) stays Research. Corridors is not a ribbon tab.
  */
 export function archieModuleFromSearch(
   section: string | null | undefined,

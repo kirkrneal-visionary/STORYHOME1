@@ -131,7 +131,7 @@ export function buildPropertyLocationReportHtml(
   ul{padding-left:1.2rem}
   @media print{body{margin:12px}}
 </style></head><body>
-<p class="mono">Corridors · Location intelligence · ${escapeHtml(PROPERTY_REPORT_VERSION)}</p>
+<p class="mono">Roads & Traffic · Location intelligence · ${escapeHtml(PROPERTY_REPORT_VERSION)}</p>
 <h1>${escapeHtml(title)}</h1>
 <p class="muted">${escapeHtml(countyName)} · CAD #${escapeHtml(pick.propId)} · ${escapeHtml(formatAcres(pick.legalAcreage))}</p>
 

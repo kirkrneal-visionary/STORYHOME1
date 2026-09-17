@@ -376,7 +376,7 @@ export function buildArchiePropertyBrief(opts: {
     findings.push({
       id: "intersection",
       title: "Nearest mapped-road crossing",
-      body: `About ${formatApproxIntersectionM(accessIntel.approxDistanceToIntersectionM)} to the nearest mapped-road crossing on the Access desk. Approx — not a surveyed intersection distance.`,
+      body: `About ${formatApproxIntersectionM(accessIntel.approxDistanceToIntersectionM)} to the nearest mapped-road crossing under Roads & Traffic. Approx — not a surveyed intersection distance.`,
       classification: tier,
       focus: "development",
       actionLabel: "Review access",
@@ -541,7 +541,7 @@ export function buildArchieConclusion(opts: {
   }
   if (!accessIntel || accessIntel.totalApproxFrontageFt <= 0) {
     if (ids.has("land-heavy") || (opts.property.legalAcreage ?? 0) >= 5) {
-      verifyNeeds.push("Load Access desk frontage when available for a road-position read.");
+      verifyNeeds.push("Load Roads & Traffic frontage when available for a road-position read.");
     }
   }
 
@@ -590,7 +590,7 @@ export function buildArchieConclusion(opts: {
       "Related ownership nearby plus road/traffic desk facts is the strongest pattern on this record so far.";
     why =
       nearbySummary ||
-      "Exact same-owner tracts sit near this parcel, and Access desk shows road or planning-traffic context.";
+      "Exact same-owner tracts sit near this parcel, and Roads & Traffic shows road or planning-traffic context.";
     nextAction = "Examine nearby ownership, then verify utilities before any development read.";
     nextFocus = "nearby";
     alternatives.push(
@@ -631,7 +631,7 @@ export function buildArchieConclusion(opts: {
       "Road position and/or land-heavy appraisal warrant a development look — not a development conclusion.";
     why =
       "Desk facts support investigation. Utility capacity, access, and restrictions are still open.";
-    nextAction = "Review Access desk frontage, then verify utilities before ranking uses.";
+    nextAction = "Review Roads & Traffic frontage, then verify utilities before ranking uses.";
     nextFocus = "development";
     alternatives.push(
       {
@@ -650,7 +650,7 @@ export function buildArchieConclusion(opts: {
     statement =
       "Nearby planning traffic is available as context — not proof of commercial demand.";
     why = "TxDOT AADT is a planning count, not live congestion and not a market study.";
-    nextAction = "Open the Access desk for traffic detail, or ask about development.";
+    nextAction = "Open Roads & Traffic for traffic detail, or ask about development.";
     nextFocus = "nearby";
   } else {
     kind = "preliminary";

@@ -80,7 +80,7 @@ export function ShiResearchAccessDesk({
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-gold uppercase">
-            Access desk
+            Roads & Traffic
           </p>
           <p className="mt-1 text-[11px] text-[var(--muted)]">
             {modeCfg.tone} Same facts — this mode changes what matters.
