@@ -63,6 +63,8 @@ export function HomeAdvancedSearch({
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const closeTimer = useRef<number>(0);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const [mounted, setMounted] = useState(false);
   const [present, setPresent] = useState(false);
   const [shown, setShown] = useState(false);
@@ -152,7 +154,7 @@ export function HomeAdvancedSearch({
 
     const frame = window.requestAnimationFrame(() => {
       fit();
-      if (open) {
+      if (open && !panelRef.current?.contains(document.activeElement)) {
         panelRef.current?.focus({ preventScroll: true });
       }
     });
@@ -163,7 +165,7 @@ export function HomeAdvancedSearch({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
       }
     };
     const onPointer = (e: PointerEvent) => {
@@ -178,7 +180,7 @@ export function HomeAdvancedSearch({
       if (document.querySelector(".story-home-search")?.contains(node)) {
         return;
       }
-      onClose();
+      onCloseRef.current();
     };
     window.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointer);
@@ -191,7 +193,7 @@ export function HomeAdvancedSearch({
       media.removeEventListener("change", fit);
       if (!open) previousFocus.current?.focus();
     };
-  }, [present, open, onClose]);
+  }, [present, open]);
 
   if (!mounted || !present) return null;
 

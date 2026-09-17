@@ -93,9 +93,12 @@ export function HeaderMotionMenu({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("pointerdown", onDoc);
+    const attach = window.setTimeout(() => {
+      document.addEventListener("pointerdown", onDoc);
+    }, 0);
     window.addEventListener("keydown", onKey);
     return () => {
+      window.clearTimeout(attach);
       document.removeEventListener("pointerdown", onDoc);
       window.removeEventListener("keydown", onKey);
     };
