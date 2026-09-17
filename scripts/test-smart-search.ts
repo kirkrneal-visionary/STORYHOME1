@@ -178,10 +178,16 @@ assert.doesNotMatch(runRoute, /openai|anthropic/i);
 const rate = read("src/lib/security/rate-limit.ts");
 assert.match(rate, /\/api\/smart-search\//);
 
+const css = read("src/app/globals.css");
+assert.match(css, /\.story-home-search\.story-glass/);
+assert.match(css, /--paper/);
+
 const hero = read("src/components/home/HomeSearchHero.tsx");
 assert.match(hero, /home-hero-meadow/);
 assert.match(hero, /HomeGhostHint/);
 assert.match(hero, /Advanced/);
+assert.match(hero, /story-home-search/);
+assert.match(hero, /["']sold["']/);
 assert.match(hero, /authorizeSearchInput/);
 assert.doesNotMatch(hero, /\/api\/smart-search/);
 assert.doesNotMatch(hero, /unsplash/i);

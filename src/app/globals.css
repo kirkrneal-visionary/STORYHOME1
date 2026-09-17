@@ -1139,6 +1139,12 @@ html[data-header-state="minimal"] .story-living-mark {
   animation: storyGhostIn 0.7s ease;
 }
 
+/* Homepage search sits on the meadow. Keep Story Glass, but use a paper plate so navy type stays readable. */
+.story-home-search.story-glass {
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--navy);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .story-ghost-phrase {
     animation: none;

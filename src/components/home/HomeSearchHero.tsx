@@ -109,7 +109,7 @@ export function HomeSearchHero() {
           </div>
 
           <div className="relative mt-8 w-full max-w-xl">
-            <div className="story-glass overflow-hidden rounded-[var(--radius-lg)] border border-navy/10 bg-[color-mix(in_srgb,var(--paper)_88%,transparent)] shadow-[var(--elev-2)]">
+            <div className="story-home-search story-glass overflow-hidden rounded-[var(--radius-lg)] border border-navy/10 shadow-[var(--elev-2)]">
               <div className="flex border-b border-navy/10">
                 {(
                   [
