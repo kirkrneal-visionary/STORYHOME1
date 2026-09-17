@@ -119,10 +119,11 @@ export function HomeAdvancedSearch({
 
     const frame = window.requestAnimationFrame(() => {
       fit();
+      const node = panelRef.current;
       if (media.matches) {
-        root?.focus({ preventScroll: true });
+        node?.focus({ preventScroll: true });
       } else {
-        root
+        node
           ?.querySelector<HTMLElement>(FOCUSABLE)
           ?.focus({ preventScroll: true });
       }
@@ -194,7 +195,7 @@ export function HomeAdvancedSearch({
           "fixed z-[55] flex h-fit flex-col overflow-hidden overscroll-contain outline-none",
           "story-glass !bg-[var(--env-1)] ![backdrop-filter:none] text-paper",
           "border border-[var(--glass-border)] shadow-[var(--glass-elev)]",
-          !placed && "invisible",
+          !placed && "opacity-0",
           narrow
             ? "inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]"
             : "rounded-[var(--radius-lg)]",
