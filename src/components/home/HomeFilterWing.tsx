@@ -297,7 +297,12 @@ export function HomeFilterWing({
         ) : null}
         <div
           data-advanced-body
-          className="min-h-[13.5rem] px-3 py-3"
+          className={cn(
+            "px-3 py-3",
+            box.maxBody === 0 || box.maxBody >= 216
+              ? "min-h-[13.5rem]"
+              : "min-h-0",
+          )}
           style={
             box.maxBody > 0
               ? { maxHeight: box.maxBody, overflowY: "auto" }

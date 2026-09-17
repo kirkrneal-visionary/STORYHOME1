@@ -243,6 +243,7 @@ assert.doesNotMatch(hero, /rgba\(9,21,37,0\.68\)/);
 
 const ghost = read("src/components/home/HomeGhostHint.tsx");
 assert.match(ghost, /aria-hidden/);
+assert.match(ghost, /data-story-ghost/);
 assert.match(ghost, /TYPE_MS/);
 assert.match(ghost, /ERASE_MS/);
 assert.match(ghost, /HOLD_MS/);

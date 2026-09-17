@@ -135,6 +135,8 @@ export const HomeGhostHint = memo(function HomeGhostHint({
   return (
     <span
       aria-hidden="true"
+      data-story-ghost
+      data-ghost-mode={mode}
       className="pointer-events-none absolute inset-y-0 left-10 right-3 flex items-center"
     >
       <span className="max-w-full text-[15px] leading-tight text-paper/45 sm:whitespace-nowrap">
