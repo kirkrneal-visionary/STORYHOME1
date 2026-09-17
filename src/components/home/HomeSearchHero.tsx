@@ -125,7 +125,7 @@ export function HomeSearchHero() {
                       "story-press type-control min-h-11 flex-1 px-3 py-3 font-semibold transition-colors md:px-4",
                       intent === key
                         ? "bg-gold text-navy"
-                        : "text-navy/65 hover:text-navy",
+                        : "text-navy/80 hover:text-navy",
                     )}
                   >
                     {label}

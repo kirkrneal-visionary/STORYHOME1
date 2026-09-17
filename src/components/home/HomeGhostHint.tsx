@@ -44,8 +44,8 @@ export function HomeGhostHint({ active }: { active: boolean }) {
         key={text}
         className={
           reduced
-            ? "truncate text-[15px] text-navy/40"
-            : "story-ghost-phrase truncate text-[15px] text-navy/40"
+            ? "truncate text-[15px] text-navy/50"
+            : "story-ghost-phrase truncate text-[15px] text-navy/50"
         }
       >
         {text}
