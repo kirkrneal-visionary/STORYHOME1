@@ -16,7 +16,7 @@ import {
   type SearchFilters,
 } from "@/lib/listing-filters";
 import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
-import { DEFAULT_MARKET } from "@/lib/markets";
+import { filtersFromSearchParams } from "@/lib/search/url";
 import { track } from "@/lib/analytics";
 import {
   marketplaceCacheFresh,
@@ -39,23 +39,15 @@ const MarketplaceMap = dynamic(
   },
 );
 
-function initialFiltersFromUrl(q: string, intent: string): SearchFilters {
-  return {
-    ...DEFAULT_SEARCH_FILTERS,
-    query: q,
-    statuses:
-      intent === "sold"
-        ? ["Sold"]
-        : intent === "rent"
-          ? ["Active"]
-          : ["Active", "Option Pending Continue to Show"],
-  };
+function initialFiltersFromUrl(
+  params: { get(name: string): string | null },
+): SearchFilters {
+  return filtersFromSearchParams(params);
 }
 
 export default function MarketplaceView() {
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || DEFAULT_MARKET.label;
-  const intent = searchParams.get("intent") || "sale";
+  const coverageNote = searchParams.get("note");
   const listRef = useRef<HTMLDivElement | null>(null);
   const restoredRef = useRef(false);
   const viewedRef = useRef(false);
@@ -74,7 +66,7 @@ export default function MarketplaceView() {
   });
 
   const [filters, setFilters] = useState<SearchFilters>(() =>
-    initialFiltersFromUrl(initialQuery, intent),
+    initialFiltersFromUrl(searchParams),
   );
   const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -202,6 +194,11 @@ export default function MarketplaceView() {
             ref={listRef}
             className="min-h-0 flex-1 overflow-y-auto px-2 py-2 pb-[var(--story-bottom-clearance)] md:px-3"
           >
+            {coverageNote ? (
+              <p className="mb-2 rounded-[var(--radius-md)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--muted)]">
+                {coverageNote}
+              </p>
+            ) : null}
             {loading ? (
               <div className="story-skeleton story-well px-5 py-12 text-center text-sm text-[var(--muted)]">
                 Loading listings…

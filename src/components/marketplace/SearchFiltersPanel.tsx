@@ -14,6 +14,7 @@ type SearchFiltersPanelProps = {
   filters: SearchFilters;
   onChange: (next: SearchFilters) => void;
   resultCount: number;
+  showResultCount?: boolean;
   className?: string;
 };
 
@@ -39,6 +40,7 @@ export function SearchFiltersPanel({
   filters,
   onChange,
   resultCount,
+  showResultCount = true,
   className,
 }: SearchFiltersPanelProps) {
   function patch(partial: Partial<SearchFilters>) {
@@ -243,9 +245,11 @@ export function SearchFiltersPanel({
         </div>
       </Field>
 
-      <p className="font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">
-        {resultCount} matching {resultCount === 1 ? "home" : "homes"}
-      </p>
+      {showResultCount ? (
+        <p className="font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">
+          {resultCount} matching {resultCount === 1 ? "home" : "homes"}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -4,9 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { MapPin, Search } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
+import { HomeAdvancedSearch } from "@/components/home/HomeAdvancedSearch";
+import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import { ListingCard } from "@/components/ListingCard";
 import type { DemoListing } from "@/lib/demo-data";
+import {
+  DEFAULT_SEARCH_FILTERS,
+  type SearchFilters,
+} from "@/lib/listing-filters";
+import {
+  authorizeSearchInput,
+  planToMarketplaceParams,
+} from "@/lib/search/interpret";
 import { fetchMarketplaceListings } from "@/lib/supabase/listings";
 import {
   DEFAULT_MARKET,
@@ -16,12 +26,15 @@ import {
 } from "@/lib/markets";
 import { cn } from "@/lib/utils";
 
-type Intent = "sale" | "rent" | "sold";
+type Intent = "sale" | "sold";
 
 export function HomeSearchHero() {
   const router = useRouter();
   const [intent, setIntent] = useState<Intent>("sale");
-  const [query, setQuery] = useState<string>(DEFAULT_MARKET.label);
+  const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
 
@@ -42,97 +55,128 @@ export function HomeSearchHero() {
     };
   }, []);
 
+  function submitPlan(raw: string) {
+    // Local first-party plan. Marketplace stays usable if APIs or a future paid interpreter are off.
+    const plan = authorizeSearchInput({
+      q: raw,
+      advanced: {
+        ...filters,
+        query: raw.trim() || filters.query,
+        statuses:
+          intent === "sold"
+            ? ["Sold"]
+            : filters.statuses.length
+              ? filters.statuses
+              : ["Active", "Option Pending Continue to Show"],
+      },
+    });
+    router.push(`/marketplace?${planToMarketplaceParams(plan).toString()}`);
+  }
+
   function onSearch(e: FormEvent) {
     e.preventDefault();
-    const params = new URLSearchParams({
-      q: query.trim() || DEFAULT_MARKET.label,
-      intent,
-    });
-    router.push(`/marketplace?${params.toString()}`);
+    submitPlan(query);
   }
 
   function searchArea(area: string) {
-    const params = new URLSearchParams({
-      q: `${area}, TX`,
-      intent,
-    });
-    router.push(`/marketplace?${params.toString()}`);
+    submitPlan(`${area}, TX`);
   }
+
+  const ghostActive =
+    !focused && !advancedOpen && query.trim().length === 0;
 
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
-      {/* Hero budget: brand + headline + support + one CTA group on full-bleed photo */}
       <section className="relative min-h-[78vh] overflow-hidden md:min-h-[85vh]">
         <Image
-          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80"
-          alt="East Texas home at dusk"
+          src="/brand/home-hero-meadow.png"
+          alt="East Texas pine meadow at first light"
           fill
           priority
-          className="object-cover"
+          className="object-cover object-[26%_36%] md:object-[42%_40%]"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,21,37,0.68)_0%,rgba(14,30,56,0.72)_48%,rgba(9,21,37,0.92)_100%)]" />
 
-        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-[calc(var(--story-safe-top)+3rem)] md:min-h-[85vh] md:px-6 md:pt-[calc(var(--story-safe-top)+4rem)]">
-          <p className="story-wordmark text-[var(--type-brand)] text-paper">
-            <span className="text-[var(--brand-word)]">STORY</span>
-            <span className="text-[var(--brand-home)]">HOME</span>
-          </p>
-          <h1 className="type-hero mt-4 max-w-3xl text-paper">
-            Find your next home in East Texas.
-          </h1>
-          <p className="type-prose mt-3 max-w-xl text-paper/80">
-            Search across seven launch counties — then grow with Story Home.
-          </p>
+        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-end px-4 pb-14 pt-[calc(var(--story-safe-top)+2.5rem)] md:min-h-[85vh] md:justify-center md:px-6 md:pt-[calc(var(--story-safe-top)+4rem)] md:pb-20">
+          <div className="max-w-xl">
+            <p className="story-wordmark text-[var(--type-brand)]">
+              <span className="text-[var(--brand-word)] !text-navy">STORY</span>
+              <span className="text-[var(--brand-home)]">HOME</span>
+            </p>
+            <h1 className="type-hero mt-3 max-w-lg text-navy">
+              Find your next place in East Texas.
+            </h1>
+          </div>
 
-          <div className="story-glass mt-8 overflow-hidden border-white/12">
-            <div className="flex border-b border-white/10">
-              {(
-                [
-                  ["sale", "For Sale"],
-                  ["rent", "For Rent"],
-                  ["sold", "Sold"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setIntent(key)}
-                  className={cn(
-                    "story-press type-control min-h-11 flex-1 px-3 py-3 font-semibold transition-colors md:px-4",
-                    intent === key
-                      ? "bg-gold text-navy"
-                      : "text-paper/75 hover:text-paper",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <form
-              onSubmit={onSearch}
-              className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:p-4"
-            >
-              <div className="story-well flex flex-1 items-center gap-3 border-white/10 px-4 py-3">
-                <MapPin className="h-5 w-5 shrink-0 text-gold" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="City, ZIP, county, or address"
-                  className="w-full bg-transparent text-base text-paper outline-none placeholder:text-paper/40"
-                  aria-label="Search location"
-                />
+          <div className="relative mt-8 w-full max-w-xl">
+            <div className="story-glass overflow-hidden rounded-[var(--radius-lg)] border border-navy/10 bg-[color-mix(in_srgb,var(--paper)_88%,transparent)] shadow-[var(--elev-2)]">
+              <div className="flex border-b border-navy/10">
+                {(
+                  [
+                    ["sale", "For sale"],
+                    ["sold", "Sold"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setIntent(key)}
+                    className={cn(
+                      "story-press type-control min-h-11 flex-1 px-3 py-3 font-semibold transition-colors md:px-4",
+                      intent === key
+                        ? "bg-gold text-navy"
+                        : "text-navy/65 hover:text-navy",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-              <button
-                type="submit"
-                data-story-sound="tap"
-                className="story-press inline-flex h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gold px-6 text-sm font-bold text-navy"
+
+              <form
+                onSubmit={onSearch}
+                className="flex flex-col gap-2 p-3 md:flex-row md:items-center"
               >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-            </form>
+                <div className="relative flex min-h-12 flex-1 items-center">
+                  <Search className="pointer-events-none absolute left-3 h-4 w-4 text-gold" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    placeholder=""
+                    autoComplete="off"
+                    className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-11 pr-3 text-base text-navy outline-none"
+                    aria-label="Search homes or describe what you want"
+                  />
+                  <HomeGhostHint active={ghostActive} />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    aria-expanded={advancedOpen}
+                    onClick={() => setAdvancedOpen((v) => !v)}
+                    className="story-press inline-flex h-12 items-center justify-center gap-1 rounded-[var(--radius-md)] border border-navy/15 px-3 text-sm font-semibold text-navy"
+                  >
+                    Advanced
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="submit"
+                    data-story-sound="tap"
+                    className="story-press inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy md:flex-none"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
+            </div>
+            <HomeAdvancedSearch
+              open={advancedOpen}
+              onClose={() => setAdvancedOpen(false)}
+              filters={filters}
+              onChange={setFilters}
+            />
           </div>
         </div>
       </section>
@@ -148,7 +192,7 @@ export function HomeSearchHero() {
             </p>
           </div>
           <Link
-            href={`/marketplace?q=${encodeURIComponent(DEFAULT_MARKET.label)}`}
+            href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
             className="hidden text-sm font-semibold text-gold hover:underline md:inline"
           >
             View all homes
@@ -199,7 +243,7 @@ export function HomeSearchHero() {
               </p>
             </div>
             <Link
-              href={`/marketplace?q=${encodeURIComponent(REGION.label)}`}
+              href={`/marketplace?q=${encodeURIContent(REGION.label)}`}
               className="text-sm font-semibold text-gold hover:underline"
             >
               See marketplace
@@ -228,7 +272,7 @@ export function HomeSearchHero() {
         <ToolCard
           title="Buy a home"
           body="Search East Texas listings with filters, saves, and agent profiles on every card."
-          href={`/marketplace?q=${encodeURIComponent(DEFAULT_MARKET.label)}`}
+          href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
           cta="Start searching"
         />
         <ToolCard
@@ -246,6 +290,10 @@ export function HomeSearchHero() {
       </section>
     </div>
   );
+}
+
+function encodeURIContent(value: string) {
+  return encodeURIComponent(value);
 }
 
 function ToolCard({
