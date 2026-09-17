@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { ChevronDown, Pause, Play, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { HomeAdvancedSearch } from "@/components/home/HomeAdvancedSearch";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import { ListingCard } from "@/components/ListingCard";
@@ -37,9 +37,9 @@ export function HomeSearchHero() {
   const [intent, setIntent] = useState<Intent>("sale");
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [ghostPaused, setGhostPaused] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
+  const [draft, setDraft] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -52,17 +52,17 @@ export function HomeSearchHero() {
           query?: unknown;
           intent?: unknown;
           filters?: unknown;
-          ghostPaused?: unknown;
         };
         if (typeof row.query === "string") setQuery(row.query);
         if (row.intent === "sale" || row.intent === "sold") setIntent(row.intent);
         if (row.filters) {
-          setFilters({
+          const next = {
             ...DEFAULT_SEARCH_FILTERS,
             ...allowlistedAdvanced(row.filters),
-          });
+          };
+          setFilters(next);
+          setDraft(next);
         }
-        if (row.ghostPaused === true) setGhostPaused(true);
       }
     } catch {
       /* ignore broken session rows */
@@ -76,12 +76,12 @@ export function HomeSearchHero() {
     try {
       sessionStorage.setItem(
         HOME_SEARCH_STATE_KEY,
-        JSON.stringify({ query, intent, filters, ghostPaused }),
+        JSON.stringify({ query, intent, filters }),
       );
     } catch {
       /* private mode */
     }
-  }, [sessionReady, query, intent, filters, ghostPaused]);
+  }, [sessionReady, query, intent, filters]);
 
   useEffect(() => {
     let active = true;
@@ -100,27 +100,38 @@ export function HomeSearchHero() {
     };
   }, []);
 
-  function submitPlan(raw: string) {
+  function submitPlan(raw: string, nextFilters: SearchFilters = filters) {
     // Local first-party plan. Marketplace stays usable if APIs or a future paid interpreter are off.
     const plan = authorizeSearchInput({
       q: raw,
       advanced: {
-        ...filters,
-        query: filters.query,
+        ...nextFilters,
+        query: nextFilters.query,
         statuses:
           intent === "sold"
             ? ["Sold"]
-            : filters.statuses.length
-              ? filters.statuses
+            : nextFilters.statuses.length
+              ? nextFilters.statuses
               : ["Active", "Option Pending Continue to Show"],
       },
     });
     router.push(`/marketplace?${planToMarketplaceParams(plan).toString()}`);
   }
 
+  function commitDraft(next: SearchFilters) {
+    setFilters(next);
+    if (next.query.trim()) setQuery(next.query);
+  }
+
   function onSearch(e: FormEvent) {
     e.preventDefault();
-    submitPlan(query);
+    const next = filtersOpen ? draft : filters;
+    if (filtersOpen) {
+      commitDraft(next);
+      setFiltersOpen(false);
+    }
+    const raw = query.trim() || next.query;
+    submitPlan(raw, next);
   }
 
   function searchArea(area: string) {
@@ -129,10 +140,9 @@ export function HomeSearchHero() {
 
   const ghostActive =
     !focused &&
-    !advancedOpen &&
-    !ghostPaused &&
+    !filtersOpen &&
     query.trim().length === 0;
-  const advancedCount = countActiveFilters(filters);
+  const filterCount = countActiveFilters(filters);
 
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
@@ -195,37 +205,45 @@ export function HomeSearchHero() {
                         onBlur={() => setFocused(false)}
                         placeholder=""
                         autoComplete="off"
-                        className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-12 text-base text-paper outline-none md:h-14 md:text-[1.05rem]"
+                        className="h-12 w-full rounded-[var(--radius-md)] bg-transparent pl-10 pr-3 text-base text-paper outline-none md:h-14 md:text-[1.05rem]"
                         aria-label="Search homes or describe what you want"
                       />
                       <HomeGhostHint active={ghostActive} />
-                      <GhostPauseButton
-                        paused={ghostPaused}
-                        onToggle={() => setGhostPaused((v) => !v)}
-                        className="absolute right-1 top-1/2 -translate-y-1/2"
-                      />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5 md:flex md:shrink-0 md:gap-2">
+                  <div className="grid grid-cols-[auto_1fr] items-center gap-1.5 md:flex md:shrink-0 md:gap-2">
                     <button
                       type="button"
-                      aria-expanded={advancedOpen}
-                      onClick={() => setAdvancedOpen((v) => !v)}
-                      className="story-press inline-flex h-11 items-center justify-center gap-1 rounded-[var(--radius-md)] border border-hairline px-2.5 text-xs font-semibold text-paper"
+                      aria-expanded={filtersOpen}
+                      aria-label={
+                        filterCount > 0
+                          ? `Filters, ${filterCount} applied`
+                          : "Filters"
+                      }
+                      onClick={() => {
+                        if (!filtersOpen) {
+                          setDraft({
+                            ...filters,
+                            query: query || filters.query,
+                          });
+                        }
+                        setFiltersOpen((v) => !v);
+                      }}
+                      className="story-home-filters-trigger story-press relative inline-flex h-11 w-11 flex-col items-center justify-center rounded-full border border-hairline text-paper md:h-12 md:w-12"
                     >
-                      Advanced
-                      {advancedCount > 0 ? (
-                        <span className="rounded-full bg-gold px-1.5 text-[10px] font-bold text-navy">
-                          {advancedCount}
+                      <span className="text-[9px] font-bold leading-none tracking-wide">
+                        Filters
+                      </span>
+                      {filterCount > 0 ? (
+                        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[9px] font-bold text-navy">
+                          {filterCount}
                         </span>
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )}
+                      ) : null}
                     </button>
                     <button
                       type="submit"
                       data-story-sound="tap"
-                      className="story-press inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
+                      className="story-home-search-submit story-press inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
                     >
                       Search
                     </button>
@@ -233,13 +251,13 @@ export function HomeSearchHero() {
                 </form>
               </div>
               <HomeAdvancedSearch
-                open={advancedOpen}
-                onClose={() => setAdvancedOpen(false)}
-                applied={{ ...filters, query: query || filters.query }}
+                open={filtersOpen}
+                onClose={() => setFiltersOpen(false)}
+                draft={draft}
+                onDraftChange={setDraft}
                 onApply={(next) => {
-                  setFilters(next);
-                  if (next.query.trim()) setQuery(next.query);
-                  setAdvancedOpen(false);
+                  commitDraft(next);
+                  setFiltersOpen(false);
                 }}
               />
             </div>
@@ -355,36 +373,6 @@ export function HomeSearchHero() {
         />
       </section>
     </div>
-  );
-}
-
-function GhostPauseButton({
-  paused,
-  onToggle,
-  className,
-}: {
-  paused: boolean;
-  onToggle: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={paused}
-      aria-label={paused ? "Play examples" : "Pause examples"}
-      title={paused ? "Play examples" : "Pause examples"}
-      onClick={onToggle}
-      className={cn(
-        "story-press inline-flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper hover:bg-paper/20",
-        className,
-      )}
-    >
-      {paused ? (
-        <Play className="h-3.5 w-3.5 fill-current" />
-      ) : (
-        <Pause className="h-3.5 w-3.5" />
-      )}
-    </button>
   );
 }
 

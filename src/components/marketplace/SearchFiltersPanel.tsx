@@ -4,6 +4,7 @@ import {
   DEFAULT_SEARCH_FILTERS,
   LISTING_STATUSES,
   PROPERTY_TYPES,
+  type FilterGroupId,
   type HoaFilter,
   type SearchFilters,
   toggleInList,
@@ -17,6 +18,7 @@ type SearchFiltersPanelProps = {
   showResultCount?: boolean;
   title?: string;
   compact?: boolean;
+  group?: FilterGroupId;
   className?: string;
 };
 
@@ -45,11 +47,14 @@ export function SearchFiltersPanel({
   showResultCount = true,
   title = "Find Your Story",
   compact = false,
+  group,
   className,
 }: SearchFiltersPanelProps) {
   function patch(partial: Partial<SearchFilters>) {
     onChange({ ...filters, ...partial });
   }
+
+  const show = (id: FilterGroupId) => !group || group === id;
 
   return (
     <div className={cn(compact ? "space-y-3" : "space-y-6", className)}>
@@ -89,7 +94,9 @@ export function SearchFiltersPanel({
       </div>
       ) : null}
 
-      <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("price_land") || show("features") ? (
+      <div className={compact && !group ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("price_land") ? (
       <Field label="Location">
         <input
           type="text"
@@ -99,7 +106,9 @@ export function SearchFiltersPanel({
           className="field-input"
         />
       </Field>
+      ) : null}
 
+      {show("features") ? (
       <Field label="Keyword">
         <input
           type="text"
@@ -109,9 +118,13 @@ export function SearchFiltersPanel({
           className="field-input"
         />
       </Field>
+      ) : null}
       </div>
+      ) : null}
 
-      <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("price_land") || show("home") ? (
+      <div className={compact && !group ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("price_land") ? (
       <Field label="Price range">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -126,7 +139,9 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Home square footage">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -141,7 +156,9 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      ) : null}
 
+      {show("price_land") ? (
       <Field label="Land size (acres)">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -156,8 +173,11 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      ) : null}
       </div>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Bedrooms">
         <div className="grid grid-cols-6 gap-1">
           {BED_OPTIONS.map(([beds, label]) => (
@@ -170,7 +190,9 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Bathrooms">
         <div className="grid grid-cols-4 gap-1 sm:grid-cols-7">
           {BATH_OPTIONS.map(([baths, label]) => (
@@ -183,8 +205,10 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      ) : null}
 
-      <div className={compact ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("features") ? (
+      <div className={compact && !group ? "grid gap-3 md:grid-cols-2" : "contents"}>
       <Field label="Features">
         <div className="grid grid-cols-3 gap-2">
           <Toggle
@@ -224,7 +248,9 @@ export function SearchFiltersPanel({
         </div>
       </Field>
       </div>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Property type">
         <div className="flex flex-wrap gap-2">
           {PROPERTY_TYPES.map((type) => (
@@ -241,7 +267,9 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Listing status">
         <div className="flex flex-col gap-2">
           {LISTING_STATUSES.map((status) => {
@@ -267,6 +295,7 @@ export function SearchFiltersPanel({
           })}
         </div>
       </Field>
+      ) : null}
 
       {showResultCount ? (
         <p className="font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">

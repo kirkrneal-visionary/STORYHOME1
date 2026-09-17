@@ -31,7 +31,13 @@ import {
   DEFAULT_SEARCH_FILTERS,
   applySearchFilters,
   countActiveFilters,
+  countActiveFiltersInGroup,
 } from "../src/lib/listing-filters.ts";
+import {
+  GHOST_PHRASES,
+  GHOST_STATIC_HINT,
+  createGhostRotation,
+} from "../src/lib/search/ghost-phrases.ts";
 import type { DemoListing } from "../src/lib/demo-data.ts";
 
 const root = process.cwd();
@@ -194,13 +200,17 @@ assert.doesNotMatch(css, /storyGhostIn/);
 const hero = read("src/components/home/HomeSearchHero.tsx");
 assert.match(hero, /home-hero-meadow/);
 assert.match(hero, /HomeGhostHint/);
-assert.match(hero, /Advanced/);
+assert.match(hero, /Filters/);
+assert.match(hero, /story-home-filters-trigger/);
+assert.match(hero, /story-home-search-submit/);
 assert.match(hero, /story-home-search/);
 assert.match(hero, /story-glass/);
 assert.match(hero, /items-center justify-center/);
 assert.match(hero, /whitespace-nowrap/);
-assert.match(hero, /Pause examples/);
-assert.match(hero, /GhostPauseButton/);
+assert.doesNotMatch(hero, /Pause examples/);
+assert.doesNotMatch(hero, /GhostPauseButton/);
+assert.doesNotMatch(hero, /Play|Pause/);
+assert.doesNotMatch(hero, />Advanced</);
 assert.doesNotMatch(hero, /story-wordmark/);
 assert.match(hero, /story-home-wave-a-search/);
 assert.match(hero, /countActiveFilters/);
@@ -217,26 +227,194 @@ assert.match(ghost, /TYPE_MS/);
 assert.match(ghost, /ERASE_MS/);
 assert.match(ghost, /HOLD_MS/);
 assert.match(ghost, /visibilitychange/);
-assert.match(ghost, /prefers-reduced-motion/);
+assert.match(ghost, /useAnimatedSearchExamples/);
+assert.match(ghost, /GHOST_STATIC_HINT/);
 assert.doesNotMatch(ghost, /setQuery|value=\{/);
 assert.doesNotMatch(ghost, /fetch\(|openai|anthropic/i);
 assert.doesNotMatch(ghost, /setInterval/);
 assert.doesNotMatch(ghost, /truncate/);
+assert.doesNotMatch(ghost, /Livingston/);
+
+const phrasesSrc = read("src/lib/search/ghost-phrases.ts");
+assert.match(phrasesSrc, /A little more land in Corrigan—5 acres or more…/);
+assert.match(phrasesSrc, /Three bedrooms in Onalaska, under \$350k…/);
+assert.match(phrasesSrc, /Room to spread out—10\+ acres in Groveton…/);
+assert.match(phrasesSrc, /A home in Trinity with a garage under \$300k…/);
+assert.match(phrasesSrc, /A pool at home in Lufkin, under \$450k…/);
+assert.match(phrasesSrc, /Three bedrooms and two baths in Diboll…/);
+assert.match(phrasesSrc, /A home in Woodville without an HOA…/);
+assert.match(phrasesSrc, /More land with the house—5\+ acres in Colmesneil…/);
+assert.match(phrasesSrc, /A Coldspring home on at least 2 acres…/);
+assert.match(phrasesSrc, /Shepherd homes with a garage, under \$325k…/);
+assert.match(phrasesSrc, /Four bedrooms in Dayton, no more than \$400k…/);
+assert.match(phrasesSrc, /A home in Liberty with a separate office…/);
+assert.match(phrasesSrc, /Three bedrooms and no HOA in Huntsville…/);
+assert.match(phrasesSrc, /Somewhere with 5–15 acres in New Waverly…/);
+assert.match(phrasesSrc, /5\+ acres in Corrigan/);
+assert.match(phrasesSrc, /3 bed in Onalaska under \$350k/);
+assert.equal(GHOST_PHRASES.length, 14);
+assert.equal(new Set(GHOST_PHRASES.map((row) => row.county)).size, 7);
+assert.match(GHOST_STATIC_HINT.full, /Search homes/);
+
+function seeded(start: number) {
+  let seed = start;
+  return () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+}
+const rotation = createGhostRotation(seeded(11));
+const firstPass = Array.from({ length: 7 }, () => rotation.next());
+assert.equal(new Set(firstPass.map((row) => row.county)).size, 7);
+const secondPass = Array.from({ length: 7 }, () => rotation.next());
+assert.equal(new Set(secondPass.map((row) => row.county)).size, 7);
+assert.notEqual(firstPass[6].county, secondPass[0].county);
+assert.notEqual(firstPass[6].id, secondPass[0].id);
+const walk = createGhostRotation(seeded(3));
+const seen = Array.from({ length: 14 }, () => walk.next());
+assert.equal(new Set(seen.map((row) => row.id)).size, 14);
+
+const pref = read("src/lib/search/ghost-preference.ts");
+assert.match(pref, /story-home-animated-search-examples/);
+assert.match(pref, /prefers-reduced-motion/);
+assert.match(pref, /localStorage/);
+
+const motionUi = read("src/components/home/GhostExamplesControl.tsx");
+assert.match(motionUi, /Animated search examples/);
+assert.match(motionUi, /aria-pressed/);
+const nav = read("src/components/GlobalNav.tsx");
+assert.match(nav, /HeaderMotionMenu/);
+assert.match(nav, /href=\"\/rent\"/);
+assert.doesNotMatch(nav, /intent=rent/);
+const drawer = read("src/components/nav/FederatedNavDrawer.tsx");
+assert.match(drawer, /GhostExamplesControl/);
+assert.match(drawer, /xl:hidden/);
 
 const advanced = read("src/components/home/HomeAdvancedSearch.tsx");
-assert.match(advanced, /Apply filters/);
-assert.match(advanced, /story-glass/);
+assert.match(advanced, />\s*Apply\s*</);
+assert.match(advanced, /story-filter-wing/);
+assert.match(advanced, /Price & land/);
 assert.match(advanced, /onApply/);
-assert.match(advanced, /overflow-hidden/);
 assert.match(advanced, /Escape/);
-assert.match(advanced, /story-bottom-clearance/);
 assert.match(advanced, /visualViewport/);
 assert.match(advanced, /preventScroll/);
 assert.match(advanced, /createPortal/);
 assert.match(advanced, /data-advanced-chrome="pinned"/);
 assert.match(advanced, /flex h-fit flex-col/);
 assert.match(advanced, /min-h-\[3\.75rem\]/);
+assert.match(advanced, /story-home-search-submit/);
+assert.doesNotMatch(advanced, /inset-0/);
 assert.doesNotMatch(advanced, /bg-\[var\(--paper\)\]/);
+assert.doesNotMatch(advanced, /aria-modal="true"/);
+
+assert.match(css, /story-filter-wing/);
+assert.match(css, /280ms/);
+
+const phrasePlans = [
+  {
+    q: "A little more land in Corrigan—5 acres or more…",
+    city: "Corrigan",
+    acresMin: "5",
+  },
+  {
+    q: "Three bedrooms in Onalaska, under $350k…",
+    city: "Onalaska",
+    beds: "3",
+    priceMax: "350000",
+  },
+  {
+    q: "Room to spread out—10+ acres in Groveton…",
+    city: "Groveton",
+    acresMin: "10",
+  },
+  {
+    q: "A home in Trinity with a garage under $300k…",
+    city: "Trinity",
+    garage: true,
+    priceMax: "300000",
+  },
+  {
+    q: "A pool at home in Lufkin, under $450k…",
+    city: "Lufkin",
+    pool: true,
+    priceMax: "450000",
+  },
+  {
+    q: "Three bedrooms and two baths in Diboll…",
+    city: "Diboll",
+    beds: "3",
+    baths: "2",
+  },
+  {
+    q: "A home in Woodville without an HOA…",
+    city: "Woodville",
+    hoa: "no_hoa",
+  },
+  {
+    q: "More land with the house—5+ acres in Colmesneil…",
+    city: "Colmesneil",
+    acresMin: "5",
+  },
+  {
+    q: "A Coldspring home on at least 2 acres…",
+    city: "Coldspring",
+    acresMin: "2",
+  },
+  {
+    q: "Shepherd homes with a garage, under $325k…",
+    city: "Shepherd",
+    garage: true,
+    priceMax: "325000",
+  },
+  {
+    q: "Four bedrooms in Dayton, no more than $400k…",
+    city: "Dayton",
+    beds: "4",
+    priceMax: "400000",
+  },
+  {
+    q: "A home in Liberty with a separate office…",
+    city: "Liberty",
+    office: true,
+  },
+  {
+    q: "Three bedrooms and no HOA in Huntsville…",
+    city: "Huntsville",
+    beds: "3",
+    hoa: "no_hoa",
+  },
+  {
+    q: "Somewhere with 5–15 acres in New Waverly…",
+    city: "New Waverly",
+    acresMin: "5",
+    acresMax: "15",
+  },
+] as const;
+
+for (const row of phrasePlans) {
+  const plan = authorizeSearchInput({ q: row.q });
+  assert.equal(plan.geography.labels[0], row.city, row.q);
+  if ("acresMin" in row) assert.equal(plan.filters.acresMin, row.acresMin, row.q);
+  if ("acresMax" in row) assert.equal(plan.filters.acresMax, row.acresMax, row.q);
+  if ("priceMax" in row) assert.equal(plan.filters.priceMax, row.priceMax, row.q);
+  if ("beds" in row) assert.equal(plan.filters.beds, row.beds, row.q);
+  if ("baths" in row) assert.equal(plan.filters.baths, row.baths, row.q);
+  if ("garage" in row) assert.equal(plan.filters.garage, true, row.q);
+  if ("pool" in row) assert.equal(plan.filters.pool, true, row.q);
+  if ("office" in row) assert.equal(plan.filters.office, true, row.q);
+  if ("hoa" in row) assert.equal(plan.filters.hoa, "no_hoa", row.q);
+}
+
+const grouped = {
+  ...DEFAULT_SEARCH_FILTERS,
+  priceMax: "350000",
+  acresMin: "5",
+  beds: "3",
+  garage: true,
+};
+assert.equal(countActiveFiltersInGroup(grouped, "price_land"), 2);
+assert.equal(countActiveFiltersInGroup(grouped, "home"), 1);
+assert.equal(countActiveFiltersInGroup(grouped, "features"), 1);
 
 const fixtures: DemoListing[] = [
   {
@@ -351,9 +529,6 @@ assert.deepEqual(
 const reset = applySearchFilters(fixtures, DEFAULT_SEARCH_FILTERS);
 assert.ok(reset.length >= 2);
 
-const nav = read("src/components/GlobalNav.tsx");
-assert.match(nav, /href=\"\/rent\"/);
-assert.doesNotMatch(nav, /intent=rent/);
 const rentPage = read("src/app/rent/page.tsx");
 assert.match(rentPage, /does not have rental inventory/);
 assert.doesNotMatch(rentPage, /intent=rent/);

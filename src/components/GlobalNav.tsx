@@ -19,6 +19,7 @@ import {
   FederatedNavDrawer,
   type FederatedDrawerLink,
 } from "@/components/nav/FederatedNavDrawer";
+import { HeaderMotionMenu } from "@/components/home/GhostExamplesControl";
 import { NavPressButton } from "@/components/nav/NavPressButton";
 import { NetworkContextRibbon } from "@/components/nav/NetworkContextRibbon";
 import { NetworkDivider } from "@/components/nav/NetworkDivider";
@@ -290,6 +291,7 @@ export default function GlobalNav() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
+          <HeaderMotionMenu className="hidden md:block" />
           {showArchieNode ? (
             <NetworkNode
               href={archieEntryHref}

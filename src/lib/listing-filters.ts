@@ -82,6 +82,39 @@ function parseNum(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+export type FilterGroupId = "price_land" | "home" | "features";
+
+export function countActiveFiltersInGroup(
+  filters: SearchFilters,
+  group: FilterGroupId,
+): number {
+  let n = 0;
+  if (group === "price_land") {
+    if (filters.priceMin || filters.priceMax) n += 1;
+    if (filters.acresMin || filters.acresMax) n += 1;
+    return n;
+  }
+  if (group === "home") {
+    if (filters.sqftMin || filters.sqftMax) n += 1;
+    if (filters.beds !== "Any") n += 1;
+    if (filters.baths !== "Any") n += 1;
+    if (filters.propertyTypes.length) n += 1;
+    if (
+      filters.statuses.length !== 1 ||
+      filters.statuses[0] !== "Active"
+    ) {
+      n += 1;
+    }
+    return n;
+  }
+  if (filters.keyword.trim()) n += 1;
+  if (filters.office) n += 1;
+  if (filters.garage) n += 1;
+  if (filters.pool) n += 1;
+  if (filters.hoa !== "any") n += 1;
+  return n;
+}
+
 export function countActiveFilters(filters: SearchFilters): number {
   let n = 0;
   if (filters.keyword.trim()) n += 1;

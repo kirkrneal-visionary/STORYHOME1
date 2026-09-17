@@ -28,15 +28,21 @@ const BED_WORDS: Record<string, number> = {
 const CITY_SOURCE: Record<string, { label: string; source: string; fips: string }> =
   {
     livingston: { label: "Livingston", source: "polk_cad", fips: "48373" },
+    corrigan: { label: "Corrigan", source: "polk_cad", fips: "48373" },
+    onalaska: { label: "Onalaska", source: "polk_cad", fips: "48373" },
     lufkin: { label: "Lufkin", source: "angelina_cad", fips: "48005" },
     huntsville: { label: "Huntsville", source: "walker_cad", fips: "48471" },
     liberty: { label: "Liberty", source: "liberty_cad", fips: "48291" },
     woodville: { label: "Woodville", source: "tyler_cad", fips: "48457" },
     coldspring: { label: "Coldspring", source: "san_jacinto_cad", fips: "48407" },
     groveton: { label: "Groveton", source: "trinity_cad", fips: "48455" },
+    trinity: { label: "Trinity", source: "trinity_cad", fips: "48455" },
     diboll: { label: "Diboll", source: "angelina_cad", fips: "48005" },
     shepherd: { label: "Shepherd", source: "san_jacinto_cad", fips: "48407" },
     cleveland: { label: "Cleveland", source: "liberty_cad", fips: "48291" },
+    colmesneil: { label: "Colmesneil", source: "tyler_cad", fips: "48457" },
+    dayton: { label: "Dayton", source: "liberty_cad", fips: "48291" },
+    "new waverly": { label: "New Waverly", source: "walker_cad", fips: "48471" },
   };
 
 const COUNTY_SOURCE: Record<string, { label: string; source: string }> = {
@@ -282,7 +288,7 @@ function parseFilters(q: string): Partial<SearchFilters> {
   const filters: Partial<SearchFilters> = {};
 
   const under = q.match(
-    /\b(?:under|below|less than|up to|max(?:imum)?)\s*\$?\s*([\d,]+(?:\.\d+)?\s*[km]?)/i,
+    /\b(?:under|below|less than|up to|max(?:imum)?|no more than)\s*\$?\s*([\d,]+(?:\.\d+)?\s*[km]?)/i,
   );
   if (under && !followedBySize(q, under[0])) {
     filters.priceMax = money(under[1]) ?? undefined;
@@ -300,10 +306,18 @@ function parseFilters(q: string): Partial<SearchFilters> {
     filters.priceMax = money(barePrice[1]) ?? undefined;
   }
 
-  const acres = q.match(
-    /\b(\d+(?:\.\d+)?)\s*\+?\s*(?:acre|acres)\+?\b/i,
+  const acresRange = q.match(
+    /\b(\d+(?:\.\d+)?)\s*[–—-]\s*(\d+(?:\.\d+)?)\s*(?:acre|acres)\b/i,
   );
-  if (acres) filters.acresMin = acres[1];
+  if (acresRange) {
+    filters.acresMin = acresRange[1];
+    filters.acresMax = acresRange[2];
+  } else {
+    const acres = q.match(
+      /\b(\d+(?:\.\d+)?)\s*\+?\s*(?:acre|acres)\+?\b/i,
+    );
+    if (acres) filters.acresMin = acres[1];
+  }
 
   const combo = q.match(/\b(\d+)\s*\/\s*(\d+(?:\.\d+)?)\b/);
   if (combo) {
@@ -331,7 +345,20 @@ function parseFilters(q: string): Partial<SearchFilters> {
   if (baths) {
     const n = Number(baths[1]);
     filters.baths = n >= 4 ? "4+" : String(n);
+  } else {
+    const wordBath = q.match(
+      /\b(one|two|three|four|five|six)\s+(?:bath|baths|bathroom|bathrooms)\b/i,
+    );
+    if (wordBath) {
+      const n = BED_WORDS[wordBath[1].toLowerCase()];
+      if (n) filters.baths = n >= 4 ? "4+" : String(n);
+    }
   }
+
+  if (/\bgarage\b/i.test(q)) filters.garage = true;
+  if (/\bpool\b/i.test(q)) filters.pool = true;
+  if (/\b(?:separate\s+)?office\b/i.test(q)) filters.office = true;
+  if (/\b(?:without(?:\s+an)?|no)\s+hoa\b/i.test(q)) filters.hoa = "no_hoa";
 
   const kPrice = q.match(/\b(\d{3,4})\s*k\b/i);
   if (kPrice && !filters.priceMax && !filters.priceMin) {

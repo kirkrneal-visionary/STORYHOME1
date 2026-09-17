@@ -1130,6 +1130,24 @@ html[data-header-state="minimal"] .story-living-mark {
   }
 }
 
+.story-filter-wing {
+  transform-origin: var(--wing-ox, 92%) var(--wing-oy, 0%);
+  perspective: 920px;
+}
+.story-filter-wing-surface {
+  border-radius: 1.15rem;
+  transform: rotateY(-16deg) rotateX(7deg) scale(0.94);
+  opacity: 0;
+  transform-origin: inherit;
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease;
+}
+.story-filter-wing[data-open="true"] .story-filter-wing-surface {
+  transform: none;
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .story-press,
   .story-card,
@@ -1143,7 +1161,9 @@ html[data-header-state="minimal"] .story-living-mark {
   .story-app-shell::before,
   .agent-world-atmosphere-sheen,
   .living-mark-presence,
-  .story-dock-active-fill {
+  .story-dock-active-fill,
+  .story-filter-wing,
+  .story-filter-wing-surface {
     transition: none !important;
     animation: none !important;
     transform: none !important;

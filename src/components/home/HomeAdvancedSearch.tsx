@@ -6,12 +6,19 @@ import { X } from "lucide-react";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
 import {
   DEFAULT_SEARCH_FILTERS,
+  countActiveFiltersInGroup,
+  type FilterGroupId,
   type SearchFilters,
 } from "@/lib/listing-filters";
 import { cn } from "@/lib/utils";
 
-const FOCUSABLE =
-  "input, button, select, textarea, [tabindex]:not([tabindex='-1'])";
+const GROUPS: { id: FilterGroupId; label: string }[] = [
+  { id: "price_land", label: "Price & land" },
+  { id: "home", label: "Home" },
+  { id: "features", label: "Features" },
+];
+
+const CLOSE_MS = 280;
 
 function dockTop(): number {
   const dock = document.querySelector("[data-story-bottom-dock]");
@@ -21,111 +28,132 @@ function dockTop(): number {
   return window.innerHeight - 76;
 }
 
-function searchBarBox(): {
-  left: number;
-  width: number;
-  bottom: number;
-} | null {
-  const bar = document.querySelector(".story-home-search");
-  if (!(bar instanceof HTMLElement)) return null;
-  const r = bar.getBoundingClientRect();
-  return { left: r.left, width: r.width, bottom: r.bottom };
+function triggerBox() {
+  const node = document.querySelector(".story-home-filters-trigger");
+  if (!(node instanceof HTMLElement)) return null;
+  return node.getBoundingClientRect();
+}
+
+function searchSubmitBox() {
+  const node = document.querySelector(".story-home-search-submit");
+  if (!(node instanceof HTMLElement)) return null;
+  return node.getBoundingClientRect();
+}
+
+function searchBarBox() {
+  const node = document.querySelector(".story-home-search");
+  if (!(node instanceof HTMLElement)) return null;
+  return node.getBoundingClientRect();
 }
 
 export function HomeAdvancedSearch({
   open,
   onClose,
-  applied,
+  draft,
+  onDraftChange,
   onApply,
 }: {
   open: boolean;
   onClose: () => void;
-  applied: SearchFilters;
+  draft: SearchFilters;
+  onDraftChange: (next: SearchFilters) => void;
   onApply: (next: SearchFilters) => void;
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
-  const [draft, setDraft] = useState<SearchFilters>(applied);
+  const closeTimer = useRef<number>(0);
   const [mounted, setMounted] = useState(false);
-  const [placed, setPlaced] = useState(false);
-  const [narrow, setNarrow] = useState(() =>
-    typeof window !== "undefined"
-      ? window.matchMedia("(max-width: 767px)").matches
-      : false,
-  );
-  const [anchor, setAnchor] = useState({ left: 16, width: 320, bottom: 200 });
+  const [present, setPresent] = useState(false);
+  const [shown, setShown] = useState(false);
+  const [group, setGroup] = useState<FilterGroupId>("price_land");
+  const [box, setBox] = useState({
+    top: 200,
+    left: 16,
+    width: 360,
+    originX: "92%",
+    originY: "0%",
+    maxBody: 0,
+  });
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (open) setDraft(applied);
-  }, [open, applied]);
+    window.clearTimeout(closeTimer.current);
+    if (open) {
+      previousFocus.current = document.activeElement as HTMLElement | null;
+      setPresent(true);
+      const raf = window.requestAnimationFrame(() => setShown(true));
+      return () => window.cancelAnimationFrame(raf);
+    }
+    setShown(false);
+    if (present) {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      closeTimer.current = window.setTimeout(
+        () => setPresent(false),
+        reduced ? 0 : CLOSE_MS,
+      );
+    }
+    return () => window.clearTimeout(closeTimer.current);
+  }, [open, present]);
 
   useEffect(() => {
-    if (!open) {
-      setPlaced(false);
-      return;
-    }
-    previousFocus.current = document.activeElement as HTMLElement | null;
-    const root = panelRef.current;
+    if (!present) return;
     const media = window.matchMedia("(max-width: 767px)");
 
     const fit = () => {
       const isNarrow = media.matches;
-      setNarrow(isNarrow);
-      const box = searchBarBox();
-      if (box) setAnchor(box);
-      if (!root) return;
-      const body = root.querySelector<HTMLElement>("[data-advanced-body]");
-      const header = root.querySelector<HTMLElement>("[data-advanced-header]");
-      const footer = root.querySelector<HTMLElement>("[data-advanced-footer]");
-      const chrome =
-        (header?.offsetHeight ?? 52) + (footer?.offsetHeight ?? 60);
+      const trigger = triggerBox();
+      const search = searchSubmitBox();
+      const bar = searchBarBox();
+      const dock = dockTop();
+
       if (isNarrow) {
-        root.style.top = "";
-        root.style.left = "";
-        root.style.width = "";
-        root.style.maxHeight = "";
-        const sheetCap = Math.min(
-          Math.floor(window.innerHeight * 0.7),
-          Math.floor(
-            window.innerHeight -
-              (window.innerHeight - dockTop()) -
-              64,
-          ),
-        );
-        if (body) {
-          body.style.maxHeight = `${Math.max(120, sheetCap - chrome)}px`;
-        }
-        setPlaced(true);
+        const top = bar ? bar.bottom + 8 : (trigger?.bottom ?? 160) + 8;
+        const left = bar ? bar.left : 16;
+        const width = bar ? bar.width : Math.min(window.innerWidth - 32, 420);
+        const available = Math.max(160, Math.floor(dock - top - 8));
+        setBox({
+          top,
+          left,
+          width,
+          originX: trigger && bar ? `${Math.max(12, trigger.left - left + trigger.width / 2)}px` : "18%",
+          originY: "0%",
+          maxBody: Math.max(0, available - 132),
+        });
         return;
       }
-      const next = box ?? searchBarBox();
-      if (!next) return;
-      const top = next.bottom + 8;
-      const available = Math.max(220, Math.floor(dockTop() - top - 8));
-      root.style.top = `${top}px`;
-      root.style.left = `${next.left}px`;
-      root.style.width = `${next.width}px`;
-      root.style.maxHeight = `${available}px`;
-      if (body) {
-        body.style.maxHeight = `${Math.max(120, available - chrome)}px`;
-      }
-      setPlaced(true);
+
+      const rowBottom = Math.max(trigger?.bottom ?? 0, bar?.bottom ?? 0, search?.bottom ?? 0);
+      const top = rowBottom + 8;
+      const searchLeft = search ? search.left - 12 : window.innerWidth - 24;
+      const preferredWidth = Math.min(26 * 16, Math.max(280, searchLeft - 16));
+      const right = Math.min(
+        trigger ? trigger.right + 4 : searchLeft,
+        searchLeft,
+      );
+      const width = Math.min(preferredWidth, Math.max(260, right - 16));
+      const left = Math.max(16, right - width);
+      const available = Math.max(180, Math.floor(dock - top - 8));
+      const originX = trigger
+        ? `${Math.min(width - 8, Math.max(8, trigger.left + trigger.width / 2 - left))}px`
+        : "92%";
+      setBox({
+        top,
+        left,
+        width,
+        originX,
+        originY: "0%",
+        maxBody: available > 420 ? 0 : Math.max(0, available - 132),
+      });
     };
 
     const frame = window.requestAnimationFrame(() => {
       fit();
-      const node = panelRef.current;
-      if (media.matches) {
-        node?.focus({ preventScroll: true });
-      } else {
-        node
-          ?.querySelector<HTMLElement>(FOCUSABLE)
-          ?.focus({ preventScroll: true });
+      if (open) {
+        panelRef.current?.focus({ preventScroll: true });
       }
     });
     window.addEventListener("resize", fit);
@@ -136,114 +164,146 @@ export function HomeAdvancedSearch({
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
-        return;
-      }
-      if (e.key !== "Tab" || !root) return;
-      const nodes = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-        (el) => !el.hasAttribute("disabled") && el.tabIndex !== -1,
-      );
-      if (nodes.length === 0) return;
-      const start = nodes[0];
-      const end = nodes[nodes.length - 1];
-      if (e.shiftKey && document.activeElement === start) {
-        e.preventDefault();
-        end.focus();
-      } else if (!e.shiftKey && document.activeElement === end) {
-        e.preventDefault();
-        start.focus();
       }
     };
+    const onPointer = (e: PointerEvent) => {
+      const node = e.target as Node;
+      if (panelRef.current?.contains(node)) return;
+      if (document.querySelector(".story-home-filters-trigger")?.contains(node)) {
+        return;
+      }
+      if (document.querySelector(".story-home-search-submit")?.contains(node)) {
+        return;
+      }
+      if (document.querySelector(".story-home-search")?.contains(node)) {
+        return;
+      }
+      onClose();
+    };
     window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
       window.removeEventListener("resize", fit);
       window.visualViewport?.removeEventListener("resize", fit);
       media.removeEventListener("change", fit);
-      previousFocus.current?.focus();
+      if (!open) previousFocus.current?.focus();
     };
-  }, [open, onClose, mounted]);
+  }, [present, open, onClose]);
 
-  if (!open || !mounted) return null;
+  if (!mounted || !present) return null;
 
   function resetDraft() {
-    setDraft({
+    onDraftChange({
       ...DEFAULT_SEARCH_FILTERS,
       query: draft.query,
     });
   }
 
   const ui = (
-    <>
-      <button
-        type="button"
-        aria-label="Close advanced search"
-        className={cn(
-          "fixed inset-0 z-[54] bg-navy/35",
-          !narrow && "bg-navy/15",
-        )}
-        onClick={onClose}
-      />
+    <div
+      ref={panelRef}
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      data-story-filter-wing
+      data-advanced-chrome="pinned"
+      data-open={shown ? "true" : "false"}
+      className="story-filter-wing fixed z-[55] outline-none"
+      style={{
+        top: box.top,
+        left: box.left,
+        width: box.width,
+        ["--wing-ox" as string]: box.originX,
+        ["--wing-oy" as string]: box.originY,
+      }}
+    >
       <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        data-advanced-chrome="pinned"
         className={cn(
-          "fixed z-[55] flex h-fit flex-col overflow-hidden overscroll-contain outline-none",
-          "story-glass !bg-[var(--env-1)] ![backdrop-filter:none] text-paper",
-          "border border-[var(--glass-border)] shadow-[var(--glass-elev)]",
-          !placed && "opacity-0",
-          narrow
-            ? "inset-x-0 bottom-[var(--story-bottom-clearance)] max-h-[min(70vh,calc(100dvh-var(--story-bottom-clearance)-var(--story-safe-top)-1rem))] rounded-t-[var(--radius-sheet)]"
-            : "rounded-[var(--radius-lg)]",
+          "story-filter-wing-surface flex h-fit flex-col text-paper",
+          "border border-[var(--glass-border)] bg-[var(--env-1)] shadow-[var(--glass-elev)]",
         )}
-        style={
-          narrow
-            ? undefined
-            : {
-                top: anchor.bottom + 8,
-                left: anchor.left,
-                width: anchor.width,
-              }
-        }
       >
         <div
           data-advanced-header
-          className="flex shrink-0 items-center justify-between gap-3 border-b border-hairline px-4 py-3"
+          className="flex shrink-0 items-center gap-2 border-b border-hairline px-3 py-2.5"
         >
-          <p className="type-card-title text-paper">Filters</p>
+          <p id={titleId} className="sr-only">
+            Filters
+          </p>
+          <div
+            role="tablist"
+            aria-label="Filter groups"
+            className="flex min-w-0 flex-1 flex-wrap gap-1"
+          >
+            {GROUPS.map((row) => {
+              const active = countActiveFiltersInGroup(draft, row.id);
+              return (
+                <button
+                  key={row.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={group === row.id}
+                  onClick={() => setGroup(row.id)}
+                  className={cn(
+                    "story-press inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold",
+                    group === row.id
+                      ? "bg-gold text-navy"
+                      : "text-paper/70 hover:text-paper",
+                  )}
+                >
+                  {row.label}
+                  {active > 0 ? (
+                    <span
+                      className={cn(
+                        "rounded-full px-1.5 text-[10px] font-bold",
+                        group === row.id
+                          ? "bg-navy/15 text-navy"
+                          : "bg-gold text-navy",
+                      )}
+                    >
+                      {active}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="story-press inline-flex h-9 w-9 items-center justify-center rounded-full text-paper/70 hover:bg-paper/10 hover:text-paper"
-            aria-label="Close advanced search"
+            className="story-press inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-paper/70 hover:bg-paper/10 hover:text-paper"
+            aria-label="Cancel filters"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
         <div
           data-advanced-body
-          className="min-h-0 overflow-y-auto overscroll-contain px-4 py-3"
+          className="min-h-0 px-3 py-3"
+          style={
+            box.maxBody > 0
+              ? { maxHeight: box.maxBody, overflowY: "auto" }
+              : undefined
+          }
         >
           <SearchFiltersPanel
             title=""
             compact
+            group={group}
             filters={draft}
-            onChange={setDraft}
+            onChange={onDraftChange}
             resultCount={0}
             showResultCount={false}
           />
         </div>
         <div
           data-advanced-footer
-          className="flex min-h-[3.75rem] shrink-0 gap-2 border-t border-hairline bg-[var(--env-1)] px-4 py-3"
+          className="flex min-h-[3.75rem] shrink-0 gap-2 border-t border-hairline bg-[var(--env-1)] px-3 py-3"
         >
-          <span id={titleId} className="sr-only">
-            Advanced search
-          </span>
           <button
             type="button"
             onClick={resetDraft}
@@ -256,11 +316,11 @@ export function HomeAdvancedSearch({
             onClick={() => onApply(draft)}
             className="story-press h-11 flex-1 rounded-[var(--radius-md)] bg-gold text-sm font-bold text-navy"
           >
-            Apply filters
+            Apply
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 
   return createPortal(ui, document.body);
