@@ -716,7 +716,6 @@ function DesktopAdvanced({
                   </button>
                 );
               })}
-            </div>
           </div>
           <div>
             <p className="story-home-filter-heading">HOA</p>
