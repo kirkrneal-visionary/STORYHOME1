@@ -927,7 +927,7 @@ function ChipRow({
         <p className="sr-only">Minimum {label}</p>
         {hint ? <p className="text-[10px] text-paper/40">{hint}</p> : null}
       </div>
-      <div className={compact ? "flex flex-nowrap gap-0.5 min-w-0" : "flex flex-wrap gap-1"}>
+      <div className={compact ? "story-home-chip-track" : "flex flex-wrap gap-1"}>
         {options.map(([id, text]) => (
           <Chip
             key={id}
