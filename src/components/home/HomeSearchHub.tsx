@@ -17,6 +17,7 @@ import {
 } from "@/components/home/HomeFilterIcons";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import { HomeRangeRow } from "@/components/home/HomeRangeRow";
+import { MobileRangeEditor } from "@/components/home/MobileRangeEditor";
 import {
   DEFAULT_SEARCH_FILTERS,
   countActiveFilters,
@@ -70,6 +71,20 @@ const DESKTOP_TYPE_TILES: {
   { type: "Mobile / Manufactured", label: "Mobile", Icon: MobileHomeIcon },
 ];
 
+const MOBILE_TYPE_TILES = [
+  { type: "Single Family" as const, label: "House", Icon: HouseIcon },
+  { type: "Farm and Ranch" as const, label: "Land", Icon: LandIcon },
+  { type: "Condo" as const, label: "Condo", Icon: CondoIcon },
+  { type: "Town Home" as const, label: "Townhome", Icon: TownhomeIcon },
+  {
+    type: "Mobile / Manufactured" as const,
+    label: "Mobile / Manufactured",
+    Icon: MobileHomeIcon,
+  },
+];
+
+type MobileRangeId = "price" | "acres" | "sqft";
+
 const DESKTOP_FEATURE_TILES = [
   { key: "office" as const, label: "Office", Icon: OfficeIcon, ready: true },
   { key: "garage" as const, label: "Garage", Icon: GarageIcon, ready: true },
@@ -106,6 +121,30 @@ function formatSqft(raw: string): string {
   const n = Number(raw);
   if (!Number.isFinite(n)) return raw;
   return `${new Intl.NumberFormat("en-US").format(n)} sqft`;
+}
+
+function compactPrice(raw: string): string {
+  if (!raw) return "Any";
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  if (n >= 1_000_000 && n % 1_000_000 === 0) return `$${n / 1_000_000}M`;
+  if (n >= 1000 && n % 1000 === 0) return `$${n / 1000}K`;
+  return formatMoney(raw);
+}
+
+function summarizeRange(
+  min: string,
+  max: string,
+  format: (raw: string) => string,
+  plusUnit?: string,
+): string {
+  if (!min && !max) return "Any – Any";
+  if (min && !max) {
+    if (plusUnit) return `${format(min).replace(/ ac$| sqft$/, "")}+ ${plusUnit}`;
+    return `${format(min)} – Any`;
+  }
+  if (!min && max) return `Any – ${format(max)}`;
+  return `${format(min)} – ${format(max)}`;
 }
 
 export function HomeSearchHub({
@@ -230,6 +269,7 @@ export function HomeSearchHub({
         >
           <AdvancedMode
             titleId={titleId}
+            open={advanced}
             transaction={transaction}
             draft={draft}
             onDraft={patchDraft}
@@ -348,6 +388,7 @@ function SearchMode({
 
 function AdvancedMode({
   titleId,
+  open,
   transaction,
   draft,
   onDraft,
@@ -355,6 +396,7 @@ function AdvancedMode({
   onClear,
 }: {
   titleId: string;
+  open: boolean;
   transaction: TransactionMode;
   draft: SearchFilters;
   onDraft: (partial: Partial<SearchFilters>) => void;
@@ -368,6 +410,7 @@ function AdvancedMode({
       </p>
       <div className="md:hidden">
         <MobileAdvanced
+          open={open}
           transaction={transaction}
           draft={draft}
           onDraft={onDraft}
@@ -389,20 +432,89 @@ function AdvancedMode({
 }
 
 function MobileAdvanced({
+  open,
   transaction,
   draft,
   onDraft,
   onCancel,
   onClear,
 }: {
+  open: boolean;
   transaction: TransactionMode;
   draft: SearchFilters;
   onDraft: (partial: Partial<SearchFilters>) => void;
   onCancel: () => void;
   onClear: () => void;
 }) {
+  const [activeRange, setActiveRange] = useState<MobileRangeId | null>(null);
+  useEffect(() => {
+    if (open) setActiveRange(null);
+  }, [open]);
+  const priceSteps = transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS;
+  const editor =
+    activeRange === "acres"
+      ? {
+          title: "Acres",
+          min: draft.acresMin,
+          max: draft.acresMax,
+          steps: ACRE_STEPS,
+          minPlaceholder: "Minimum Acres",
+          maxPlaceholder: "Maximum Acres",
+          formatValue: formatAcres,
+          onChange: (acresMin: string, acresMax: string) =>
+            onDraft({ acresMin, acresMax }),
+        }
+      : activeRange === "sqft"
+        ? {
+            title: "Sq Ft",
+            min: draft.sqftMin,
+            max: draft.sqftMax,
+            steps: SQFT_STEPS,
+            minPlaceholder: "Minimum Sq Ft",
+            maxPlaceholder: "Maximum Sq Ft",
+            formatValue: formatSqft,
+            onChange: (sqftMin: string, sqftMax: string) =>
+              onDraft({ sqftMin, sqftMax }),
+          }
+        : {
+            title: "Price",
+            min: draft.priceMin,
+            max: draft.priceMax,
+            steps: priceSteps,
+            minPlaceholder: "Minimum Price",
+            maxPlaceholder: "Maximum Price",
+            formatValue: formatMoney,
+            onChange: (priceMin: string, priceMax: string) =>
+              onDraft({ priceMin, priceMax }),
+          };
+
+  function toggleRange(next: MobileRangeId) {
+    setActiveRange((cur) => (cur === next ? null : next));
+  }
+
   return (
-    <div className="story-home-mobile-advanced" data-mobile-advanced="">
+    <div
+      className="story-home-mobile-advanced"
+      data-mobile-advanced=""
+      data-active-range={activeRange ?? "none"}
+    >
+      <div className="story-home-mobile-actions">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={onClear}
+          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
+        >
+          Clear
+        </button>
+        <PrimaryAction count={countActiveFilters(draft)}>Apply</PrimaryAction>
+      </div>
       {transaction === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
         <p
           data-rent-unavailable
@@ -413,43 +525,36 @@ function MobileAdvanced({
       ) : null}
       <section data-region="property">
         <p className="story-home-region-heading">Property</p>
-        <div className="story-home-range-stack">
-          <div className="story-home-range-head" aria-hidden="true">
-            <span />
-            <span>MIN</span>
-            <span>MAX</span>
-            <span />
-          </div>
-          <HomeRangeRow
-            title="Price"
-            min={draft.priceMin}
-            max={draft.priceMax}
-            steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
-            minPlaceholder="Minimum Price"
-            maxPlaceholder="Maximum Price"
-            formatValue={formatMoney}
-            onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
-          />
-          <HomeRangeRow
-            title="Acres"
-            min={draft.acresMin}
-            max={draft.acresMax}
-            steps={ACRE_STEPS}
-            minPlaceholder="Minimum Acreage"
-            maxPlaceholder="Maximum Acreage"
-            formatValue={formatAcres}
-            onChange={(acresMin, acresMax) => onDraft({ acresMin, acresMax })}
-          />
-          <HomeRangeRow
-            title="Sq Ft"
-            min={draft.sqftMin}
-            max={draft.sqftMax}
-            steps={SQFT_STEPS}
-            minPlaceholder="Minimum Sq Ft"
-            maxPlaceholder="Maximum Sq Ft"
-            formatValue={formatSqft}
-            onChange={(sqftMin, sqftMax) => onDraft({ sqftMin, sqftMax })}
-          />
+        <RangeSummary
+          label="Price"
+          value={summarizeRange(draft.priceMin, draft.priceMax, compactPrice)}
+          expanded={activeRange === "price"}
+          onToggle={() => toggleRange("price")}
+        />
+        <RangeSummary
+          label="Acres"
+          value={summarizeRange(draft.acresMin, draft.acresMax, formatAcres, "ac")}
+          expanded={activeRange === "acres"}
+          onToggle={() => toggleRange("acres")}
+        />
+        <RangeSummary
+          label="Sq Ft"
+          value={summarizeRange(draft.sqftMin, draft.sqftMax, formatSqft, "sqft")}
+          expanded={activeRange === "sqft"}
+          onToggle={() => toggleRange("sqft")}
+        />
+        <div
+          className="story-home-mobile-editor"
+          data-range-editor-slot=""
+          data-open={activeRange ? "true" : "false"}
+        >
+          {activeRange ? (
+            <MobileRangeEditor key={activeRange} {...editor} />
+          ) : (
+            <p className="story-home-mobile-editor-hint">
+              Tap Price, Acres, or Sq Ft
+            </p>
+          )}
         </div>
       </section>
       <section data-region="home">
@@ -472,7 +577,7 @@ function MobileAdvanced({
       <section data-region="type">
         <p className="story-home-region-heading">Type</p>
         <div className="story-home-mobile-types">
-          {DESKTOP_TYPE_TILES.map((tile) => {
+          {MOBILE_TYPE_TILES.map((tile) => {
             const active = draft.propertyTypes.includes(tile.type);
             return (
               <button
@@ -711,6 +816,34 @@ function DesktopAdvanced({
         </section>
       </div>
     </div>
+  );
+}
+
+function RangeSummary({
+  label,
+  value,
+  expanded,
+  onToggle,
+}: {
+  label: string;
+  value: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      data-range-summary={label}
+      aria-expanded={expanded}
+      onClick={onToggle}
+      className={cn(
+        "story-home-range-summary",
+        expanded ? "is-open" : null,
+      )}
+    >
+      <span>{label}</span>
+      <span>{value}</span>
+    </button>
   );
 }
 
