@@ -195,7 +195,7 @@ export function HomeSearchHero() {
           />
         </div>
         <div className="story-home-hero-stage">
-          <h1 className="type-hero mx-auto max-w-3xl text-center text-navy">
+          <h1 className="type-hero story-home-hero-headline mx-auto max-w-3xl text-center text-navy">
             Find your next place in{" "}
             <span className="whitespace-nowrap">East Texas.</span>
           </h1>

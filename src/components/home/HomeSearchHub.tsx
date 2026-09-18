@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import {
-  Briefcase,
-  Building,
-  Building2,
-  Car,
-  Container,
-  House,
-  Search,
-  Trees,
-  Waves,
-} from "lucide-react";
-import { HomeBoundPickers } from "@/components/home/HomeBoundPickers";
+import { Search } from "lucide-react";
 import {
   CondoIcon,
   GarageIcon,
@@ -31,9 +20,7 @@ import { HomeRangeRow } from "@/components/home/HomeRangeRow";
 import {
   DEFAULT_SEARCH_FILTERS,
   countActiveFilters,
-  countHomepageGroup,
   toggleInList,
-  type HomepageFilterGroupId,
   type HoaFilter,
   type PropertyType,
   type SearchFilters,
@@ -53,11 +40,6 @@ import {
 } from "@/lib/search/transaction";
 import { cn } from "@/lib/utils";
 
-const GROUPS: { id: HomepageFilterGroupId; label: string }[] = [
-  { id: "price_features", label: "Price & Features" },
-  { id: "home_land", label: "Home & Land" },
-];
-
 const BED_OPTIONS = [
   ["Any", "Any"],
   ["1", "1+"],
@@ -75,24 +57,6 @@ const BATH_OPTIONS = [
   ["3", "3+"],
   ["4+", "4+"],
 ] as const;
-
-const TYPE_TILES: {
-  type: PropertyType;
-  label: string;
-  Icon: typeof House;
-}[] = [
-  { type: "Single Family", label: "House", Icon: House },
-  { type: "Farm and Ranch", label: "Land", Icon: Trees },
-  { type: "Condo", label: "Condo", Icon: Building2 },
-  { type: "Town Home", label: "Town", Icon: Building },
-  { type: "Mobile / Manufactured", label: "Mobile", Icon: Container },
-];
-
-const FEATURE_TILES = [
-  { key: "office" as const, label: "Office", Icon: Briefcase },
-  { key: "garage" as const, label: "Garage", Icon: Car },
-  { key: "pool" as const, label: "Pool", Icon: Waves },
-];
 
 const DESKTOP_TYPE_TILES: {
   type: PropertyType;
@@ -114,6 +78,15 @@ const DESKTOP_FEATURE_TILES = [
   { key: "waterfront" as const, label: "Waterfront", Icon: WaterfrontIcon, ready: false },
   { key: "golf" as const, label: "Golf Course", Icon: GolfIcon, ready: false },
 ];
+
+const MOBILE_FEATURE_TILES = [
+  DESKTOP_FEATURE_TILES[1],
+  DESKTOP_FEATURE_TILES[0],
+  DESKTOP_FEATURE_TILES[2],
+  DESKTOP_FEATURE_TILES[3],
+  DESKTOP_FEATURE_TILES[4],
+  DESKTOP_FEATURE_TILES[5],
+] as const;
 
 export const HOME_CROSSFADE_MS = 240;
 
@@ -155,8 +128,6 @@ export function HomeSearchHub({
   const titleId = useId();
   const [view, setView] = useState<"search" | "advanced">("search");
   const [draft, setDraft] = useState<SearchFilters>(filters);
-  const [group, setGroup] = useState<HomepageFilterGroupId>("price_features");
-  const [landBound, setLandBound] = useState<"acres" | "sqft">("acres");
   const [focused, setFocused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const draftRef = useRef(draft);
@@ -191,7 +162,6 @@ export function HomeSearchHub({
     const next = withoutKeyword(filters, query);
     draftRef.current = next;
     setDraft(next);
-    setGroup("price_features");
     setView("advanced");
   }
 
@@ -223,10 +193,6 @@ export function HomeSearchHub({
       return;
     }
     onSubmitSearch(sanitizeBoundFields(withoutKeyword(filters, query)));
-  }
-
-  function changeGroup(next: HomepageFilterGroupId) {
-    setGroup(next);
   }
 
   return (
@@ -267,10 +233,6 @@ export function HomeSearchHub({
             transaction={transaction}
             draft={draft}
             onDraft={patchDraft}
-            group={group}
-            onGroup={changeGroup}
-            landBound={landBound}
-            onLandBound={setLandBound}
             onCancel={cancelAdvanced}
             onClear={clearDraft}
           />
@@ -368,11 +330,15 @@ function SearchMode({
           <span className="text-[10px] font-bold leading-none tracking-wide">
             Filters
           </span>
-          {filterCount > 0 ? (
-            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[9px] font-bold text-navy">
-              {filterCount}
-            </span>
-          ) : null}
+          <span
+            data-filter-count={filterCount}
+            className={cn(
+              "absolute -right-1 -top-1 flex h-4 w-5 items-center justify-center rounded-full bg-gold text-[9px] font-bold tabular-nums text-navy",
+              filterCount > 0 ? "visible" : "invisible",
+            )}
+          >
+            {filterCount || 0}
+          </span>
         </button>
         <PrimaryAction>Search</PrimaryAction>
       </div>
@@ -385,10 +351,6 @@ function AdvancedMode({
   transaction,
   draft,
   onDraft,
-  group,
-  onGroup,
-  landBound,
-  onLandBound,
   onCancel,
   onClear,
 }: {
@@ -396,10 +358,6 @@ function AdvancedMode({
   transaction: TransactionMode;
   draft: SearchFilters;
   onDraft: (partial: Partial<SearchFilters>) => void;
-  group: HomepageFilterGroupId;
-  onGroup: (next: HomepageFilterGroupId) => void;
-  landBound: "acres" | "sqft";
-  onLandBound: (next: "acres" | "sqft") => void;
   onCancel: () => void;
   onClear: () => void;
 }) {
@@ -413,10 +371,6 @@ function AdvancedMode({
           transaction={transaction}
           draft={draft}
           onDraft={onDraft}
-          group={group}
-          onGroup={onGroup}
-          landBound={landBound}
-          onLandBound={onLandBound}
           onCancel={onCancel}
           onClear={onClear}
         />
@@ -438,88 +392,17 @@ function MobileAdvanced({
   transaction,
   draft,
   onDraft,
-  group,
-  onGroup,
-  landBound,
-  onLandBound,
   onCancel,
   onClear,
 }: {
   transaction: TransactionMode;
   draft: SearchFilters;
   onDraft: (partial: Partial<SearchFilters>) => void;
-  group: HomepageFilterGroupId;
-  onGroup: (next: HomepageFilterGroupId) => void;
-  landBound: "acres" | "sqft";
-  onLandBound: (next: "acres" | "sqft") => void;
   onCancel: () => void;
   onClear: () => void;
 }) {
   return (
-    <>
-      <div className="story-home-advanced-chrome">
-        <div
-          role="tablist"
-          aria-label="Filter groups"
-          className="story-home-advanced-tabs grid grid-cols-2 gap-1"
-        >
-          {GROUPS.map((row) => {
-            const active = countHomepageGroup(draft, row.id);
-            return (
-              <button
-                key={row.id}
-                type="button"
-                role="tab"
-                aria-selected={group === row.id}
-                onClick={() => onGroup(row.id)}
-                className={cn(
-                  "story-press inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-xs font-semibold",
-                  group === row.id
-                    ? "bg-gold text-navy"
-                    : "text-paper/70 hover:text-paper",
-                )}
-              >
-                <span className="min-w-0 truncate">{row.label}</span>
-                <span
-                  className={cn(
-                    "inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
-                    group === row.id
-                      ? "bg-navy/15 text-navy"
-                      : "bg-gold text-navy",
-                    active > 0 ? "visible" : "invisible",
-                  )}
-                >
-                  {active || 0}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="story-home-advanced-actions flex shrink-0 items-center justify-end gap-1">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={onClear}
-            className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
-          >
-            Clear
-          </button>
-          <PrimaryAction
-            count={
-              countHomepageGroup(draft, "price_features") +
-              countHomepageGroup(draft, "home_land")
-            }
-          >
-            Apply
-          </PrimaryAction>
-        </div>
-      </div>
+    <div className="story-home-mobile-advanced" data-mobile-advanced="">
       {transaction === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
         <p
           data-rent-unavailable
@@ -528,30 +411,141 @@ function MobileAdvanced({
           {RENT_UNAVAILABLE.title}. {RENT_UNAVAILABLE.detail}
         </p>
       ) : null}
-      <div className="story-home-advanced-body">
-        <div
-          className="story-home-advanced-group"
-          data-active={group === "price_features" ? "true" : "false"}
-          inert={group !== "price_features" ? true : undefined}
-          aria-hidden={group !== "price_features"}
-        >
-          <PriceFeaturesGroup draft={draft} transaction={transaction} onDraft={onDraft} />
-        </div>
-        <div
-          className="story-home-advanced-group"
-          data-active={group === "home_land" ? "true" : "false"}
-          inert={group !== "home_land" ? true : undefined}
-          aria-hidden={group !== "home_land"}
-        >
-          <HomeLandGroup
-            draft={draft}
-            landBound={landBound}
-            onLandBound={onLandBound}
-            onDraft={onDraft}
+      <section data-region="property">
+        <p className="story-home-region-heading">Property</p>
+        <div className="story-home-range-stack">
+          <div className="story-home-range-head" aria-hidden="true">
+            <span />
+            <span>MIN</span>
+            <span>MAX</span>
+            <span />
+          </div>
+          <HomeRangeRow
+            title="Price"
+            min={draft.priceMin}
+            max={draft.priceMax}
+            steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
+            minPlaceholder="Minimum Price"
+            maxPlaceholder="Maximum Price"
+            formatValue={formatMoney}
+            onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
+          />
+          <HomeRangeRow
+            title="Acres"
+            min={draft.acresMin}
+            max={draft.acresMax}
+            steps={ACRE_STEPS}
+            minPlaceholder="Minimum Acreage"
+            maxPlaceholder="Maximum Acreage"
+            formatValue={formatAcres}
+            onChange={(acresMin, acresMax) => onDraft({ acresMin, acresMax })}
+          />
+          <HomeRangeRow
+            title="Sq Ft"
+            min={draft.sqftMin}
+            max={draft.sqftMax}
+            steps={SQFT_STEPS}
+            minPlaceholder="Minimum Sq Ft"
+            maxPlaceholder="Maximum Sq Ft"
+            formatValue={formatSqft}
+            onChange={(sqftMin, sqftMax) => onDraft({ sqftMin, sqftMax })}
           />
         </div>
+      </section>
+      <section data-region="home">
+        <p className="story-home-region-heading">Home</p>
+        <ChipRow
+          label="Beds"
+          value={draft.beds}
+          options={BED_OPTIONS}
+          onChange={(beds) => onDraft({ beds })}
+        />
+        <ChipRow
+          label="Baths"
+          value={draft.baths}
+          options={BATH_OPTIONS}
+          onChange={(baths) => onDraft({ baths })}
+        />
+      </section>
+      <section data-region="type">
+        <p className="story-home-region-heading">Type</p>
+        <div className="story-home-mobile-types">
+          {DESKTOP_TYPE_TILES.map((tile) => {
+            const active = draft.propertyTypes.includes(tile.type);
+            return (
+              <button
+                key={tile.type}
+                type="button"
+                aria-pressed={active}
+                aria-label={tile.type}
+                onClick={() =>
+                  onDraft({
+                    propertyTypes: toggleInList(draft.propertyTypes, tile.type),
+                  })
+                }
+                className={cn(
+                  "story-home-icon-tile story-press",
+                  active ? "is-active" : null,
+                )}
+              >
+                <tile.Icon className="h-4 w-4" />
+                <span>{tile.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+      <section data-region="features">
+        <p className="story-home-region-heading">Features</p>
+        <div className="story-home-mobile-features">
+          {MOBILE_FEATURE_TILES.map((tile) => (
+            <FeatureTileButton
+              key={tile.key}
+              tile={tile}
+              draft={draft}
+              onDraft={onDraft}
+            />
+          ))}
+        </div>
+      </section>
+      <section data-region="hoa">
+        <p className="story-home-filter-heading">HOA</p>
+        <p className="sr-only">Unknown is not No</p>
+        <div className="flex flex-wrap gap-1">
+          {(
+            [
+              ["any", "Any"],
+              ["hoa", "Yes"],
+              ["no_hoa", "No"],
+            ] as const
+          ).map(([value, label]) => (
+            <Chip
+              key={value}
+              label={label}
+              active={draft.hoa === value}
+              onClick={() => onDraft({ hoa: value as HoaFilter })}
+            />
+          ))}
+        </div>
+      </section>
+      <div className="story-home-mobile-actions">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={onClear}
+          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
+        >
+          Clear
+        </button>
+        <PrimaryAction count={countActiveFilters(draft)}>Apply</PrimaryAction>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -682,40 +676,14 @@ function DesktopAdvanced({
             onChange={(baths) => onDraft({ baths })}
           />
           <div className="story-home-desktop-features-grid">
-              {DESKTOP_FEATURE_TILES.map(({ key, label, Icon, ready }) => {
-                if (!ready) {
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      disabled
-                      data-preview-future={key}
-                      aria-disabled="true"
-                      className="story-home-icon-tile is-future"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{label}</span>
-                    </button>
-                  );
-                }
-                const liveKey = key as "office" | "garage" | "pool";
-                const active = draft[liveKey];
-                return (
-                  <button
-                    key={liveKey}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => onDraft({ [liveKey]: !active })}
-                    className={cn(
-                      "story-home-icon-tile story-press",
-                      active ? "is-active" : null,
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{label}</span>
-                  </button>
-                );
-              })}
+            {DESKTOP_FEATURE_TILES.map((tile) => (
+              <FeatureTileButton
+                key={tile.key}
+                tile={tile}
+                draft={draft}
+                onDraft={onDraft}
+              />
+            ))}
           </div>
           <div>
             <p className="story-home-filter-heading">HOA</p>
@@ -743,202 +711,45 @@ function DesktopAdvanced({
   );
 }
 
-function PriceFeaturesGroup({
+function FeatureTileButton({
+  tile,
   draft,
-  transaction,
   onDraft,
 }: {
+  tile: (typeof DESKTOP_FEATURE_TILES)[number];
   draft: SearchFilters;
-  transaction: TransactionMode;
   onDraft: (partial: Partial<SearchFilters>) => void;
 }) {
+  const { key, label, Icon, ready } = tile;
+  if (!ready) {
+    return (
+      <button
+        type="button"
+        disabled
+        data-preview-future={key}
+        aria-disabled="true"
+        className="story-home-icon-tile is-future"
+      >
+        <Icon className="h-4 w-4" />
+        <span>{label}</span>
+      </button>
+    );
+  }
+  const liveKey = key as "office" | "garage" | "pool";
+  const active = draft[liveKey];
   return (
-    <div className="story-home-price-features" data-filter-group="price_features">
-      <HomeBoundPickers
-        title="Price"
-        unit={transaction === "rent" ? "$ / mo" : "$"}
-        min={draft.priceMin}
-        max={draft.priceMax}
-        minLabel="Min"
-        maxLabel="Max"
-        steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
-        formatValue={formatMoney}
-        onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
-      />
-      <div className="story-home-feature-cluster">
-        <div>
-          <p className="story-home-filter-heading">Features</p>
-          <div className="story-home-feature-tiles">
-            {FEATURE_TILES.map(({ key, label, Icon }) => {
-              const active = draft[key];
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => onDraft({ [key]: !active })}
-                  className={cn(
-                    "story-home-feature-tile story-press items-center justify-center gap-1 rounded-[var(--radius-sm)] px-2 text-[10px] font-semibold",
-                    active
-                      ? "bg-gold text-navy"
-                      : "text-paper/65 hover:text-paper",
-                  )}
-                >
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <div>
-          <p className="story-home-filter-heading">HOA</p>
-          <p className="sr-only">Unknown is not No</p>
-          <div className="flex flex-wrap gap-1">
-            {(
-              [
-                ["any", "Any"],
-                ["hoa", "Yes"],
-                ["no_hoa", "No"],
-              ] as const
-            ).map(([value, label]) => (
-              <Chip
-                key={value}
-                label={label}
-                active={draft.hoa === value}
-                onClick={() => onDraft({ hoa: value as HoaFilter })}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HomeLandGroup({
-  draft,
-  landBound,
-  onLandBound,
-  onDraft,
-}: {
-  draft: SearchFilters;
-  landBound: "acres" | "sqft";
-  onLandBound: (next: "acres" | "sqft") => void;
-  onDraft: (partial: Partial<SearchFilters>) => void;
-}) {
-  return (
-    <div className="story-home-home-land" data-filter-group="home_land">
-      <div className="grid grid-cols-2 gap-2">
-        <ChipRow
-          label="Beds"
-          value={draft.beds}
-          options={BED_OPTIONS}
-          onChange={(beds) => onDraft({ beds })}
-        />
-        <ChipRow
-          label="Baths"
-          value={draft.baths}
-          options={BATH_OPTIONS}
-          onChange={(baths) => onDraft({ baths })}
-        />
-      </div>
-      <div>
-        <p className="story-home-filter-heading">Type</p>
-        <div className="grid grid-cols-5 gap-1">
-          {TYPE_TILES.map(({ type, label, Icon }) => {
-            const active = draft.propertyTypes.includes(type);
-            return (
-              <button
-                key={type}
-                type="button"
-                aria-pressed={active}
-                aria-label={type}
-                onClick={() =>
-                  onDraft({
-                    propertyTypes: toggleInList(draft.propertyTypes, type),
-                  })
-                }
-                className={cn(
-                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1 text-[10px] font-semibold",
-                  active
-                    ? "bg-gold text-navy"
-                    : "text-paper/65 hover:text-paper",
-                )}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div>
-        <div
-          role="tablist"
-          aria-label="Acres or square feet"
-          className="mb-0.5 flex items-center gap-1"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={landBound === "acres"}
-            onClick={() => onLandBound("acres")}
-            className={cn(
-              "story-press h-7 rounded-full px-2.5 text-[11px] font-semibold md:h-8 md:px-3 md:text-[12px]",
-              landBound === "acres"
-                ? "bg-gold text-navy"
-                : "text-paper/60 hover:text-paper",
-            )}
-          >
-            Acres
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={landBound === "sqft"}
-            onClick={() => onLandBound("sqft")}
-            className={cn(
-              "story-press h-7 rounded-full px-2.5 text-[11px] font-semibold md:h-8 md:px-3 md:text-[12px]",
-              landBound === "sqft"
-                ? "bg-gold text-navy"
-                : "text-paper/60 hover:text-paper",
-            )}
-          >
-            Sq Ft
-          </button>
-          <p className="ml-auto self-center text-[11px] text-paper/50">
-            {formatAcres(draft.acresMin)}–{formatAcres(draft.acresMax)} ·{" "}
-            {formatSqft(draft.sqftMin)}–{formatSqft(draft.sqftMax)}
-          </p>
-        </div>
-        {landBound === "acres" ? (
-          <HomeBoundPickers
-            title="Acres"
-            unit="ac"
-            min={draft.acresMin}
-            max={draft.acresMax}
-            minLabel="Min"
-            maxLabel="Max"
-            steps={ACRE_STEPS}
-            formatValue={formatAcres}
-            onChange={(acresMin, acresMax) => onDraft({ acresMin, acresMax })}
-          />
-        ) : (
-          <HomeBoundPickers
-            title="Sq Ft"
-            unit="sqft"
-            min={draft.sqftMin}
-            max={draft.sqftMax}
-            minLabel="Min"
-            maxLabel="Max"
-            steps={SQFT_STEPS}
-            formatValue={formatSqft}
-            onChange={(sqftMin, sqftMax) => onDraft({ sqftMin, sqftMax })}
-          />
-        )}
-      </div>
-    </div>
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={() => onDraft({ [liveKey]: !active })}
+      className={cn(
+        "story-home-icon-tile story-press",
+        active ? "is-active" : null,
+      )}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+    </button>
   );
 }
 
