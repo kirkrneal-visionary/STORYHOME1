@@ -78,7 +78,7 @@ const MOBILE_TYPE_TILES = [
   { type: "Town Home" as const, label: "Townhome", Icon: TownhomeIcon },
   {
     type: "Mobile / Manufactured" as const,
-    label: "Mobile / Manufactured",
+    label: "Mobile",
     Icon: MobileHomeIcon,
   },
 ];
@@ -404,7 +404,7 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1 p-1 md:gap-1.5 md:p-2">
+    <div className="flex flex-col gap-0.5 px-1 py-0.5 md:gap-1.5 md:p-2">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
@@ -636,23 +636,6 @@ function MobileAdvanced({
           ))}
         </div>
       </section>
-      <div className="story-home-mobile-actions">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={onClear}
-          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
-        >
-          Clear
-        </button>
-        <PrimaryAction count={countActiveFilters(draft)}>Apply</PrimaryAction>
-      </div>
     </div>
   );
 }
@@ -940,7 +923,7 @@ function ChipRow({
         <p className="sr-only">Minimum {label}</p>
         {hint ? <p className="text-[10px] text-paper/40">{hint}</p> : null}
       </div>
-      <div className="flex flex-wrap gap-1">
+      <div className={compact ? "flex flex-nowrap gap-0.5 min-w-0" : "flex flex-wrap gap-1"}>
         {options.map(([id, text]) => (
           <Chip
             key={id}

@@ -1145,7 +1145,7 @@ html[data-home-hub] .story-route-page {
   isolation: isolate;
   overflow: hidden;
   /* Phone canvas is viewport/breakpoint only — not Advanced, count, or Exact. */
-  height: min(41rem, calc(100svh - var(--story-bottom-clearance) - 0.75rem));
+  height: min(42rem, calc(100svh - var(--story-bottom-clearance)));
 }
 @media (min-width: 768px) {
   .story-home-hero {
@@ -1218,6 +1218,12 @@ html[data-home-hub] .story-route-page {
 @media (max-width: 767px) {
   .story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
     overflow: visible;
+  }
+  /* Search keeps centered breathing room. Advanced uses that same
+     reserved space so the taller surface stays inside the hero. */
+  .story-home-hero-safe:has([data-search-view="advanced"]) {
+    padding-top: 0.2rem;
+    padding-bottom: 0.3rem;
   }
 }
 .story-home-search-shell[data-search-view="advanced"].story-glass {
@@ -1455,11 +1461,11 @@ html[data-home-hub] .story-route-page {
 .story-home-mobile-advanced {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.12rem;
   min-width: 0;
 }
 .story-home-mobile-advanced .story-home-region-heading {
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.08rem;
 }
 .story-home-mobile-advanced .story-home-filter-heading {
   margin-bottom: 0;
@@ -1468,14 +1474,14 @@ html[data-home-hub] .story-route-page {
 .story-home-mobile-advanced [data-region="property"] {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.08rem;
 }
 .story-home-range-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  min-height: 2rem;
+  min-height: 1.55rem;
   width: 100%;
   padding: 0 0.15rem;
   font-size: 0.8125rem;
@@ -1497,7 +1503,7 @@ html[data-home-hub] .story-route-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 5.35rem;
+  min-height: 6.35rem;
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--env-0) 55%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--paper) 8%, transparent);
@@ -1511,14 +1517,14 @@ html[data-home-hub] .story-route-page {
   width: max-content;
   max-width: 100%;
   margin-inline: auto;
-  padding: 0.3rem 0.45rem 0.35rem;
+  padding: 0.2rem 0.4rem 0.25rem;
 }
 .story-home-mobile-editor-head {
   display: grid;
-  grid-template-columns: 5.65rem 5.65rem auto;
-  column-gap: 0.4rem;
+  grid-template-columns: 6.5rem 6.5rem auto;
+  column-gap: 0.35rem;
   align-items: center;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
   font-size: 0.625rem;
   font-weight: 650;
   letter-spacing: 0.08em;
@@ -1527,14 +1533,23 @@ html[data-home-hub] .story-route-page {
 }
 .story-home-mobile-editor-pair {
   display: grid;
-  grid-template-columns: 5.65rem 5.65rem;
-  column-gap: 0.4rem;
+  grid-template-columns: 6.5rem 6.5rem;
+  column-gap: 0.35rem;
   align-items: center;
+}
+.story-home-mobile-editor .story-home-filter-input {
+  height: 2rem;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
 }
 .story-home-chip-row-compact {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.story-home-chip-row-compact > :last-child {
+  flex: 1 1 auto;
   min-width: 0;
 }
 .story-home-chip-row-compact .story-home-filter-heading {
@@ -1548,28 +1563,27 @@ html[data-home-hub] .story-route-page {
 }
 .story-home-mobile-types {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.28rem;
-}
-.story-home-mobile-types > :nth-child(-n + 3) {
-  grid-column: span 2;
-}
-.story-home-mobile-types > :nth-child(n + 4) {
-  grid-column: span 3;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.22rem;
 }
 .story-home-mobile-features {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.28rem;
+  gap: 0.22rem;
 }
 .story-home-mobile-advanced .story-home-icon-tile {
-  min-height: 2.25rem;
+  min-height: 1.85rem;
   box-sizing: border-box;
-  padding: 0.2rem 0.15rem;
+  gap: 0.04rem;
+  padding: 0.08rem 0.06rem;
   font-size: 0.625rem;
 }
 .story-home-mobile-advanced .story-home-icon-tile.is-active {
-  min-height: 2.25rem;
+  min-height: 1.85rem;
+}
+.story-home-mobile-advanced .story-home-icon-tile svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 .story-home-mobile-actions {
   display: flex;
