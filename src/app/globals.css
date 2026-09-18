@@ -106,6 +106,7 @@
   --control-min: 2.75rem;
 
   /* Shell insets — living overlay header + floating bottom nav + Archie ribbon */
+  --story-header-h-full: 72px;
   --story-header-h: 72px;
   --story-archie-ribbon-h: 2.75rem;
   --story-safe-top: calc(var(--story-header-h) + env(safe-area-inset-top, 0px));
@@ -1165,11 +1166,13 @@ html[data-home-hub] .story-route-page {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
-  padding: calc(var(--story-safe-top) + 1rem) 1rem 1.25rem;
+  /* Lock to the full header height. The living header may shrink
+     --story-header-h on scroll; Search/Advanced must not follow it. */
+  padding: calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 1rem) 1rem 1.25rem;
 }
 @media (min-width: 768px) {
   .story-home-hero-stage {
-    padding: calc(var(--story-safe-top) + 1.75rem) 1.5rem 1.5rem;
+    padding: calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 1.75rem) 1.5rem 1.5rem;
   }
 }
 .story-home-hero-safe {
@@ -1200,6 +1203,9 @@ html[data-home-hub] .story-route-page {
 }
 .story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
   overflow: auto;
+}
+.story-home-search-shell[data-search-view="advanced"].story-glass {
+  background: color-mix(in srgb, var(--env-1) 84%, transparent);
 }
 @media (min-width: 1024px) {
   .story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
