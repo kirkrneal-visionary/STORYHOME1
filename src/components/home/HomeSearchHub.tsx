@@ -2,10 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { Building, Building2, Container, House, Search, Trees } from "lucide-react";
-import {
-  HomeBoundPickers,
-} from "@/components/home/HomeBoundPickers";
-import { PickerFlushProvider } from "@/components/home/HomeBoundPicker";
+import { HomeBoundPickers } from "@/components/home/HomeBoundPickers";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import {
   DEFAULT_SEARCH_FILTERS,
@@ -129,7 +126,6 @@ export function HomeSearchHub({
   const [focused, setFocused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const draftRef = useRef(draft);
-  const flushPickers = useRef<(() => void) | null>(null);
   draftRef.current = draft;
 
   useEffect(() => {
@@ -174,7 +170,6 @@ export function HomeSearchHub({
   }
 
   function applyAdvanced() {
-    flushPickers.current?.();
     onFilters(withoutKeyword(draftRef.current, query));
     setView("search");
   }
@@ -237,20 +232,18 @@ export function HomeSearchHub({
           inert={view !== "advanced" ? true : undefined}
           aria-hidden={view !== "advanced"}
         >
-          <PickerFlushProvider flushRef={flushPickers}>
-            <AdvancedMode
-              titleId={titleId}
-              transaction={transaction}
-              draft={draft}
-              onDraft={patchDraft}
-              group={group}
-              onGroup={changeGroup}
-              metric={metric}
-              onMetric={setMetric}
-              onCancel={cancelAdvanced}
-              onClear={clearDraft}
-            />
-          </PickerFlushProvider>
+          <AdvancedMode
+            titleId={titleId}
+            transaction={transaction}
+            draft={draft}
+            onDraft={patchDraft}
+            group={group}
+            onGroup={changeGroup}
+            metric={metric}
+            onMetric={setMetric}
+            onCancel={cancelAdvanced}
+            onClear={clearDraft}
+          />
         </div>
       </form>
     </div>

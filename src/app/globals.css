@@ -1143,14 +1143,13 @@ html[data-home-hub] .story-route-page {
 html[data-home-hub] .story-route-surface {
   overflow: visible;
 }
-.story-home-search-shell {
+.story-home-search-anchor {
   position: sticky;
   top: var(--story-safe-top);
   z-index: 20;
-  height: auto;
 }
-.story-home-search {
-  z-index: 20;
+.story-home-search-shell {
+  height: auto;
 }
 .story-home-modes {
   position: relative;

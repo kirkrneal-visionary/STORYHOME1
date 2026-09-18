@@ -1,46 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { stepIndex, type RollerStep } from "@/lib/search/rollers";
 import { cn } from "@/lib/utils";
 
 export const PICKER_ROW_H = 32;
 const WHEEL_STEP = 28;
-
-const FlushContext = createContext<(fn: () => void) => () => void>(
-  () => () => {},
-);
-
-export function PickerFlushProvider({
-  children,
-  flushRef,
-}: {
-  children: ReactNode;
-  flushRef: { current: (() => void) | null };
-}) {
-  const fns = useRef(new Set<() => void>());
-  flushRef.current = () => {
-    fns.current.forEach((fn) => fn());
-  };
-  const register = useCallback((fn: () => void) => {
-    fns.current.add(fn);
-    return () => {
-      fns.current.delete(fn);
-    };
-  }, []);
-  return (
-    <FlushContext.Provider value={register}>{children}</FlushContext.Provider>
-  );
-}
 
 export function HomeBoundPicker({
   label,
@@ -56,7 +21,6 @@ export function HomeBoundPicker({
   disabled?: boolean;
 }) {
   const listId = useId();
-  const register = useContext(FlushContext);
   const root = useRef<HTMLDivElement>(null);
   const pending = useRef(stepIndex(steps, value));
   const valueRef = useRef(value);
@@ -88,13 +52,6 @@ export function HomeBoundPicker({
       setIndex(next);
     }
   }, [value, steps]);
-
-  useEffect(() => {
-    return register(() => {
-      const picked = stepsRef.current[pending.current]?.value ?? "";
-      if (picked !== valueRef.current) onChangeRef.current(picked);
-    });
-  }, [register]);
 
   useEffect(() => {
     const node = root.current;
