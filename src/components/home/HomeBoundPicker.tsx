@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { stepIndex, type RollerStep } from "@/lib/search/rollers";
+import {
+  firstFiniteAbove,
+  stepIndex,
+  type RollerStep,
+} from "@/lib/search/rollers";
 import { cn } from "@/lib/utils";
 
 export const PICKER_ROW_H = 22;
@@ -32,6 +36,9 @@ export function HomeBoundPicker({
   value,
   onChange,
   disabled,
+  hideLabel,
+  anticipateAfter,
+  visibleCount,
 }: {
   label: string;
   accessibleLabel?: string;
@@ -39,24 +46,41 @@ export function HomeBoundPicker({
   value: string;
   onChange: (next: string) => void;
   disabled?: boolean;
+  hideLabel?: boolean;
+  anticipateAfter?: string;
+  visibleCount?: number;
 }) {
   const listId = useId();
   const compact = useCompactPicker();
-  const visible = pickerVisibleCount(compact);
-  const offsets = compact ? ([-1, 0, 1] as const) : ([-2, -1, 0, 1, 2] as const);
+  const visible = visibleCount ?? pickerVisibleCount(compact);
+  const compactWindow = visible <= 3;
+  const offsets = compactWindow
+    ? ([-1, 0, 1] as const)
+    : ([-2, -1, 0, 1, 2] as const);
   const root = useRef<HTMLDivElement>(null);
   const pending = useRef(stepIndex(steps, value));
   const valueRef = useRef(value);
   const stepsRef = useRef(steps);
   const onChangeRef = useRef(onChange);
+  const anticipateRef = useRef(anticipateAfter);
   const [index, setIndex] = useState(() => stepIndex(steps, value));
 
   valueRef.current = value;
   stepsRef.current = steps;
   onChangeRef.current = onChange;
+  anticipateRef.current = anticipateAfter;
 
   function clamp(next: number) {
     return Math.max(0, Math.min(stepsRef.current.length - 1, next));
+  }
+
+  function project(from: number, delta: number) {
+    const hint = anticipateRef.current;
+    if (hint && !valueRef.current && from === 0 && delta > 0) {
+      const above = firstFiniteAbove(stepsRef.current, hint);
+      if (above > 0) return clamp(above + delta - 1);
+    }
+    return clamp(from + delta);
   }
 
   function settle(next: number) {
@@ -90,7 +114,7 @@ export function HomeBoundPicker({
       if (Math.abs(wheelAcc) < WHEEL_PIXEL) return;
       const dir = Math.sign(wheelAcc);
       wheelAcc = 0;
-      settle(pending.current + dir);
+      settle(project(pending.current, dir));
     }
     node.addEventListener("wheel", onWheel, { passive: false });
     return () => node.removeEventListener("wheel", onWheel);
@@ -110,7 +134,7 @@ export function HomeBoundPicker({
     const moved = Math.round(
       (drag.current.startY - event.clientY) / PICKER_ROW_H,
     );
-    settle(drag.current.startIndex + moved);
+    settle(project(drag.current.startIndex, moved));
   }
 
   function onPointerUp() {
@@ -120,18 +144,26 @@ export function HomeBoundPicker({
   }
 
   function move(delta: number) {
-    settle(pending.current + delta);
+    settle(project(pending.current, delta));
   }
 
   const current = steps[index];
-  const neighborhood = offsets.map((offset) => ({
-    offset,
-    step: steps[index + offset],
-  }));
+  const above =
+    anticipateAfter && !value ? firstFiniteAbove(steps, anticipateAfter) : -1;
+  const neighborhood = offsets.map((offset) => {
+    if (offset > 0 && above > 0) {
+      return { offset, step: steps[above + offset - 1] };
+    }
+    return { offset, step: steps[index + offset] };
+  });
 
   return (
     <div className="story-home-range-col-inner">
-      <p className="story-home-filter-heading">{label}</p>
+      {hideLabel ? (
+        <span className="sr-only">{label}</span>
+      ) : (
+        <p className="story-home-filter-heading">{label}</p>
+      )}
       <div
         ref={root}
         role="listbox"
@@ -183,7 +215,7 @@ export function HomeBoundPicker({
                 key={offset}
                 faded
                 disabled={!step}
-                onPick={() => settle(index + offset)}
+                onPick={() => settle(project(index, offset))}
               >
                 {step?.label ?? "\u00a0"}
               </PickerRow>

@@ -60,6 +60,7 @@ import {
   applyMinChange,
   constrainMaxSteps,
   constrainMinSteps,
+  firstFiniteAbove,
   prepareBoundSteps,
   rollerContentWidthPx,
   sanitizeBoundFields,
@@ -333,7 +334,18 @@ assert.match(hub, /\["rent", "Rent"\]/);
 assert.match(hub, /Price & Features/);
 assert.match(hub, /Home & Land/);
 assert.match(hub, /HomeBoundPickers/);
+assert.match(hub, /HomeRangeRow/);
+assert.match(hub, /data-desktop-advanced/);
+assert.match(hub, /data-region="property"/);
+assert.match(hub, /data-region="features"/);
+assert.match(hub, /data-preview-future/);
+assert.match(hub, /Water View/);
+assert.match(hub, /Waterfront/);
+assert.match(hub, /Golf Course/);
+assert.match(hub, /md:hidden/);
+assert.match(hub, /hidden md:block/);
 assert.match(hub, /sanitizeBoundFields/);
+assert.doesNotMatch(hub, /hasWaterView|hasWaterfront|hasGolf|water_view: true/);
 const pickers = read("src/components/home/HomeBoundPickers.tsx");
 assert.match(pickers, /story-home-range-pair/);
 assert.match(pickers, /applyMinChange/);
@@ -341,6 +353,20 @@ assert.match(pickers, /label="MIN"/);
 assert.match(pickers, /label="MAX"/);
 assert.doesNotMatch(pickers, /rangeError/);
 assert.doesNotMatch(pickers, /grid-cols-2/);
+assert.match(hub, /Minimum Price/);
+assert.match(hub, /Minimum Acreage/);
+assert.match(hub, /Minimum Sq Ft/);
+const rangeRow = read("src/components/home/HomeRangeRow.tsx");
+assert.match(rangeRow, /anticipateAfter/);
+assert.match(rangeRow, /visibleCount=\{ROW_VISIBLE\}/);
+assert.match(rangeRow, /"Rollers"/);
+assert.doesNotMatch(rangeRow, /setExact\("min"\)/);
+const icons = read("src/components/home/HomeFilterIcons.tsx");
+assert.match(icons, /strokeWidth: 1.5/);
+assert.match(icons, /HouseIcon/);
+assert.match(icons, /WaterViewIcon/);
+assert.match(icons, /GolfIcon/);
+assert.doesNotMatch(icons, /lucide/);
 assert.match(hub, /Acres/);
 assert.match(hub, /FEATURE_TILES/);
 assert.match(hub, /Briefcase/);
@@ -370,6 +396,8 @@ assert.match(picker, /WHEEL_PIXEL/);
 assert.match(picker, /PICKER_VISIBLE/);
 assert.match(picker, /PICKER_VISIBLE_COMPACT/);
 assert.match(picker, /useCompactPicker/);
+assert.match(picker, /anticipateAfter/);
+assert.match(picker, /firstFiniteAbove/);
 assert.match(picker, /onPick/);
 assert.doesNotMatch(picker, /overflow-y-auto/);
 assert.doesNotMatch(picker, /scrollTo/);
@@ -398,8 +426,12 @@ assert.match(css, /story-home-bound-title/);
 assert.match(css, /story-home-price-features/);
 assert.match(css, /story-home-picker-band/);
 assert.match(css, /story-home-range-pair/);
+assert.match(css, /story-home-desktop-advanced/);
+assert.match(css, /story-home-desktop-regions/);
+assert.match(css, /story-home-range-stack/);
 assert.match(css, /--roller-w/);
 assert.match(css, /grid-template-areas: "editor"/);
+assert.match(css, /overflow: hidden/);
 assert.match(css, /story-home-picker/);
 assert.match(css, /user-select: none/);
 assert.match(css, /overscroll-behavior: contain/);
@@ -711,6 +743,9 @@ assert.ok(!exactMax.some((row) => row.value === "5"));
 assert.ok(exactMax.some((row) => row.value === ""));
 assert.ok(rollerContentWidthPx(BUY_PRICE_STEPS) < 200);
 assert.ok(rollerContentWidthPx(ACRE_STEPS) <= rollerContentWidthPx(BUY_PRICE_STEPS));
+assert.equal(BUY_PRICE_STEPS[firstFiniteAbove(BUY_PRICE_STEPS, "350000")].label, "$375,000");
+assert.equal(ACRE_STEPS[firstFiniteAbove(ACRE_STEPS, "10")].value, "15");
+assert.equal(firstFiniteAbove(BUY_PRICE_STEPS, ""), -1);
 const buyPreset = BUY_PRICE_PRESETS.find((row) => row.id === "350-500");
 const rentPreset = RENT_PRICE_PRESETS.find((row) => row.id === "1500-2000");
 assert.ok(buyPreset && rentPreset);

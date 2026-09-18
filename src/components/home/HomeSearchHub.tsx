@@ -13,7 +13,21 @@ import {
   Waves,
 } from "lucide-react";
 import { HomeBoundPickers } from "@/components/home/HomeBoundPickers";
+import {
+  CondoIcon,
+  GarageIcon,
+  GolfIcon,
+  HouseIcon,
+  LandIcon,
+  MobileHomeIcon,
+  OfficeIcon,
+  PoolIcon,
+  TownhomeIcon,
+  WaterfrontIcon,
+  WaterViewIcon,
+} from "@/components/home/HomeFilterIcons";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
+import { HomeRangeRow } from "@/components/home/HomeRangeRow";
 import {
   DEFAULT_SEARCH_FILTERS,
   countActiveFilters,
@@ -78,6 +92,27 @@ const FEATURE_TILES = [
   { key: "office" as const, label: "Office", Icon: Briefcase },
   { key: "garage" as const, label: "Garage", Icon: Car },
   { key: "pool" as const, label: "Pool", Icon: Waves },
+];
+
+const DESKTOP_TYPE_TILES: {
+  type: PropertyType;
+  label: string;
+  Icon: typeof HouseIcon;
+}[] = [
+  { type: "Single Family", label: "House", Icon: HouseIcon },
+  { type: "Farm and Ranch", label: "Land", Icon: LandIcon },
+  { type: "Condo", label: "Condo", Icon: CondoIcon },
+  { type: "Town Home", label: "Townhome", Icon: TownhomeIcon },
+  { type: "Mobile / Manufactured", label: "Mobile", Icon: MobileHomeIcon },
+];
+
+const DESKTOP_FEATURE_TILES = [
+  { key: "office" as const, label: "Office", Icon: OfficeIcon, ready: true },
+  { key: "garage" as const, label: "Garage", Icon: GarageIcon, ready: true },
+  { key: "pool" as const, label: "Pool", Icon: PoolIcon, ready: true },
+  { key: "water_view" as const, label: "Water View", Icon: WaterViewIcon, ready: false },
+  { key: "waterfront" as const, label: "Waterfront", Icon: WaterfrontIcon, ready: false },
+  { key: "golf" as const, label: "Golf Course", Icon: GolfIcon, ready: false },
 ];
 
 export const HOME_CROSSFADE_MS = 240;
@@ -369,10 +404,59 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 p-1.5 md:gap-2 md:p-3">
+    <div className="flex flex-col gap-1.5 p-1.5 md:gap-2 md:p-2.5">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
+      <div className="md:hidden">
+        <MobileAdvanced
+          transaction={transaction}
+          draft={draft}
+          onDraft={onDraft}
+          group={group}
+          onGroup={onGroup}
+          landBound={landBound}
+          onLandBound={onLandBound}
+          onCancel={onCancel}
+          onClear={onClear}
+        />
+      </div>
+      <div className="hidden md:block">
+        <DesktopAdvanced
+          transaction={transaction}
+          draft={draft}
+          onDraft={onDraft}
+          onCancel={onCancel}
+          onClear={onClear}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MobileAdvanced({
+  transaction,
+  draft,
+  onDraft,
+  group,
+  onGroup,
+  landBound,
+  onLandBound,
+  onCancel,
+  onClear,
+}: {
+  transaction: TransactionMode;
+  draft: SearchFilters;
+  onDraft: (partial: Partial<SearchFilters>) => void;
+  group: HomepageFilterGroupId;
+  onGroup: (next: HomepageFilterGroupId) => void;
+  landBound: "acres" | "sqft";
+  onLandBound: (next: "acres" | "sqft") => void;
+  onCancel: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <>
       <div className="story-home-advanced-chrome">
         <div
           role="tablist"
@@ -466,6 +550,195 @@ function AdvancedMode({
             onDraft={onDraft}
           />
         </div>
+      </div>
+    </>
+  );
+}
+
+function DesktopAdvanced({
+  transaction,
+  draft,
+  onDraft,
+  onCancel,
+  onClear,
+}: {
+  transaction: TransactionMode;
+  draft: SearchFilters;
+  onDraft: (partial: Partial<SearchFilters>) => void;
+  onCancel: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="story-home-desktop-advanced" data-desktop-advanced="">
+      <div className="story-home-advanced-chrome story-home-desktop-chrome">
+        <div className="story-home-advanced-actions flex shrink-0 items-center justify-end gap-1">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
+          >
+            Clear
+          </button>
+          <PrimaryAction count={countActiveFilters(draft)}>Apply</PrimaryAction>
+        </div>
+      </div>
+      {transaction === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
+        <p
+          data-rent-unavailable
+          className="text-[11px] leading-snug text-paper/65"
+        >
+          {RENT_UNAVAILABLE.title}. {RENT_UNAVAILABLE.detail}
+        </p>
+      ) : null}
+      <div className="story-home-desktop-regions">
+        <section className="story-home-desktop-property" data-region="property">
+          <p className="story-home-region-heading">Property</p>
+          <div className="story-home-range-stack">
+            <div className="story-home-range-head" aria-hidden="true">
+              <span />
+              <span>MIN</span>
+              <span>MAX</span>
+              <span />
+            </div>
+            <HomeRangeRow
+              title="Price"
+              min={draft.priceMin}
+              max={draft.priceMax}
+              steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
+              minPlaceholder="Minimum Price"
+              maxPlaceholder="Maximum Price"
+              formatValue={formatMoney}
+              onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
+            />
+            <HomeRangeRow
+              title="Acres"
+              min={draft.acresMin}
+              max={draft.acresMax}
+              steps={ACRE_STEPS}
+              minPlaceholder="Minimum Acreage"
+              maxPlaceholder="Maximum Acreage"
+              formatValue={formatAcres}
+              onChange={(acresMin, acresMax) => onDraft({ acresMin, acresMax })}
+            />
+            <HomeRangeRow
+              title="Sq Ft"
+              min={draft.sqftMin}
+              max={draft.sqftMax}
+              steps={SQFT_STEPS}
+              minPlaceholder="Minimum Sq Ft"
+              maxPlaceholder="Maximum Sq Ft"
+              formatValue={formatSqft}
+              onChange={(sqftMin, sqftMax) => onDraft({ sqftMin, sqftMax })}
+            />
+          </div>
+          <div>
+            <p className="story-home-filter-heading">Property Type</p>
+            <div className="story-home-desktop-types">
+              {DESKTOP_TYPE_TILES.map(({ type, label, Icon }) => {
+                const active = draft.propertyTypes.includes(type);
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    aria-pressed={active}
+                    aria-label={type}
+                    onClick={() =>
+                      onDraft({
+                        propertyTypes: toggleInList(draft.propertyTypes, type),
+                      })
+                    }
+                    className={cn(
+                      "story-home-icon-tile story-press",
+                      active ? "is-active" : null,
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+        <section className="story-home-desktop-features" data-region="features">
+          <p className="story-home-region-heading">Features</p>
+          <ChipRow
+            label="Beds"
+            value={draft.beds}
+            options={BED_OPTIONS}
+            onChange={(beds) => onDraft({ beds })}
+          />
+          <ChipRow
+            label="Baths"
+            value={draft.baths}
+            options={BATH_OPTIONS}
+            onChange={(baths) => onDraft({ baths })}
+          />
+          <div className="story-home-desktop-features-grid">
+              {DESKTOP_FEATURE_TILES.map(({ key, label, Icon, ready }) => {
+                if (!ready) {
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      disabled
+                      data-preview-future={key}
+                      aria-disabled="true"
+                      className="story-home-icon-tile is-future"
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </button>
+                  );
+                }
+                const liveKey = key as "office" | "garage" | "pool";
+                const active = draft[liveKey];
+                return (
+                  <button
+                    key={liveKey}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => onDraft({ [liveKey]: !active })}
+                    className={cn(
+                      "story-home-icon-tile story-press",
+                      active ? "is-active" : null,
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
+            <p className="story-home-filter-heading">HOA</p>
+            <p className="sr-only">Unknown is not No</p>
+            <div className="flex flex-wrap gap-1">
+              {(
+                [
+                  ["any", "Any"],
+                  ["hoa", "Yes"],
+                  ["no_hoa", "No"],
+                ] as const
+              ).map(([value, label]) => (
+                <Chip
+                  key={value}
+                  label={label}
+                  active={draft.hoa === value}
+                  onClick={() => onDraft({ hoa: value as HoaFilter })}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

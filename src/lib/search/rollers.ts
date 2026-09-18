@@ -213,3 +213,14 @@ export function rollerContentWidthPx(steps: RollerStep[]): number {
   const longest = steps.reduce((n, row) => Math.max(n, row.label.length), 3);
   return Math.max(92, Math.min(152, longest * 8 + 40));
 }
+
+/** First finite step strictly above `min`, or -1 when none exists. */
+export function firstFiniteAbove(steps: RollerStep[], min: string): number {
+  const floor = parseBound(min);
+  if (floor == null) return -1;
+  return steps.findIndex((row) => {
+    if (!row.value) return false;
+    const n = parseBound(row.value);
+    return n != null && n > floor;
+  });
+}
