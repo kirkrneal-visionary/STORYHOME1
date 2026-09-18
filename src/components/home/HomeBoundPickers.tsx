@@ -13,6 +13,7 @@ import {
   formatMoney,
   prepareBoundSteps,
   rollerContentWidthPx,
+  withExactStep,
   type RollerStep,
 } from "@/lib/search/rollers";
 
@@ -41,7 +42,7 @@ export function HomeBoundPickers({
   const [exact, setExact] = useState<"min" | "max" | null>(null);
   const width = rollerContentWidthPx(steps);
   const minSteps = useMemo(
-    () => prepareBoundSteps(steps, min, max, "min"),
+    () => withExactStep(withExactStep(steps, min), max),
     [steps, min, max],
   );
   const maxSteps = useMemo(
