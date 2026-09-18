@@ -224,3 +224,16 @@ export function firstFiniteAbove(steps: RollerStep[], min: string): number {
     return n != null && n > floor;
   });
 }
+
+/** Last finite step strictly below `max`, or -1 when none exists. */
+export function firstFiniteBelow(steps: RollerStep[], max: string): number {
+  const ceil = parseBound(max);
+  if (ceil == null) return -1;
+  for (let i = steps.length - 1; i >= 0; i--) {
+    const row = steps[i];
+    if (!row.value) continue;
+    const n = parseBound(row.value);
+    if (n != null && n < ceil) return i;
+  }
+  return -1;
+}

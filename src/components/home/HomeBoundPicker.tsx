@@ -2,7 +2,16 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import {
+  coastDelays,
+  dragDeltaSteps,
+  flickTravel,
+  interpretWheel,
+  sampleVelocity,
+  WHEEL_PIXEL,
+} from "@/lib/search/roller-physics";
+import {
   firstFiniteAbove,
+  firstFiniteBelow,
   stepIndex,
   type RollerStep,
 } from "@/lib/search/rollers";
@@ -11,7 +20,7 @@ import { cn } from "@/lib/utils";
 export const PICKER_ROW_H = 22;
 export const PICKER_VISIBLE = 5;
 export const PICKER_VISIBLE_COMPACT = 3;
-const WHEEL_PIXEL = 40;
+export { WHEEL_PIXEL };
 
 export function pickerVisibleCount(compact: boolean) {
   return compact ? PICKER_VISIBLE_COMPACT : PICKER_VISIBLE;
@@ -38,7 +47,9 @@ export function HomeBoundPicker({
   disabled,
   hideLabel,
   anticipateAfter,
+  anticipateBefore,
   visibleCount,
+  velocityPhysics,
 }: {
   label: string;
   accessibleLabel?: string;
@@ -48,7 +59,9 @@ export function HomeBoundPicker({
   disabled?: boolean;
   hideLabel?: boolean;
   anticipateAfter?: string;
+  anticipateBefore?: string;
   visibleCount?: number;
+  velocityPhysics?: boolean;
 }) {
   const listId = useId();
   const compact = useCompactPicker();
@@ -62,23 +75,34 @@ export function HomeBoundPicker({
   const valueRef = useRef(value);
   const stepsRef = useRef(steps);
   const onChangeRef = useRef(onChange);
-  const anticipateRef = useRef(anticipateAfter);
+  const anticipateAfterRef = useRef(anticipateAfter);
+  const anticipateBeforeRef = useRef(anticipateBefore);
+  const velocityRef = useRef(Boolean(velocityPhysics));
   const [index, setIndex] = useState(() => stepIndex(steps, value));
 
   valueRef.current = value;
   stepsRef.current = steps;
   onChangeRef.current = onChange;
-  anticipateRef.current = anticipateAfter;
+  anticipateAfterRef.current = anticipateAfter;
+  anticipateBeforeRef.current = anticipateBefore;
+  velocityRef.current = Boolean(velocityPhysics);
 
   function clamp(next: number) {
     return Math.max(0, Math.min(stepsRef.current.length - 1, next));
   }
 
   function project(from: number, delta: number) {
-    const hint = anticipateRef.current;
-    if (hint && !valueRef.current && from === 0 && delta > 0) {
-      const above = firstFiniteAbove(stepsRef.current, hint);
-      if (above > 0) return clamp(above + delta - 1);
+    if (!valueRef.current && from === 0 && delta > 0) {
+      const after = anticipateAfterRef.current;
+      if (after) {
+        const above = firstFiniteAbove(stepsRef.current, after);
+        if (above > 0) return clamp(above + delta - 1);
+      }
+      const before = anticipateBeforeRef.current;
+      if (before) {
+        const below = firstFiniteBelow(stepsRef.current, before);
+        if (below > 0) return clamp(below + delta - 1);
+      }
     }
     return clamp(from + delta);
   }
@@ -110,37 +134,79 @@ export function HomeBoundPicker({
       let dy = event.deltaY;
       if (event.deltaMode === 1) dy *= 16;
       if (event.deltaMode === 2) dy *= PICKER_ROW_H;
-      wheelAcc += dy;
-      if (Math.abs(wheelAcc) < WHEEL_PIXEL) return;
-      const dir = Math.sign(wheelAcc);
-      wheelAcc = 0;
-      settle(project(pending.current, dir));
+      if (!velocityRef.current) {
+        wheelAcc += dy;
+        if (Math.abs(wheelAcc) < WHEEL_PIXEL) return;
+        const dir = Math.sign(wheelAcc);
+        wheelAcc = 0;
+        settle(project(pending.current, dir));
+        return;
+      }
+      const next = interpretWheel(wheelAcc, dy);
+      wheelAcc = next.acc;
+      if (next.steps) settle(project(pending.current, next.steps));
     }
     node.addEventListener("wheel", onWheel, { passive: false });
     return () => node.removeEventListener("wheel", onWheel);
   }, [disabled]);
 
-  const drag = useRef<{ startY: number; startIndex: number } | null>(null);
+  const drag = useRef<{
+    startY: number;
+    startIndex: number;
+    samples: { t: number; y: number }[];
+  } | null>(null);
+  const coastTimers = useRef<number[]>([]);
+
+  function clearCoast() {
+    for (const id of coastTimers.current) window.clearTimeout(id);
+    coastTimers.current = [];
+  }
+
+  useEffect(() => () => clearCoast(), []);
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     if (disabled) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { startY: event.clientY, startIndex: pending.current };
+    clearCoast();
+    drag.current = {
+      startY: event.clientY,
+      startIndex: pending.current,
+      samples: [{ t: performance.now(), y: event.clientY }],
+    };
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!drag.current) return;
-    const moved = Math.round(
-      (drag.current.startY - event.clientY) / PICKER_ROW_H,
-    );
+    const moved = dragDeltaSteps(drag.current.startY, event.clientY, PICKER_ROW_H);
+    drag.current.samples.push({ t: performance.now(), y: event.clientY });
+    if (drag.current.samples.length > 6) drag.current.samples.shift();
     settle(project(drag.current.startIndex, moved));
   }
 
   function onPointerUp() {
     if (!drag.current) return;
+    const samples = drag.current.samples;
     drag.current = null;
-    settle(pending.current);
+    if (!velocityRef.current) {
+      settle(pending.current);
+      return;
+    }
+    const travel = flickTravel(sampleVelocity(samples));
+    if (!travel) {
+      settle(pending.current);
+      return;
+    }
+    const delays = coastDelays(travel);
+    const dir = Math.sign(travel);
+    let waited = 0;
+    delays.forEach((ms) => {
+      waited += ms;
+      const id = window.setTimeout(() => {
+        settle(project(pending.current, dir));
+      }, waited);
+      coastTimers.current.push(id);
+    });
   }
 
   function move(delta: number) {
@@ -150,9 +216,14 @@ export function HomeBoundPicker({
   const current = steps[index];
   const above =
     anticipateAfter && !value ? firstFiniteAbove(steps, anticipateAfter) : -1;
+  const below =
+    anticipateBefore && !value ? firstFiniteBelow(steps, anticipateBefore) : -1;
   const neighborhood = offsets.map((offset) => {
     if (offset > 0 && above > 0) {
       return { offset, step: steps[above + offset - 1] };
+    }
+    if (offset > 0 && below > 0) {
+      return { offset, step: steps[below + offset - 1] };
     }
     return { offset, step: steps[index + offset] };
   });
@@ -173,6 +244,7 @@ export function HomeBoundPicker({
         aria-valuetext={current?.label ?? "Any"}
         tabIndex={disabled ? -1 : 0}
         data-home-picker=""
+        data-physics={velocityPhysics ? "velocity" : "classic"}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

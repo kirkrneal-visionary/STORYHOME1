@@ -94,6 +94,8 @@ export function MobileRangeEditor({
               onChange={changeMin}
               hideLabel
               visibleCount={ROW_VISIBLE}
+              velocityPhysics
+              anticipateBefore={max || undefined}
             />
             <HomeBoundPicker
               label="MAX"
@@ -103,6 +105,7 @@ export function MobileRangeEditor({
               onChange={changeMax}
               hideLabel
               visibleCount={ROW_VISIBLE}
+              velocityPhysics
               anticipateAfter={min || undefined}
             />
           </>

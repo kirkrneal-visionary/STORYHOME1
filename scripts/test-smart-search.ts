@@ -61,6 +61,7 @@ import {
   constrainMaxSteps,
   constrainMinSteps,
   firstFiniteAbove,
+  firstFiniteBelow,
   prepareBoundSteps,
   rollerContentWidthPx,
   sanitizeBoundFields,
@@ -74,6 +75,11 @@ import {
   formatExactDisplay,
   interpretExactTyping,
 } from "../src/lib/search/exact-input.ts";
+import {
+  dragDeltaSteps,
+  flickTravel,
+  interpretWheel,
+} from "../src/lib/search/roller-physics.ts";
 import type { DemoListing } from "../src/lib/demo-data.ts";
 
 const root = process.cwd();
@@ -412,7 +418,10 @@ assert.match(picker, /PICKER_VISIBLE/);
 assert.match(picker, /PICKER_VISIBLE_COMPACT/);
 assert.match(picker, /useCompactPicker/);
 assert.match(picker, /anticipateAfter/);
+assert.match(picker, /anticipateBefore/);
 assert.match(picker, /firstFiniteAbove/);
+assert.match(picker, /firstFiniteBelow/);
+assert.match(picker, /velocityPhysics/);
 assert.match(picker, /onPick/);
 assert.doesNotMatch(picker, /overflow-y-auto/);
 assert.doesNotMatch(picker, /scrollTo/);
@@ -455,11 +464,15 @@ assert.match(css, /story-home-range-summary/);
 assert.match(css, /:has\(\[data-search-view="advanced"\]\)/);
 const mobileEditor = read("src/components/home/MobileRangeEditor.tsx");
 assert.match(mobileEditor, /anticipateAfter/);
+assert.match(mobileEditor, /anticipateBefore/);
+assert.match(mobileEditor, /velocityPhysics/);
+assert.doesNotMatch(rangeRow, /velocityPhysics/);
 assert.match(mobileEditor, /visibleCount=\{ROW_VISIBLE\}/);
 assert.match(mobileEditor, /Minimum Price|minPlaceholder/);
 assert.match(mobileEditor, /ExactBoundInput/);
 assert.doesNotMatch(mobileEditor, /setExact\("min"\)/);
 assert.match(hub, /Square Feet/);
+assert.match(hub, /Up to /);
 assert.match(css, /--m1-editor-h/);
 const exactInput = read("src/lib/search/exact-input.ts");
 assert.match(exactInput, /formatExactDisplay/);
@@ -785,6 +798,15 @@ assert.ok(rollerContentWidthPx(ACRE_STEPS) <= rollerContentWidthPx(BUY_PRICE_STE
 assert.equal(BUY_PRICE_STEPS[firstFiniteAbove(BUY_PRICE_STEPS, "350000")].label, "$375,000");
 assert.equal(ACRE_STEPS[firstFiniteAbove(ACRE_STEPS, "10")].value, "15");
 assert.equal(firstFiniteAbove(BUY_PRICE_STEPS, ""), -1);
+assert.equal(BUY_PRICE_STEPS[firstFiniteBelow(BUY_PRICE_STEPS, "500000")].value, "450000");
+assert.equal(firstFiniteBelow(BUY_PRICE_STEPS, ""), -1);
+assert.deepEqual(interpretWheel(0, 12), { acc: 12, steps: 0 });
+assert.equal(interpretWheel(0, 80).steps, 1);
+assert.ok(Math.abs(interpretWheel(0, 220).steps) > 1);
+assert.equal(interpretWheel(40, 3).steps, 0);
+assert.equal(dragDeltaSteps(100, 78, 22), 1);
+assert.equal(flickTravel(0), 0);
+assert.ok(Math.abs(flickTravel(-0.8)) >= 1);
 const buyPreset = BUY_PRICE_PRESETS.find((row) => row.id === "350-500");
 const rentPreset = RENT_PRICE_PRESETS.find((row) => row.id === "1500-2000");
 assert.ok(buyPreset && rentPreset);

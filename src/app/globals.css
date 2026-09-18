@@ -1229,6 +1229,13 @@ html[data-home-hub] .story-route-page {
 .story-home-search-shell[data-search-view="advanced"].story-glass {
   background: color-mix(in srgb, var(--env-1) 84%, transparent);
 }
+@media (max-width: 767px) {
+  .story-home-search-shell[data-search-view="advanced"].story-glass {
+    background: color-mix(in srgb, var(--env-1) 86%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
 @media (min-width: 1024px) {
   .story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
     overflow: hidden;
@@ -1496,6 +1503,8 @@ html[data-home-hub] .story-route-page {
   background: transparent;
 }
 .story-home-range-summary > :last-child {
+  min-width: 6.5rem;
+  text-align: right;
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, var(--paper) 62%, transparent);
 }
@@ -1631,6 +1640,7 @@ html[data-home-hub] .story-route-page {
 .story-home-picker-row {
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .story-home-filter-input {
   height: 2.25rem;

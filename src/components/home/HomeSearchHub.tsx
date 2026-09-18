@@ -141,11 +141,13 @@ function summarizeRange(
   plusUnit?: string,
 ): string {
   if (!min && !max) return "Any – Any";
+  const strip = (raw: string) => format(raw).replace(/ ac$| sqft$/, "");
   if (min && !max) {
-    if (plusUnit) return `${format(min).replace(/ ac$| sqft$/, "")}+ ${plusUnit}`;
-    return `${format(min)} – Any`;
+    if (plusUnit) return `${strip(min)}+ ${plusUnit}`;
+    return `${format(min)}+`;
   }
-  if (!min && max) return `Any – ${format(max)}`;
+  if (!min && max) return `Up to ${format(max)}`;
+  if (plusUnit) return `${strip(min)} – ${strip(max)} ${plusUnit}`;
   return `${format(min)} – ${format(max)}`;
 }
 

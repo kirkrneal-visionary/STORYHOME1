@@ -48,7 +48,10 @@ export function ExactBoundInput({
       inputMode={exactInputMode(kind)}
       value={text}
       placeholder={placeholder}
-      onFocus={() => setFocused(true)}
+      onFocus={(e) => {
+        setFocused(true);
+        e.currentTarget.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }}
       onBlur={() => {
         setFocused(false);
         setText(formatExactDisplay(value, kind));
