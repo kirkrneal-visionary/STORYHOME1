@@ -1262,11 +1262,10 @@ html[data-home-hub] .story-route-page {
   gap: 0.45rem;
 }
 .story-home-feature-cluster {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.45rem 0.85rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) auto;
+  align-items: start;
+  gap: 0.35rem 0.65rem;
 }
 .story-home-feature-tiles {
   display: flex;
@@ -1276,6 +1275,15 @@ html[data-home-hub] .story-route-page {
 .story-home-feature-tile {
   display: inline-flex;
   min-height: 2rem;
+}
+@media (max-width: 767px) {
+  .story-home-home-land .story-home-bound-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
 }
 @media (min-width: 768px) {
   .story-home-price-features,

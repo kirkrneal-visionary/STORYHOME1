@@ -378,6 +378,7 @@ assert.doesNotMatch(heroSrc, /sticky/);
 assert.doesNotMatch(heroSrc, /-mt-24/);
 assert.match(css, /story-home-advanced-body/);
 assert.match(css, /story-home-filter-heading/);
+assert.match(css, /story-home-bound-title/);
 assert.match(css, /story-home-price-features/);
 assert.match(css, /story-home-picker-band/);
 assert.match(css, /grid-template-areas: "editor"/);

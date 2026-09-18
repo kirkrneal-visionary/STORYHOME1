@@ -43,7 +43,7 @@ export function HomeBoundPickers({
 
   return (
     <div data-bound-pickers className="relative">
-      <div className="mb-0.5 flex items-baseline justify-between gap-2">
+      <div className="story-home-bound-title mb-0.5 flex items-baseline justify-between gap-2">
         <p className="story-home-filter-heading">{title}</p>
         <p className="text-[11px] text-paper/45">{unit}</p>
       </div>
