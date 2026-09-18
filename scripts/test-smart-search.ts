@@ -56,6 +56,7 @@ import {
   BUY_PRICE_STEPS,
   RENT_PRICE_STEPS,
   SQFT_STEPS,
+  YEAR_STEPS,
   applyMaxChange,
   applyMinChange,
   constrainMaxSteps,
@@ -472,6 +473,7 @@ assert.match(mobileEditor, /Minimum Price|minPlaceholder/);
 assert.match(mobileEditor, /ExactBoundInput/);
 assert.doesNotMatch(mobileEditor, /setExact\("min"\)/);
 assert.match(hub, /Square Feet/);
+assert.match(hub, /YEAR_STEPS/);
 assert.match(hub, /story-home-measure-row/);
 assert.match(hub, /data-measure-min/);
 assert.match(hub, /data-measure-max/);
@@ -483,6 +485,8 @@ assert.match(css, /--m1-icon/);
 assert.match(css, /story-home-chip-track/);
 assert.match(css, /story-home-measure-row/);
 assert.match(css, /story-home-measure-zone/);
+assert.match(css, /text-align: center/);
+assert.match(css, /padding-bottom: 0\.42rem/);
 assert.match(hub, /story-home-chip-track/);
 assert.match(css, /\.story-home-mobile-editor-body \{[\s\S]*?max-width: 100%/);
 const exactInput = read("src/lib/search/exact-input.ts");
@@ -724,6 +728,13 @@ assert.deepEqual(
 );
 const reset = applySearchFilters(fixtures, DEFAULT_SEARCH_FILTERS);
 assert.ok(reset.length >= 2);
+const byYear = applySearchFilters(fixtures, {
+  ...DEFAULT_SEARCH_FILTERS,
+  yearMin: "1985",
+  yearMax: "2000",
+});
+assert.ok(byYear.every((row) => row.yearBuilt >= 1985 && row.yearBuilt <= 2000));
+assert.equal(interpretExactTyping("2020", "year").display, "2020");
 
 const rentPage = read("src/app/rent/page.tsx");
 assert.match(rentPage, /does not have rental inventory/);
@@ -736,9 +747,18 @@ assert.ok(BUY_PRICE_STEPS.length < 40);
 assert.ok(RENT_PRICE_STEPS.length < 20);
 assert.equal(ACRE_STEPS[0].value, "");
 assert.equal(ACRE_STEPS[0].label, "Any");
-assert.ok(ACRE_STEPS.length < 20);
+assert.ok(ACRE_STEPS.some((row) => row.value === "0.25"));
+assert.ok(ACRE_STEPS.some((row) => row.value === "8"));
+assert.ok(ACRE_STEPS.some((row) => row.value === "1000"));
+assert.ok(ACRE_STEPS.length < 32);
 assert.equal(SQFT_STEPS[0].value, "");
-assert.ok(SQFT_STEPS.length < 20);
+assert.ok(SQFT_STEPS.some((row) => row.value === "800"));
+assert.ok(SQFT_STEPS.some((row) => row.value === "8000"));
+assert.ok(SQFT_STEPS.length < 24);
+assert.equal(YEAR_STEPS[0].value, "");
+assert.ok(YEAR_STEPS.some((row) => row.value === "1990"));
+assert.ok(YEAR_STEPS.some((row) => row.value === "2026"));
+assert.ok(YEAR_STEPS.length < 40);
 assert.ok(withExactStep(BUY_PRICE_STEPS, "375000").some((row) => row.value === "375000"));
 assert.equal(parseBound(""), null);
 assert.equal(parseBound("0"), 0);
@@ -751,7 +771,7 @@ function valuesOf(steps: { value: string }[]) {
 assert.deepEqual(valuesOf(constrainMaxSteps(ACRE_STEPS, "")), valuesOf(ACRE_STEPS));
 assert.deepEqual(
   valuesOf(constrainMaxSteps(ACRE_STEPS, "10")),
-  ["", "10", "15", "20", "30", "40", "50", "80", "100"],
+  ["", "10", "15", "20", "25", "30", "40", "50", "80", "100", "250", "500", "1000"],
 );
 assert.ok(!valuesOf(constrainMaxSteps(ACRE_STEPS, "10")).includes("0.5"));
 assert.ok(!valuesOf(constrainMaxSteps(ACRE_STEPS, "10")).includes("5"));
@@ -861,6 +881,10 @@ assert.equal(interpretExactTyping("1250.5", "acres").display, "1,250.5");
 assert.equal(interpretExactTyping("1250.5", "acres").canonical, "1250.5");
 assert.equal(interpretExactTyping("12.3.4", "acres").canonical, "12.34");
 assert.equal(interpretExactTyping("1,250", "acres").display, "1,250");
+assert.equal(interpretExactTyping("2020", "year").display, "2020");
+assert.equal(interpretExactTyping("2020", "year").canonical, "2020");
+assert.equal(interpretExactTyping("2,020", "year").display, "2020");
+assert.equal(formatExactDisplay("2020", "year"), "2020");
 assert.doesNotMatch(interpretExactTyping("$1,250,000", "price").canonical, /[$,]/);
 assert.equal(finalizeExact("12.50", "acres"), "12.5");
 assert.equal(

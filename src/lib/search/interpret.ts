@@ -112,6 +112,8 @@ function compactAdvanced(extra: Partial<SearchFilters>): Partial<SearchFilters> 
     "sqftMax",
     "acresMin",
     "acresMax",
+    "yearMin",
+    "yearMax",
     "beds",
     "baths",
   ] as const) {
@@ -520,6 +522,8 @@ export function planToMarketplaceParams(plan: SearchPlan): URLSearchParams {
   if (plan.filters.keyword) p.set("keyword", plan.filters.keyword);
   if (plan.filters.sqftMin) p.set("sqftMin", plan.filters.sqftMin);
   if (plan.filters.sqftMax) p.set("sqftMax", plan.filters.sqftMax);
+  if (plan.filters.yearMin) p.set("yearMin", plan.filters.yearMin);
+  if (plan.filters.yearMax) p.set("yearMax", plan.filters.yearMax);
   if (plan.filters.office) p.set("office", "1");
   if (plan.filters.garage) p.set("garage", "1");
   if (plan.filters.pool) p.set("pool", "1");

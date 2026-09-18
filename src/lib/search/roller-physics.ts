@@ -4,8 +4,8 @@
  */
 
 export const WHEEL_PIXEL = 40;
-export const FLICK_DEAD_PX_S = 220;
-export const FLICK_MAX_STEPS = 8;
+export const FLICK_DEAD_PX_S = 200;
+export const FLICK_MAX_STEPS = 16;
 
 export function interpretWheel(
   acc: number,
@@ -21,7 +21,7 @@ export function interpretWheel(
 
   if (fine) return { acc: next - dir * threshold, steps: dir };
 
-  const extra = Math.min(5, Math.floor((Math.abs(next) - threshold) / 56));
+  const extra = Math.min(8, Math.floor((Math.abs(next) - threshold) / 48));
   return { acc: 0, steps: dir * (1 + extra) };
 }
 
@@ -38,7 +38,7 @@ export function flickTravel(velocityPxPerMs: number): number {
   const pxPerS = -velocityPxPerMs * 1000;
   const speed = Math.abs(pxPerS);
   if (speed < FLICK_DEAD_PX_S) return 0;
-  const steps = Math.min(FLICK_MAX_STEPS, Math.max(1, Math.round(speed / 380)));
+  const steps = Math.min(FLICK_MAX_STEPS, Math.max(1, Math.round(speed / 240)));
   return Math.sign(pxPerS) * steps;
 }
 
@@ -63,6 +63,6 @@ export function sampleVelocity(
 export function coastDelays(travel: number): number[] {
   const n = Math.abs(travel);
   const delays: number[] = [];
-  for (let i = 0; i < n; i++) delays.push(26 + i * 16);
+  for (let i = 0; i < n; i++) delays.push(16 + i * 11);
   return delays;
 }

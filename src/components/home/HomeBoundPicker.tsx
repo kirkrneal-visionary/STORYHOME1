@@ -278,6 +278,8 @@ export function HomeBoundPicker({
                 key="selected"
                 id={`${listId}-${index}`}
                 selected
+                depth={0}
+                wheel={Boolean(velocityPhysics)}
                 label={step?.label ?? "Any"}
               >
                 {step?.label ?? "Any"}
@@ -286,6 +288,8 @@ export function HomeBoundPicker({
               <PickerRow
                 key={offset}
                 faded
+                depth={Math.abs(offset)}
+                wheel={Boolean(velocityPhysics)}
                 disabled={!step}
                 onPick={() => settle(project(index, offset))}
               >
@@ -303,6 +307,8 @@ function PickerRow({
   children,
   faded,
   selected,
+  depth = 0,
+  wheel,
   id,
   label,
   disabled,
@@ -311,22 +317,38 @@ function PickerRow({
   children: React.ReactNode;
   faded?: boolean;
   selected?: boolean;
+  depth?: number;
+  wheel?: boolean;
   id?: string;
   label?: string;
   disabled?: boolean;
   onPick?: () => void;
 }) {
   const className = cn(
-    "story-home-picker-row flex w-full items-center justify-center px-1 text-[12px] font-semibold",
-    selected ? "text-paper" : faded ? "text-paper/32" : "text-paper",
+    "story-home-picker-row flex w-full items-center justify-center px-1 text-[12px]",
+    selected
+      ? wheel
+        ? "font-medium text-paper"
+        : "font-semibold text-paper"
+      : faded
+        ? "font-normal text-paper/32"
+        : "font-semibold text-paper",
     onPick && !disabled ? "cursor-pointer" : null,
   );
-  const style = { height: PICKER_ROW_H };
+  const depthStyle = wheel
+    ? {
+        height: PICKER_ROW_H,
+        opacity: selected ? 1 : depth >= 2 ? 0.22 : 0.44,
+        transform: selected ? "none" : `scale(${depth >= 2 ? 0.86 : 0.93})`,
+      }
+    : { height: PICKER_ROW_H };
+  const style = depthStyle;
   if (onPick) {
     return (
       <button
         type="button"
         disabled={disabled}
+        data-depth={depth}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={onPick}
         className={className}
@@ -342,6 +364,7 @@ function PickerRow({
       role={selected ? "option" : undefined}
       aria-selected={selected || undefined}
       aria-label={label}
+      data-depth={depth}
       className={className}
       style={style}
     >

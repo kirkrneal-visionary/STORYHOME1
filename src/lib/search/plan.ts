@@ -74,6 +74,8 @@ export function allowlistedAdvanced(input: unknown): Partial<SearchFilters> {
     "sqftMax",
     "acresMin",
     "acresMax",
+    "yearMin",
+    "yearMax",
     "beds",
     "baths",
   ] as const) {

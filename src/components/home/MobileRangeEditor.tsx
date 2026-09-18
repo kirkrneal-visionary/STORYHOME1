@@ -35,12 +35,12 @@ export function MobileRangeEditor({
 }) {
   const [exact, setExact] = useState(false);
   const minSteps = useMemo(
-    () => prepareBoundSteps(steps, min, max, "min"),
-    [steps, min, max],
+    () => prepareBoundSteps(steps, min, max, "min", formatValue),
+    [steps, min, max, formatValue],
   );
   const maxSteps = useMemo(
-    () => prepareBoundSteps(steps, max, min, "max"),
-    [steps, min, max],
+    () => prepareBoundSteps(steps, max, min, "max", formatValue),
+    [steps, min, max, formatValue],
   );
 
   function changeMin(nextMin: string) {

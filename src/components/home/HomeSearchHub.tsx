@@ -32,7 +32,9 @@ import {
   RENT_PRICE_STEPS,
   sanitizeBoundFields,
   SQFT_STEPS,
+  YEAR_STEPS,
   formatMoney,
+  formatYear,
 } from "@/lib/search/rollers";
 import {
   RENTAL_INVENTORY_AVAILABLE,
@@ -83,7 +85,7 @@ const MOBILE_TYPE_TILES = [
   },
 ];
 
-type MobileRangeId = "price" | "acres" | "sqft";
+type MobileRangeId = "price" | "acres" | "sqft" | "year";
 
 const DESKTOP_FEATURE_TILES = [
   { key: "office" as const, label: "Office", Icon: OfficeIcon, ready: true },
@@ -484,17 +486,29 @@ function MobileAdvanced({
             onChange: (sqftMin: string, sqftMax: string) =>
               onDraft({ sqftMin, sqftMax }),
           }
-        : {
-            title: "Price",
-            min: draft.priceMin,
-            max: draft.priceMax,
-            steps: priceSteps,
-            minPlaceholder: "Minimum Price",
-            maxPlaceholder: "Maximum Price",
-            formatValue: formatMoney,
-            onChange: (priceMin: string, priceMax: string) =>
-              onDraft({ priceMin, priceMax }),
-          };
+        : activeRange === "year"
+          ? {
+              title: "Year",
+              min: draft.yearMin,
+              max: draft.yearMax,
+              steps: YEAR_STEPS,
+              minPlaceholder: "Minimum Year",
+              maxPlaceholder: "Maximum Year",
+              formatValue: formatYear,
+              onChange: (yearMin: string, yearMax: string) =>
+                onDraft({ yearMin, yearMax }),
+            }
+          : {
+              title: "Price",
+              min: draft.priceMin,
+              max: draft.priceMax,
+              steps: priceSteps,
+              minPlaceholder: "Minimum Price",
+              maxPlaceholder: "Maximum Price",
+              formatValue: formatMoney,
+              onChange: (priceMin: string, priceMax: string) =>
+                onDraft({ priceMin, priceMax }),
+            };
 
   function toggleRange(next: MobileRangeId) {
     setActiveRange((cur) => (cur === next ? null : next));
@@ -548,11 +562,20 @@ function MobileAdvanced({
             onToggle={() => toggleRange("acres")}
           />
           <MeasureZone
-            label="Square Feet"
+            label="Sq Ft"
+            summary="Square Feet"
             min={boundDisplay(draft.sqftMin, compactSqft)}
             max={boundDisplay(draft.sqftMax, compactSqft)}
             expanded={activeRange === "sqft"}
             onToggle={() => toggleRange("sqft")}
+          />
+          <MeasureZone
+            label="Year"
+            accessibleLabel="Year Built"
+            min={boundDisplay(draft.yearMin, formatYear)}
+            max={boundDisplay(draft.yearMax, formatYear)}
+            expanded={activeRange === "year"}
+            onToggle={() => toggleRange("year")}
           />
         </div>
         <div
@@ -564,7 +587,7 @@ function MobileAdvanced({
             <MobileRangeEditor key={activeRange} {...editor} />
           ) : (
             <p className="story-home-mobile-editor-hint">
-              Select Price, Acres, or Square Feet
+              Select Price, Acres, Sq Ft, or Year
             </p>
           )}
         </div>
@@ -815,12 +838,16 @@ function DesktopAdvanced({
 
 function MeasureZone({
   label,
+  summary,
+  accessibleLabel,
   min,
   max,
   expanded,
   onToggle,
 }: {
   label: string;
+  summary?: string;
+  accessibleLabel?: string;
   min: string;
   max: string;
   expanded: boolean;
@@ -829,7 +856,8 @@ function MeasureZone({
   return (
     <button
       type="button"
-      data-range-summary={label}
+      data-range-summary={summary ?? label}
+      aria-label={accessibleLabel ?? label}
       aria-expanded={expanded}
       onClick={onToggle}
       className={cn(

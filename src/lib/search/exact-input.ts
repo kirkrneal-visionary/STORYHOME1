@@ -3,7 +3,7 @@
  * SearchState stores a clean number string. Commas and $ are display only.
  */
 
-export type ExactKind = "price" | "acres" | "sqft";
+export type ExactKind = "price" | "acres" | "sqft" | "year";
 
 const INT_CAP = 12;
 const ACRE_FRAC_CAP = 4;
@@ -30,11 +30,14 @@ function stripToBody(raw: string, allowDecimal: boolean): string {
   return body;
 }
 
-function splitBody(body: string): { intPart: string; frac: string | null; trailingDot: boolean } {
+function splitBody(
+  body: string,
+  intCap = INT_CAP,
+): { intPart: string; frac: string | null; trailingDot: boolean } {
   if (!body || body === ".") return { intPart: "", frac: null, trailingDot: body === "." };
   const trailingDot = body.endsWith(".");
   const [intRaw = "", fracRaw] = body.split(".");
-  const intPart = intRaw.replace(/^0+(?=\d)/, "").slice(0, INT_CAP);
+  const intPart = intRaw.replace(/^0+(?=\d)/, "").slice(0, intCap);
   if (fracRaw == null) return { intPart, frac: null, trailingDot: false };
   return {
     intPart: intPart || "0",
@@ -63,6 +66,7 @@ function displayFromParts(
 ): string {
   if (!intPart && !trailingDot && frac == null) return kind === "price" ? "" : "";
   if (!intPart && trailingDot) return kind === "price" ? "$" : ".";
+  if (kind === "year") return (intPart || "").slice(0, 4);
   const grouped = groupInt(intPart || "0");
   if (kind === "price") return `$${grouped}`;
   if (kind === "sqft" || frac == null) return trailingDot ? `${grouped}.` : grouped;
@@ -73,7 +77,7 @@ export function formatExactDisplay(canonical: string, kind: ExactKind): string {
   if (!canonical) return "";
   const allowDecimal = kind === "acres";
   const body = stripToBody(canonical, allowDecimal);
-  const parts = splitBody(body);
+  const parts = splitBody(body, kind === "year" ? 4 : INT_CAP);
   return displayFromParts(kind, parts.intPart, parts.frac, false);
 }
 
@@ -83,7 +87,7 @@ export function interpretExactTyping(
 ): { display: string; canonical: string } {
   const allowDecimal = kind === "acres";
   const body = stripToBody(raw, allowDecimal);
-  const parts = splitBody(body);
+  const parts = splitBody(body, kind === "year" ? 4 : INT_CAP);
   return {
     display: displayFromParts(kind, parts.intPart, parts.frac, parts.trailingDot),
     canonical: canonicalFromParts(parts.intPart, parts.frac, parts.trailingDot),
@@ -139,6 +143,7 @@ export function caretFromNumericCount(
 export function exactKindFromTitle(title: string): ExactKind {
   if (title === "Price") return "price";
   if (title === "Acres") return "acres";
+  if (title === "Year" || title === "Year Built") return "year";
   return "sqft";
 }
 
