@@ -1133,8 +1133,8 @@ html[data-header-state="minimal"] .story-living-mark {
 /*
  * Homepage layers — one scheme:
  * header + dock 50, search shell 20, page content 0.
- * Shared Search/Advanced footprint (proposed adjustment so rollers fit
- * without shrinking targets): 16.25rem phone / 14.75rem desktop.
+ * Shell hugs the active mode. Inactive mode is out of flow so it
+ * cannot reserve the taller editor height.
  */
 html[data-home-hub] .story-route-page {
   will-change: auto;
@@ -1147,42 +1147,40 @@ html[data-home-hub] .story-route-surface {
   position: sticky;
   top: var(--story-safe-top);
   z-index: 20;
-  height: 16.25rem;
-}
-@media (min-width: 768px) {
-  .story-home-search-shell {
-    height: 14.75rem;
-  }
+  height: auto;
 }
 .story-home-search {
-  position: relative;
   z-index: 20;
 }
 .story-home-modes {
-  display: grid;
-  grid-template-areas: "stack";
+  position: relative;
 }
 .story-home-mode {
-  grid-area: stack;
-  min-height: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity 240ms ease;
 }
 .story-home-mode[data-active="true"] {
+  position: relative;
   opacity: 1;
   pointer-events: auto;
+}
+.story-home-mode:not([data-active="true"]) {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
 }
 .story-home-search-shell[data-reduced="true"] .story-home-mode {
   transition: none;
 }
-.story-home-roller {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  overscroll-behavior: contain;
+.story-home-picker {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
 }
-.story-home-roller::-webkit-scrollbar {
-  display: none;
+.story-home-picker-row {
+  user-select: none;
+  -webkit-user-select: none;
 }
 .story-home-filter-input {
   height: 2.25rem;

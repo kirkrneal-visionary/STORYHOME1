@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { HomeValueRoller } from "@/components/home/HomeValueRoller";
+import { useMemo, useState } from "react";
+import { HomeBoundPicker } from "@/components/home/HomeBoundPicker";
 import { rangeError } from "@/lib/search/transaction";
 import {
   formatMoney,
@@ -9,7 +9,7 @@ import {
   type RollerStep,
 } from "@/lib/search/rollers";
 
-export function HomeBoundRollers({
+export function HomeBoundPickers({
   title,
   unit,
   min,
@@ -17,6 +17,7 @@ export function HomeBoundRollers({
   minLabel,
   maxLabel,
   steps,
+  formatValue = formatMoney,
   onChange,
 }: {
   title: string;
@@ -26,15 +27,16 @@ export function HomeBoundRollers({
   minLabel: string;
   maxLabel: string;
   steps: RollerStep[];
+  formatValue?: (raw: string) => string;
   onChange: (min: string, max: string) => void;
 }) {
   const [exact, setExact] = useState<"min" | "max" | null>(null);
-  const minSteps = withExactStep(steps, min);
-  const maxSteps = withExactStep(steps, max);
+  const minSteps = useMemo(() => withExactStep(steps, min), [steps, min]);
+  const maxSteps = useMemo(() => withExactStep(steps, max), [steps, max]);
   const error = rangeError(min, max);
 
   return (
-    <div data-price-rollers>
+    <div data-bound-pickers>
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <p className="font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
           {title}
@@ -50,7 +52,7 @@ export function HomeBoundRollers({
             onDone={() => setExact(null)}
           />
         ) : (
-          <HomeValueRoller
+          <HomeBoundPicker
             label={minLabel}
             steps={minSteps}
             value={min}
@@ -65,7 +67,7 @@ export function HomeBoundRollers({
             onDone={() => setExact(null)}
           />
         ) : (
-          <HomeValueRoller
+          <HomeBoundPicker
             label={maxLabel}
             steps={maxSteps}
             value={max}
@@ -91,7 +93,7 @@ export function HomeBoundRollers({
           </button>
         </div>
         <p className="text-[11px] text-paper/45">
-          {formatMoney(min)} – {formatMoney(max)}
+          {formatValue(min)} – {formatValue(max)}
         </p>
       </div>
       {error ? (
@@ -119,13 +121,22 @@ function ExactField({
       <p className="mb-1 font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
         {label}
       </p>
-      <div className="flex h-[6.75rem] flex-col justify-center">
+      <div
+        className="flex flex-col justify-center"
+        style={{ height: 96 }}
+      >
         <input
           type="text"
           inputMode="decimal"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onBlur={onDone}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === "Escape") {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
           aria-label={`${label} exact amount`}
           autoComplete="off"
           className="story-home-filter-input"
@@ -135,7 +146,7 @@ function ExactField({
           onClick={onDone}
           className="mt-2 text-[11px] font-semibold text-paper/55 hover:text-paper"
         >
-          Use roller
+          Use picker
         </button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 /**
- * Compact bound lists for homepage rollers.
+ * Compact bound lists for homepage pickers.
  * Any = unset, not zero. Exact extras are inserted, not generated in bulk.
  */
 
@@ -47,6 +47,38 @@ export const RENT_PRICE_STEPS: RollerStep[] = [
   { value: "3500", label: "$3,500" },
   { value: "4000", label: "$4,000" },
   { value: "5000", label: "$5,000" },
+];
+
+export const ACRE_STEPS: RollerStep[] = [
+  { value: "", label: "Any" },
+  { value: "0.5", label: "0.5 ac" },
+  { value: "1", label: "1 ac" },
+  { value: "2", label: "2 ac" },
+  { value: "3", label: "3 ac" },
+  { value: "5", label: "5 ac" },
+  { value: "8", label: "8 ac" },
+  { value: "10", label: "10 ac" },
+  { value: "15", label: "15 ac" },
+  { value: "20", label: "20 ac" },
+  { value: "30", label: "30 ac" },
+  { value: "40", label: "40 ac" },
+  { value: "50", label: "50 ac" },
+  { value: "80", label: "80 ac" },
+  { value: "100", label: "100 ac" },
+];
+
+export const SQFT_STEPS: RollerStep[] = [
+  { value: "", label: "Any" },
+  { value: "800", label: "800" },
+  { value: "1000", label: "1,000" },
+  { value: "1200", label: "1,200" },
+  { value: "1500", label: "1,500" },
+  { value: "1800", label: "1,800" },
+  { value: "2000", label: "2,000" },
+  { value: "2500", label: "2,500" },
+  { value: "3000", label: "3,000" },
+  { value: "4000", label: "4,000" },
+  { value: "5000", label: "5,000" },
 ];
 
 export function formatMoney(raw: string): string {
