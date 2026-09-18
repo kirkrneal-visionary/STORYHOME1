@@ -67,6 +67,13 @@ import {
   sanitizeRangePair,
   withExactStep,
 } from "../src/lib/search/rollers.ts";
+import {
+  caretFromNumericCount,
+  countNumericPrefix,
+  finalizeExact,
+  formatExactDisplay,
+  interpretExactTyping,
+} from "../src/lib/search/exact-input.ts";
 import type { DemoListing } from "../src/lib/demo-data.ts";
 
 const root = process.cwd();
@@ -368,6 +375,7 @@ const rangeRow = read("src/components/home/HomeRangeRow.tsx");
 assert.match(rangeRow, /anticipateAfter/);
 assert.match(rangeRow, /visibleCount=\{ROW_VISIBLE\}/);
 assert.match(rangeRow, /"Rollers"/);
+assert.match(rangeRow, /ExactBoundInput/);
 assert.doesNotMatch(rangeRow, /setExact\("min"\)/);
 const icons = read("src/components/home/HomeFilterIcons.tsx");
 assert.match(icons, /strokeWidth: 1.5/);
@@ -449,7 +457,14 @@ const mobileEditor = read("src/components/home/MobileRangeEditor.tsx");
 assert.match(mobileEditor, /anticipateAfter/);
 assert.match(mobileEditor, /visibleCount=\{ROW_VISIBLE\}/);
 assert.match(mobileEditor, /Minimum Price|minPlaceholder/);
+assert.match(mobileEditor, /ExactBoundInput/);
 assert.doesNotMatch(mobileEditor, /setExact\("min"\)/);
+assert.match(hub, /Square Feet/);
+assert.match(css, /--m1-editor-h/);
+const exactInput = read("src/lib/search/exact-input.ts");
+assert.match(exactInput, /formatExactDisplay/);
+assert.match(exactInput, /interpretExactTyping/);
+assert.doesNotMatch(exactInput, /openai|anthropic/);
 assert.match(css, /story-home-hero-headline/);
 assert.match(css, /story-home-range-stack/);
 assert.match(css, /--roller-w/);
@@ -780,6 +795,45 @@ assert.equal(matchPreset(RENT_PRICE_PRESETS, "350000", "500000"), "custom");
 const isolated = withPrice(DEFAULT_SEARCH_FILTERS, EMPTY_PRICE);
 assert.equal(isolated.priceMin, "");
 assert.equal(isolated.priceMax, "");
+
+const priceCases = [
+  ["1", "$1", "1"],
+  ["10", "$10", "10"],
+  ["1000", "$1,000", "1000"],
+  ["125000", "$125,000", "125000"],
+  ["1250000", "$1,250,000", "1250000"],
+  ["$1,250,000", "$1,250,000", "1250000"],
+  ["1,250,000", "$1,250,000", "1250000"],
+  ["$1250000", "$1,250,000", "1250000"],
+  ["abc", "", ""],
+  ["-12", "$12", "12"],
+];
+for (const [raw, display, canonical] of priceCases) {
+  const got = interpretExactTyping(raw, "price");
+  assert.equal(got.display, display, `price display ${raw}`);
+  assert.equal(got.canonical, canonical, `price canonical ${raw}`);
+  assert.equal(formatExactDisplay(canonical, "price"), display || "");
+}
+assert.equal(interpretExactTyping("1500", "sqft").display, "1,500");
+assert.equal(interpretExactTyping("1500", "sqft").canonical, "1500");
+assert.equal(interpretExactTyping("12500", "sqft").display, "12,500");
+assert.equal(interpretExactTyping("2,500", "sqft").canonical, "2500");
+assert.equal(formatExactDisplay("2500", "sqft"), "2,500");
+assert.equal(interpretExactTyping("12.5", "acres").display, "12.5");
+assert.equal(interpretExactTyping("12.5", "acres").canonical, "12.5");
+assert.equal(interpretExactTyping("12.50", "acres").canonical, "12.5");
+assert.equal(interpretExactTyping("12.", "acres").display, "12.");
+assert.equal(interpretExactTyping("12.", "acres").canonical, "12");
+assert.equal(interpretExactTyping("1250.5", "acres").display, "1,250.5");
+assert.equal(interpretExactTyping("1250.5", "acres").canonical, "1250.5");
+assert.equal(interpretExactTyping("12.3.4", "acres").canonical, "12.34");
+assert.equal(interpretExactTyping("1,250", "acres").display, "1,250");
+assert.doesNotMatch(interpretExactTyping("$1,250,000", "price").canonical, /[$,]/);
+assert.equal(finalizeExact("12.50", "acres"), "12.5");
+assert.equal(
+  caretFromNumericCount("$1,250,000", countNumericPrefix("$1,250", 6, false), false),
+  6,
+);
 const demoSrc = read("src/lib/demo-data.ts");
 assert.doesNotMatch(demoSrc, /monthlyRent|leaseType|forRent/);
 const filterSrc = read("src/lib/listing-filters.ts");

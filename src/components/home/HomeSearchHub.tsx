@@ -113,7 +113,9 @@ function formatAcres(raw: string): string {
   if (!raw) return "Any";
   const n = Number(raw);
   if (!Number.isFinite(n)) return raw;
-  return `${n} ac`;
+  return `${new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 4,
+  }).format(n)} ac`;
 }
 
 function formatSqft(raw: string): string {
@@ -538,7 +540,7 @@ function MobileAdvanced({
           onToggle={() => toggleRange("acres")}
         />
         <RangeSummary
-          label="Sq Ft"
+          label="Square Feet"
           value={summarizeRange(draft.sqftMin, draft.sqftMax, formatSqft, "sqft")}
           expanded={activeRange === "sqft"}
           onToggle={() => toggleRange("sqft")}
@@ -552,7 +554,7 @@ function MobileAdvanced({
             <MobileRangeEditor key={activeRange} {...editor} />
           ) : (
             <p className="story-home-mobile-editor-hint">
-              Tap Price, Acres, or Sq Ft
+              Select Price, Acres, or Square Feet
             </p>
           )}
         </div>

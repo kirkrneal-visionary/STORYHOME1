@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ExactBoundInput } from "@/components/home/ExactBoundInput";
 import { HomeBoundPicker, PICKER_ROW_H } from "@/components/home/HomeBoundPicker";
+import { exactKindFromTitle } from "@/lib/search/exact-input";
 import {
   applyMaxChange,
   applyMinChange,
@@ -63,12 +65,14 @@ export function HomeRangeRow({
       {exact ? (
         <>
           <RowExact
+            kind={exactKindFromTitle(title)}
             placeholder={minPlaceholder}
             accessibleLabel={`${title} minimum`}
             value={min}
             onChange={changeMin}
           />
           <RowExact
+            kind={exactKindFromTitle(title)}
             placeholder={maxPlaceholder}
             accessibleLabel={`${title} maximum`}
             value={max}
@@ -110,11 +114,13 @@ export function HomeRangeRow({
 }
 
 function RowExact({
+  kind,
   placeholder,
   accessibleLabel,
   value,
   onChange,
 }: {
+  kind: ReturnType<typeof exactKindFromTitle>;
   placeholder: string;
   accessibleLabel: string;
   value: string;
@@ -125,15 +131,12 @@ function RowExact({
       className="flex flex-col justify-center"
       style={{ height: PICKER_ROW_H * ROW_VISIBLE }}
     >
-      <input
-        type="text"
-        inputMode="decimal"
+      <ExactBoundInput
+        kind={kind}
         value={value}
         placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={`${accessibleLabel} exact amount`}
-        autoComplete="off"
-        className="story-home-filter-input"
+        accessibleLabel={accessibleLabel}
+        onChange={onChange}
       />
     </div>
   );
