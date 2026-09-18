@@ -3,6 +3,8 @@
  * Any = unset, not zero. Exact extras are inserted, not generated in bulk.
  */
 
+import { parseBound } from "@/lib/search/transaction";
+
 export type RollerStep = { value: string; label: string };
 
 export const BUY_PRICE_STEPS: RollerStep[] = [
@@ -111,4 +113,103 @@ export function withExactStep(steps: RollerStep[], raw: string): RollerStep[] {
 export function stepIndex(steps: RollerStep[], raw: string): number {
   const hit = steps.findIndex((row) => row.value === raw);
   return hit >= 0 ? hit : 0;
+}
+
+export function constrainMaxSteps(
+  steps: RollerStep[],
+  min: string,
+): RollerStep[] {
+  const floor = parseBound(min);
+  if (floor == null) return steps;
+  return steps.filter((row) => {
+    if (!row.value) return true;
+    const n = parseBound(row.value);
+    return n != null && n >= floor;
+  });
+}
+
+export function constrainMinSteps(
+  steps: RollerStep[],
+  max: string,
+): RollerStep[] {
+  const ceil = parseBound(max);
+  if (ceil == null) return steps;
+  return steps.filter((row) => {
+    if (!row.value) return true;
+    const n = parseBound(row.value);
+    return n != null && n <= ceil;
+  });
+}
+
+export function applyMinChange(
+  _min: string,
+  max: string,
+  nextMin: string,
+): { min: string; max: string } {
+  const a = parseBound(nextMin);
+  const b = parseBound(max);
+  if (a != null && b != null && a > b) return { min: nextMin, max: "" };
+  return { min: nextMin, max };
+}
+
+export function applyMaxChange(
+  min: string,
+  _max: string,
+  nextMax: string,
+): { min: string; max: string } {
+  const a = parseBound(min);
+  const b = parseBound(nextMax);
+  if (a != null && b != null && a > b) return { min: "", max: nextMax };
+  return { min, max: nextMax };
+}
+
+export function sanitizeRangePair(
+  min: string,
+  max: string,
+): { min: string; max: string } {
+  const a = parseBound(min);
+  const b = parseBound(max);
+  if (a != null && b != null && a > b) return { min, max: "" };
+  return { min, max };
+}
+
+export function sanitizeBoundFields<
+  T extends {
+    priceMin: string;
+    priceMax: string;
+    acresMin: string;
+    acresMax: string;
+    sqftMin: string;
+    sqftMax: string;
+  },
+>(filters: T): T {
+  const price = sanitizeRangePair(filters.priceMin, filters.priceMax);
+  const acres = sanitizeRangePair(filters.acresMin, filters.acresMax);
+  const sqft = sanitizeRangePair(filters.sqftMin, filters.sqftMax);
+  return {
+    ...filters,
+    priceMin: price.min,
+    priceMax: price.max,
+    acresMin: acres.min,
+    acresMax: acres.max,
+    sqftMin: sqft.min,
+    sqftMax: sqft.max,
+  };
+}
+
+export function prepareBoundSteps(
+  steps: RollerStep[],
+  own: string,
+  counterpart: string,
+  side: "min" | "max",
+): RollerStep[] {
+  const withExact = withExactStep(withExactStep(steps, own), counterpart);
+  return side === "min"
+    ? constrainMinSteps(withExact, counterpart)
+    : constrainMaxSteps(withExact, counterpart);
+}
+
+export function rollerContentWidthPx(steps: RollerStep[]): number {
+  const longest = steps.reduce((n, row) => Math.max(n, row.label.length), 3);
+  return Math.max(92, Math.min(152, longest * 8 + 40));
 }

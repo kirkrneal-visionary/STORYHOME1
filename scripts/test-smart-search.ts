@@ -56,6 +56,14 @@ import {
   BUY_PRICE_STEPS,
   RENT_PRICE_STEPS,
   SQFT_STEPS,
+  applyMaxChange,
+  applyMinChange,
+  constrainMaxSteps,
+  constrainMinSteps,
+  prepareBoundSteps,
+  rollerContentWidthPx,
+  sanitizeBoundFields,
+  sanitizeRangePair,
   withExactStep,
 } from "../src/lib/search/rollers.ts";
 import type { DemoListing } from "../src/lib/demo-data.ts";
@@ -325,6 +333,14 @@ assert.match(hub, /\["rent", "Rent"\]/);
 assert.match(hub, /Price & Features/);
 assert.match(hub, /Home & Land/);
 assert.match(hub, /HomeBoundPickers/);
+assert.match(hub, /sanitizeBoundFields/);
+const pickers = read("src/components/home/HomeBoundPickers.tsx");
+assert.match(pickers, /story-home-range-pair/);
+assert.match(pickers, /applyMinChange/);
+assert.match(pickers, /label="MIN"/);
+assert.match(pickers, /label="MAX"/);
+assert.doesNotMatch(pickers, /rangeError/);
+assert.doesNotMatch(pickers, /grid-cols-2/);
 assert.match(hub, /Acres/);
 assert.match(hub, /FEATURE_TILES/);
 assert.match(hub, /Briefcase/);
@@ -381,6 +397,8 @@ assert.match(css, /story-home-filter-heading/);
 assert.match(css, /story-home-bound-title/);
 assert.match(css, /story-home-price-features/);
 assert.match(css, /story-home-picker-band/);
+assert.match(css, /story-home-range-pair/);
+assert.match(css, /--roller-w/);
 assert.match(css, /grid-template-areas: "editor"/);
 assert.match(css, /story-home-picker/);
 assert.match(css, /user-select: none/);
@@ -631,6 +649,68 @@ assert.equal(parseBound(""), null);
 assert.equal(parseBound("0"), 0);
 assert.equal(rangeError("500000", "200000"), "Minimum is higher than maximum.");
 assert.equal(rangeError("200000", "500000"), null);
+
+function valuesOf(steps: { value: string }[]) {
+  return steps.map((row) => row.value);
+}
+assert.deepEqual(valuesOf(constrainMaxSteps(ACRE_STEPS, "")), valuesOf(ACRE_STEPS));
+assert.deepEqual(
+  valuesOf(constrainMaxSteps(ACRE_STEPS, "10")),
+  ["", "10", "15", "20", "30", "40", "50", "80", "100"],
+);
+assert.ok(!valuesOf(constrainMaxSteps(ACRE_STEPS, "10")).includes("0.5"));
+assert.ok(!valuesOf(constrainMaxSteps(ACRE_STEPS, "10")).includes("5"));
+assert.deepEqual(
+  valuesOf(constrainMinSteps(BUY_PRICE_STEPS, "500000")).slice(-3),
+  ["400000", "450000", "500000"],
+);
+assert.ok(!valuesOf(constrainMinSteps(BUY_PRICE_STEPS, "500000")).includes("750000"));
+assert.ok(valuesOf(constrainMinSteps(BUY_PRICE_STEPS, "500000")).includes(""));
+assert.deepEqual(applyMinChange("5", "5", "10"), { min: "10", max: "" });
+assert.deepEqual(applyMaxChange("750000", "1000000", "500000"), {
+  min: "",
+  max: "500000",
+});
+assert.deepEqual(applyMinChange("", "", "10"), { min: "10", max: "" });
+assert.deepEqual(applyMaxChange("", "", "25"), { min: "", max: "25" });
+assert.deepEqual(applyMinChange("10", "25", "10"), { min: "10", max: "25" });
+assert.deepEqual(applyMinChange("10", "25", ""), { min: "", max: "25" });
+assert.deepEqual(applyMaxChange("10", "25", ""), { min: "10", max: "" });
+assert.deepEqual(applyMinChange("200000", "500000", "500000"), {
+  min: "500000",
+  max: "500000",
+});
+assert.deepEqual(sanitizeRangePair("750000", "500000"), {
+  min: "750000",
+  max: "",
+});
+assert.deepEqual(sanitizeRangePair("200000", "500000"), {
+  min: "200000",
+  max: "500000",
+});
+assert.deepEqual(sanitizeRangePair("", "25"), { min: "", max: "25" });
+const dirty = {
+  ...DEFAULT_SEARCH_FILTERS,
+  priceMin: "750000",
+  priceMax: "500000",
+  acresMin: "20",
+  acresMax: "5",
+  sqftMin: "3000",
+  sqftMax: "1500",
+};
+const clean = sanitizeBoundFields(dirty);
+assert.equal(clean.priceMin, "750000");
+assert.equal(clean.priceMax, "");
+assert.equal(clean.acresMin, "20");
+assert.equal(clean.acresMax, "");
+assert.equal(clean.sqftMin, "3000");
+assert.equal(clean.sqftMax, "");
+const exactMax = prepareBoundSteps(ACRE_STEPS, "12", "10", "max");
+assert.ok(exactMax.some((row) => row.value === "12"));
+assert.ok(!exactMax.some((row) => row.value === "5"));
+assert.ok(exactMax.some((row) => row.value === ""));
+assert.ok(rollerContentWidthPx(BUY_PRICE_STEPS) < 200);
+assert.ok(rollerContentWidthPx(ACRE_STEPS) <= rollerContentWidthPx(BUY_PRICE_STEPS));
 const buyPreset = BUY_PRICE_PRESETS.find((row) => row.id === "350-500");
 const rentPreset = RENT_PRICE_PRESETS.find((row) => row.id === "1500-2000");
 assert.ok(buyPreset && rentPreset);

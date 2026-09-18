@@ -130,7 +130,7 @@ export function HomeBoundPicker({
   }));
 
   return (
-    <div className="min-w-0">
+    <div className="story-home-range-col-inner">
       <p className="story-home-filter-heading">{label}</p>
       <div
         ref={root}

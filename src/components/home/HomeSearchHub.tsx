@@ -28,6 +28,7 @@ import {
   ACRE_STEPS,
   BUY_PRICE_STEPS,
   RENT_PRICE_STEPS,
+  sanitizeBoundFields,
   SQFT_STEPS,
   formatMoney,
 } from "@/lib/search/rollers";
@@ -167,7 +168,7 @@ export function HomeSearchHub({
   }
 
   function applyAdvanced() {
-    onFilters(withoutKeyword(draftRef.current, query));
+    onFilters(sanitizeBoundFields(withoutKeyword(draftRef.current, query)));
     setView("search");
   }
 
@@ -186,7 +187,7 @@ export function HomeSearchHub({
       applyAdvanced();
       return;
     }
-    onSubmitSearch(withoutKeyword(filters, query));
+    onSubmitSearch(sanitizeBoundFields(withoutKeyword(filters, query)));
   }
 
   function changeGroup(next: HomepageFilterGroupId) {

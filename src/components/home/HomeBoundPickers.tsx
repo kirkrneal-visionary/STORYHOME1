@@ -7,10 +7,12 @@ import {
   pickerVisibleCount,
   useCompactPicker,
 } from "@/components/home/HomeBoundPicker";
-import { rangeError } from "@/lib/search/transaction";
 import {
+  applyMaxChange,
+  applyMinChange,
   formatMoney,
-  withExactStep,
+  prepareBoundSteps,
+  rollerContentWidthPx,
   type RollerStep,
 } from "@/lib/search/rollers";
 
@@ -37,96 +39,116 @@ export function HomeBoundPickers({
 }) {
   const compact = useCompactPicker();
   const [exact, setExact] = useState<"min" | "max" | null>(null);
-  const minSteps = useMemo(() => withExactStep(steps, min), [steps, min]);
-  const maxSteps = useMemo(() => withExactStep(steps, max), [steps, max]);
-  const error = rangeError(min, max);
+  const width = rollerContentWidthPx(steps);
+  const minSteps = useMemo(
+    () => prepareBoundSteps(steps, min, max, "min"),
+    [steps, min, max],
+  );
+  const maxSteps = useMemo(
+    () => prepareBoundSteps(steps, max, min, "max"),
+    [steps, min, max],
+  );
+
+  function changeMin(nextMin: string) {
+    const next = applyMinChange(min, max, nextMin);
+    onChange(next.min, next.max);
+  }
+
+  function changeMax(nextMax: string) {
+    const next = applyMaxChange(min, max, nextMax);
+    onChange(next.min, next.max);
+  }
 
   return (
-    <div data-bound-pickers className="relative">
+    <div
+      data-bound-pickers
+      className="story-home-range relative"
+      style={{ ["--roller-w" as string]: `${width}px` }}
+    >
       <div className="story-home-bound-title mb-0.5 flex items-baseline justify-between gap-2">
         <p className="story-home-filter-heading">{title}</p>
         <p className="text-[11px] text-paper/45">{unit}</p>
       </div>
-      <div className="grid grid-cols-2 gap-1.5">
-        {exact === "min" ? (
-          <ExactField
-            label={minLabel}
-            value={min}
-            compact={compact}
-            onChange={(next) => onChange(next, max)}
-            onDone={() => setExact(null)}
-          />
-        ) : (
-          <HomeBoundPicker
-            label={minLabel}
-            accessibleLabel={`${title} minimum`}
-            steps={minSteps}
-            value={min}
-            onChange={(next) => onChange(next, max)}
-          />
-        )}
-        {exact === "max" ? (
-          <ExactField
-            label={maxLabel}
-            value={max}
-            compact={compact}
-            onChange={(next) => onChange(min, next)}
-            onDone={() => setExact(null)}
-          />
-        ) : (
-          <HomeBoundPicker
-            label={maxLabel}
-            accessibleLabel={`${title} maximum`}
-            steps={maxSteps}
-            value={max}
-            onChange={(next) => onChange(min, next)}
-          />
-        )}
+      <div className="story-home-range-pair">
+        <div className="story-home-range-col">
+          {exact === "min" ? (
+            <ExactField
+              label="MIN"
+              accessibleLabel={`${title} minimum`}
+              value={min}
+              compact={compact}
+              onChange={changeMin}
+              onDone={() => setExact(null)}
+            />
+          ) : (
+            <HomeBoundPicker
+              label="MIN"
+              accessibleLabel={`${title} minimum`}
+              steps={minSteps}
+              value={min}
+              onChange={changeMin}
+            />
+          )}
+          <button
+            type="button"
+            className="mt-0.5 text-left text-[10px] font-semibold text-paper/55 hover:text-paper"
+            onClick={() => setExact(exact === "min" ? null : "min")}
+          >
+            {exact === "min" ? "Picker" : "Exact"}
+          </button>
+        </div>
+        <div className="story-home-range-col">
+          {exact === "max" ? (
+            <ExactField
+              label="MAX"
+              accessibleLabel={`${title} maximum`}
+              value={max}
+              compact={compact}
+              onChange={changeMax}
+              onDone={() => setExact(null)}
+            />
+          ) : (
+            <HomeBoundPicker
+              label="MAX"
+              accessibleLabel={`${title} maximum`}
+              steps={maxSteps}
+              value={max}
+              onChange={changeMax}
+            />
+          )}
+          <button
+            type="button"
+            className="mt-0.5 text-left text-[10px] font-semibold text-paper/55 hover:text-paper"
+            onClick={() => setExact(exact === "max" ? null : "max")}
+          >
+            {exact === "max" ? "Picker" : "Exact"}
+          </button>
+        </div>
       </div>
-      <div className="mt-0.5 grid grid-cols-2 gap-1.5">
-        <button
-          type="button"
-          className="text-left text-[10px] font-semibold text-paper/55 hover:text-paper"
-          onClick={() => setExact(exact === "min" ? null : "min")}
-        >
-          {exact === "min" ? "Picker" : "Exact"}
-        </button>
-        <button
-          type="button"
-          className="text-left text-[10px] font-semibold text-paper/55 hover:text-paper"
-          onClick={() => setExact(exact === "max" ? null : "max")}
-        >
-          {exact === "max" ? "Picker" : "Exact"}
-        </button>
-      </div>
-      {error ? (
-        <p className="mt-0.5 text-[10px] font-medium text-gold" role="alert">
-          {error}
-        </p>
-      ) : (
-        <p className="sr-only">
-          {formatValue(min)} to {formatValue(max)}
-        </p>
-      )}
+      <p className="sr-only">
+        {minLabel} {formatValue(min)} to {maxLabel} {formatValue(max)}
+      </p>
     </div>
   );
 }
 
 function ExactField({
   label,
+  accessibleLabel,
   value,
   compact,
   onChange,
   onDone,
 }: {
   label: string;
+  accessibleLabel: string;
   value: string;
   compact: boolean;
   onChange: (next: string) => void;
   onDone: () => void;
 }) {
   return (
-    <div className="min-w-0">
+    <div>
       <p className="story-home-filter-heading">{label}</p>
       <div
         className="flex flex-col justify-center"
@@ -144,7 +166,7 @@ function ExactField({
               (e.target as HTMLInputElement).blur();
             }
           }}
-          aria-label={`${label} exact amount`}
+          aria-label={`${accessibleLabel} exact amount`}
           autoComplete="off"
           className="story-home-filter-input"
         />
