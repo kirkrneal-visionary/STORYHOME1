@@ -368,7 +368,7 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-2 p-2 md:p-3">
+    <div className="flex flex-col gap-1.5 p-1.5 md:gap-2 md:p-3">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
@@ -505,7 +505,7 @@ function PriceFeaturesGroup({
                   aria-pressed={active}
                   onClick={() => onDraft({ [key]: !active })}
                   className={cn(
-                    "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1.5 text-[10px] font-semibold",
+                    "story-home-feature-tile story-press items-center justify-center gap-1 rounded-[var(--radius-sm)] px-2 text-[10px] font-semibold",
                     active
                       ? "bg-gold text-navy"
                       : "text-paper/65 hover:text-paper",
@@ -587,7 +587,7 @@ function HomeLandGroup({
                   })
                 }
                 className={cn(
-                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1.5 text-[10px] font-semibold",
+                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1 text-[10px] font-semibold",
                   active
                     ? "bg-gold text-navy"
                     : "text-paper/65 hover:text-paper",
@@ -604,7 +604,7 @@ function HomeLandGroup({
         <div
           role="tablist"
           aria-label="Acres or square feet"
-          className="mb-1 flex items-center gap-1"
+          className="mb-0.5 flex items-center gap-1"
         >
           <button
             type="button"
@@ -612,7 +612,7 @@ function HomeLandGroup({
             aria-selected={landBound === "acres"}
             onClick={() => onLandBound("acres")}
             className={cn(
-              "story-press h-8 rounded-full px-3 text-[12px] font-semibold",
+              "story-press h-7 rounded-full px-2.5 text-[11px] font-semibold md:h-8 md:px-3 md:text-[12px]",
               landBound === "acres"
                 ? "bg-gold text-navy"
                 : "text-paper/60 hover:text-paper",
@@ -626,7 +626,7 @@ function HomeLandGroup({
             aria-selected={landBound === "sqft"}
             onClick={() => onLandBound("sqft")}
             className={cn(
-              "story-press h-8 rounded-full px-3 text-[12px] font-semibold",
+              "story-press h-7 rounded-full px-2.5 text-[11px] font-semibold md:h-8 md:px-3 md:text-[12px]",
               landBound === "sqft"
                 ? "bg-gold text-navy"
                 : "text-paper/60 hover:text-paper",
