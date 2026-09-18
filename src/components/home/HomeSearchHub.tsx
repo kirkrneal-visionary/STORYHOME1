@@ -404,7 +404,7 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 p-1.5 md:gap-2 md:p-2.5">
+    <div className="flex flex-col gap-1.5 p-1.5 md:gap-1.5 md:p-2">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
