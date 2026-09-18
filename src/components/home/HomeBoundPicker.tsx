@@ -111,9 +111,7 @@ export function HomeBoundPicker({
 
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-        {label}
-      </p>
+      <p className="story-home-filter-heading">{label}</p>
       <div
         ref={root}
         role="listbox"
@@ -147,7 +145,7 @@ export function HomeBoundPicker({
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-1 top-1/2 z-0 h-[22px] -translate-y-1/2 rounded-[var(--radius-sm)] bg-gold/20 ring-1 ring-gold/40"
+          className="story-home-picker-band pointer-events-none absolute inset-x-1 top-1/2 z-0 h-[22px] -translate-y-1/2 rounded-[var(--radius-sm)]"
         />
         <div className="relative z-[1] flex h-full flex-col">
           {neighborhood.map(({ offset, step }) =>
@@ -196,7 +194,7 @@ function PickerRow({
 }) {
   const className = cn(
     "story-home-picker-row flex w-full items-center justify-center px-1 text-[12px] font-semibold",
-    faded ? "text-paper/40" : "text-paper",
+    selected ? "text-paper" : faded ? "text-paper/32" : "text-paper",
     onPick && !disabled ? "cursor-pointer" : null,
   );
   const style = { height: PICKER_ROW_H };

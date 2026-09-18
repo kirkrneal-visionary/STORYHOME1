@@ -42,10 +42,8 @@ export function HomeBoundPickers({
   return (
     <div data-bound-pickers className="relative">
       <div className="mb-0.5 flex items-baseline justify-between gap-2">
-        <p className="font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-          {title}
-        </p>
-        <p className="text-[10px] text-paper/40">{unit}</p>
+        <p className="story-home-filter-heading">{title}</p>
+        <p className="text-[11px] text-paper/45">{unit}</p>
       </div>
       <div className="grid grid-cols-2 gap-1.5">
         {exact === "min" ? (
@@ -123,9 +121,7 @@ function ExactField({
 }) {
   return (
     <div className="min-w-0">
-      <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-        {label}
-      </p>
+      <p className="story-home-filter-heading">{label}</p>
       <div
         className="flex flex-col justify-center"
         style={{ height: PICKER_ROW_H * PICKER_VISIBLE }}

@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { Building, Building2, Container, House, Search, Trees } from "lucide-react";
+import {
+  Briefcase,
+  Building,
+  Building2,
+  Car,
+  Container,
+  House,
+  Search,
+  Trees,
+  Waves,
+} from "lucide-react";
 import { HomeBoundPickers } from "@/components/home/HomeBoundPickers";
 import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import {
@@ -61,6 +71,12 @@ const TYPE_TILES: {
   { type: "Condo", label: "Condo", Icon: Building2 },
   { type: "Town Home", label: "Town", Icon: Building },
   { type: "Mobile / Manufactured", label: "Mobile", Icon: Container },
+];
+
+const FEATURE_TILES = [
+  { key: "office" as const, label: "Office", Icon: Briefcase },
+  { key: "garage" as const, label: "Garage", Icon: Car },
+  { key: "pool" as const, label: "Pool", Icon: Waves },
 ];
 
 export const HOME_CROSSFADE_MS = 240;
@@ -352,7 +368,7 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1 p-1">
+    <div className="flex flex-col gap-2 p-2 md:p-3">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
@@ -464,7 +480,7 @@ function PriceFeaturesGroup({
   onDraft: (partial: Partial<SearchFilters>) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1" data-filter-group="price_features">
+    <div className="story-home-price-features" data-filter-group="price_features">
       <HomeBoundPickers
         title="Price"
         unit={transaction === "rent" ? "$ / mo" : "$"}
@@ -476,33 +492,34 @@ function PriceFeaturesGroup({
         formatValue={formatMoney}
         onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
       />
-      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+      <div className="story-home-feature-cluster">
         <div>
-          <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-            Features
-          </p>
-          <div className="flex flex-wrap gap-1">
-            <Chip
-              label="Office"
-              active={draft.office}
-              onClick={() => onDraft({ office: !draft.office })}
-            />
-            <Chip
-              label="Garage"
-              active={draft.garage}
-              onClick={() => onDraft({ garage: !draft.garage })}
-            />
-            <Chip
-              label="Pool"
-              active={draft.pool}
-              onClick={() => onDraft({ pool: !draft.pool })}
-            />
+          <p className="story-home-filter-heading">Features</p>
+          <div className="story-home-feature-tiles">
+            {FEATURE_TILES.map(({ key, label, Icon }) => {
+              const active = draft[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onDraft({ [key]: !active })}
+                  className={cn(
+                    "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1.5 text-[10px] font-semibold",
+                    active
+                      ? "bg-gold text-navy"
+                      : "text-paper/65 hover:text-paper",
+                  )}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
         <div>
-          <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-            HOA
-          </p>
+          <p className="story-home-filter-heading">HOA</p>
           <p className="sr-only">Unknown is not No</p>
           <div className="flex flex-wrap gap-1">
             {(
@@ -538,8 +555,8 @@ function HomeLandGroup({
   onDraft: (partial: Partial<SearchFilters>) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1" data-filter-group="home_land">
-      <div className="grid grid-cols-2 gap-1">
+    <div className="story-home-home-land" data-filter-group="home_land">
+      <div className="grid grid-cols-2 gap-2">
         <ChipRow
           label="Beds"
           value={draft.beds}
@@ -554,9 +571,7 @@ function HomeLandGroup({
         />
       </div>
       <div>
-        <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-          Type
-        </p>
+        <p className="story-home-filter-heading">Type</p>
         <div className="grid grid-cols-5 gap-1">
           {TYPE_TILES.map(({ type, label, Icon }) => {
             const active = draft.propertyTypes.includes(type);
@@ -572,7 +587,7 @@ function HomeLandGroup({
                   })
                 }
                 className={cn(
-                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1 text-[10px] font-semibold",
+                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1.5 text-[10px] font-semibold",
                   active
                     ? "bg-gold text-navy"
                     : "text-paper/65 hover:text-paper",
@@ -589,7 +604,7 @@ function HomeLandGroup({
         <div
           role="tablist"
           aria-label="Acres or square feet"
-          className="mb-0.5 flex gap-1"
+          className="mb-1 flex items-center gap-1"
         >
           <button
             type="button"
@@ -597,10 +612,10 @@ function HomeLandGroup({
             aria-selected={landBound === "acres"}
             onClick={() => onLandBound("acres")}
             className={cn(
-              "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+              "story-press h-8 rounded-full px-3 text-[12px] font-semibold",
               landBound === "acres"
-                ? "bg-paper/12 text-paper"
-                : "text-paper/55 hover:text-paper",
+                ? "bg-gold text-navy"
+                : "text-paper/60 hover:text-paper",
             )}
           >
             Acres
@@ -611,15 +626,15 @@ function HomeLandGroup({
             aria-selected={landBound === "sqft"}
             onClick={() => onLandBound("sqft")}
             className={cn(
-              "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+              "story-press h-8 rounded-full px-3 text-[12px] font-semibold",
               landBound === "sqft"
-                ? "bg-paper/12 text-paper"
-                : "text-paper/55 hover:text-paper",
+                ? "bg-gold text-navy"
+                : "text-paper/60 hover:text-paper",
             )}
           >
             Sq Ft
           </button>
-          <p className="ml-auto self-center text-[10px] text-paper/45">
+          <p className="ml-auto self-center text-[11px] text-paper/50">
             {formatAcres(draft.acresMin)}–{formatAcres(draft.acresMax)} ·{" "}
             {formatSqft(draft.sqftMin)}–{formatSqft(draft.sqftMax)}
           </p>
@@ -699,9 +714,7 @@ function ChipRow({
   return (
     <div>
       <div className="mb-0.5 flex items-baseline justify-between">
-        <p className="font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
-          {label}
-        </p>
+        <p className="story-home-filter-heading">{label}</p>
         <p className="sr-only">Minimum {label}</p>
         {hint ? <p className="text-[10px] text-paper/40">{hint}</p> : null}
       </div>
