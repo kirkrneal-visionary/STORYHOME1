@@ -7,9 +7,9 @@ import { HomeGhostHint } from "@/components/home/HomeGhostHint";
 import {
   DEFAULT_SEARCH_FILTERS,
   countActiveFilters,
-  countActiveFiltersInGroup,
+  countHomepageGroup,
   toggleInList,
-  type FilterGroupId,
+  type HomepageFilterGroupId,
   type HoaFilter,
   type PropertyType,
   type SearchFilters,
@@ -28,28 +28,10 @@ import {
 } from "@/lib/search/transaction";
 import { cn } from "@/lib/utils";
 
-const GROUPS: { id: FilterGroupId; label: string }[] = [
-  { id: "price_land", label: "Price & land" },
-  { id: "home", label: "Home" },
-  { id: "features", label: "Features" },
+const GROUPS: { id: HomepageFilterGroupId; label: string }[] = [
+  { id: "price_features", label: "Price & Features" },
+  { id: "home_land", label: "Home & Land" },
 ];
-
-const PRICE_METRICS = [
-  { id: "price", label: "Price" },
-  { id: "acres", label: "Acreage" },
-] as const;
-
-const HOME_METRICS = [
-  { id: "beds", label: "Beds" },
-  { id: "baths", label: "Baths" },
-  { id: "type", label: "Type" },
-  { id: "sqft", label: "Size" },
-] as const;
-
-const FEATURE_METRICS = [
-  { id: "amenities", label: "Features" },
-  { id: "hoa", label: "HOA" },
-] as const;
 
 const BED_OPTIONS = [
   ["Any", "Any"],
@@ -121,8 +103,8 @@ export function HomeSearchHub({
   const titleId = useId();
   const [view, setView] = useState<"search" | "advanced">("search");
   const [draft, setDraft] = useState<SearchFilters>(filters);
-  const [group, setGroup] = useState<FilterGroupId>("price_land");
-  const [metric, setMetric] = useState("price");
+  const [group, setGroup] = useState<HomepageFilterGroupId>("price_features");
+  const [landBound, setLandBound] = useState<"acres" | "sqft">("acres");
   const [focused, setFocused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const draftRef = useRef(draft);
@@ -157,8 +139,7 @@ export function HomeSearchHub({
     const next = withoutKeyword(filters, query);
     draftRef.current = next;
     setDraft(next);
-    setGroup("price_land");
-    setMetric("price");
+    setGroup("price_features");
     setView("advanced");
   }
 
@@ -192,11 +173,8 @@ export function HomeSearchHub({
     onSubmitSearch(withoutKeyword(filters, query));
   }
 
-  function changeGroup(next: FilterGroupId) {
+  function changeGroup(next: HomepageFilterGroupId) {
     setGroup(next);
-    setMetric(
-      next === "price_land" ? "price" : next === "home" ? "beds" : "amenities",
-    );
   }
 
   return (
@@ -239,8 +217,8 @@ export function HomeSearchHub({
             onDraft={patchDraft}
             group={group}
             onGroup={changeGroup}
-            metric={metric}
-            onMetric={setMetric}
+            landBound={landBound}
+            onLandBound={setLandBound}
             onCancel={cancelAdvanced}
             onClear={clearDraft}
           />
@@ -357,8 +335,8 @@ function AdvancedMode({
   onDraft,
   group,
   onGroup,
-  metric,
-  onMetric,
+  landBound,
+  onLandBound,
   onCancel,
   onClear,
 }: {
@@ -366,33 +344,26 @@ function AdvancedMode({
   transaction: TransactionMode;
   draft: SearchFilters;
   onDraft: (partial: Partial<SearchFilters>) => void;
-  group: FilterGroupId;
-  onGroup: (next: FilterGroupId) => void;
-  metric: string;
-  onMetric: (next: string) => void;
+  group: HomepageFilterGroupId;
+  onGroup: (next: HomepageFilterGroupId) => void;
+  landBound: "acres" | "sqft";
+  onLandBound: (next: "acres" | "sqft") => void;
   onCancel: () => void;
   onClear: () => void;
 }) {
-  const metrics =
-    group === "price_land"
-      ? PRICE_METRICS
-      : group === "home"
-        ? HOME_METRICS
-        : FEATURE_METRICS;
-
   return (
-    <div className="flex flex-col gap-2 p-2">
-      <div className="flex items-center gap-1.5">
-        <p id={titleId} className="sr-only">
-          Advanced filters
-        </p>
+    <div className="flex flex-col gap-1.5 p-1.5">
+      <p id={titleId} className="sr-only">
+        Advanced filters
+      </p>
+      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div
           role="tablist"
           aria-label="Filter groups"
-          className="flex min-w-0 flex-1 flex-wrap gap-1"
+          className="grid grid-cols-2 gap-1"
         >
           {GROUPS.map((row) => {
-            const active = countActiveFiltersInGroup(draft, row.id);
+            const active = countHomepageGroup(draft, row.id);
             return (
               <button
                 key={row.id}
@@ -401,84 +372,260 @@ function AdvancedMode({
                 aria-selected={group === row.id}
                 onClick={() => onGroup(row.id)}
                 className={cn(
-                  "story-press inline-flex h-9 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold",
+                  "story-press inline-flex h-9 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-xs font-semibold",
                   group === row.id
                     ? "bg-gold text-navy"
                     : "text-paper/70 hover:text-paper",
                 )}
               >
-                {row.label}
-                {active > 0 ? (
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 text-[10px] font-bold",
-                      group === row.id
-                        ? "bg-navy/15 text-navy"
-                        : "bg-gold text-navy",
-                    )}
-                  >
-                    {active}
-                  </span>
-                ) : null}
+                <span className="min-w-0 truncate">{row.label}</span>
+                <span
+                  className={cn(
+                    "inline-flex h-4 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
+                    group === row.id
+                      ? "bg-navy/15 text-navy"
+                      : "bg-gold text-navy",
+                    active > 0 ? "visible" : "invisible",
+                  )}
+                >
+                  {active || 0}
+                </span>
               </button>
             );
           })}
         </div>
+        <div className="flex shrink-0 items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="story-press h-9 shrink-0 rounded-full px-2.5 text-xs font-semibold text-paper/70 hover:text-paper"
+          >
+            Back
+          </button>
+          <PrimaryAction>Apply</PrimaryAction>
+        </div>
+      </div>
+      {transaction === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
+        <p
+          data-rent-unavailable
+          className="text-[11px] leading-snug text-paper/65"
+        >
+          {RENT_UNAVAILABLE.title}. {RENT_UNAVAILABLE.detail}
+        </p>
+      ) : null}
+      <div className="story-home-advanced-body">
+        <div
+          className="story-home-advanced-group"
+          data-active={group === "price_features" ? "true" : "false"}
+          inert={group !== "price_features" ? true : undefined}
+          aria-hidden={group !== "price_features"}
+        >
+          <PriceFeaturesGroup draft={draft} transaction={transaction} onDraft={onDraft} />
+        </div>
+        <div
+          className="story-home-advanced-group"
+          data-active={group === "home_land" ? "true" : "false"}
+          inert={group !== "home_land" ? true : undefined}
+          aria-hidden={group !== "home_land"}
+        >
+          <HomeLandGroup
+            draft={draft}
+            landBound={landBound}
+            onLandBound={onLandBound}
+            onDraft={onDraft}
+          />
+        </div>
+      </div>
+      <div className="flex items-center justify-start">
         <button
           type="button"
-          onClick={onCancel}
-          className="story-press h-9 shrink-0 rounded-full px-2.5 text-xs font-semibold text-paper/70 hover:text-paper"
+          onClick={onClear}
+          className="story-press h-8 rounded-full px-2.5 text-xs font-semibold text-paper/60 hover:text-paper"
         >
-          Back
+          Clear filters
         </button>
-        <PrimaryAction>Apply</PrimaryAction>
       </div>
-      <div
-        role="tablist"
-        aria-label="Filter metric"
-        className="flex flex-wrap gap-1"
-      >
-        {metrics.map((row) => (
-          <button
-            key={row.id}
-            type="button"
-            role="tab"
-            aria-selected={metric === row.id}
-            onClick={() => onMetric(row.id)}
-            className={cn(
-              "story-press h-8 rounded-full px-2.5 text-[11px] font-semibold",
-              metric === row.id
-                ? "bg-paper/12 text-paper"
-                : "text-paper/55 hover:text-paper",
-            )}
-          >
-            {row.label}
-          </button>
-        ))}
-      </div>
-      <div data-filter-editor={metric}>
-        {transaction === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
-          <p
-            data-rent-unavailable
-            className="mb-2 text-[11px] leading-snug text-paper/65"
-          >
-            {RENT_UNAVAILABLE.title}. {RENT_UNAVAILABLE.detail}
+    </div>
+  );
+}
+
+function PriceFeaturesGroup({
+  draft,
+  transaction,
+  onDraft,
+}: {
+  draft: SearchFilters;
+  transaction: TransactionMode;
+  onDraft: (partial: Partial<SearchFilters>) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5" data-filter-group="price_features">
+      <HomeBoundPickers
+        title={transaction === "rent" ? "Monthly rent" : "Purchase price"}
+        unit={transaction === "rent" ? "$ / month" : "purchase $"}
+        min={draft.priceMin}
+        max={draft.priceMax}
+        minLabel="Minimum"
+        maxLabel="Maximum"
+        steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
+        formatValue={formatMoney}
+        onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
+      />
+      <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+        <div>
+          <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
+            Features
           </p>
-        ) : null}
-        {group === "price_land" && metric === "price" ? (
-          <HomeBoundPickers
-            title={transaction === "rent" ? "Monthly rent" : "Purchase price"}
-            unit={transaction === "rent" ? "$ / month" : "purchase $"}
-            min={draft.priceMin}
-            max={draft.priceMax}
-            minLabel="Minimum"
-            maxLabel="Maximum"
-            steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
-            formatValue={formatMoney}
-            onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
-          />
-        ) : null}
-        {group === "price_land" && metric === "acres" ? (
+          <div className="flex flex-wrap gap-1">
+            <Chip
+              label="Office"
+              active={draft.office}
+              onClick={() => onDraft({ office: !draft.office })}
+            />
+            <Chip
+              label="Garage"
+              active={draft.garage}
+              onClick={() => onDraft({ garage: !draft.garage })}
+            />
+            <Chip
+              label="Pool"
+              active={draft.pool}
+              onClick={() => onDraft({ pool: !draft.pool })}
+            />
+          </div>
+        </div>
+        <div>
+          <div className="mb-0.5 flex items-baseline gap-2">
+            <p className="font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
+              HOA
+            </p>
+            <p className="text-[10px] text-paper/40">Unknown is not No</p>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {(
+              [
+                ["any", "Any"],
+                ["hoa", "Yes"],
+                ["no_hoa", "No"],
+              ] as const
+            ).map(([value, label]) => (
+              <Chip
+                key={value}
+                label={label}
+                active={draft.hoa === value}
+                onClick={() => onDraft({ hoa: value as HoaFilter })}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomeLandGroup({
+  draft,
+  landBound,
+  onLandBound,
+  onDraft,
+}: {
+  draft: SearchFilters;
+  landBound: "acres" | "sqft";
+  onLandBound: (next: "acres" | "sqft") => void;
+  onDraft: (partial: Partial<SearchFilters>) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5" data-filter-group="home_land">
+      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+        <ChipRow
+          label="Bedrooms"
+          hint="Minimum"
+          value={draft.beds}
+          options={BED_OPTIONS}
+          onChange={(beds) => onDraft({ beds })}
+        />
+        <ChipRow
+          label="Bathrooms"
+          hint="Minimum"
+          value={draft.baths}
+          options={BATH_OPTIONS}
+          onChange={(baths) => onDraft({ baths })}
+        />
+      </div>
+      <div>
+        <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
+          Property type
+        </p>
+        <div className="grid grid-cols-5 gap-1">
+          {TYPE_TILES.map(({ type, label, Icon }) => {
+            const active = draft.propertyTypes.includes(type);
+            return (
+              <button
+                key={type}
+                type="button"
+                aria-pressed={active}
+                aria-label={type}
+                onClick={() =>
+                  onDraft({
+                    propertyTypes: toggleInList(draft.propertyTypes, type),
+                  })
+                }
+                className={cn(
+                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1.5 text-[10px] font-semibold",
+                  active
+                    ? "bg-gold text-navy"
+                    : "text-paper/65 hover:text-paper",
+                )}
+              >
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div>
+        <div className="mb-0.5 flex flex-wrap items-center justify-between gap-2">
+          <div
+            role="tablist"
+            aria-label="Land or size"
+            className="flex gap-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={landBound === "acres"}
+              onClick={() => onLandBound("acres")}
+              className={cn(
+                "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+                landBound === "acres"
+                  ? "bg-paper/12 text-paper"
+                  : "text-paper/55 hover:text-paper",
+              )}
+            >
+              Acreage
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={landBound === "sqft"}
+              onClick={() => onLandBound("sqft")}
+              className={cn(
+                "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+                landBound === "sqft"
+                  ? "bg-paper/12 text-paper"
+                  : "text-paper/55 hover:text-paper",
+              )}
+            >
+              Size
+            </button>
+          </div>
+          <p className="text-[10px] text-paper/45">
+            {formatAcres(draft.acresMin)}–{formatAcres(draft.acresMax)} ·{" "}
+            {formatSqft(draft.sqftMin)}–{formatSqft(draft.sqftMax)}
+          </p>
+        </div>
+        {landBound === "acres" ? (
           <HomeBoundPickers
             title="Acreage"
             unit="acres"
@@ -490,60 +637,7 @@ function AdvancedMode({
             formatValue={formatAcres}
             onChange={(acresMin, acresMax) => onDraft({ acresMin, acresMax })}
           />
-        ) : null}
-        {group === "home" && metric === "beds" ? (
-          <ChipRow
-            label="Bedrooms"
-            hint="Minimum"
-            value={draft.beds}
-            options={BED_OPTIONS}
-            onChange={(beds) => onDraft({ beds })}
-          />
-        ) : null}
-        {group === "home" && metric === "baths" ? (
-          <ChipRow
-            label="Bathrooms"
-            hint="Minimum"
-            value={draft.baths}
-            options={BATH_OPTIONS}
-            onChange={(baths) => onDraft({ baths })}
-          />
-        ) : null}
-        {group === "home" && metric === "type" ? (
-          <div>
-            <p className="mb-1.5 font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
-              Property type
-            </p>
-            <div className="grid grid-cols-5 gap-1">
-              {TYPE_TILES.map(({ type, label, Icon }) => {
-                const active = draft.propertyTypes.includes(type);
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    aria-pressed={active}
-                    aria-label={type}
-                    onClick={() =>
-                      onDraft({
-                        propertyTypes: toggleInList(draft.propertyTypes, type),
-                      })
-                    }
-                    className={cn(
-                      "story-press flex flex-col items-center gap-1 rounded-[var(--radius-sm)] px-1 py-2 text-[10px] font-semibold",
-                      active
-                        ? "bg-gold text-navy"
-                        : "text-paper/65 hover:text-paper",
-                    )}
-                  >
-                    <Icon className="h-4 w-4" aria-hidden="true" />
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-        {group === "home" && metric === "sqft" ? (
+        ) : (
           <HomeBoundPickers
             title="Square footage"
             unit="sqft"
@@ -555,66 +649,7 @@ function AdvancedMode({
             formatValue={formatSqft}
             onChange={(sqftMin, sqftMax) => onDraft({ sqftMin, sqftMax })}
           />
-        ) : null}
-        {group === "features" && metric === "amenities" ? (
-          <div>
-            <p className="mb-1.5 font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
-              Features
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              <Chip
-                label="Office"
-                active={draft.office}
-                onClick={() => onDraft({ office: !draft.office })}
-              />
-              <Chip
-                label="Garage"
-                active={draft.garage}
-                onClick={() => onDraft({ garage: !draft.garage })}
-              />
-              <Chip
-                label="Pool"
-                active={draft.pool}
-                onClick={() => onDraft({ pool: !draft.pool })}
-              />
-            </div>
-          </div>
-        ) : null}
-        {group === "features" && metric === "hoa" ? (
-          <div>
-            <div className="mb-1.5 flex items-baseline justify-between">
-              <p className="font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
-                HOA
-              </p>
-              <p className="text-[10px] text-paper/40">Unknown is not No</p>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {(
-                [
-                  ["any", "Any"],
-                  ["hoa", "Yes"],
-                  ["no_hoa", "No"],
-                ] as const
-              ).map(([value, label]) => (
-                <Chip
-                  key={value}
-                  label={label}
-                  active={draft.hoa === value}
-                  onClick={() => onDraft({ hoa: value as HoaFilter })}
-                />
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-      <div className="flex items-center justify-start">
-        <button
-          type="button"
-          onClick={onClear}
-          className="story-press h-9 rounded-full px-3 text-xs font-semibold text-paper/60 hover:text-paper"
-        >
-          Clear filters
-        </button>
+        )}
       </div>
     </div>
   );
@@ -626,7 +661,7 @@ function PrimaryAction({ children }: { children: string }) {
       type="submit"
       data-story-sound="tap"
       data-primary-action={children.toLowerCase()}
-      className="story-home-search-submit story-press inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-4 text-sm font-bold text-navy"
+      className="story-home-search-submit story-press inline-flex h-11 min-w-[5.75rem] shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-gold px-3 text-sm font-bold text-navy"
     >
       {children}
     </button>
@@ -648,7 +683,7 @@ function ChipRow({
 }) {
   return (
     <div>
-      <div className="mb-1.5 flex items-baseline justify-between">
+      <div className="mb-0.5 flex items-baseline justify-between">
         <p className="font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
           {label}
         </p>

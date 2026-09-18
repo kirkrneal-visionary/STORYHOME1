@@ -32,6 +32,7 @@ import {
   applySearchFilters,
   countActiveFilters,
   countActiveFiltersInGroup,
+  countHomepageGroup,
 } from "../src/lib/listing-filters.ts";
 import {
   GHOST_PHRASES,
@@ -321,12 +322,16 @@ assert.match(hub, />Apply</);
 assert.match(hub, />Search</);
 assert.match(hub, /\["buy", "Buy"\]/);
 assert.match(hub, /\["rent", "Rent"\]/);
-assert.match(hub, /Price & land/);
+assert.match(hub, /Price & Features/);
+assert.match(hub, /Home & Land/);
 assert.match(hub, /HomeBoundPickers/);
 assert.match(hub, /Acreage/);
+assert.match(hub, /countHomepageGroup/);
+assert.match(hub, /story-home-advanced-body/);
 assert.match(hub, /HOME_CROSSFADE_MS = 240/);
 assert.match(hub, /inert/);
 assert.match(hub, /keyword: ""/);
+assert.doesNotMatch(hub, /Price & land/);
 assert.doesNotMatch(hub, /overflow-y-auto/);
 assert.doesNotMatch(hub, /Optional — extra detail/);
 assert.doesNotMatch(hub, /City, county, ZIP/);
@@ -341,6 +346,8 @@ const picker = read("src/components/home/HomeBoundPicker.tsx");
 assert.match(picker, /role="listbox"/);
 assert.match(picker, /data-home-picker/);
 assert.match(picker, /passive: false/);
+assert.match(picker, /WHEEL_PIXEL/);
+assert.match(picker, /onPick/);
 assert.doesNotMatch(picker, /overflow-y-auto/);
 assert.doesNotMatch(picker, /scrollTo/);
 assert.doesNotMatch(picker, /<select/);
@@ -354,8 +361,11 @@ assert.match(css, /story-home-search-shell/);
 assert.match(css, /240ms/);
 assert.match(css, /story-home-search-anchor/);
 assert.match(css, /position: sticky/);
+assert.match(css, /story-home-advanced-body/);
+assert.match(css, /grid-template-areas: "editor"/);
 assert.match(css, /story-home-picker/);
 assert.match(css, /user-select: none/);
+assert.match(css, /overscroll-behavior: contain/);
 assert.doesNotMatch(css, /height: 16\.25rem/);
 assert.doesNotMatch(css, /height: 14\.75rem/);
 assert.doesNotMatch(css, /transform 420ms/);
@@ -467,6 +477,8 @@ const grouped = {
 assert.equal(countActiveFiltersInGroup(grouped, "price_land"), 2);
 assert.equal(countActiveFiltersInGroup(grouped, "home"), 1);
 assert.equal(countActiveFiltersInGroup(grouped, "features"), 1);
+assert.equal(countHomepageGroup(grouped, "price_features"), 2);
+assert.equal(countHomepageGroup(grouped, "home_land"), 2);
 
 const fixtures: DemoListing[] = [
   {

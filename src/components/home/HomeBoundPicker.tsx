@@ -4,8 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { stepIndex, type RollerStep } from "@/lib/search/rollers";
 import { cn } from "@/lib/utils";
 
-export const PICKER_ROW_H = 32;
-const WHEEL_STEP = 28;
+export const PICKER_ROW_H = 28;
+const WHEEL_PIXEL = 40;
 
 export function HomeBoundPicker({
   label,
@@ -60,11 +60,14 @@ export function HomeBoundPicker({
     function onWheel(event: WheelEvent) {
       event.preventDefault();
       event.stopPropagation();
-      wheelAcc += event.deltaY;
-      if (Math.abs(wheelAcc) < WHEEL_STEP) return;
-      const jumps = Math.sign(wheelAcc) * Math.max(1, Math.round(Math.abs(wheelAcc) / 72));
+      let dy = event.deltaY;
+      if (event.deltaMode === 1) dy *= 16;
+      if (event.deltaMode === 2) dy *= PICKER_ROW_H;
+      wheelAcc += dy;
+      if (Math.abs(wheelAcc) < WHEEL_PIXEL) return;
+      const dir = Math.sign(wheelAcc);
       wheelAcc = 0;
-      settle(pending.current + jumps);
+      settle(pending.current + dir);
     }
     node.addEventListener("wheel", onWheel, { passive: false });
     return () => node.removeEventListener("wheel", onWheel);
@@ -101,7 +104,7 @@ export function HomeBoundPicker({
 
   return (
     <div className="min-w-0">
-      <p className="mb-1 font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
+      <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
         {label}
       </p>
       <div
@@ -110,6 +113,7 @@ export function HomeBoundPicker({
         id={listId}
         aria-label={label}
         aria-activedescendant={`${listId}-${index}`}
+        aria-valuetext={current?.label ?? "Any"}
         tabIndex={disabled ? -1 : 0}
         data-home-picker=""
         onPointerDown={onPointerDown}
@@ -136,10 +140,16 @@ export function HomeBoundPicker({
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-1 top-1/2 z-0 h-8 -translate-y-1/2 rounded-[var(--radius-sm)] bg-gold/20 ring-1 ring-gold/40"
+          className="pointer-events-none absolute inset-x-1 top-1/2 z-0 h-7 -translate-y-1/2 rounded-[var(--radius-sm)] bg-gold/20 ring-1 ring-gold/40"
         />
         <div className="relative z-[1] flex h-full flex-col">
-          <PickerRow faded>{prev?.label ?? "\u00a0"}</PickerRow>
+          <PickerRow
+            faded
+            disabled={!prev}
+            onPick={() => settle(index - 1)}
+          >
+            {prev?.label ?? "\u00a0"}
+          </PickerRow>
           <PickerRow
             id={`${listId}-${index}`}
             selected
@@ -147,7 +157,13 @@ export function HomeBoundPicker({
           >
             {current?.label ?? "Any"}
           </PickerRow>
-          <PickerRow faded>{next?.label ?? "\u00a0"}</PickerRow>
+          <PickerRow
+            faded
+            disabled={!next}
+            onPick={() => settle(index + 1)}
+          >
+            {next?.label ?? "\u00a0"}
+          </PickerRow>
         </div>
       </div>
     </div>
@@ -160,24 +176,45 @@ function PickerRow({
   selected,
   id,
   label,
+  disabled,
+  onPick,
 }: {
   children: React.ReactNode;
   faded?: boolean;
   selected?: boolean;
   id?: string;
   label?: string;
+  disabled?: boolean;
+  onPick?: () => void;
 }) {
+  const className = cn(
+    "story-home-picker-row flex w-full items-center justify-center px-1 text-[13px] font-semibold",
+    faded ? "text-paper/40" : "text-paper",
+    onPick && !disabled ? "cursor-pointer" : null,
+  );
+  const style = { height: PICKER_ROW_H };
+  if (onPick) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={onPick}
+        className={className}
+        style={style}
+      >
+        {children}
+      </button>
+    );
+  }
   return (
     <div
       id={id}
       role={selected ? "option" : undefined}
       aria-selected={selected || undefined}
       aria-label={label}
-      className={cn(
-        "story-home-picker-row flex items-center justify-center px-1 text-sm font-semibold",
-        faded ? "text-paper/40" : "text-paper",
-      )}
-      style={{ height: PICKER_ROW_H }}
+      className={className}
+      style={style}
     >
       {children}
     </div>

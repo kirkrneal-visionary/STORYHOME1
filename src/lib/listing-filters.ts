@@ -84,6 +84,30 @@ function parseNum(raw: string): number | null {
 
 export type FilterGroupId = "price_land" | "home" | "features";
 
+export type HomepageFilterGroupId = "price_features" | "home_land";
+
+export function countHomepageGroup(
+  filters: SearchFilters,
+  group: HomepageFilterGroupId,
+): number {
+  if (group === "price_features") {
+    let n = 0;
+    if (filters.priceMin || filters.priceMax) n += 1;
+    if (filters.office) n += 1;
+    if (filters.garage) n += 1;
+    if (filters.pool) n += 1;
+    if (filters.hoa !== "any") n += 1;
+    return n;
+  }
+  let n = 0;
+  if (filters.beds !== "Any") n += 1;
+  if (filters.baths !== "Any") n += 1;
+  if (filters.propertyTypes.length) n += 1;
+  if (filters.sqftMin || filters.sqftMax) n += 1;
+  if (filters.acresMin || filters.acresMax) n += 1;
+  return n;
+}
+
 export function countActiveFiltersInGroup(
   filters: SearchFilters,
   group: FilterGroupId,

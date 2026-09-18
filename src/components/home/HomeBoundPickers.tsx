@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { HomeBoundPicker } from "@/components/home/HomeBoundPicker";
+import { HomeBoundPicker, PICKER_ROW_H } from "@/components/home/HomeBoundPicker";
 import { rangeError } from "@/lib/search/transaction";
 import {
   formatMoney,
@@ -37,13 +37,13 @@ export function HomeBoundPickers({
 
   return (
     <div data-bound-pickers>
-      <div className="mb-1 flex items-baseline justify-between gap-2">
-        <p className="font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
+      <div className="mb-0.5 flex items-baseline justify-between gap-2">
+        <p className="font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
           {title}
         </p>
         <p className="text-[10px] text-paper/40">{unit}</p>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {exact === "min" ? (
           <ExactField
             label={minLabel}
@@ -75,7 +75,7 @@ export function HomeBoundPickers({
           />
         )}
       </div>
-      <div className="mt-1.5 flex items-center justify-between gap-2">
+      <div className="mt-1 flex items-center justify-between gap-2">
         <div className="flex gap-2">
           <button
             type="button"
@@ -96,11 +96,12 @@ export function HomeBoundPickers({
           {formatValue(min)} – {formatValue(max)}
         </p>
       </div>
-      {error ? (
-        <p className="mt-1 text-[11px] font-medium text-gold" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <p
+        className="mt-1 min-h-[1.125rem] text-[11px] font-medium text-gold"
+        role={error ? "alert" : undefined}
+      >
+        {error ?? "\u00a0"}
+      </p>
     </div>
   );
 }
@@ -118,12 +119,12 @@ function ExactField({
 }) {
   return (
     <div className="min-w-0">
-      <p className="mb-1 font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
+      <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
         {label}
       </p>
       <div
         className="flex flex-col justify-center"
-        style={{ height: 96 }}
+        style={{ height: PICKER_ROW_H * 3 }}
       >
         <input
           type="text"

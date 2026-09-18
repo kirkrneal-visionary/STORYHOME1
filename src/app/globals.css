@@ -1134,7 +1134,9 @@ html[data-header-state="minimal"] .story-living-mark {
  * Homepage layers — one scheme:
  * header + dock 50, search shell 20, page content 0.
  * Shell hugs the active mode. Inactive mode is out of flow so it
- * cannot reserve the taller editor height.
+ * cannot reserve the taller editor height. Advanced groups share
+ * one in-flow cell so switching Price & Features / Home & Land
+ * does not resize the photograph.
  */
 html[data-home-hub] .story-route-page {
   will-change: auto;
@@ -1172,10 +1174,22 @@ html[data-home-hub] .story-route-surface {
 .story-home-search-shell[data-reduced="true"] .story-home-mode {
   transition: none;
 }
+.story-home-advanced-body {
+  display: grid;
+  grid-template-areas: "editor";
+}
+.story-home-advanced-group {
+  grid-area: editor;
+}
+.story-home-advanced-group:not([data-active="true"]) {
+  visibility: hidden;
+  pointer-events: none;
+}
 .story-home-picker {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  overscroll-behavior: contain;
 }
 .story-home-picker-row {
   user-select: none;
