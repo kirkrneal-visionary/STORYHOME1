@@ -362,7 +362,7 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 p-1.5 md:gap-1.5 md:p-2">
+    <div className="flex flex-col gap-1 p-1 md:gap-1.5 md:p-2">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
@@ -455,12 +455,14 @@ function MobileAdvanced({
       <section data-region="home">
         <p className="story-home-region-heading">Home</p>
         <ChipRow
+          compact
           label="Beds"
           value={draft.beds}
           options={BED_OPTIONS}
           onChange={(beds) => onDraft({ beds })}
         />
         <ChipRow
+          compact
           label="Baths"
           value={draft.baths}
           options={BATH_OPTIONS}
@@ -508,7 +510,7 @@ function MobileAdvanced({
           ))}
         </div>
       </section>
-      <section data-region="hoa">
+      <section data-region="hoa" className="story-home-mobile-hoa">
         <p className="story-home-filter-heading">HOA</p>
         <p className="sr-only">Unknown is not No</p>
         <div className="flex flex-wrap gap-1">
@@ -521,6 +523,7 @@ function MobileAdvanced({
           ).map(([value, label]) => (
             <Chip
               key={value}
+              compact
               label={label}
               active={draft.hoa === value}
               onClick={() => onDraft({ hoa: value as HoaFilter })}
@@ -788,16 +791,18 @@ function ChipRow({
   value,
   options,
   onChange,
+  compact,
 }: {
   label: string;
   hint?: string;
   value: string;
   options: readonly (readonly [string, string])[];
   onChange: (next: string) => void;
+  compact?: boolean;
 }) {
   return (
-    <div>
-      <div className="mb-0.5 flex items-baseline justify-between">
+    <div className={compact ? "story-home-chip-row-compact" : undefined}>
+      <div className={cn(compact ? "shrink-0" : "mb-0.5 flex items-baseline justify-between")}>
         <p className="story-home-filter-heading">{label}</p>
         <p className="sr-only">Minimum {label}</p>
         {hint ? <p className="text-[10px] text-paper/40">{hint}</p> : null}
@@ -806,6 +811,7 @@ function ChipRow({
         {options.map(([id, text]) => (
           <Chip
             key={id}
+            compact={compact}
             label={text}
             active={value === id}
             onClick={() => onChange(id)}
@@ -820,10 +826,12 @@ function Chip({
   label,
   active,
   onClick,
+  compact,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
+  compact?: boolean;
 }) {
   return (
     <button
@@ -831,7 +839,10 @@ function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+        "story-press rounded-full font-semibold",
+        compact
+          ? "h-6 px-1.5 text-[10px]"
+          : "h-7 px-2 text-[11px]",
         active ? "bg-gold text-navy" : "text-paper/65 hover:text-paper",
       )}
     >

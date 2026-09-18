@@ -1145,7 +1145,7 @@ html[data-home-hub] .story-route-page {
   isolation: isolate;
   overflow: hidden;
   /* Phone canvas is viewport/breakpoint only — not Advanced, count, or Exact. */
-  height: min(41.5rem, calc(100svh - var(--story-bottom-clearance) - 0.65rem));
+  height: min(42.25rem, calc(100svh - var(--story-bottom-clearance)));
 }
 @media (min-width: 768px) {
   .story-home-hero {
@@ -1166,8 +1166,8 @@ html[data-home-hub] .story-route-page {
 }
 @media (max-width: 767px) {
   .story-home-hero-headline {
-    font-size: 1.625rem;
-    line-height: 1.9rem;
+    font-size: 1.5rem;
+    line-height: 1.75rem;
   }
 }
 .story-home-hero-stage {
@@ -1178,7 +1178,7 @@ html[data-home-hub] .story-route-page {
   height: 100%;
   /* Lock to the full header height. The living header may shrink
      --story-header-h on scroll; Search/Advanced must not follow it. */
-  padding: calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 0.75rem) 0.85rem 0.85rem;
+  padding: calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 0.7rem) 0.85rem 0.3rem;
 }
 @media (min-width: 768px) {
   .story-home-hero-stage {
@@ -1193,8 +1193,8 @@ html[data-home-hub] .story-route-page {
   width: 100%;
   max-width: 48rem;
   margin-inline: auto;
-  padding-top: 0.65rem;
-  padding-bottom: 0.9rem;
+  padding-top: 0.4rem;
+  padding-bottom: 0.2rem;
 }
 @media (min-width: 768px) {
   .story-home-hero-safe {
@@ -1454,7 +1454,7 @@ html[data-home-hub] .story-route-page {
 .story-home-mobile-advanced {
   display: flex;
   flex-direction: column;
-  gap: 0.32rem;
+  gap: 0.1rem;
   min-width: 0;
 }
 .story-home-mobile-advanced .story-home-range-stack {
@@ -1462,47 +1462,66 @@ html[data-home-hub] .story-route-page {
   width: max-content;
   max-width: 100%;
   column-gap: 0.32rem;
-  row-gap: 0.08rem;
+  row-gap: 0;
+}
+.story-home-mobile-advanced .story-home-range-head > * {
+  display: none;
 }
 .story-home-mobile-advanced .story-home-region-heading {
-  margin-bottom: 0.12rem;
+  margin-bottom: 0.06rem;
 }
 .story-home-mobile-advanced .story-home-filter-heading {
-  margin-bottom: 0.12rem;
+  margin-bottom: 0;
 }
 .story-home-mobile-advanced [data-region="home"] {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
+  gap: 0.12rem;
+}
+.story-home-chip-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.story-home-chip-row-compact .story-home-filter-heading {
+  min-width: 2.15rem;
+  margin: 0;
+}
+.story-home-mobile-hoa {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .story-home-mobile-types {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.22rem;
+  gap: 0.18rem;
 }
 .story-home-mobile-features {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.22rem;
+  gap: 0.18rem;
 }
 .story-home-mobile-advanced .story-home-icon-tile {
-  min-height: 2.15rem;
+  min-height: 1.7rem;
   box-sizing: border-box;
+  padding: 0.12rem 0.08rem;
+  font-size: 0.5rem;
+  white-space: nowrap;
 }
 .story-home-mobile-advanced .story-home-icon-tile.is-active {
-  min-height: 2.15rem;
+  min-height: 1.7rem;
 }
 .story-home-mobile-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.25rem;
-  padding-top: 0.1rem;
+  gap: 0.2rem;
 }
-.story-home-mobile-advanced .story-press.h-7 {
-  height: 1.5rem;
-  padding-inline: 0.4rem;
-  font-size: 0.625rem;
+.story-home-mobile-actions .story-home-search-submit {
+  height: 2rem;
+  min-width: 5rem;
 }
 .story-home-range-pair {
   display: flex;

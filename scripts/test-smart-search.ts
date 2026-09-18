@@ -439,7 +439,7 @@ assert.match(css, /story-home-desktop-advanced/);
 assert.match(css, /story-home-desktop-regions/);
 assert.match(css, /story-home-mobile-advanced/);
 assert.match(css, /story-home-mobile-features/);
-assert.match(css, /41\.5rem/);
+assert.match(css, /42\.25rem/);
 assert.match(css, /story-home-hero-headline/);
 assert.match(css, /story-home-range-stack/);
 assert.match(css, /--roller-w/);
