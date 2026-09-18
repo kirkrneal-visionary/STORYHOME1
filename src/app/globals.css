@@ -1466,14 +1466,14 @@ html[data-home-hub] .story-route-page {
   opacity: 0.42;
 }
 .story-home-mobile-advanced {
-  --m1-section-gap: 0.12rem;
-  --m1-row-gap: 0.08rem;
+  --m1-section-gap: 0.22rem;
+  --m1-row-gap: 0.12rem;
   --m1-control-gap: 0.22rem;
   --m1-action-h: 2rem;
   --m1-summary-h: 1.55rem;
   --m1-editor-h: 6.35rem;
   --m1-measure-label: 5.6rem;
-  --m1-home-label: 2.25rem;
+  --m1-home-label: 2.35rem;
   --m1-tile-h: 1.85rem;
   --m1-icon: 0.75rem;
   --m1-roller-gap: 0.4rem;
@@ -1483,7 +1483,7 @@ html[data-home-hub] .story-route-page {
   min-width: 0;
 }
 .story-home-mobile-advanced .story-home-region-heading {
-  margin-bottom: 0.08rem;
+  margin-bottom: 0.1rem;
 }
 .story-home-mobile-advanced .story-home-filter-heading {
   margin-bottom: 0;
@@ -1492,47 +1492,60 @@ html[data-home-hub] .story-route-page {
   display: flex;
   flex-direction: column;
   gap: var(--m1-row-gap);
+  padding-inline: 0.12rem;
 }
 .story-home-mobile-advanced [data-region="property"] {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  column-gap: 0.7rem;
-  row-gap: var(--m1-row-gap);
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
 }
-.story-home-mobile-advanced [data-region="property"] > .story-home-region-heading,
-.story-home-mobile-advanced [data-region="property"] > .story-home-mobile-editor {
-  grid-column: 1 / -1;
-}
-.story-home-range-summary {
+.story-home-measure-row {
   display: grid;
-  grid-template-columns: var(--m1-measure-label) minmax(0, 1fr);
-  align-items: center;
-  column-gap: 0.7rem;
-  min-height: var(--m1-summary-h);
-  width: 100%;
-  padding: 0;
-  font-size: 0.8125rem;
-  font-weight: 600;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.18fr);
+  column-gap: 0.28rem;
+  align-items: stretch;
+  min-width: 0;
+}
+.story-home-measure-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.14rem;
+  min-width: 0;
+  min-height: 2.55rem;
+  padding: 0.12rem 0.08rem;
   color: color-mix(in srgb, var(--paper) 82%, transparent);
   background: transparent;
 }
-@supports (grid-template-columns: subgrid) {
-  .story-home-range-summary {
-    grid-template-columns: subgrid;
-    grid-column: 1 / -1;
-    column-gap: inherit;
-  }
+.story-home-measure-heading {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.1;
+  text-align: center;
+  text-transform: uppercase;
 }
-.story-home-range-summary > :last-child {
+.story-home-measure-bounds {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0.16rem;
   min-width: 0;
-  text-align: right;
+}
+.story-home-measure-bounds > span {
+  min-width: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  line-height: 1.15;
   color: color-mix(in srgb, var(--paper) 62%, transparent);
 }
-.story-home-range-summary.is-open {
+.story-home-measure-zone.is-open {
   color: var(--gold);
 }
-.story-home-range-summary.is-open > :last-child {
+.story-home-measure-zone.is-open .story-home-measure-bounds > span {
   color: var(--gold);
 }
 .story-home-mobile-editor {
@@ -1583,14 +1596,14 @@ html[data-home-hub] .story-route-page {
   display: grid;
   grid-template-columns: var(--m1-home-label) minmax(0, 1fr);
   align-items: center;
-  column-gap: 0.3rem;
+  column-gap: 0.4rem;
   min-width: 0;
 }
 .story-home-chip-track {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  column-gap: 0.1rem;
+  column-gap: 0.16rem;
   min-width: 0;
 }
 .story-home-chip-track button {
@@ -1651,10 +1664,18 @@ html[data-home-hub] .story-route-page {
   white-space: nowrap;
 }
 .story-home-mobile-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.25rem;
+}
+.story-home-mobile-actions > :first-child {
+  justify-self: start;
+}
+.story-home-mobile-actions > :nth-child(2) {
+  justify-self: center;
+}
+.story-home-mobile-actions > :last-child {
+  justify-self: end;
 }
 .story-home-mobile-actions .story-home-search-submit {
   height: var(--m1-action-h);

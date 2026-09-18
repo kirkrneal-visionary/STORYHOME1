@@ -134,21 +134,25 @@ function compactPrice(raw: string): string {
   return formatMoney(raw);
 }
 
-function summarizeRange(
-  min: string,
-  max: string,
-  format: (raw: string) => string,
-  plusUnit?: string,
-): string {
-  if (!min && !max) return "Any – Any";
-  const strip = (raw: string) => format(raw).replace(/ ac$| sqft$/, "");
-  if (min && !max) {
-    if (plusUnit) return `${strip(min)}+ ${plusUnit}`;
-    return `${format(min)}+`;
-  }
-  if (!min && max) return `Up to ${format(max)}`;
-  if (plusUnit) return `${strip(min)} – ${strip(max)} ${plusUnit}`;
-  return `${format(min)} – ${format(max)}`;
+function boundDisplay(raw: string, format: (raw: string) => string): string {
+  if (!raw) return "Any";
+  return format(raw);
+}
+
+function compactAcres(raw: string): string {
+  if (!raw) return "Any";
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 4,
+  }).format(n);
+}
+
+function compactSqft(raw: string): string {
+  if (!raw) return "Any";
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return raw;
+  return new Intl.NumberFormat("en-US").format(n);
 }
 
 export function HomeSearchHub({
@@ -528,25 +532,29 @@ function MobileAdvanced({
         </p>
       ) : null}
       <section data-region="property">
-        <p className="story-home-region-heading">Property</p>
-        <RangeSummary
-          label="Price"
-          value={summarizeRange(draft.priceMin, draft.priceMax, compactPrice)}
-          expanded={activeRange === "price"}
-          onToggle={() => toggleRange("price")}
-        />
-        <RangeSummary
-          label="Acres"
-          value={summarizeRange(draft.acresMin, draft.acresMax, formatAcres, "ac")}
-          expanded={activeRange === "acres"}
-          onToggle={() => toggleRange("acres")}
-        />
-        <RangeSummary
-          label="Square Feet"
-          value={summarizeRange(draft.sqftMin, draft.sqftMax, formatSqft, "sqft")}
-          expanded={activeRange === "sqft"}
-          onToggle={() => toggleRange("sqft")}
-        />
+        <div className="story-home-measure-row" data-measure-row="">
+          <MeasureZone
+            label="Price"
+            min={boundDisplay(draft.priceMin, compactPrice)}
+            max={boundDisplay(draft.priceMax, compactPrice)}
+            expanded={activeRange === "price"}
+            onToggle={() => toggleRange("price")}
+          />
+          <MeasureZone
+            label="Acres"
+            min={boundDisplay(draft.acresMin, compactAcres)}
+            max={boundDisplay(draft.acresMax, compactAcres)}
+            expanded={activeRange === "acres"}
+            onToggle={() => toggleRange("acres")}
+          />
+          <MeasureZone
+            label="Square Feet"
+            min={boundDisplay(draft.sqftMin, compactSqft)}
+            max={boundDisplay(draft.sqftMax, compactSqft)}
+            expanded={activeRange === "sqft"}
+            onToggle={() => toggleRange("sqft")}
+          />
+        </div>
         <div
           className="story-home-mobile-editor"
           data-range-editor-slot=""
@@ -562,7 +570,6 @@ function MobileAdvanced({
         </div>
       </section>
       <section data-region="home">
-        <p className="story-home-region-heading">Home</p>
         <ChipRow
           compact
           label="Beds"
@@ -806,14 +813,16 @@ function DesktopAdvanced({
   );
 }
 
-function RangeSummary({
+function MeasureZone({
   label,
-  value,
+  min,
+  max,
   expanded,
   onToggle,
 }: {
   label: string;
-  value: string;
+  min: string;
+  max: string;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -824,12 +833,15 @@ function RangeSummary({
       aria-expanded={expanded}
       onClick={onToggle}
       className={cn(
-        "story-home-range-summary",
+        "story-home-measure-zone",
         expanded ? "is-open" : null,
       )}
     >
-      <span>{label}</span>
-      <span>{value}</span>
+      <span className="story-home-measure-heading">{label}</span>
+      <span className="story-home-measure-bounds">
+        <span data-measure-min="">{min}</span>
+        <span data-measure-max="">{max}</span>
+      </span>
     </button>
   );
 }
