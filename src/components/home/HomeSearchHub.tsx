@@ -277,7 +277,7 @@ function SearchMode({
             }
             onClick={() => onTransaction(key)}
             className={cn(
-              "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold",
+              "story-press type-control h-8 rounded-full px-2.5 text-xs font-semibold md:h-9 md:px-3 md:text-sm",
               transaction === key
                 ? "bg-gold text-navy"
                 : "text-paper/70 hover:text-paper",
@@ -287,7 +287,7 @@ function SearchMode({
           </button>
         ))}
       </div>
-      <div className="relative min-w-0 flex-1 md:min-w-[18rem]">
+      <div className="relative min-w-0 flex-1 md:min-w-[22rem]">
         <div className="relative rounded-[var(--radius-md)] bg-[var(--env-0)] ring-1 ring-hairline">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold" />
           <input
@@ -311,7 +311,7 @@ function SearchMode({
             filterCount > 0 ? `Filters, ${filterCount} selected` : "Filters"
           }
           onClick={onOpenAdvanced}
-          className="story-home-filters-trigger story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper"
+          className="story-home-filters-trigger story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper md:h-14 md:w-14"
         >
           <span className="text-[10px] font-bold leading-none tracking-wide">
             Filters
@@ -666,7 +666,7 @@ function PrimaryAction({
       type="submit"
       data-story-sound="tap"
       data-primary-action={children.toLowerCase()}
-      className="story-home-search-submit story-press inline-flex h-10 min-w-[5.75rem] shrink-0 items-center justify-center gap-1 rounded-[var(--radius-md)] bg-gold px-3 text-sm font-bold text-navy"
+      className="story-home-search-submit story-press inline-flex h-10 min-w-[5.75rem] shrink-0 items-center justify-center gap-1 rounded-[var(--radius-md)] bg-gold px-3 text-sm font-bold text-navy md:h-12 md:min-w-[6.5rem] md:px-4"
     >
       <span>{children}</span>
       {count != null ? (

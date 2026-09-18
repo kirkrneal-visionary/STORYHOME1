@@ -1175,14 +1175,31 @@ html[data-home-hub] .story-route-page {
 .story-home-hero-safe {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-height: 0;
   width: 100%;
   max-width: 48rem;
   margin-inline: auto;
+  padding-top: clamp(1.25rem, 3.5vh, 2rem);
+  padding-bottom: clamp(2.25rem, 7vh, 3.25rem);
+}
+@media (min-width: 768px) {
+  .story-home-hero-safe {
+    padding-top: clamp(1.75rem, 4vh, 2.5rem);
+    padding-bottom: clamp(3rem, 8vh, 4.25rem);
+  }
+}
+@media (min-width: 1200px) {
+  .story-home-hero-safe {
+    max-width: 56rem;
+  }
 }
 .story-home-hero-safe .story-home-search-shell {
   max-height: 100%;
+  min-height: 0;
+}
+.story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
+  overflow: auto;
 }
 .story-home-search-shell {
   height: auto;
@@ -1207,11 +1224,6 @@ html[data-home-hub] .story-route-page {
   .story-home-advanced-chrome {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: "tabs actions";
-  }
-}
-@media (max-height: 520px) {
-  .story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
-    overflow: auto;
   }
 }
 .story-home-modes {

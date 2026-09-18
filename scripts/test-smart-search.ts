@@ -361,6 +361,7 @@ assert.throws(() => read("src/components/home/HomeBoundRollers.tsx"));
 assert.match(css, /story-home-search-shell/);
 assert.match(css, /240ms/);
 assert.match(css, /story-home-hero-safe/);
+assert.match(css, /justify-content: flex-start/);
 assert.match(css, /story-home-advanced-chrome/);
 assert.doesNotMatch(css, /story-home-search-anchor/);
 assert.doesNotMatch(css, /position: sticky/);
