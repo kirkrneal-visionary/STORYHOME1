@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import {
   HomeBoundPicker,
   PICKER_ROW_H,
-  PICKER_VISIBLE,
+  pickerVisibleCount,
+  useCompactPicker,
 } from "@/components/home/HomeBoundPicker";
 import { rangeError } from "@/lib/search/transaction";
 import {
@@ -34,6 +35,7 @@ export function HomeBoundPickers({
   formatValue?: (raw: string) => string;
   onChange: (min: string, max: string) => void;
 }) {
+  const compact = useCompactPicker();
   const [exact, setExact] = useState<"min" | "max" | null>(null);
   const minSteps = useMemo(() => withExactStep(steps, min), [steps, min]);
   const maxSteps = useMemo(() => withExactStep(steps, max), [steps, max]);
@@ -50,6 +52,7 @@ export function HomeBoundPickers({
           <ExactField
             label={minLabel}
             value={min}
+            compact={compact}
             onChange={(next) => onChange(next, max)}
             onDone={() => setExact(null)}
           />
@@ -66,6 +69,7 @@ export function HomeBoundPickers({
           <ExactField
             label={maxLabel}
             value={max}
+            compact={compact}
             onChange={(next) => onChange(min, next)}
             onDone={() => setExact(null)}
           />
@@ -111,11 +115,13 @@ export function HomeBoundPickers({
 function ExactField({
   label,
   value,
+  compact,
   onChange,
   onDone,
 }: {
   label: string;
   value: string;
+  compact: boolean;
   onChange: (next: string) => void;
   onDone: () => void;
 }) {
@@ -124,7 +130,7 @@ function ExactField({
       <p className="story-home-filter-heading">{label}</p>
       <div
         className="flex flex-col justify-center"
-        style={{ height: PICKER_ROW_H * PICKER_VISIBLE }}
+        style={{ height: PICKER_ROW_H * pickerVisibleCount(compact) }}
       >
         <input
           type="text"

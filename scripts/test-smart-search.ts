@@ -352,6 +352,8 @@ assert.match(picker, /data-home-picker/);
 assert.match(picker, /passive: false/);
 assert.match(picker, /WHEEL_PIXEL/);
 assert.match(picker, /PICKER_VISIBLE/);
+assert.match(picker, /PICKER_VISIBLE_COMPACT/);
+assert.match(picker, /useCompactPicker/);
 assert.match(picker, /onPick/);
 assert.doesNotMatch(picker, /overflow-y-auto/);
 assert.doesNotMatch(picker, /scrollTo/);

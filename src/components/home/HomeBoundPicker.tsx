@@ -6,7 +6,24 @@ import { cn } from "@/lib/utils";
 
 export const PICKER_ROW_H = 22;
 export const PICKER_VISIBLE = 5;
+export const PICKER_VISIBLE_COMPACT = 3;
 const WHEEL_PIXEL = 40;
+
+export function pickerVisibleCount(compact: boolean) {
+  return compact ? PICKER_VISIBLE_COMPACT : PICKER_VISIBLE;
+}
+
+export function useCompactPicker() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const sync = () => setCompact(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+  return compact;
+}
 
 export function HomeBoundPicker({
   label,
@@ -24,6 +41,9 @@ export function HomeBoundPicker({
   disabled?: boolean;
 }) {
   const listId = useId();
+  const compact = useCompactPicker();
+  const visible = pickerVisibleCount(compact);
+  const offsets = compact ? ([-1, 0, 1] as const) : ([-2, -1, 0, 1, 2] as const);
   const root = useRef<HTMLDivElement>(null);
   const pending = useRef(stepIndex(steps, value));
   const valueRef = useRef(value);
@@ -104,7 +124,7 @@ export function HomeBoundPicker({
   }
 
   const current = steps[index];
-  const neighborhood = [-2, -1, 0, 1, 2].map((offset) => ({
+  const neighborhood = offsets.map((offset) => ({
     offset,
     step: steps[index + offset],
   }));
@@ -141,7 +161,7 @@ export function HomeBoundPicker({
           }
         }}
         className="story-home-picker relative outline-none"
-        style={{ height: PICKER_ROW_H * PICKER_VISIBLE }}
+        style={{ height: PICKER_ROW_H * visible }}
       >
         <div
           aria-hidden="true"
