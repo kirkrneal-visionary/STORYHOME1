@@ -183,8 +183,8 @@ export function HomeSearchHero() {
 
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
-      <section className="relative min-h-[20.5rem] md:min-h-[26rem]">
-        <div className="absolute inset-0 overflow-hidden">
+      <section className="story-home-hero" data-home-hero="">
+        <div className="story-home-hero-photo">
           <Image
             src="/brand/storyhome-meadow-hero.png"
             alt="East Texas pine meadow at first light"
@@ -194,29 +194,29 @@ export function HomeSearchHero() {
             sizes="(max-width: 390px) 390px, (max-width: 768px) 768px, (max-width: 1440px) 1440px, 1672px"
           />
         </div>
-
-        <div className="relative z-10 flex items-center justify-center px-4 pb-28 pt-[calc(var(--story-safe-top)+1.25rem)] md:px-6 md:pb-32 md:pt-[calc(var(--story-safe-top)+2.25rem)]">
-          <div className="relative mx-auto w-full max-w-3xl text-center">
-            <h1 className="type-hero mx-auto max-w-3xl text-navy">
-              Find your next place in{" "}
-              <span className="whitespace-nowrap">East Texas.</span>
-            </h1>
+        <div className="story-home-hero-stage">
+          <h1 className="type-hero mx-auto max-w-3xl text-center text-navy">
+            Find your next place in{" "}
+            <span className="whitespace-nowrap">East Texas.</span>
+          </h1>
+          <div className="story-home-hero-safe">
+            <HomeSearchHub
+              transaction={mode}
+              onTransaction={changeMode}
+              query={query}
+              onQuery={setQuery}
+              filters={filters}
+              onFilters={changeFilters}
+              onSubmitSearch={onSearch}
+            />
           </div>
         </div>
       </section>
-      <div className="story-home-search-anchor relative z-20 mx-auto -mt-24 w-full max-w-3xl px-4 text-left md:-mt-28 md:px-6">
-        <HomeSearchHub
-          transaction={mode}
-          onTransaction={changeMode}
-          query={query}
-          onQuery={setQuery}
-          filters={filters}
-          onFilters={changeFilters}
-          onSubmitSearch={onSearch}
-        />
-      </div>
 
-      <section className="mx-auto max-w-6xl px-4 pb-10 pt-8 md:px-6 md:pt-10">
+      <section
+        className="mx-auto max-w-6xl px-4 pb-10 pt-8 md:px-6 md:pt-10"
+        data-launch-counties=""
+      >
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="type-section text-paper">

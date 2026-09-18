@@ -4,17 +4,20 @@ import { useEffect, useId, useRef, useState } from "react";
 import { stepIndex, type RollerStep } from "@/lib/search/rollers";
 import { cn } from "@/lib/utils";
 
-export const PICKER_ROW_H = 28;
+export const PICKER_ROW_H = 22;
+export const PICKER_VISIBLE = 5;
 const WHEEL_PIXEL = 40;
 
 export function HomeBoundPicker({
   label,
+  accessibleLabel,
   steps,
   value,
   onChange,
   disabled,
 }: {
   label: string;
+  accessibleLabel?: string;
   steps: RollerStep[];
   value: string;
   onChange: (next: string) => void;
@@ -84,7 +87,9 @@ export function HomeBoundPicker({
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     if (!drag.current) return;
-    const moved = Math.round((drag.current.startY - event.clientY) / PICKER_ROW_H);
+    const moved = Math.round(
+      (drag.current.startY - event.clientY) / PICKER_ROW_H,
+    );
     settle(drag.current.startIndex + moved);
   }
 
@@ -98,9 +103,11 @@ export function HomeBoundPicker({
     settle(pending.current + delta);
   }
 
-  const prev = steps[index - 1];
   const current = steps[index];
-  const next = steps[index + 1];
+  const neighborhood = [-2, -1, 0, 1, 2].map((offset) => ({
+    offset,
+    step: steps[index + offset],
+  }));
 
   return (
     <div className="min-w-0">
@@ -111,7 +118,7 @@ export function HomeBoundPicker({
         ref={root}
         role="listbox"
         id={listId}
-        aria-label={label}
+        aria-label={accessibleLabel ?? label}
         aria-activedescendant={`${listId}-${index}`}
         aria-valuetext={current?.label ?? "Any"}
         tabIndex={disabled ? -1 : 0}
@@ -136,34 +143,34 @@ export function HomeBoundPicker({
           }
         }}
         className="story-home-picker relative outline-none"
-        style={{ height: PICKER_ROW_H * 3 }}
+        style={{ height: PICKER_ROW_H * PICKER_VISIBLE }}
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-1 top-1/2 z-0 h-7 -translate-y-1/2 rounded-[var(--radius-sm)] bg-gold/20 ring-1 ring-gold/40"
+          className="pointer-events-none absolute inset-x-1 top-1/2 z-0 h-[22px] -translate-y-1/2 rounded-[var(--radius-sm)] bg-gold/20 ring-1 ring-gold/40"
         />
         <div className="relative z-[1] flex h-full flex-col">
-          <PickerRow
-            faded
-            disabled={!prev}
-            onPick={() => settle(index - 1)}
-          >
-            {prev?.label ?? "\u00a0"}
-          </PickerRow>
-          <PickerRow
-            id={`${listId}-${index}`}
-            selected
-            label={current?.label ?? "Any"}
-          >
-            {current?.label ?? "Any"}
-          </PickerRow>
-          <PickerRow
-            faded
-            disabled={!next}
-            onPick={() => settle(index + 1)}
-          >
-            {next?.label ?? "\u00a0"}
-          </PickerRow>
+          {neighborhood.map(({ offset, step }) =>
+            offset === 0 ? (
+              <PickerRow
+                key="selected"
+                id={`${listId}-${index}`}
+                selected
+                label={step?.label ?? "Any"}
+              >
+                {step?.label ?? "Any"}
+              </PickerRow>
+            ) : (
+              <PickerRow
+                key={offset}
+                faded
+                disabled={!step}
+                onPick={() => settle(index + offset)}
+              >
+                {step?.label ?? "\u00a0"}
+              </PickerRow>
+            ),
+          )}
         </div>
       </div>
     </div>
@@ -188,7 +195,7 @@ function PickerRow({
   onPick?: () => void;
 }) {
   const className = cn(
-    "story-home-picker-row flex w-full items-center justify-center px-1 text-[13px] font-semibold",
+    "story-home-picker-row flex w-full items-center justify-center px-1 text-[12px] font-semibold",
     faded ? "text-paper/40" : "text-paper",
     onPick && !disabled ? "cursor-pointer" : null,
   );

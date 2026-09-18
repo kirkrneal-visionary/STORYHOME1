@@ -352,15 +352,15 @@ function AdvancedMode({
   onClear: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 p-1.5">
+    <div className="flex flex-col gap-1 p-1">
       <p id={titleId} className="sr-only">
         Advanced filters
       </p>
-      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <div className="story-home-advanced-chrome">
         <div
           role="tablist"
           aria-label="Filter groups"
-          className="grid grid-cols-2 gap-1"
+          className="story-home-advanced-tabs grid grid-cols-2 gap-1"
         >
           {GROUPS.map((row) => {
             const active = countHomepageGroup(draft, row.id);
@@ -372,7 +372,7 @@ function AdvancedMode({
                 aria-selected={group === row.id}
                 onClick={() => onGroup(row.id)}
                 className={cn(
-                  "story-press inline-flex h-9 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-xs font-semibold",
+                  "story-press inline-flex h-8 min-w-0 items-center justify-center gap-1 rounded-full px-2 text-xs font-semibold",
                   group === row.id
                     ? "bg-gold text-navy"
                     : "text-paper/70 hover:text-paper",
@@ -381,7 +381,7 @@ function AdvancedMode({
                 <span className="min-w-0 truncate">{row.label}</span>
                 <span
                   className={cn(
-                    "inline-flex h-4 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
+                    "inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums",
                     group === row.id
                       ? "bg-navy/15 text-navy"
                       : "bg-gold text-navy",
@@ -394,15 +394,29 @@ function AdvancedMode({
             );
           })}
         </div>
-        <div className="flex shrink-0 items-center justify-end gap-1.5">
+        <div className="story-home-advanced-actions flex shrink-0 items-center justify-end gap-1">
           <button
             type="button"
             onClick={onCancel}
-            className="story-press h-9 shrink-0 rounded-full px-2.5 text-xs font-semibold text-paper/70 hover:text-paper"
+            className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
           >
             Back
           </button>
-          <PrimaryAction>Apply</PrimaryAction>
+          <button
+            type="button"
+            onClick={onClear}
+            className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
+          >
+            Clear
+          </button>
+          <PrimaryAction
+            count={
+              countHomepageGroup(draft, "price_features") +
+              countHomepageGroup(draft, "home_land")
+            }
+          >
+            Apply
+          </PrimaryAction>
         </div>
       </div>
       {transaction === "rent" && !RENTAL_INVENTORY_AVAILABLE ? (
@@ -436,15 +450,6 @@ function AdvancedMode({
           />
         </div>
       </div>
-      <div className="flex items-center justify-start">
-        <button
-          type="button"
-          onClick={onClear}
-          className="story-press h-8 rounded-full px-2.5 text-xs font-semibold text-paper/60 hover:text-paper"
-        >
-          Clear filters
-        </button>
-      </div>
     </div>
   );
 }
@@ -459,14 +464,14 @@ function PriceFeaturesGroup({
   onDraft: (partial: Partial<SearchFilters>) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5" data-filter-group="price_features">
+    <div className="flex flex-col gap-1" data-filter-group="price_features">
       <HomeBoundPickers
-        title={transaction === "rent" ? "Monthly rent" : "Purchase price"}
-        unit={transaction === "rent" ? "$ / month" : "purchase $"}
+        title="Price"
+        unit={transaction === "rent" ? "$ / mo" : "$"}
         min={draft.priceMin}
         max={draft.priceMax}
-        minLabel="Minimum"
-        maxLabel="Maximum"
+        minLabel="Min"
+        maxLabel="Max"
         steps={transaction === "rent" ? RENT_PRICE_STEPS : BUY_PRICE_STEPS}
         formatValue={formatMoney}
         onChange={(priceMin, priceMax) => onDraft({ priceMin, priceMax })}
@@ -495,12 +500,10 @@ function PriceFeaturesGroup({
           </div>
         </div>
         <div>
-          <div className="mb-0.5 flex items-baseline gap-2">
-            <p className="font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-              HOA
-            </p>
-            <p className="text-[10px] text-paper/40">Unknown is not No</p>
-          </div>
+          <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
+            HOA
+          </p>
+          <p className="sr-only">Unknown is not No</p>
           <div className="flex flex-wrap gap-1">
             {(
               [
@@ -535,18 +538,16 @@ function HomeLandGroup({
   onDraft: (partial: Partial<SearchFilters>) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5" data-filter-group="home_land">
-      <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+    <div className="flex flex-col gap-1" data-filter-group="home_land">
+      <div className="grid grid-cols-2 gap-1">
         <ChipRow
-          label="Bedrooms"
-          hint="Minimum"
+          label="Beds"
           value={draft.beds}
           options={BED_OPTIONS}
           onChange={(beds) => onDraft({ beds })}
         />
         <ChipRow
-          label="Bathrooms"
-          hint="Minimum"
+          label="Baths"
           value={draft.baths}
           options={BATH_OPTIONS}
           onChange={(baths) => onDraft({ baths })}
@@ -554,7 +555,7 @@ function HomeLandGroup({
       </div>
       <div>
         <p className="mb-0.5 font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
-          Property type
+          Type
         </p>
         <div className="grid grid-cols-5 gap-1">
           {TYPE_TILES.map(({ type, label, Icon }) => {
@@ -571,7 +572,7 @@ function HomeLandGroup({
                   })
                 }
                 className={cn(
-                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1.5 text-[10px] font-semibold",
+                  "story-press flex flex-col items-center gap-0.5 rounded-[var(--radius-sm)] px-1 py-1 text-[10px] font-semibold",
                   active
                     ? "bg-gold text-navy"
                     : "text-paper/65 hover:text-paper",
@@ -585,66 +586,64 @@ function HomeLandGroup({
         </div>
       </div>
       <div>
-        <div className="mb-0.5 flex flex-wrap items-center justify-between gap-2">
-          <div
-            role="tablist"
-            aria-label="Land or size"
-            className="flex gap-1"
+        <div
+          role="tablist"
+          aria-label="Acres or square feet"
+          className="mb-0.5 flex gap-1"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={landBound === "acres"}
+            onClick={() => onLandBound("acres")}
+            className={cn(
+              "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+              landBound === "acres"
+                ? "bg-paper/12 text-paper"
+                : "text-paper/55 hover:text-paper",
+            )}
           >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={landBound === "acres"}
-              onClick={() => onLandBound("acres")}
-              className={cn(
-                "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
-                landBound === "acres"
-                  ? "bg-paper/12 text-paper"
-                  : "text-paper/55 hover:text-paper",
-              )}
-            >
-              Acreage
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={landBound === "sqft"}
-              onClick={() => onLandBound("sqft")}
-              className={cn(
-                "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
-                landBound === "sqft"
-                  ? "bg-paper/12 text-paper"
-                  : "text-paper/55 hover:text-paper",
-              )}
-            >
-              Size
-            </button>
-          </div>
-          <p className="text-[10px] text-paper/45">
+            Acres
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={landBound === "sqft"}
+            onClick={() => onLandBound("sqft")}
+            className={cn(
+              "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
+              landBound === "sqft"
+                ? "bg-paper/12 text-paper"
+                : "text-paper/55 hover:text-paper",
+            )}
+          >
+            Sq Ft
+          </button>
+          <p className="ml-auto self-center text-[10px] text-paper/45">
             {formatAcres(draft.acresMin)}–{formatAcres(draft.acresMax)} ·{" "}
             {formatSqft(draft.sqftMin)}–{formatSqft(draft.sqftMax)}
           </p>
         </div>
         {landBound === "acres" ? (
           <HomeBoundPickers
-            title="Acreage"
-            unit="acres"
+            title="Acres"
+            unit="ac"
             min={draft.acresMin}
             max={draft.acresMax}
-            minLabel="Minimum"
-            maxLabel="Maximum"
+            minLabel="Min"
+            maxLabel="Max"
             steps={ACRE_STEPS}
             formatValue={formatAcres}
             onChange={(acresMin, acresMax) => onDraft({ acresMin, acresMax })}
           />
         ) : (
           <HomeBoundPickers
-            title="Square footage"
+            title="Sq Ft"
             unit="sqft"
             min={draft.sqftMin}
             max={draft.sqftMax}
-            minLabel="Minimum"
-            maxLabel="Maximum"
+            minLabel="Min"
+            maxLabel="Max"
             steps={SQFT_STEPS}
             formatValue={formatSqft}
             onChange={(sqftMin, sqftMax) => onDraft({ sqftMin, sqftMax })}
@@ -655,15 +654,31 @@ function HomeLandGroup({
   );
 }
 
-function PrimaryAction({ children }: { children: string }) {
+function PrimaryAction({
+  children,
+  count,
+}: {
+  children: string;
+  count?: number;
+}) {
   return (
     <button
       type="submit"
       data-story-sound="tap"
       data-primary-action={children.toLowerCase()}
-      className="story-home-search-submit story-press inline-flex h-11 min-w-[5.75rem] shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-gold px-3 text-sm font-bold text-navy"
+      className="story-home-search-submit story-press inline-flex h-10 min-w-[5.75rem] shrink-0 items-center justify-center gap-1 rounded-[var(--radius-md)] bg-gold px-3 text-sm font-bold text-navy"
     >
-      {children}
+      <span>{children}</span>
+      {count != null ? (
+        <span
+          className={cn(
+            "inline-flex h-4 w-6 shrink-0 items-center justify-center rounded-full bg-navy/15 text-[10px] font-bold tabular-nums",
+            count > 0 ? "visible" : "invisible",
+          )}
+        >
+          {count || 0}
+        </span>
+      ) : null}
     </button>
   );
 }
@@ -687,6 +702,7 @@ function ChipRow({
         <p className="font-mono text-[11px] font-semibold tracking-wider text-paper/50 uppercase">
           {label}
         </p>
+        <p className="sr-only">Minimum {label}</p>
         {hint ? <p className="text-[10px] text-paper/40">{hint}</p> : null}
       </div>
       <div className="flex flex-wrap gap-1">
@@ -718,7 +734,7 @@ function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "story-press h-8 rounded-full px-2.5 text-[11px] font-semibold",
+        "story-press h-7 rounded-full px-2 text-[11px] font-semibold",
         active ? "bg-gold text-navy" : "text-paper/65 hover:text-paper",
       )}
     >

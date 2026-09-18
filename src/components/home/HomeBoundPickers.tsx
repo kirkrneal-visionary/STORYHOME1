@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { HomeBoundPicker, PICKER_ROW_H } from "@/components/home/HomeBoundPicker";
+import {
+  HomeBoundPicker,
+  PICKER_ROW_H,
+  PICKER_VISIBLE,
+} from "@/components/home/HomeBoundPicker";
 import { rangeError } from "@/lib/search/transaction";
 import {
   formatMoney,
@@ -36,14 +40,14 @@ export function HomeBoundPickers({
   const error = rangeError(min, max);
 
   return (
-    <div data-bound-pickers>
+    <div data-bound-pickers className="relative">
       <div className="mb-0.5 flex items-baseline justify-between gap-2">
         <p className="font-mono text-[10px] font-semibold tracking-wider text-paper/50 uppercase">
           {title}
         </p>
         <p className="text-[10px] text-paper/40">{unit}</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-1.5">
         {exact === "min" ? (
           <ExactField
             label={minLabel}
@@ -54,6 +58,7 @@ export function HomeBoundPickers({
         ) : (
           <HomeBoundPicker
             label={minLabel}
+            accessibleLabel={`${title} minimum`}
             steps={minSteps}
             value={min}
             onChange={(next) => onChange(next, max)}
@@ -69,39 +74,38 @@ export function HomeBoundPickers({
         ) : (
           <HomeBoundPicker
             label={maxLabel}
+            accessibleLabel={`${title} maximum`}
             steps={maxSteps}
             value={max}
             onChange={(next) => onChange(min, next)}
           />
         )}
       </div>
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="text-[11px] font-semibold text-paper/55 hover:text-paper"
-            onClick={() => setExact(exact === "min" ? null : "min")}
-          >
-            Exact min
-          </button>
-          <button
-            type="button"
-            className="text-[11px] font-semibold text-paper/55 hover:text-paper"
-            onClick={() => setExact(exact === "max" ? null : "max")}
-          >
-            Exact max
-          </button>
-        </div>
-        <p className="text-[11px] text-paper/45">
-          {formatValue(min)} – {formatValue(max)}
-        </p>
+      <div className="mt-0.5 grid grid-cols-2 gap-1.5">
+        <button
+          type="button"
+          className="text-left text-[10px] font-semibold text-paper/55 hover:text-paper"
+          onClick={() => setExact(exact === "min" ? null : "min")}
+        >
+          {exact === "min" ? "Picker" : "Exact"}
+        </button>
+        <button
+          type="button"
+          className="text-left text-[10px] font-semibold text-paper/55 hover:text-paper"
+          onClick={() => setExact(exact === "max" ? null : "max")}
+        >
+          {exact === "max" ? "Picker" : "Exact"}
+        </button>
       </div>
-      <p
-        className="mt-1 min-h-[1.125rem] text-[11px] font-medium text-gold"
-        role={error ? "alert" : undefined}
-      >
-        {error ?? "\u00a0"}
-      </p>
+      {error ? (
+        <p className="mt-0.5 text-[10px] font-medium text-gold" role="alert">
+          {error}
+        </p>
+      ) : (
+        <p className="sr-only">
+          {formatValue(min)} to {formatValue(max)}
+        </p>
+      )}
     </div>
   );
 }
@@ -124,7 +128,7 @@ function ExactField({
       </p>
       <div
         className="flex flex-col justify-center"
-        style={{ height: PICKER_ROW_H * 3 }}
+        style={{ height: PICKER_ROW_H * PICKER_VISIBLE }}
       >
         <input
           type="text"
@@ -142,13 +146,6 @@ function ExactField({
           autoComplete="off"
           className="story-home-filter-input"
         />
-        <button
-          type="button"
-          onClick={onDone}
-          className="mt-2 text-[11px] font-semibold text-paper/55 hover:text-paper"
-        >
-          Use picker
-        </button>
       </div>
     </div>
   );

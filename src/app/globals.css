@@ -1131,27 +1131,88 @@ html[data-header-state="minimal"] .story-living-mark {
 }
 
 /*
- * Homepage layers — one scheme:
- * header + dock 50, search shell 20, page content 0.
- * Shell hugs the active mode. Inactive mode is out of flow so it
- * cannot reserve the taller editor height. Advanced groups share
- * one in-flow cell so switching Price & Features / Home & Land
- * does not resize the photograph.
+ * Homepage hero is a hard visual frame. Photograph, headline, and
+ * Search/Advanced live inside it and scroll away together. Hero
+ * height is breakpoint/viewport CSS only — never filter content.
  */
 html[data-home-hub] .story-route-page {
   will-change: auto;
   transform: none;
 }
-html[data-home-hub] .story-route-surface {
-  overflow: visible;
+.story-home-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: min(36.5rem, calc(100svh - var(--story-bottom-clearance) - 1.25rem));
 }
-.story-home-search-anchor {
-  position: sticky;
-  top: var(--story-safe-top);
-  z-index: 20;
+@media (min-width: 768px) {
+  .story-home-hero {
+    height: min(40rem, calc(100svh - 3.5rem));
+  }
+}
+@media (min-width: 1200px) {
+  .story-home-hero {
+    height: min(42rem, calc(100svh - 3rem));
+  }
+}
+.story-home-hero-photo {
+  position: absolute;
+  inset: 0;
+}
+.story-home-hero-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  padding: calc(var(--story-safe-top) + 1rem) 1rem 1.25rem;
+}
+@media (min-width: 768px) {
+  .story-home-hero-stage {
+    padding: calc(var(--story-safe-top) + 1.75rem) 1.5rem 1.5rem;
+  }
+}
+.story-home-hero-safe {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+}
+.story-home-hero-safe .story-home-search-shell {
+  max-height: 100%;
 }
 .story-home-search-shell {
   height: auto;
+}
+.story-home-advanced-chrome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    "tabs tabs"
+    "actions actions";
+  gap: 0.35rem;
+  align-items: center;
+}
+.story-home-advanced-tabs {
+  grid-area: tabs;
+}
+.story-home-advanced-actions {
+  grid-area: actions;
+  justify-self: end;
+}
+@media (min-width: 768px) {
+  .story-home-advanced-chrome {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "tabs actions";
+  }
+}
+@media (max-height: 520px) {
+  .story-home-hero-safe .story-home-search-shell[data-search-view="advanced"] {
+    overflow: auto;
+  }
 }
 .story-home-modes {
   position: relative;
