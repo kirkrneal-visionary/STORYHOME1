@@ -400,7 +400,18 @@ assert.doesNotMatch(hub, /Listing status/);
 assert.doesNotMatch(hub, /createPortal/);
 assert.doesNotMatch(hub, /story-filter-wing/);
 assert.doesNotMatch(hub, /SearchFiltersPanel/);
+assert.match(hub, /not available yet/);
+assert.match(hub, /data-preview-future/);
 assert.doesNotMatch(hub, /aria-modal="true"/);
+const marketPanel = read("src/components/marketplace/SearchFiltersPanel.tsx");
+assert.match(marketPanel, /Year built/);
+assert.match(marketPanel, /yearMin/);
+assert.match(marketPanel, /yearMax/);
+assert.match(marketPanel, /Min year/);
+const marketBar = read("src/components/marketplace/SearchToolbar.tsx");
+assert.match(marketBar, /data-year-chip/);
+assert.match(marketBar, /Clear year built/);
+assert.doesNotMatch(marketBar, /story-glass/);
 assert.doesNotMatch(hub, /HomeFilterWing|HomeFilterGroups|HomeValueRoller|HomeBoundRollers/);
 
 const picker = read("src/components/home/HomeBoundPicker.tsx");

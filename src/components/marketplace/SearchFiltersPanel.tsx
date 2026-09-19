@@ -158,6 +158,25 @@ export function SearchFiltersPanel({
       </Field>
       ) : null}
 
+      {show("home") ? (
+      <Field label="Year built">
+        <div className="grid grid-cols-2 gap-3">
+          <NumberInput
+            value={filters.yearMin}
+            onChange={(yearMin) => patch({ yearMin })}
+            placeholder="Min year"
+            inputMode="numeric"
+          />
+          <NumberInput
+            value={filters.yearMax}
+            onChange={(yearMax) => patch({ yearMax })}
+            placeholder="Max year"
+            inputMode="numeric"
+          />
+        </div>
+      </Field>
+      ) : null}
+
       {show("price_land") ? (
       <Field label="Land size (acres)">
         <div className="grid grid-cols-2 gap-3">
@@ -327,15 +346,17 @@ function NumberInput({
   value,
   onChange,
   placeholder,
+  inputMode = "decimal",
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  inputMode?: "decimal" | "numeric";
 }) {
   return (
     <input
       type="text"
-      inputMode="decimal"
+      inputMode={inputMode}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}

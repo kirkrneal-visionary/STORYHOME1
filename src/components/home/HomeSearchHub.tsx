@@ -891,6 +891,8 @@ function FeatureTileButton({
         disabled
         data-preview-future={key}
         aria-disabled="true"
+        aria-label={`${label}, not available yet`}
+        title="Not available yet"
         className="story-home-icon-tile is-future"
       >
         <Icon className="h-4 w-4" />
