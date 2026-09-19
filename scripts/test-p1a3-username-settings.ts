@@ -193,7 +193,8 @@ assert.match(own, /username_own_mutation_state/);
 assert.match(own, /username: row\?\.active_normalized/);
 assert.doesNotMatch(own, /admin_moderate_username/);
 
-assert.equal(existsSync(join(root, "src/app/u")), false);
+assert.ok(existsSync(join(root, "src/app/u/[username]/page.tsx")));
+assert.equal(existsSync(join(root, "src/app/[username]")), false);
 const accountApi = readdirSync(join(root, "src/app/api/account"));
 assert.ok(accountApi.includes("username"));
 

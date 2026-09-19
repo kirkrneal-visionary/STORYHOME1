@@ -211,7 +211,11 @@ assert.match(settings, /UsernameField/);
 assert.doesNotMatch(settings, /username_registry|service_role/);
 assert.doesNotMatch(settings, /href=["']\/u\//);
 
-assert.equal(existsSync(join(root, "src/app/u")), false);
+assert.ok(existsSync(join(root, "src/app/u/[username]/page.tsx")));
+assert.ok(existsSync(join(root, "src/app/agents/[id]/page.tsx")));
+assert.ok(existsSync(join(root, "src/app/b/[slug]/page.tsx")));
+assert.ok(existsSync(join(root, "src/app/profile/page.tsx")));
+assert.equal(existsSync(join(root, "src/app/[username]")), false);
 assert.doesNotMatch(read("src/lib/analytics/events.ts"), /username_claimed|username_change_result/);
 
 const mw = read("src/middleware.ts");
