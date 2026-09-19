@@ -97,6 +97,7 @@
     "scripts/test-p1a3-username-settings.ts",
     "scripts/test-p1a4-username-routing.ts",
     "scripts/test-p1a-claim-rpc-boundary.ts",
-    "scripts/test-p1b1-settings-shell.ts"
+    "scripts/test-p1b1-settings-shell.ts",
+    "scripts/test-p1b2a-account-profile.ts"
   ]
 }
