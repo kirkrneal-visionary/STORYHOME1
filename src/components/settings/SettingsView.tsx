@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AtSign, BadgeCheck, Save, UserRound } from "lucide-react";
+import { BadgeCheck, Save } from "lucide-react";
 import { UsernameField } from "@/components/settings/UsernameField";
 import {
   demoUsernameClient,
@@ -11,16 +11,16 @@ import {
 } from "@/lib/account/username-client";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
-import { TextField, TextAreaField } from "@/components/broker/ui";
+import { TextField } from "@/components/broker/ui";
 import { LivingMarkLibraryCard } from "@/components/settings/LivingMarkLibraryCard";
 import { OpenOfficeCard } from "@/components/settings/OpenOfficeCard";
 import { PurposeCard } from "@/components/settings/PurposeCard";
 import { SecuritySection } from "@/components/settings/SecuritySection";
+import { ProfileControl } from "@/components/settings/ProfileControl";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 import { SettingsCategoryRow } from "@/components/settings/SettingsCategoryRow";
 import {
   getMyProfile,
-  updateMyProfile,
   type MyProfile,
 } from "@/lib/supabase/profile";
 import { getBrokerageById, type Brokerage } from "@/lib/supabase/brokerage";
@@ -277,7 +277,7 @@ export function SettingsView() {
           <UsernameField userId={user.id} demo={demoSession} />
           <Link
             href={closeHref}
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
           >
             Done
           </Link>
@@ -359,28 +359,42 @@ export function SettingsView() {
       ) : location.control === "profile" ? (
         <div className="mt-8 space-y-6">
           {backLink(accountHref)}
-          {profile && <AccountSection profile={profile} onSaved={load} />}
+          <AccountSection
+            userId={user.id}
+            fullName={profile?.fullName || user.name}
+            phone={profile?.phone ?? ""}
+            website={profile?.website ?? ""}
+            bio={profile?.bio ?? ""}
+            legalFullName={profile?.legalFullName}
+            onSaved={load}
+          />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
         </div>
       ) : (
         <div className="mt-8 space-y-3">
           {backLink(rootHref)}
-          <div
-            onClick={() => markFocus("settings-row-username")}
-            onKeyDown={() => markFocus("settings-row-username")}
-          >
-            <UsernameSummary href={usernameHref} />
-          </div>
+          <UsernameSummary
+            href={usernameHref}
+            onOpen={() => markFocus("settings-row-username")}
+          />
           <SettingsCategoryRow
             id="settings-row-profile"
             href={profileHref}
             title="Profile"
-            subtitle="Display name, contact, and bio"
+            subtitle={profile?.fullName || user.name || "Display name, phone, and bio"}
+            onClick={() => markFocus("settings-row-profile")}
           />
           <SettingsCategoryRow
             id="settings-row-security"
             href={securityHref}
             title="Security"
-            subtitle="Email, password, authenticator, and delete account"
+            subtitle="Sign-in and account protection"
+            onClick={() => markFocus("settings-row-security")}
           />
         </div>
       )}
@@ -388,7 +402,13 @@ export function SettingsView() {
   );
 }
 
-function UsernameSummary({ href }: { href?: string }) {
+function UsernameSummary({
+  href,
+  onOpen,
+}: {
+  href?: string;
+  onOpen?: () => void;
+}) {
   const { user } = useAuth();
   const demoSession =
     user?.emailConfirmed === undefined && user?.aal === undefined;
@@ -401,19 +421,13 @@ function UsernameSummary({ href }: { href?: string }) {
     void client.loadCurrent().then(setName);
   }, [user, demoSession]);
   return (
-    <SettingsCard icon={AtSign} title="Username" subtitle="Public @username for this login.">
-      <div className="flex items-center justify-between gap-3">
-        <p className={name ? "text-sm font-semibold text-ink" : "text-sm text-[var(--muted)]"}>
-          {name ? `@${name}` : "Not set"}
-        </p>
-        <Link
-          href={href ?? "/settings?control=username"}
-          className="inline-flex h-9 min-h-11 items-center rounded-lg border border-hairline px-3 text-sm font-semibold text-ink"
-        >
-          {name ? "Change" : "Set username"}
-        </Link>
-      </div>
-    </SettingsCard>
+    <SettingsCategoryRow
+      id="settings-row-username"
+      href={href ?? "/settings?control=username"}
+      title="Username"
+      subtitle={name ? `@${name}` : "Not set"}
+      onClick={onOpen}
+    />
   );
 }
 
@@ -428,37 +442,33 @@ function SaveButton({ busy, note }: { busy: boolean; note: string }) {
   );
 }
 
-function AccountSection({ profile, onSaved }: { profile: MyProfile; onSaved: () => void }) {
-  const [f, setF] = useState({
-    fullName: profile.fullName,
-    phone: profile.phone ?? "",
-    website: profile.website ?? "",
-    bio: profile.bio ?? "",
-  });
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
+function AccountSection({
+  userId,
+  fullName,
+  phone,
+  website,
+  bio,
+  legalFullName,
+  onSaved,
+}: {
+  userId: string;
+  fullName: string;
+  phone: string;
+  website: string;
+  bio: string;
+  legalFullName?: string | null;
+  onSaved?: () => void;
+}) {
   return (
-    <SettingsCard icon={UserRound} title="Account" subtitle="Your name, contact, and public bio.">
-      <form onSubmit={async (e) => { e.preventDefault(); setBusy(true); try { await updateMyProfile(profile.id, { ...f }); setNote("Saved."); setTimeout(() => setNote(""), 2000); onSaved(); } finally { setBusy(false); } }}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <TextField id="s-name" label="Display name" value={f.fullName} onChange={(v) => setF((p) => ({ ...p, fullName: v }))} />
-          <TextField id="s-phone" label="Phone" value={f.phone} onChange={(v) => setF((p) => ({ ...p, phone: v }))} />
-          <TextField id="s-web" label="Website" value={f.website} onChange={(v) => setF((p) => ({ ...p, website: v }))} />
-        </div>
-        {profile.legalFullName && (
-          <p className="mt-2 text-[11px] text-[var(--muted)]">
-            Legal name on file (not editable here): {profile.legalFullName}
-          </p>
-        )}
-        <p className="mt-2 text-[11px] text-[var(--muted)]">
-          Display name is public. It does not change a verified license. Living Mark uploads live in the library above.
-        </p>
-        <div className="mt-3">
-          <TextAreaField id="s-bio" label="About / bio" rows={4} value={f.bio} onChange={(v) => setF((p) => ({ ...p, bio: v }))} />
-        </div>
-        <SaveButton busy={busy} note={note} />
-      </form>
-    </SettingsCard>
+    <ProfileControl
+      userId={userId}
+      fullName={fullName}
+      phone={phone}
+      website={website}
+      bio={bio}
+      legalFullName={legalFullName}
+      onSaved={onSaved}
+    />
   );
 }
 

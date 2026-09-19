@@ -66,7 +66,9 @@ assert.match(settings, /PurposeCard/);
 assert.match(settings, /OpenOfficeCard/);
 assert.match(settings, /LivingMarkLibraryCard/);
 assert.match(settings, /Display name/);
-assert.match(settings, /Legal name on file/);
+const profileControl = read("src/components/settings/ProfileControl.tsx");
+assert.match(profileControl, /Display name/);
+assert.match(profileControl, /Legal name on file/);
 assert.doesNotMatch(settings, /label="Photo URL"/);
 assert.doesNotMatch(settings, /Story Glass sound/);
 
