@@ -140,6 +140,12 @@ assert.equal((await demo.claim("takenow")).ok, false);
 assert.equal((await demo.claim("takenow")).code, "unavailable");
 assert.equal((await demo.claim("coolwait")).code, "cooldown");
 assert.equal((await demo.claim("limitout")).code, "change_limit");
+try {
+  await demo.claim("netfail");
+  assert.fail("expected network failure");
+} catch (err) {
+  assert.match(String(err), /network/);
+}
 const changed = await demo.claim("kirk_two");
 assert.equal(changed.ok, true);
 assert.equal((await demo.checkAvailability("kirkneal")).status, "unavailable");

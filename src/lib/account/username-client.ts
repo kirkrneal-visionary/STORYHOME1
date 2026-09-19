@@ -125,6 +125,9 @@ export function demoUsernameClient(userId: string): UsernameClient {
           code: "change_limit",
         };
       }
+      if (username === "netfail") {
+        throw new Error("network");
+      }
       const inspected = inspectUsername(username);
       if (inspected.status === "invalid") {
         return {

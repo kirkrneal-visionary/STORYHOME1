@@ -148,7 +148,7 @@ export function UsernameField({
                 setClaim(null);
                 setValue(shapeUsernameInput(e.target.value));
               }}
-              placeholder="kirkneal"
+              placeholder=""
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="none"
@@ -191,7 +191,7 @@ export function UsernameField({
           type="button"
           disabled={!canSave}
           onClick={() => void onSave()}
-          className="story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60"
+          className="story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Save className="h-4 w-4" />
           {saving ? "Saving…" : "Save username"}
