@@ -309,9 +309,9 @@ export default function GlobalNav() {
                 type="button"
                 onClick={() => setRole("consumer")}
                 className="hidden h-9 items-center rounded-full border border-hairline bg-[var(--surface)] px-3 text-xs font-semibold text-[var(--muted)] transition-colors hover:text-ink xl:inline-flex"
-                title="Preview the site the way a buyer sees it"
+                title="Preview the site the way a consumer sees it"
               >
-                View as buyer
+                View as Consumer
               </button>
             ) : (
               <button

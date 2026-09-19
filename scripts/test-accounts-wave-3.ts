@@ -29,6 +29,8 @@ assert.equal(navRoleForAccount("managing_broker", "broker"), "professional");
 assert.equal(navRoleForAccount("individual_pro", "agent"), "professional");
 assert.equal(navRoleForAccount("other_professional", "pro"), "consumer");
 assert.equal(purposeLabel("managing_broker"), "Office account");
+assert.equal(purposeLabel("consumer"), "Consumer");
+assert.equal(purposeLabel(undefined), "Consumer");
 assert.equal(destForUser({ kind: "broker", purpose: "managing_broker" }), "/office");
 
 assert.equal(
@@ -70,7 +72,7 @@ assert.doesNotMatch(settings, /Story Glass sound/);
 
 const office = read("src/components/office/OfficeHome.tsx");
 assert.match(office, /mayManageBrokerage/);
-assert.match(office, /Story Pro, Archie, and buyer/);
+assert.match(office, /Story Pro, Archie, and Consumer/);
 assert.doesNotMatch(office, /CLIENTSAGENTS/i);
 
 const roster = read("src/components/office/RosterManager.tsx");

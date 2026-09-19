@@ -36,7 +36,7 @@ export function SuitesLibrary() {
           Your property albums live here
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-sm text-[var(--muted)]">
-          Log in as a buyer to build Spotify-style suites — Lake Houses,
+          Log in as a Consumer to build Spotify-style suites — Lake Houses,
           Investment, For Mom — then thumb through and share.
         </p>
         <Link

@@ -14,7 +14,7 @@ import {
   decideStoryProRpc,
   mayUseStoryProDb,
 } from "../src/lib/account/rpc-authority.ts";
-import { settingsBuyerPreview } from "../src/lib/account/settings-preview.ts";
+import { settingsConsumerPreview } from "../src/lib/account/settings-preview.ts";
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
@@ -69,7 +69,7 @@ assert.equal(decideStoryProRpc({ role: "service_role", purpose: "consumer" }), "
 
 assert.equal(mayUseStoryPro("consumer", "broker"), false);
 assert.equal(mayUseStoryPro("other_professional", "pro"), false);
-assert.equal(settingsBuyerPreview({ role: "consumer", mayUseStoryPro: true }), true);
+assert.equal(settingsConsumerPreview({ role: "consumer", mayUseStoryPro: true }), true);
 assert.equal(
   portalPageAccess({
     ok: true,

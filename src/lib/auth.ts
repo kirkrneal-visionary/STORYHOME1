@@ -83,7 +83,7 @@ export function accountLabel(user: AuthUser) {
   if (user.purpose === "other_professional") {
     return PRO_ROLE_LABELS[user.proRole ?? "inspector"];
   }
-  if (user.kind === "consumer") return "Buyer / Consumer";
+  if (user.kind === "consumer") return "Consumer";
   if (user.kind === "seller") return "Seller (listing access)";
   if (user.kind === "broker") return "Individual broker";
   return PRO_ROLE_LABELS[user.proRole ?? "realtor_broker"];

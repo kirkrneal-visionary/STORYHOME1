@@ -181,12 +181,13 @@ assert.match(settings, /UsernameField/);
 assert.match(settings, /UsernameSummary/);
 assert.match(settings, /← Back/);
 assert.match(settings, />\s*Done\s*</);
-assert.match(settings, /return "Homeowner"|Buyer \/ Consumer/);
-assert.doesNotMatch(settings, /View as Consumer/);
+assert.match(settings, /settingsConsumerPreview/);
+assert.match(settings, /"Consumer"/);
+assert.doesNotMatch(settings, /Buyer \/ Consumer|Homeowner account/);
 assert.doesNotMatch(settings, /href=.*\/u\//);
 assert.doesNotMatch(settings, /Account\n.*Story Home Preferences|Search & Property/);
-assert.match(read("src/components/GlobalNav.tsx"), /View as buyer/);
-assert.match(read("src/lib/account/purpose.ts"), /return "Homeowner"/);
+assert.match(read("src/components/GlobalNav.tsx"), /View as Consumer/);
+assert.match(read("src/lib/account/purpose.ts"), /return "Consumer"/);
 
 const own = read("src/app/api/account/username/route.ts");
 assert.match(own, /username_own_mutation_state/);
