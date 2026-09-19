@@ -75,6 +75,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createClient(url, service, { auth: { persistSession: false } });
+  await admin.rpc("tombstone_account_usernames", { p_uid: auth.user.id });
   const { error } = await admin.auth.admin.deleteUser(auth.user.id);
   if (error) {
     return NextResponse.json(

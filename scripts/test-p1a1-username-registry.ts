@@ -131,10 +131,7 @@ assert.doesNotMatch(purpose, /username_registry/);
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /View as buyer/);
 
-assert.ok(
-  !readdirSync(join(root, "src/app/api/account")).includes("username"),
-  "P1A-1 must not add username API routes",
-);
+assert.doesNotMatch(mig, /\/api\/account\/username/);
 assert.ok(
   !readdirSync(join(root, "src/app"), { withFileTypes: true }).some(
     (e) => e.isDirectory() && e.name === "u",

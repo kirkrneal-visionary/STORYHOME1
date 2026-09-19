@@ -4,7 +4,12 @@
  * Tiles are NOT limited here (pan/zoom would break).
  */
 
-export type RateCost = "low" | "medium" | "high";
+export type RateCost =
+  | "low"
+  | "medium"
+  | "high"
+  | "username_availability"
+  | "username_claim";
 
 export const RATE_WINDOWS: Record<
   RateCost,
@@ -13,7 +18,17 @@ export const RATE_WINDOWS: Record<
   low: { limit: 90, windowMs: 60_000 },
   medium: { limit: 30, windowMs: 60_000 },
   high: { limit: 10, windowMs: 60_000 },
+  /** Authenticated typing/debounce. Separate bucket from other /api/account. */
+  username_availability: { limit: 45, windowMs: 60_000 },
+  /** Identity mutation. Stricter than availability. */
+  username_claim: { limit: 8, windowMs: 60_000 },
 };
+
+/** Observe-only. Logs when exceeded. Does not 429. */
+export const USERNAME_AVAILABILITY_OBSERVE = {
+  limit: 200,
+  windowMs: 60 * 60 * 1000,
+} as const;
 
 type Bucket = { count: number; resetAt: number };
 
@@ -59,6 +74,23 @@ export function consumeRateLimit(
   return { ok: true };
 }
 
+export function observeRateLimit(
+  key: string,
+  spec: { limit: number; windowMs: number },
+  now = Date.now(),
+): { ok: true; count: number } | { ok: false; count: number } {
+  const existing = buckets.get(key);
+  if (!existing || existing.resetAt <= now) {
+    buckets.set(key, { count: 1, resetAt: now + spec.windowMs });
+    return { ok: true, count: 1 };
+  }
+  existing.count += 1;
+  if (existing.count > spec.limit) {
+    return { ok: false, count: existing.count };
+  }
+  return { ok: true, count: existing.count };
+}
+
 export function classifyApiPath(pathname: string): RateCost | null {
   return classifyRequestPath(pathname);
 }
@@ -67,6 +99,12 @@ export function classifyApiPath(pathname: string): RateCost | null {
 export function classifyRequestPath(pathname: string): RateCost | null {
   if (pathname.startsWith("/seller/portal/")) return "medium";
   if (!pathname.startsWith("/api/")) return null;
+  if (pathname.startsWith("/api/account/username/availability")) {
+    return "username_availability";
+  }
+  if (pathname.startsWith("/api/account/username/claim")) {
+    return "username_claim";
+  }
   // Expensive lidar analytics live under /api/map/ — classify before the tile exemption.
   if (
     pathname.startsWith("/api/map/lidar/parcel") ||
