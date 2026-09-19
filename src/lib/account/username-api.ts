@@ -57,6 +57,11 @@ export type UsernameRpcRow = {
 
 export type UsernameOwnMutationState = {
   cooldown_until?: string | null;
+  active_normalized?: string | null;
+};
+
+export type UsernameOwnResponse = {
+  username: string | null;
 };
 
 export function usernameHeaders(): HeadersInit {

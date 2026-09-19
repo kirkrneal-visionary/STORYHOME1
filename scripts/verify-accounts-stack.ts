@@ -19,12 +19,13 @@ const scripts = [
   "scripts/test-settings-db-locks.ts",
   "scripts/test-p1a1-username-registry.ts",
   "scripts/test-p1a2-username-api.ts",
+  "scripts/test-p1a3-username-settings.ts",
 ];
 
 for (const file of scripts) {
   const run = spawnSync(
     process.execPath,
-    ["--experimental-strip-types", file],
+    ["--import", "./scripts/story-ts-alias.mjs", "--experimental-strip-types", file],
     { stdio: "inherit" },
   );
   if (run.status !== 0) {

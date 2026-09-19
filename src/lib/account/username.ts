@@ -59,3 +59,38 @@ export function normalizeUsername(
   const inspected = inspectUsername(raw);
   return inspected.status === "ok" ? inspected.normalized : null;
 }
+
+/** Settings input: strip a leading @ and lowercase. Keep other characters. */
+export function shapeUsernameInput(raw: string): string {
+  let value = raw.replace(/^\s+/, "");
+  if (value.startsWith("@")) value = value.slice(1);
+  return value.replace(/[A-Z]/g, (ch) => ch.toLowerCase());
+}
+
+export type UsernameSyntaxCode =
+  | "too_short"
+  | "too_long"
+  | "bad_chars"
+  | "leading_underscore"
+  | "trailing_underscore"
+  | "double_underscore";
+
+export function usernameSyntax(shaped: string): UsernameSyntaxCode | null {
+  if (!shaped) return null;
+  if (/[^a-z0-9_]/.test(shaped)) return "bad_chars";
+  if (shaped.startsWith("_")) return "leading_underscore";
+  if (shaped.endsWith("_")) return "trailing_underscore";
+  if (shaped.includes("__")) return "double_underscore";
+  if (shaped.length < USERNAME_MIN_LEN) return "too_short";
+  if (shaped.length > USERNAME_MAX_LEN) return "too_long";
+  return null;
+}
+
+export function usernameSyntaxCopy(code: UsernameSyntaxCode): string {
+  if (code === "too_short") return "Use at least 4 characters.";
+  if (code === "too_long") return "Maximum 20 characters.";
+  if (code === "leading_underscore") return "Don't start with an underscore.";
+  if (code === "trailing_underscore") return "Don't end with an underscore.";
+  if (code === "double_underscore") return "Don't use two underscores in a row.";
+  return "Use letters, numbers, and underscores only.";
+}

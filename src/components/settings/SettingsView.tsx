@@ -3,7 +3,12 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, Save, UserRound } from "lucide-react";
+import { AtSign, BadgeCheck, Save, UserRound } from "lucide-react";
+import { UsernameField } from "@/components/settings/UsernameField";
+import {
+  demoUsernameClient,
+  liveUsernameClient,
+} from "@/lib/account/username-client";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
 import { TextField, TextAreaField } from "@/components/broker/ui";
@@ -48,6 +53,7 @@ type SettingsTab = "you" | "security";
 export function SettingsView() {
   const searchParams = useSearchParams();
   const requested = searchParams.get("tab");
+  const usernameFocus = searchParams.get("control") === "username";
   const initialTab: SettingsTab =
     requested === "security" || searchParams.get("setup") === "mfa"
       ? "security"
@@ -129,6 +135,7 @@ export function SettingsView() {
         )}
       </header>
 
+      {!usernameFocus && (
       <div className="mt-6 flex gap-2">
         {(["you", "security"] as const).map((t) => (
           <button
@@ -154,6 +161,7 @@ export function SettingsView() {
           </Link>
         )}
       </div>
+      )}
 
       {/* story-surface cards live in SettingsCard + office workspace */}
       {loading ? (
@@ -164,11 +172,28 @@ export function SettingsView() {
             <SecuritySection purpose={purpose} kind={kind} />
           </Suspense>
         </div>
+      ) : usernameFocus ? (
+        <div className="mt-8 space-y-6">
+          <Link
+            href="/settings"
+            className="inline-flex h-9 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink"
+          >
+            ← Back
+          </Link>
+          <UsernameField userId={user.id} demo={demoSession} />
+          <Link
+            href="/settings"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
       ) : (
         <div className="mt-8 space-y-6">
           {pending && !buyerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}
+          <UsernameSummary />
           {!buyerPreview && (
             <PurposeCard
               purpose={purpose}
@@ -223,6 +248,35 @@ export function SettingsView() {
         </div>
       )}
     </div>
+  );
+}
+
+function UsernameSummary() {
+  const { user } = useAuth();
+  const demoSession =
+    user?.emailConfirmed === undefined && user?.aal === undefined;
+  const [name, setName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    const client = demoSession
+      ? demoUsernameClient(user.id)
+      : liveUsernameClient();
+    void client.loadCurrent().then(setName);
+  }, [user, demoSession]);
+  return (
+    <SettingsCard icon={AtSign} title="Username" subtitle="Public @username for this login.">
+      <div className="flex items-center justify-between gap-3">
+        <p className={name ? "text-sm font-semibold text-ink" : "text-sm text-[var(--muted)]"}>
+          {name ? `@${name}` : "Not set"}
+        </p>
+        <Link
+          href="/settings?control=username"
+          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-sm font-semibold text-ink"
+        >
+          {name ? "Change" : "Set username"}
+        </Link>
+      </div>
+    </SettingsCard>
   );
 }
 
