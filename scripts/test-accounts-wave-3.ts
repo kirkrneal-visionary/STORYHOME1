@@ -72,7 +72,7 @@ assert.doesNotMatch(settings, /Story Glass sound/);
 
 const office = read("src/components/office/OfficeHome.tsx");
 assert.match(office, /mayManageBrokerage/);
-assert.match(office, /Story Pro, Archie, and buyer/);
+assert.match(office, /Story Pro, Archie, and Consumer/);
 assert.doesNotMatch(office, /CLIENTSAGENTS/i);
 
 const roster = read("src/components/office/RosterManager.tsx");
