@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { mayManageBrokerage, mayUseStoryPro } from "../src/lib/account/purpose.ts";
 import {
@@ -132,11 +132,12 @@ const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /View as buyer/);
 
 assert.doesNotMatch(mig, /\/api\/account\/username/);
+assert.ok(existsSync(join(root, "src/app/u/[username]/page.tsx")));
 assert.ok(
   !readdirSync(join(root, "src/app"), { withFileTypes: true }).some(
-    (e) => e.isDirectory() && e.name === "u",
+    (e) => e.isDirectory() && e.name === "[username]",
   ),
-  "P1A-1 must not add /u/",
+  "must not add /[username]",
 );
 
 const psql = spawnSync("psql", ["--version"], { encoding: "utf8" });
