@@ -83,7 +83,7 @@ export function OfficeHome() {
           Brokerage office
         </h1>
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Roster and branding for this office. Story Pro, Archie, and buyer
+          Roster and branding for this office. Story Pro, Archie, and Consumer
           view stay on this login.
         </p>
       </header>

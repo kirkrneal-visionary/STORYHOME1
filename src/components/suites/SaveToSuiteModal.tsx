@@ -46,7 +46,7 @@ export function SaveToSuiteModal({
           <div className="story-sheet-handle" />
           <h3 className="type-section">Save to a Suite</h3>
           <p className="mt-2 text-sm text-paper/70">
-            Log in as a buyer to add homes to album-style collections.
+            Log in as a Consumer to add homes to album-style collections.
           </p>
           <div className="mt-6 flex gap-2">
             <button

@@ -45,7 +45,7 @@ export function OpenOfficeCard() {
     <SettingsCard
       icon={Building2}
       title="Open office account"
-      subtitle="This login becomes the office. Story Pro, Archie, and buyer view stay here."
+      subtitle="This login becomes the office. Story Pro, Archie, and Consumer view stay here."
     >
       <p className="text-sm text-[var(--muted)]">
         Roster and branding are added to this login. You keep Story Pro on the same account.

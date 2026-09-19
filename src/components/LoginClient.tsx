@@ -249,7 +249,7 @@ export function LoginClient() {
       <p className="mt-3 text-sm text-[var(--muted)]">
         {supabaseConfigured
           ? "Sign in or create your account. Your data syncs across devices."
-          : "Demo mode — pick an account type. Buyers get Story Home Suites."}
+          : "Demo mode — pick an account type. Consumers get Story Home Suites."}
       </p>
 
       {supabaseConfigured &&
@@ -275,7 +275,7 @@ export function LoginClient() {
         <>
       <section className="mt-10">
         <h2 className="type-section text-ink">
-          Consumer (Buyer)
+          Consumer
         </h2>
         <button
           type="button"
@@ -285,7 +285,7 @@ export function LoginClient() {
           }}
           className="mt-3 h-12 w-full rounded-xl bg-gold text-sm font-bold text-navy"
         >
-          Continue as Buyer — Jordan Hale
+          Continue as Consumer — Jordan Hale
         </button>
       </section>
 
@@ -602,7 +602,7 @@ function RealAuthForm({
               }
               className={inputCls}
             >
-              <option value="consumer">Buyer / Consumer</option>
+              <option value="consumer">Consumer</option>
               <option value="pro">Agent / Pro</option>
               <option value="broker">Broker of Record</option>
             </select>

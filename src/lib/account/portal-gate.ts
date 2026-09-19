@@ -22,7 +22,7 @@ export function portalRefuseCopy(purpose?: string | null): {
   if (purpose === "managing_broker") {
     return {
       title: "Office account",
-      body: "This login manages a brokerage. Story Pro, Archie, and buyer view stay on this same login.",
+      body: "This login manages a brokerage. Story Pro, Archie, and Consumer view stay on this same login.",
       href: "/portal",
       cta: "Open Story Pro",
     };

@@ -3,7 +3,12 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, Save, UserRound } from "lucide-react";
+import { AtSign, BadgeCheck, Save, UserRound } from "lucide-react";
+import { UsernameField } from "@/components/settings/UsernameField";
+import {
+  demoUsernameClient,
+  liveUsernameClient,
+} from "@/lib/account/username-client";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
 import { TextField, TextAreaField } from "@/components/broker/ui";
@@ -33,8 +38,8 @@ import {
   mayUseStoryPro,
 } from "@/lib/account/purpose";
 import {
-  settingsBuyerPreview,
-  settingsBuyerPreviewCopy,
+  settingsConsumerPreview,
+  settingsConsumerPreviewCopy,
 } from "@/lib/account/settings-preview";
 import { accountLabel } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -48,6 +53,7 @@ type SettingsTab = "you" | "security";
 export function SettingsView() {
   const searchParams = useSearchParams();
   const requested = searchParams.get("tab");
+  const usernameFocus = searchParams.get("control") === "username";
   const initialTab: SettingsTab =
     requested === "security" || searchParams.get("setup") === "mfa"
       ? "security"
@@ -105,11 +111,11 @@ export function SettingsView() {
       enrolled: user.mfaEnrolled === true,
       currentAal: user.aal,
     });
-  const buyerPreview = settingsBuyerPreview({
+  const consumerPreview = settingsConsumerPreview({
     role,
     mayUseStoryPro: isPro,
   });
-  const showRealtorCards = !buyerPreview && securityReady;
+  const showRealtorCards = !consumerPreview && securityReady;
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
@@ -119,16 +125,17 @@ export function SettingsView() {
         <p className="mt-2 inline-flex items-center gap-2 text-sm text-[var(--muted)]">
           {user.name}
           <span className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink">
-            {buyerPreview ? "Buyer / Consumer" : accountLabel(user)}
+            {consumerPreview ? "Consumer" : accountLabel(user)}
           </span>
         </p>
-        {buyerPreview && (
+        {consumerPreview && (
           <p className="mt-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
-            {settingsBuyerPreviewCopy(user.name, isOffice)}
+            {settingsConsumerPreviewCopy(user.name, isOffice)}
           </p>
         )}
       </header>
 
+      {!usernameFocus && (
       <div className="mt-6 flex gap-2">
         {(["you", "security"] as const).map((t) => (
           <button
@@ -145,7 +152,7 @@ export function SettingsView() {
             {t === "you" ? "You" : "Security"}
           </button>
         ))}
-        {isOffice && !buyerPreview && (
+        {isOffice && !consumerPreview && (
           <Link
             href="/office"
             className="inline-flex h-9 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold"
@@ -154,6 +161,7 @@ export function SettingsView() {
           </Link>
         )}
       </div>
+      )}
 
       {/* story-surface cards live in SettingsCard + office workspace */}
       {loading ? (
@@ -164,12 +172,29 @@ export function SettingsView() {
             <SecuritySection purpose={purpose} kind={kind} />
           </Suspense>
         </div>
+      ) : usernameFocus ? (
+        <div className="mt-8 space-y-6">
+          <Link
+            href="/settings"
+            className="inline-flex h-9 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink"
+          >
+            ← Back
+          </Link>
+          <UsernameField userId={user.id} demo={demoSession} />
+          <Link
+            href="/settings"
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
       ) : (
         <div className="mt-8 space-y-6">
-          {pending && !buyerPreview && (
+          {pending && !consumerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}
-          {!buyerPreview && (
+          <UsernameSummary />
+          {!consumerPreview && (
             <PurposeCard
               purpose={purpose}
               kind={kind}
@@ -177,7 +202,7 @@ export function SettingsView() {
               brokerageName={brokerage?.name}
             />
           )}
-          {!buyerPreview && (
+          {!consumerPreview && (
             <LivingMarkLibraryCard
               userId={user.id}
               initials={
@@ -202,7 +227,7 @@ export function SettingsView() {
           {isPro && showRealtorCards && profile && (
             <LicenseSection profile={profile} />
           )}
-          {(isPro || isOther) && !buyerPreview && !securityReady && (
+          {(isPro || isOther) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               {STORY_PRO_SETTINGS_BLOCKED}
             </p>
@@ -210,12 +235,12 @@ export function SettingsView() {
           {canOpenOfficeAccount(purpose, kind) && showRealtorCards && (
             <OpenOfficeCard />
           )}
-          {canOpenOfficeAccount(purpose, kind) && !buyerPreview && !securityReady && (
+          {canOpenOfficeAccount(purpose, kind) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before opening an office account.
             </p>
           )}
-          {isOffice && !buyerPreview && !securityReady && (
+          {isOffice && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before office tools.
             </p>
@@ -223,6 +248,35 @@ export function SettingsView() {
         </div>
       )}
     </div>
+  );
+}
+
+function UsernameSummary() {
+  const { user } = useAuth();
+  const demoSession =
+    user?.emailConfirmed === undefined && user?.aal === undefined;
+  const [name, setName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    const client = demoSession
+      ? demoUsernameClient(user.id)
+      : liveUsernameClient();
+    void client.loadCurrent().then(setName);
+  }, [user, demoSession]);
+  return (
+    <SettingsCard icon={AtSign} title="Username" subtitle="Public @username for this login.">
+      <div className="flex items-center justify-between gap-3">
+        <p className={name ? "text-sm font-semibold text-ink" : "text-sm text-[var(--muted)]"}>
+          {name ? `@${name}` : "Not set"}
+        </p>
+        <Link
+          href="/settings?control=username"
+          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-sm font-semibold text-ink"
+        >
+          {name ? "Change" : "Set username"}
+        </Link>
+      </div>
+    </SettingsCard>
   );
 }
 

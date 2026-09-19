@@ -1,5 +1,5 @@
 /**
- * Office login keeps Story Pro, Archie, and buyer view.
+ * Office login keeps Story Pro, Archie, and Consumer view.
  * Run: node --experimental-strip-types scripts/test-office-keep-story-pro.ts
  */
 import assert from "node:assert/strict";
@@ -63,11 +63,11 @@ assert.match(portalLayout, /Office login keeps Story Pro/);
 const nav = read("src/components/GlobalNav.tsx");
 assert.match(nav, /href: "\/office"/);
 assert.match(nav, /href: "\/portal"/);
-assert.match(nav, /View as buyer/);
+assert.match(nav, /View as Consumer/);
 assert.doesNotMatch(nav, /else if \(isPro && isLoggedIn\)/);
 
 const profile = read("src/app/profile/page.tsx");
-assert.match(profile, /Story Pro, Archie, and buyer view stay on this same login/);
+assert.match(profile, /Story Pro, Archie, and Consumer view stay on this same login/);
 assert.match(profile, /href="\/office"/);
 assert.match(profile, /href="\/portal"/);
 
@@ -76,7 +76,7 @@ assert.match(purpose, /purpose === "managing_broker"/);
 assert.match(purpose, /mayUseStoryPro/);
 
 const card = read("src/components/settings/PurposeCard.tsx");
-assert.match(card, /Story Pro, Archie, and buyer view stay here too/);
+assert.match(card, /Story Pro, Archie, and Consumer view stay here too/);
 assert.doesNotMatch(card, /Story Pro will move off this login/);
 
 const open = read("src/components/settings/OpenOfficeCard.tsx");

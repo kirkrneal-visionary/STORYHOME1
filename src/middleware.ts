@@ -5,9 +5,11 @@ import { normalizeSupabaseUrl } from "@/lib/supabase/url";
 import { logSecurityEvent } from "@/lib/security/log-event";
 import { originAllowed, shouldCheckOrigin } from "@/lib/security/origin";
 import {
+  USERNAME_AVAILABILITY_OBSERVE,
   classifyRequestPath,
   clientIp,
   consumeRateLimit,
+  observeRateLimit,
   rateLimitKey,
   tooManyRequests,
 } from "@/lib/security/rate-limit";
@@ -15,6 +17,7 @@ import {
   classifyCadPublicPath,
   consumeCadAccess,
 } from "@/lib/cad/public-access";
+import { inspectUsername } from "@/lib/account/username";
 
 const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -25,6 +28,19 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (pathname.startsWith("/u/")) {
+    const raw = decodeURIComponent(pathname.slice(3).split("/")[0] ?? "");
+    const inspected = inspectUsername(raw);
+    if (
+      inspected.status === "ok" &&
+      inspected.normalized &&
+      raw !== inspected.normalized
+    ) {
+      const next = request.nextUrl.clone();
+      next.pathname = `/u/${inspected.normalized}`;
+      return NextResponse.redirect(next, 308);
+    }
+  }
   if (pathname.endsWith(".map")) {
     return new NextResponse("Not found", {
       status: 404,
@@ -75,6 +91,21 @@ export async function middleware(request: NextRequest) {
         ip,
       });
       return tooManyRequests(hit.retryAfterSec);
+    }
+    if (cost === "username_availability") {
+      const observed = observeRateLimit(
+        `observe:username_availability:${ip}`,
+        USERNAME_AVAILABILITY_OBSERVE,
+      );
+      if (!observed.ok) {
+        logSecurityEvent({
+          kind: "rate_limited",
+          path: pathname,
+          status: 200,
+          ip,
+          subject: "username_availability_observe",
+        });
+      }
     }
   }
 

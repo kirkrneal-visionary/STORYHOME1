@@ -1,5 +1,5 @@
 /**
- * Wave 3: database locks follow the account on file, not View as buyer.
+ * Wave 3: database locks follow the account on file, not View as Consumer.
  * Run: node --experimental-strip-types scripts/test-settings-db-locks.ts
  */
 import assert from "node:assert/strict";
@@ -38,7 +38,9 @@ assert.match(mig, /individual_pro/);
 assert.match(mig, /managing_broker/);
 assert.match(mig, /auth\.jwt\(\) ->> 'aal'/);
 assert.match(mig, /email_confirmed_at/);
-assert.match(mig, /View as buyer/);
+assert.match(mig, /account_kind cannot be changed by the client/);
+assert.match(mig, /account_purpose cannot be changed by the client/);
+assert.match(mig, /is a preview only\. It is not stored and cannot change these locks/);
 assert.match(mig, /Story Pro settings cannot be changed on this account/);
 assert.match(mig, /Confirm your email and authenticator before Story Pro settings/);
 assert.doesNotMatch(mig, /delete from public\.(profiles|listings|county_parcels)/i);

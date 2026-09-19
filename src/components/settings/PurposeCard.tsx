@@ -33,12 +33,12 @@ export function PurposeCard({
     >
       <p className="text-sm text-ink">
         {office
-          ? "This login runs the office — roster and branding. Story Pro, Archie, and buyer view stay here too."
+          ? "This login runs the office — roster and branding. Story Pro, Archie, and Consumer view stay here too."
           : pro
             ? "This login is your own Story Pro. Office tools stay on a separate office login."
             : purpose === "other_professional"
               ? "This login is for your professional profile. Story Pro and office tools are not on this account."
-              : "This login is your homeowner account."}
+              : "This login is your consumer account."}
       </p>
       {legalFullName && (
         <p className="mt-2 text-[11px] text-[var(--muted)]">

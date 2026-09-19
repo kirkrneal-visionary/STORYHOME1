@@ -44,7 +44,7 @@ export default function ProfilePage() {
 
         <p className="mt-6 max-w-xl text-sm leading-relaxed text-[var(--muted)]">
           {mayManageBrokerage(user.purpose)
-            ? "This login is the office account. Roster and branding live here. Story Pro, Archie, and buyer view stay on this same login."
+            ? "This login is the office account. Roster and branding live here. Story Pro, Archie, and Consumer view stay on this same login."
             : user.purpose === "other_professional"
               ? "This login is your professional profile. Story Pro and office tools are not on this account."
               : user.kind === "consumer"
