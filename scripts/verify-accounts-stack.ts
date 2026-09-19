@@ -24,6 +24,7 @@ const scripts = [
   "scripts/test-p1b1-settings-shell.ts",
   "scripts/test-p1b2a-account-profile.ts",
   "scripts/test-p1b2b1-account-security.ts",
+  "scripts/test-p1b2b2-session-delete.ts",
 ];
 
 for (const file of scripts) {

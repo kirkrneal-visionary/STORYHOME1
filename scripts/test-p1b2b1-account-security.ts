@@ -50,7 +50,7 @@ assert.match(view, /control: "authenticator"/);
 assert.match(view, /title="Authenticator"/);
 assert.match(view, /mfaRequired\(purpose, kind\)/);
 assert.match(view, /settingsConsumerPreview/);
-assert.doesNotMatch(view, /This Device|Sign out everywhere|Delete account/);
+assert.doesNotMatch(view, /Sign out everywhere|Security Notices/);
 
 const security = read("src/components/settings/SecuritySection.tsx");
 assert.match(security, /\/api\/account\/change-email/);
@@ -61,7 +61,7 @@ assert.match(security, /PasswordStrengthMeter/);
 assert.match(security, /autoComplete="current-password"/);
 assert.match(security, /autoComplete="new-password"/);
 assert.match(security, /role="status"/);
-assert.match(security, /SESSION_ACTIONS = false/);
+assert.match(security, /NOTICES_UI = false/);
 assert.match(security, /Sign out everywhere/);
 assert.match(security, /Delete account/);
 assert.doesNotMatch(security, /factorType: "phone"|sms/i);

@@ -20,7 +20,9 @@ export type SettingsControl =
   | "profile"
   | "email"
   | "password"
-  | "authenticator";
+  | "authenticator"
+  | "device"
+  | "delete";
 
 export type SettingsSearch = {
   category: SettingsCategory | null;
@@ -51,6 +53,8 @@ const CONTROLS = new Set<string>([
   "email",
   "password",
   "authenticator",
+  "device",
+  "delete",
 ]);
 
 const ORIGIN_MAX = 512;
@@ -166,7 +170,9 @@ export function resolveSettingsLocation(
     category === "security" &&
     (search.control === "email" ||
       search.control === "password" ||
-      search.control === "authenticator")
+      search.control === "authenticator" ||
+      search.control === "device" ||
+      search.control === "delete")
   ) {
     return {
       screen: "control",
