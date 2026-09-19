@@ -612,6 +612,11 @@ export function SettingsView() {
       ) : location.control === "workspace" ? (
         <div className="mt-8 space-y-6">
           {backLink(officeHref)}
+          {isOffice && !consumerPreview && !securityReady && (
+            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+              Confirm your email and authenticator before office tools.
+            </p>
+          )}
           <OfficeWorkspaceHandoff />
           <Link
             href={closeHref}
