@@ -193,6 +193,14 @@ export function resolveSettingsLocation(
       setupMfa: false,
     };
   }
+  if (category === "professional" && search.control === "profile") {
+    return {
+      screen: "control",
+      category,
+      control: "profile",
+      setupMfa: false,
+    };
+  }
   if (
     category === "professional" &&
     search.control === "license" &&
