@@ -44,6 +44,8 @@ export type SearchFilters = {
   sqftMax: string;
   acresMin: string;
   acresMax: string;
+  yearMin: string;
+  yearMax: string;
   beds: string; // Any | 1 | 2 | 3 | 4 | 5+
   baths: string; // Any | 1 | 1.5 | 2 | 2.5 | 3 | 4+
   office: boolean;
@@ -64,6 +66,8 @@ export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   sqftMax: "",
   acresMin: "",
   acresMax: "",
+  yearMin: "",
+  yearMax: "",
   beds: "Any",
   baths: "Any",
   office: false,
@@ -82,12 +86,72 @@ function parseNum(raw: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+export type FilterGroupId = "price_land" | "home" | "features";
+
+export type HomepageFilterGroupId = "price_features" | "home_land";
+
+export function countHomepageGroup(
+  filters: SearchFilters,
+  group: HomepageFilterGroupId,
+): number {
+  if (group === "price_features") {
+    let n = 0;
+    if (filters.priceMin || filters.priceMax) n += 1;
+    if (filters.office) n += 1;
+    if (filters.garage) n += 1;
+    if (filters.pool) n += 1;
+    if (filters.hoa !== "any") n += 1;
+    return n;
+  }
+  let n = 0;
+  if (filters.beds !== "Any") n += 1;
+  if (filters.baths !== "Any") n += 1;
+  if (filters.propertyTypes.length) n += 1;
+  if (filters.sqftMin || filters.sqftMax) n += 1;
+  if (filters.acresMin || filters.acresMax) n += 1;
+  if (filters.yearMin || filters.yearMax) n += 1;
+  return n;
+}
+
+export function countActiveFiltersInGroup(
+  filters: SearchFilters,
+  group: FilterGroupId,
+): number {
+  let n = 0;
+  if (group === "price_land") {
+    if (filters.priceMin || filters.priceMax) n += 1;
+    if (filters.acresMin || filters.acresMax) n += 1;
+    return n;
+  }
+  if (group === "home") {
+    if (filters.sqftMin || filters.sqftMax) n += 1;
+    if (filters.yearMin || filters.yearMax) n += 1;
+    if (filters.beds !== "Any") n += 1;
+    if (filters.baths !== "Any") n += 1;
+    if (filters.propertyTypes.length) n += 1;
+    if (
+      filters.statuses.length !== 1 ||
+      filters.statuses[0] !== "Active"
+    ) {
+      n += 1;
+    }
+    return n;
+  }
+  if (filters.keyword.trim()) n += 1;
+  if (filters.office) n += 1;
+  if (filters.garage) n += 1;
+  if (filters.pool) n += 1;
+  if (filters.hoa !== "any") n += 1;
+  return n;
+}
+
 export function countActiveFilters(filters: SearchFilters): number {
   let n = 0;
   if (filters.keyword.trim()) n += 1;
   if (filters.priceMin || filters.priceMax) n += 1;
   if (filters.sqftMin || filters.sqftMax) n += 1;
   if (filters.acresMin || filters.acresMax) n += 1;
+  if (filters.yearMin || filters.yearMax) n += 1;
   if (filters.beds !== "Any") n += 1;
   if (filters.baths !== "Any") n += 1;
   if (filters.office) n += 1;
@@ -138,6 +202,8 @@ export function applySearchFilters(
   const sqftMax = parseNum(filters.sqftMax);
   const acresMin = parseNum(filters.acresMin);
   const acresMax = parseNum(filters.acresMax);
+  const yearMin = parseNum(filters.yearMin);
+  const yearMax = parseNum(filters.yearMax);
   const keyword = filters.keyword.trim().toLowerCase();
 
   const filtered = listings.filter((listing) => {
@@ -154,6 +220,12 @@ export function applySearchFilters(
     if (sqftMax != null && listing.sqft > sqftMax) return false;
     if (acresMin != null && listing.acres < acresMin) return false;
     if (acresMax != null && listing.acres > acresMax) return false;
+    if (yearMin != null && (!listing.yearBuilt || listing.yearBuilt < yearMin)) {
+      return false;
+    }
+    if (yearMax != null && (!listing.yearBuilt || listing.yearBuilt > yearMax)) {
+      return false;
+    }
 
     // Beds/baths use Zillow-style minimums (2 = 2+)
     if (filters.beds === "5+") {

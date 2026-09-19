@@ -1,0 +1,143 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { ExactBoundInput } from "@/components/home/ExactBoundInput";
+import { HomeBoundPicker, PICKER_ROW_H } from "@/components/home/HomeBoundPicker";
+import { exactKindFromTitle } from "@/lib/search/exact-input";
+import {
+  applyMaxChange,
+  applyMinChange,
+  formatMoney,
+  prepareBoundSteps,
+  type RollerStep,
+} from "@/lib/search/rollers";
+
+const ROW_VISIBLE = 3;
+
+export function HomeRangeRow({
+  title,
+  min,
+  max,
+  steps,
+  minPlaceholder,
+  maxPlaceholder,
+  formatValue = formatMoney,
+  onChange,
+}: {
+  title: string;
+  min: string;
+  max: string;
+  steps: RollerStep[];
+  minPlaceholder: string;
+  maxPlaceholder: string;
+  formatValue?: (raw: string) => string;
+  onChange: (min: string, max: string) => void;
+}) {
+  const [exact, setExact] = useState(false);
+  const minSteps = useMemo(
+    () => prepareBoundSteps(steps, min, max, "min", formatValue),
+    [steps, min, max, formatValue],
+  );
+  const maxSteps = useMemo(
+    () => prepareBoundSteps(steps, max, min, "max", formatValue),
+    [steps, min, max, formatValue],
+  );
+
+  function changeMin(nextMin: string) {
+    const next = applyMinChange(min, max, nextMin);
+    onChange(next.min, next.max);
+  }
+
+  function changeMax(nextMax: string) {
+    const next = applyMaxChange(min, max, nextMax);
+    onChange(next.min, next.max);
+  }
+
+  return (
+    <div className="story-home-range-row" data-range-row={title}>
+      <p className="story-home-range-row-label">
+        {title}
+        <span className="sr-only">
+          {" "}
+          {formatValue(min)} to {formatValue(max)}
+        </span>
+      </p>
+      {exact ? (
+        <>
+          <RowExact
+            kind={exactKindFromTitle(title)}
+            placeholder={minPlaceholder}
+            accessibleLabel={`${title} minimum`}
+            value={min}
+            onChange={changeMin}
+          />
+          <RowExact
+            kind={exactKindFromTitle(title)}
+            placeholder={maxPlaceholder}
+            accessibleLabel={`${title} maximum`}
+            value={max}
+            onChange={changeMax}
+          />
+        </>
+      ) : (
+        <>
+          <HomeBoundPicker
+            label="MIN"
+            accessibleLabel={`${title} minimum`}
+            steps={minSteps}
+            value={min}
+            onChange={changeMin}
+            hideLabel
+            visibleCount={ROW_VISIBLE}
+          />
+          <HomeBoundPicker
+            label="MAX"
+            accessibleLabel={`${title} maximum`}
+            steps={maxSteps}
+            value={max}
+            onChange={changeMax}
+            hideLabel
+            visibleCount={ROW_VISIBLE}
+            anticipateAfter={min || undefined}
+          />
+        </>
+      )}
+      <button
+        type="button"
+        className="story-home-range-exact"
+        onClick={() => setExact((on) => !on)}
+      >
+        {exact ? "Rollers" : "Exact"}
+      </button>
+    </div>
+  );
+}
+
+function RowExact({
+  kind,
+  placeholder,
+  accessibleLabel,
+  value,
+  onChange,
+}: {
+  kind: ReturnType<typeof exactKindFromTitle>;
+  placeholder: string;
+  accessibleLabel: string;
+  value: string;
+  onChange: (next: string) => void;
+}) {
+  return (
+    <div
+      className="flex flex-col justify-center"
+      style={{ height: PICKER_ROW_H * ROW_VISIBLE }}
+    >
+      <ExactBoundInput
+        kind={kind}
+        value={value}
+        placeholder={placeholder}
+        accessibleLabel={accessibleLabel}
+        onChange={onChange}
+      />
+    </div>
+  );
+}

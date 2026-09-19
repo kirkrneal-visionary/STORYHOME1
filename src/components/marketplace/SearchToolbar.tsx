@@ -103,6 +103,29 @@ export function SearchToolbar({
             ]}
           />
 
+          {filters.yearMin || filters.yearMax ? (
+            <span
+              data-year-chip=""
+              className="inline-flex h-10 items-center gap-1 rounded-[var(--radius-md)] border border-gold/50 bg-gold/15 px-2 text-sm font-semibold text-ink"
+            >
+              <button
+                type="button"
+                onClick={onOpenMore}
+                className="story-press max-w-[9rem] truncate px-0.5"
+              >
+                Year {yearChipLabel(filters.yearMin, filters.yearMax)}
+              </button>
+              <button
+                type="button"
+                aria-label="Clear year built"
+                onClick={() => patch({ yearMin: "", yearMax: "" })}
+                className="story-press px-1 text-[var(--muted)] hover:text-ink"
+              >
+                ×
+              </button>
+            </span>
+          ) : null}
+
           <button
             type="button"
             onClick={onOpenMore}
@@ -186,6 +209,13 @@ export function SearchToolbar({
       </div>
     </div>
   );
+}
+
+function yearChipLabel(min: string, max: string): string {
+  if (min && max) return `${min}–${max}`;
+  if (min) return `${min}+`;
+  if (max) return `–${max}`;
+  return "Any";
 }
 
 function FilterSelect({

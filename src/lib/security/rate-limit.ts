@@ -107,7 +107,8 @@ export function classifyRequestPath(pathname: string): RateCost | null {
     pathname.startsWith("/api/account/") ||
     pathname.startsWith("/api/analytics") ||
     pathname.startsWith("/api/listing-activity") ||
-    pathname.startsWith("/api/seller/")
+    pathname.startsWith("/api/seller/") ||
+    pathname.startsWith("/api/smart-search/")
   ) {
     return "medium";
   }

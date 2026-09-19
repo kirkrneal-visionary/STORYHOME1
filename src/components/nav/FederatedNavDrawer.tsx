@@ -4,6 +4,7 @@ import { useEffect, useId, useRef } from "react";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
+import { GhostExamplesControl } from "@/components/home/GhostExamplesControl";
 import { NavPressButton } from "@/components/nav/NavPressButton";
 import { PrimaryNavLink } from "@/components/nav/PrimaryNavLink";
 import {
@@ -71,7 +72,7 @@ export function FederatedNavDrawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] md:hidden" role="presentation">
+    <div className="fixed inset-0 z-[60] xl:hidden" role="presentation">
       <button
         type="button"
         aria-label="Close menu"
@@ -135,6 +136,10 @@ export function FederatedNavDrawer({
               </PrimaryNavLink>
             ))}
           </nav>
+
+          <div className="mt-5 rounded-2xl border border-hairline px-3 py-3">
+            <GhostExamplesControl />
+          </div>
 
           {showArchie ? (
             <>

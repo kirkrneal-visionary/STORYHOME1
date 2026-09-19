@@ -89,6 +89,8 @@
     "scripts/test-harden-wave-4-warehouse.ts",
     "scripts/test-harden-wave-4b-enumeration.ts",
     "scripts/test-harden-wave-5-hygiene.ts",
+    "scripts/test-smart-search.ts",
+    "scripts/eval-smart-search-nl.ts",
     "scripts/verify-accounts-stack.ts"
   ]
 }

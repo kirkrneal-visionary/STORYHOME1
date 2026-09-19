@@ -3,10 +3,29 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
-import { MapPin, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { HomeSearchHub } from "@/components/home/HomeSearchHub";
 import { ListingCard } from "@/components/ListingCard";
 import type { DemoListing } from "@/lib/demo-data";
+import {
+  DEFAULT_SEARCH_FILTERS,
+  type SearchFilters,
+} from "@/lib/listing-filters";
+import {
+  authorizeSearchInput,
+  planToMarketplaceParams,
+} from "@/lib/search/interpret";
+import { allowlistedAdvanced } from "@/lib/search/plan";
+import {
+  EMPTY_PRICE,
+  SALE_SEARCH_STATUSES,
+  asPriceBounds,
+  readPrice,
+  storedTransactionMode,
+  withPrice,
+  type PriceBounds,
+  type TransactionMode,
+} from "@/lib/search/transaction";
 import { fetchMarketplaceListings } from "@/lib/supabase/listings";
 import {
   DEFAULT_MARKET,
@@ -14,16 +33,81 @@ import {
   REGION_CITIES,
   SERVICE_COUNTIES,
 } from "@/lib/markets";
-import { cn } from "@/lib/utils";
 
-type Intent = "sale" | "rent" | "sold";
+const HOME_SEARCH_STATE_KEY = "story-home-wave-a-search";
 
 export function HomeSearchHero() {
   const router = useRouter();
-  const [intent, setIntent] = useState<Intent>("sale");
-  const [query, setQuery] = useState<string>(DEFAULT_MARKET.label);
+  const [mode, setMode] = useState<TransactionMode>("buy");
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
+  const [buyPrice, setBuyPrice] = useState<PriceBounds>(EMPTY_PRICE);
+  const [rentPrice, setRentPrice] = useState<PriceBounds>(EMPTY_PRICE);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(HOME_SEARCH_STATE_KEY);
+      if (raw) {
+        const row = JSON.parse(raw) as {
+          query?: unknown;
+          mode?: unknown;
+          intent?: unknown;
+          filters?: unknown;
+          buyPrice?: unknown;
+          rentPrice?: unknown;
+        };
+        if (typeof row.query === "string") setQuery(row.query);
+        const nextMode = storedTransactionMode(
+          row.mode ?? (row.intent === "rent" ? "rent" : "buy"),
+        );
+        setMode(nextMode);
+        const nextFilters = {
+          ...DEFAULT_SEARCH_FILTERS,
+          ...(row.filters ? allowlistedAdvanced(row.filters) : {}),
+          statuses: DEFAULT_SEARCH_FILTERS.statuses,
+          keyword: "",
+        };
+        const storedBuy = asPriceBounds(row.buyPrice);
+        const storedRent = asPriceBounds(row.rentPrice);
+        const buy =
+          storedBuy.min || storedBuy.max
+            ? storedBuy
+            : nextMode === "buy"
+              ? readPrice(nextFilters)
+              : EMPTY_PRICE;
+        const rent =
+          storedRent.min || storedRent.max ? storedRent : EMPTY_PRICE;
+        setBuyPrice(buy);
+        setRentPrice(rent);
+        setFilters(withPrice(nextFilters, nextMode === "buy" ? buy : rent));
+      }
+    } catch {
+      /* ignore broken session rows */
+    } finally {
+      setSessionReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!sessionReady) return;
+    try {
+      sessionStorage.setItem(
+        HOME_SEARCH_STATE_KEY,
+        JSON.stringify({
+          query,
+          mode,
+          filters,
+          buyPrice,
+          rentPrice,
+        }),
+      );
+    } catch {
+      /* private mode */
+    }
+  }, [sessionReady, query, mode, filters, buyPrice, rentPrice]);
 
   useEffect(() => {
     let active = true;
@@ -42,102 +126,97 @@ export function HomeSearchHero() {
     };
   }, []);
 
-  function onSearch(e: FormEvent) {
-    e.preventDefault();
-    const params = new URLSearchParams({
-      q: query.trim() || DEFAULT_MARKET.label,
-      intent,
+  function changeMode(next: TransactionMode) {
+    if (next === mode) return;
+    const current = readPrice(filters);
+    const nextBuy = mode === "buy" ? current : buyPrice;
+    const nextRent = mode === "rent" ? current : rentPrice;
+    setBuyPrice(nextBuy);
+    setRentPrice(nextRent);
+    setMode(next);
+    setFilters(withPrice(filters, next === "buy" ? nextBuy : nextRent));
+  }
+
+  function changeFilters(next: SearchFilters) {
+    const clean = { ...next, keyword: "", query };
+    setFilters(clean);
+    const price = readPrice(clean);
+    if (mode === "buy") setBuyPrice(price);
+    else setRentPrice(price);
+  }
+
+  function submitBuy(raw: string, nextFilters: SearchFilters = filters) {
+    const plan = authorizeSearchInput({
+      q: raw,
+      advanced: {
+        ...nextFilters,
+        query: nextFilters.query,
+        keyword: "",
+        priceMin: nextFilters.priceMin,
+        priceMax: nextFilters.priceMax,
+        statuses: [...SALE_SEARCH_STATUSES],
+      },
     });
-    router.push(`/marketplace?${params.toString()}`);
+    router.push(`/marketplace?${planToMarketplaceParams(plan).toString()}`);
+  }
+
+  function submitRent() {
+    router.push("/rent");
+  }
+
+  function onSearch(nextFilters: SearchFilters = filters) {
+    if (mode === "rent") {
+      submitRent();
+      return;
+    }
+    const raw = query.trim() || nextFilters.query;
+    submitBuy(raw, { ...nextFilters, keyword: "" });
   }
 
   function searchArea(area: string) {
-    const params = new URLSearchParams({
-      q: `${area}, TX`,
-      intent,
-    });
-    router.push(`/marketplace?${params.toString()}`);
+    if (mode === "rent") {
+      submitRent();
+      return;
+    }
+    submitBuy(`${area}, TX`);
   }
 
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
-      {/* Hero budget: brand + headline + support + one CTA group on full-bleed photo */}
-      <section className="relative min-h-[78vh] overflow-hidden md:min-h-[85vh]">
-        <Image
-          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2400&q=80"
-          alt="East Texas home at dusk"
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,21,37,0.68)_0%,rgba(14,30,56,0.72)_48%,rgba(9,21,37,0.92)_100%)]" />
-
-        <div className="relative z-10 mx-auto flex min-h-[78vh] max-w-5xl flex-col justify-center px-4 pb-16 pt-[calc(var(--story-safe-top)+3rem)] md:min-h-[85vh] md:px-6 md:pt-[calc(var(--story-safe-top)+4rem)]">
-          <p className="story-wordmark text-[var(--type-brand)] text-paper">
-            <span className="text-[var(--brand-word)]">STORY</span>
-            <span className="text-[var(--brand-home)]">HOME</span>
-          </p>
-          <h1 className="type-hero mt-4 max-w-3xl text-paper">
-            Find your next home in East Texas.
+      <section className="story-home-hero" data-home-hero="">
+        <div className="story-home-hero-photo">
+          <Image
+            src="/brand/storyhome-meadow-hero.png"
+            alt="East Texas pine meadow at first light"
+            fill
+            priority
+            className="object-cover object-[22%_72%] md:object-[28%_60%]"
+            sizes="(max-width: 390px) 390px, (max-width: 768px) 768px, (max-width: 1440px) 1440px, 1672px"
+          />
+        </div>
+        <div className="story-home-hero-stage">
+          <h1 className="type-hero story-home-hero-headline mx-auto max-w-3xl text-center text-navy">
+            Find your next place in{" "}
+            <span className="whitespace-nowrap">East Texas.</span>
           </h1>
-          <p className="type-prose mt-3 max-w-xl text-paper/80">
-            Search across seven launch counties — then grow with Story Home.
-          </p>
-
-          <div className="story-glass mt-8 overflow-hidden border-white/12">
-            <div className="flex border-b border-white/10">
-              {(
-                [
-                  ["sale", "For Sale"],
-                  ["rent", "For Rent"],
-                  ["sold", "Sold"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setIntent(key)}
-                  className={cn(
-                    "story-press type-control min-h-11 flex-1 px-3 py-3 font-semibold transition-colors md:px-4",
-                    intent === key
-                      ? "bg-gold text-navy"
-                      : "text-paper/75 hover:text-paper",
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            <form
-              onSubmit={onSearch}
-              className="flex flex-col gap-3 p-3 md:flex-row md:items-center md:p-4"
-            >
-              <div className="story-well flex flex-1 items-center gap-3 border-white/10 px-4 py-3">
-                <MapPin className="h-5 w-5 shrink-0 text-gold" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="City, ZIP, county, or address"
-                  className="w-full bg-transparent text-base text-paper outline-none placeholder:text-paper/40"
-                  aria-label="Search location"
-                />
-              </div>
-              <button
-                type="submit"
-                data-story-sound="tap"
-                className="story-press inline-flex h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-gold px-6 text-sm font-bold text-navy"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
-            </form>
+          <div className="story-home-hero-safe">
+            <HomeSearchHub
+              transaction={mode}
+              onTransaction={changeMode}
+              query={query}
+              onQuery={setQuery}
+              filters={filters}
+              onFilters={changeFilters}
+              onSubmitSearch={onSearch}
+            />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-14 md:px-6">
+      <section
+        className="mx-auto max-w-6xl px-4 pb-10 pt-8 md:px-6 md:pt-10"
+        data-launch-counties=""
+      >
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="type-section text-paper">
@@ -148,7 +227,7 @@ export function HomeSearchHero() {
             </p>
           </div>
           <Link
-            href={`/marketplace?q=${encodeURIComponent(DEFAULT_MARKET.label)}`}
+            href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
             className="hidden text-sm font-semibold text-gold hover:underline md:inline"
           >
             View all homes
@@ -199,7 +278,7 @@ export function HomeSearchHero() {
               </p>
             </div>
             <Link
-              href={`/marketplace?q=${encodeURIComponent(REGION.label)}`}
+              href={`/marketplace?q=${encodeURIContent(REGION.label)}`}
               className="text-sm font-semibold text-gold hover:underline"
             >
               See marketplace
@@ -228,7 +307,7 @@ export function HomeSearchHero() {
         <ToolCard
           title="Buy a home"
           body="Search East Texas listings with filters, saves, and agent profiles on every card."
-          href={`/marketplace?q=${encodeURIComponent(DEFAULT_MARKET.label)}`}
+          href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
           cta="Start searching"
         />
         <ToolCard
@@ -246,6 +325,10 @@ export function HomeSearchHero() {
       </section>
     </div>
   );
+}
+
+function encodeURIContent(value: string) {
+  return encodeURIComponent(value);
 }
 
 function ToolCard({

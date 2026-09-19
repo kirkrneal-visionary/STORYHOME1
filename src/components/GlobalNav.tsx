@@ -19,6 +19,7 @@ import {
   FederatedNavDrawer,
   type FederatedDrawerLink,
 } from "@/components/nav/FederatedNavDrawer";
+import { HeaderMotionMenu } from "@/components/home/GhostExamplesControl";
 import { NavPressButton } from "@/components/nav/NavPressButton";
 import { NetworkContextRibbon } from "@/components/nav/NetworkContextRibbon";
 import { NetworkDivider } from "@/components/nav/NetworkDivider";
@@ -92,7 +93,7 @@ export default function GlobalNav() {
           active: false,
         },
         {
-          href: "/marketplace?q=Lufkin%2C%20TX&intent=rent",
+          href: "/rent",
           label: "Rent",
           active: false,
         },
@@ -218,7 +219,7 @@ export default function GlobalNav() {
                 Buy
               </NavLink>
               <NavLink
-                href="/marketplace?q=Lufkin%2C%20TX&intent=rent"
+                href="/rent"
                 active={false}
               >
                 Rent
@@ -290,6 +291,7 @@ export default function GlobalNav() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
+          <HeaderMotionMenu />
           {showArchieNode ? (
             <NetworkNode
               href={archieEntryHref}

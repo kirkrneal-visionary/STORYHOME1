@@ -4,6 +4,7 @@ import {
   DEFAULT_SEARCH_FILTERS,
   LISTING_STATUSES,
   PROPERTY_TYPES,
+  type FilterGroupId,
   type HoaFilter,
   type SearchFilters,
   toggleInList,
@@ -14,6 +15,10 @@ type SearchFiltersPanelProps = {
   filters: SearchFilters;
   onChange: (next: SearchFilters) => void;
   resultCount: number;
+  showResultCount?: boolean;
+  title?: string;
+  compact?: boolean;
+  group?: FilterGroupId;
   className?: string;
 };
 
@@ -39,37 +44,59 @@ export function SearchFiltersPanel({
   filters,
   onChange,
   resultCount,
+  showResultCount = true,
+  title = "Find Your Story",
+  compact = false,
+  group,
   className,
 }: SearchFiltersPanelProps) {
   function patch(partial: Partial<SearchFilters>) {
     onChange({ ...filters, ...partial });
   }
 
+  const show = (id: FilterGroupId) => !group || group === id;
+
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn(compact ? "space-y-3" : "space-y-6", className)}>
+      {title || !compact ? (
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="font-serif text-2xl font-semibold text-ink">
-            Find Your Story
+          {title ? (
+          <h2
+            className={cn(
+              "font-semibold text-ink",
+              compact ? "type-card-title" : "font-serif text-2xl",
+            )}
+          >
+            {title}
           </h2>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            Filter East Texas homes by what matters.
-          </p>
+          ) : null}
+          {compact ? null : (
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Filter East Texas homes by what matters.
+            </p>
+          )}
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            onChange({
-              ...DEFAULT_SEARCH_FILTERS,
-              query: filters.query,
-            })
-          }
-          className="shrink-0 text-xs font-semibold text-gold hover:underline"
-        >
-          Reset
-        </button>
+        {compact ? null : (
+          <button
+            type="button"
+            onClick={() =>
+              onChange({
+                ...DEFAULT_SEARCH_FILTERS,
+                query: filters.query,
+              })
+            }
+            className="shrink-0 text-xs font-semibold text-gold hover:underline"
+          >
+            Reset
+          </button>
+        )}
       </div>
+      ) : null}
 
+      {show("price_land") || show("features") ? (
+      <div className={compact && !group ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("price_land") ? (
       <Field label="Location">
         <input
           type="text"
@@ -79,7 +106,9 @@ export function SearchFiltersPanel({
           className="field-input"
         />
       </Field>
+      ) : null}
 
+      {show("features") ? (
       <Field label="Keyword">
         <input
           type="text"
@@ -89,7 +118,13 @@ export function SearchFiltersPanel({
           className="field-input"
         />
       </Field>
+      ) : null}
+      </div>
+      ) : null}
 
+      {show("price_land") || show("home") ? (
+      <div className={compact && !group ? "grid gap-3 md:grid-cols-2" : "contents"}>
+      {show("price_land") ? (
       <Field label="Price range">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -104,7 +139,9 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Home square footage">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -119,7 +156,28 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
+      <Field label="Year built">
+        <div className="grid grid-cols-2 gap-3">
+          <NumberInput
+            value={filters.yearMin}
+            onChange={(yearMin) => patch({ yearMin })}
+            placeholder="Min year"
+            inputMode="numeric"
+          />
+          <NumberInput
+            value={filters.yearMax}
+            onChange={(yearMax) => patch({ yearMax })}
+            placeholder="Max year"
+            inputMode="numeric"
+          />
+        </div>
+      </Field>
+      ) : null}
+
+      {show("price_land") ? (
       <Field label="Land size (acres)">
         <div className="grid grid-cols-2 gap-3">
           <NumberInput
@@ -134,7 +192,11 @@ export function SearchFiltersPanel({
           />
         </div>
       </Field>
+      ) : null}
+      </div>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Bedrooms">
         <div className="grid grid-cols-6 gap-1">
           {BED_OPTIONS.map(([beds, label]) => (
@@ -147,7 +209,9 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Bathrooms">
         <div className="grid grid-cols-4 gap-1 sm:grid-cols-7">
           {BATH_OPTIONS.map(([baths, label]) => (
@@ -160,7 +224,10 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      ) : null}
 
+      {show("features") ? (
+      <div className={compact && !group ? "grid gap-3 md:grid-cols-2" : "contents"}>
       <Field label="Features">
         <div className="grid grid-cols-3 gap-2">
           <Toggle
@@ -199,7 +266,10 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      </div>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Property type">
         <div className="flex flex-wrap gap-2">
           {PROPERTY_TYPES.map((type) => (
@@ -216,7 +286,9 @@ export function SearchFiltersPanel({
           ))}
         </div>
       </Field>
+      ) : null}
 
+      {show("home") ? (
       <Field label="Listing status">
         <div className="flex flex-col gap-2">
           {LISTING_STATUSES.map((status) => {
@@ -242,10 +314,13 @@ export function SearchFiltersPanel({
           })}
         </div>
       </Field>
+      ) : null}
 
-      <p className="font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">
-        {resultCount} matching {resultCount === 1 ? "home" : "homes"}
-      </p>
+      {showResultCount ? (
+        <p className="font-mono text-[11px] tracking-wide text-[var(--muted)] uppercase">
+          {resultCount} matching {resultCount === 1 ? "home" : "homes"}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -271,15 +346,17 @@ function NumberInput({
   value,
   onChange,
   placeholder,
+  inputMode = "decimal",
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  inputMode?: "decimal" | "numeric";
 }) {
   return (
     <input
       type="text"
-      inputMode="decimal"
+      inputMode={inputMode}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
