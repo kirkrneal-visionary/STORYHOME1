@@ -79,9 +79,9 @@ assert.deepEqual(resolveSettingsLocation(legacy, consumer), {
 
 const mfa = parseSettingsSearch(params("setup=mfa"));
 assert.deepEqual(resolveSettingsLocation(mfa, consumer), {
-  screen: "category",
+  screen: "control",
   category: "security",
-  control: null,
+  control: "authenticator",
   setupMfa: true,
 });
 

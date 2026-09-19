@@ -15,7 +15,12 @@ export type SettingsCategory =
   | "professional"
   | "office";
 
-export type SettingsControl = "username" | "profile" | "password";
+export type SettingsControl =
+  | "username"
+  | "profile"
+  | "email"
+  | "password"
+  | "authenticator";
 
 export type SettingsSearch = {
   category: SettingsCategory | null;
@@ -40,7 +45,13 @@ const CATEGORIES = new Set<string>([
   "office",
 ]);
 
-const CONTROLS = new Set<string>(["username", "profile", "password"]);
+const CONTROLS = new Set<string>([
+  "username",
+  "profile",
+  "email",
+  "password",
+  "authenticator",
+]);
 
 const ORIGIN_MAX = 512;
 
@@ -115,9 +126,9 @@ export function resolveSettingsLocation(
 ): SettingsLocation {
   if (search.setupMfa) {
     return {
-      screen: "category",
+      screen: "control",
       category: "security",
-      control: null,
+      control: "authenticator",
       setupMfa: true,
     };
   }
@@ -151,11 +162,16 @@ export function resolveSettingsLocation(
       setupMfa: false,
     };
   }
-  if (category === "security" && search.control === "password") {
+  if (
+    category === "security" &&
+    (search.control === "email" ||
+      search.control === "password" ||
+      search.control === "authenticator")
+  ) {
     return {
-      screen: "category",
-      category: "security",
-      control: "password",
+      screen: "control",
+      category,
+      control: search.control,
       setupMfa: false,
     };
   }
