@@ -64,7 +64,7 @@ export function OfficeHome() {
           account from settings if this login is a Story Pro broker.
         </p>
         <Link
-          href="/settings"
+          href="/settings?from=/office"
           className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy"
         >
           Open settings

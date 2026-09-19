@@ -21,6 +21,7 @@ const scripts = [
   "scripts/test-p1a2-username-api.ts",
   "scripts/test-p1a3-username-settings.ts",
   "scripts/test-p1a4-username-routing.ts",
+  "scripts/test-p1b1-settings-shell.ts",
 ];
 
 for (const file of scripts) {

@@ -239,7 +239,7 @@ export function LivingMarkPresence({
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link
-              href="/settings"
+              href={`/settings?category=professional&from=${encodeURIComponent(`/agents/${agentId}`)}`}
               className="story-press inline-flex h-8 items-center rounded-full bg-gold px-3 text-[11px] font-bold text-navy"
             >
               Open library
