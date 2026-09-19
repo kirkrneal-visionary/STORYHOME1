@@ -126,6 +126,10 @@ const settings = read("src/components/settings/SettingsView.tsx");
 assert.match(settings, /UsernameField/);
 assert.doesNotMatch(settings, /href=["']\/u\//);
 
+const mw = read("src/middleware.ts");
+assert.match(mw, /inspectUsername/);
+assert.match(mw, /NextResponse.redirect\(next, 308\)/);
+
 const migrations = readdirSync(join(root, "supabase/migrations")).sort();
 assert.ok(migrations.includes("0061_username_public_resolve.sql"));
 assert.equal(migrations.filter((f) => f.startsWith("0061")).length, 1);
