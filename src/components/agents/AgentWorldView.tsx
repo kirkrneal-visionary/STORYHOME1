@@ -270,7 +270,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
               </p>
               <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
                 <Link
-                  href={isOwn ? "/settings" : "/marketplace"}
+                  href={isOwn ? `/settings?from=${encodeURIComponent(`/agents/${agent.id}`)}` : "/marketplace"}
                   onClick={() => onCta("listings")}
                   className="story-press inline-flex h-10 items-center rounded-full bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--accent-contrast)]"
                 >

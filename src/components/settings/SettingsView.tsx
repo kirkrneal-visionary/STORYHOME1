@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AtSign, BadgeCheck, Save, UserRound } from "lucide-react";
@@ -17,6 +17,7 @@ import { OpenOfficeCard } from "@/components/settings/OpenOfficeCard";
 import { PurposeCard } from "@/components/settings/PurposeCard";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { SettingsCard } from "@/components/settings/SettingsCard";
+import { SettingsCategoryRow } from "@/components/settings/SettingsCategoryRow";
 import {
   getMyProfile,
   updateMyProfile,
@@ -32,50 +33,51 @@ import {
   STORY_PRO_SETTINGS_BLOCKED,
   canAccessPrivateApp,
 } from "@/lib/account/assurance";
+import { settingsCapabilities } from "@/lib/account/settings-capabilities";
+import {
+  buildSettingsHref,
+  fallbackSettingsOrigin,
+  parseSettingsSearch,
+  readRememberedSettingsOrigin,
+  rememberSettingsOrigin,
+  resolveSettingsLocation,
+  sameOriginReferrerPath,
+  sanitizeSettingsOrigin,
+} from "@/lib/account/settings-nav";
 import {
   canOpenOfficeAccount,
   mayManageBrokerage,
   mayUseStoryPro,
+  purposeLabel,
 } from "@/lib/account/purpose";
 import {
   settingsConsumerPreview,
   settingsConsumerPreviewCopy,
 } from "@/lib/account/settings-preview";
 import { accountLabel } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 
 const toList = (s: string) =>
   s.split(",").map((x) => x.trim()).filter(Boolean);
 const fromList = (a: string[]) => a.join(", ");
 
-type SettingsTab = "you" | "security";
-
 export function SettingsView() {
   const searchParams = useSearchParams();
-  const requested = searchParams.get("tab");
-  const usernameFocus = searchParams.get("control") === "username";
-  const initialTab: SettingsTab =
-    requested === "security" || searchParams.get("setup") === "mfa"
-      ? "security"
-      : "you";
+  const parsed = parseSettingsSearch(searchParams);
   const { role } = useApp();
   const { user, isLoggedIn } = useAuth();
-  const [tab, setTab] = useState<SettingsTab>(initialTab);
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [brokerage, setBrokerage] = useState<Brokerage | null>(null);
   const [pending, setPending] = useState<PendingInvite | null>(null);
   const [loading, setLoading] = useState(true);
+  const [origin, setOrigin] = useState<string | null>(null);
+  const panelTitleId = useId();
+  const lastFocusRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
     try {
       const p = await getMyProfile(user.id);
       setProfile(p);
-      if (p?.brokerageId) setBrokerage(await getBrokerageById(p.brokerageId));
-      else setBrokerage(null);
-      if (p?.accountPurpose === "individual_pro" && p.accountKind === "agent") {
-        setPending(await myPendingInvite());
-      } else setPending(null);
     } finally {
       setLoading(false);
     }
@@ -84,6 +86,55 @@ export function SettingsView() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const next =
+      rememberSettingsOrigin(parsed.from) ??
+      readRememberedSettingsOrigin() ??
+      sameOriginReferrerPath();
+    setOrigin(next);
+  }, [parsed.from]);
+
+  const purpose = profile?.accountPurpose ?? user?.purpose;
+  const kind = profile?.accountKind ?? user?.kind;
+  const caps = settingsCapabilities({ purpose, kind });
+  const location = resolveSettingsLocation(parsed, caps);
+  const from = origin ?? parsed.from;
+
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (location.category !== "professional" && location.category !== "office") {
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const nextBrokerage = profile.brokerageId
+        ? await getBrokerageById(profile.brokerageId)
+        : null;
+      const nextPending =
+        profile.accountPurpose === "individual_pro" &&
+        profile.accountKind === "agent"
+          ? await myPendingInvite()
+          : null;
+      if (cancelled) return;
+      setBrokerage(nextBrokerage);
+      setPending(nextPending);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, profile, location.category]);
+
+  useEffect(() => {
+    if (location.screen === "root") {
+      const id = lastFocusRef.current;
+      if (id) {
+        document.getElementById(id)?.focus();
+      }
+      return;
+    }
+    document.getElementById(panelTitleId)?.focus();
+  }, [location.screen, location.category, location.control, panelTitleId]);
 
   if (!isLoggedIn || !user) {
     return (
@@ -95,8 +146,6 @@ export function SettingsView() {
     );
   }
 
-  const purpose = profile?.accountPurpose ?? user.purpose;
-  const kind = profile?.accountKind ?? user.kind;
   const isPro = mayUseStoryPro(purpose, kind);
   const isOther = purpose === "other_professional";
   const isOffice = mayManageBrokerage(purpose);
@@ -116,12 +165,59 @@ export function SettingsView() {
     mayUseStoryPro: isPro,
   });
   const showRealtorCards = !consumerPreview && securityReady;
+  const closeHref =
+    sanitizeSettingsOrigin(from) ??
+    fallbackSettingsOrigin({ kind: user.kind, purpose });
+  const rootHref = buildSettingsHref({ from });
+  const accountHref = buildSettingsHref({ category: "account", from });
+  const securityHref = buildSettingsHref({ category: "security", from });
+  const usernameHref = buildSettingsHref({
+    category: "account",
+    control: "username",
+    from,
+  });
+  const profileHref = buildSettingsHref({
+    category: "account",
+    control: "profile",
+    from,
+  });
+
+  function markFocus(id: string) {
+    lastFocusRef.current = id;
+  }
+
+  const backLink = (href: string, label = "← Back") => (
+    <Link
+      href={href}
+      className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink"
+    >
+      {label}
+    </Link>
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
       <header>
         <p className="font-mono text-[11px] tracking-[0.16em] text-gold uppercase">Account settings</p>
-        <h1 className="mt-2 type-page-title text-ink md:text-4xl">Settings</h1>
+        <h1
+          id={panelTitleId}
+          tabIndex={-1}
+          className="mt-2 type-page-title text-ink outline-none md:text-4xl"
+        >
+          {location.screen === "root"
+            ? "Settings"
+            : location.control === "username"
+              ? "Username"
+              : location.control === "profile"
+                ? "Profile"
+                : location.category === "security"
+                  ? "Security"
+                  : location.category === "professional"
+                    ? "Professional"
+                    : location.category === "office"
+                      ? "Brokerage / Office"
+                      : "Account"}
+        </h1>
         <p className="mt-2 inline-flex items-center gap-2 text-sm text-[var(--muted)]">
           {user.name}
           <span className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink">
@@ -135,65 +231,70 @@ export function SettingsView() {
         )}
       </header>
 
-      {!usernameFocus && (
-      <div className="mt-6 flex gap-2">
-        {(["you", "security"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={cn(
-              "h-9 rounded-lg px-4 text-sm font-semibold",
-              tab === t
-                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                : "border border-hairline text-ink",
-            )}
-          >
-            {t === "you" ? "You" : "Security"}
-          </button>
-        ))}
-        {isOffice && !consumerPreview && (
-          <Link
-            href="/office"
-            className="inline-flex h-9 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold"
-          >
-            Office
-          </Link>
-        )}
-      </div>
-      )}
-
-      {/* story-surface cards live in SettingsCard + office workspace */}
       {loading ? (
         <p className="mt-8 text-sm text-[var(--muted)]">Loading your settings…</p>
-      ) : tab === "security" ? (
-        <div className="mt-8 space-y-6">
-          <Suspense fallback={null}>
-            <SecuritySection purpose={purpose} kind={kind} />
-          </Suspense>
-        </div>
-      ) : usernameFocus ? (
-        <div className="mt-8 space-y-6">
+      ) : location.screen === "root" ? (
+        <div className="mt-8 space-y-3">
+          <SettingsCategoryRow
+            id="settings-row-account"
+            href={accountHref}
+            title="Account"
+            subtitle="Username, profile, and sign-in"
+            onClick={() => markFocus("settings-row-account")}
+          />
+          {caps.professional && (
+            <SettingsCategoryRow
+              id="settings-row-professional"
+              href={buildSettingsHref({ category: "professional", from })}
+              title="Professional"
+              subtitle={purposeLabel(purpose)}
+              onClick={() => markFocus("settings-row-professional")}
+            />
+          )}
+          {caps.office && (
+            <SettingsCategoryRow
+              id="settings-row-office"
+              href={buildSettingsHref({ category: "office", from })}
+              title="Brokerage / Office"
+              subtitle={
+                caps.officeWorkspace
+                  ? "Office workspace"
+                  : "Open an office account"
+              }
+              onClick={() => markFocus("settings-row-office")}
+            />
+          )}
           <Link
-            href="/settings"
-            className="inline-flex h-9 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink"
+            href={closeHref}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
           >
-            ← Back
+            Done
           </Link>
+        </div>
+      ) : location.control === "username" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(accountHref)}
           <UsernameField userId={user.id} demo={demoSession} />
           <Link
-            href="/settings"
+            href={closeHref}
             className="inline-flex h-10 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
           >
             Done
           </Link>
         </div>
-      ) : (
+      ) : location.category === "security" ? (
         <div className="mt-8 space-y-6">
+          {backLink(location.setupMfa ? closeHref : accountHref)}
+          <Suspense fallback={null}>
+            <SecuritySection purpose={purpose} kind={kind} />
+          </Suspense>
+        </div>
+      ) : location.category === "professional" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(rootHref)}
           {pending && !consumerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}
-          <UsernameSummary />
           {!consumerPreview && (
             <PurposeCard
               purpose={purpose}
@@ -202,7 +303,7 @@ export function SettingsView() {
               brokerageName={brokerage?.name}
             />
           )}
-          {!consumerPreview && (
+          {caps.livingMark && !consumerPreview && (
             <LivingMarkLibraryCard
               userId={user.id}
               initials={
@@ -220,7 +321,6 @@ export function SettingsView() {
               onChanged={load}
             />
           )}
-          {profile && <AccountSection profile={profile} onSaved={load} />}
           {(isPro || isOther) && showRealtorCards && profile && (
             <ProSection profile={profile} onSaved={load} />
           )}
@@ -232,9 +332,19 @@ export function SettingsView() {
               {STORY_PRO_SETTINGS_BLOCKED}
             </p>
           )}
-          {canOpenOfficeAccount(purpose, kind) && showRealtorCards && (
-            <OpenOfficeCard />
+        </div>
+      ) : location.category === "office" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(rootHref)}
+          {caps.officeWorkspace && !consumerPreview && (
+            <Link
+              href="/office"
+              className="inline-flex min-h-11 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold"
+            >
+              Open office
+            </Link>
           )}
+          {caps.openOffice && showRealtorCards && <OpenOfficeCard />}
           {canOpenOfficeAccount(purpose, kind) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before opening an office account.
@@ -246,12 +356,39 @@ export function SettingsView() {
             </p>
           )}
         </div>
+      ) : location.control === "profile" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(accountHref)}
+          {profile && <AccountSection profile={profile} onSaved={load} />}
+        </div>
+      ) : (
+        <div className="mt-8 space-y-3">
+          {backLink(rootHref)}
+          <div
+            onClick={() => markFocus("settings-row-username")}
+            onKeyDown={() => markFocus("settings-row-username")}
+          >
+            <UsernameSummary href={usernameHref} />
+          </div>
+          <SettingsCategoryRow
+            id="settings-row-profile"
+            href={profileHref}
+            title="Profile"
+            subtitle="Display name, contact, and bio"
+          />
+          <SettingsCategoryRow
+            id="settings-row-security"
+            href={securityHref}
+            title="Security"
+            subtitle="Email, password, authenticator, and delete account"
+          />
+        </div>
       )}
     </div>
   );
 }
 
-function UsernameSummary() {
+function UsernameSummary({ href }: { href?: string }) {
   const { user } = useAuth();
   const demoSession =
     user?.emailConfirmed === undefined && user?.aal === undefined;
@@ -270,8 +407,8 @@ function UsernameSummary() {
           {name ? `@${name}` : "Not set"}
         </p>
         <Link
-          href="/settings?control=username"
-          className="inline-flex h-9 items-center rounded-lg border border-hairline px-3 text-sm font-semibold text-ink"
+          href={href ?? "/settings?control=username"}
+          className="inline-flex h-9 min-h-11 items-center rounded-lg border border-hairline px-3 text-sm font-semibold text-ink"
         >
           {name ? "Change" : "Set username"}
         </Link>
