@@ -33,7 +33,7 @@ export function SettingsCategoryRow({
         >
           {title}
         </span>
-        <span className="mt-0.5 block text-xs text-[var(--muted)]">{subtitle}</span>
+        <span className="mt-0.5 block break-words text-xs text-[var(--muted)]">{subtitle}</span>
       </span>
       <ChevronRight
         className="h-5 w-5 shrink-0 text-[var(--muted)]"

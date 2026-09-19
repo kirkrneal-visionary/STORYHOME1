@@ -117,6 +117,6 @@ assert.match(settings, /mayManageBrokerage/);
 assert.match(settings, /Display name/);
 const profileControl = read("src/components/settings/ProfileControl.tsx");
 assert.match(profileControl, /Display name/);
-assert.match(profileControl, /Legal name on file/);
+assert.doesNotMatch(profileControl, /Legal name on file/);
 
 console.log("accounts-wave-1: ok");

@@ -22,7 +22,9 @@ export type SettingsControl =
   | "password"
   | "authenticator"
   | "device"
-  | "delete";
+  | "delete"
+  | "identity"
+  | "license";
 
 export type SettingsSearch = {
   category: SettingsCategory | null;
@@ -55,6 +57,8 @@ const CONTROLS = new Set<string>([
   "authenticator",
   "device",
   "delete",
+  "identity",
+  "license",
 ]);
 
 const ORIGIN_MAX = 512;
@@ -178,6 +182,26 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: search.control,
+      setupMfa: false,
+    };
+  }
+  if (category === "professional" && search.control === "identity") {
+    return {
+      screen: "control",
+      category,
+      control: "identity",
+      setupMfa: false,
+    };
+  }
+  if (
+    category === "professional" &&
+    search.control === "license" &&
+    caps.trecLicense
+  ) {
+    return {
+      screen: "control",
+      category,
+      control: "license",
       setupMfa: false,
     };
   }
