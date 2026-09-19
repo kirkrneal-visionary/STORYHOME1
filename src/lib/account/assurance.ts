@@ -63,7 +63,7 @@ export function canAccessPrivateApp(opts: {
 export const STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT =
   "Story Pro settings cannot be changed on this account.";
 
-/** Realtor fields follow the account on file, not View as buyer. */
+/** Realtor fields follow the account on file, not View as Consumer. */
 export function holdsRealtorSettingsPurpose(
   purpose: AccountPurpose | string | null | undefined,
 ): boolean {

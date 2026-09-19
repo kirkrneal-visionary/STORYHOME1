@@ -66,7 +66,7 @@ export function purposeLabel(purpose?: string | null): string {
   if (purpose === "managing_broker") return "Office account";
   if (purpose === "individual_pro") return "Story Pro";
   if (purpose === "other_professional") return "Other professional";
-  return "Homeowner";
+  return "Consumer";
 }
 
 function norm(value: string | null | undefined): string {

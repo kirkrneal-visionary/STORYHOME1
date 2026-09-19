@@ -51,7 +51,8 @@ assert.equal(files.filter((f) => f.startsWith("0059")).length, 1);
 
 const lock = read("supabase/migrations/0053_story_pro_settings_lock.sql");
 assert.match(lock, /account_kind cannot be changed by the client/);
-assert.match(lock, /View as buyer/);
+assert.match(lock, /account_purpose cannot be changed by the client/);
+assert.match(lock, /is a preview only\. It is not stored and cannot change these locks/);
 assert.doesNotMatch(lock, /username_registry/);
 
 const cad = read("supabase/migrations/0057_cad_warehouse_lock.sql");
@@ -125,11 +126,11 @@ assert.doesNotMatch(ts, /mayUseStoryPro/);
 assert.doesNotMatch(ts, /account_purpose/);
 
 const purpose = read("src/lib/account/purpose.ts");
-assert.match(purpose, /return "Homeowner"/);
+assert.match(purpose, /return "Consumer"/);
 assert.doesNotMatch(purpose, /username_registry/);
 
 const nav = read("src/components/GlobalNav.tsx");
-assert.match(nav, /View as buyer/);
+assert.match(nav, /View as Consumer/);
 
 assert.doesNotMatch(mig, /\/api\/account\/username/);
 assert.ok(existsSync(join(root, "src/app/u/[username]/page.tsx")));

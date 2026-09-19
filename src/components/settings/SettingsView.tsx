@@ -38,8 +38,8 @@ import {
   mayUseStoryPro,
 } from "@/lib/account/purpose";
 import {
-  settingsBuyerPreview,
-  settingsBuyerPreviewCopy,
+  settingsConsumerPreview,
+  settingsConsumerPreviewCopy,
 } from "@/lib/account/settings-preview";
 import { accountLabel } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -111,11 +111,11 @@ export function SettingsView() {
       enrolled: user.mfaEnrolled === true,
       currentAal: user.aal,
     });
-  const buyerPreview = settingsBuyerPreview({
+  const consumerPreview = settingsConsumerPreview({
     role,
     mayUseStoryPro: isPro,
   });
-  const showRealtorCards = !buyerPreview && securityReady;
+  const showRealtorCards = !consumerPreview && securityReady;
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
@@ -125,12 +125,12 @@ export function SettingsView() {
         <p className="mt-2 inline-flex items-center gap-2 text-sm text-[var(--muted)]">
           {user.name}
           <span className="rounded-full border border-hairline px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink">
-            {buyerPreview ? "Buyer / Consumer" : accountLabel(user)}
+            {consumerPreview ? "Consumer" : accountLabel(user)}
           </span>
         </p>
-        {buyerPreview && (
+        {consumerPreview && (
           <p className="mt-3 rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
-            {settingsBuyerPreviewCopy(user.name, isOffice)}
+            {settingsConsumerPreviewCopy(user.name, isOffice)}
           </p>
         )}
       </header>
@@ -152,7 +152,7 @@ export function SettingsView() {
             {t === "you" ? "You" : "Security"}
           </button>
         ))}
-        {isOffice && !buyerPreview && (
+        {isOffice && !consumerPreview && (
           <Link
             href="/office"
             className="inline-flex h-9 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold"
@@ -190,11 +190,11 @@ export function SettingsView() {
         </div>
       ) : (
         <div className="mt-8 space-y-6">
-          {pending && !buyerPreview && (
+          {pending && !consumerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
           )}
           <UsernameSummary />
-          {!buyerPreview && (
+          {!consumerPreview && (
             <PurposeCard
               purpose={purpose}
               kind={kind}
@@ -202,7 +202,7 @@ export function SettingsView() {
               brokerageName={brokerage?.name}
             />
           )}
-          {!buyerPreview && (
+          {!consumerPreview && (
             <LivingMarkLibraryCard
               userId={user.id}
               initials={
@@ -227,7 +227,7 @@ export function SettingsView() {
           {isPro && showRealtorCards && profile && (
             <LicenseSection profile={profile} />
           )}
-          {(isPro || isOther) && !buyerPreview && !securityReady && (
+          {(isPro || isOther) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               {STORY_PRO_SETTINGS_BLOCKED}
             </p>
@@ -235,12 +235,12 @@ export function SettingsView() {
           {canOpenOfficeAccount(purpose, kind) && showRealtorCards && (
             <OpenOfficeCard />
           )}
-          {canOpenOfficeAccount(purpose, kind) && !buyerPreview && !securityReady && (
+          {canOpenOfficeAccount(purpose, kind) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before opening an office account.
             </p>
           )}
-          {isOffice && !buyerPreview && !securityReady && (
+          {isOffice && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before office tools.
             </p>

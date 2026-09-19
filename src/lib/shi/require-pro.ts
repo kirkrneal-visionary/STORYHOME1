@@ -23,7 +23,7 @@ export type ProGateFail = {
 /**
  * Story Pro gate for SHI API routes.
  * Individual Pro and office (managing broker) qualify. Other professionals are refused.
- * Purpose comes from the profiles row. Query params, View as buyer, and nav labels are ignored.
+ * Purpose comes from the profiles row. Query params, View as Consumer, and nav labels are ignored.
  */
 export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
   const supabase = await getServerSupabase();

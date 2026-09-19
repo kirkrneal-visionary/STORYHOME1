@@ -39,7 +39,7 @@ export function DevLoginButtons({
           }}
           className="h-10 rounded-lg bg-gold px-4 text-sm font-bold text-navy"
         >
-          Test Homeowner (consumer)
+          Test Consumer
         </button>
         <button
           type="button"
