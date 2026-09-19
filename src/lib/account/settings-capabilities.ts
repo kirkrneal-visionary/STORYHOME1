@@ -15,6 +15,7 @@ export type SettingsCapabilities = {
   professional: boolean;
   livingMark: boolean;
   trecLicense: boolean;
+  brokerage: boolean;
   office: boolean;
   officeWorkspace: boolean;
   openOffice: boolean;
@@ -29,6 +30,7 @@ export function settingsCapabilities(opts: {
     opts.purpose === "other_professional";
   const livingMark = mayUseStoryPro(opts.purpose, opts.kind);
   const trecLicense = livingMark;
+  const brokerage = livingMark;
   const officeWorkspace = mayManageBrokerage(opts.purpose);
   const openOffice = canOpenOfficeAccount(opts.purpose, opts.kind);
   return {
@@ -36,6 +38,7 @@ export function settingsCapabilities(opts: {
     professional,
     livingMark,
     trecLicense,
+    brokerage,
     office: officeWorkspace || openOffice,
     officeWorkspace,
     openOffice,

@@ -25,7 +25,8 @@ export type SettingsControl =
   | "delete"
   | "identity"
   | "license"
-  | "living";
+  | "living"
+  | "brokerage";
 
 export type SettingsSearch = {
   category: SettingsCategory | null;
@@ -61,6 +62,7 @@ const CONTROLS = new Set<string>([
   "identity",
   "license",
   "living",
+  "brokerage",
 ]);
 
 const ORIGIN_MAX = 512;
@@ -224,6 +226,18 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "living",
+      setupMfa: false,
+    };
+  }
+  if (
+    category === "professional" &&
+    search.control === "brokerage" &&
+    caps.brokerage
+  ) {
+    return {
+      screen: "control",
+      category,
+      control: "brokerage",
       setupMfa: false,
     };
   }
