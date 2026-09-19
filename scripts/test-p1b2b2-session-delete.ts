@@ -58,7 +58,7 @@ assert.match(security, /Sign out everywhere/);
 assert.match(security, /location.assign\("\/login"\)/);
 assert.match(security, /confirmEverywhere/);
 assert.match(security, /\/api\/account\/delete-account/);
-assert.match(security, /tombstone_account_usernames|Type DELETE/);
+assert.match(security, /DELETE_CONFIRM_WORD/);
 assert.match(security, /NOTICES_UI = false/);
 assert.doesNotMatch(security, /trusted devices|fingerprint|device list/i);
 

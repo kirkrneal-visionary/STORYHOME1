@@ -80,7 +80,8 @@ assert.match(route, /status: 403/);
 assert.doesNotMatch(route, /CLIENTSAGENTS/i);
 
 const security = read("src/components/settings/SecuritySection.tsx");
-assert.match(security, /onClick=\{logout\}/);
+assert.match(security, /logout\(\);/);
+assert.match(security, /location.assign\("\/login"\)/);
 
 assert.match(STORY_PRO_SETTINGS_BLOCKED, /authenticator/);
 assert.match(STORY_PRO_SETTINGS_BLOCKED, /Story Pro settings/);
