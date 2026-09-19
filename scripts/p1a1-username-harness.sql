@@ -133,6 +133,7 @@ begin
      and state = 'active';
   perform pg_temp.record('one_active_username', n = 1);
 
+  perform pg_temp.as_user('a1111111-1111-1111-1111-111111111111', 'authenticated');
   perform set_config('story.allow_profile_privilege_write', '', true);
 
   begin
