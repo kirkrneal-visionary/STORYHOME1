@@ -207,7 +207,9 @@ assert.match(del, /p_uid: auth\.user\.id/);
 assert.ok(del.indexOf("tombstone_account_usernames") < del.indexOf("deleteUser"));
 
 const settings = read("src/components/settings/SettingsView.tsx");
-assert.doesNotMatch(settings, /UsernameField|username\/claim|@username/);
+assert.match(settings, /UsernameField/);
+assert.doesNotMatch(settings, /username_registry|service_role/);
+assert.doesNotMatch(settings, /href=["']\/u\//);
 
 assert.equal(existsSync(join(root, "src/app/u")), false);
 assert.doesNotMatch(read("src/lib/analytics/events.ts"), /username_claimed|username_change_result/);
