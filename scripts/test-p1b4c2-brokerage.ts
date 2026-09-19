@@ -102,8 +102,8 @@ assert.doesNotMatch(view, /from\("profiles"\)\.update/);
 assert.doesNotMatch(view, /brokerage\?\.id|brokerage\.id\b/);
 
 const professionalList = view.slice(
-  view.indexOf("location.category === \"professional\" ? ("),
-  view.indexOf("location.category === \"office\""),
+  view.indexOf('id="settings-row-identity"'),
+  view.indexOf('location.category === "office" ? ('),
 );
 assert.match(professionalList, /title="Brokerage"/);
 assert.doesNotMatch(professionalList, /AgentJoinBanner/);
