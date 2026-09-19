@@ -18,6 +18,7 @@ const scripts = [
   "scripts/test-settings-buyer-preview.ts",
   "scripts/test-settings-db-locks.ts",
   "scripts/test-p1a1-username-registry.ts",
+  "scripts/test-p1a2-username-api.ts",
 ];
 
 for (const file of scripts) {
