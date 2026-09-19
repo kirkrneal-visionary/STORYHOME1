@@ -37,8 +37,8 @@ declare
   uid_c uuid := 'c3333333-3333-3333-3333-333333333333';
   uid_e uuid := 'e5555555-5555-5555-5555-555555555555';
 begin
-  perform pg_temp.as_user(uid_a);
-  perform public.claim_username('alpha');
+  perform pg_temp.as_user(uid_a, 'service_role');
+  perform public.claim_username(uid_a, 'alpha');
   perform pg_temp.as_user(null, 'anon');
   select * into r from public.resolve_username('alpha');
   perform pg_temp.record(
@@ -53,8 +53,8 @@ begin
     r.normalized = 'alpha' and r.account_id = uid_a
   );
 
-  perform pg_temp.as_user(uid_c);
-  perform public.claim_username('sarahpro');
+  perform pg_temp.as_user(uid_c, 'service_role');
+  perform public.claim_username(uid_c, 'sarahpro');
   perform pg_temp.as_user(null, 'anon');
   select * into r from public.resolve_username('sarahpro');
   perform pg_temp.record(
@@ -75,8 +75,8 @@ begin
   select count(*) into n from public.resolve_username('bad name');
   perform pg_temp.record('invalid_empty', n = 0);
 
-  perform pg_temp.as_user(uid_a);
-  perform public.claim_username('beta');
+  perform pg_temp.as_user(uid_a, 'service_role');
+  perform public.claim_username(uid_a, 'beta');
   perform pg_temp.as_user(null, 'anon');
   select count(*) into n from public.resolve_username('alpha');
   perform pg_temp.record('changed_old_empty', n = 0);
@@ -86,8 +86,8 @@ begin
     r.normalized = 'beta' and r.account_id = uid_a
   );
 
-  perform pg_temp.as_user(uid_e);
-  perform public.claim_username('goneuser');
+  perform pg_temp.as_user(uid_e, 'service_role');
+  perform public.claim_username(uid_e, 'goneuser');
   perform pg_temp.as_user(uid_e, 'service_role');
   perform public.tombstone_account_usernames(uid_e);
   perform pg_temp.as_user(null, 'anon');

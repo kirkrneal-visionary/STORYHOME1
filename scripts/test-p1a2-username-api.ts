@@ -32,9 +32,11 @@ assert.ok(migrations.includes("0057_cad_warehouse_lock.sql"));
 assert.ok(migrations.includes("0058_username_registry.sql"));
 assert.ok(migrations.includes("0059_username_reserved_seed.sql"));
 assert.ok(migrations.includes("0060_username_api_hooks.sql"));
+assert.ok(migrations.includes("0062_username_claim_service_role.sql"));
 assert.equal(migrations.filter((f) => f.startsWith("0058")).length, 1);
 assert.equal(migrations.filter((f) => f.startsWith("0059")).length, 1);
 assert.equal(migrations.filter((f) => f.startsWith("0060")).length, 1);
+assert.equal(migrations.filter((f) => f.startsWith("0062")).length, 1);
 assert.ok(
   migrations.indexOf("0058_username_registry.sql") >
     migrations.indexOf("0057_cad_warehouse_lock.sql"),
@@ -194,9 +196,13 @@ assert.match(claimRoute, /requireSignedIn/);
 assert.match(claimRoute, /requireStepUpIfEnrolled/);
 assert.match(claimRoute, /claim_username/);
 assert.match(claimRoute, /p_raw/);
+assert.match(claimRoute, /p_uid: auth\.user\.id/);
+assert.match(claimRoute, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(claimRoute, /username_own_mutation_state/);
 assert.match(claimRoute, /step\.code/);
 assert.match(read("src/lib/account/require-signed-in.ts"), /needs_mfa/);
+assert.ok(claimRoute.indexOf("requireStepUpIfEnrolled") < claimRoute.indexOf("claim_username"));
+assert.doesNotMatch(claimRoute, /auth\.supabase\.rpc\("claim_username"/);
 assert.doesNotMatch(claimRoute, /admin_moderate_username/);
 assert.doesNotMatch(claimRoute, /account_kind|account_purpose|professional_role/);
 assert.doesNotMatch(claimRoute, /insert into public\.username_registry/i);
@@ -252,6 +258,7 @@ apply("scripts/p1a1-username-pg-bootstrap.sql");
 apply("supabase/migrations/0058_username_registry.sql");
 apply("supabase/migrations/0059_username_reserved_seed.sql");
 apply("supabase/migrations/0060_username_api_hooks.sql");
+apply("supabase/migrations/0062_username_claim_service_role.sql");
 const harnessOut = apply("scripts/p1a2-username-harness.sql");
 
 for (const name of [

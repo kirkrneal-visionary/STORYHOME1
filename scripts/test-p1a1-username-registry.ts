@@ -46,8 +46,10 @@ assert.equal(mayUseStoryPro("managing_broker", "broker"), true);
 const files = readdirSync(join(root, "supabase/migrations")).sort();
 assert.ok(files.includes("0058_username_registry.sql"));
 assert.ok(files.includes("0059_username_reserved_seed.sql"));
+assert.ok(files.includes("0062_username_claim_service_role.sql"));
 assert.equal(files.filter((f) => f.startsWith("0058")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0059")).length, 1);
+assert.equal(files.filter((f) => f.startsWith("0062")).length, 1);
 
 const lock = read("supabase/migrations/0053_story_pro_settings_lock.sql");
 assert.match(lock, /account_kind cannot be changed by the client/);
@@ -184,6 +186,7 @@ const apply = (file: string) => {
 apply("scripts/p1a1-username-pg-bootstrap.sql");
 apply("supabase/migrations/0058_username_registry.sql");
 apply("supabase/migrations/0059_username_reserved_seed.sql");
+apply("supabase/migrations/0062_username_claim_service_role.sql");
 const harnessOut = apply("scripts/p1a1-username-harness.sql");
 
 const requiredProofs = [

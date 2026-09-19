@@ -1,6 +1,7 @@
 /**
  * Username format and v1 change policy.
- * SQL claim_username / username_inspect are authoritative.
+ * SQL claim_username (service_role) / username_inspect are authoritative.
+ * Ordinary claims go through POST /api/account/username/claim.
  * This module mirrors those rules for tests and later API layers.
  * Username is a public alias. It is not authorization.
  */

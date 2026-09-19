@@ -95,6 +95,7 @@
     "scripts/test-p1a1-username-registry.ts",
     "scripts/test-p1a2-username-api.ts",
     "scripts/test-p1a3-username-settings.ts",
-    "scripts/test-p1a4-username-routing.ts"
+    "scripts/test-p1a4-username-routing.ts",
+    "scripts/test-p1a-claim-rpc-boundary.ts"
   ]
 }

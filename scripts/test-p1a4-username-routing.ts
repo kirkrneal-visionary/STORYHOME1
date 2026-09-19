@@ -132,7 +132,9 @@ assert.match(mw, /NextResponse.redirect\(next, 308\)/);
 
 const migrations = readdirSync(join(root, "supabase/migrations")).sort();
 assert.ok(migrations.includes("0061_username_public_resolve.sql"));
+assert.ok(migrations.includes("0062_username_claim_service_role.sql"));
 assert.equal(migrations.filter((f) => f.startsWith("0061")).length, 1);
+assert.equal(migrations.filter((f) => f.startsWith("0062")).length, 1);
 const grant = read("supabase/migrations/0061_username_public_resolve.sql");
 assert.match(grant, /grant execute on function public\.resolve_username/);
 assert.match(grant, /to anon/);
@@ -170,6 +172,7 @@ apply("supabase/migrations/0058_username_registry.sql");
 apply("supabase/migrations/0059_username_reserved_seed.sql");
 apply("supabase/migrations/0060_username_api_hooks.sql");
 apply("supabase/migrations/0061_username_public_resolve.sql");
+apply("supabase/migrations/0062_username_claim_service_role.sql");
 const harnessOut = apply("scripts/p1a4-username-public-harness.sql");
 
 for (const name of [

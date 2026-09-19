@@ -43,8 +43,8 @@ begin
   select * into r from public.username_availability('freshname');
   perform pg_temp.record('avail_fresh', r.status = 'available' and r.normalized = 'freshname');
 
-  perform pg_temp.as_user(uid_a);
-  perform public.claim_username('freshname');
+  perform pg_temp.as_user(uid_a, 'service_role');
+  perform public.claim_username(uid_a, 'freshname');
   select * into r from public.username_availability('freshname');
   perform pg_temp.record(
     'avail_active_opaque',
@@ -61,8 +61,8 @@ begin
     r.status = 'unavailable' and r.normalized = 'freshname'
   );
 
-  perform pg_temp.as_user(uid_b);
-  perform public.claim_username('oldlabel');
+  perform pg_temp.as_user(uid_b, 'service_role');
+  perform public.claim_username(uid_b, 'oldlabel');
   perform pg_temp.as_user(uid_b, 'service_role');
   perform public.tombstone_account_usernames(uid_b);
   select * into r from public.username_availability('oldlabel');
@@ -71,8 +71,8 @@ begin
     r.status = 'unavailable' and r.code = 'taken_or_blocked'
   );
 
-  perform pg_temp.as_user(uid_e);
-  perform public.claim_username('deletehook');
+  perform pg_temp.as_user(uid_e, 'service_role');
+  perform public.claim_username(uid_e, 'deletehook');
   perform pg_temp.as_user(uid_e, 'service_role');
   n := public.tombstone_account_usernames(uid_e);
   perform pg_temp.record('delete_hook_count', n = 1);
@@ -101,7 +101,8 @@ begin
     'deleted_still_unavailable',
     r.status = 'unavailable' and r.code = 'taken_or_blocked'
   );
-  select * into r from public.claim_username('deletehook');
+  perform pg_temp.as_user(uid_b, 'service_role');
+  select * into r from public.claim_username(uid_b, 'deletehook');
   perform pg_temp.record('deleted_still_unclaimable', r.ok is not true);
 
   perform pg_temp.as_user(uid_a);
