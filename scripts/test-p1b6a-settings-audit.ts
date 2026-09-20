@@ -152,6 +152,8 @@ assert.doesNotMatch(claim, /settingsCapabilities/);
 
 const username = read("src/components/settings/UsernameField.tsx");
 assert.match(username, /min-h-11/);
+assert.match(read("src/components/settings/ProfileControl.tsx"), /bottom-\[var\(--story-bottom-clearance\)\]/);
+assert.match(read("src/components/settings/ProfessionalProfileControl.tsx"), /bottom-\[var\(--story-bottom-clearance\)\]/);
 
 const deleteSrc = read("src/components/settings/SecuritySection.tsx");
 assert.match(deleteSrc, /sec-delete-confirm|DELETE_CONFIRM/);
