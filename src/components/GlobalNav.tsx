@@ -40,6 +40,7 @@ import {
   isSuitesPath,
   primaryDockId,
 } from "@/lib/navigation/nav-active";
+import { settingsEntryHref } from "@/lib/account/settings-nav";
 import {
   ARCHIE_MARK_SRC,
   NAVIGATION_NETWORKS,
@@ -82,6 +83,7 @@ export default function GlobalNav() {
   const archieActive = dockId === "archie";
   const showArchieNode = isPro && isLoggedIn;
   const isSellerPath = pathname.startsWith("/seller");
+  const settingsHref = settingsEntryHref(pathname ?? "/");
 
   const hostLinks = useMemo(() => {
     const links: FederatedDrawerLink[] = [];
@@ -147,13 +149,13 @@ export default function GlobalNav() {
     }
     if (isLoggedIn) {
       links.push({
-        href: "/settings",
+        href: settingsHref,
         label: "Settings",
         active: isSettingsPath(pathname),
       });
     }
     return links;
-  }, [isHome, isLoggedIn, isOfficeAccount, isPro, pathname]);
+  }, [isHome, isLoggedIn, isOfficeAccount, isPro, pathname, settingsHref]);
 
   if (isSellerPath) {
     return null;
@@ -327,7 +329,7 @@ export default function GlobalNav() {
           {isLoggedIn && user ? (
             <>
               <Link
-                href="/settings"
+                href={settingsHref}
                 aria-label="Settings"
                 title="Settings"
                 className={cn(
