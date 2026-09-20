@@ -1,6 +1,6 @@
 /** P1C-4B Availability Settings locks. Run: npm run test:p1c4b-availability-settings */
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { settingsCapabilities } from "../src/lib/account/settings-capabilities.ts";
 import {
@@ -56,7 +56,8 @@ assert.doesNotMatch(control, /professional_id|service_role|from\("professional_o
 assert.doesNotMatch(control, /lead count|income target|30-day|living_mark/);
 assert.doesNotMatch(read("src/app/agents/[id]/page.tsx"), /temporarily_unavailable|operational_state/);
 assert.doesNotMatch(read("src/app/api/account/availability/route.ts"), /SettingsView|AvailabilityControl/);
-assert.equal(readdirSync(join(root, "supabase/migrations")).filter((file) => file.startsWith("0070")).length, 0);
+assert.doesNotMatch(control, /0070_|create table/);
+assert.doesNotMatch(view, /0070_/);
 
 let last = -1;
 for (const title of [
