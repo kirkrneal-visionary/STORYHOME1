@@ -119,6 +119,8 @@ assert.match(view, /title="Living Mark"/);
 assert.match(view, /title="Brokerage"/);
 assert.match(view, /showBrokerageRow/);
 assert.match(view, /location.category !== "professional"/);
+assert.match(view, /const doneLink/);
+assert.match(view, /focus-visible:outline-gold/);
 assert.doesNotMatch(view, /title="Story Home"/);
 assert.doesNotMatch(view, /Search & Property|title="Communication"|title="Privacy"/);
 assert.doesNotMatch(view, /Coming Soon|You\/Security tabs|setTab/);
