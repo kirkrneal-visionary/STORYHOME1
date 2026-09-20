@@ -44,6 +44,13 @@ const ServiceCountiesControl = dynamic(
     ),
   { loading: () => settingsFallback },
 );
+const PrimaryCountyControl = dynamic(
+  () =>
+    import("@/components/settings/PrimaryCountyControl").then(
+      (m) => m.PrimaryCountyControl,
+    ),
+  { loading: () => settingsFallback },
+);
 const SecuritySection = dynamic(
   () =>
     import("@/components/settings/SecuritySection").then((m) => m.SecuritySection),
@@ -234,6 +241,11 @@ export function SettingsView() {
     control: "counties",
     from,
   });
+  const primaryHref = buildSettingsHref({
+    category: "professional",
+    control: "primary",
+    from,
+  });
   const livingHref = buildSettingsHref({
     category: "professional",
     control: "living",
@@ -318,6 +330,8 @@ export function SettingsView() {
                               ? "License"
                               : location.control === "counties"
                                 ? "Service Counties"
+                              : location.control === "primary"
+                                ? "Primary County"
                               : location.control === "living"
                                 ? "Living Mark"
                                 : location.control === "brokerage"
@@ -498,6 +512,12 @@ export function SettingsView() {
           <ServiceCountiesControl canEdit={securityReady} />
           {doneLink}
         </div>
+      ) : location.control === "primary" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <PrimaryCountyControl canEdit={securityReady} />
+          {doneLink}
+        </div>
       ) : location.control === "living" ? (
         <div className="mt-8 space-y-6">
           {backLink(professionalHref)}
@@ -548,6 +568,15 @@ export function SettingsView() {
               subtitle="Public profile"
               onClick={() => markFocus("settings-row-pro-profile")}
             />
+            {caps.primaryCounty && !consumerPreview && (
+              <SettingsCategoryRow
+                id="settings-row-primary"
+                href={primaryHref}
+                title="Primary County"
+                subtitle="Request your primary launch county"
+                onClick={() => markFocus("settings-row-primary")}
+              />
+            )}
             {caps.serviceCounties && !consumerPreview && (
               <SettingsCategoryRow
                 id="settings-row-counties"

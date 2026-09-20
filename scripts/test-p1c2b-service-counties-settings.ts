@@ -46,7 +46,6 @@ assert.match(view, /title="Service Counties"/);
 assert.match(view, /caps\.serviceCounties && !consumerPreview/);
 assert.match(view, /ServiceCountiesControl/);
 assert.match(view, /control: "counties"/);
-assert.doesNotMatch(view, /title="Primary County"/);
 assert.match(control, /\/api\/account\/service-counties/);
 assert.match(control, /serviceCountyFips: selected/);
 assert.match(control, /aria-pressed/);

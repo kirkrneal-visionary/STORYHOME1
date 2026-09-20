@@ -133,7 +133,6 @@ assert.match(view, /LicenseSection/);
 assert.match(view, /PurposeCard/);
 assert.match(view, /caps\.livingMark && !consumerPreview/);
 assert.match(view, /Legal name/);
-assert.doesNotMatch(view, /title="Primary County"/);
 assert.doesNotMatch(view, /title="Opportunity Availability"/);
 assert.doesNotMatch(view, /title="Professional Notifications"/);
 assert.doesNotMatch(view, /title="individual_pro"|title="managing_broker"|title="other_professional"/);
