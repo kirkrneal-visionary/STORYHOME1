@@ -162,7 +162,10 @@ export function SettingsView() {
         profile.accountKind === "agent"
           ? await myPendingInvite()
           : null;
-      const nextHistory = caps.brokerage ? await ownBrokerageHistory() : [];
+      const nextHistory =
+        caps.brokerage && location.control === "brokerage"
+          ? await ownBrokerageHistory()
+          : [];
       if (cancelled) return;
       setBrokerage(nextBrokerage);
       setPending(nextPending);
@@ -171,7 +174,7 @@ export function SettingsView() {
     return () => {
       cancelled = true;
     };
-  }, [user, profile, location.category, caps.brokerage]);
+  }, [user, profile, location.category, location.control, caps.brokerage]);
 
   useEffect(() => {
     if (location.screen === "root") {
