@@ -37,6 +37,7 @@ const scripts = [
   "scripts/test-p1c2a-service-counties.ts",
   "scripts/test-p1c2b-service-counties-settings.ts",
   "scripts/test-p1c1c-primary-county-settings.ts",
+  "scripts/test-p1c3a1-brokerage-history.ts",
 ];
 
 for (const file of scripts) {
