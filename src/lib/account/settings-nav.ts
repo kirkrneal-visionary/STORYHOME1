@@ -26,7 +26,9 @@ export type SettingsControl =
   | "identity"
   | "license"
   | "living"
-  | "brokerage";
+  | "brokerage"
+  | "open"
+  | "workspace";
 
 export type SettingsSearch = {
   category: SettingsCategory | null;
@@ -63,6 +65,8 @@ const CONTROLS = new Set<string>([
   "license",
   "living",
   "brokerage",
+  "open",
+  "workspace",
 ]);
 
 const ORIGIN_MAX = 512;
@@ -238,6 +242,26 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "brokerage",
+      setupMfa: false,
+    };
+  }
+  if (category === "office" && search.control === "open" && caps.openOffice) {
+    return {
+      screen: "control",
+      category,
+      control: "open",
+      setupMfa: false,
+    };
+  }
+  if (
+    category === "office" &&
+    search.control === "workspace" &&
+    caps.officeWorkspace
+  ) {
+    return {
+      screen: "control",
+      category,
+      control: "workspace",
       setupMfa: false,
     };
   }

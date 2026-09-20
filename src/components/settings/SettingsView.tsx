@@ -209,6 +209,21 @@ export function SettingsView() {
     control: "brokerage",
     from,
   });
+  const officeHref = buildSettingsHref({ category: "office", from });
+  const openOfficeHref = buildSettingsHref({
+    category: "office",
+    control: "open",
+    from,
+  });
+  const workspaceHref = buildSettingsHref({
+    category: "office",
+    control: "workspace",
+    from,
+  });
+  const authenticatorHref = buildSettingsHref({
+    setup: "mfa",
+    from,
+  });
   const showBrokerageRow =
     caps.brokerage &&
     !consumerPreview &&
@@ -262,6 +277,10 @@ export function SettingsView() {
                                 ? "Living Mark"
                                 : location.control === "brokerage"
                                   ? "Brokerage"
+                                  : location.control === "open"
+                                    ? "Open Office"
+                                    : location.control === "workspace"
+                                      ? "Office Workspace"
                       : location.category === "security"
                         ? "Security"
                   : location.category === "professional"
@@ -564,28 +583,71 @@ export function SettingsView() {
             </p>
           )}
         </div>
-      ) : location.category === "office" ? (
+      ) : location.control === "open" ? (
         <div className="mt-8 space-y-6">
-          {backLink(rootHref)}
-          {caps.officeWorkspace && !consumerPreview && (
-            <Link
-              href="/office"
-              className="inline-flex min-h-11 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold"
-            >
-              Open office
-            </Link>
+          {backLink(officeHref)}
+          {caps.openOffice && showRealtorCards && (
+            <OpenOfficeCard authenticatorHref={authenticatorHref} />
           )}
-          {caps.openOffice && showRealtorCards && <OpenOfficeCard />}
           {canOpenOfficeAccount(purpose, kind) && !consumerPreview && !securityReady && (
-            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
-              Confirm your email and authenticator before opening an office account.
-            </p>
+            <div className="space-y-3">
+              <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+                Confirm your email and authenticator before opening an office account.
+              </p>
+              <Link
+                href={authenticatorHref}
+                className="inline-flex min-h-11 items-center text-sm font-semibold text-gold"
+              >
+                Set up authenticator
+              </Link>
+            </div>
           )}
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
+      ) : location.control === "workspace" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(officeHref)}
           {isOffice && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               Confirm your email and authenticator before office tools.
             </p>
           )}
+          <OfficeWorkspaceHandoff />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
+      ) : location.category === "office" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(rootHref)}
+          <div className="space-y-3">
+            {caps.openOffice && (
+              <SettingsCategoryRow
+                id="settings-row-open-office"
+                href={openOfficeHref}
+                title="Open Office"
+                subtitle="This login becomes the office"
+                onClick={() => markFocus("settings-row-open-office")}
+              />
+            )}
+            {caps.officeWorkspace && (
+              <SettingsCategoryRow
+                id="settings-row-office-workspace"
+                href={workspaceHref}
+                title="Office Workspace"
+                subtitle="Administer this office on /office"
+                onClick={() => markFocus("settings-row-office-workspace")}
+              />
+            )}
+          </div>
         </div>
       ) : location.control === "profile" ? (
         <div className="mt-8 space-y-6">
@@ -705,6 +767,26 @@ function IdentityFacts({
         <Fact label="Professional type" value={typeLabel} />
         {legalFullName ? <Fact label="Legal name" value={legalFullName} /> : null}
       </dl>
+    </SettingsCard>
+  );
+}
+
+function OfficeWorkspaceHandoff() {
+  return (
+    <SettingsCard
+      icon={Building2}
+      title="Office workspace"
+      subtitle="Roster, branding, and office tools stay on /office."
+    >
+      <p className="text-sm text-[var(--muted)]">
+        Settings does not administer the office here.
+      </p>
+      <Link
+        href="/office"
+        className="mt-4 inline-flex min-h-11 items-center rounded-lg border border-gold px-4 text-sm font-bold text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+      >
+        Open office
+      </Link>
     </SettingsCard>
   );
 }
