@@ -55,11 +55,11 @@ begin
     return query select true, null::text, current; return;
   end if;
 
-  update public.professional_service_counties
+  update public.professional_service_counties s
      set status = 'ended', effective_to = now()
-   where professional_id = p_uid
-     and status = 'current'
-     and not (county_fips = any (wanted));
+   where s.professional_id = p_uid
+     and s.status = 'current'
+     and not (s.county_fips = any (wanted));
 
   foreach fips in array wanted loop
     if not (fips = any (current)) then
