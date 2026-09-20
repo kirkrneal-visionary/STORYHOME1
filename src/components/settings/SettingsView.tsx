@@ -217,6 +217,10 @@ export function SettingsView() {
                     ? "Password"
                     : location.control === "authenticator"
                       ? "Authenticator"
+                      : location.control === "device"
+                        ? "This Device"
+                        : location.control === "delete"
+                          ? "Delete Account"
                       : location.category === "security"
                         ? "Security"
                   : location.category === "professional"
@@ -322,6 +326,23 @@ export function SettingsView() {
             subtitle={user.mfaEnrolled === true ? "On" : "Not set up"}
             onClick={() => markFocus("settings-row-authenticator")}
           />
+          <SettingsCategoryRow
+            id="settings-row-device"
+            href={buildSettingsHref({ category: "security", control: "device", from })}
+            title="This Device"
+            subtitle="This session"
+            onClick={() => markFocus("settings-row-device")}
+          />
+          <div className="pt-4">
+            <SettingsCategoryRow
+              id="settings-row-delete"
+              href={buildSettingsHref({ category: "security", control: "delete", from })}
+              title="Delete Account"
+              subtitle="Remove this login"
+              tone="danger"
+              onClick={() => markFocus("settings-row-delete")}
+            />
+          </div>
         </div>
       ) : location.category === "security" ? (
         <div className="mt-8 space-y-6">
@@ -333,7 +354,9 @@ export function SettingsView() {
               control={
                 location.control === "email" ||
                 location.control === "password" ||
-                location.control === "authenticator"
+                location.control === "authenticator" ||
+                location.control === "device" ||
+                location.control === "delete"
                   ? location.control
                   : "authenticator"
               }

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useId, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { KeyRound, Shield } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
@@ -14,10 +14,15 @@ import { DELETE_CONFIRM_WORD, deleteWarning } from "@/lib/account/delete-account
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 type Factor = { id: string; status: string; friendlyName?: string };
-type SecurityControl = "email" | "password" | "authenticator";
+type SecurityControl =
+  | "email"
+  | "password"
+  | "authenticator"
+  | "device"
+  | "delete";
 
-/** P1B-2B2 session actions stay in this file and stay hidden. */
-const SESSION_ACTIONS = false;
+/** Process-local inbox is a stub. Do not expose it as a Settings product. */
+const NOTICES_UI = false;
 
 export function SecuritySection({
   purpose,
@@ -61,6 +66,7 @@ export function SecuritySection({
   const [needsStepUp, setNeedsStepUp] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [confirmEverywhere, setConfirmEverywhere] = useState(false);
   const [notices, setNotices] = useState<
     { id: string; label: string; at: string }[]
   >([]);
@@ -93,7 +99,7 @@ export function SecuritySection({
     } catch {
       // keep last
     }
-    if (SESSION_ACTIONS) {
+    if (NOTICES_UI) {
       try {
         const noticeRes = await fetch("/api/account/security-notices");
         const noticeData = (await noticeRes.json()) as {
@@ -535,95 +541,124 @@ export function SecuritySection({
         </div>
       ) : null}
 
-      {SESSION_ACTIONS ? (
-        <div className="mt-4 space-y-5">
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[var(--muted)]" />
-            <div>
-              <h2 className="type-card-title text-ink">Sign-in &amp; security</h2>
-              <p className="text-xs text-[var(--muted)]">
-                Email, password, authenticator, this device, and delete account.
-              </p>
-            </div>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-ink">This device</p>
-            <p className="mt-1 text-xs text-[var(--muted)]">
-              Last sign-in:{" "}
+      {focus === "device" ? (
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--muted)]">
+            Last sign-in:{" "}
+            <span className="text-ink">
               {status?.lastSignInAt
                 ? new Date(status.lastSignInAt).toLocaleString()
                 : "this session"}
+            </span>
+          </p>
+          <p className="text-xs text-[var(--muted)]">
+            Other sessions are not listed here. Use sign out everywhere to close
+            them.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              window.location.assign("/login");
+            }}
+            className="inline-flex min-h-11 items-center rounded-xl border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Sign out this device
+          </button>
+          <div className="border-t border-hairline pt-4">
+            <p className="text-xs text-[var(--muted)]">
+              Sign out everywhere closes every session on this login.
             </p>
-            <p className="mt-1 text-xs text-[var(--muted)]">
-              Other sessions are not listed here. Use sign out everywhere to close
-              them.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            {!confirmEverywhere ? (
               <button
                 type="button"
-                onClick={logout}
-                className="h-10 rounded-xl border border-hairline px-4 text-sm font-semibold text-ink"
+                onClick={() => setConfirmEverywhere(true)}
+                className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-gold px-4 text-sm font-bold text-gold"
               >
-                Sign out this device
+                Sign out everywhere…
               </button>
+            ) : (
               <button
                 type="button"
-                onClick={() => void signOutEverywhere()}
-                className="h-10 rounded-xl border border-gold px-4 text-sm font-bold text-gold"
+                onClick={async () => {
+                  await signOutEverywhere();
+                  window.location.assign("/login");
+                }}
+                className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-gold px-4 text-sm font-bold text-gold"
               >
-                Sign out everywhere
+                Sign out everywhere now
               </button>
-            </div>
+            )}
           </div>
-          <form onSubmit={(e) => void onDeleteAccount(e)}>
-            <p className="text-xs font-semibold text-ink">Delete account</p>
-            <p className="mt-1 text-xs text-[var(--muted)]">
-              {deleteWarning(purpose)}
-            </p>
+          {statusLine}
+        </div>
+      ) : null}
+
+      {focus === "delete" ? (
+        <form onSubmit={(e) => void onDeleteAccount(e)} className="space-y-4">
+          <p className="text-xs font-semibold text-ink">Delete account</p>
+          <p className="text-sm text-[var(--muted)]">{deleteWarning(purpose)}</p>
+          {stepUp}
+          <label htmlFor="sec-delete-password" className="block">
+            <span className="type-control block text-[var(--muted)]">Password</span>
             <input
+              id="sec-delete-password"
               type="password"
               autoComplete="current-password"
-              placeholder="Password"
-              className={`${inputCls} mt-3`}
+              className={`${inputCls} mt-1.5`}
               value={deletePassword}
               onChange={(e) => setDeletePassword(e.target.value)}
+              required
             />
+          </label>
+          <label htmlFor="sec-delete-confirm" className="block">
+            <span className="type-control block text-[var(--muted)]">
+              Type {DELETE_CONFIRM_WORD} to confirm
+            </span>
             <input
+              id="sec-delete-confirm"
               type="text"
               autoComplete="off"
-              placeholder={`Type ${DELETE_CONFIRM_WORD}`}
-              className={`${inputCls} mt-2`}
+              className={`${inputCls} mt-1.5`}
               value={deleteConfirm}
               onChange={(e) => setDeleteConfirm(e.target.value)}
+              required
             />
+          </label>
+          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
               disabled={busy === "delete"}
-              className="mt-3 h-10 rounded-xl border border-red-400/60 px-4 text-sm font-semibold text-red-300"
+              aria-describedby={statusId}
+              className="inline-flex min-h-11 items-center rounded-xl border border-red-400/60 px-4 text-sm font-semibold text-red-300 disabled:opacity-60"
             >
               {busy === "delete" ? "Deleting…" : "Delete this account"}
             </button>
-          </form>
-          <div>
-            <p className="text-xs font-semibold text-ink">Security notices</p>
-            <p className="mt-1 text-xs text-[var(--muted)]">
-              This list is on this server only. Live email is not sent from here.
-            </p>
-            {notices.length === 0 ? (
-              <p className="mt-2 text-xs text-[var(--muted)]">No notices yet.</p>
-            ) : (
-              <ul className="mt-2 space-y-1">
-                {notices.slice(0, 8).map((n) => (
-                  <li key={n.id} className="text-xs text-ink">
-                    {n.label}
-                    <span className="ml-2 font-mono text-[10px] text-[var(--muted)]">
-                      {new Date(n.at).toLocaleString()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {statusLine}
           </div>
+        </form>
+      ) : null}
+
+      {NOTICES_UI ? (
+        <div>
+          <p className="text-xs font-semibold text-ink">Security notices</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            This list is on this server only. Live email is not sent from here.
+          </p>
+          {notices.length === 0 ? (
+            <p className="mt-2 text-xs text-[var(--muted)]">No notices yet.</p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {notices.slice(0, 8).map((n) => (
+                <li key={n.id} className="text-xs text-ink">
+                  {n.label}
+                  <span className="ml-2 font-mono text-[10px] text-[var(--muted)]">
+                    {new Date(n.at).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       ) : null}
     </section>
