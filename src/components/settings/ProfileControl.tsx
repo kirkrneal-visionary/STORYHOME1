@@ -112,7 +112,7 @@ export function ProfileControl({
           type="submit"
           disabled={busy}
           aria-describedby={statusId}
-          className="story-press inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60"
+          className="story-press inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-60"
         >
           <Save className="h-4 w-4" aria-hidden="true" />
           {busy ? "Saving…" : "Save"}
