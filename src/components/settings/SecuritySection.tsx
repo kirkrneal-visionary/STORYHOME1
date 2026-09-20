@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useId, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { KeyRound, Shield } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
@@ -14,16 +14,23 @@ import { DELETE_CONFIRM_WORD, deleteWarning } from "@/lib/account/delete-account
 import { getBrowserSupabase } from "@/lib/supabase/client";
 
 type Factor = { id: string; status: string; friendlyName?: string };
+type SecurityControl = "email" | "password" | "authenticator";
+
+/** P1B-2B2 session actions stay in this file and stay hidden. */
+const SESSION_ACTIONS = false;
 
 export function SecuritySection({
   purpose,
   kind,
+  control,
 }: {
   purpose?: string | null;
   kind?: string | null;
+  control?: SecurityControl | null;
 }) {
   const searchParams = useSearchParams();
   const setupMfa = searchParams.get("setup") === "mfa";
+  const statusId = useId();
   const {
     user,
     logout,
@@ -59,6 +66,7 @@ export function SecuritySection({
   >([]);
 
   const mustMfa = mfaRequired(purpose, kind);
+  const focus = control ?? (setupMfa ? "authenticator" : null);
 
   async function loadStatus() {
     try {
@@ -85,17 +93,19 @@ export function SecuritySection({
     } catch {
       // keep last
     }
-    try {
-      const noticeRes = await fetch("/api/account/security-notices");
-      const noticeData = (await noticeRes.json()) as {
-        ok?: boolean;
-        items?: { id: string; label: string; at: string }[];
-      };
-      if (noticeRes.ok && noticeData.ok) {
-        setNotices(noticeData.items ?? []);
+    if (SESSION_ACTIONS) {
+      try {
+        const noticeRes = await fetch("/api/account/security-notices");
+        const noticeData = (await noticeRes.json()) as {
+          ok?: boolean;
+          items?: { id: string; label: string; at: string }[];
+        };
+        if (noticeRes.ok && noticeData.ok) {
+          setNotices(noticeData.items ?? []);
+        }
+      } catch {
+        // inbox is optional
       }
-    } catch {
-      // inbox is optional
     }
     const supabase = getBrowserSupabase();
     if (!supabase) return;
@@ -176,7 +186,6 @@ export function SecuritySection({
         setError(data.error ?? "Unable to start that email change.");
         return;
       }
-      setNewEmail("");
       flash(data.message ?? "Check the new inbox to confirm the change.");
     } finally {
       setBusy("");
@@ -312,34 +321,46 @@ export function SecuritySection({
   if (!user) return null;
 
   const inputCls =
-    "h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold";
+    "field-input";
+  const enrolled =
+    status?.enrolled === true ||
+    factors.some((f) => f.status === "verified") ||
+    user.mfaEnrolled === true;
+
+  const statusLine = (
+    <p
+      id={statusId}
+      role="status"
+      aria-live="polite"
+      className={error ? "text-sm text-red-300" : "text-sm text-teal-soft"}
+    >
+      {error || note}
+    </p>
+  );
+
+  const stepUp = needsStepUp ? (
+    <div className="rounded-xl border border-gold/40 p-3">
+      <MfaChallengeForm
+        onVerified={() => {
+          setNeedsStepUp(false);
+          void refreshAssurance();
+          void loadStatus();
+        }}
+      />
+    </div>
+  ) : null;
 
   return (
     <section
       id="security"
-      className={`story-surface p-5 ${setupMfa ? "ring-2 ring-gold/50" : ""}`}
+      className={`mx-auto max-w-md ${setupMfa ? "ring-2 ring-gold/50 rounded-2xl p-4" : ""}`}
     >
-      <div className="flex items-center gap-2">
-        <Shield className="h-5 w-5 text-[var(--muted)]" />
-        <div>
-          <h2 className="type-card-title text-ink">Sign-in &amp; security</h2>
+      {focus === "email" ? (
+        <form onSubmit={onChangeEmail} className="space-y-4">
+          <p className="text-sm text-[var(--muted)]">
+            Current email: <span className="text-ink">{email || "—"}</span>
+          </p>
           <p className="text-xs text-[var(--muted)]">
-            Email, password, authenticator, this device, and delete account.
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-5">
-        {mustMfa && !status?.enrolled && (
-          <p className="rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-sm text-ink">
-            Realtor and office accounts need an authenticator app.
-          </p>
-        )}
-
-        <div>
-          <p className="text-xs font-semibold text-ink">Email on this login</p>
-          <p className="mt-1 font-mono text-xs text-[var(--muted)]">{email || "—"}</p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
             {status?.emailConfirmed
               ? "Mailbox confirmed."
               : "Mailbox not confirmed yet."}
@@ -351,100 +372,117 @@ export function SecuritySection({
                 await resendConfirmation(email);
                 flash(GENERIC_AUTH_SENT);
               }}
-              className="mt-2 text-xs font-semibold text-gold hover:underline"
+              className="min-h-11 text-sm font-semibold text-gold hover:underline"
             >
               Resend confirmation
             </button>
           )}
-        </div>
-
-        <form onSubmit={onChangeEmail} className="space-y-2">
-          <label className="text-xs font-semibold text-ink" htmlFor="sec-email">
-            Change email
+          <label htmlFor="sec-email" className="block">
+            <span className="type-control block text-[var(--muted)]">New email</span>
+            <input
+              id="sec-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              className={`${inputCls} mt-1.5`}
+              required
+            />
           </label>
-          <input
-            id="sec-email"
-            type="email"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            placeholder="New email"
-            className={inputCls}
-            required
-          />
-          <button
-            type="submit"
-            disabled={busy === "email"}
-            className="h-10 rounded-xl border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-60"
-          >
-            {busy === "email" ? "Sending…" : "Send confirmation"}
-          </button>
+          <p className="text-xs text-[var(--muted)]">
+            We keep this email until you confirm the new one.
+          </p>
+          {stepUp}
+          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="submit"
+              disabled={busy === "email"}
+              aria-describedby={statusId}
+              className="inline-flex min-h-11 items-center rounded-xl border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-60"
+            >
+              {busy === "email" ? "Sending…" : "Send confirmation"}
+            </button>
+            {statusLine}
+          </div>
         </form>
+      ) : null}
 
-        <form onSubmit={onChangePassword} className="space-y-2">
-          <p className="text-xs font-semibold text-ink">Change password</p>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Current password"
-            className={inputCls}
-            required
-          />
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
-            className={inputCls}
-            required
-            minLength={6}
-          />
+      {focus === "password" ? (
+        <form onSubmit={onChangePassword} className="space-y-4">
+          <label htmlFor="sec-current-password" className="block">
+            <span className="type-control block text-[var(--muted)]">Current password</span>
+            <input
+              id="sec-current-password"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className={`${inputCls} mt-1.5`}
+              required
+            />
+          </label>
+          <label htmlFor="sec-new-password" className="block">
+            <span className="type-control block text-[var(--muted)]">New password</span>
+            <input
+              id="sec-new-password"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className={`${inputCls} mt-1.5`}
+              required
+              minLength={6}
+            />
+          </label>
           <PasswordStrengthMeter password={newPassword} email={email} />
-          <button
-            type="submit"
-            disabled={busy === "password"}
-            className="h-10 rounded-xl border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-60"
-          >
-            {busy === "password" ? "Saving…" : "Update password"}
-          </button>
+          {stepUp}
+          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="submit"
+              disabled={busy === "password"}
+              aria-describedby={statusId}
+              className="inline-flex min-h-11 items-center rounded-xl border border-hairline px-4 text-sm font-semibold text-ink disabled:opacity-60"
+            >
+              {busy === "password" ? "Saving…" : "Update password"}
+            </button>
+            {statusLine}
+          </div>
         </form>
+      ) : null}
 
-        <div>
-          <p className="flex items-center gap-2 text-xs font-semibold text-ink">
+      {focus === "authenticator" ? (
+        <div className="space-y-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-ink">
             <KeyRound className="h-4 w-4" /> Authenticator
           </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
+          {mustMfa && !enrolled && (
+            <p className="rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-sm text-ink">
+              Realtor and office accounts need an authenticator app.
+            </p>
+          )}
+          <p className="text-xs text-[var(--muted)]">
             We use the authenticator in Supabase. We do not store backup codes.
             If you lost your phone, you still need a working code — a password
             reset does not skip this.
           </p>
-          {needsStepUp && (
-            <div className="mt-3 rounded-xl border border-gold/40 p-3">
-              <MfaChallengeForm
-                onVerified={() => {
-                  setNeedsStepUp(false);
-                  void refreshAssurance();
-                  void loadStatus();
-                }}
-              />
-            </div>
-          )}
+          {stepUp}
           {factors.filter((f) => f.status === "verified").length === 0 && !enrollQr && (
             <button
               type="button"
               onClick={() => void startEnroll()}
               disabled={busy === "enroll"}
-              className="mt-3 h-10 rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
+              className="inline-flex min-h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
             >
               {busy === "enroll" ? "Starting…" : "Set up authenticator"}
             </button>
           )}
           {enrollQr && (
-            <form onSubmit={confirmEnroll} className="mt-3 space-y-2">
+            <form onSubmit={confirmEnroll} className="space-y-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={enrollQr}
-                alt="Authenticator QR code"
+                alt="Authenticator QR code. Enter the secret below if you cannot scan."
                 className="h-40 w-40 rounded-lg bg-white p-2"
               />
               {enrollSecret && (
@@ -452,17 +490,22 @@ export function SecuritySection({
                   {enrollSecret}
                 </p>
               )}
-              <input
-                value={enrollCode}
-                onChange={(e) => setEnrollCode(e.target.value)}
-                placeholder="Code from the app"
-                className={inputCls}
-                required
-              />
+              <label htmlFor="sec-enroll-code" className="block">
+                <span className="type-control block text-[var(--muted)]">Code from the app</span>
+                <input
+                  id="sec-enroll-code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={enrollCode}
+                  onChange={(e) => setEnrollCode(e.target.value)}
+                  className={`${inputCls} mt-1.5`}
+                  required
+                />
+              </label>
               <button
                 type="submit"
                 disabled={busy === "verify"}
-                className="h-10 rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
+                className="inline-flex min-h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
               >
                 {busy === "verify" ? "Checking…" : "Confirm authenticator"}
               </button>
@@ -473,7 +516,7 @@ export function SecuritySection({
             .map((f) => (
               <div
                 key={f.id}
-                className="mt-3 flex items-center justify-between rounded-xl border border-hairline px-3 py-2"
+                className="flex items-center justify-between rounded-xl border border-hairline px-3 py-2"
               >
                 <p className="text-sm text-ink">
                   {f.friendlyName || "Authenticator"} · on
@@ -482,98 +525,107 @@ export function SecuritySection({
                   type="button"
                   onClick={() => void removeFactor(f.id)}
                   disabled={busy === "unenroll"}
-                  className="text-xs font-semibold text-red-300 hover:underline disabled:opacity-60"
+                  className="min-h-11 text-sm font-semibold text-red-300 hover:underline disabled:opacity-60"
                 >
                   Remove
                 </button>
               </div>
             ))}
+          {statusLine}
         </div>
+      ) : null}
 
-        <div>
-          <p className="text-xs font-semibold text-ink">This device</p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            Last sign-in:{" "}
-            {status?.lastSignInAt
-              ? new Date(status.lastSignInAt).toLocaleString()
-              : "this session"}
-          </p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            Other sessions are not listed here. Use sign out everywhere to close
-            them.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+      {SESSION_ACTIONS ? (
+        <div className="mt-4 space-y-5">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-[var(--muted)]" />
+            <div>
+              <h2 className="type-card-title text-ink">Sign-in &amp; security</h2>
+              <p className="text-xs text-[var(--muted)]">
+                Email, password, authenticator, this device, and delete account.
+              </p>
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-ink">This device</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Last sign-in:{" "}
+              {status?.lastSignInAt
+                ? new Date(status.lastSignInAt).toLocaleString()
+                : "this session"}
+            </p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Other sessions are not listed here. Use sign out everywhere to close
+              them.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={logout}
+                className="h-10 rounded-xl border border-hairline px-4 text-sm font-semibold text-ink"
+              >
+                Sign out this device
+              </button>
+              <button
+                type="button"
+                onClick={() => void signOutEverywhere()}
+                className="h-10 rounded-xl border border-gold px-4 text-sm font-bold text-gold"
+              >
+                Sign out everywhere
+              </button>
+            </div>
+          </div>
+          <form onSubmit={(e) => void onDeleteAccount(e)}>
+            <p className="text-xs font-semibold text-ink">Delete account</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              {deleteWarning(purpose)}
+            </p>
+            <input
+              type="password"
+              autoComplete="current-password"
+              placeholder="Password"
+              className={`${inputCls} mt-3`}
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+            />
+            <input
+              type="text"
+              autoComplete="off"
+              placeholder={`Type ${DELETE_CONFIRM_WORD}`}
+              className={`${inputCls} mt-2`}
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+            />
             <button
-              type="button"
-              onClick={logout}
-              className="h-10 rounded-xl border border-hairline px-4 text-sm font-semibold text-ink"
+              type="submit"
+              disabled={busy === "delete"}
+              className="mt-3 h-10 rounded-xl border border-red-400/60 px-4 text-sm font-semibold text-red-300"
             >
-              Sign out this device
+              {busy === "delete" ? "Deleting…" : "Delete this account"}
             </button>
-            <button
-              type="button"
-              onClick={() => void signOutEverywhere()}
-              className="h-10 rounded-xl border border-gold px-4 text-sm font-bold text-gold"
-            >
-              Sign out everywhere
-            </button>
+          </form>
+          <div>
+            <p className="text-xs font-semibold text-ink">Security notices</p>
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              This list is on this server only. Live email is not sent from here.
+            </p>
+            {notices.length === 0 ? (
+              <p className="mt-2 text-xs text-[var(--muted)]">No notices yet.</p>
+            ) : (
+              <ul className="mt-2 space-y-1">
+                {notices.slice(0, 8).map((n) => (
+                  <li key={n.id} className="text-xs text-ink">
+                    {n.label}
+                    <span className="ml-2 font-mono text-[10px] text-[var(--muted)]">
+                      {new Date(n.at).toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
-
-        <form onSubmit={(e) => void onDeleteAccount(e)}>
-          <p className="text-xs font-semibold text-ink">Delete account</p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            {deleteWarning(purpose)}
-          </p>
-          <input
-            type="password"
-            autoComplete="current-password"
-            placeholder="Password"
-            className={`${inputCls} mt-3`}
-            value={deletePassword}
-            onChange={(e) => setDeletePassword(e.target.value)}
-          />
-          <input
-            type="text"
-            autoComplete="off"
-            placeholder={`Type ${DELETE_CONFIRM_WORD}`}
-            className={`${inputCls} mt-2`}
-            value={deleteConfirm}
-            onChange={(e) => setDeleteConfirm(e.target.value)}
-          />
-          <button
-            type="submit"
-            disabled={busy === "delete"}
-            className="mt-3 h-10 rounded-xl border border-red-400/60 px-4 text-sm font-semibold text-red-300"
-          >
-            {busy === "delete" ? "Deleting…" : "Delete this account"}
-          </button>
-        </form>
-
-        <div>
-          <p className="text-xs font-semibold text-ink">Security notices</p>
-          <p className="mt-1 text-xs text-[var(--muted)]">
-            This list is on this server only. Live email is not sent from here.
-          </p>
-          {notices.length === 0 ? (
-            <p className="mt-2 text-xs text-[var(--muted)]">No notices yet.</p>
-          ) : (
-            <ul className="mt-2 space-y-1">
-              {notices.slice(0, 8).map((n) => (
-                <li key={n.id} className="text-xs text-ink">
-                  {n.label}
-                  <span className="ml-2 font-mono text-[10px] text-[var(--muted)]">
-                    {new Date(n.at).toLocaleString()}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {error && <p className="text-sm text-red-300">{error}</p>}
-        {note && <p className="text-sm text-teal-soft">{note}</p>}
-      </div>
+      ) : null}
     </section>
   );
 }

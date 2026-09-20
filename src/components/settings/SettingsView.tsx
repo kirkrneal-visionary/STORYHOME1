@@ -32,6 +32,7 @@ import {
 import {
   STORY_PRO_SETTINGS_BLOCKED,
   canAccessPrivateApp,
+  mfaRequired,
 } from "@/lib/account/assurance";
 import { settingsCapabilities } from "@/lib/account/settings-capabilities";
 import {
@@ -210,8 +211,14 @@ export function SettingsView() {
               ? "Username"
               : location.control === "profile"
                 ? "Profile"
-                : location.category === "security"
-                  ? "Security"
+                : location.control === "email"
+                  ? "Email"
+                  : location.control === "password"
+                    ? "Password"
+                    : location.control === "authenticator"
+                      ? "Authenticator"
+                      : location.category === "security"
+                        ? "Security"
                   : location.category === "professional"
                     ? "Professional"
                     : location.category === "office"
@@ -282,12 +289,62 @@ export function SettingsView() {
             Done
           </Link>
         </div>
+      ) : location.category === "security" && !location.control ? (
+        <div className="mt-8 space-y-3">
+          {backLink(accountHref)}
+          {mfaRequired(purpose, kind) && user.mfaEnrolled !== true && (
+            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+              Realtor and office accounts need an authenticator app.
+            </p>
+          )}
+          <SettingsCategoryRow
+            id="settings-row-email"
+            href={buildSettingsHref({ category: "security", control: "email", from })}
+            title="Email"
+            subtitle={user.email || "Not set"}
+            onClick={() => markFocus("settings-row-email")}
+          />
+          <SettingsCategoryRow
+            id="settings-row-password"
+            href={buildSettingsHref({ category: "security", control: "password", from })}
+            title="Password"
+            subtitle="Current password required"
+            onClick={() => markFocus("settings-row-password")}
+          />
+          <SettingsCategoryRow
+            id="settings-row-authenticator"
+            href={buildSettingsHref({
+              category: "security",
+              control: "authenticator",
+              from,
+            })}
+            title="Authenticator"
+            subtitle={user.mfaEnrolled === true ? "On" : "Not set up"}
+            onClick={() => markFocus("settings-row-authenticator")}
+          />
+        </div>
       ) : location.category === "security" ? (
         <div className="mt-8 space-y-6">
-          {backLink(location.setupMfa ? closeHref : accountHref)}
+          {backLink(location.setupMfa ? closeHref : securityHref)}
           <Suspense fallback={null}>
-            <SecuritySection purpose={purpose} kind={kind} />
+            <SecuritySection
+              purpose={purpose}
+              kind={kind}
+              control={
+                location.control === "email" ||
+                location.control === "password" ||
+                location.control === "authenticator"
+                  ? location.control
+                  : "authenticator"
+              }
+            />
           </Suspense>
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
         </div>
       ) : location.category === "professional" ? (
         <div className="mt-8 space-y-6">
