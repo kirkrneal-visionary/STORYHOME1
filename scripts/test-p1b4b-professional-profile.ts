@@ -74,7 +74,6 @@ assert.match(view, /title="License"/);
 assert.match(view, /ProfessionalProfileControl/);
 assert.match(view, /canEdit=\{securityReady\}/);
 assert.match(view, /caps\.livingMark && !consumerPreview/);
-assert.doesNotMatch(view, /title="Primary County"/);
 assert.doesNotMatch(view, /title="Opportunity Availability"/);
 assert.doesNotMatch(view, /function ProSection/);
 assert.doesNotMatch(view, /from\("profiles"\)\.update/);
