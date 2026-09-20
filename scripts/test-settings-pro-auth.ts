@@ -70,7 +70,7 @@ assert.match(view, /STORY_PRO_SETTINGS_BLOCKED/);
 assert.match(view, /showRealtorCards/);
 assert.match(view, /securityReady/);
 assert.match(view, /ProfessionalProfileControl/);
-assert.match(view, /AccountSection/);
+assert.match(view, /ProfileControl/);
 assert.match(view, /SecuritySection/);
 
 const proProfile = read("src/components/settings/ProfessionalProfileControl.tsx");

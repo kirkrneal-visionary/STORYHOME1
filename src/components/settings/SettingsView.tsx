@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { BadgeCheck, Building2 } from "lucide-react";
@@ -11,14 +12,36 @@ import {
 } from "@/lib/account/username-client";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
-import { LivingMarkLibraryCard } from "@/components/settings/LivingMarkLibraryCard";
-import { OpenOfficeCard } from "@/components/settings/OpenOfficeCard";
 import { PurposeCard } from "@/components/settings/PurposeCard";
-import { ProfessionalProfileControl } from "@/components/settings/ProfessionalProfileControl";
-import { SecuritySection } from "@/components/settings/SecuritySection";
 import { ProfileControl } from "@/components/settings/ProfileControl";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 import { SettingsCategoryRow } from "@/components/settings/SettingsCategoryRow";
+
+const settingsFallback = (
+  <p className="text-sm text-[var(--muted)]">Loading…</p>
+);
+const LivingMarkLibraryCard = dynamic(
+  () =>
+    import("@/components/settings/LivingMarkLibraryCard").then((m) => m.LivingMarkLibraryCard),
+  { loading: () => settingsFallback },
+);
+const OpenOfficeCard = dynamic(
+  () =>
+    import("@/components/settings/OpenOfficeCard").then((m) => m.OpenOfficeCard),
+  { loading: () => settingsFallback },
+);
+const ProfessionalProfileControl = dynamic(
+  () =>
+    import("@/components/settings/ProfessionalProfileControl").then(
+      (m) => m.ProfessionalProfileControl,
+    ),
+  { loading: () => settingsFallback },
+);
+const SecuritySection = dynamic(
+  () =>
+    import("@/components/settings/SecuritySection").then((m) => m.SecuritySection),
+  { loading: () => settingsFallback },
+);
 import {
   getMyProfile,
   type MyProfile,
@@ -405,21 +428,19 @@ export function SettingsView() {
       ) : location.category === "security" ? (
         <div className="mt-8 space-y-6">
           {backLink(location.setupMfa ? closeHref : securityHref)}
-          <Suspense fallback={null}>
-            <SecuritySection
-              purpose={purpose}
-              kind={kind}
-              control={
-                location.control === "email" ||
-                location.control === "password" ||
-                location.control === "authenticator" ||
-                location.control === "device" ||
-                location.control === "delete"
-                  ? location.control
-                  : "authenticator"
-              }
-            />
-          </Suspense>
+          <SecuritySection
+            purpose={purpose}
+            kind={kind}
+            control={
+              location.control === "email" ||
+              location.control === "password" ||
+              location.control === "authenticator" ||
+              location.control === "device" ||
+              location.control === "delete"
+                ? location.control
+                : "authenticator"
+            }
+          />
           {doneLink}
         </div>
       ) : location.category === "professional" &&
@@ -610,7 +631,7 @@ export function SettingsView() {
       ) : location.control === "profile" ? (
         <div className="mt-8 space-y-6">
           {backLink(accountHref)}
-          <AccountSection
+          <ProfileControl
             userId={user.id}
             fullName={profile?.fullName || user.name}
             phone={profile?.phone ?? ""}
@@ -672,33 +693,6 @@ function UsernameSummary({
       title="Username"
       subtitle={name ? `@${name}` : "Not set"}
       onClick={onOpen}
-    />
-  );
-}
-
-function AccountSection({
-  userId,
-  fullName,
-  phone,
-  website,
-  bio,
-  onSaved,
-}: {
-  userId: string;
-  fullName: string;
-  phone: string;
-  website: string;
-  bio: string;
-  onSaved?: () => void;
-}) {
-  return (
-    <ProfileControl
-      userId={userId}
-      fullName={fullName}
-      phone={phone}
-      website={website}
-      bio={bio}
-      onSaved={onSaved}
     />
   );
 }

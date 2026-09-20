@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { BadgeInfo } from "lucide-react";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 import {
@@ -43,14 +42,6 @@ export function PurposeCard({
           You belong to {brokerageName}. That does not turn this login into the
           office account.
         </p>
-      )}
-      {office && (
-        <Link
-          href="/office"
-          className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-        >
-          Open office
-        </Link>
       )}
       {canOpen && (
         <p className="mt-3 text-xs text-[var(--muted)]">
