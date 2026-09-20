@@ -111,10 +111,8 @@ export function parseSettingsSearch(params: {
 }): SettingsSearch {
   const rawCategory = params.get("category");
   const rawControl = params.get("control");
-  const tab = params.get("tab");
   const setupMfa = params.get("setup") === "mfa";
-  let category = asCategory(rawCategory);
-  if (!category && tab === "security") category = "security";
+  const category = asCategory(rawCategory);
   return {
     category,
     control: asControl(rawControl),

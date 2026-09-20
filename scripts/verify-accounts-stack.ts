@@ -31,6 +31,7 @@ const scripts = [
   "scripts/test-p1b4c2-brokerage.ts",
   "scripts/test-p1b5-office-settings.ts",
   "scripts/test-p1b6a-settings-audit.ts",
+  "scripts/test-p1b6b-settings-cleanup.ts",
 ];
 
 for (const file of scripts) {

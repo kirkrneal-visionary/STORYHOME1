@@ -41,7 +41,7 @@ assert.match(view, /settingsConsumerPreview/);
 assert.match(view, /settingsConsumerPreviewCopy/);
 assert.match(view, /consumerPreview \? "Consumer"/);
 assert.match(view, /!consumerPreview && securityReady/);
-assert.match(view, /AccountSection/);
+assert.match(view, /ProfileControl/);
 assert.match(view, /SecuritySection/);
 assert.doesNotMatch(view, /from\("profiles"\)\.update/);
 assert.doesNotMatch(view, /account_purpose/);

@@ -24,7 +24,6 @@ assert.doesNotMatch(profile, /\/api\/account\//);
 assert.doesNotMatch(profile, /legal_full_name/);
 
 const view = read("src/components/settings/SettingsView.tsx");
-assert.match(view, /AccountSection/);
 assert.match(view, /ProfileControl/);
 assert.match(view, /UsernameSummary/);
 assert.match(view, /control=username/);

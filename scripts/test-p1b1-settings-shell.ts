@@ -86,7 +86,8 @@ assert.deepEqual(resolveSettingsLocation(mfa, consumer), {
 });
 
 const tab = parseSettingsSearch(params("tab=security"));
-assert.equal(resolveSettingsLocation(tab, consumer).category, "security");
+assert.equal(tab.category, null);
+assert.equal(resolveSettingsLocation(tab, consumer).screen, "root");
 
 assert.equal(
   resolveSettingsLocation(parseSettingsSearch(params("category=professional")), consumer)
