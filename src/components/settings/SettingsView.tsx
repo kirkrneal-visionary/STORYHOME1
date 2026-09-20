@@ -49,7 +49,7 @@ import {
   canOpenOfficeAccount,
   mayManageBrokerage,
   mayUseStoryPro,
-  purposeLabel,
+  professionalTypeLabel,
 } from "@/lib/account/purpose";
 import {
   settingsConsumerPreview,
@@ -98,6 +98,8 @@ export function SettingsView() {
 
   const purpose = profile?.accountPurpose ?? user?.purpose;
   const kind = profile?.accountKind ?? user?.kind;
+  const professionalRole = profile?.professionalRole ?? user?.proRole;
+  const typeLabel = professionalTypeLabel({ purpose, kind, professionalRole });
   const caps = settingsCapabilities({ purpose, kind });
   const location = resolveSettingsLocation(parsed, caps);
   const from = origin ?? parsed.from;
@@ -182,6 +184,20 @@ export function SettingsView() {
     control: "profile",
     from,
   });
+  const professionalHref = buildSettingsHref({
+    category: "professional",
+    from,
+  });
+  const identityHref = buildSettingsHref({
+    category: "professional",
+    control: "identity",
+    from,
+  });
+  const licenseHref = buildSettingsHref({
+    category: "professional",
+    control: "license",
+    from,
+  });
 
   function markFocus(id: string) {
     lastFocusRef.current = id;
@@ -221,6 +237,10 @@ export function SettingsView() {
                         ? "This Device"
                         : location.control === "delete"
                           ? "Delete Account"
+                          : location.control === "identity"
+                            ? "Professional Identity"
+                            : location.control === "license"
+                              ? "License"
                       : location.category === "security"
                         ? "Security"
                   : location.category === "professional"
@@ -258,7 +278,7 @@ export function SettingsView() {
               id="settings-row-professional"
               href={buildSettingsHref({ category: "professional", from })}
               title="Professional"
-              subtitle={purposeLabel(purpose)}
+              subtitle={typeLabel}
               onClick={() => markFocus("settings-row-professional")}
             />
           )}
@@ -369,19 +389,59 @@ export function SettingsView() {
             Done
           </Link>
         </div>
+      ) : location.control === "identity" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <PurposeCard
+            purpose={purpose}
+            kind={kind}
+            brokerageName={brokerage?.name}
+          />
+          <IdentityFacts
+            typeLabel={typeLabel}
+            legalFullName={profile?.legalFullName}
+          />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
+      ) : location.control === "license" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <LicenseSection profile={profile} />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
       ) : location.category === "professional" ? (
         <div className="mt-8 space-y-6">
           {backLink(rootHref)}
+          <div className="space-y-3">
+            <SettingsCategoryRow
+              id="settings-row-identity"
+              href={identityHref}
+              title="Professional Identity"
+              subtitle={typeLabel}
+              onClick={() => markFocus("settings-row-identity")}
+            />
+            {caps.trecLicense && (
+              <SettingsCategoryRow
+                id="settings-row-license"
+                href={licenseHref}
+                title="License"
+                subtitle={profile?.trecLicense ? "On file" : "Not on file"}
+                onClick={() => markFocus("settings-row-license")}
+              />
+            )}
+          </div>
           {pending && !consumerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
-          )}
-          {!consumerPreview && (
-            <PurposeCard
-              purpose={purpose}
-              kind={kind}
-              legalFullName={profile?.legalFullName}
-              brokerageName={brokerage?.name}
-            />
           )}
           {caps.livingMark && !consumerPreview && (
             <LivingMarkLibraryCard
@@ -400,12 +460,6 @@ export function SettingsView() {
               profileVideoUrl={profile?.livingMarkVideoUrl}
               onChanged={load}
             />
-          )}
-          {(isPro || isOther) && showRealtorCards && profile && (
-            <ProSection profile={profile} onSaved={load} />
-          )}
-          {isPro && showRealtorCards && profile && (
-            <LicenseSection profile={profile} />
           )}
           {(isPro || isOther) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
@@ -445,7 +499,6 @@ export function SettingsView() {
             phone={profile?.phone ?? ""}
             website={profile?.website ?? ""}
             bio={profile?.bio ?? ""}
-            legalFullName={profile?.legalFullName}
             onSaved={load}
           />
           <Link
@@ -528,7 +581,6 @@ function AccountSection({
   phone,
   website,
   bio,
-  legalFullName,
   onSaved,
 }: {
   userId: string;
@@ -536,7 +588,6 @@ function AccountSection({
   phone: string;
   website: string;
   bio: string;
-  legalFullName?: string | null;
   onSaved?: () => void;
 }) {
   return (
@@ -546,7 +597,6 @@ function AccountSection({
       phone={phone}
       website={website}
       bio={bio}
-      legalFullName={legalFullName}
       onSaved={onSaved}
     />
   );
@@ -605,16 +655,37 @@ function ProSection({ profile, onSaved }: { profile: MyProfile; onSaved: () => v
   );
 }
 
-function LicenseSection({ profile }: { profile: MyProfile }) {
+function IdentityFacts({
+  typeLabel,
+  legalFullName,
+}: {
+  typeLabel: string;
+  legalFullName?: string | null;
+}) {
   return (
-    <SettingsCard icon={BadgeCheck} title="License (TREC)" subtitle="Verified from the Texas Real Estate Commission — read only.">
-      {profile.trecLicense ? (
-        <div className="grid gap-2 font-mono text-xs sm:grid-cols-2">
-          <Fact label="License #" value={profile.trecLicense} />
+    <SettingsCard
+      icon={BadgeCheck}
+      title="On file"
+      subtitle="Verified account information. Not editable here."
+    >
+      <dl className="grid gap-2">
+        <Fact label="Professional type" value={typeLabel} />
+        {legalFullName ? <Fact label="Legal name" value={legalFullName} /> : null}
+      </dl>
+    </SettingsCard>
+  );
+}
+
+function LicenseSection({ profile }: { profile: MyProfile | null }) {
+  return (
+    <SettingsCard icon={BadgeCheck} title="License (TREC)" subtitle="On file from the Texas Real Estate Commission.">
+      {profile?.trecLicense ? (
+        <dl className="grid gap-2 sm:grid-cols-2">
+          <Fact label="License number" value={profile.trecLicense} />
           <Fact label="Status" value={profile.trecStatus ?? "—"} />
           <Fact label="Sponsoring broker" value={profile.sponsorName ?? "—"} />
           <Fact label="Sponsor license" value={profile.sponsorLicenseNumber ?? "—"} />
-        </div>
+        </dl>
       ) : (
         <p className="text-sm text-[var(--muted)]">No TREC license on file for this account.</p>
       )}
@@ -658,8 +729,8 @@ function AgentJoinBanner({ pending, onJoined }: { pending: PendingInvite; onJoin
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="story-well px-3 py-2">
-      <p className="text-[10px] uppercase text-[var(--muted)]">{label}</p>
-      <p className="mt-0.5 text-sm text-ink">{value}</p>
+      <dt className="text-[10px] uppercase tracking-wide text-[var(--muted)]">{label}</dt>
+      <dd className="mt-0.5 break-words text-sm text-ink">{value}</dd>
     </div>
   );
 }

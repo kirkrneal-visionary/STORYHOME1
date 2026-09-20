@@ -12,7 +12,7 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const profile = read("src/components/settings/ProfileControl.tsx");
 assert.match(profile, /updateMyProfile/);
 assert.match(profile, /Display name/);
-assert.match(profile, /Legal name on file/);
+assert.doesNotMatch(profile, /Legal name on file/);
 assert.match(profile, /type="tel"/);
 assert.match(profile, /inputMode="url"/);
 assert.match(profile, /Couldn't save your profile/);

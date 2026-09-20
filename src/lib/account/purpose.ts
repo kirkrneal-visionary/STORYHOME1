@@ -69,6 +69,26 @@ export function purposeLabel(purpose?: string | null): string {
   return "Consumer";
 }
 
+/** Human label for the professional type already on file. Does not change authority. */
+export function professionalTypeLabel(opts: {
+  purpose?: string | null;
+  kind?: string | null;
+  professionalRole?: string | null;
+}): string {
+  if (opts.purpose === "managing_broker") return "Managing Broker";
+  if (opts.purpose === "other_professional") {
+    if (opts.professionalRole === "inspector") return "Inspector";
+    if (opts.professionalRole === "appraiser") return "Appraiser";
+    if (opts.professionalRole === "lender") return "Lender";
+    return "Other Professional";
+  }
+  if (opts.kind === "agent") return "Sales Agent";
+  if (opts.kind === "broker") return "Broker";
+  if (opts.purpose === "individual_pro" || opts.kind === "pro") return "Story Pro";
+  if (opts.purpose === "consumer" || opts.kind === "consumer") return "Consumer";
+  return purposeLabel(opts.purpose);
+}
+
 function norm(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 }

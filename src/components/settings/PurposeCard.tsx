@@ -13,12 +13,10 @@ import {
 export function PurposeCard({
   purpose,
   kind,
-  legalFullName,
   brokerageName,
 }: {
   purpose?: string | null;
   kind?: string | null;
-  legalFullName?: string | null;
   brokerageName?: string | null;
 }) {
   const office = mayManageBrokerage(purpose);
@@ -40,11 +38,6 @@ export function PurposeCard({
               ? "This login is for your professional profile. Story Pro and office tools are not on this account."
               : "This login is your consumer account."}
       </p>
-      {legalFullName && (
-        <p className="mt-2 text-[11px] text-[var(--muted)]">
-          Legal name on file (not editable here): {legalFullName}
-        </p>
-      )}
       {pro && !office && brokerageName && (
         <p className="mt-2 text-sm text-[var(--muted)]">
           You belong to {brokerageName}. That does not turn this login into the

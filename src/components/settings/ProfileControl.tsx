@@ -10,7 +10,6 @@ export function ProfileControl({
   phone,
   website,
   bio,
-  legalFullName,
   onSaved,
 }: {
   userId: string;
@@ -18,7 +17,6 @@ export function ProfileControl({
   phone: string;
   website: string;
   bio: string;
-  legalFullName?: string | null;
   onSaved?: () => void;
 }) {
   const statusId = useId();
@@ -64,11 +62,6 @@ export function ProfileControl({
           className="field-input mt-1.5"
         />
       </label>
-      {legalFullName ? (
-        <p className="text-[11px] text-[var(--muted)]">
-          Legal name on file (not editable here): {legalFullName}
-        </p>
-      ) : null}
       <p className="text-[11px] text-[var(--muted)]">
         Display name is public. It is not your legal name or @username.
       </p>
