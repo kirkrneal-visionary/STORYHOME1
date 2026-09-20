@@ -34,6 +34,7 @@ const scripts = [
   "scripts/test-p1b6b-settings-cleanup.ts",
   "scripts/test-p1c1a-geography-foundation.ts",
   "scripts/test-p1c1b-primary-county.ts",
+  "scripts/test-p1c2a-service-counties.ts",
 ];
 
 for (const file of scripts) {
