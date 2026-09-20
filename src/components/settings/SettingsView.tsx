@@ -51,6 +51,13 @@ const PrimaryCountyControl = dynamic(
     ),
   { loading: () => settingsFallback },
 );
+const AvailabilityControl = dynamic(
+  () =>
+    import("@/components/settings/AvailabilityControl").then(
+      (m) => m.AvailabilityControl,
+    ),
+  { loading: () => settingsFallback },
+);
 const SecuritySection = dynamic(
   () =>
     import("@/components/settings/SecuritySection").then((m) => m.SecuritySection),
@@ -251,6 +258,11 @@ export function SettingsView() {
     control: "primary",
     from,
   });
+  const availabilityHref = buildSettingsHref({
+    category: "professional",
+    control: "availability",
+    from,
+  });
   const livingHref = buildSettingsHref({
     category: "professional",
     control: "living",
@@ -337,6 +349,8 @@ export function SettingsView() {
                                 ? "Service Counties"
                               : location.control === "primary"
                                 ? "Primary County"
+                              : location.control === "availability"
+                                ? "Availability"
                               : location.control === "living"
                                 ? "Living Mark"
                                 : location.control === "brokerage"
@@ -523,6 +537,12 @@ export function SettingsView() {
           <PrimaryCountyControl canEdit={securityReady} />
           {doneLink}
         </div>
+      ) : location.control === "availability" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <AvailabilityControl canEdit={securityReady} />
+          {doneLink}
+        </div>
       ) : location.control === "living" ? (
         <div className="mt-8 space-y-6">
           {backLink(professionalHref)}
@@ -590,6 +610,15 @@ export function SettingsView() {
                 title="Service Counties"
                 subtitle="Choose launch counties"
                 onClick={() => markFocus("settings-row-counties")}
+              />
+            )}
+            {caps.availability && !consumerPreview && (
+              <SettingsCategoryRow
+                id="settings-row-availability"
+                href={availabilityHref}
+                title="Availability"
+                subtitle="Manage your work availability"
+                onClick={() => markFocus("settings-row-availability")}
               />
             )}
             {caps.trecLicense && (
