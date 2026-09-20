@@ -191,7 +191,7 @@ export function UsernameField({
           type="button"
           disabled={!canSave}
           onClick={() => void onSave()}
-          className="story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:cursor-not-allowed disabled:opacity-40"
+          className="story-press inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Save className="h-4 w-4" />
           {saving ? "Saving…" : "Save username"}

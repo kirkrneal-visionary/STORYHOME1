@@ -47,15 +47,15 @@ export function PurposeCard({
       {office && (
         <Link
           href="/office"
-          className="mt-4 inline-flex h-10 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy"
+          className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
         >
           Open office
         </Link>
       )}
       {canOpen && (
         <p className="mt-3 text-xs text-[var(--muted)]">
-          Need office tools? You can turn this login into the office account
-          below. Story Pro stays on this login.
+          Need office tools? Open them from Brokerage / Office. Story Pro stays
+          on this login.
         </p>
       )}
     </SettingsCard>

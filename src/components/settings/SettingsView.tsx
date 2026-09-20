@@ -102,7 +102,7 @@ export function SettingsView() {
 
   useEffect(() => {
     if (!user || !profile) return;
-    if (location.category !== "professional" && location.category !== "office") {
+    if (location.category !== "professional") {
       return;
     }
     let cancelled = false;
@@ -236,9 +236,17 @@ export function SettingsView() {
   const backLink = (href: string, label = "← Back") => (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink"
+      className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
     >
       {label}
+    </Link>
+  );
+  const doneLink = (
+    <Link
+      href={closeHref}
+      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+    >
+      Done
     </Link>
   );
 
@@ -335,23 +343,13 @@ export function SettingsView() {
               onClick={() => markFocus("settings-row-office")}
             />
           )}
-          <Link
-            href={closeHref}
-            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          <div className="mt-4">{doneLink}</div>
         </div>
       ) : location.control === "username" ? (
         <div className="mt-8 space-y-6">
           {backLink(accountHref)}
           <UsernameField userId={user.id} demo={demoSession} />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.category === "security" && !location.control ? (
         <div className="mt-8 space-y-3">
@@ -422,12 +420,7 @@ export function SettingsView() {
               }
             />
           </Suspense>
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.category === "professional" &&
         location.control === "profile" ? (
@@ -442,12 +435,7 @@ export function SettingsView() {
             canEdit={securityReady}
             onSaved={load}
           />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.control === "identity" ? (
         <div className="mt-8 space-y-6">
@@ -461,23 +449,13 @@ export function SettingsView() {
             typeLabel={typeLabel}
             legalFullName={profile?.legalFullName}
           />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.control === "license" ? (
         <div className="mt-8 space-y-6">
           {backLink(professionalHref)}
           <LicenseSection profile={profile} />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.control === "living" ? (
         <div className="mt-8 space-y-6">
@@ -498,12 +476,7 @@ export function SettingsView() {
             profileVideoUrl={profile?.livingMarkVideoUrl}
             onChanged={load}
           />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.control === "brokerage" ? (
         <div className="mt-8 space-y-6">
@@ -514,12 +487,7 @@ export function SettingsView() {
             pending={pending}
             onJoined={load}
           />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.category === "professional" ? (
         <div className="mt-8 space-y-6">
@@ -596,18 +564,13 @@ export function SettingsView() {
               </p>
               <Link
                 href={authenticatorHref}
-                className="inline-flex min-h-11 items-center text-sm font-semibold text-gold"
+                className="inline-flex min-h-11 items-center text-sm font-semibold text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
               >
                 Set up authenticator
               </Link>
             </div>
           )}
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.control === "workspace" ? (
         <div className="mt-8 space-y-6">
@@ -618,12 +581,7 @@ export function SettingsView() {
             </p>
           )}
           <OfficeWorkspaceHandoff />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : location.category === "office" ? (
         <div className="mt-8 space-y-6">
@@ -660,12 +618,7 @@ export function SettingsView() {
             bio={profile?.bio ?? ""}
             onSaved={load}
           />
-          <Link
-            href={closeHref}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
-          >
-            Done
-          </Link>
+          {doneLink}
         </div>
       ) : (
         <div className="mt-8 space-y-3">

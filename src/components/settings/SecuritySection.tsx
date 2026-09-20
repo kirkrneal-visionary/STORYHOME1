@@ -400,7 +400,7 @@ export function SecuritySection({
             We keep this email until you confirm the new one.
           </p>
           {stepUp}
-          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="sticky bottom-[var(--story-bottom-clearance)] z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
               disabled={busy === "email"}
@@ -443,7 +443,7 @@ export function SecuritySection({
           </label>
           <PasswordStrengthMeter password={newPassword} email={email} />
           {stepUp}
-          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="sticky bottom-[var(--story-bottom-clearance)] z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
               disabled={busy === "password"}
@@ -625,7 +625,7 @@ export function SecuritySection({
               required
             />
           </label>
-          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="sticky bottom-[var(--story-bottom-clearance)] z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
               disabled={busy === "delete"}
