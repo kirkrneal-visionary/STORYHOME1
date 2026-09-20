@@ -28,6 +28,7 @@ const scripts = [
   "scripts/test-p1b4a-professional-identity.ts",
   "scripts/test-p1b4b-professional-profile.ts",
   "scripts/test-p1b4c1-living-mark.ts",
+  "scripts/test-p1b4c2-brokerage.ts",
 ];
 
 for (const file of scripts) {

@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Building2 } from "lucide-react";
 import { UsernameField } from "@/components/settings/UsernameField";
 import {
   demoUsernameClient,
@@ -204,6 +204,15 @@ export function SettingsView() {
     control: "living",
     from,
   });
+  const brokerageHref = buildSettingsHref({
+    category: "professional",
+    control: "brokerage",
+    from,
+  });
+  const showBrokerageRow =
+    caps.brokerage &&
+    !consumerPreview &&
+    Boolean(brokerage?.name || pending);
 
   function markFocus(id: string) {
     lastFocusRef.current = id;
@@ -251,6 +260,8 @@ export function SettingsView() {
                               ? "License"
                               : location.control === "living"
                                 ? "Living Mark"
+                                : location.control === "brokerage"
+                                  ? "Brokerage"
                       : location.category === "security"
                         ? "Security"
                   : location.category === "professional"
@@ -475,6 +486,22 @@ export function SettingsView() {
             Done
           </Link>
         </div>
+      ) : location.control === "brokerage" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <BrokerageRelationship
+            brokerageName={brokerage?.name ?? null}
+            typeLabel={typeLabel}
+            pending={pending}
+            onJoined={load}
+          />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
       ) : location.category === "professional" ? (
         <div className="mt-8 space-y-6">
           {backLink(rootHref)}
@@ -515,10 +542,22 @@ export function SettingsView() {
                 onClick={() => markFocus("settings-row-living")}
               />
             )}
+            {showBrokerageRow && (
+              <SettingsCategoryRow
+                id="settings-row-brokerage"
+                href={brokerageHref}
+                title="Brokerage"
+                subtitle={
+                  pending
+                    ? brokerage?.name
+                      ? `${brokerage.name} · Invitation pending`
+                      : "Invitation pending"
+                    : brokerage?.name ?? ""
+                }
+                onClick={() => markFocus("settings-row-brokerage")}
+              />
+            )}
           </div>
-          {pending && !consumerPreview && (
-            <AgentJoinBanner pending={pending} onJoined={load} />
-          )}
           {(isPro || isOther) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
               {STORY_PRO_SETTINGS_BLOCKED}
@@ -687,18 +726,57 @@ function LicenseSection({ profile }: { profile: MyProfile | null }) {
   );
 }
 
+function BrokerageRelationship({
+  brokerageName,
+  typeLabel,
+  pending,
+  onJoined,
+}: {
+  brokerageName: string | null;
+  typeLabel: string;
+  pending: PendingInvite | null;
+  onJoined: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      {brokerageName ? (
+        <SettingsCard
+          icon={Building2}
+          title="Current brokerage"
+          subtitle="Story Home relationship on this professional account."
+        >
+          <dl className="grid gap-2">
+            <Fact label="Brokerage" value={brokerageName} />
+            <Fact label="Account" value={typeLabel} />
+          </dl>
+        </SettingsCard>
+      ) : pending ? null : (
+        <p className="text-sm text-[var(--muted)]">
+          No brokerage relationship on this account.
+        </p>
+      )}
+      {pending ? <AgentJoinBanner pending={pending} onJoined={onJoined} /> : null}
+    </div>
+  );
+}
+
 function AgentJoinBanner({ pending, onJoined }: { pending: PendingInvite; onJoined: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   return (
-    <div className="rounded-2xl border border-gold/50 bg-gold/10 p-4">
-      <p className="text-sm text-ink">
-        <span className="font-semibold">{pending.brokerageName}</span> invited you to join their brokerage on Story Home.
+    <div className="rounded-xl border border-gold/50 bg-gold/10 px-4 py-3">
+      <p className="break-words text-sm text-ink">
+        <span className="font-semibold">{pending.brokerageName}</span> invited you
+        to join their brokerage on Story Home.
       </p>
-      {err && <p className="mt-1 text-xs text-red-300">{err}</p>}
+      <p role="status" aria-live="polite" className="mt-1 min-h-4 text-xs text-red-300">
+        {err}
+      </p>
       <button
         type="button"
         disabled={busy}
+        aria-busy={busy}
+        aria-label={`Accept invitation from ${pending.brokerageName}`}
         onClick={async () => {
           setBusy(true);
           setErr("");
@@ -712,9 +790,11 @@ function AgentJoinBanner({ pending, onJoined }: { pending: PendingInvite; onJoin
             setBusy(false);
           }
         }}
-        className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60"
+        className="mt-2 inline-flex min-h-11 max-w-full items-center rounded-lg bg-gold px-5 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-60"
       >
-        {busy ? "Joining…" : `Join ${pending.brokerageName}`}
+        <span className="break-words text-left">
+          {busy ? "Joining…" : `Join ${pending.brokerageName}`}
+        </span>
       </button>
     </div>
   );
