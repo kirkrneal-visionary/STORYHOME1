@@ -19,6 +19,7 @@ export function AvailabilityControl({ canEdit }: { canEdit: boolean }) {
   const statusId = useId();
   const [saved, setSaved] = useState<Choice | null>(null);
   const [pick, setPick] = useState<Choice | null>(null);
+  const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,6 +37,7 @@ export function AvailabilityControl({ canEdit }: { canEdit: boolean }) {
         const next = asChoice(data.availability);
         setSaved(next);
         setPick(next);
+        setReady(true);
       } catch {
         if (!cancelled) setError("Unable to load.");
       }
@@ -90,7 +92,9 @@ export function AvailabilityControl({ canEdit }: { canEdit: boolean }) {
       </p>
       <section className="rounded-xl border border-hairline px-4 py-3">
         <h2 className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">Current availability</h2>
-        <p className="mt-1 text-sm font-semibold text-ink">{current}</p>
+        <p className="mt-1 text-sm font-semibold text-ink">
+          {ready ? current : error ? "" : "Loading…"}
+        </p>
       </section>
       <div role="radiogroup" aria-label="Availability" className="space-y-2">
         {CHOICES.map(([value, title, copy]) => {
