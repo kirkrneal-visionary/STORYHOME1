@@ -30,7 +30,7 @@ assert.match(route, /canAccessPrivateApp/);
 assert.match(route, /mayHoldRealtorGeography/);
 assert.match(route, /countyFips/);
 assert.doesNotMatch(route, /professional_id|decide_primary_county/);
-assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /primary.?county/i);
+assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /decide_primary_county/);
 assert.doesNotMatch(read("src/app/api/account/story-pro-profile/route.ts"), /primary_county/);
 assert.equal(classifyApiPath("/api/account/primary-county"), "medium");
 assert.equal(mayHoldRealtorGeography("consumer"), false);

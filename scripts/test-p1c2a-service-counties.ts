@@ -24,7 +24,7 @@ assert.match(route, /p_uid: auth\.user\.id/);
 assert.match(route, /serviceCountyFips/);
 assert.match(route, /canAccessPrivateApp/);
 assert.doesNotMatch(route, /professional_id|decide_primary_county/);
-assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /primary.?county/i);
+assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /decide_primary_county/);
 assert.equal(classifyApiPath("/api/account/service-counties"), "medium");
 assert.equal(PROFESSIONAL_LAUNCH_COUNTY_FIPS.length, 7);
 assert.equal(
