@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, Save } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import { UsernameField } from "@/components/settings/UsernameField";
 import {
   demoUsernameClient,
@@ -11,10 +11,10 @@ import {
 } from "@/lib/account/username-client";
 import { useApp } from "@/components/AppContext";
 import { useAuth } from "@/components/AuthContext";
-import { TextField } from "@/components/broker/ui";
 import { LivingMarkLibraryCard } from "@/components/settings/LivingMarkLibraryCard";
 import { OpenOfficeCard } from "@/components/settings/OpenOfficeCard";
 import { PurposeCard } from "@/components/settings/PurposeCard";
+import { ProfessionalProfileControl } from "@/components/settings/ProfessionalProfileControl";
 import { SecuritySection } from "@/components/settings/SecuritySection";
 import { ProfileControl } from "@/components/settings/ProfileControl";
 import { SettingsCard } from "@/components/settings/SettingsCard";
@@ -56,10 +56,6 @@ import {
   settingsConsumerPreviewCopy,
 } from "@/lib/account/settings-preview";
 import { accountLabel } from "@/lib/auth";
-
-const toList = (s: string) =>
-  s.split(",").map((x) => x.trim()).filter(Boolean);
-const fromList = (a: string[]) => a.join(", ");
 
 export function SettingsView() {
   const searchParams = useSearchParams();
@@ -198,6 +194,11 @@ export function SettingsView() {
     control: "license",
     from,
   });
+  const proProfileHref = buildSettingsHref({
+    category: "professional",
+    control: "profile",
+    from,
+  });
 
   function markFocus(id: string) {
     lastFocusRef.current = id;
@@ -226,7 +227,9 @@ export function SettingsView() {
             : location.control === "username"
               ? "Username"
               : location.control === "profile"
-                ? "Profile"
+                ? location.category === "professional"
+                  ? "Professional Profile"
+                  : "Profile"
                 : location.control === "email"
                   ? "Email"
                   : location.control === "password"
@@ -389,6 +392,26 @@ export function SettingsView() {
             Done
           </Link>
         </div>
+      ) : location.category === "professional" &&
+        location.control === "profile" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <ProfessionalProfileControl
+            specialties={profile?.specialties ?? []}
+            serviceAreas={profile?.serviceAreas ?? []}
+            languages={profile?.languages ?? []}
+            designations={profile?.designations ?? []}
+            primaryMarketCity={profile?.primaryMarketCity ?? ""}
+            canEdit={securityReady}
+            onSaved={load}
+          />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
       ) : location.control === "identity" ? (
         <div className="mt-8 space-y-6">
           {backLink(professionalHref)}
@@ -429,6 +452,13 @@ export function SettingsView() {
               title="Professional Identity"
               subtitle={typeLabel}
               onClick={() => markFocus("settings-row-identity")}
+            />
+            <SettingsCategoryRow
+              id="settings-row-pro-profile"
+              href={proProfileHref}
+              title="Professional Profile"
+              subtitle="Public profile"
+              onClick={() => markFocus("settings-row-pro-profile")}
             />
             {caps.trecLicense && (
               <SettingsCategoryRow
@@ -564,17 +594,6 @@ function UsernameSummary({
   );
 }
 
-function SaveButton({ busy, note }: { busy: boolean; note: string }) {
-  return (
-    <div className="mt-4 flex items-center gap-3">
-      <button type="submit" disabled={busy} className="story-press inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy disabled:opacity-60">
-        <Save className="h-4 w-4" /> {busy ? "Saving…" : "Save"}
-      </button>
-      {note && <span className="text-sm text-teal-soft">{note}</span>}
-    </div>
-  );
-}
-
 function AccountSection({
   userId,
   fullName,
@@ -599,59 +618,6 @@ function AccountSection({
       bio={bio}
       onSaved={onSaved}
     />
-  );
-}
-
-function ProSection({ profile, onSaved }: { profile: MyProfile; onSaved: () => void }) {
-  const [f, setF] = useState({
-    specialties: fromList(profile.specialties),
-    serviceAreas: fromList(profile.serviceAreas),
-    languages: fromList(profile.languages),
-    designations: fromList(profile.designations),
-    primaryMarketCity: profile.primaryMarketCity ?? "",
-  });
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
-  return (
-    <SettingsCard icon={BadgeCheck} title="Professional profile" subtitle="Shown on your public profile. Separate items with commas.">
-      <form onSubmit={async (e) => {
-        e.preventDefault();
-        setBusy(true);
-        setNote("");
-        try {
-          const res = await fetch("/api/account/story-pro-profile", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              specialties: toList(f.specialties),
-              serviceAreas: toList(f.serviceAreas),
-              languages: toList(f.languages),
-              designations: toList(f.designations),
-              primaryMarketCity: f.primaryMarketCity,
-            }),
-          });
-          const data = (await res.json()) as { ok?: boolean; error?: string };
-          if (!res.ok || !data.ok) {
-            setNote(data.error ?? STORY_PRO_SETTINGS_BLOCKED);
-            return;
-          }
-          setNote("Saved.");
-          setTimeout(() => setNote(""), 2000);
-          onSaved();
-        } finally {
-          setBusy(false);
-        }
-      }}>
-        <div className="grid gap-3">
-          <TextField id="s-market" label="Primary market (city)" value={f.primaryMarketCity} onChange={(v) => setF((p) => ({ ...p, primaryMarketCity: v }))} />
-          <TextField id="s-spec" label="Specialties" value={f.specialties} onChange={(v) => setF((p) => ({ ...p, specialties: v }))} />
-          <TextField id="s-areas" label="Service areas" value={f.serviceAreas} onChange={(v) => setF((p) => ({ ...p, serviceAreas: v }))} />
-          <TextField id="s-lang" label="Languages" value={f.languages} onChange={(v) => setF((p) => ({ ...p, languages: v }))} />
-          <TextField id="s-desig" label="Designations / credentials" value={f.designations} onChange={(v) => setF((p) => ({ ...p, designations: v }))} />
-        </div>
-        <SaveButton busy={busy} note={note} />
-      </form>
-    </SettingsCard>
   );
 }
 
