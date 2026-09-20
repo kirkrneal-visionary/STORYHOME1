@@ -102,7 +102,7 @@ export function SettingsView() {
 
   useEffect(() => {
     if (!user || !profile) return;
-    if (location.category !== "professional" && location.category !== "office") {
+    if (location.category !== "professional") {
       return;
     }
     let cancelled = false;
