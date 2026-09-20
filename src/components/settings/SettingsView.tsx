@@ -37,6 +37,13 @@ const ProfessionalProfileControl = dynamic(
     ),
   { loading: () => settingsFallback },
 );
+const ServiceCountiesControl = dynamic(
+  () =>
+    import("@/components/settings/ServiceCountiesControl").then(
+      (m) => m.ServiceCountiesControl,
+    ),
+  { loading: () => settingsFallback },
+);
 const SecuritySection = dynamic(
   () =>
     import("@/components/settings/SecuritySection").then((m) => m.SecuritySection),
@@ -222,6 +229,11 @@ export function SettingsView() {
     control: "profile",
     from,
   });
+  const countiesHref = buildSettingsHref({
+    category: "professional",
+    control: "counties",
+    from,
+  });
   const livingHref = buildSettingsHref({
     category: "professional",
     control: "living",
@@ -304,6 +316,8 @@ export function SettingsView() {
                             ? "Professional Identity"
                             : location.control === "license"
                               ? "License"
+                              : location.control === "counties"
+                                ? "Service Counties"
                               : location.control === "living"
                                 ? "Living Mark"
                                 : location.control === "brokerage"
@@ -478,6 +492,12 @@ export function SettingsView() {
           <LicenseSection profile={profile} />
           {doneLink}
         </div>
+      ) : location.control === "counties" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <ServiceCountiesControl canEdit={securityReady} />
+          {doneLink}
+        </div>
       ) : location.control === "living" ? (
         <div className="mt-8 space-y-6">
           {backLink(professionalHref)}
@@ -528,6 +548,15 @@ export function SettingsView() {
               subtitle="Public profile"
               onClick={() => markFocus("settings-row-pro-profile")}
             />
+            {caps.serviceCounties && !consumerPreview && (
+              <SettingsCategoryRow
+                id="settings-row-counties"
+                href={countiesHref}
+                title="Service Counties"
+                subtitle="Choose launch counties"
+                onClick={() => markFocus("settings-row-counties")}
+              />
+            )}
             {caps.trecLicense && (
               <SettingsCategoryRow
                 id="settings-row-license"

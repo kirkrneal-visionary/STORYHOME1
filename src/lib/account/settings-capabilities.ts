@@ -16,6 +16,7 @@ export type SettingsCapabilities = {
   livingMark: boolean;
   trecLicense: boolean;
   brokerage: boolean;
+  serviceCounties: boolean;
   office: boolean;
   officeWorkspace: boolean;
   openOffice: boolean;
@@ -31,6 +32,8 @@ export function settingsCapabilities(opts: {
   const livingMark = mayUseStoryPro(opts.purpose, opts.kind);
   const trecLicense = livingMark;
   const brokerage = livingMark;
+  const serviceCounties =
+    opts.purpose === "individual_pro" || opts.purpose === "managing_broker";
   const officeWorkspace = mayManageBrokerage(opts.purpose);
   const openOffice = canOpenOfficeAccount(opts.purpose, opts.kind);
   return {
@@ -39,6 +42,7 @@ export function settingsCapabilities(opts: {
     livingMark,
     trecLicense,
     brokerage,
+    serviceCounties,
     office: officeWorkspace || openOffice,
     officeWorkspace,
     openOffice,
