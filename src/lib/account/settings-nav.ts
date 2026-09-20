@@ -24,7 +24,8 @@ export type SettingsControl =
   | "device"
   | "delete"
   | "identity"
-  | "license";
+  | "license"
+  | "living";
 
 export type SettingsSearch = {
   category: SettingsCategory | null;
@@ -59,6 +60,7 @@ const CONTROLS = new Set<string>([
   "delete",
   "identity",
   "license",
+  "living",
 ]);
 
 const ORIGIN_MAX = 512;
@@ -210,6 +212,18 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "license",
+      setupMfa: false,
+    };
+  }
+  if (
+    category === "professional" &&
+    search.control === "living" &&
+    caps.livingMark
+  ) {
+    return {
+      screen: "control",
+      category,
+      control: "living",
       setupMfa: false,
     };
   }

@@ -27,6 +27,7 @@ const scripts = [
   "scripts/test-p1b2b2-session-delete.ts",
   "scripts/test-p1b4a-professional-identity.ts",
   "scripts/test-p1b4b-professional-profile.ts",
+  "scripts/test-p1b4c1-living-mark.ts",
 ];
 
 for (const file of scripts) {

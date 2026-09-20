@@ -199,6 +199,11 @@ export function SettingsView() {
     control: "profile",
     from,
   });
+  const livingHref = buildSettingsHref({
+    category: "professional",
+    control: "living",
+    from,
+  });
 
   function markFocus(id: string) {
     lastFocusRef.current = id;
@@ -244,6 +249,8 @@ export function SettingsView() {
                             ? "Professional Identity"
                             : location.control === "license"
                               ? "License"
+                              : location.control === "living"
+                                ? "Living Mark"
                       : location.category === "security"
                         ? "Security"
                   : location.category === "professional"
@@ -442,6 +449,32 @@ export function SettingsView() {
             Done
           </Link>
         </div>
+      ) : location.control === "living" ? (
+        <div className="mt-8 space-y-6">
+          {backLink(professionalHref)}
+          <LivingMarkLibraryCard
+            userId={user.id}
+            initials={
+              profile?.fullName
+                ?.split(" ")
+                .map((p) => p[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase() ||
+              user.initials ||
+              "SH"
+            }
+            profileStillUrl={profile?.photoUrl}
+            profileVideoUrl={profile?.livingMarkVideoUrl}
+            onChanged={load}
+          />
+          <Link
+            href={closeHref}
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink"
+          >
+            Done
+          </Link>
+        </div>
       ) : location.category === "professional" ? (
         <div className="mt-8 space-y-6">
           {backLink(rootHref)}
@@ -469,27 +502,22 @@ export function SettingsView() {
                 onClick={() => markFocus("settings-row-license")}
               />
             )}
+            {caps.livingMark && !consumerPreview && (
+              <SettingsCategoryRow
+                id="settings-row-living"
+                href={livingHref}
+                title="Living Mark"
+                subtitle={
+                  profile?.photoUrl || profile?.livingMarkVideoUrl
+                    ? "Set"
+                    : "Not set"
+                }
+                onClick={() => markFocus("settings-row-living")}
+              />
+            )}
           </div>
           {pending && !consumerPreview && (
             <AgentJoinBanner pending={pending} onJoined={load} />
-          )}
-          {caps.livingMark && !consumerPreview && (
-            <LivingMarkLibraryCard
-              userId={user.id}
-              initials={
-                profile?.fullName
-                  ?.split(" ")
-                  .map((p) => p[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase() ||
-                user.initials ||
-                "SH"
-              }
-              profileStillUrl={profile?.photoUrl}
-              profileVideoUrl={profile?.livingMarkVideoUrl}
-              onChanged={load}
-            />
           )}
           {(isPro || isOther) && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
