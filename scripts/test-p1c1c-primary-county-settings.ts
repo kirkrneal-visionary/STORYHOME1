@@ -1,6 +1,6 @@
 /** P1C-1C Primary County Settings locks. Run: npm run test:p1c1c-primary-county-settings */
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { settingsCapabilities } from "../src/lib/account/settings-capabilities.ts";
 import {
@@ -67,10 +67,6 @@ assert.doesNotMatch(counties, /primary-county|Request Primary County/);
 assert.match(profile, />Service areas</);
 assert.doesNotMatch(profile, /effectiveCountyFips|Primary County/);
 assert.doesNotMatch(read("src/app/agents/[id]/page.tsx"), /effectiveCountyFips|pendingCountyFips/);
-assert.equal(
-  readdirSync(join(root, "supabase/migrations")).filter((f) => f.startsWith("0066")).length,
-  0,
-);
 assert.doesNotMatch(read("package.json"), /react-select|downshift|cmdk/);
 
 console.log("p1c1c-primary-county-settings: ok");

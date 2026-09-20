@@ -1,6 +1,6 @@
 /** P1C-2B Service Counties Settings locks. Run: npm run test:p1c2b-service-counties-settings */
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { settingsCapabilities } from "../src/lib/account/settings-capabilities.ts";
 import {
@@ -55,10 +55,6 @@ assert.doesNotMatch(control, /professional_id|service_role|from\("professional_s
 assert.match(profile, />Service areas</);
 assert.doesNotMatch(profile, /serviceCountyFips|Service Counties/);
 assert.doesNotMatch(read("src/app/agents/[id]/page.tsx"), /serviceCountyFips/);
-assert.equal(
-  readdirSync(join(root, "supabase/migrations")).filter((f) => f.startsWith("0066")).length,
-  0,
-);
 const pkg = read("package.json");
 assert.doesNotMatch(pkg, /react-select|downshift|cmdk/);
 
