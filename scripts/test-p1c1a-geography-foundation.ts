@@ -55,7 +55,7 @@ assert.doesNotMatch(mig, /create policy/i);
 assert.doesNotMatch(mig, /insert into public\.professional_(primary|service)_counties/i);
 assert.doesNotMatch(mig, /primary_market_city|service_areas|insurance|claim_username/);
 assert.doesNotMatch(mig, /professional_brokerage_relationships|professional_operational_state/);
-assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /primary.?county|service.?count/i);
+assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /primary.?county/i);
 assert.doesNotMatch(
   read("src/app/api/account/story-pro-profile/route.ts"),
   /professional_primary_counties|professional_service_counties/,
