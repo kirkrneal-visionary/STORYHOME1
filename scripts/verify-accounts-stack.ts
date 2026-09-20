@@ -42,6 +42,7 @@ const scripts = [
   "scripts/test-p1c3b-brokerage-history-read.ts",
   "scripts/test-p1c4a-availability.ts",
   "scripts/test-p1c4b-availability-settings.ts",
+  "scripts/test-p1c5a-security-audit.ts",
 ];
 
 for (const file of scripts) {
