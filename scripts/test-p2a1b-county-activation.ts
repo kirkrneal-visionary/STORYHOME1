@@ -1,46 +1,33 @@
 /**
- * P2A1A Texas County reference locks.
- * Run: npm run test:p2a1a-county-reference
+ * P2A1B County product activation locks.
+ * Run: npm run test:p2a1b-county-activation
  */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PROFESSIONAL_LAUNCH_COUNTY_FIPS } from "../src/lib/account/professional-geography.ts";
+import {
+  COUNTY_PRODUCT_V1_ACTIVE_FIPS,
+  isCountyProductActive,
+  listCountyProductActiveFips,
+} from "../src/lib/geo/county-product.ts";
 import { SERVICE_COUNTIES } from "../src/lib/markets.ts";
 import { TX_COUNTIES } from "../src/lib/tx-counties.ts";
 
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const files = readdirSync(join(root, "supabase/migrations")).sort();
-const migPath = "supabase/migrations/0071_tx_county_reference.sql";
+const migPath = "supabase/migrations/0072_tx_county_product_activation.sql";
 const mig = read(migPath);
+const ref = read("supabase/migrations/0071_tx_county_reference.sql");
 
 assert.equal(TX_COUNTIES.length, 254);
 assert.equal(files.filter((f) => f.startsWith("0071")).length, 1);
-assert.ok(files.includes("0071_tx_county_reference.sql"));
 assert.equal(files.filter((f) => f.startsWith("0072")).length, 1);
-assert.match(
-  read("supabase/migrations/0072_tx_county_product_activation.sql"),
-  /create table public\.tx_county_product_activation/,
-);
-assert.doesNotMatch(
-  read("supabase/migrations/0072_tx_county_product_activation.sql"),
-  /insert into public\.tx_counties/,
-);
+assert.equal(files.filter((f) => f.startsWith("0073")).length, 0);
 
-const seeded = [
-  ...mig.matchAll(/\('(\d{5})','([^']+)'\)/g),
-].map((m) => ({ fips: m[1], name: m[2] }));
-assert.equal(seeded.length, 254);
-assert.deepEqual(
-  seeded,
-  TX_COUNTIES.map((c) => ({ fips: c.fips, name: c.name })),
-);
-assert.equal(new Set(seeded.map((c) => c.fips)).size, 254);
-assert.equal(new Set(seeded.map((c) => c.name)).size, 254);
-
-const launch = [
+const approved = [
   "48005",
   "48291",
   "48373",
@@ -49,50 +36,58 @@ const launch = [
   "48457",
   "48471",
 ];
-assert.deepEqual([...PROFESSIONAL_LAUNCH_COUNTY_FIPS].slice().sort(), [...launch].sort());
-assert.deepEqual(SERVICE_COUNTIES.map((c) => c.fips).slice().sort(), [...launch].sort());
-for (const fips of launch) {
-  assert.ok(seeded.some((c) => c.fips === fips));
-}
-assert.ok(seeded.some((c) => c.fips === "48339" && c.name === "Montgomery County"));
-assert.equal(PROFESSIONAL_LAUNCH_COUNTY_FIPS.includes("48339"), false);
-assert.equal(SERVICE_COUNTIES.some((c) => c.fips === "48339"), false);
+const seeded = [...mig.matchAll(/\('(\d{5})', true\)/g)].map((m) => m[1]);
+assert.deepEqual(seeded, approved);
+assert.deepEqual([...COUNTY_PRODUCT_V1_ACTIVE_FIPS], approved);
+assert.deepEqual([...listCountyProductActiveFips()], approved);
+assert.deepEqual(
+  [...PROFESSIONAL_LAUNCH_COUNTY_FIPS].slice().sort(),
+  [...approved].sort(),
+);
+assert.deepEqual(SERVICE_COUNTIES.map((c) => c.fips).slice().sort(), [...approved].sort());
+assert.equal(COUNTY_PRODUCT_V1_ACTIVE_FIPS.includes("48339"), false);
+assert.equal(isCountyProductActive("48373"), true);
+assert.equal(isCountyProductActive("48339"), false);
+assert.equal(isCountyProductActive("48113"), false);
+assert.equal(isCountyProductActive("Polk"), false);
 
-assert.match(mig, /county_fips text primary key/);
-assert.match(mig, /canonical_name text not null/);
-assert.match(mig, /state text not null default 'TX'/);
+assert.match(mig, /references public\.tx_counties/);
+assert.match(mig, /on delete restrict/);
+assert.match(mig, /on conflict \(county_fips\) do update/);
 assert.match(mig, /force row level security/);
-assert.match(mig, /revoke all on table public\.tx_counties/);
-assert.match(mig, /grant all on table public\.tx_counties to service_role/);
+assert.match(mig, /revoke all on table public\.tx_county_product_activation/);
 assert.doesNotMatch(mig, /create policy/i);
 const ddl = mig.slice(mig.indexOf("create table"), mig.indexOf("comment on table"));
-assert.doesNotMatch(ddl, /slug|hub_city|hubCity|polk_cad|local_place|activ/i);
+assert.doesNotMatch(ddl, /preparing|paused|coming_soon|slug|local_place|polk_cad/i);
 assert.doesNotMatch(
   mig,
-  /professional_primary_counties|professional_service_counties|professional_operational_state|professional_brokerage_relationships/,
+  /professional_primary_counties|professional_service_counties|professional_operational_state|listings|county_parcels/,
 );
+assert.doesNotMatch(ref, /tx_county_product_activation|is_active/);
 
 assert.equal(existsSync(join(root, "src/app/tx")), false);
+const helper = read("src/lib/geo/county-product.ts");
+assert.doesNotMatch(helper, /from ["']@\/lib\/markets|from ["']\.\.\/markets/);
+assert.doesNotMatch(helper, /primary_county|cad_/);
 for (const rel of [
   "src/app/page.tsx",
   "src/components/home/HomeSearchHero.tsx",
   "src/components/GlobalNav.tsx",
   "src/lib/search/url.ts",
   "src/lib/search/interpret.ts",
-  "src/lib/search/exact-input.ts",
   "src/app/marketplace/page.tsx",
   "src/lib/account/professional-geography.ts",
   "src/lib/markets.ts",
   "src/components/settings/SettingsView.tsx",
   "src/app/api/account/primary-county/route.ts",
   "src/app/api/account/service-counties/route.ts",
-  "src/app/api/account/availability/route.ts",
   "src/lib/supabase/parcels.ts",
   "src/app/agents/[id]/page.tsx",
-  "src/app/u/[username]/page.tsx",
 ]) {
-  const src = read(rel);
-  assert.doesNotMatch(src, /from ["'].*tx_counties["']|public\.tx_counties|\/tx\/polk/);
+  assert.doesNotMatch(
+    read(rel),
+    /county-product|tx_county_product_activation|isCountyProductActive|\/tx\/polk/,
+  );
 }
 
 const started = spawnSync("sudo", ["pg_ctlcluster", "16", "main", "start"], {
@@ -101,7 +96,7 @@ const started = spawnSync("sudo", ["pg_ctlcluster", "16", "main", "start"], {
 if (started.status !== 0 && !/already running/i.test(`${started.stderr}${started.stdout}`)) {
   assert.fail(`postgres start failed: ${started.stderr || started.stdout}`);
 }
-const db = "p2a1a_county_reference";
+const db = "p2a1b_county_activation";
 spawnSync("sudo", ["-u", "postgres", "dropdb", "--if-exists", db], { encoding: "utf8" });
 assert.equal(
   spawnSync("sudo", ["-u", "postgres", "createdb", db], { encoding: "utf8" }).status,
@@ -117,15 +112,20 @@ const apply = (file: string) => {
   return `${run.stdout}\n${run.stderr}`;
 };
 apply("scripts/p2a1a-county-reference-bootstrap.sql");
+apply("supabase/migrations/0071_tx_county_reference.sql");
 apply(migPath);
-const out = apply("scripts/p2a1a-county-reference-harness.sql");
+const out = apply("scripts/p2a1b-county-activation-harness.sql");
 for (const name of [
-  "count_254",
-  "seed_integrity",
+  "canonical_254",
+  "active_7",
+  "launch_seven_only",
+  "montgomery_inactive",
+  "activation_idempotent",
+  "unknown_fips_rejected",
   "anon_write_denied",
   "authenticated_write_denied",
-  "authenticated_update_denied",
-  "service_read_254",
+  "authenticated_delete_denied",
+  "service_active_7",
 ]) {
   assert.match(out, new RegExp(name), `missing proof ${name}`);
 }
@@ -141,22 +141,11 @@ const dump = spawnSync(
     "-A",
     "-t",
     "-c",
-    "select county_fips || '|' || canonical_name || '|' || state from public.tx_counties order by county_fips",
+    "select county_fips from public.tx_county_product_activation order by county_fips",
     db,
   ],
   { encoding: "utf8" },
 );
 assert.equal(dump.status, 0, dump.stderr);
-const dbRows = dump.stdout
-  .trim()
-  .split("\n")
-  .filter(Boolean)
-  .map((line) => {
-    const [fips, name, state] = line.split("|");
-    return { fips, name, state };
-  });
-assert.deepEqual(
-  dbRows,
-  TX_COUNTIES.map((c) => ({ fips: c.fips, name: c.name, state: "TX" })),
-);
-console.log("p2a1a-county-reference: ok");
+assert.deepEqual(dump.stdout.trim().split("\n").filter(Boolean), approved);
+console.log("p2a1b-county-activation: ok");
