@@ -17,7 +17,8 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const files = readdirSync(join(root, "supabase/migrations")).sort();
 
-assert.equal(files.filter((f) => f.startsWith("0079")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0079")).length, 1);
+assert.doesNotMatch(read("supabase/migrations/0079_parcel_local_place_membership.sql"), /listings\.local_place/);
 assert.equal(files.filter((f) => f.startsWith("0078")).length, 1);
 assert.doesNotMatch(read("supabase/migrations/0078_local_place_boundaries.sql"), /classify_parcel_local_place/);
 assert.doesNotMatch(read("scripts/p2b2c1-parcel-classify-primitive.sql"), /alter table public\.county_parcels|listings\.local_place/);

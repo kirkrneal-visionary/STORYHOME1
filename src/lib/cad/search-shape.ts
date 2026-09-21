@@ -22,6 +22,7 @@ export const CAD_SEARCH_FORBIDDEN_FIELDS = [
   "first_seen_at",
   "last_seen_at",
   "absent_at",
+  "local_place_id",
 ] as const;
 
 export const CAD_LOOKUP_SELECT =
