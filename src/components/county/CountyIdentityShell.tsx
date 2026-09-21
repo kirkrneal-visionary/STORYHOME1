@@ -19,9 +19,11 @@ export function CountyIdentityShell({
   return (
     <main
       data-county-identity=""
+      data-county-composition=""
       className="min-h-dvh pb-[var(--story-bottom-clearance)] pt-[var(--story-safe-top)]"
     >
       <div
+        data-county-cover-fallback=""
         className="relative hidden h-20 max-h-[22vh] overflow-hidden [@media(min-height:500px)]:block md:h-28"
         aria-hidden
       >
@@ -30,44 +32,76 @@ export function CountyIdentityShell({
       </div>
 
       <div className="relative z-[1] mx-auto max-w-5xl px-4 md:px-8">
-        <nav aria-label="Story Home">
-          <ol className="flex flex-wrap items-center gap-x-2 text-sm">
-            <li>
-              <Link
-                href="/"
-                className="story-press inline-flex min-h-11 items-center font-medium text-[var(--muted)] hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+        <section
+          data-county-where=""
+          aria-labelledby="county-identity-heading"
+        >
+          <nav aria-label="Story Home">
+            <ol className="flex flex-wrap items-center gap-x-2 text-sm">
+              <li>
+                <Link
+                  href="/"
+                  className="story-press inline-flex min-h-11 items-center font-medium text-[var(--muted)] hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+                >
+                  Story Home
+                </Link>
+              </li>
+              <li aria-hidden className="text-[var(--muted)]">
+                /
+              </li>
+              <li
+                aria-current="page"
+                className="inline-flex min-h-11 items-center text-ink"
               >
-                Story Home
-              </Link>
-            </li>
-            <li aria-hidden className="text-[var(--muted)]">
-              /
-            </li>
-            <li
-              aria-current="page"
-              className="inline-flex min-h-11 items-center text-ink"
+                {identity.canonicalName}
+              </li>
+            </ol>
+          </nav>
+
+          <div className="mt-2 max-w-xl max-[499px]:mt-0 md:mt-8">
+            <h1
+              id="county-identity-heading"
+              className="type-hero text-balance tracking-[-0.02em] text-ink md:text-5xl"
             >
               {identity.canonicalName}
-            </li>
-          </ol>
-        </nav>
+            </h1>
+            <p className="mt-2 text-base text-[var(--muted)]">Texas</p>
+          </div>
+        </section>
 
-        <div className="mt-2 max-w-xl pb-10 max-[499px]:mt-0 md:mt-8">
-          <h1 className="type-hero text-balance tracking-[-0.02em] text-ink md:text-5xl">
-            {identity.canonicalName}
-          </h1>
-          <p className="mt-2 text-base text-[var(--muted)]">Texas</p>
-          <p className="mt-4 text-base leading-relaxed text-ink/85 md:mt-6">
+        <section
+          data-county-property=""
+          aria-labelledby="county-property-heading"
+          className="mt-7 max-w-xl pb-10 max-[499px]:mt-4 max-[499px]:pb-6 md:mt-10 md:pb-14"
+        >
+          <div className="mb-4 h-px w-10 bg-gold/40" aria-hidden />
+          <h2 id="county-property-heading" className="sr-only">
+            Explore property
+          </h2>
+          <p className="text-base leading-relaxed text-ink/85">
             Explore property across {identity.canonicalName}.
           </p>
           <Link
             href={marketplaceHref}
-            className="story-press mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:mt-8"
+            className="story-press mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:mt-7"
           >
             Explore Properties
           </Link>
-        </div>
+        </section>
+
         {children}
+
+        <p
+          data-county-ending=""
+          className="mt-10 border-t border-hairline pt-6 pb-2 max-[499px]:mt-6 md:mt-14 md:pt-8"
+        >
+          <Link
+            href="/"
+            className="story-press inline-flex min-h-11 items-center text-sm font-medium text-[var(--muted)] hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+          >
+            Story Home
+          </Link>
+        </p>
       </div>
     </main>
   );
