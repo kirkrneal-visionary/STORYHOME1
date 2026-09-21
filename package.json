@@ -106,6 +106,7 @@
     "test:p2f1a-county-route": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2f1a-county-route.ts",
     "test:p2f1b-county-identity": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2f1b-county-identity.ts",
     "test:p2f2a-county-places": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2f2a-county-places.ts",
+    "test:p2f2b-county-composition": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2f2b-county-composition.ts",
     "test:p2f3a-local-place-route": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2f3a-local-place-route.ts",
     "test:p2f3b-place-identity": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2f3b-place-identity.ts",
     "test:p2b1b-listing-county": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p2b1b-listing-county.ts",
