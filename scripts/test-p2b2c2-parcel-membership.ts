@@ -15,7 +15,7 @@ const mig = "supabase/migrations/0079_parcel_local_place_membership.sql";
 
 assert.equal(files.filter((f) => f.startsWith("0079")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0080")).length, 0);
-assert.doesNotMatch(read("supabase/migrations/0078_local_place_boundaries.sql"), /local_place_id/);
+assert.doesNotMatch(read("supabase/migrations/0078_local_place_boundaries.sql"), /county_parcels/);
 assert.doesNotMatch(read(mig), /listings\.local_place|CITY_SOURCE|REGION_CITIES|345,?648/);
 assert.match(read(mig), /county_parcels_local_place_id_idx/);
 assert.match(read(mig), /parcels_recompute_local_place/);
