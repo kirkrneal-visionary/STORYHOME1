@@ -11,7 +11,15 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const files = readdirSync(join(root, "supabase/migrations")).sort();
 const chain = ["0063", "0064", "0065", "0066", "0067", "0068", "0069", "0070"] as const;
 
-assert.equal(files.filter((f) => f.startsWith("0071")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0071")).length, 1);
+assert.match(
+  read("supabase/migrations/0071_tx_county_reference.sql"),
+  /create table public\.tx_counties/,
+);
+assert.doesNotMatch(
+  read("supabase/migrations/0071_tx_county_reference.sql"),
+  /professional_primary_counties|professional_service_counties|professional_operational_state|professional_brokerage_relationships/,
+);
 for (const name of chain) {
   assert.equal(files.filter((f) => f.startsWith(name)).length, 1);
 }
