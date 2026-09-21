@@ -81,12 +81,12 @@ const countyPage = read("src/app/tx/[county]/page.tsx");
 const mw = read("src/middleware.ts");
 assert.match(page, /resolvePublicLocalPlace/);
 assert.match(page, /index: false/);
-assert.match(page, /<h1/);
-assert.doesNotMatch(page, /marketplace\?q|Explore Properties|Coming Soon/i);
+assert.match(page, /LocalPlaceIdentityShell|<h1/);
+assert.doesNotMatch(page, /Coming Soon/i);
 assert.match(route, /isLocalPlaceProductActive/);
 assert.match(route, /resolvePublicCounty/);
 assert.match(mw, /resolvePublicLocalPlace/);
-assert.doesNotMatch(dir, /\/tx\/.*\/|href=/);
+assert.doesNotMatch(dir, /marketplace\?q|Coming Soon|FIPS|UUID/i);
 assert.doesNotMatch(countyPage, /\/tx\/polk\/livingston/);
 assert.doesNotMatch(
   route,

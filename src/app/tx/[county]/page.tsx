@@ -52,6 +52,7 @@ export default async function PublicCountyPage({ params }: PageProps) {
     >
       <CountyLocalPlaceDirectory
         countyName={identity.canonicalName}
+        countySlug={identity.slug}
         places={places}
       />
     </CountyIdentityShell>
