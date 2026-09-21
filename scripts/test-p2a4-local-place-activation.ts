@@ -66,7 +66,6 @@ apply("supabase/migrations/0073_local_places.sql");
 apply("supabase/migrations/0074_local_place_resolution.sql");
 apply("supabase/migrations/0075_local_place_launch_seed.sql");
 apply(migPath);
-apply(migPath);
 const out = apply("scripts/p2a4-local-place-activation-harness.sql");
 for (const name of [
   "canonical_places_22",

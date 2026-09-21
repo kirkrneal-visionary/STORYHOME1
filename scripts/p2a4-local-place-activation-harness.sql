@@ -120,5 +120,16 @@ begin
 end
 $$;
 
+insert into public.local_place_product_activation (local_place_id, is_active) values
+  ('00029d4e-eb06-5551-83de-6e016d76fa06', true),
+  ('e27d8dab-f9bb-5a40-88a0-989630cf6c91', true),
+  ('57b6c1da-0815-5ea9-9202-ec53a86f6c87', true),
+  ('d44ba033-63c7-5d3e-a701-9f07b33b78cd', true),
+  ('33b96f7a-394f-508f-bb97-f53ea282e6a8', true),
+  ('e48fe0cb-c8ee-5620-bf75-5cae48bf095f', true),
+  ('860e0e40-a3b2-5e4f-baef-4b8e39f8e219', true)
+on conflict (local_place_id) do update
+  set is_active = excluded.is_active;
+
 select 'idempotent_seven'
 where (select count(*) from public.local_place_product_activation) = 7;
