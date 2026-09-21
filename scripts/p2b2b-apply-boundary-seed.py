@@ -2,7 +2,8 @@
 """Apply the reviewed 22-place TIGER 2024 fixture. No network. Not a public API.
 
 Source: Census TIGER/Line 2024 Texas Places (tl_2024_48_place), NAD83 to EPSG:4326.
-Statewide zip is not in the repo. Mapping is by GEOID, not place name.
+Official shapefile parts are preserved. Polygon is normalized to MultiPolygon.
+Statewide zip is not in the repo. Mapping is by reviewed GEOID, not place name.
 """
 import json
 import subprocess
