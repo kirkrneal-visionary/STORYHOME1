@@ -121,6 +121,7 @@
     "scripts/test-p1c5a-security-audit.ts",
     "scripts/test-p1c5b-release-candidate.ts",
     "scripts/test-p2a1a-county-reference.ts",
-    "scripts/test-p2a1b-county-activation.ts"
+    "scripts/test-p2a1b-county-activation.ts",
+    "scripts/test-p2a2a-local-place-foundation.ts"
   ]
 }

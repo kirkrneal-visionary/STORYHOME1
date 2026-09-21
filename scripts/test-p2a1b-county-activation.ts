@@ -25,7 +25,12 @@ const ref = read("supabase/migrations/0071_tx_county_reference.sql");
 assert.equal(TX_COUNTIES.length, 254);
 assert.equal(files.filter((f) => f.startsWith("0071")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0072")).length, 1);
-assert.equal(files.filter((f) => f.startsWith("0073")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0073")).length, 1);
+assert.match(read("supabase/migrations/0073_local_places.sql"), /create table public\.local_places/);
+assert.doesNotMatch(
+  read("supabase/migrations/0073_local_places.sql"),
+  /tx_county_product_activation/,
+);
 
 const approved = [
   "48005",
