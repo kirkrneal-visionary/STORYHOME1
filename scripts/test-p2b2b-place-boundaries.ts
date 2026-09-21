@@ -61,7 +61,7 @@ assert.equal((geo.match(/"type":"Feature"/g) || []).length, 22);
 for (const r of LOCAL_PLACE_BOUNDARY_REFS) {
   assert.match(geo, new RegExp(`"geoid":"${r.censusGeoid}"`));
   assert.match(geo, new RegExp(`"gnis":"${r.gnis}"`));
-  assert.match(geo, r.localPlaceId);
+  assert.match(geo, new RegExp(r.localPlaceId));
 }
 
 for (const rel of [
