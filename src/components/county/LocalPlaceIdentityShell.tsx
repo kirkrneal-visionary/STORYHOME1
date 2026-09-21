@@ -62,11 +62,11 @@ export function LocalPlaceIdentityShell({
           </ol>
         </nav>
 
-        <div className="mt-2 pb-16 max-[499px]:mt-0 md:mt-6">
+        <div className="mt-2 pb-16 max-[499px]:mt-0 [@media(max-height:499px)]:pb-8 md:mt-6">
           <h1 className="type-hero text-balance tracking-[-0.02em] text-ink">
             {identity.displayName}
           </h1>
-          <p className="mt-2 text-base text-[var(--muted)]">
+          <p className="mt-2 text-base text-[var(--muted)] [@media(max-height:499px)]:mt-1">
             <Link
               href={countyHref}
               className="story-press inline-flex min-h-11 items-center hover:text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
@@ -75,12 +75,12 @@ export function LocalPlaceIdentityShell({
             </Link>
             , {identity.county.state}
           </p>
-          <p className="mt-4 text-base leading-relaxed text-ink/85">
+          <p className="mt-4 text-base leading-relaxed text-ink/85 [@media(max-height:499px)]:mt-2 [@media(max-height:499px)]:hidden">
             Explore property in {identity.displayName}.
           </p>
           <Link
             href={marketplaceHref}
-            className="story-press mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:mt-7"
+            className="story-press mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold [@media(max-height:499px)]:mt-3 md:mt-7"
           >
             Explore Properties
           </Link>
