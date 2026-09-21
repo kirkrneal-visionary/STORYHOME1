@@ -62,8 +62,8 @@ begin
     end loop;
     return new;
   end if;
-  place := coalesce(new.id, new.local_place_id);
   if tg_table_name = 'local_places' then
+    place := new.id;
     new.canonical_slug := public.normalize_local_place_key(new.canonical_slug);
     k := new.canonical_slug;
     if k is not null and exists (
@@ -71,6 +71,7 @@ begin
       where a.local_place_id = place and a.normalized_value = k
     ) then raise exception 'local_place_key_conflict'; end if;
   else
+    place := new.local_place_id;
     new.normalized_value := public.normalize_local_place_key(new.raw_value);
     k := new.normalized_value;
     if k is null or exists (
