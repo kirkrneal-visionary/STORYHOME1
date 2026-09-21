@@ -127,6 +127,7 @@
     "scripts/test-p2a3-local-place-seed.ts",
     "scripts/test-p2a4-local-place-activation.ts",
     "scripts/test-p2f1a-county-route.ts",
-    "scripts/test-p2f1b-county-identity.ts"
+    "scripts/test-p2f1b-county-identity.ts",
+    "scripts/test-p2f2a-county-places.ts"
   ]
 }

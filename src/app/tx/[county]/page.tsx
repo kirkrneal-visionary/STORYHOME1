@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { CountyIdentityShell } from "@/components/county/CountyIdentityShell";
+import { CountyLocalPlaceDirectory } from "@/components/county/CountyLocalPlaceDirectory";
+import { listPublicCountyPlaces } from "@/lib/geo/county-places";
 import {
   canonicalCountyParam,
   needsCountyCanonicalRedirect,
@@ -40,12 +42,18 @@ export default async function PublicCountyPage({ params }: PageProps) {
   }
   const identity = resolvePublicCounty(canonical);
   if (!identity) notFound();
+  const places = listPublicCountyPlaces(identity);
   return (
     <CountyIdentityShell
       identity={{
         canonicalName: identity.canonicalName,
         state: identity.state,
       }}
-    />
+    >
+      <CountyLocalPlaceDirectory
+        countyName={identity.canonicalName}
+        places={places}
+      />
+    </CountyIdentityShell>
   );
 }

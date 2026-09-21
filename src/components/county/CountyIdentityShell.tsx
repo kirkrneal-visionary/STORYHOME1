@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   countyMarketplacePath,
@@ -6,9 +7,13 @@ import {
 
 type CountyIdentityShellProps = {
   identity: Pick<PublicCountyIdentity, "canonicalName" | "state">;
+  children?: ReactNode;
 };
 
-export function CountyIdentityShell({ identity }: CountyIdentityShellProps) {
+export function CountyIdentityShell({
+  identity,
+  children,
+}: CountyIdentityShellProps) {
   const marketplaceHref = countyMarketplacePath(identity);
 
   return (
@@ -47,7 +52,7 @@ export function CountyIdentityShell({ identity }: CountyIdentityShellProps) {
           </ol>
         </nav>
 
-        <div className="mt-2 max-w-xl pb-16 max-[499px]:mt-0 md:mt-8">
+        <div className="mt-2 max-w-xl pb-10 max-[499px]:mt-0 md:mt-8">
           <h1 className="type-hero text-balance tracking-[-0.02em] text-ink md:text-5xl">
             {identity.canonicalName}
           </h1>
@@ -62,6 +67,7 @@ export function CountyIdentityShell({ identity }: CountyIdentityShellProps) {
             Explore Properties
           </Link>
         </div>
+        {children}
       </div>
     </main>
   );
