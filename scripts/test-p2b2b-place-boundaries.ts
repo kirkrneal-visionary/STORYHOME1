@@ -20,7 +20,8 @@ const mig = "supabase/migrations/0078_local_place_boundaries.sql";
 const fixture = "scripts/fixtures/p2b2b-local-place-boundaries.geojson";
 
 assert.equal(files.filter((f) => f.startsWith("0078")).length, 1);
-assert.equal(files.filter((f) => f.startsWith("0079")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0079")).length, 1);
+assert.doesNotMatch(read("supabase/migrations/0079_parcel_local_place_membership.sql"), /listings\.local_place/);
 assert.ok(files.includes("0078_local_place_boundaries.sql"));
 assert.equal(existsSync(join(root, fixture)), true);
 
