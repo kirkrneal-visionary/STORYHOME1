@@ -41,7 +41,8 @@ assert.doesNotMatch(
   /professional_|listings|county_parcels|source_registry|geojson/,
 );
 
-assert.equal(existsSync(join(root, "src/app/tx")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
 for (const rel of [
   "src/app/page.tsx",
   "src/components/GlobalNav.tsx",

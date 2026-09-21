@@ -37,7 +37,8 @@ assert.equal(normalizeLocalPlaceKey("CLEVELAND"), "cleveland");
 assert.equal(normalizeLocalPlaceKey("livngston"), "livngston");
 assert.equal(normalizeLocalPlaceKey("  "), null);
 
-assert.equal(existsSync(join(root, "src/app/tx")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
 for (const rel of [
   "src/app/page.tsx",
   "src/components/GlobalNav.tsx",

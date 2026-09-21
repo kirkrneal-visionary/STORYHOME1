@@ -70,7 +70,8 @@ assert.doesNotMatch(
 );
 assert.doesNotMatch(ref, /tx_county_product_activation|is_active/);
 
-assert.equal(existsSync(join(root, "src/app/tx")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
 const helper = read("src/lib/geo/county-product.ts");
 assert.doesNotMatch(helper, /from ["']@\/lib\/markets|from ["']\.\.\/markets/);
 assert.doesNotMatch(helper, /primary_county|cad_/);
