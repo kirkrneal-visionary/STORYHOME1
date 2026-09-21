@@ -18,7 +18,7 @@ import { TX_COUNTIES, txCountyNameByFips } from "../src/lib/tx-counties.ts";
 const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
-assert.equal(readdirSync(join(root, "supabase/migrations")).filter((f) => f.startsWith("0077")).length, 0);
+assert.equal(readdirSync(join(root, "supabase/migrations")).filter((f) => f.startsWith("0078")).length, 0);
 assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
 assert.equal(existsSync(join(root, "src/app/tx/[county]/not-found.tsx")), true);
 assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
