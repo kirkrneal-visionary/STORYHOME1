@@ -14,6 +14,7 @@ export default function P2F2APlaceLayoutFixturePage() {
       <div className="mx-auto max-w-5xl">
         <CountyLocalPlaceDirectory
           countyName="Polk County"
+          countySlug="polk"
           places={P2F2A_MULTI_PLACE_LAYOUT_FIXTURE}
         />
       </div>

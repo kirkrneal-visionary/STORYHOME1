@@ -72,6 +72,16 @@ export function publicLocalPlacePath(
   return `/tx/${countySlug}/${placeSlug}`;
 }
 
+/** Marketplace `q` from canonical local-place identity. Not browser input. */
+export function localPlaceMarketplacePath(
+  identity: Pick<PublicLocalPlaceIdentity, "displayName"> & {
+    county: Pick<PublicLocalPlaceIdentity["county"], "state">;
+  },
+): string {
+  const q = `${identity.displayName}, ${identity.county.state}`;
+  return `/marketplace?q=${encodeURIComponent(q)}&intent=sale`;
+}
+
 function associated(place: PlaceTwin): readonly string[] {
   return place.associatedCountyFips ?? [place.primaryCountyFips];
 }
