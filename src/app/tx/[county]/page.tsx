@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
+import { CountyIdentityShell } from "@/components/county/CountyIdentityShell";
 import {
   canonicalCountyParam,
   needsCountyCanonicalRedirect,
@@ -23,7 +24,11 @@ export async function generateMetadata({
   if (!identity) {
     return { title: "Not found", robots: NOINDEX };
   }
-  return { title: identity.canonicalName, robots: NOINDEX };
+  return {
+    title: `${identity.canonicalName}, Texas`,
+    description: `Explore property across ${identity.canonicalName}, Texas.`,
+    robots: NOINDEX,
+  };
 }
 
 export default async function PublicCountyPage({ params }: PageProps) {
@@ -36,11 +41,11 @@ export default async function PublicCountyPage({ params }: PageProps) {
   const identity = resolvePublicCounty(canonical);
   if (!identity) notFound();
   return (
-    <main className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] md:px-6">
-      <h1 className="text-xl font-semibold text-ink">{identity.canonicalName}</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">
-        Texas · {identity.countyFips}
-      </p>
-    </main>
+    <CountyIdentityShell
+      identity={{
+        canonicalName: identity.canonicalName,
+        state: identity.state,
+      }}
+    />
   );
 }

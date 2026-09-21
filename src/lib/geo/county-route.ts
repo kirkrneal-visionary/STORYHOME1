@@ -39,6 +39,14 @@ export function publicCountyPath(slug: string): string {
   return `/tx/${slug}`;
 }
 
+/** Marketplace `q` from canonical County identity. Not browser input. */
+export function countyMarketplacePath(
+  identity: Pick<PublicCountyIdentity, "canonicalName" | "state">,
+): string {
+  const q = `${identity.canonicalName}, ${identity.state}`;
+  return `/marketplace?q=${encodeURIComponent(q)}&intent=sale`;
+}
+
 export function resolvePublicCounty(
   raw: string | null | undefined,
 ): PublicCountyIdentity | null {
