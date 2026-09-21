@@ -18,7 +18,7 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
 assert.equal(
   readdirSync(join(root, "supabase/migrations")).filter((f) =>
-    f.startsWith("0077"),
+    f.startsWith("0078"),
   ).length,
   0,
 );

@@ -130,6 +130,7 @@
     "scripts/test-p2f1b-county-identity.ts",
     "scripts/test-p2f2a-county-places.ts",
     "scripts/test-p2f3a-local-place-route.ts",
-    "scripts/test-p2f3b-place-identity.ts"
+    "scripts/test-p2f3b-place-identity.ts",
+    "scripts/test-p2b1b-listing-county.ts"
   ]
 }
