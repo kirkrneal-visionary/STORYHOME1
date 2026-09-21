@@ -11,6 +11,8 @@ type PageProps = {
   params: Promise<{ county: string }>;
 };
 
+export const dynamic = "force-dynamic";
+
 const NOINDEX: Metadata["robots"] = { index: false, follow: false };
 
 export async function generateMetadata({
