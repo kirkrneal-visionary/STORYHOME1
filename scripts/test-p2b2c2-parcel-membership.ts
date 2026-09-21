@@ -14,7 +14,8 @@ const files = readdirSync(join(root, "supabase/migrations")).sort();
 const mig = "supabase/migrations/0079_parcel_local_place_membership.sql";
 
 assert.equal(files.filter((f) => f.startsWith("0079")).length, 1);
-assert.equal(files.filter((f) => f.startsWith("0080")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0080")).length, 1);
+assert.doesNotMatch(read("supabase/migrations/0080_listing_local_place_authority.sql"), /345,?648|parcels_recompute_local_place/);
 assert.doesNotMatch(read("supabase/migrations/0078_local_place_boundaries.sql"), /county_parcels/);
 assert.doesNotMatch(read(mig), /listings\.local_place|CITY_SOURCE|REGION_CITIES|345,?648/);
 assert.match(read(mig), /county_parcels_local_place_id_idx/);
