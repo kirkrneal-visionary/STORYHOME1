@@ -72,7 +72,8 @@ assert.doesNotMatch(
   /professional_primary_counties|professional_service_counties|professional_operational_state|professional_brokerage_relationships/,
 );
 
-assert.equal(existsSync(join(root, "src/app/tx")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
 for (const rel of [
   "src/app/page.tsx",
   "src/components/home/HomeSearchHero.tsx",

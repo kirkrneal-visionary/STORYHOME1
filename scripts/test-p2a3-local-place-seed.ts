@@ -29,7 +29,8 @@ assert.doesNotMatch(mig, /is_active|create table public/);
 assert.doesNotMatch(read("supabase/migrations/0074_local_place_resolution.sql"), /insert into public\.local_places/i);
 assert.doesNotMatch(read("src/lib/markets.ts"), /0075|local_places/);
 
-assert.equal(existsSync(join(root, "src/app/tx")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
 for (const rel of [
   "src/app/page.tsx",
   "src/lib/search/interpret.ts",
