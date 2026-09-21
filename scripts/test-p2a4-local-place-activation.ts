@@ -19,7 +19,7 @@ const migPath = "supabase/migrations/0076_local_place_product_activation.sql";
 const mig = read(migPath);
 
 assert.equal(files.filter((f) => f.startsWith("0076")).length, 1);
-assert.equal(files.filter((f) => f.startsWith("0078")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0078")).length, 1);
 assert.match(mig, /create table public\.local_place_product_activation/);
 assert.doesNotMatch(mig, /insert into public\.local_places/i);
 assert.doesNotMatch(read("supabase/migrations/0075_local_place_launch_seed.sql"), /product_activation/);

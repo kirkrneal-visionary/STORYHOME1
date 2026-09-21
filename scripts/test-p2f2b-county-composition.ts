@@ -20,7 +20,7 @@ assert.equal(
   readdirSync(join(root, "supabase/migrations")).filter((f) =>
     f.startsWith("0078"),
   ).length,
-  0,
+  1,
 );
 
 const shell = read("src/components/county/CountyIdentityShell.tsx");

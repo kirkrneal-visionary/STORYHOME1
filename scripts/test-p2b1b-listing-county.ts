@@ -16,7 +16,8 @@ const migPath = "supabase/migrations/0077_listing_county_authority.sql";
 const mig = read(migPath);
 
 assert.equal(files.filter((f) => f.startsWith("0077")).length, 1);
-assert.equal(files.filter((f) => f.startsWith("0078")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0078")).length, 1);
+assert.doesNotMatch(read("supabase/migrations/0078_local_place_boundaries.sql"), /listing_resolve_county_fips|listings_bind_county/);
 assert.ok(files.includes("0077_listing_county_authority.sql"));
 
 assert.match(mig, /listing_resolve_county_fips/);

@@ -19,7 +19,7 @@ assert.equal(
   readdirSync(join(root, "supabase/migrations")).filter((f) =>
     f.startsWith("0078"),
   ).length,
-  0,
+  1,
 );
 assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
 assert.equal(
