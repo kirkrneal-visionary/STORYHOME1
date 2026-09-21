@@ -43,6 +43,7 @@ const scripts = [
   "scripts/test-p1c4a-availability.ts",
   "scripts/test-p1c4b-availability-settings.ts",
   "scripts/test-p1c5a-security-audit.ts",
+  "scripts/test-p1c5b-release-candidate.ts",
 ];
 
 for (const file of scripts) {
