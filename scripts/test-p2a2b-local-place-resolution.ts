@@ -15,7 +15,15 @@ const migPath = "supabase/migrations/0074_local_place_resolution.sql";
 const mig = read(migPath);
 
 assert.equal(files.filter((f) => f.startsWith("0074")).length, 1);
-assert.equal(files.filter((f) => f.startsWith("0075")).length, 0);
+assert.equal(files.filter((f) => f.startsWith("0075")).length, 1);
+assert.match(
+  read("supabase/migrations/0075_local_place_launch_seed.sql"),
+  /insert into public\.local_places/,
+);
+assert.doesNotMatch(
+  read("supabase/migrations/0075_local_place_launch_seed.sql"),
+  /create table public/,
+);
 assert.match(mig, /canonical_slug/);
 assert.match(mig, /create table public\.local_place_aliases/);
 assert.match(mig, /alias_kind in \('name', 'slug'\)/);
