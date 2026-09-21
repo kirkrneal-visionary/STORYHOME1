@@ -32,15 +32,22 @@ declare
   place uuid;
 begin
   if p_listing is null then return null; end if;
-  select count(*), min(p.local_place_id) into n, place
+  select count(*) into n
   from public.listing_parcels lp
   join public.county_parcels p
     on p.source = lp.source
    and p.prop_id = lp.prop_id
   where lp.listing_id = p_listing
     and lp.is_primary;
-  if n = 1 then return place; end if;
-  return null;
+  if n <> 1 then return null; end if;
+  select p.local_place_id into place
+  from public.listing_parcels lp
+  join public.county_parcels p
+    on p.source = lp.source
+   and p.prop_id = lp.prop_id
+  where lp.listing_id = p_listing
+    and lp.is_primary;
+  return place;
 end
 $$;
 
