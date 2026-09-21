@@ -8,12 +8,12 @@ declare
   trinity_id uuid := '6e8bfac5-1b0c-531d-be26-f53bef1ecf42';
 begin
   select count(*) into n from public.local_places;
-  if n <> 21 then raise exception 'seed_count %', n; end if;
-  raise notice 'seed_count_21';
+  if n <> 22 then raise exception 'seed_count %', n; end if;
+  raise notice 'seed_count_22';
 
   if exists (select 1 from public.local_places group by id having count(*) > 1) then
     raise exception 'dup_uuid'; end if;
-  if (select count(distinct canonical_slug) from public.local_places) <> 21 then
+  if (select count(distinct canonical_slug) from public.local_places) <> 22 then
     raise exception 'slug_count'; end if;
   raise notice 'one_uuid_one_slug';
 
@@ -79,8 +79,8 @@ end
 $$;
 
 select 'idempotent_seed'
-where (select count(*) from public.local_places) = 21
-  and (select count(*) from public.local_place_counties) = 22;
+where (select count(*) from public.local_places) = 22
+  and (select count(*) from public.local_place_counties) = 23;
 
 do $$
 begin

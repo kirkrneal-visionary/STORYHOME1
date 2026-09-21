@@ -80,7 +80,7 @@ apply(migPath);
 apply(migPath);
 const out = apply("scripts/p2a3-local-place-seed-harness.sql");
 for (const name of [
-  "seed_count_21",
+  "seed_count_22",
   "one_uuid_one_slug",
   "county_rels_ok",
   "montgomery_inactive",
