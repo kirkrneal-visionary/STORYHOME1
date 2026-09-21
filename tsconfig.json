@@ -124,6 +124,7 @@
     "scripts/test-p2a1b-county-activation.ts",
     "scripts/test-p2a2a-local-place-foundation.ts",
     "scripts/test-p2a2b-local-place-resolution.ts",
-    "scripts/test-p2a3-local-place-seed.ts"
+    "scripts/test-p2a3-local-place-seed.ts",
+    "scripts/test-p2a4-local-place-activation.ts"
   ]
 }
