@@ -27,7 +27,7 @@ assert.equal(
   existsSync(join(root, "src/components/county/CountyIdentityShell.tsx")),
   true,
 );
-assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
 
 const active = TX_COUNTIES.filter((c) => isCountyProductActive(c.fips));
 assert.equal(active.length, 7);

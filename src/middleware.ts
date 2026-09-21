@@ -22,6 +22,7 @@ import {
   canonicalCountyParam,
   resolvePublicCounty,
 } from "@/lib/geo/county-route";
+import { resolvePublicLocalPlace } from "@/lib/geo/local-place-route";
 
 const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
@@ -34,24 +35,41 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   if (pathname.startsWith("/tx/")) {
     const parts = pathname.split("/").filter(Boolean);
-    if (parts.length !== 2) {
+    if (parts.length === 3) {
+      const resolved = resolvePublicLocalPlace(
+        decodeURIComponent(parts[1] ?? ""),
+        decodeURIComponent(parts[2] ?? ""),
+      );
+      if (resolved.status === "not_found") {
+        return new NextResponse("Not found", {
+          status: 404,
+          headers: { "cache-control": "no-store" },
+        });
+      }
+      if (resolved.status === "redirect") {
+        const next = request.nextUrl.clone();
+        next.pathname = resolved.path;
+        return NextResponse.redirect(next, 308);
+      }
+    } else if (parts.length !== 2) {
       return new NextResponse("Not found", {
         status: 404,
         headers: { "cache-control": "no-store" },
       });
-    }
-    const raw = decodeURIComponent(parts[1] ?? "");
-    const canonical = canonicalCountyParam(raw);
-    if (!canonical || !resolvePublicCounty(canonical)) {
-      return new NextResponse("Not found", {
-        status: 404,
-        headers: { "cache-control": "no-store" },
-      });
-    }
-    if (raw !== canonical) {
-      const next = request.nextUrl.clone();
-      next.pathname = `/tx/${canonical}`;
-      return NextResponse.redirect(next, 308);
+    } else {
+      const raw = decodeURIComponent(parts[1] ?? "");
+      const canonical = canonicalCountyParam(raw);
+      if (!canonical || !resolvePublicCounty(canonical)) {
+        return new NextResponse("Not found", {
+          status: 404,
+          headers: { "cache-control": "no-store" },
+        });
+      }
+      if (raw !== canonical) {
+        const next = request.nextUrl.clone();
+        next.pathname = `/tx/${canonical}`;
+        return NextResponse.redirect(next, 308);
+      }
     }
   }
   if (pathname.startsWith("/u/")) {
