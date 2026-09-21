@@ -8,7 +8,7 @@ declare
   lid2 uuid;
   place uuid;
   fips text;
-  city text;
+  v_city text;
   n int;
 begin
   if not exists (
@@ -42,9 +42,9 @@ begin
 
   insert into public.listing_parcels (listing_id, source, prop_id, is_primary)
     values (lid, 'polk_cad', 'liv_p', true);
-  select local_place_id, county_fips, city into place, fips, city
+  select local_place_id, county_fips, city into place, fips, v_city
     from public.listings where id = lid;
-  if place <> livingston or fips <> '48373' or city <> 'Livingston' then
+  if place <> livingston or fips <> '48373' or v_city <> 'Livingston' then
     raise exception 'liv_attach % %', place, fips;
   end if;
   raise notice 'livingston_matched';
