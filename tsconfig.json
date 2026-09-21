@@ -119,6 +119,7 @@
     "scripts/test-p1c4a-availability.ts",
     "scripts/test-p1c4b-availability-settings.ts",
     "scripts/test-p1c5a-security-audit.ts",
-    "scripts/test-p1c5b-release-candidate.ts"
+    "scripts/test-p1c5b-release-candidate.ts",
+    "scripts/test-p2a1a-county-reference.ts"
   ]
 }
