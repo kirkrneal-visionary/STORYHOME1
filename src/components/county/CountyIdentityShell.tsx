@@ -17,7 +17,7 @@ export function CountyIdentityShell({ identity }: CountyIdentityShellProps) {
       className="min-h-dvh pb-[var(--story-bottom-clearance)] pt-[var(--story-safe-top)]"
     >
       <div
-        className="relative h-20 max-h-[22vh] overflow-hidden md:h-28"
+        className="relative hidden h-20 max-h-[22vh] overflow-hidden [@media(min-height:500px)]:block md:h-28"
         aria-hidden
       >
         <div className="absolute inset-0 bg-[var(--env-1)]" />
@@ -47,17 +47,17 @@ export function CountyIdentityShell({ identity }: CountyIdentityShellProps) {
           </ol>
         </nav>
 
-        <div className="mt-4 max-w-xl pb-16 md:mt-8">
+        <div className="mt-2 max-w-xl pb-16 max-[499px]:mt-0 md:mt-8">
           <h1 className="type-hero text-balance tracking-[-0.02em] text-ink md:text-5xl">
             {identity.canonicalName}
           </h1>
           <p className="mt-2 text-base text-[var(--muted)]">Texas</p>
-          <p className="mt-6 text-base leading-relaxed text-ink/85">
+          <p className="mt-4 text-base leading-relaxed text-ink/85 md:mt-6">
             Explore property across {identity.canonicalName}.
           </p>
           <Link
             href={marketplaceHref}
-            className="story-press mt-8 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            className="story-press mt-5 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold md:mt-8"
           >
             Explore Properties
           </Link>
