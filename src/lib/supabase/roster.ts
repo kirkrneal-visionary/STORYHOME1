@@ -16,6 +16,16 @@ export type PendingInvite = {
   brokerageName: string;
 };
 
+export type BrokerageHistoryItem = {
+  brokerageName: string;
+  relationshipType: string;
+  status: string;
+  effectiveFrom: string;
+  effectiveEnd: string | null;
+  current: boolean;
+  recorded: boolean;
+};
+
 const digits = (s: string | null | undefined) => (s ?? "").replace(/[^\d]/g, "");
 
 export async function listInvites(brokerageId: string): Promise<BrokerageInvite[]> {
@@ -100,6 +110,24 @@ export async function removeAgent(agentId: string): Promise<boolean> {
   });
   if (error) throw error;
   return Boolean(data);
+}
+
+export async function ownBrokerageHistory(): Promise<BrokerageHistoryItem[]> {
+  const s = getBrowserSupabase();
+  if (!s) return [];
+  const { data, error } = await s.rpc("own_brokerage_relationship_history");
+  if (error || !data) return [];
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data as any[]).map((r) => ({
+    brokerageName: r.brokerage_name,
+    relationshipType: r.relationship_type,
+    status: r.status,
+    effectiveFrom: r.effective_from,
+    effectiveEnd: r.effective_end ?? null,
+    current: Boolean(r.is_current),
+    recorded: Boolean(r.recorded),
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 }
 
 /** Active invite addressed to the logged-in agent (via RLS on their license). */

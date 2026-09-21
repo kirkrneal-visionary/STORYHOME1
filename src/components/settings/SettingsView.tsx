@@ -64,6 +64,8 @@ import { getBrokerageById, type Brokerage } from "@/lib/supabase/brokerage";
 import {
   acceptInvite,
   myPendingInvite,
+  ownBrokerageHistory,
+  type BrokerageHistoryItem,
   type PendingInvite,
 } from "@/lib/supabase/roster";
 import {
@@ -102,6 +104,7 @@ export function SettingsView() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [brokerage, setBrokerage] = useState<Brokerage | null>(null);
   const [pending, setPending] = useState<PendingInvite | null>(null);
+  const [history, setHistory] = useState<BrokerageHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [origin, setOrigin] = useState<string | null>(null);
   const panelTitleId = useId();
@@ -152,14 +155,16 @@ export function SettingsView() {
         profile.accountKind === "agent"
           ? await myPendingInvite()
           : null;
+      const nextHistory = caps.brokerage ? await ownBrokerageHistory() : [];
       if (cancelled) return;
       setBrokerage(nextBrokerage);
       setPending(nextPending);
+      setHistory(nextHistory);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, profile, location.category]);
+  }, [user, profile, location.category, caps.brokerage]);
 
   useEffect(() => {
     if (location.screen === "root") {
@@ -546,6 +551,7 @@ export function SettingsView() {
             brokerageName={brokerage?.name ?? null}
             typeLabel={typeLabel}
             pending={pending}
+            history={history}
             onJoined={load}
           />
           {doneLink}
@@ -813,15 +819,33 @@ function LicenseSection({ profile }: { profile: MyProfile | null }) {
   );
 }
 
+function historyWhen(row: BrokerageHistoryItem) {
+  const from = new Date(row.effectiveFrom).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+  if (row.recorded) return `Recorded since ${from}`;
+  if (!row.current && row.effectiveEnd) {
+    const to = new Date(row.effectiveEnd).toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    });
+    return `${from} – ${to}`;
+  }
+  return null;
+}
+
 function BrokerageRelationship({
   brokerageName,
   typeLabel,
   pending,
+  history,
   onJoined,
 }: {
   brokerageName: string | null;
   typeLabel: string;
   pending: PendingInvite | null;
+  history: BrokerageHistoryItem[];
   onJoined: () => void;
 }) {
   return (
@@ -843,6 +867,21 @@ function BrokerageRelationship({
         </p>
       )}
       {pending ? <AgentJoinBanner pending={pending} onJoined={onJoined} /> : null}
+      {history.length ? (
+        <SettingsCard icon={Building2} title="Brokerage history">
+          <ul className="space-y-2">
+            {history.map((row) => (
+              <li key={`${row.brokerageName}-${row.effectiveFrom}`} className="story-well px-3 py-2">
+                <p className="break-words text-sm text-ink">{row.brokerageName}</p>
+                <p className="text-xs text-[var(--muted)]">
+                  {row.current ? "Current" : "Previous"}
+                  {historyWhen(row) ? ` · ${historyWhen(row)}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </SettingsCard>
+      ) : null}
     </div>
   );
 }
