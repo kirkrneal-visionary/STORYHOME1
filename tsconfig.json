@@ -132,6 +132,7 @@
     "scripts/test-p2f2b-county-composition.ts",
     "scripts/test-p2f3a-local-place-route.ts",
     "scripts/test-p2f3b-place-identity.ts",
-    "scripts/test-p2b1b-listing-county.ts"
+    "scripts/test-p2b1b-listing-county.ts",
+    "scripts/test-p2b2b-place-boundaries.ts"
   ]
 }
