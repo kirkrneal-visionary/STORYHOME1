@@ -1,7 +1,11 @@
 -- P2B3A: server-authoritative listing local-place binding.
 -- Inherit verified primary parcel.local_place_id only. City text is not authority.
 -- Replaces P2B1B bind/sync so County and place stay on one path.
--- Safe after 0079 before parcel backfill. Production listings are 0.
+-- Release order: 0071–0078 → 22-place boundary seed → 0079 →
+-- parcels_recompute/backfill (later authorized) → 0080 listing place authority.
+-- 0080 is safe before parcel backfill: listings.local_place_id is nullable and
+-- production listings are 0, so no listing backfill is required. After a later
+-- parcel reclass, call listings_recompute_local_place() as service_role.
 -- Do not apply hosted independently of the P2 chain.
 
 alter table public.listings

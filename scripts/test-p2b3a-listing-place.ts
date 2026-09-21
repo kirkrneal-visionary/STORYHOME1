@@ -65,6 +65,9 @@ apply("supabase/migrations/0074_local_place_resolution.sql");
 apply("supabase/migrations/0075_local_place_launch_seed.sql");
 apply("supabase/migrations/0076_local_place_product_activation.sql");
 apply("supabase/migrations/0077_listing_county_authority.sql");
+// 0078 enables PostGIS so 0079's geometry-typed classify functions can apply.
+// B3A inherit-only: no 22-place seed and no parcel backfill.
+apply("supabase/migrations/0078_local_place_boundaries.sql");
 apply("supabase/migrations/0079_parcel_local_place_membership.sql");
 apply(mig);
 const out = apply("scripts/p2b3a-listing-place-harness.sql");
