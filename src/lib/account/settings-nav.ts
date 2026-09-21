@@ -29,6 +29,7 @@ export type SettingsControl =
   | "brokerage"
   | "counties"
   | "primary"
+  | "availability"
   | "open"
   | "workspace";
 
@@ -69,6 +70,7 @@ const CONTROLS = new Set<string>([
   "brokerage",
   "counties",
   "primary",
+  "availability",
   "open",
   "workspace",
 ]);
@@ -256,6 +258,18 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "primary",
+      setupMfa: false,
+    };
+  }
+  if (
+    category === "professional" &&
+    search.control === "availability" &&
+    caps.availability
+  ) {
+    return {
+      screen: "control",
+      category,
+      control: "availability",
       setupMfa: false,
     };
   }
