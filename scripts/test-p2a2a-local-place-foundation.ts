@@ -42,7 +42,7 @@ assert.doesNotMatch(
 );
 
 assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
-assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
 for (const rel of [
   "src/app/page.tsx",
   "src/components/GlobalNav.tsx",

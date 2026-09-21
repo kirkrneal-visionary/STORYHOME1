@@ -21,7 +21,7 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 assert.equal(readdirSync(join(root, "supabase/migrations")).filter((f) => f.startsWith("0077")).length, 0);
 assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
 assert.equal(existsSync(join(root, "src/app/tx/[county]/not-found.tsx")), true);
-assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
 
 const slugs = TX_COUNTIES.map((c) => countySlugFromName(c.name));
 assert.equal(slugs.every(Boolean), true);

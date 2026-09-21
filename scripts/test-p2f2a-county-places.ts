@@ -21,7 +21,7 @@ assert.equal(
   ).length,
   0,
 );
-assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
 assert.equal(
   existsSync(join(root, "src/components/county/CountyLocalPlaceDirectory.tsx")),
   true,

@@ -28,7 +28,7 @@ assert.equal(listLocalPlaceProductActiveIds().length, 7);
 assert.equal(isLocalPlaceProductActive("00029d4e-eb06-5551-83de-6e016d76fa06"), true);
 assert.equal(isLocalPlaceProductActive("d34e1210-95ec-5371-92cf-69271971259e"), false);
 assert.equal(existsSync(join(root, "src/app/tx/[county]/page.tsx")), true);
-assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), false);
+assert.equal(existsSync(join(root, "src/app/tx/[county]/[place]")), true);
 for (const rel of [
   "src/app/page.tsx",
   "src/lib/search/interpret.ts",
