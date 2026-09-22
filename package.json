@@ -59,6 +59,7 @@
     "test:ui-2-cta-focus": "node scripts/test-ui-2-cta-focus.mjs",
     "test:ui-3a-pro-identity": "node scripts/test-ui-3a-pro-identity.mjs && node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-ui-3a-owner-review-gate.ts",
     "test:ui-3b-org-world": "node scripts/test-ui-3b-org-world.mjs && node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-ui-3b-owner-review-gate.ts",
+    "test:ui-4a-county-discovery": "node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-ui-4a-county-discovery.mjs",
     "test:phase-1": "node scripts/test-phase-1-coherence.mjs && node scripts/test-typography-system.mjs && node scripts/test-design-tokens.mjs && node scripts/test-story-feel-wave-1.mjs",
     "test:phase-2": "node scripts/test-phase-2-truth.mjs && node scripts/test-shi-obs-ops.mjs && node scripts/test-story-analytics-foundation.mjs && node scripts/test-phase-1-coherence.mjs",
     "test:prelaunch-security": "node --experimental-strip-types scripts/test-prelaunch-security.ts",

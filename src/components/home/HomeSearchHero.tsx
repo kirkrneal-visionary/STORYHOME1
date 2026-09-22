@@ -33,6 +33,10 @@ import {
   REGION_CITIES,
   SERVICE_COUNTIES,
 } from "@/lib/markets";
+import {
+  countySlugFromName,
+  publicCountyPath,
+} from "@/lib/geo/county-route";
 
 const HOME_SEARCH_STATE_KEY = "story-home-wave-a-search";
 
@@ -213,43 +217,53 @@ export function HomeSearchHero() {
         </div>
       </section>
 
+      <div className="story-home-hero-join" data-home-hero-join="" aria-hidden />
+
       <section
-        className="mx-auto max-w-6xl px-4 pb-10 pt-8 md:px-6 md:pt-10"
+        className="mx-auto max-w-6xl px-4 pb-8 pt-4 md:px-6 md:pt-6"
         data-launch-counties=""
+        data-ui-4a="county-discovery"
       >
+        <div data-home-story-attachment="" aria-hidden />
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="type-section text-paper">
               Launch counties
             </h2>
             <p className="mt-1 text-sm text-paper/65">
-              Beginning rollout across seven East Texas counties.
+              Explore each county. Homes stay one step away.
             </p>
           </div>
           <Link
             href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
-            className="hidden text-sm font-semibold text-gold hover:underline md:inline"
+            className="hidden min-h-11 items-center text-sm font-semibold text-gold hover:underline md:inline-flex"
           >
             View all homes
           </Link>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
-          {SERVICE_COUNTIES.map((county) => (
-            <button
-              key={county.fips}
-              type="button"
-              onClick={() => searchArea(county.hubCity)}
-              className="story-well story-press px-3 py-4 text-left transition-colors hover:border-[var(--hairline-interactive)]"
-            >
-              <p className="font-semibold text-paper">
-                {county.name.replace(" County", "")}
-              </p>
-              <p className="type-meta mt-1 text-paper/50">
-                {county.hubCity}
-              </p>
-            </button>
-          ))}
+        <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3 lg:grid-cols-7">
+          {SERVICE_COUNTIES.map((county) => {
+            const slug = countySlugFromName(county.name);
+            if (!slug) return null;
+            return (
+              <Link
+                key={county.fips}
+                href={publicCountyPath(slug)}
+                data-home-county-card=""
+                data-home-county={slug}
+                aria-label={`Explore ${county.name}`}
+                className="story-well story-press flex min-h-11 flex-col justify-center px-3 py-3 text-left md:py-4"
+              >
+                <p className="font-semibold text-paper">
+                  {county.name.replace(" County", "")}
+                </p>
+                <p className="type-meta mt-1 text-paper/50">
+                  {county.hubCity}
+                </p>
+              </Link>
+            );
+          })}
         </div>
 
         <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
@@ -258,7 +272,7 @@ export function HomeSearchHero() {
               key={area}
               type="button"
               onClick={() => searchArea(area)}
-              className="story-press text-sm font-medium text-paper/75 hover:text-gold"
+              className="story-press inline-flex min-h-11 items-center text-sm font-medium text-paper/75 hover:text-gold"
             >
               {area}
             </button>
@@ -266,31 +280,31 @@ export function HomeSearchHero() {
         </div>
       </section>
 
-      <section className="border-t border-hairline">
-        <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
-          <div className="mb-6 flex items-end justify-between">
+      <section className="border-t border-hairline" data-home-featured="">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
+          <div className="mb-6 flex items-end justify-between gap-4">
             <div>
               <h2 className="type-section text-paper">
                 Homes in East Texas right now
               </h2>
               <p className="mt-1 text-sm text-paper/65">
-                Featured listings — every card shows the agent behind it.
+                Live listings from local agents, when they exist.
               </p>
             </div>
             <Link
               href={`/marketplace?q=${encodeURIContent(REGION.label)}`}
-              className="text-sm font-semibold text-gold hover:underline"
+              className="inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-gold hover:underline"
             >
               See marketplace
             </Link>
           </div>
           {featuredLoaded && featured.length === 0 ? (
-            <div className="story-well p-10 text-center">
+            <div className="story-well px-5 py-8 text-center">
               <p className="type-card-title text-paper">
-                No listings yet
+                No homes listed yet
               </p>
               <p className="mt-2 text-sm text-paper/65">
-                East Texas homes will appear here as local agents list them.
+                East Texas listings will appear here as agents publish them.
               </p>
             </div>
           ) : (
@@ -303,7 +317,7 @@ export function HomeSearchHero() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-4 py-14 md:grid-cols-3 md:px-6">
+      <section className="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3 md:px-6 md:py-12">
         <ToolCard
           title="Buy a home"
           body="Search East Texas listings with filters, saves, and agent profiles on every card."

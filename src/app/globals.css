@@ -1192,6 +1192,20 @@ html[data-home-hub] .story-route-page {
   position: absolute;
   inset: 0;
 }
+.story-home-hero-join {
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+  height: 2.5rem;
+  margin-top: -2.5rem;
+  background: linear-gradient(180deg, transparent, var(--background));
+}
+@media (min-width: 768px) {
+  .story-home-hero-join {
+    height: 3.25rem;
+    margin-top: -3.25rem;
+  }
+}
 .story-home-hero-headline {
   margin: 0;
 }
