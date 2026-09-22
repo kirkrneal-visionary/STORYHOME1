@@ -81,7 +81,8 @@ export default async function Ui6OwnerReviewSettingsPage({
           </span>
         </p>
       </header>
-      <SettingsLoadingHint className="mt-4" />
+      <p className="type-meta mt-4 text-[var(--muted)]">Settings loading language</p>
+      <SettingsLoadingHint />
       <div className="mt-6">{renderPanel(role, panel, caps)}</div>
     </div>
   );
