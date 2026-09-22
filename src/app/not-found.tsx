@@ -1,6 +1,6 @@
 import { PublicMiss } from "@/components/story/PublicMiss";
 
-export default function CountyNotFound() {
+export default function NotFound() {
   return (
     <PublicMiss
       title="This page isn’t available."
