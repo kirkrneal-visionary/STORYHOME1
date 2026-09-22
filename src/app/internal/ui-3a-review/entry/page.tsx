@@ -1,0 +1,29 @@
+import { notFound } from "next/navigation";
+import { UsernamePublicStub } from "@/components/username/UsernamePublicStub";
+import {
+  isUi3aOwnerReviewAllowed,
+  ui3aOwnerReviewUsernameStub,
+} from "@/lib/ui-3a-owner-review";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "UI-3A owner review",
+  robots: { index: false, follow: false },
+};
+
+export default function Ui3aOwnerReviewEntryPage() {
+  if (!isUi3aOwnerReviewAllowed()) notFound();
+
+  return (
+    <>
+      <p
+        data-ui-3a-owner-review="entry"
+        className="px-4 pt-[calc(var(--story-safe-top)+0.75rem)] font-mono text-[11px] tracking-[0.14em] text-[var(--muted)] uppercase md:px-8"
+      >
+        Owner review fixture
+      </p>
+      <UsernamePublicStub stub={ui3aOwnerReviewUsernameStub()} />
+    </>
+  );
+}
