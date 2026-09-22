@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { ListingCard } from "@/components/ListingCard";
+import { StoryEmptyWell } from "@/components/story/StoryEmptyWell";
 import { SearchFiltersPanel } from "@/components/marketplace/SearchFiltersPanel";
 import { SearchToolbar } from "@/components/marketplace/SearchToolbar";
 import type { DemoListing } from "@/lib/demo-data";
@@ -211,23 +212,15 @@ export default function MarketplaceView() {
                 Loading listings…
               </div>
             ) : allListings.length === 0 ? (
-              <div className="story-well px-5 py-12 text-center">
-                <p className="type-card-title text-ink">
-                  No listings yet
-                </p>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  New homes will appear here as local agents list them.
-                </p>
-              </div>
+              <StoryEmptyWell
+                title="No listings yet"
+                body="New homes will appear here as local agents list them."
+              />
             ) : listings.length === 0 ? (
-              <div className="story-well px-5 py-12 text-center">
-                <p className="type-card-title text-ink">
-                  No homes in this map area
-                </p>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  Clear the drawn boundary or widen filters to see more East
-                  Texas listings.
-                </p>
+              <StoryEmptyWell
+                title="No homes in this map area"
+                body="Clear the drawn boundary or widen filters to see more East Texas listings."
+              >
                 <button
                   type="button"
                   onClick={() => {
@@ -248,7 +241,7 @@ export default function MarketplaceView() {
                 >
                   Reset map & filters
                 </button>
-              </div>
+              </StoryEmptyWell>
             ) : (
               <div className="grid grid-cols-1 gap-2">
                 {listings.map((listing) => (

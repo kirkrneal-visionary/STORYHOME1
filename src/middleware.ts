@@ -27,6 +27,15 @@ import { resolvePublicLocalPlace } from "@/lib/geo/local-place-route";
 const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
+function publicMissResponse(request: NextRequest) {
+  const miss = request.nextUrl.clone();
+  miss.pathname = "/internal/story-public-miss";
+  return NextResponse.rewrite(miss, {
+    status: 404,
+    headers: { "cache-control": "no-store" },
+  });
+}
+
 /**
  * Session refresh + app rate classes + Story Pro page session gate.
  * Tile routes are not rate-limited here.
@@ -41,10 +50,7 @@ export async function middleware(request: NextRequest) {
         decodeURIComponent(parts[2] ?? ""),
       );
       if (resolved.status === "not_found") {
-        return new NextResponse("Not found", {
-          status: 404,
-          headers: { "cache-control": "no-store" },
-        });
+        return publicMissResponse(request);
       }
       if (resolved.status === "redirect") {
         const next = request.nextUrl.clone();
@@ -52,18 +58,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(next, 308);
       }
     } else if (parts.length !== 2) {
-      return new NextResponse("Not found", {
-        status: 404,
-        headers: { "cache-control": "no-store" },
-      });
+      return publicMissResponse(request);
     } else {
       const raw = decodeURIComponent(parts[1] ?? "");
       const canonical = canonicalCountyParam(raw);
       if (!canonical || !resolvePublicCounty(canonical)) {
-        return new NextResponse("Not found", {
-          status: 404,
-          headers: { "cache-control": "no-store" },
-        });
+        return publicMissResponse(request);
       }
       if (raw !== canonical) {
         const next = request.nextUrl.clone();

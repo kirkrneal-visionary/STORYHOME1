@@ -1,6 +1,9 @@
 import { PublicMiss } from "@/components/story/PublicMiss";
 
-export default function CountyNotFound() {
+/** Internal rewrite target. Middleware keeps HTTP 404. */
+export const dynamic = "force-dynamic";
+
+export default function StoryPublicMissTrigger() {
   return (
     <PublicMiss
       title="This page isn’t available."
