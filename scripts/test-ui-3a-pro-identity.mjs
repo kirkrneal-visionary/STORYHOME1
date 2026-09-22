@@ -63,6 +63,8 @@ assert.doesNotMatch(usernamePage, /ui-3a-review|isUi3aOwnerReviewAllowed/);
 
 const helper = read("src/lib/ui-3a-owner-review.ts");
 assert.match(helper, /vercelEnv !== "production"/);
+assert.match(helper, /-git-/);
+assert.match(helper, /storyhome-1-eqmg\.vercel\.app/);
 assert.match(helper, /\/internal\/ui-3a-review\/world/);
 assert.match(helper, /Sarah Jenkins/);
 assert.match(helper, /sarahpro/);
@@ -70,6 +72,7 @@ assert.doesNotMatch(helper, /from\("profiles"\)|insert\(|upsert\(/);
 
 const reviewWorld = read("src/app/internal/ui-3a-review/world/page.tsx");
 assert.match(reviewWorld, /isUi3aOwnerReviewAllowed/);
+assert.match(reviewWorld, /isUi3aOwnerReviewHost/);
 assert.match(reviewWorld, /AgentWorldView/);
 assert.match(reviewWorld, /listings=\{\[\]\}/);
 assert.match(reviewWorld, /index: false/);
@@ -77,6 +80,7 @@ assert.doesNotMatch(reviewWorld, /getServerSupabase|from\("profiles"\)/);
 
 const reviewEntry = read("src/app/internal/ui-3a-review/entry/page.tsx");
 assert.match(reviewEntry, /isUi3aOwnerReviewAllowed/);
+assert.match(reviewEntry, /isUi3aOwnerReviewHost/);
 assert.match(reviewEntry, /UsernamePublicStub/);
 assert.match(reviewEntry, /index: false/);
 assert.doesNotMatch(reviewEntry, /getServerSupabase|resolvePublicUsername/);

@@ -11,6 +11,16 @@ export function isUi3aOwnerReviewAllowed(
   return vercelEnv !== "production";
 }
 
+/**
+ * Runtime host lock. Git preview aliases stay open.
+ * Blocked live hosts: storyhome-1-eqmg.vercel.app, www.storyhome.app, storyhome.app
+ */
+export function isUi3aOwnerReviewHost(host: string | null | undefined): boolean {
+  const h = (host ?? "").split(":")[0]?.toLowerCase() ?? "";
+  if (!h || h === "localhost" || h === "127.0.0.1") return true;
+  return h.includes("-git-") && h.endsWith(".vercel.app");
+}
+
 export const UI3A_OWNER_REVIEW_WORLD_PATH = "/internal/ui-3a-review/world";
 export const UI3A_OWNER_REVIEW_ENTRY_PATH = "/internal/ui-3a-review/entry";
 

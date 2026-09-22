@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { UsernamePublicStub } from "@/components/username/UsernamePublicStub";
 import {
   isUi3aOwnerReviewAllowed,
+  isUi3aOwnerReviewHost,
   ui3aOwnerReviewUsernameStub,
 } from "@/lib/ui-3a-owner-review";
 
@@ -12,8 +14,9 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Ui3aOwnerReviewEntryPage() {
-  if (!isUi3aOwnerReviewAllowed()) notFound();
+export default async function Ui3aOwnerReviewEntryPage() {
+  const host = (await headers()).get("host");
+  if (!isUi3aOwnerReviewAllowed() || !isUi3aOwnerReviewHost(host)) notFound();
 
   return (
     <>

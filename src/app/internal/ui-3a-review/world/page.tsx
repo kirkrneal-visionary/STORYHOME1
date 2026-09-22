@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AgentWorldView } from "@/components/agents/AgentWorldView";
 import {
   isUi3aOwnerReviewAllowed,
+  isUi3aOwnerReviewHost,
   ui3aOwnerReviewAgent,
 } from "@/lib/ui-3a-owner-review";
 
@@ -12,8 +14,9 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function Ui3aOwnerReviewWorldPage() {
-  if (!isUi3aOwnerReviewAllowed()) notFound();
+export default async function Ui3aOwnerReviewWorldPage() {
+  const host = (await headers()).get("host");
+  if (!isUi3aOwnerReviewAllowed() || !isUi3aOwnerReviewHost(host)) notFound();
 
   return (
     <>
