@@ -94,6 +94,9 @@ assert.match(reviewPage, /ListingCard/);
 assert.match(reviewPage, /dense/);
 assert.doesNotMatch(reviewPage, /fetchMarketplaceListings/);
 
+const tsconfig = read("tsconfig.json");
+assert.match(tsconfig, /scripts\/test-ui-5-owner-review-gate\.ts/);
+
 const pkg = read("package.json");
 assert.match(pkg, /test:ui-5-marketplace-visual/);
 assert.doesNotMatch(pkg, /@radix-ui\/react-slot|class-variance-authority/);
