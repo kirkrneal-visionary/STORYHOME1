@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import { SettingsLoadingHint } from "@/components/settings/SettingsLoadingHint";
 import { STORY_PRO_SETTINGS_BLOCKED } from "@/lib/account/assurance";
 
 type Choice = "available" | "temporarily_unavailable";
@@ -92,9 +93,9 @@ export function AvailabilityControl({ canEdit }: { canEdit: boolean }) {
       </p>
       <section className="rounded-xl border border-hairline px-4 py-3">
         <h2 className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">Current availability</h2>
-        <p className="mt-1 text-sm font-semibold text-ink">
-          {ready ? current : error ? "" : "Loading…"}
-        </p>
+        <div className="mt-1 text-sm font-semibold text-ink">
+          {ready ? current : error ? "" : <SettingsLoadingHint />}
+        </div>
       </section>
       <div role="radiogroup" aria-label="Availability" className="space-y-2">
         {CHOICES.map(([value, title, copy]) => {

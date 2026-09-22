@@ -16,10 +16,9 @@ import { PurposeCard } from "@/components/settings/PurposeCard";
 import { ProfileControl } from "@/components/settings/ProfileControl";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 import { SettingsCategoryRow } from "@/components/settings/SettingsCategoryRow";
+import { SettingsLoadingHint } from "@/components/settings/SettingsLoadingHint";
 
-const settingsFallback = (
-  <p className="text-sm text-[var(--muted)]">Loading…</p>
-);
+const settingsFallback = <SettingsLoadingHint />;
 const LivingMarkLibraryCard = dynamic(
   () =>
     import("@/components/settings/LivingMarkLibraryCard").then((m) => m.LivingMarkLibraryCard),
@@ -189,10 +188,18 @@ export function SettingsView() {
 
   if (!isLoggedIn || !user) {
     return (
-      <div className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] text-center md:px-6">
+      <div
+        data-ui-6="settings-hygiene"
+        className="mx-auto max-w-lg px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+2rem)] text-center md:px-6"
+      >
         <h1 className="type-page-title text-ink">Settings</h1>
         <p className="mt-3 text-sm text-[var(--muted)]">Log in to manage your account.</p>
-        <Link href="/login?next=/settings" className="mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy">Log in</Link>
+        <Link
+          href="/login?next=/settings"
+          className="story-press mt-6 inline-flex h-11 items-center rounded-xl bg-gold px-5 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+        >
+          Log in
+        </Link>
       </div>
     );
   }
@@ -303,7 +310,7 @@ export function SettingsView() {
   const backLink = (href: string, label = "← Back") => (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+      className="story-press inline-flex min-h-11 items-center text-sm font-semibold text-[var(--muted)] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
     >
       {label}
     </Link>
@@ -311,20 +318,23 @@ export function SettingsView() {
   const doneLink = (
     <Link
       href={closeHref}
-      className="inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+      className="story-press inline-flex min-h-11 items-center justify-center rounded-lg border border-hairline px-4 text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
     >
       Done
     </Link>
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
+    <div
+      data-ui-6="settings-hygiene"
+      className="mx-auto max-w-3xl px-4 pb-[var(--story-bottom-clearance)] pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6"
+    >
       <header>
         <p className="font-mono text-[11px] tracking-[0.16em] text-gold uppercase">Account settings</p>
         <h1
           id={panelTitleId}
           tabIndex={-1}
-          className="mt-2 type-page-title text-ink outline-none md:text-4xl"
+          className="mt-2 type-page-title text-ink outline-none"
         >
           {location.screen === "root"
             ? "Settings"
@@ -384,7 +394,7 @@ export function SettingsView() {
       </header>
 
       {loading ? (
-        <p className="mt-8 text-sm text-[var(--muted)]">Loading your settings…</p>
+        <SettingsLoadingHint className="mt-8" label="Loading settings" />
       ) : location.screen === "root" ? (
         <div className="mt-8 space-y-3">
           <SettingsCategoryRow

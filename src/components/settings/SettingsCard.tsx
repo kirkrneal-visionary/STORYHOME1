@@ -17,7 +17,7 @@ export function SettingsCard({
         <Icon className="h-5 w-5 text-[var(--muted)]" />
         <div>
           <h2 className="type-card-title text-ink">{title}</h2>
-          {subtitle && <p className="text-xs text-[var(--muted)]">{subtitle}</p>}
+          {subtitle && <p className="type-meta text-[var(--muted)]">{subtitle}</p>}
         </div>
       </div>
       <div className="mt-4">{children}</div>
