@@ -54,7 +54,8 @@ const settings = read("src/components/settings/SettingsView.tsx");
 assert.doesNotMatch(settings, /PublicMiss|StoryEmptyWell/);
 
 const aw = read("src/components/agents/AgentWorldView.tsx");
-assert.doesNotMatch(aw, /PublicMiss|StoryEmptyWell/);
+assert.doesNotMatch(aw, /PublicMiss/);
+assert.match(aw, /StoryEmptyWell/);
 assert.match(aw, /data-agent-world-listings-empty/);
 
 const mw = read("src/middleware.ts");

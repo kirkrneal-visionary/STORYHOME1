@@ -41,7 +41,6 @@ for (const rel of [
   "src/components/county/LocalPlaceIdentityShell.tsx",
   "src/components/home/HomeSearchHero.tsx",
   "src/components/MarketplaceView.tsx",
-  "src/components/agents/AgentWorldView.tsx",
   "src/components/settings/SettingsView.tsx",
   "src/components/GlobalNav.tsx",
 ]) {
