@@ -41,7 +41,7 @@ export function SearchToolbar({
             value={filters.query}
             onChange={(e) => patch({ query: e.target.value })}
             placeholder="City, county, ZIP, address…"
-            className="field-input h-10 min-w-[180px] flex-1 md:max-w-sm"
+            className="field-input min-h-11 min-w-[180px] flex-1 md:max-w-sm"
           />
 
           <FilterSelect
@@ -106,7 +106,7 @@ export function SearchToolbar({
           {filters.yearMin || filters.yearMax ? (
             <span
               data-year-chip=""
-              className="inline-flex h-10 items-center gap-1 rounded-[var(--radius-md)] border border-gold/50 bg-gold/15 px-2 text-sm font-semibold text-ink"
+              className="inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-md)] border border-gold/50 bg-gold/15 px-2 text-sm font-semibold text-ink"
             >
               <button
                 type="button"
@@ -130,7 +130,7 @@ export function SearchToolbar({
             type="button"
             onClick={onOpenMore}
             className={cn(
-              "story-press inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-semibold",
+              "story-press inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-md)] border px-3 text-sm font-semibold",
               activeFilterCount > 0
                 ? "border-gold/50 bg-gold/15 text-ink"
                 : "border-hairline bg-[var(--market-control-bg)] text-ink",
@@ -161,7 +161,7 @@ export function SearchToolbar({
                 onChange={(e) =>
                   patch({ sort: e.target.value as SortOption })
                 }
-                className="field-input h-10 w-auto"
+                className="field-input min-h-11 w-auto"
               >
                 <option value="recommended">Homes for You</option>
                 <option value="price_asc">Price (Low–High)</option>
@@ -184,9 +184,9 @@ export function SearchToolbar({
                   type="button"
                   onClick={() => onMobileView(id)}
                   className={cn(
-                    "story-press inline-flex h-9 items-center gap-1 rounded-[var(--radius-sm)] px-2.5 text-xs font-semibold",
+                    "story-press inline-flex min-h-11 items-center gap-1 rounded-[var(--radius-sm)] px-2.5 text-xs font-semibold",
                     mobileView === id
-                      ? "bg-gold text-navy"
+                      ? "bg-[var(--paper)] text-navy"
                       : "text-[var(--muted)]",
                   )}
                 >
@@ -199,8 +199,11 @@ export function SearchToolbar({
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <p className="font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase">
-            {resultCount} results · East Texas map search
+          <p
+            data-market-query={filters.query.trim() || "East Texas"}
+            className="story-market-query font-mono text-[11px] tracking-wider text-[var(--muted)] uppercase"
+          >
+            {resultCount} results · {filters.query.trim() || "East Texas map search"}
           </p>
           <p className="hidden text-xs text-[var(--muted)] lg:block">
             Draw on the map or pan + “Search this area”
@@ -235,7 +238,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="field-input h-10 appearance-none py-2 pr-8 pl-3 font-semibold"
+        className="field-input min-h-11 appearance-none py-2 pr-8 pl-3 font-semibold"
       >
         {options.map(([v, text]) => (
           <option key={`${label}-${v}`} value={v}>
