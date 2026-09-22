@@ -525,6 +525,37 @@ html[data-role="professional"] {
 .story-bottom-dock .story-press:active {
   transform: none;
 }
+
+/* UI-2 — shared public action language. Compose with .story-press. */
+.story-cta-primary,
+.story-cta-secondary {
+  display: inline-flex;
+  min-height: var(--control-min);
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+  border-radius: var(--radius-md);
+  font-size: var(--type-control);
+  line-height: var(--type-control-lh);
+  font-weight: 700;
+  text-decoration: none;
+  outline: none;
+}
+.story-cta-primary:focus-visible,
+.story-cta-secondary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.story-cta-primary {
+  background: var(--gold);
+  color: var(--navy);
+}
+.story-cta-secondary {
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--ink);
+}
+
 .story-bottom-dock .story-nav-hit[data-nav-state="pending"] {
   opacity: 1;
 }

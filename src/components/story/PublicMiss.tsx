@@ -26,7 +26,7 @@ export function PublicMiss({ title, body }: PublicMissProps) {
         <p className="mt-3 type-ui text-[var(--muted)]">{body}</p>
         <Link
           href="/"
-          className="story-press mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-gold px-6 text-sm font-bold text-navy focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+          className="story-press story-cta-primary mt-7"
         >
           Back to Story Home
         </Link>

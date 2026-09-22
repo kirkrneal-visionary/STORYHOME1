@@ -14,7 +14,7 @@ export default function RentPage() {
         </p>
         <Link
           href="/marketplace?q=Lufkin%2C%20TX&intent=sale"
-          className="story-press mt-8 inline-flex h-11 items-center justify-center rounded-[var(--radius-md)] bg-gold px-5 text-sm font-bold text-navy"
+          className="story-press story-cta-primary mt-8"
         >
           Search homes for sale
         </Link>

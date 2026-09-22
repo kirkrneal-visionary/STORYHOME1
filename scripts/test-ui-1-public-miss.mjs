@@ -14,8 +14,8 @@ assert.match(miss, /data-story-public-miss/);
 assert.match(miss, /type-page-title/);
 assert.match(miss, /Back to Story Home/);
 assert.match(miss, /href="\/"/);
-assert.match(miss, /min-h-11/);
-assert.match(miss, /focus-visible:outline-gold/);
+assert.match(miss, /story-cta-primary/);
+assert.match(miss, /story-press/);
 assert.doesNotMatch(miss, /Coming Soon|inactive|activation|FIPS|UUID|404 error/i);
 assert.doesNotMatch(miss, /CountyIdentityShell|data-county|framer-motion|next\/image/);
 

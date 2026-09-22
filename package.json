@@ -56,6 +56,7 @@
     "test:shell": "node scripts/test-story-messages-referrals.mjs && node scripts/test-phase-1-coherence.mjs",
     "test:design-tokens": "node scripts/test-design-tokens.mjs",
     "test:ui-1-public-miss": "node scripts/test-ui-1-public-miss.mjs",
+    "test:ui-2-cta-focus": "node scripts/test-ui-2-cta-focus.mjs",
     "test:phase-1": "node scripts/test-phase-1-coherence.mjs && node scripts/test-typography-system.mjs && node scripts/test-design-tokens.mjs && node scripts/test-story-feel-wave-1.mjs",
     "test:phase-2": "node scripts/test-phase-2-truth.mjs && node scripts/test-shi-obs-ops.mjs && node scripts/test-story-analytics-foundation.mjs && node scripts/test-phase-1-coherence.mjs",
     "test:prelaunch-security": "node --experimental-strip-types scripts/test-prelaunch-security.ts",
