@@ -64,8 +64,9 @@ assert.match(mw, /internal\/story-public-miss/);
 assert.doesNotMatch(mw, /Coming Soon|inactive county/i);
 
 const trigger = read("src/app/internal/story-public-miss/page.tsx");
-assert.match(trigger, /notFound\(\)/);
-assert.doesNotMatch(trigger, /Coming Soon/i);
+assert.match(trigger, /PublicMiss/);
+assert.match(trigger, /This page isn’t available|This page isn't available/);
+assert.doesNotMatch(trigger, /Coming Soon|inactive|activation/i);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:ui-1-public-miss/);
