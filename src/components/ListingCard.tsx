@@ -110,15 +110,15 @@ export function ListingCard({
           </button>
         </div>
 
-        <div className={cn("story-copy mt-3", dense ? "px-3 pb-3" : "mt-4")}>
+        <div className={cn("story-copy mt-3", dense ? "px-3 pb-2" : "mt-4")}>
           <h3 className="type-card-title text-ink">
             {listing.addressSerif}
           </h3>
-          <p className="type-meta mt-1 text-[var(--muted)]">
+          <p className={cn("type-meta mt-1", dense ? "text-paper/50" : "text-[var(--muted)]")}>
             {listing.city} · {listing.countyName.replace(" County", "")} ·{" "}
             {listing.propertyType}
           </p>
-          <p className="type-meta type-nums mt-1 text-[var(--muted)]">
+          <p className={cn("type-meta type-nums mt-1", dense ? "text-paper/55" : "text-[var(--muted)]")}>
             {listing.beds} beds · {listing.baths} baths ·{" "}
             {listing.sqft.toLocaleString()} sqft · {listing.lotSize}
             {listing.sqft > 0 && (
@@ -131,7 +131,7 @@ export function ListingCard({
       <div
         className={cn(
           "flex items-center justify-between border-t border-hairline",
-          dense ? "mx-3 my-0 py-2.5" : "my-4 pt-3",
+          dense ? "mx-3 my-0 py-2" : "my-4 pt-3",
         )}
       >
         <Link
@@ -158,7 +158,12 @@ export function ListingCard({
         </Link>
       </div>
 
-      <div className="type-meta flex items-center gap-4 text-[var(--muted)]">
+      <div
+        className={cn(
+          "type-meta flex items-center gap-4",
+          dense ? "px-3 pb-3 text-paper/40" : "text-[var(--muted)]",
+        )}
+      >
         <span>♡ {listing.likeCount} likes</span>
         <span>❑ {listing.saveCount + (saved ? 1 : 0)} saves</span>
         <span className="inline-flex items-center gap-1">

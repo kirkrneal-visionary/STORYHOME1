@@ -699,6 +699,17 @@ html[data-role="professional"] {
   box-shadow: none;
 }
 
+/* UI-5 — Marketplace as the Story Home property room. Visual only. */
+.story-market-canvas[data-ui-5="marketplace-visual"] [data-story-empty] {
+  margin-top: 0.25rem;
+}
+.story-market-query {
+  letter-spacing: 0.08em;
+}
+.story-market-card .story-copy h3 {
+  letter-spacing: -0.01em;
+}
+
 /* Story Glass — floating translucent chrome (selective blur) */
 .story-glass {
   background: var(--glass-bg);

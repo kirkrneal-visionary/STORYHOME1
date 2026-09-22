@@ -178,7 +178,10 @@ export default function MarketplaceView() {
   const activeFilterCount = countActiveFilters(filters);
 
   return (
-    <div className="story-market-canvas flex h-dvh flex-col pt-[var(--story-safe-top)]">
+    <div
+      className="story-market-canvas flex h-dvh flex-col pt-[var(--story-safe-top)]"
+      data-ui-5="marketplace-visual"
+    >
       <SearchToolbar
         filters={filters}
         onChange={setFilters}
@@ -213,11 +216,13 @@ export default function MarketplaceView() {
               </div>
             ) : allListings.length === 0 ? (
               <StoryEmptyWell
+                className="story-well px-4 py-8 text-center"
                 title="No listings yet"
                 body="New homes will appear here as local agents list them."
               />
             ) : listings.length === 0 ? (
               <StoryEmptyWell
+                className="story-well px-4 py-8 text-center"
                 title="No homes in this map area"
                 body="Clear the drawn boundary or widen filters to see more East Texas listings."
               >
