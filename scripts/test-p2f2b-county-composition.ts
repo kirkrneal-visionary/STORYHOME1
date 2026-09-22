@@ -26,9 +26,10 @@ assert.equal(
 const shell = read("src/components/county/CountyIdentityShell.tsx");
 const dir = read("src/components/county/CountyLocalPlaceDirectory.tsx");
 const page = read("src/app/tx/[county]/page.tsx");
-const fixture = read("src/app/internal/p2f2a-fixture/page.tsx");
 const placeShell = read("src/components/county/LocalPlaceIdentityShell.tsx");
 const placePage = read("src/app/tx/[county]/[place]/page.tsx");
+
+assert.equal(existsSync(join(root, "src/app/internal/p2f2a-fixture/page.tsx")), false);
 
 assert.match(shell, /data-county-composition/);
 assert.match(shell, /data-county-cover-fallback/);
@@ -64,11 +65,6 @@ assert.match(page, /CountyLocalPlaceDirectory/);
 assert.match(page, /index: false/);
 assert.match(page, /Explore property across/);
 assert.doesNotMatch(page, /Coming Soon|FIPS|48373|<img|next\/image/);
-
-assert.match(fixture, /CountyIdentityShell/);
-assert.match(fixture, /P2F2A_PLACE_FIXTURE/);
-assert.match(fixture, /P2F2A_MULTI_PLACE_LAYOUT_FIXTURE/);
-assert.match(fixture, /notFound\(\)/);
 
 assert.doesNotMatch(placeShell, /data-county-composition|CountyIdentityShell/);
 assert.match(placePage, /LocalPlaceIdentityShell/);

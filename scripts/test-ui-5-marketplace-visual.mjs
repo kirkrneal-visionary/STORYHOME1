@@ -3,7 +3,7 @@
  * Run: node scripts/test-ui-5-marketplace-visual.mjs
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -80,22 +80,12 @@ assert.match(place, /Explore Properties/);
 const demo = read("src/lib/demo-data.ts");
 assert.match(demo, /DEMO_LISTINGS:\s*DemoListing\[\]\s*=\s*\[\]/);
 
-const review = read("src/lib/ui-5-owner-review.ts");
-assert.match(review, /UI5_OWNER_REVIEW_CARDS_PATH/);
-assert.match(review, /isUi5OwnerReviewHost/);
-assert.match(review, /ui5OwnerReviewListings/);
-assert.doesNotMatch(review, /fetchMarketplaceListings/);
-
-const reviewPage = read("src/app/internal/ui-5-review/cards/page.tsx");
-assert.match(reviewPage, /isUi5OwnerReviewAllowed/);
-assert.match(reviewPage, /isUi5OwnerReviewHost/);
-assert.match(reviewPage, /data-ui-5-owner-review="cards"/);
-assert.match(reviewPage, /ListingCard/);
-assert.match(reviewPage, /dense/);
-assert.doesNotMatch(reviewPage, /fetchMarketplaceListings/);
+assert.equal(existsSync(join(root, "src/lib/ui-5-owner-review.ts")), false);
+assert.equal(existsSync(join(root, "src/app/internal/ui-5-review/cards/page.tsx")), false);
+assert.equal(existsSync(join(root, "scripts/test-ui-5-owner-review-gate.ts")), false);
 
 const tsconfig = read("tsconfig.json");
-assert.match(tsconfig, /scripts\/test-ui-5-owner-review-gate\.ts/);
+assert.doesNotMatch(tsconfig, /scripts\/test-ui-5-owner-review-gate\.ts/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:ui-5-marketplace-visual/);

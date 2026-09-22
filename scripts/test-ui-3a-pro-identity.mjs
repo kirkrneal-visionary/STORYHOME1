@@ -3,7 +3,7 @@
  * Run: node scripts/test-ui-3a-pro-identity.mjs
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -61,29 +61,10 @@ const usernamePage = read("src/app/u/[username]/page.tsx");
 assert.match(usernamePage, /resolvePublicUsername/);
 assert.doesNotMatch(usernamePage, /ui-3a-review|isUi3aOwnerReviewAllowed/);
 
-const helper = read("src/lib/ui-3a-owner-review.ts");
-assert.match(helper, /vercelEnv !== "production"/);
-assert.match(helper, /-git-/);
-assert.match(helper, /storyhome-1-eqmg\.vercel\.app/);
-assert.match(helper, /\/internal\/ui-3a-review\/world/);
-assert.match(helper, /Sarah Jenkins/);
-assert.match(helper, /sarahpro/);
-assert.doesNotMatch(helper, /from\("profiles"\)|insert\(|upsert\(/);
-
-const reviewWorld = read("src/app/internal/ui-3a-review/world/page.tsx");
-assert.match(reviewWorld, /isUi3aOwnerReviewAllowed/);
-assert.match(reviewWorld, /isUi3aOwnerReviewHost/);
-assert.match(reviewWorld, /AgentWorldView/);
-assert.match(reviewWorld, /listings=\{\[\]\}/);
-assert.match(reviewWorld, /index: false/);
-assert.doesNotMatch(reviewWorld, /getServerSupabase|from\("profiles"\)/);
-
-const reviewEntry = read("src/app/internal/ui-3a-review/entry/page.tsx");
-assert.match(reviewEntry, /isUi3aOwnerReviewAllowed/);
-assert.match(reviewEntry, /isUi3aOwnerReviewHost/);
-assert.match(reviewEntry, /UsernamePublicStub/);
-assert.match(reviewEntry, /index: false/);
-assert.doesNotMatch(reviewEntry, /getServerSupabase|resolvePublicUsername/);
+assert.equal(existsSync(join(root, "src/lib/ui-3a-owner-review.ts")), false);
+assert.equal(existsSync(join(root, "src/app/internal/ui-3a-review/world/page.tsx")), false);
+assert.equal(existsSync(join(root, "src/app/internal/ui-3a-review/entry/page.tsx")), false);
+assert.equal(existsSync(join(root, "scripts/test-ui-3a-owner-review-gate.ts")), false);
 
 const stub = read("src/components/username/UsernamePublicStub.tsx");
 assert.match(stub, /data-ui-3a="username-public"/);

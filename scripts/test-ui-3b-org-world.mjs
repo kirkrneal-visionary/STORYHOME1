@@ -3,7 +3,7 @@
  * Run: node scripts/test-ui-3b-org-world.mjs
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -52,20 +52,9 @@ assert.match(page, /BrokeragePublicView/);
 assert.doesNotMatch(page, /ui-3b-review|isUi3bOwnerReviewAllowed/);
 assert.doesNotMatch(page, /own_brokerage_relationship_history/);
 
-const helper = read("src/lib/ui-3b-owner-review.ts");
-assert.match(helper, /\/internal\/ui-3b-review\/org/);
-assert.match(helper, /Story Home Realty/);
-assert.match(helper, /Sarah Jenkins/);
-assert.match(helper, /isUi3aOwnerReviewAllowed|isUi3bOwnerReviewAllowed/);
-assert.doesNotMatch(helper, /from\("brokerages"\)|insert\(|upsert\(/);
-assert.doesNotMatch(helper, /create_managed_brokerage/);
-
-const reviewOrg = read("src/app/internal/ui-3b-review/org/page.tsx");
-assert.match(reviewOrg, /isUi3bOwnerReviewAllowed/);
-assert.match(reviewOrg, /isUi3bOwnerReviewHost/);
-assert.match(reviewOrg, /BrokeragePublicView/);
-assert.match(reviewOrg, /index: false/);
-assert.doesNotMatch(reviewOrg, /getServerSupabase|from\("brokerages"\)/);
+assert.equal(existsSync(join(root, "src/lib/ui-3b-owner-review.ts")), false);
+assert.equal(existsSync(join(root, "src/app/internal/ui-3b-review/org/page.tsx")), false);
+assert.equal(existsSync(join(root, "scripts/test-ui-3b-owner-review-gate.ts")), false);
 
 const world = read("src/components/agents/AgentWorldView.tsx");
 assert.match(world, /data-ui-3a="professional-identity"/);
