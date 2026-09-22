@@ -57,6 +57,16 @@ const aw = read("src/components/agents/AgentWorldView.tsx");
 assert.doesNotMatch(aw, /PublicMiss|StoryEmptyWell/);
 assert.match(aw, /data-agent-world-listings-empty/);
 
+const mw = read("src/middleware.ts");
+assert.match(mw, /publicMissResponse/);
+assert.match(mw, /status: 404/);
+assert.match(mw, /internal\/story-public-miss/);
+assert.doesNotMatch(mw, /Coming Soon|inactive county/i);
+
+const trigger = read("src/app/internal/story-public-miss/page.tsx");
+assert.match(trigger, /notFound\(\)/);
+assert.doesNotMatch(trigger, /Coming Soon/i);
+
 const pkg = read("package.json");
 assert.match(pkg, /test:ui-1-public-miss/);
 
