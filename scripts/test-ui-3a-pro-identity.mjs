@@ -100,7 +100,7 @@ const profile = read("src/app/profile/page.tsx");
 assert.doesNotMatch(profile, /data-ui-3a|story-cta-primary|LivingMarkPresence/);
 
 const brokerage = read("src/components/brokerage/BrokeragePublicView.tsx");
-assert.doesNotMatch(brokerage, /data-ui-3a|story-cta-primary/);
+assert.doesNotMatch(brokerage, /data-ui-3a|LivingMarkPresence/);
 
 for (const rel of [
   "src/components/county/CountyIdentityShell.tsx",
