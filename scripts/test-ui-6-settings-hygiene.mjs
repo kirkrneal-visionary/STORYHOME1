@@ -3,7 +3,7 @@
  * Run: node scripts/test-ui-6-settings-hygiene.mjs
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -75,25 +75,12 @@ const nav = read("src/lib/account/settings-nav.ts");
 assert.match(nav, /setup.*mfa/);
 assert.doesNotMatch(nav, /ui-6|owner-review/);
 
-const review = read("src/lib/ui-6-owner-review.ts");
-assert.match(review, /UI6_OWNER_REVIEW_SETTINGS_PATH/);
-assert.match(review, /isUi6OwnerReviewHost/);
-assert.match(review, /settingsCapabilities/);
-assert.doesNotMatch(review, /from\("profiles"\)|seller.?passcode/i);
-
-const reviewPage = read("src/app/internal/ui-6-review/settings/page.tsx");
-assert.match(reviewPage, /isUi6OwnerReviewAllowed/);
-assert.match(reviewPage, /isUi6OwnerReviewHost/);
-assert.match(reviewPage, /data-ui-6-owner-review="settings"/);
-assert.match(reviewPage, /SettingsCategoryRow/);
-assert.match(reviewPage, /SettingsCard/);
-assert.match(reviewPage, /Request Primary County/);
-assert.match(reviewPage, /SettingsLoadingHint/);
-assert.doesNotMatch(reviewPage, /SettingsView|PrimaryCountyControl|ServiceCountiesControl|AvailabilityControl/);
-assert.doesNotMatch(reviewPage, /PublicMiss|StoryEmptyWell|story-cta-primary/);
+assert.equal(existsSync(join(root, "src/lib/ui-6-owner-review.ts")), false);
+assert.equal(existsSync(join(root, "src/app/internal/ui-6-review/settings/page.tsx")), false);
+assert.equal(existsSync(join(root, "scripts/test-ui-6-owner-review-gate.ts")), false);
 
 const tsconfig = read("tsconfig.json");
-assert.match(tsconfig, /scripts\/test-ui-6-owner-review-gate\.ts/);
+assert.doesNotMatch(tsconfig, /scripts\/test-ui-6-owner-review-gate\.ts/);
 
 const pkg = read("package.json");
 assert.match(pkg, /test:ui-6-settings-hygiene/);
