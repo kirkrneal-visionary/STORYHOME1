@@ -61,13 +61,13 @@ comment on table public.county_story_activation is
   'County Stories County eligibility. Separate from County profile activation and P1C geography. No row means inactive. Server/service-role only.';
 
 insert into public.county_story_activation (county_fips, is_active) values
-  ('48005', true),
-  ('48291', true),
-  ('48373', true),
-  ('48407', true),
-  ('48455', true),
-  ('48457', true),
-  ('48471', true)
+  ('48005', true), -- Angelina County
+  ('48291', true), -- Liberty County
+  ('48373', true), -- Polk County
+  ('48407', true), -- San Jacinto County
+  ('48455', true), -- Trinity County
+  ('48457', true), -- Tyler County
+  ('48471', true)  -- Walker County
 on conflict (county_fips) do update
   set is_active = excluded.is_active;
 

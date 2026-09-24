@@ -72,6 +72,22 @@ assert.equal(
   countyStoryDayFromInstant(new Date("2026-11-01T08:00:00-06:00")),
   "2026-11-01",
 );
+assert.equal(
+  countyStoryDayFromInstant(new Date("2026-03-08T01:59:00-06:00")),
+  "2026-03-07",
+);
+assert.equal(
+  countyStoryDayFromInstant(new Date("2026-03-08T03:00:00-05:00")),
+  "2026-03-07",
+);
+assert.equal(
+  countyStoryDayFromInstant(new Date("2026-11-01T01:59:00-05:00")),
+  "2026-10-31",
+);
+assert.equal(
+  countyStoryDayFromInstant(new Date("2026-11-01T01:00:00-06:00")),
+  "2026-10-31",
+);
 
 assert.equal(
   countyStoryPublisherEligible({
@@ -117,7 +133,8 @@ assert.doesNotMatch(mig, /create bucket|storage\.buckets|living-marks/);
 assert.doesNotMatch(mig, /publish_county_story\(/);
 
 const eligibility = read("src/lib/county-stories/eligibility.ts");
-assert.match(eligibility, /brokerageId is intentionally ignored/);
+assert.match(eligibility, /brokerage_id is intentionally ignored/);
+assert.match(eligibility, /void opts\.brokerageId/);
 assert.doesNotMatch(eligibility, /mayUseStoryPro\(/);
 
 for (const rel of [
@@ -131,6 +148,8 @@ for (const rel of [
   "src/lib/shi/require-pro.ts",
   "src/lib/account/purpose.ts",
   "src/lib/account/professional-geography.ts",
+  "src/app/tx/[county]/page.tsx",
+  "src/app/tx/[county]/[place]/page.tsx",
 ]) {
   assert.doesNotMatch(
     read(rel),
@@ -180,6 +199,7 @@ for (const name of [
   "story_day_rollover",
   "dst_spring",
   "dst_fall",
+  "dst_clock_transitions",
   "launch_seven_montgomery_denied",
   "eligibility_foundation",
   "nullable_listing_and_brokerage",
@@ -192,6 +212,8 @@ for (const name of [
   "anon_write_denied",
   "authenticated_write_denied",
   "authenticated_mutate_denied",
+  "anon_select_denied",
+  "authenticated_select_denied",
   "service_slots_consistent",
 ]) {
   assert.match(out, new RegExp(name), `missing proof ${name}\n${out}`);
@@ -201,6 +223,7 @@ const shaped = "county_stories_w1_shaped";
 createdb(shaped);
 applyTo(shaped, "scripts/county-stories-w1-bootstrap.sql");
 applyTo(shaped, "supabase/migrations/0071_tx_county_reference.sql");
+applyTo(shaped, "supabase/migrations/0072_tx_county_product_activation.sql");
 applyTo(shaped, migPath);
 const shapedCount = spawnSync(
   "sudo",
@@ -213,12 +236,12 @@ const shapedCount = spawnSync(
     "-A",
     "-t",
     "-c",
-    "select count(*) from public.county_story_activation",
+    "select (select count(*) from public.county_story_activation)::text || ',' || (select count(*) from public.tx_county_product_activation)::text || ',' || (select count(*) from public.county_story_activation where county_fips = '48339')::text || ',' || (select count(*) from public.tx_county_product_activation where county_fips = '48339')::text",
     shaped,
   ],
   { encoding: "utf8" },
 );
 assert.equal(shapedCount.status, 0, shapedCount.stderr);
-assert.equal(shapedCount.stdout.trim(), "7");
+assert.equal(shapedCount.stdout.trim(), "7,7,0,0");
 
 console.log("county-stories-w1-authority: ok");

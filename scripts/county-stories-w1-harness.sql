@@ -1,5 +1,6 @@
 -- Isolated County Stories Wave 1 proofs. Not production.
-select set_config('request.jwt.claim.role', 'service_role', true);
+-- Session-level (not transaction-local) so later DO blocks keep service_role.
+select set_config('request.jwt.claim.role', 'service_role', false);
 
 do $$
 declare
@@ -55,6 +56,31 @@ begin
     raise exception 'dst_fall_reset';
   end if;
   raise notice 'dst_fall';
+
+  -- Clock skip 2026-03-08 02:00 CST → 03:00 CDT. Both sides stay on prior Story Day.
+  if public.county_story_day('2026-03-08 01:59:00-06'::timestamptz) <> date '2026-03-07' then
+    raise exception 'dst_spring_clock_before';
+  end if;
+  if public.county_story_day('2026-03-08 03:00:00-05'::timestamptz) <> date '2026-03-07' then
+    raise exception 'dst_spring_clock_after';
+  end if;
+  if public.county_story_next_reset('2026-03-08 01:59:00-06'::timestamptz)
+       <> timestamptz '2026-03-08 08:00:00-05' then
+    raise exception 'dst_spring_clock_reset';
+  end if;
+
+  -- Clock repeat 2026-11-01 02:00 CDT → 01:00 CST. Both sides stay on prior Story Day.
+  if public.county_story_day('2026-11-01 01:59:00-05'::timestamptz) <> date '2026-10-31' then
+    raise exception 'dst_fall_clock_before';
+  end if;
+  if public.county_story_day('2026-11-01 01:00:00-06'::timestamptz) <> date '2026-10-31' then
+    raise exception 'dst_fall_clock_after';
+  end if;
+  if public.county_story_next_reset('2026-11-01 01:00:00-06'::timestamptz)
+       <> timestamptz '2026-11-01 08:00:00-06' then
+    raise exception 'dst_fall_clock_reset';
+  end if;
+  raise notice 'dst_clock_transitions';
 end
 $$;
 
@@ -88,6 +114,23 @@ begin
   end if;
   if public.county_story_county_is_active('48339') is not false then
     raise exception 'montgomery_fn_active';
+  end if;
+  if (select canonical_name from public.tx_counties where county_fips = '48005')
+       <> 'Angelina County'
+    or (select canonical_name from public.tx_counties where county_fips = '48291')
+       <> 'Liberty County'
+    or (select canonical_name from public.tx_counties where county_fips = '48373')
+       <> 'Polk County'
+    or (select canonical_name from public.tx_counties where county_fips = '48407')
+       <> 'San Jacinto County'
+    or (select canonical_name from public.tx_counties where county_fips = '48455')
+       <> 'Trinity County'
+    or (select canonical_name from public.tx_counties where county_fips = '48457')
+       <> 'Tyler County'
+    or (select canonical_name from public.tx_counties where county_fips = '48471')
+       <> 'Walker County'
+  then
+    raise exception 'launch_fips_name_mismatch';
   end if;
   raise notice 'launch_seven_montgomery_denied';
 end
@@ -153,6 +196,7 @@ begin
     when check_violation then null;
     when others then
       if sqlerrm = 'slot_31_allowed' then raise; end if;
+      raise;
   end;
   raise notice 'slot_over_30_rejected';
 end
@@ -175,6 +219,7 @@ begin
     when unique_violation then null;
     when others then
       if sqlerrm = 'duplicate_slot_allowed' then raise; end if;
+      raise;
   end;
   raise notice 'duplicate_county_day_slot_rejected';
 end
@@ -197,6 +242,7 @@ begin
     when unique_violation then null;
     when others then
       if sqlerrm = 'second_owner_day_allowed' then raise; end if;
+      raise;
   end;
   raise notice 'one_slot_per_professional_day';
 end
@@ -219,6 +265,7 @@ begin
     when insufficient_privilege then null;
     when others then
       if sqlerrm = 'other_professional_slot_allowed' then raise; end if;
+      raise;
   end;
   raise notice 'other_professional_denied';
 end
@@ -241,6 +288,7 @@ begin
     when check_violation then null;
     when others then
       if sqlerrm = 'montgomery_slot_allowed' then raise; end if;
+      raise;
   end;
   raise notice 'montgomery_slot_denied';
 end
@@ -280,6 +328,7 @@ begin
     when unique_violation then null;
     when others then
       if sqlerrm = 'duplicate_intent_allowed' then raise; end if;
+      raise;
   end;
   raise notice 'idempotency_unique';
 end
@@ -303,9 +352,10 @@ begin
     when insufficient_privilege then null;
     when others then
       if sqlerrm = 'anon_write_allowed' then raise; end if;
+      raise;
   end;
   reset role;
-  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('request.jwt.claim.role', 'service_role', false);
   raise notice 'anon_write_denied';
 end
 $$;
@@ -328,9 +378,10 @@ begin
     when insufficient_privilege then null;
     when others then
       if sqlerrm = 'authenticated_write_allowed' then raise; end if;
+      raise;
   end;
   reset role;
-  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('request.jwt.claim.role', 'service_role', false);
   raise notice 'authenticated_write_denied';
 end
 $$;
@@ -347,10 +398,47 @@ begin
     when insufficient_privilege then null;
     when others then
       if sqlerrm = 'authenticated_mutate_allowed' then raise; end if;
+      raise;
   end;
   reset role;
-  perform set_config('request.jwt.claim.role', 'service_role', true);
+  perform set_config('request.jwt.claim.role', 'service_role', false);
   raise notice 'authenticated_mutate_denied';
+end
+$$;
+
+do $$
+begin
+  begin
+    set local role anon;
+    perform 1 from public.county_story_slots;
+    raise exception 'anon_select_allowed';
+  exception
+    when insufficient_privilege then null;
+    when others then
+      if sqlerrm = 'anon_select_allowed' then raise; end if;
+      raise;
+  end;
+  reset role;
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  raise notice 'anon_select_denied';
+end
+$$;
+
+do $$
+begin
+  begin
+    set local role authenticated;
+    perform 1 from public.county_story_slots;
+    raise exception 'authenticated_select_allowed';
+  exception
+    when insufficient_privilege then null;
+    when others then
+      if sqlerrm = 'authenticated_select_allowed' then raise; end if;
+      raise;
+  end;
+  reset role;
+  perform set_config('request.jwt.claim.role', 'service_role', false);
+  raise notice 'authenticated_select_denied';
 end
 $$;
 
