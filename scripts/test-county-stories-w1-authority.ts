@@ -25,7 +25,8 @@ const mig = read(migPath);
 
 assert.equal(files.filter((f) => f.startsWith("0080")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0081")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0082")), false);
+assert.equal(files.filter((f) => f.startsWith("0082")).length, 1);
+assert.equal(files.some((f) => f.startsWith("0083")), false);
 
 const approved = [
   "48005",

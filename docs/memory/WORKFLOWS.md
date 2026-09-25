@@ -15,6 +15,7 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Isolation (your stuff is yours) | [workflows/isolation.md](./workflows/isolation.md) |
 | Suites (albums on the account) | [workflows/suites.md](./workflows/suites.md) |
 | Capacity (isolated simulate) | [workflows/capacity.md](./workflows/capacity.md) |
+| County Stories (authority + staging) | [workflows/county-stories.md](./workflows/county-stories.md) |
 
 ## Inventoried, not equally deep
 
@@ -30,6 +31,5 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Billing / boost | Boundary tables exist. **No provider. Not a paid entitlement engine.** |
 | Living Marks | Public bucket by design. |
 | Settings Wave 1–3 | Authenticator before Pro cards; buyer preview is local; DB locks follow real purpose. |
-| County Stories | Wave 1 schema/authority only (`0081`). No consumer UI, media, composer, or viewer. Not bound to P1C geography. |
 
 Founder rationale that was not supplied is marked **unknown**.
