@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–3 exist in the repo. Wave 1 and Wave 2 are accepted and hosted. Wave 3 publish/replace is implemented and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, strikes, or share URLs. Wave 4 is not authorized.
+**Intended:** Waves 1–3 are accepted and hosted. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, strikes, or share URLs. Wave 4 is not authorized.
 
 ## Waves
 
@@ -10,7 +10,7 @@
 |---|---|---|
 | 1 | Accepted, hosted `0081` | Story Day, launch-seven activation, publisher eligibility, slots/days schema. No media. |
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
-| 3 | In-repo `0083`. Hosted migration **not** applied. | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
+| 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
 | 4 | Not authorized | Policy hide/removal, strikes, 7-day suspension. |
 | 6 UI | Not authorized | Professional composer. Blocked on the normalization gate below. |
 
@@ -18,7 +18,7 @@ Do not increase the County Stories wave count here. Placement of normalization i
 
 ## Feature gate
 
-`county_story_launch.publish_enabled` defaults to **false**. Hosted must stay false until a later launch wave turns it on.
+`county_story_launch.publish_enabled` defaults to **false**. Hosted is applied and remains false until a later launch wave turns it on.
 
 API `/api/county-stories/publish` and `/replace` check the gate before RPC. The RPC also refuses with `FEATURE_DISABLED`. A signed-in professional who finds the route cannot publish.
 
@@ -105,6 +105,10 @@ Before the professional County Stories composer is released to users, Story Home
 A normal professional recording on an iPhone must not require the publisher to understand codecs or convert video by hand.
 
 Exact implementation placement is decided before UI authorization. Do not add a paid transcoding vendor without a separate recommendation and approval.
+
+## Future composer copy (not Wave 3)
+
+A missing required rules acknowledgment should later show clear copy such as **Rules acknowledgment required**. Do not show a vague “Not eligible” for that condition. The server still rejects without acknowledgment. Do not change the accepted Wave 3 transaction for this.
 
 ## Related
 

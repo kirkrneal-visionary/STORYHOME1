@@ -32,5 +32,7 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-25 | Idempotency rows store only successful PUBLISHED/REPLACED results | A failed attempt must not leave an intent without a Story Slot | County Stories Wave 3 |
 | 2026-09-25 | Same idempotency key + different media/type/county/listing is `IDEMPOTENCY_CONFLICT` | Do not silently convert a retry into a different Story | County Stories Wave 3 |
 | 2026-09-25 | Replacement is a second publication and stores `replacement_rules_acknowledged_at` | Version 1 acknowledgment must remain separately provable | County Stories Wave 3 correction |
+| 2026-09-25 | Hosted `0083` is applied with `publish_enabled = false` | County Stories is not launched; “no UI” is not the security boundary | County Stories Wave 3 closeout |
+| 2026-09-25 | Future composer should say “Rules acknowledgment required” instead of vague “Not eligible” | Mapping only. Do not change the accepted Wave 3 transaction | County Stories Wave 3 closeout |
 
 If a new change alters one of these, add a row and update the workflow contract.
