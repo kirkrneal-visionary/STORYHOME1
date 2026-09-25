@@ -32,5 +32,9 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-25 | Idempotency rows store only successful PUBLISHED/REPLACED results | A failed attempt must not leave an intent without a Story Slot | County Stories Wave 3 |
 | 2026-09-25 | Same idempotency key + different media/type/county/listing is `IDEMPOTENCY_CONFLICT` | Do not silently convert a retry into a different Story | County Stories Wave 3 |
 | 2026-09-25 | Replacement is a second publication and stores `replacement_rules_acknowledged_at` | Version 1 acknowledgment must remain separately provable | County Stories Wave 3 correction |
+| 2026-09-25 | Policy hide consumes the County Story slot permanently and never decrements capacity | The professional still owns that Story Day position; another publisher cannot take it | County Stories Wave 4 |
+| 2026-09-25 | Three qualifying hides in a rolling 7-day timestamp window create a 7-day County Stories publishing suspension from the third event | Not a calendar week, not Story Day, not a Story Home-wide ban | County Stories Wave 4 |
+| 2026-09-25 | Technical/system failures never share a path with policy enforcement | Upload, codec, gate, and cleanup errors must not become strikes | County Stories Wave 4 |
+| 2026-09-25 | Policy hide is service-role only and idempotent per slot+media and per owner+key | Ordinary client credentials cannot hide; retries must not double-strike | County Stories Wave 4 |
 
 If a new change alters one of these, add a row and update the workflow contract.

@@ -17,6 +17,12 @@ export type CountyStoryRpcResult = {
   superseded_media_id?: string;
   accepted?: number;
   max?: number;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  eligible_at?: string | null;
+  qualifying_count?: number;
+  suspended?: boolean;
+  event_id?: string;
 };
 
 export async function countyStoriesPublishEnabled(

@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–3 exist in the repo. Wave 1 and Wave 2 are accepted and hosted. Wave 3 publish/replace is implemented and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, strikes, or share URLs. Wave 4 is not authorized.
+**Intended:** Waves 1–3 are accepted and hosted. Wave 4 policy hide / strikes / 7-day suspension is implemented in-repo (`0084`) and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, analytics, or share URLs. Wave 5 is not authorized.
 
 ## Waves
 
@@ -10,8 +10,8 @@
 |---|---|---|
 | 1 | Accepted, hosted `0081` | Story Day, launch-seven activation, publisher eligibility, slots/days schema. No media. |
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
-| 3 | In-repo `0083`. Hosted migration **not** applied. | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
-| 4 | Not authorized | Policy hide/removal, strikes, 7-day suspension. |
+| 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
+| 4 | In-repo `0084`. Hosted migration **not** applied. | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
 | 6 UI | Not authorized | Professional composer. Blocked on the normalization gate below. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
@@ -67,7 +67,27 @@ There is **no** delete-slot / surrender / reopen-capacity path.
 
 ## Capacity read
 
-`county_story_capacity` / `GET /api/county-stories/capacity?county=` returns consumed `N / 30` for the current Story Day. Informational. Hidden Stories still count later. Replacement does not change it.
+`county_story_capacity` / `GET /api/county-stories/capacity?county=` returns consumed `N / 30` for the current Story Day. Informational. Hidden Stories still count. Replacement and policy hide do not change it.
+
+## Policy hide and suspension
+
+`hide_county_story_for_policy` is service-role only. Ordinary client JWTs cannot call it. `POST /api/county-stories/admin/policy-hide` requires the service-role bearer. An explicit bounded reason is required. There is no `delete_county_story_slot`.
+
+A qualifying hide of accepted media:
+
+1. Sets the slot `state = hidden` (playback stops)
+2. Leaves the durable slot and slot number in place
+3. Does not decrement capacity
+4. Writes one `county_story_enforcement_events` row (unique per slot+media+action and per owner+idempotency key)
+5. Counts that professional’s qualifying events in `[occurred_at - 7 days, occurred_at]`
+6. On the third event, inserts one `county_story_suspensions` row: `starts_at = occurred_at`, `ends_at = occurred_at + 7 days` (not midnight, not Story Day)
+7. After commit, storage-first delete of the temporary video/poster. Cleanup failure keeps the Story hidden and the event recorded
+
+Technical/system failures never write enforcement rows. Publish/replace failures, validation, codec, cleanup, feature-gate, and capacity errors are a separate path.
+
+An unused one-time replacement survives a first or second hide. Successful replace reactivates the same slot (`state = accepted`) and does not erase strikes or return capacity. An active suspension blocks both publish and replace with `POSTING_SUSPENDED` plus `eligible_at`. Server authority only — no client `isSuspended`.
+
+`GET /api/county-stories/suspension` and `county_story_suspension_status` are the composer read foundation: suspended flag, start, end, eligible_at, rolling qualifying count. No admin notes.
 
 ## Playback-ready (`state = valid`)
 
@@ -94,7 +114,7 @@ Eligible unpublished media (no `slot_id`, object not yet gone, expired):
 2. Only after that succeeds, set `state = deleted` and `media_deleted_at`
 3. If Storage delete fails, keep the row and record `cleanup_error` for a safe retry
 
-Slot-attached / current Story media is excluded. Superseded replacement media uses `county_story_media_list_superseded` + `county_story_media_mark_retired` after the new pointer commits.
+Unpublished staged media is excluded when `slot_id` is set. Superseded replacement media uses `county_story_media_list_superseded` + `county_story_media_mark_retired` after the new pointer commits. Policy-removed media on a hidden slot uses `county_story_media_list_policy_removed` + `county_story_media_mark_policy_deleted`. Cleanup failure does not restore playback.
 
 ## Required pre-Wave-6 infrastructure gate
 
@@ -111,4 +131,4 @@ Exact implementation placement is decided before UI authorization. Do not add a 
 - Not Living Marks, Home Docs, or SHI Studies. Dedicated private bucket `county-story-media`.
 - Not P1C geography. Launch-seven FIPS only until a later wave says otherwise.
 - Not Marketplace, Agent World, Homepage, or County page UI.
-- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`.
+- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`.

@@ -15,7 +15,7 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Isolation (your stuff is yours) | [workflows/isolation.md](./workflows/isolation.md) |
 | Suites (albums on the account) | [workflows/suites.md](./workflows/suites.md) |
 | Capacity (isolated simulate) | [workflows/capacity.md](./workflows/capacity.md) |
-| County Stories (authority + staging + publish) | [workflows/county-stories.md](./workflows/county-stories.md) |
+| County Stories (authority + staging + publish + hide) | [workflows/county-stories.md](./workflows/county-stories.md) |
 
 ## Inventoried, not equally deep
 
