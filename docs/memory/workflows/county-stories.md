@@ -71,7 +71,9 @@ There is **no** delete-slot / surrender / reopen-capacity path.
 
 ## Policy hide and suspension
 
-`hide_county_story_for_policy` is service-role only. Ordinary client JWTs cannot call it. `POST /api/county-stories/admin/policy-hide` requires the service-role bearer. An explicit bounded reason is required. There is no `delete_county_story_slot`.
+`hide_county_story_for_policy` is service-role database authority only. Ordinary client JWTs cannot execute it. There is no public or professional HTTP policy-hide route. Command/admin HTTP is deferred until a narrow Story Home admin authorization layer exists. The server-internal `hideCountyStoryForPolicy` helper is for that later integration. The Supabase service-role secret is not an externally supplied moderation credential. An explicit bounded reason is required. There is no `delete_county_story_slot`.
+
+`unauthorized_property` detaches the optional `listing_id` on the slot and stores it as `prior_listing_id` on the enforcement event. Replacement may reactivate the same slot without that listing, or with a newly authorized listing. It cannot restore the detached listing. Hide does not surrender the slot or reduce capacity.
 
 A qualifying hide of accepted media:
 

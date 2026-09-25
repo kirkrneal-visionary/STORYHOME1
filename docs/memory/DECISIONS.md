@@ -36,5 +36,7 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-25 | Three qualifying hides in a rolling 7-day timestamp window create a 7-day County Stories publishing suspension from the third event | Not a calendar week, not Story Day, not a Story Home-wide ban | County Stories Wave 4 |
 | 2026-09-25 | Technical/system failures never share a path with policy enforcement | Upload, codec, gate, and cleanup errors must not become strikes | County Stories Wave 4 |
 | 2026-09-25 | Policy hide is service-role only and idempotent per slot+media and per owner+key | Ordinary client credentials cannot hide; retries must not double-strike | County Stories Wave 4 |
+| 2026-09-25 | Policy-hide HTTP is deferred; no route accepts the Supabase service-role secret | There is no Command/admin authorization layer yet; the service-role key is not a moderation credential | County Stories Wave 4 correction |
+| 2026-09-25 | `unauthorized_property` detaches `listing_id` and blocks restoring that listing on replace | Do not reactivate a known-invalid listing association; the slot and capacity stay consumed | County Stories Wave 4 correction |
 
 If a new change alters one of these, add a row and update the workflow contract.

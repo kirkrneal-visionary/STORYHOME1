@@ -384,7 +384,7 @@ begin
   select (public.county_story_capacity('48291', timestamptz '2026-09-25 11:00:00-05')->>'accepted')::int
     into cap_before;
   r := public.hide_county_story_for_policy(
-    slot, 'unauthorized_property', null, 'w4-h-hide', 'admin', 'admin-h',
+    slot, 'generic_solicitation', null, 'w4-h-hide', 'admin', 'admin-h',
     timestamptz '2026-09-25 11:10:00-05'
   );
   if (select replacement_used from public.county_story_slots where id = slot) is not false then
@@ -737,31 +737,273 @@ end
 $$;
 
 -- ---------------------------------------------------------------------------
--- Authenticated callers cannot hide. Suspension read is service-role.
+-- Unauthorized property: detach listing A. Replacement cannot restore it.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  owner uuid := '10000000-0000-4000-8000-000000000090';
+  listing_a uuid := '21111111-1111-4111-8111-111111111111';
+  listing_b uuid := '21111111-1111-4111-8111-111111111112';
+  v1 uuid;
+  v2 uuid;
+  v3 uuid;
+  slot uuid;
+  r jsonb;
+  cap_before int;
+  cap_after int;
+begin
+  perform public.w4_seed_pro(owner, 'Listing Integrity');
+  insert into public.listings (id, agent_id, county_fips, brokerage_id) values
+    (listing_a, owner, '48373', null),
+    (listing_b, owner, '48373', null)
+  on conflict (id) do update
+    set agent_id = excluded.agent_id,
+        county_fips = excluded.county_fips;
+
+  v1 := public.w4_valid_media(owner);
+  r := public.publish_county_story(
+    owner, v1, '48373', 'open_house_property', listing_a,
+    'w4-up-pub', true, timestamptz '2026-09-14 11:00:00-05'
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'up_publish %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  if (select listing_id from public.county_story_slots where id = slot) is distinct from listing_a then
+    raise exception 'up_listing_not_attached';
+  end if;
+  select (public.county_story_capacity('48373', timestamptz '2026-09-14 11:00:00-05')->>'accepted')::int
+    into cap_before;
+
+  r := public.hide_county_story_for_policy(
+    slot, 'unauthorized_property', null, 'w4-up-hide', 'admin', 'admin-up',
+    timestamptz '2026-09-14 11:10:00-05'
+  );
+  if r->>'code' is distinct from 'POLICY_HIDDEN' then
+    raise exception 'up_hide %', r;
+  end if;
+  if (select state from public.county_story_slots where id = slot) is distinct from 'hidden' then
+    raise exception 'up_not_hidden';
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'up_listing_retained';
+  end if;
+  if (select prior_listing_id from public.county_story_enforcement_events
+       where slot_id = slot and reason_code = 'unauthorized_property')
+       is distinct from listing_a then
+    raise exception 'up_prior_listing_missing';
+  end if;
+  if (select count(*) from public.county_story_enforcement_events where professional_owner_id = owner)
+       is distinct from 1 then
+    raise exception 'up_strike_missing';
+  end if;
+  select (public.county_story_capacity('48373', timestamptz '2026-09-14 11:10:00-05')->>'accepted')::int
+    into cap_after;
+  if cap_after is distinct from cap_before then
+    raise exception 'up_capacity % %', cap_before, cap_after;
+  end if;
+  raise notice 'unauthorized_property_detached';
+
+  v2 := public.w4_valid_media(owner);
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'w4-up-reattach-a', true,
+    timestamptz '2026-09-14 11:20:00-05', listing_a
+  );
+  if r->>'code' is distinct from 'LISTING_NOT_AUTHORIZED' then
+    raise exception 'up_reattach %', r;
+  end if;
+  if (select state from public.county_story_slots where id = slot) is distinct from 'hidden' then
+    raise exception 'up_reactivated_with_a';
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'up_listing_a_restored';
+  end if;
+  if (select replacement_used from public.county_story_slots where id = slot) is not false then
+    raise exception 'up_replacement_spent_on_fail';
+  end if;
+  raise notice 'unauthorized_property_cannot_reattach';
+
+  v3 := public.w4_valid_media(owner);
+  r := public.replace_county_story_media(
+    owner, slot, v3, 'w4-up-rep-b', true,
+    timestamptz '2026-09-14 11:30:00-05', listing_b
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'up_replace_b %', r;
+  end if;
+  if (select state from public.county_story_slots where id = slot) is distinct from 'accepted' then
+    raise exception 'up_b_not_accepted';
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is distinct from listing_b then
+    raise exception 'up_b_not_attached';
+  end if;
+  if (select count(*) from public.county_story_slots
+       where professional_owner_id = owner and story_day = date '2026-09-14')
+       is distinct from 1 then
+    raise exception 'up_second_slot';
+  end if;
+  raise notice 'unauthorized_property_corrected_listing';
+end
+$$;
+
+do $$
+declare
+  owner uuid := '10000000-0000-4000-8000-000000000091';
+  listing_a uuid := '21111111-1111-4111-8111-111111111113';
+  v1 uuid;
+  v2 uuid;
+  slot uuid;
+  r jsonb;
+begin
+  perform public.w4_seed_pro(owner, 'Listing None');
+  insert into public.listings (id, agent_id, county_fips) values
+    (listing_a, owner, '48407')
+  on conflict (id) do update
+    set agent_id = excluded.agent_id,
+        county_fips = excluded.county_fips;
+  v1 := public.w4_valid_media(owner);
+  r := public.publish_county_story(
+    owner, v1, '48407', 'open_house_property', listing_a,
+    'w4-up2-pub', true, timestamptz '2026-09-12 10:00:00-05'
+  );
+  slot := (r->>'slot_id')::uuid;
+  perform public.hide_county_story_for_policy(
+    slot, 'unauthorized_property', null, 'w4-up2-hide', 'admin', 'admin-up',
+    timestamptz '2026-09-12 10:10:00-05'
+  );
+  v2 := public.w4_valid_media(owner);
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'w4-up2-rep-none', true,
+    timestamptz '2026-09-12 10:20:00-05'
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'up_none %', r;
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'up_none_kept_listing';
+  end if;
+  if (select state from public.county_story_slots where id = slot) is distinct from 'accepted' then
+    raise exception 'up_none_not_accepted';
+  end if;
+  raise notice 'unauthorized_property_replace_without_listing';
+end
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Callers without service_role cannot hide. Suspension read is service-role.
 -- ---------------------------------------------------------------------------
 do $$
 declare
   r jsonb;
   owner uuid := '10000000-0000-4000-8000-000000000060';
   slot uuid;
+  denied boolean;
 begin
   select id into slot from public.county_story_slots
    where professional_owner_id = owner
    order by accepted_at desc
    limit 1;
-  perform set_config('request.jwt.claim.role', 'authenticated', false);
+
+  perform set_config('request.jwt.claim.role', 'anon', false);
   r := public.hide_county_story_for_policy(
-    slot, 'other_policy', null, 'w4-auth-hide', 'admin', 'intruder',
+    slot, 'other_policy', null, 'w4-anon-hide', 'admin', 'intruder',
     timestamptz '2026-09-21 16:00:00-05'
   );
   if r->>'code' is distinct from 'NOT_ELIGIBLE' then
-    raise exception 'auth_hide %', r;
+    raise exception 'anon_hide %', r;
+  end if;
+  raise notice 'anonymous_cannot_policy_hide';
+
+  perform set_config('request.jwt.claim.role', 'authenticated', false);
+  r := public.hide_county_story_for_policy(
+    slot, 'other_policy', null, 'w4-consumer-hide', 'admin', 'a1111111-1111-1111-1111-111111111111',
+    timestamptz '2026-09-21 16:00:00-05'
+  );
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'consumer_hide %', r;
+  end if;
+  raise notice 'consumer_cannot_policy_hide';
+
+  r := public.hide_county_story_for_policy(
+    slot, 'other_policy', null, 'w4-agent-hide', 'admin', 'b2222222-2222-2222-2222-222222222222',
+    timestamptz '2026-09-21 16:00:00-05'
+  );
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'agent_hide %', r;
+  end if;
+  raise notice 'agent_cannot_policy_hide';
+
+  r := public.hide_county_story_for_policy(
+    slot, 'other_policy', null, 'w4-broker-hide', 'admin', 'd4444444-4444-4444-4444-444444444444',
+    timestamptz '2026-09-21 16:00:00-05'
+  );
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'broker_hide %', r;
+  end if;
+  raise notice 'broker_cannot_policy_hide';
+
+  r := public.hide_county_story_for_policy(
+    slot, 'other_policy', null, 'w4-other-hide', 'admin', 'e5555555-5555-5555-5555-555555555555',
+    timestamptz '2026-09-21 16:00:00-05'
+  );
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'other_pro_hide %', r;
+  end if;
+  raise notice 'other_professional_cannot_policy_hide';
+
+  r := public.hide_county_story_for_policy(
+    slot, 'other_policy', null, 'w4-forged-hide', 'admin', 'forged-bearer',
+    timestamptz '2026-09-21 16:00:00-05'
+  );
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'forged_hide %', r;
   end if;
   r := public.county_story_suspension_status(owner, timestamptz '2026-09-21 16:00:00-05');
   if r->>'code' is distinct from 'NOT_ELIGIBLE' then
     raise exception 'auth_status %', r;
   end if;
+  raise notice 'forged_role_cannot_policy_hide';
+
+  denied := false;
+  begin
+    execute 'set local role anon';
+    perform public.hide_county_story_for_policy(
+      slot, 'other_policy', null, 'w4-anon-grant', 'admin', 'x',
+      timestamptz '2026-09-21 16:00:00-05'
+    );
+    raise exception 'anon_grant_executed';
+  exception
+    when insufficient_privilege then
+      denied := true;
+  end;
+  if not denied then
+    raise exception 'anon_grant_not_denied';
+  end if;
+
+  denied := false;
+  begin
+    execute 'set local role authenticated';
+    perform public.hide_county_story_for_policy(
+      slot, 'other_policy', null, 'w4-auth-grant', 'admin', 'x',
+      timestamptz '2026-09-21 16:00:00-05'
+    );
+    raise exception 'authenticated_grant_executed';
+  exception
+    when insufficient_privilege then
+      denied := true;
+  end;
+  if not denied then
+    raise exception 'authenticated_grant_not_denied';
+  end if;
+
   perform set_config('request.jwt.claim.role', 'service_role', false);
+  r := public.hide_county_story_for_policy(
+    slot, 'other_policy', null, 'w4-l-hide', 'admin', 'admin-l',
+    timestamptz '2026-09-21 16:00:00-05'
+  );
+  if r->>'code' is distinct from 'POLICY_HIDDEN' then
+    raise exception 'server_admin_hide %', r;
+  end if;
   raise notice 'service_role_hide_authority';
 end
 $$;

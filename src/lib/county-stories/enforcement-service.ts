@@ -1,25 +1,12 @@
 /**
  * County Stories Wave 4 policy hide + suspension read.
- * Service-role RPCs only. Technical failures never call hide.
+ * Hide is server-internal only. No HTTP moderation route.
+ * Callers must already hold a trusted admin client. Technical failures never call hide.
  */
-import { timingSafeEqual } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { countyStoryHttpStatus } from "@/lib/county-stories/publish";
 import { supabaseCountyStoryStorage } from "@/lib/county-stories/media-service";
 import type { CountyStoryRpcResult } from "@/lib/county-stories/publish-service";
-
-export function requireCountyStoryServiceRole(request: Request): boolean {
-  const expected = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? "";
-  const header = request.headers.get("authorization") ?? "";
-  const token = header.toLowerCase().startsWith("bearer ")
-    ? header.slice(7).trim()
-    : "";
-  if (!expected || !token) return false;
-  const left = Buffer.from(expected);
-  const right = Buffer.from(token);
-  if (left.length !== right.length) return false;
-  return timingSafeEqual(left, right);
-}
 
 export async function hideCountyStoryForPolicy(opts: {
   admin: SupabaseClient;

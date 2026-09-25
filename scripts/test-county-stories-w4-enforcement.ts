@@ -40,6 +40,8 @@ assert.match(mig, /county_story_suspension_status/);
 assert.match(mig, /county_story_media_list_policy_removed/);
 assert.match(mig, /county_story_media_mark_policy_deleted/);
 assert.match(mig, /state = 'accepted'/);
+assert.match(mig, /prior_listing_id/);
+assert.match(mig, /unauthorized_property then null/);
 assert.doesNotMatch(mig, /delete_county_story_slot/);
 assert.doesNotMatch(mig, /accepted_count = accepted_count - 1/);
 assert.doesNotMatch(mig, /publish_enabled\s*=\s*true/);
@@ -51,18 +53,47 @@ assert.equal(countyStoryHttpStatus("POLICY_HIDDEN"), 200);
 assert.equal(isCountyStoryPolicyReason("generic_solicitation"), true);
 assert.equal(isCountyStoryPolicyReason("upload_failure"), false);
 assert.equal(COUNTY_STORY_POLICY_REASON_CODES.length, 5);
-assert.equal(existsSync(join(root, "src/app/api/county-stories/admin/policy-hide/route.ts")), true);
+assert.equal(existsSync(join(root, "src/app/api/county-stories/admin/policy-hide/route.ts")), false);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/suspension/route.ts")), true);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/delete/route.ts")), false);
 assert.equal(existsSync(join(root, "src/components/county-stories")), false);
 assert.match(
-  read("src/app/api/county-stories/admin/policy-hide/route.ts"),
-  /requireCountyStoryServiceRole/,
+  read("src/lib/county-stories/enforcement-service.ts"),
+  /hideCountyStoryForPolicy/,
 );
 assert.doesNotMatch(
-  read("src/app/api/county-stories/admin/policy-hide/route.ts"),
-  /requireCountyStoryPublisher/,
+  read("src/lib/county-stories/enforcement-service.ts"),
+  /requireCountyStoryServiceRole|timingSafeEqual|authorization/i,
 );
+assert.doesNotMatch(
+  read("src/app/api/county-stories/publish/route.ts"),
+  /hide_county_story_for_policy|hideCountyStoryForPolicy/,
+);
+assert.doesNotMatch(
+  read("src/app/api/county-stories/replace/route.ts"),
+  /hide_county_story_for_policy|hideCountyStoryForPolicy/,
+);
+assert.doesNotMatch(
+  read("src/app/api/county-stories/suspension/route.ts"),
+  /hide_county_story_for_policy|hideCountyStoryForPolicy/,
+);
+assert.doesNotMatch(
+  read("src/app/api/county-stories/capacity/route.ts"),
+  /hide_county_story_for_policy|hideCountyStoryForPolicy/,
+);
+for (const rel of [
+  "src/app/api/county-stories/publish/route.ts",
+  "src/app/api/county-stories/replace/route.ts",
+  "src/app/api/county-stories/suspension/route.ts",
+  "src/app/api/county-stories/capacity/route.ts",
+  "src/lib/county-stories/enforcement-service.ts",
+]) {
+  assert.doesNotMatch(
+    read(rel),
+    /SUPABASE_SERVICE_ROLE_KEY/,
+    `${rel} must not treat the service-role secret as an HTTP moderation credential`,
+  );
+}
 assert.match(
   read("src/app/api/county-stories/suspension/route.ts"),
   /requireCountyStoryPublisher/,
@@ -137,6 +168,16 @@ for (const name of [
   "idempotent_policy_action",
   "policy_removal_at_capacity",
   "storage_cleanup_failure",
+  "unauthorized_property_detached",
+  "unauthorized_property_cannot_reattach",
+  "unauthorized_property_corrected_listing",
+  "unauthorized_property_replace_without_listing",
+  "anonymous_cannot_policy_hide",
+  "consumer_cannot_policy_hide",
+  "agent_cannot_policy_hide",
+  "broker_cannot_policy_hide",
+  "other_professional_cannot_policy_hide",
+  "forged_role_cannot_policy_hide",
   "service_role_hide_authority",
   "feature_gate_remains_off",
   "suspension_read_foundation",

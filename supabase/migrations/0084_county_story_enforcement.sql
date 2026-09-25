@@ -42,6 +42,7 @@ create table public.county_story_enforcement_events (
   action text not null,
   reason_code text not null,
   reason_detail text,
+  prior_listing_id uuid,
   qualifies_for_strike boolean not null default true,
   actor_kind text not null,
   actor_id text,
@@ -70,6 +71,8 @@ create table public.county_story_enforcement_events (
 
 comment on table public.county_story_enforcement_events is
   'Durable County Stories policy-hide facts. One event per slot+media+action. Technical failures never insert here.';
+comment on column public.county_story_enforcement_events.prior_listing_id is
+  'Snapshot of listing_id at hide time. unauthorized_property detaches the live slot association but keeps this fact.';
 
 create index county_story_enforcement_owner_at_idx
   on public.county_story_enforcement_events (professional_owner_id, occurred_at);
@@ -395,6 +398,7 @@ declare
   v_payload jsonb;
   v_start timestamptz;
   v_end timestamptz;
+  v_prior_listing uuid;
 begin
   if auth.role() is distinct from 'service_role' then
     return public.county_story_result(false, 'NOT_ELIGIBLE');
@@ -485,10 +489,16 @@ begin
     hashtext(v_slot.current_media_id::text)
   );
 
+  v_prior_listing := v_slot.listing_id;
+
   update public.county_story_slots
      set state = 'hidden',
          hidden_at = p_at,
-         hidden_reason_code = p_reason_code
+         hidden_reason_code = p_reason_code,
+         listing_id = case
+           when p_reason_code = 'unauthorized_property' then null
+           else listing_id
+         end
    where id = v_slot.id
      and state = 'accepted'
      and current_media_id is not distinct from v_slot.current_media_id;
@@ -507,13 +517,13 @@ begin
 
   insert into public.county_story_enforcement_events (
     professional_owner_id, slot_id, media_id, county_fips, story_day,
-    action, reason_code, reason_detail, qualifies_for_strike,
+    action, reason_code, reason_detail, prior_listing_id, qualifies_for_strike,
     actor_kind, actor_id, idempotency_key, request_hash, occurred_at
   ) values (
     v_slot.professional_owner_id, v_slot.id, v_slot.current_media_id,
     v_slot.county_fips, v_slot.story_day,
     'policy_hide', p_reason_code, nullif(btrim(coalesce(p_reason_detail, '')), ''),
-    true, p_actor_kind, nullif(btrim(coalesce(p_actor_id, '')), ''),
+    v_prior_listing, true, p_actor_kind, nullif(btrim(coalesce(p_actor_id, '')), ''),
     p_idempotency_key, v_hash, p_at
   )
   returning * into v_event;
@@ -558,7 +568,7 @@ end;
 $$;
 
 comment on function public.hide_county_story_for_policy(uuid, text, text, text, text, text, timestamptz) is
-  'Trusted policy hide. Service-role only. Consumes the slot permanently. Idempotent per key and per slot+media. Does not decrement capacity.';
+  'Trusted policy hide. Service-role database authority only. Not an HTTP credential. unauthorized_property detaches listing_id. Consumes the slot permanently. Idempotent per key and per slot+media. Does not decrement capacity.';
 
 revoke all on function public.hide_county_story_for_policy(uuid, text, text, text, text, text, timestamptz)
   from public, anon, authenticated;
@@ -804,14 +814,19 @@ grant execute on function public.publish_county_story(uuid, uuid, text, text, uu
 
 -- ---------------------------------------------------------------------------
 -- Replace: suspension blocks unused replacement. Hidden slots reactivate.
+-- Optional listing update is validated. A listing detached for
+-- unauthorized_property cannot be silently reattached.
 -- ---------------------------------------------------------------------------
+drop function if exists public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz);
+
 create or replace function public.replace_county_story_media(
   p_owner uuid,
   p_slot uuid,
   p_media uuid,
   p_idempotency_key text,
   p_rules_acknowledged boolean,
-  p_at timestamptz default now()
+  p_at timestamptz default now(),
+  p_listing_id uuid default null
 )
 returns jsonb
 language plpgsql
@@ -827,6 +842,11 @@ declare
   v_media public.county_story_media%rowtype;
   v_old uuid;
   v_payload jsonb;
+  v_profile public.profiles%rowtype;
+  v_listing_agent uuid;
+  v_listing_brokerage uuid;
+  v_listing_fips text;
+  v_next_listing uuid;
 begin
   if auth.role() is distinct from 'service_role' then
     return public.county_story_result(false, 'NOT_ELIGIBLE');
@@ -838,7 +858,7 @@ begin
 
   v_day := public.county_story_day(p_at);
   v_hash := public.county_story_request_hash(
-    'replace', p_media, null, null, null, p_slot
+    'replace', p_media, null, null, p_listing_id, p_slot
   );
 
   perform pg_advisory_xact_lock(
@@ -881,6 +901,41 @@ begin
     ));
   end if;
 
+  v_next_listing := v_slot.listing_id;
+  if p_listing_id is not null then
+    if exists (
+      select 1
+        from public.county_story_enforcement_events e
+       where e.slot_id = v_slot.id
+         and e.reason_code = 'unauthorized_property'
+         and e.prior_listing_id is not distinct from p_listing_id
+    ) then
+      return public.county_story_result(false, 'LISTING_NOT_AUTHORIZED', jsonb_build_object(
+        'slot_id', v_slot.id
+      ));
+    end if;
+    select * into v_profile from public.profiles where id = p_owner;
+    select l.agent_id, l.brokerage_id, l.county_fips
+      into v_listing_agent, v_listing_brokerage, v_listing_fips
+      from public.listings l
+     where l.id = p_listing_id;
+    if not found then
+      return public.county_story_result(false, 'LISTING_NOT_AUTHORIZED');
+    end if;
+    if v_listing_fips is distinct from v_slot.county_fips then
+      return public.county_story_result(false, 'LISTING_COUNTY_MISMATCH');
+    end if;
+    if v_listing_agent is distinct from p_owner
+       and not (
+         v_profile.account_purpose = 'managing_broker'
+         and v_listing_brokerage is not null
+         and v_listing_brokerage is not distinct from v_profile.brokerage_id
+       ) then
+      return public.county_story_result(false, 'LISTING_NOT_AUTHORIZED');
+    end if;
+    v_next_listing := p_listing_id;
+  end if;
+
   perform pg_advisory_xact_lock(hashtext('county_story_media'), hashtext(p_media::text));
   select * into v_media
     from public.county_story_media m
@@ -904,6 +959,7 @@ begin
   update public.county_story_slots
      set current_media_id = p_media,
          state = 'accepted',
+         listing_id = v_next_listing,
          replacement_used = true,
          replaced_at = p_at,
          replacement_rules_acknowledged_at = p_at
@@ -947,10 +1003,10 @@ begin
 end;
 $$;
 
-comment on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz) is
-  'Atomic one-time media replacement. Blocks POSTING_SUSPENDED. Reactivates a policy-hidden slot on success. Does not change capacity or erase enforcement history.';
+comment on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz, uuid) is
+  'Atomic one-time media replacement. Blocks POSTING_SUSPENDED. Reactivates a policy-hidden slot on success. Optional listing must pass authority checks and cannot restore a listing detached for unauthorized_property. Does not change capacity or erase enforcement history.';
 
-revoke all on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz)
+revoke all on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz, uuid)
   from public, anon, authenticated;
-grant execute on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz)
+grant execute on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz, uuid)
   to service_role;

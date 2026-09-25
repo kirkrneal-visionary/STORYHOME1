@@ -84,6 +84,7 @@ export async function replaceCountyStoryMedia(opts: {
   idempotencyKey: string;
   rulesAcknowledged: boolean;
   at?: string;
+  listingId?: string | null;
 }): Promise<{ result: CountyStoryRpcResult; status: number }> {
   const { data, error } = await opts.admin.rpc("replace_county_story_media", {
     p_owner: opts.ownerId,
@@ -92,6 +93,7 @@ export async function replaceCountyStoryMedia(opts: {
     p_idempotency_key: opts.idempotencyKey,
     p_rules_acknowledged: opts.rulesAcknowledged,
     p_at: opts.at ?? new Date().toISOString(),
+    p_listing_id: opts.listingId ?? null,
   });
   if (error || !data) {
     return { result: { ok: false, code: "NOT_ELIGIBLE" }, status: 400 };
