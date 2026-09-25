@@ -9,7 +9,7 @@
 | Wave | Status | Job |
 |---|---|---|
 | 1 | Accepted, hosted `0081` | Story Day, launch-seven activation, publisher eligibility, slots/days schema. No media. |
-| 2 | Accepted (`0082`) | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
+| 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
 | 3 | Not started | Accept/attach to a Story Slot. Separate authorization. Start from updated `main`. |
 | 6 UI | Not authorized | Professional composer. Blocked on the normalization gate below. |
 
