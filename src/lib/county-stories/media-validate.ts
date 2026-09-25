@@ -3,9 +3,10 @@
  * Browser duration / filename extensions are not authority.
  */
 import {
-  COUNTY_STORY_MEDIA_CODECS,
   COUNTY_STORY_MEDIA_MAX_BYTES,
   COUNTY_STORY_MEDIA_MAX_DURATION_MS,
+  isCountyStoryIngestRecognized,
+  isCountyStoryPlaybackReady,
   type CountyStoryValidationCode,
 } from "@/lib/county-stories/media";
 
@@ -18,6 +19,7 @@ export type CountyStoryVideoProbe = {
 
 export type CountyStoryValidateOk = {
   ok: true;
+  publishReady: true;
   probe: CountyStoryVideoProbe;
 };
 
@@ -26,16 +28,15 @@ export type CountyStoryValidateFail = {
   code: CountyStoryValidationCode;
   detail: string;
   probe?: CountyStoryVideoProbe;
+  publishReady?: false;
 };
-
-const CODEC_OK = new Set<string>(COUNTY_STORY_MEDIA_CODECS);
 
 function fail(
   code: CountyStoryValidationCode,
   detail: string,
   probe?: CountyStoryVideoProbe,
 ): CountyStoryValidateFail {
-  return { ok: false, code, detail, probe };
+  return { ok: false, code, detail, probe, publishReady: false };
 }
 
 function looksJpeg(buf: Buffer): boolean {
@@ -242,8 +243,15 @@ export function validateCountyStoryVideo(
   if (probe.durationMs > COUNTY_STORY_MEDIA_MAX_DURATION_MS) {
     return fail("VIDEO_TOO_LONG", "Video exceeds 30 seconds", probe);
   }
-  if (!probe.codec || !CODEC_OK.has(probe.codec)) {
-    return fail("UNSUPPORTED_CODEC", "Codec is not approved for County Stories", probe);
+  if (!probe.codec || !isCountyStoryIngestRecognized(probe.codec)) {
+    return fail("UNSUPPORTED_CODEC", "Video codec is not a recognized ingest codec", probe);
   }
-  return { ok: true, probe };
+  if (!isCountyStoryPlaybackReady(probe.container, probe.codec)) {
+    return fail(
+      "NOT_PLAYBACK_READY",
+      `Container ${probe.container} with codec ${probe.codec} is not a launch playback pair`,
+      probe,
+    );
+  }
+  return { ok: true, publishReady: true, probe };
 }

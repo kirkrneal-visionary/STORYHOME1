@@ -30,6 +30,6 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Billing / boost | Boundary tables exist. **No provider. Not a paid entitlement engine.** |
 | Living Marks | Public bucket by design. |
 | Settings Wave 1–3 | Authenticator before Pro cards; buyer preview is local; DB locks follow real purpose. |
-| County Stories | Wave 1 authority (`0081`) plus Wave 2 private staging (`0082`). No consumer UI, composer, viewer, or publish. Not bound to P1C geography. |
+| County Stories | Wave 1 authority (`0081`) plus Wave 2 private staging (`0082`). `valid` is launch playback-ready only (MP4+AVC or WebM+VP8/VP9). Cleanup deletes the storage object before the row. No consumer UI, composer, viewer, or publish. Not bound to P1C geography. |
 
 Founder rationale that was not supplied is marked **unknown**.

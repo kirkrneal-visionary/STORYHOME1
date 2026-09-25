@@ -5,7 +5,7 @@
 
 ## In progress
 
-- County Stories Wave 2 (private media staging only): `0082_county_story_media.sql`. No consumer UI, composer, viewer, captions, or publish. Wave 3 is not authorized.
+- County Stories Wave 2 correction (private media staging only): `0082_county_story_media.sql`. `valid` is playback-ready pairs only. Orphan cleanup deletes the Storage object before marking `deleted`. No consumer UI, composer, viewer, captions, or publish. Hosted `0082` is not applied. Wave 3 is not authorized.
 - County Stories Wave 1 is on `main` (`0081`, hosted and verified).
 - Harden Wave 5: Archie workspace is route-split; DevPass is out of the login bundle; source maps stay off and `.map` 404s. CSP left compatible with Mapbox/auth.
 - Harden Waves 1–4 stay stacked. `0056` / `0057` are repo-only until pasted.

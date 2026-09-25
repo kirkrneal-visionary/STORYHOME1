@@ -37,6 +37,12 @@ create table if not exists storage.buckets (
   allowed_mime_types text[]
 );
 
+create table if not exists storage.objects (
+  bucket_id text not null,
+  name text not null,
+  primary key (bucket_id, name)
+);
+
 create table if not exists public.profiles (
   id uuid primary key,
   account_kind text not null default 'consumer',

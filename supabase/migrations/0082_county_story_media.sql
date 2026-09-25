@@ -38,12 +38,26 @@ create table public.county_story_media (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   deleted_at timestamptz,
+  media_deleted_at timestamptz,
+  cleanup_attempted_at timestamptz,
+  cleanup_error text,
   constraint county_story_media_purpose_check
     check (purpose in ('original', 'replacement')),
   constraint county_story_media_state_check
     check (state in (
-      'created', 'uploaded', 'validating', 'valid', 'invalid', 'deleted'
+      'created', 'uploaded', 'validating', 'valid',
+      'needs_normalization', 'invalid', 'deleted'
     )),
+  constraint county_story_media_deleted_requires_object_gone
+    check (state <> 'deleted' or media_deleted_at is not null),
+  constraint county_story_media_valid_is_playback_ready
+    check (
+      state <> 'valid'
+      or (
+        (container = 'mp4' and codec_video in ('avc1', 'avc3'))
+        or (container = 'webm' and codec_video in ('vp08', 'vp09'))
+      )
+    ),
   constraint county_story_media_bucket_check
     check (storage_bucket = 'county-story-media'),
   constraint county_story_media_path_owner_check
@@ -58,7 +72,13 @@ create table public.county_story_media (
 );
 
 comment on table public.county_story_media is
-  'Temporary County Story video staging. Not an accepted Story. slot_id stays null until Wave 3 publish. Caption columns are reserved for Wave 5.';
+  'Temporary County Story video staging. state=valid is playback-ready only. needs_normalization is ingest-recognized but not publishable. slot_id stays null until Wave 3. Caption columns are reserved for Wave 5.';
+
+comment on column public.county_story_media.state is
+  'valid = launch playback-ready (MP4/AVC or WebM/VP8|VP9). needs_normalization is not Wave 3-publishable. deleted requires media_deleted_at.';
+
+comment on column public.county_story_media.media_deleted_at is
+  'Set only after the storage object is confirmed gone. deleted without this timestamp is forbidden.';
 
 comment on column public.county_story_media.slot_id is
   'Null in Wave 2. Wave 3 may attach after accept. Cleanup never deletes rows with a slot.';
@@ -143,9 +163,10 @@ grant execute on function public.county_story_media_touch()
   to service_role;
 
 -- ---------------------------------------------------------------------------
--- Orphan cleanup: expired unpublished media only. Never slot-attached rows.
+-- Orphan cleanup: list eligible rows. Mark deleted only after storage is gone.
+-- Never slot-attached / current Story media.
 -- ---------------------------------------------------------------------------
-create or replace function public.county_story_media_cleanup_expired(
+create or replace function public.county_story_media_list_expired(
   p_at timestamptz default now()
 )
 returns table (
@@ -153,6 +174,69 @@ returns table (
   storage_path text,
   poster_path text
 )
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select m.id, m.storage_path, m.poster_path
+    from public.county_story_media m
+   where m.media_deleted_at is null
+     and m.slot_id is null
+     and m.expires_at <= p_at
+     and m.state in (
+       'created', 'uploaded', 'validating', 'valid',
+       'needs_normalization', 'invalid'
+     );
+$$;
+
+comment on function public.county_story_media_list_expired(timestamptz) is
+  'Eligible unpublished staged media for storage deletion. Never includes slot-attached rows.';
+
+create or replace function public.county_story_media_mark_storage_deleted(
+  p_id uuid,
+  p_at timestamptz default now()
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  n int;
+begin
+  if auth.role() is distinct from 'service_role' then
+    raise exception 'county stories media cleanup requires service_role'
+      using errcode = '42501';
+  end if;
+
+  update public.county_story_media m
+     set state = 'deleted',
+         deleted_at = p_at,
+         media_deleted_at = p_at,
+         cleanup_error = null,
+         cleanup_attempted_at = p_at
+   where m.id = p_id
+     and m.slot_id is null
+     and m.media_deleted_at is null
+     and m.state in (
+       'created', 'uploaded', 'validating', 'valid',
+       'needs_normalization', 'invalid', 'deleted'
+     );
+  get diagnostics n = row_count;
+  return n > 0;
+end;
+$$;
+
+comment on function public.county_story_media_mark_storage_deleted(uuid, timestamptz) is
+  'Records deleted only after the caller confirmed storage objects are gone. Idempotent. Never marks slot-attached media.';
+
+create or replace function public.county_story_media_record_cleanup_failure(
+  p_id uuid,
+  p_error text,
+  p_at timestamptz default now()
+)
+returns void
 language plpgsql
 security definer
 set search_path = public
@@ -163,33 +247,27 @@ begin
       using errcode = '42501';
   end if;
 
-  return query
-  with doomed as (
-    select m.id
-      from public.county_story_media m
-     where m.deleted_at is null
-       and m.slot_id is null
-       and m.expires_at <= p_at
-       and m.state in ('created', 'uploaded', 'validating', 'valid', 'invalid')
-  ),
-  marked as (
-    update public.county_story_media m
-       set state = 'deleted',
-           deleted_at = p_at
-      from doomed d
-     where m.id = d.id
-    returning m.id, m.storage_path, m.poster_path
-  )
-  select marked.id, marked.storage_path, marked.poster_path from marked;
+  update public.county_story_media m
+     set cleanup_attempted_at = p_at,
+         cleanup_error = left(coalesce(p_error, 'storage_delete_failed'), 500)
+   where m.id = p_id
+     and m.slot_id is null
+     and m.media_deleted_at is null
+     and m.state <> 'deleted';
 end;
 $$;
 
-comment on function public.county_story_media_cleanup_expired(timestamptz) is
-  'Deletes unpublished staged media after the staging lifetime. Never deletes media attached to a Story Slot.';
-
-revoke all on function public.county_story_media_cleanup_expired(timestamptz)
+revoke all on function public.county_story_media_list_expired(timestamptz)
   from public, anon, authenticated;
-grant execute on function public.county_story_media_cleanup_expired(timestamptz)
+grant execute on function public.county_story_media_list_expired(timestamptz)
+  to service_role;
+revoke all on function public.county_story_media_mark_storage_deleted(uuid, timestamptz)
+  from public, anon, authenticated;
+grant execute on function public.county_story_media_mark_storage_deleted(uuid, timestamptz)
+  to service_role;
+revoke all on function public.county_story_media_record_cleanup_failure(uuid, text, timestamptz)
+  from public, anon, authenticated;
+grant execute on function public.county_story_media_record_cleanup_failure(uuid, text, timestamptz)
   to service_role;
 
 -- ---------------------------------------------------------------------------

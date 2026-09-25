@@ -38,6 +38,7 @@ export async function POST(_request: Request, ctx: Ctx) {
     ok: true,
     id: result.media.id,
     state: result.media.state,
+    publishReady: result.media.state === "valid",
     durationMs: result.media.duration_ms,
     container: result.media.container,
     codec: result.media.codec_video,

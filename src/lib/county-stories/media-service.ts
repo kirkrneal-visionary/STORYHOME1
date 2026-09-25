@@ -35,6 +35,8 @@ export type CountyStoryMediaRow = {
   slot_id: string | null;
   expires_at: string;
   deleted_at: string | null;
+  media_deleted_at?: string | null;
+  cleanup_error?: string | null;
 };
 
 export type CountyStoryStorage = {
@@ -248,10 +250,12 @@ export async function validateCountyStoryMedia(opts: {
     byteSize: row.byte_size ?? buf.length,
   });
   if (!result.ok) {
-    const { data } = await opts.admin
+    const nextState =
+      result.code === "NOT_PLAYBACK_READY" ? "needs_normalization" : "invalid";
+    await opts.admin
       .from("county_story_media")
       .update({
-        state: "invalid",
+        state: nextState,
         validation_code: result.code,
         validation_detail: result.detail,
         container: result.probe?.container ?? null,
@@ -259,10 +263,7 @@ export async function validateCountyStoryMedia(opts: {
         duration_ms: result.probe?.durationMs ?? null,
         byte_size: buf.length,
       })
-      .eq("id", row.id)
-      .select("*")
-      .single();
-    void data;
+      .eq("id", row.id);
     return {
       ok: false,
       status: 400,
@@ -318,16 +319,28 @@ export async function deleteCountyStoryMedia(opts: {
 }): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
   const row = await loadOwnedCountyStoryMedia(opts.admin, opts.ownerId, opts.mediaId);
   if (!row) return { ok: false, status: 404, error: "Not found." };
+  if (row.slot_id) {
+    return { ok: false, status: 409, error: "Attached Story media cannot be orphan-deleted." };
+  }
   const paths = [row.storage_path, row.poster_path].filter(Boolean) as string[];
-  await opts.storage.remove(paths);
-  await opts.admin
-    .from("county_story_media")
-    .update({
-      state: "deleted",
-      deleted_at: new Date().toISOString(),
-    })
-    .eq("id", row.id)
-    .eq("professional_owner_id", opts.ownerId);
+  try {
+    await opts.storage.remove(paths);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "storage_delete_failed";
+    await opts.admin.rpc("county_story_media_record_cleanup_failure", {
+      p_id: row.id,
+      p_error: message,
+      p_at: new Date().toISOString(),
+    });
+    return { ok: false, status: 500, error: "Storage delete failed." };
+  }
+  const { data, error } = await opts.admin.rpc(
+    "county_story_media_mark_storage_deleted",
+    { p_id: row.id, p_at: new Date().toISOString() },
+  );
+  if (error || data === false) {
+    return { ok: false, status: 500, error: "Unable to record storage deletion." };
+  }
   return { ok: true };
 }
 
@@ -335,9 +348,13 @@ export async function cleanupExpiredCountyStoryMedia(opts: {
   admin: SupabaseClient;
   storage: CountyStoryStorage;
   now?: Date;
-}): Promise<{ ids: string[]; paths: string[] }> {
+}): Promise<{
+  deleted: string[];
+  failed: { id: string; error: string }[];
+  paths: string[];
+}> {
   const now = (opts.now ?? new Date()).toISOString();
-  const { data, error } = await opts.admin.rpc("county_story_media_cleanup_expired", {
+  const { data, error } = await opts.admin.rpc("county_story_media_list_expired", {
     p_at: now,
   });
   if (error) throw new Error(error.message);
@@ -346,9 +363,30 @@ export async function cleanupExpiredCountyStoryMedia(opts: {
     storage_path: string | null;
     poster_path: string | null;
   }[];
-  const paths = rows.flatMap((row) =>
-    [row.storage_path, row.poster_path].filter(Boolean),
-  ) as string[];
-  await opts.storage.remove(paths);
-  return { ids: rows.map((row) => row.id), paths };
+  const deleted: string[] = [];
+  const failed: { id: string; error: string }[] = [];
+  const paths: string[] = [];
+  for (const row of rows) {
+    const rowPaths = [row.storage_path, row.poster_path].filter(Boolean) as string[];
+    try {
+      await opts.storage.remove(rowPaths);
+      const marked = await opts.admin.rpc("county_story_media_mark_storage_deleted", {
+        p_id: row.id,
+        p_at: now,
+      });
+      if (marked.error) throw new Error(marked.error.message);
+      if (marked.data === false) throw new Error("mark_storage_deleted_rejected");
+      deleted.push(row.id);
+      paths.push(...rowPaths);
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "storage_delete_failed";
+      await opts.admin.rpc("county_story_media_record_cleanup_failure", {
+        p_id: row.id,
+        p_error: message,
+        p_at: now,
+      });
+      failed.push({ id: row.id, error: message });
+    }
+  }
+  return { deleted, failed, paths };
 }

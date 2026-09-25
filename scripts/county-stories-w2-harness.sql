@@ -8,14 +8,17 @@ declare
   n int;
 begin
   insert into public.county_story_media (
-    id, professional_owner_id, purpose, state, storage_path, expires_at
+    id, professional_owner_id, purpose, state, storage_path, expires_at,
+    container, codec_video
   ) values (
     media_id,
     'b2222222-2222-2222-2222-222222222222',
     'original',
     'valid',
     'b2222222-2222-2222-2222-222222222222/' || media_id || '/original.mp4',
-    now() + interval '6 hours'
+    now() + interval '6 hours',
+    'mp4',
+    'avc1'
   );
   select count(*) into n from public.county_story_slots;
   if n <> 0 then raise exception 'slot_created_on_stage %', n; end if;
@@ -184,7 +187,8 @@ begin
   ) returning id into slot_id;
 
   insert into public.county_story_media (
-    id, professional_owner_id, purpose, state, storage_path, expires_at, slot_id
+    id, professional_owner_id, purpose, state, storage_path, expires_at, slot_id,
+    container, codec_video
   ) values (
     kept_id,
     'c3333333-3333-3333-3333-333333333333',
@@ -192,26 +196,94 @@ begin
     'valid',
     'c3333333-3333-3333-3333-333333333333/' || kept_id || '/original.mp4',
     now() - interval '1 hour',
-    slot_id
+    slot_id,
+    'mp4',
+    'avc1'
   );
   insert into public.county_story_media (
-    id, professional_owner_id, purpose, state, storage_path, expires_at
+    id, professional_owner_id, purpose, state, storage_path, expires_at,
+    container, codec_video
   ) values (
     expired_id,
     'd4444444-4444-4444-4444-444444444444',
     'original',
     'valid',
     'd4444444-4444-4444-4444-444444444444/' || expired_id || '/original.mp4',
-    now() - interval '1 hour'
+    now() - interval '1 hour',
+    'mp4',
+    'avc1'
   );
 
-  perform * from public.county_story_media_cleanup_expired(now());
+  insert into storage.objects (bucket_id, name) values
+    ('county-story-media', 'd4444444-4444-4444-4444-444444444444/' || expired_id || '/original.mp4'),
+    ('county-story-media', 'c3333333-3333-3333-3333-333333333333/' || kept_id || '/original.mp4');
+
+  if not exists (
+    select 1 from public.county_story_media_list_expired(now()) where id = expired_id
+  ) then
+    raise exception 'expired_not_listed';
+  end if;
+  if exists (
+    select 1 from public.county_story_media_list_expired(now()) where id = kept_id
+  ) then
+    raise exception 'slot_media_listed';
+  end if;
+
+  -- Storage still present: do not mark deleted.
+  if (select state from public.county_story_media where id = expired_id) <> 'valid' then
+    raise exception 'marked_before_storage_delete';
+  end if;
+
+  perform public.county_story_media_record_cleanup_failure(
+    expired_id, 'storage_delete_failed', now()
+  );
+  if (select state from public.county_story_media where id = expired_id) <> 'valid' then
+    raise exception 'failure_marked_deleted';
+  end if;
+  if (select media_deleted_at from public.county_story_media where id = expired_id) is not null then
+    raise exception 'failure_set_media_deleted_at';
+  end if;
+  if (select cleanup_error from public.county_story_media where id = expired_id)
+     is distinct from 'storage_delete_failed' then
+    raise exception 'cleanup_error_missing';
+  end if;
+  raise notice 'cleanup_failure_keeps_row';
+
+  delete from storage.objects
+   where bucket_id = 'county-story-media'
+     and name = 'd4444444-4444-4444-4444-444444444444/' || expired_id || '/original.mp4';
+
+  if not public.county_story_media_mark_storage_deleted(expired_id, now()) then
+    raise exception 'mark_after_storage_failed';
+  end if;
+  -- Idempotent retry after success.
+  perform public.county_story_media_mark_storage_deleted(expired_id, now());
 
   if (select state from public.county_story_media where id = expired_id) <> 'deleted' then
     raise exception 'expired_not_cleaned';
   end if;
+  if (select media_deleted_at from public.county_story_media where id = expired_id) is null then
+    raise exception 'media_deleted_at_missing';
+  end if;
+  if exists (
+    select 1 from storage.objects
+    where name = 'd4444444-4444-4444-4444-444444444444/' || expired_id || '/original.mp4'
+  ) then
+    raise exception 'storage_object_remains';
+  end if;
+  if not exists (
+    select 1 from storage.objects
+    where name = 'c3333333-3333-3333-3333-333333333333/' || kept_id || '/original.mp4'
+  ) then
+    raise exception 'slot_object_removed';
+  end if;
   if (select state from public.county_story_media where id = kept_id) <> 'valid' then
     raise exception 'slot_media_cleaned';
+  end if;
+  if exists (
+    select 1 from public.county_story_media_list_expired(now()) where id = expired_id
+  ) then
+    raise exception 'deleted_still_listed';
   end if;
   select accepted_count into n from public.county_story_days
     where county_fips = '48373' and story_day = date '2026-09-24';
@@ -220,6 +292,33 @@ begin
     raise exception 'slot_changed_on_cleanup';
   end if;
   raise notice 'cleanup_expired_only';
+  raise notice 'storage_deleted_before_row';
+end
+$$;
+
+do $$
+begin
+  begin
+    insert into public.county_story_media (
+      professional_owner_id, purpose, state, storage_path, expires_at,
+      container, codec_video
+    ) values (
+      'd4444444-4444-4444-4444-444444444444',
+      'original',
+      'valid',
+      'd4444444-4444-4444-4444-444444444444/webm-avc/original.webm',
+      now() + interval '6 hours',
+      'webm',
+      'avc1'
+    );
+    raise exception 'webm_h264_valid_allowed';
+  exception
+    when check_violation then null;
+    when others then
+      if sqlerrm = 'webm_h264_valid_allowed' then raise; end if;
+      raise;
+  end;
+  raise notice 'webm_h264_not_valid';
 end
 $$;
 

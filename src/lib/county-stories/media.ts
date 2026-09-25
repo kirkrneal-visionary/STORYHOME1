@@ -20,6 +20,7 @@ export const COUNTY_STORY_MEDIA_STATES = [
   "uploaded",
   "validating",
   "valid",
+  "needs_normalization",
   "invalid",
   "deleted",
 ] as const;
@@ -37,13 +38,37 @@ export const COUNTY_STORY_MEDIA_DECLARED_TYPES = [
   "video/webm",
 ] as const;
 
-export const COUNTY_STORY_MEDIA_CODECS = [
+/**
+ * Launch playback-ready pairs for the Story Home web viewer.
+ * Codec is never approved apart from its container.
+ *
+ * Playback-ready (`state=valid`) is only:
+ *   MP4  + H.264/AVC (avc1, avc3)
+ *   WebM + VP8 (vp08) or VP9 (vp09)
+ *
+ * Ingest-recognized but not publishable (`needs_normalization`):
+ *   HEVC/H.265 (hvc1, hev1) in MP4 or QuickTime/MOV — iPhone default
+ *   AV1 (av01) in MP4 or WebM — not a launch viewer pair
+ *   WebM + H.264 — recognized, never playback-ready
+ *   QuickTime/MOV with any codec, including H.264 — not a launch container
+ *
+ * No transcoding vendor is wired. Wave 3 may consume only `valid`.
+ */
+export const COUNTY_STORY_PLAYBACK_MATRIX = [
+  { container: "mp4", codec: "avc1" },
+  { container: "mp4", codec: "avc3" },
+  { container: "webm", codec: "vp08" },
+  { container: "webm", codec: "vp09" },
+] as const;
+
+/** Video codecs we can identify. Recognition is not playback approval. */
+export const COUNTY_STORY_INGEST_CODECS = [
   "avc1",
   "avc3",
-  "hev1",
-  "hvc1",
   "vp08",
   "vp09",
+  "hvc1",
+  "hev1",
   "av01",
 ] as const;
 
@@ -52,6 +77,7 @@ export const COUNTY_STORY_VALIDATION_CODES = [
   "VIDEO_TOO_LONG",
   "FILE_TOO_LARGE",
   "UNSUPPORTED_CODEC",
+  "NOT_PLAYBACK_READY",
   "INVALID_MEDIA",
   "OWNER_MISMATCH",
 ] as const;
@@ -88,5 +114,21 @@ export function isCountyStoryDeclaredVideoType(
 ): boolean {
   return !!value && (COUNTY_STORY_MEDIA_DECLARED_TYPES as readonly string[]).includes(
     value,
+  );
+}
+
+export function isCountyStoryIngestRecognized(
+  codec: string | null | undefined,
+): boolean {
+  return !!codec && (COUNTY_STORY_INGEST_CODECS as readonly string[]).includes(codec);
+}
+
+export function isCountyStoryPlaybackReady(
+  container: string | null | undefined,
+  codec: string | null | undefined,
+): boolean {
+  if (!container || !codec) return false;
+  return COUNTY_STORY_PLAYBACK_MATRIX.some(
+    (pair) => pair.container === container && pair.codec === codec,
   );
 }

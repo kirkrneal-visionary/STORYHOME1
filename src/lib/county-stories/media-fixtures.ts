@@ -62,13 +62,22 @@ export function buildCountyStoryMp4(opts: {
   timescale?: number;
   codec?: string;
   videoTrack?: boolean;
+  brand?: "isom" | "qt  ";
 }): Buffer {
   const timescale = opts.timescale ?? 1000;
   const duration = Math.round(((opts.durationMs ?? 0) * timescale) / 1000);
   const codec = opts.codec ?? "avc1";
+  const brand = opts.brand ?? "isom";
   const ftyp = box(
     "ftyp",
-    concat(ascii("isom"), u32(0), ascii("isom"), ascii("iso2"), ascii("avc1"), ascii("mp41")),
+    concat(
+      ascii(brand),
+      u32(0),
+      ascii(brand),
+      ascii(brand === "qt  " ? "qt  " : "iso2"),
+      ascii(brand === "qt  " ? "qt  " : "avc1"),
+      ascii(brand === "qt  " ? "qt  " : "mp41"),
+    ),
   );
   const mdia = box(
     "mdia",
