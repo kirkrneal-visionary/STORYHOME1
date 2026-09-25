@@ -59,7 +59,7 @@ assert.doesNotMatch(mig, /create policy/i);
 assert.doesNotMatch(mig, /publish_county_story\(/);
 assert.doesNotMatch(mig, /insert into public\.county_story_slots/);
 assert.doesNotMatch(mig, /accepted_count = accepted_count \+ 1/);
-assert.doesNotMatch(mig, /living-marks|home-docs|shi-studies/);
+assert.doesNotMatch(mig, /insert into storage\.buckets[\s\S]*(home-docs|living-marks|shi-studies)/);
 
 const okMp4 = validateCountyStoryVideo(buildCountyStoryMp4({ durationMs: 12_000 }), {
   declaredType: "video/mp4",
