@@ -22,6 +22,10 @@ const w2 = read("supabase/migrations/0082_county_story_media.sql");
 assert.equal(files.filter((f) => f.startsWith("0082")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.some((f) => f.startsWith("0084")), false);
+assert.match(
+  read("tsconfig.json"),
+  /scripts\/test-county-stories-w3-publish\.ts/,
+);
 assert.doesNotMatch(w2, /publish_county_story\(/);
 assert.match(mig, /publish_county_story\(/);
 assert.match(mig, /replace_county_story_media\(/);
