@@ -14,5 +14,6 @@ Short, maintained documents for future sessions. Older briefs in `docs/` still e
 | [RECONCILIATION.md](./RECONCILIATION.md) | How AGENTS.md and Cursor rules fit together |
 | [workflows/isolation.md](./workflows/isolation.md) | Two-user isolation harness (Wave 2) |
 | [workflows/capacity.md](./workflows/capacity.md) | Isolated capacity simulate (Wave 6) |
+| [workflows/county-stories.md](./workflows/county-stories.md) | County Stories authority, staging, pre-Wave-6 normalization gate |
 
 Do not copy secrets, customer records, or production logs here.

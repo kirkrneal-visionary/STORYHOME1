@@ -26,5 +26,7 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-16 | Archie/Corridors scoring executes on the server | Browser gets the parcel-specific answer, not the recipe | Founder harden Wave 3 |
 | 2026-09-16 | Processed `county_parcels` is a product warehouse | Public users get bounded search/lookup + tiles; anon/authenticated table SELECT is revoked only after those paths are live | Founder harden Wave 4 |
 | 2026-09-16 | Production CSP keeps `unsafe-inline` / `unsafe-eval` | Mapbox, Next, and auth still need them; Wave 5 does not tighten blindly | Founder harden Wave 5 |
+| 2026-09-25 | County Story `valid` is launch playback-ready only (MP4+AVC or WebM+VP8/VP9). HEVC/MOV/AV1 stay `needs_normalization` | Web viewer must play what we publish; recognizing a codec is not approval | County Stories Wave 2 |
+| 2026-09-25 | Automatic HEVC/MOV normalization is required before Wave 6 composer UI | iPhone recordings must not need a manual convert | County Stories Wave 2 closeout |
 
 If a new change alters one of these, add a row and update the workflow contract.
