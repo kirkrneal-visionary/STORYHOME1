@@ -5,7 +5,7 @@
 
 ## In progress
 
-- County Stories Wave 3 is implemented in-repo (`0083` publish/replace). Hosted `0083` is **not** applied. Public publish stays off (`county_story_launch.publish_enabled` default false). Wave 4 is not authorized.
+- County Stories Wave 3 is accepted on `main` (`0083`, hosted). Public publish stays off (`county_story_launch.publish_enabled = false`). Wave 4 is not authorized.
 - County Stories Wave 2 is on `main` (`0082`, hosted and verified).
 - County Stories Wave 1 is on `main` (`0081`, hosted and verified).
 - County Stories pre-Wave-6 gate (not started): automatic normalization for iPhone HEVC/MOV and other `needs_normalization` inputs before composer UI. No vendor selected. Wave count unchanged.

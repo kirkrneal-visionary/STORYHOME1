@@ -46,7 +46,7 @@ These are **isolated**. They do not write production. Wave 2 runs two disposable
 | Marketplace cards sit on the canvas | `--market-edge` + no raise puddle **source-tested**. Founder **GOOD** 2026-09-15. Live |
 | Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Founder **GOOD** 2026-09-15. Live |
 
-| County Stories Wave 3 publish/replace/concurrency | `npm run test:county-stories-w3` — isolated Postgres. Hosted `0083` is not applied. Public publish stays off |
+| County Stories Wave 3 publish/replace/concurrency | `npm run test:county-stories-w3` — isolated Postgres. Hosted `0083` applied. Public publish stays off |
 
 If a test fails, do not weaken it to go green.
 
