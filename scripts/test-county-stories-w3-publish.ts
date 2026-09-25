@@ -88,16 +88,31 @@ function createdb(name: string) {
   );
 }
 
+function lastDataLine(text: string) {
+  return (
+    text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && line !== "DO")
+      .at(-1) ?? ""
+  );
+}
+
 function serviceSql(db: string, command: string) {
-  return sql(
-    db,
-    `do $$ begin perform set_config('request.jwt.claim.role', 'service_role', false); end $$; ${command}`,
+  return lastDataLine(
+    sql(
+      db,
+      `do $$ begin perform set_config('request.jwt.claim.role', 'service_role', false); end $$; ${command}`,
+    ),
   );
 }
 
 function lastJson(text: string) {
-  const line = text.trim().split("\n").filter(Boolean).at(-1) ?? "";
-  return JSON.parse(line) as { code: string; slot_id?: string; media_id?: string };
+  return JSON.parse(lastDataLine(text)) as {
+    code: string;
+    slot_id?: string;
+    media_id?: string;
+  };
 }
 
 function applyStack(db: string) {
