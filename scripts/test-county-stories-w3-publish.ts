@@ -35,6 +35,8 @@ assert.match(mig, /FEATURE_DISABLED/);
 assert.match(mig, /ALREADY_POSTED/);
 assert.match(mig, /COUNTY_FULL/);
 assert.match(mig, /REPLACEMENT_ALREADY_USED/);
+assert.match(mig, /replacement_rules_acknowledged_at/);
+assert.match(mig, /p_rules_acknowledged boolean/);
 assert.doesNotMatch(mig, /delete_county_story_slot/);
 assert.doesNotMatch(mig, /accepted_count = accepted_count - 1/);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/publish/route.ts")), true);
@@ -46,6 +48,7 @@ assert.match(read("src/app/api/county-stories/publish/route.ts"), /countyStories
 assert.match(read("src/app/api/county-stories/publish/route.ts"), /FEATURE_DISABLED/);
 assert.match(read("src/app/api/county-stories/replace/route.ts"), /countyStoriesPublishEnabled/);
 assert.match(read("src/app/api/county-stories/replace/route.ts"), /FEATURE_DISABLED/);
+assert.match(read("src/app/api/county-stories/replace/route.ts"), /rulesAcknowledged/);
 assert.doesNotMatch(mig, /create table public\.county_story_strikes/);
 assert.doesNotMatch(mig, /create function public\.delete_county_story_slot/);
 assert.equal(COUNTY_STORY_MAX_SLOTS, 30);
@@ -145,7 +148,11 @@ for (const name of [
   "capacity_read",
   "already_posted",
   "idempotency_conflict",
+  "publish_idempotency_conflict",
+  "replace_rules_required",
+  "replace_feature_disabled",
   "replaced_once",
+  "replace_idempotency_conflict",
   "story_day_ended",
   "wave3_gates_ok",
 ]) {
@@ -387,7 +394,7 @@ function replaceCmd(owner: string, slot: string, media: string, key: string) {
     do $$ begin perform set_config('request.jwt.claim.role', 'service_role', false); end $$;
     select public.replace_county_story_media(
       '${owner}'::uuid, '${slot}'::uuid, '${media}'::uuid, '${key}',
-      timestamptz '2026-09-28 14:00:00-05'
+      true, timestamptz '2026-09-28 14:00:00-05'
     )::text;
   `;
 }
@@ -426,7 +433,7 @@ const current = serviceSql(
 );
 const retryReplace = lastJson(serviceSql(
   conc,
-  `select public.replace_county_story_media('${repOwner}'::uuid, '${publishedRep.slot_id}'::uuid, '${current}'::uuid, 'rep-par-${replaceCodes[0] === "REPLACED" ? 0 : 1}', timestamptz '2026-09-28 14:00:00-05')::text;`,
+  `select public.replace_county_story_media('${repOwner}'::uuid, '${publishedRep.slot_id}'::uuid, '${current}'::uuid, 'rep-par-${replaceCodes[0] === "REPLACED" ? 0 : 1}', true, timestamptz '2026-09-28 14:00:00-05')::text;`,
 ));
 assert.equal(retryReplace.code, "REPLACED");
 assert.equal(retryReplace.media_id, current);

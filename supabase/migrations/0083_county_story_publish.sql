@@ -55,6 +55,7 @@ alter table public.county_story_slots
     on delete restrict
     on update restrict,
   add column if not exists rules_acknowledged_at timestamptz,
+  add column if not exists replacement_rules_acknowledged_at timestamptz,
   add column if not exists replaced_at timestamptz,
   add column if not exists snapshot_legal_name text,
   add column if not exists snapshot_license text,
@@ -73,6 +74,18 @@ alter table public.county_story_slots
 alter table public.county_story_slots
   add constraint county_story_slots_accepted_has_media
     check (state <> 'accepted' or current_media_id is not null);
+alter table public.county_story_slots
+  drop constraint if exists county_story_slots_replace_ack_check;
+alter table public.county_story_slots
+  add constraint county_story_slots_replace_ack_check
+    check (
+      (replacement_used = false and replacement_rules_acknowledged_at is null)
+      or (replacement_used = true and replacement_rules_acknowledged_at is not null)
+    );
+comment on column public.county_story_slots.rules_acknowledged_at is
+  'Version 1 publish acknowledgment. Never overwritten by replacement.';
+comment on column public.county_story_slots.replacement_rules_acknowledged_at is
+  'Independent Version 2 / replacement acknowledgment. Separate publication event.';
 
 create unique index if not exists county_story_slots_current_media_uidx
   on public.county_story_slots (current_media_id)
@@ -496,6 +509,7 @@ create or replace function public.replace_county_story_media(
   p_slot uuid,
   p_media uuid,
   p_idempotency_key text,
+  p_rules_acknowledged boolean,
   p_at timestamptz default now()
 )
 returns jsonb
@@ -538,6 +552,9 @@ begin
   if not public.county_story_publish_enabled() then
     return public.county_story_result(false, 'FEATURE_DISABLED');
   end if;
+  if p_rules_acknowledged is not true then
+    return public.county_story_result(false, 'NOT_ELIGIBLE');
+  end if;
 
   select * into v_slot
     from public.county_story_slots s
@@ -579,10 +596,12 @@ begin
   update public.county_story_slots
      set current_media_id = p_media,
          replacement_used = true,
-         replaced_at = p_at
+         replaced_at = p_at,
+         replacement_rules_acknowledged_at = p_at
    where id = v_slot.id
      and replacement_used = false
-     and current_media_id is not distinct from v_old;
+     and current_media_id is not distinct from v_old
+     and rules_acknowledged_at is not distinct from v_slot.rules_acknowledged_at;
   if not found then
     return public.county_story_result(false, 'REPLACEMENT_ALREADY_USED', jsonb_build_object(
       'slot_id', v_slot.id
@@ -619,12 +638,12 @@ begin
 end;
 $$;
 
-comment on function public.replace_county_story_media(uuid, uuid, uuid, text, timestamptz) is
-  'Atomic one-time media replacement. Does not change capacity, slot number, County, or Story Day.';
+comment on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz) is
+  'Atomic one-time media replacement. Requires its own rules acknowledgment. Does not change capacity, slot number, County, Story Day, or Version 1 acknowledgment.';
 
-revoke all on function public.replace_county_story_media(uuid, uuid, uuid, text, timestamptz)
+revoke all on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz)
   from public, anon, authenticated;
-grant execute on function public.replace_county_story_media(uuid, uuid, uuid, text, timestamptz)
+grant execute on function public.replace_county_story_media(uuid, uuid, uuid, text, boolean, timestamptz)
   to service_role;
 
 -- ---------------------------------------------------------------------------

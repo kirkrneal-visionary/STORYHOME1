@@ -31,5 +31,6 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-25 | County Story publish/replace is a service-role DB transaction behind `county_story_launch.publish_enabled` (default false) | “No UI” is not a security gate; hosted users must not publish until later launch waves | County Stories Wave 3 |
 | 2026-09-25 | Idempotency rows store only successful PUBLISHED/REPLACED results | A failed attempt must not leave an intent without a Story Slot | County Stories Wave 3 |
 | 2026-09-25 | Same idempotency key + different media/type/county/listing is `IDEMPOTENCY_CONFLICT` | Do not silently convert a retry into a different Story | County Stories Wave 3 |
+| 2026-09-25 | Replacement is a second publication and stores `replacement_rules_acknowledged_at` | Version 1 acknowledgment must remain separately provable | County Stories Wave 3 correction |
 
 If a new change alters one of these, add a row and update the workflow contract.

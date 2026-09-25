@@ -47,6 +47,18 @@ begin
   if exists (select 1 from public.county_story_slots) then
     raise exception 'feature_gate_created_slot';
   end if;
+  if (select slot_id from public.county_story_media where id = media) is not null then
+    raise exception 'feature_gate_attached_media';
+  end if;
+  if exists (select 1 from public.county_story_days where accepted_count > 0) then
+    raise exception 'feature_gate_capacity';
+  end if;
+  if exists (
+    select 1 from public.county_story_publish_intents
+     where result_code in ('PUBLISHED', 'REPLACED')
+  ) then
+    raise exception 'feature_gate_stored_success';
+  end if;
   raise notice 'feature_disabled';
 end
 $$;
@@ -336,10 +348,136 @@ $$;
 do $$
 declare
   r jsonb;
+  media_b uuid := public.w3_valid_media('b2222222-2222-2222-2222-222222222222');
+  slots_before int;
+  accepted_before int;
+begin
+  select count(*) into slots_before from public.county_story_slots;
+  select accepted_count into accepted_before
+    from public.county_story_days
+   where county_fips = '48373' and story_day = date '2026-09-24';
+  r := public.publish_county_story(
+    'b2222222-2222-2222-2222-222222222222',
+    media_b,
+    '48373',
+    'local_knowledge',
+    '11111111-1111-1111-1111-111111111111',
+    'idemp-publish-ok',
+    true,
+    timestamptz '2026-09-24 14:00:00-05'
+  );
+  if r->>'code' is distinct from 'IDEMPOTENCY_CONFLICT' then
+    raise exception 'publish_conflict_media %', r;
+  end if;
+  if (select slot_id from public.county_story_media where id = media_b) is not null then
+    raise exception 'conflict_attached_media_b';
+  end if;
+  if (select count(*) from public.county_story_slots) <> slots_before then
+    raise exception 'conflict_extra_slot';
+  end if;
+  if (select accepted_count from public.county_story_days
+        where county_fips = '48373' and story_day = date '2026-09-24') <> accepted_before then
+    raise exception 'conflict_capacity';
+  end if;
+  raise notice 'publish_idempotency_conflict';
+end
+$$;
+
+do $$
+declare
+  r jsonb;
+  media uuid := public.w3_valid_media('b2222222-2222-2222-2222-222222222222');
+  slot uuid;
+  original uuid;
+  original_ack timestamptz;
+begin
+  select id, current_media_id, rules_acknowledged_at
+    into slot, original, original_ack
+    from public.county_story_slots
+   where professional_owner_id = 'b2222222-2222-2222-2222-222222222222';
+  r := public.replace_county_story_media(
+    'b2222222-2222-2222-2222-222222222222',
+    slot,
+    media,
+    'idemp-rep-noack',
+    false,
+    timestamptz '2026-09-24 14:00:00-05'
+  );
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'replace_without_ack %', r;
+  end if;
+  if (select current_media_id from public.county_story_slots where id = slot) is distinct from original then
+    raise exception 'replace_noack_moved_pointer';
+  end if;
+  if (select replacement_used from public.county_story_slots where id = slot) is true then
+    raise exception 'replace_noack_used';
+  end if;
+  if (select replacement_rules_acknowledged_at from public.county_story_slots where id = slot) is not null then
+    raise exception 'replace_noack_wrote_ack';
+  end if;
+  if (select rules_acknowledged_at from public.county_story_slots where id = slot) is distinct from original_ack then
+    raise exception 'replace_noack_clobbered_v1';
+  end if;
+  if (select slot_id from public.county_story_media where id = media) is not null then
+    raise exception 'replace_noack_attached';
+  end if;
+  if (select accepted_count from public.county_story_days
+        where county_fips = '48373' and story_day = date '2026-09-24') <> 1 then
+    raise exception 'replace_noack_capacity';
+  end if;
+  raise notice 'replace_rules_required';
+end
+$$;
+
+update public.county_story_launch set publish_enabled = false where id = 1;
+
+do $$
+declare
+  r jsonb;
+  media uuid := public.w3_valid_media('b2222222-2222-2222-2222-222222222222');
+  slot uuid;
+  original uuid;
+begin
+  select id, current_media_id into slot, original
+    from public.county_story_slots
+   where professional_owner_id = 'b2222222-2222-2222-2222-222222222222';
+  r := public.replace_county_story_media(
+    'b2222222-2222-2222-2222-222222222222',
+    slot,
+    media,
+    'idemp-rep-gated',
+    true,
+    timestamptz '2026-09-24 14:00:00-05'
+  );
+  if r->>'code' is distinct from 'FEATURE_DISABLED' then
+    raise exception 'replace_gate_open %', r;
+  end if;
+  if (select current_media_id from public.county_story_slots where id = slot) is distinct from original then
+    raise exception 'replace_gate_moved_pointer';
+  end if;
+  if (select replacement_used from public.county_story_slots where id = slot) is true then
+    raise exception 'replace_gate_used';
+  end if;
+  if exists (
+    select 1 from public.county_story_publish_intents
+     where idempotency_key = 'idemp-rep-gated' and result_code = 'REPLACED'
+  ) then
+    raise exception 'replace_gate_stored_success';
+  end if;
+  raise notice 'replace_feature_disabled';
+end
+$$;
+
+update public.county_story_launch set publish_enabled = true where id = 1;
+
+do $$
+declare
+  r jsonb;
   first uuid := public.w3_valid_media('c3333333-3333-3333-3333-333333333333');
   second uuid := public.w3_valid_media('c3333333-3333-3333-3333-333333333333');
   slot uuid;
   old uuid;
+  original_ack timestamptz;
 begin
   r := public.publish_county_story(
     'c3333333-3333-3333-3333-333333333333',
@@ -355,12 +493,15 @@ begin
     raise exception 'c_publish %', r;
   end if;
   slot := (r->>'slot_id')::uuid;
+  select rules_acknowledged_at into original_ack
+    from public.county_story_slots where id = slot;
   r := public.replace_county_story_media(
     'c3333333-3333-3333-3333-333333333333',
     slot,
     second,
     'idemp-c-rep',
-    timestamptz '2026-09-24 14:00:00-05'
+    true,
+    timestamptz '2026-09-24 15:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
     raise exception 'replace_failed %', r;
@@ -374,6 +515,14 @@ begin
   if (select accepted_count from public.county_story_days
         where county_fips = '48005' and story_day = date '2026-09-24') <> 1 then
     raise exception 'replace_changed_capacity';
+  end if;
+  if (select rules_acknowledged_at from public.county_story_slots where id = slot)
+       is distinct from original_ack then
+    raise exception 'replace_clobbered_v1_ack';
+  end if;
+  if (select replacement_rules_acknowledged_at from public.county_story_slots where id = slot)
+       is distinct from timestamptz '2026-09-24 15:00:00-05' then
+    raise exception 'replace_ack_missing';
   end if;
   old := first;
   insert into storage.objects (bucket_id, name)
@@ -395,6 +544,7 @@ begin
     slot,
     public.w3_valid_media('c3333333-3333-3333-3333-333333333333'),
     'idemp-c-rep-2',
+    true,
     timestamptz '2026-09-24 14:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACEMENT_ALREADY_USED' then
@@ -405,12 +555,28 @@ begin
     slot,
     second,
     'idemp-c-rep',
+    true,
     timestamptz '2026-09-24 14:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
     raise exception 'replace_retry %', r;
   end if;
+  r := public.replace_county_story_media(
+    'c3333333-3333-3333-3333-333333333333',
+    slot,
+    public.w3_valid_media('c3333333-3333-3333-3333-333333333333'),
+    'idemp-c-rep',
+    true,
+    timestamptz '2026-09-24 15:00:00-05'
+  );
+  if r->>'code' is distinct from 'IDEMPOTENCY_CONFLICT' then
+    raise exception 'replace_conflict_media %', r;
+  end if;
+  if (select current_media_id from public.county_story_slots where id = slot) is distinct from second then
+    raise exception 'replace_conflict_moved';
+  end if;
   raise notice 'replaced_once';
+  raise notice 'replace_idempotency_conflict';
 end
 $$;
 
@@ -424,6 +590,7 @@ begin
     (select id from public.county_story_slots where professional_owner_id = 'c3333333-3333-3333-3333-333333333333'),
     media,
     'idemp-stale-rep',
+    true,
     timestamptz '2026-09-25 08:00:00-05'
   );
   if r->>'code' is distinct from 'STORY_DAY_ENDED' then
@@ -436,6 +603,10 @@ $$;
 select 'wave3_gates_ok'
 where (select count(*) from public.county_story_slots) = 2
   and (select count(*) from public.county_story_slots where replacement_used) = 1
+  and (select count(*) from public.county_story_slots
+        where rules_acknowledged_at is not null) = 2
+  and (select count(*) from public.county_story_slots
+        where replacement_rules_acknowledged_at is not null) = 1
   and (select accepted_count from public.county_story_days
          where county_fips = '48373' and story_day = date '2026-09-24') = 1
   and not exists (

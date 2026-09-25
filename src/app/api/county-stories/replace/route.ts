@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     slotId?: string;
     mediaId?: string;
     idempotencyKey?: string;
+    rulesAcknowledged?: boolean;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     slotId: body.slotId ?? "",
     mediaId: body.mediaId ?? "",
     idempotencyKey: body.idempotencyKey ?? "",
+    rulesAcknowledged: body.rulesAcknowledged === true,
   });
   return NextResponse.json(result, { status });
 }

@@ -45,7 +45,7 @@ Only `state = valid` media may attach. `needs_normalization` (HEVC/MOV/AV1) is r
 - Null `brokerage_id` does not reject a verified broker
 - Optional `listing_id`: listing agent or same-brokerage managing broker, and listing `county_fips` must match
 
-Rules acknowledgment is a required boolean on publish. The accepted slot stores `rules_acknowledged_at`. No fake UI.
+Rules acknowledgment is a required boolean on every publication. Version 1 stores `rules_acknowledged_at`. A replacement is a second publication and stores `replacement_rules_acknowledged_at` without overwriting the original. No fake UI.
 
 Advertising snapshots are copied from verified profile/brokerage rows at accept. Client brokerage strings are ignored.
 
@@ -61,7 +61,7 @@ New key after a successful Story Day slot → `ALREADY_POSTED` (not `COUNTY_FULL
 
 ## Replacement
 
-`replace_county_story_media` once per slot. No capacity, slot number, county, or ownership change. Original media stays current until the new pointer commits. Then storage-first retire of the superseded object (`county_story_media_mark_retired`). Storage delete failure does not roll the Story back.
+`replace_county_story_media` once per slot. Requires its own rules acknowledgment. No capacity, slot number, county, or ownership change. Version 1 `rules_acknowledged_at` is preserved. Original media stays current until the new pointer commits. Then storage-first retire of the superseded object (`county_story_media_mark_retired`). Storage delete failure does not roll the Story back.
 
 There is **no** delete-slot / surrender / reopen-capacity path.
 
