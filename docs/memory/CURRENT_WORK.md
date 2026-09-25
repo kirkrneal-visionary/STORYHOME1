@@ -5,7 +5,8 @@
 
 ## In progress
 
-- County Stories Wave 1 (authority/schema only): `0081_county_story_authority.sql`. No consumer UI, media, composer, or viewer. Wave 2 is not authorized.
+- County Stories Wave 2 (private media staging only): `0082_county_story_media.sql`. No consumer UI, composer, viewer, captions, or publish. Wave 3 is not authorized.
+- County Stories Wave 1 is on `main` (`0081`, hosted and verified).
 - Harden Wave 5: Archie workspace is route-split; DevPass is out of the login bundle; source maps stay off and `.map` 404s. CSP left compatible with Mapbox/auth.
 - Harden Waves 1–4 stay stacked. `0056` / `0057` are repo-only until pasted.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
