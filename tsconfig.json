@@ -138,6 +138,7 @@
     "scripts/test-p2b2c2-parcel-membership.ts",
     "scripts/test-p2b3a-listing-place.ts",
     "scripts/test-county-stories-w1-authority.ts",
-    "scripts/test-county-stories-w2-media.ts"
+    "scripts/test-county-stories-w2-media.ts",
+    "scripts/test-county-stories-w3-publish.ts"
   ]
 }
