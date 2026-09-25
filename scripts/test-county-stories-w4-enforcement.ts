@@ -41,7 +41,7 @@ assert.match(mig, /county_story_media_list_policy_removed/);
 assert.match(mig, /county_story_media_mark_policy_deleted/);
 assert.match(mig, /state = 'accepted'/);
 assert.match(mig, /prior_listing_id/);
-assert.match(mig, /unauthorized_property then null/);
+assert.match(mig, /unauthorized_property' then null/);
 assert.doesNotMatch(mig, /delete_county_story_slot/);
 assert.doesNotMatch(mig, /accepted_count = accepted_count - 1/);
 assert.doesNotMatch(mig, /publish_enabled\s*=\s*true/);

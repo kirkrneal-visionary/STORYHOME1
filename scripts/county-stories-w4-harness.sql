@@ -998,7 +998,7 @@ begin
 
   perform set_config('request.jwt.claim.role', 'service_role', false);
   r := public.hide_county_story_for_policy(
-    slot, 'other_policy', null, 'w4-l-hide', 'admin', 'admin-l',
+    slot, 'generic_solicitation', null, 'w4-l-hide', 'admin', 'admin-l',
     timestamptz '2026-09-21 16:00:00-05'
   );
   if r->>'code' is distinct from 'POLICY_HIDDEN' then
