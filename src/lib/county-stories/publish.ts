@@ -31,6 +31,10 @@ export const COUNTY_STORY_RESULT_CODES = [
   "NOT_SLOT_OWNER",
   "STORY_DAY_ENDED",
   "FEATURE_DISABLED",
+  "POSTING_SUSPENDED",
+  "POLICY_HIDDEN",
+  "INVALID_REASON",
+  "NOT_PLAYABLE",
 ] as const;
 
 export type CountyStoryResultCode = (typeof COUNTY_STORY_RESULT_CODES)[number];
@@ -45,7 +49,10 @@ export function countyStoryHttpStatus(code: string): number {
     case "NOT_ELIGIBLE":
     case "STORY_PRO_REQUIRED":
     case "NOT_SLOT_OWNER":
+    case "POSTING_SUSPENDED":
       return 403;
+    case "POLICY_HIDDEN":
+      return 200;
     case "ALREADY_POSTED":
     case "COUNTY_FULL":
     case "REPLACEMENT_ALREADY_USED":
