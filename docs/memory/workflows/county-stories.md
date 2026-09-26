@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–3 are accepted and hosted. Wave 4 policy hide / strikes / 7-day suspension is implemented in-repo (`0084`) and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, analytics, or share URLs. Wave 5 is not authorized.
+**Intended:** Waves 1–4 are accepted and hosted. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, analytics, or share URLs. Wave 5 is not authorized.
 
 ## Waves
 
@@ -11,7 +11,7 @@
 | 1 | Accepted, hosted `0081` | Story Day, launch-seven activation, publisher eligibility, slots/days schema. No media. |
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
-| 4 | In-repo `0084`. Hosted migration **not** applied. | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
+| 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
 | 6 UI | Not authorized | Professional composer. Blocked on the normalization gate below. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
