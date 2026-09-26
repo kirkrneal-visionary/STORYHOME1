@@ -38,5 +38,9 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-25 | Policy hide is service-role only and idempotent per slot+media and per owner+key | Ordinary client credentials cannot hide; retries must not double-strike | County Stories Wave 4 |
 | 2026-09-25 | Policy-hide HTTP is deferred; no route accepts the Supabase service-role secret | There is no Command/admin authorization layer yet; the service-role key is not a moderation credential | County Stories Wave 4 correction |
 | 2026-09-25 | `unauthorized_property` detaches `listing_id` and blocks restoring that listing on replace | Do not reactivate a known-invalid listing association; the slot and capacity stay consumed | County Stories Wave 4 correction |
+| 2026-09-26 | County Story captions use a WebVTT-compatible cue table (`start_ms`, `end_ms`, `text`, `index`) | Synchronized playback later without a destructive convert | County Stories Wave 5 |
+| 2026-09-26 | Automatic captions are not publication-ready until professional confirmation | Generated ≠ confirmed. Manual complete sets confirm on save | County Stories Wave 5 |
+| 2026-09-26 | Publish/replace require server `county_story_media_is_accessibility_ready` | Client `captionsReady` is not authority. Failures return `ACCESSIBILITY_NOT_READY` with no slot | County Stories Wave 5 |
+| 2026-09-26 | No transcription vendor is wired; jobs record `PROVIDER_UNAVAILABLE` | Story Home has no approved paid speech service. Adapter stays replaceable | County Stories Wave 5 |
 
 If a new change alters one of these, add a row and update the workflow contract.

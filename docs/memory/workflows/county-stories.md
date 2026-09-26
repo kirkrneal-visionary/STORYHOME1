@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–3 are accepted and hosted. Wave 4 policy hide / strikes / 7-day suspension is implemented in-repo (`0084`) and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, viewer, captions, analytics, or share URLs. Wave 5 is not authorized.
+**Intended:** Waves 1–4 are accepted and hosted. Wave 5 captions / accessibility is implemented in-repo (`0085`) and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 is not authorized.
 
 ## Waves
 
@@ -11,7 +11,8 @@
 | 1 | Accepted, hosted `0081` | Story Day, launch-seven activation, publisher eligibility, slots/days schema. No media. |
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
-| 4 | In-repo `0084`. Hosted migration **not** applied. | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
+| 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
+| 5 | In-repo `0085`. Hosted migration **not** applied. | Captions, professional confirmation, accessible description, publish/replace accessibility gate. Public publish off. No UI. |
 | 6 UI | Not authorized | Professional composer. Blocked on the normalization gate below. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
@@ -36,7 +37,7 @@ Lock order:
 
 Allocation: `max(slot_number) + 1` under the county/day lock. Slot numbers stay 1–30. Unique `(county_fips, story_day, slot_number)` and unique `(professional_owner_id, story_day)` are the last line of defense. `accepted_count` is rebuilt from slot rows and is advisory.
 
-Only `state = valid` media may attach. `needs_normalization` (HEVC/MOV/AV1) is refused.
+Only `state = valid` media may attach. `needs_normalization` (HEVC/MOV/AV1) is refused. Media must also be accessibility-ready.
 
 ## Eligibility
 
@@ -91,6 +92,18 @@ An unused one-time replacement survives a first or second hide. Successful repla
 
 `GET /api/county-stories/suspension` and `county_story_suspension_status` are the composer read foundation: suspended flag, start, end, eligible_at, rolling qualifying count. No admin notes.
 
+## Captions and accessibility (Wave 5)
+
+Captions belong to the media version, not the durable slot. Canonical store is `webvtt_cues` (`start_ms`, `end_ms`, `text`, `index`). Overlapping cues are rejected. Adjacent `end == next start` is allowed.
+
+`county_story_media_is_accessibility_ready` is the publish fact. It requires confirmed synchronized captions plus a professional visual-information confirmation (`spoken_audio` or a supplied description). Client booleans are ignored. Publish/replace fail with `ACCESSIBILITY_NOT_READY` and do not create a slot, move capacity, or write enforcement.
+
+Automatic transcription uses a replaceable adapter. No vendor is approved. Jobs record `PROVIDER_UNAVAILABLE`. Failure is not a strike. Manual complete cue sets confirm on save. Auto sets stay `auto_ready` until `county_story_confirm_captions`. Edits use `expected_revision`; a stale revision returns `CAPTION_REVISION_CONFLICT`.
+
+Cue text and the video-specific description delete with superseded, policy-removed, or expired media. Job/revision/confirmation facts may remain. Transcripts are not indexed for search, Archie, SEO, or profile history.
+
+Wave 7 viewer requirements (track only, not this wave): keyboard controls, non-swipe alternatives, screen-reader labels, focus management, visible focus, caption contrast, text scaling, reduced motion, panel pause/resume, return focus after panel close, position such as “3 of 12”.
+
 ## Playback-ready (`state = valid`)
 
 Wave 3 may consume only `valid` media. Never treat `needs_normalization` as publishable.
@@ -133,4 +146,4 @@ Exact implementation placement is decided before UI authorization. Do not add a 
 - Not Living Marks, Home Docs, or SHI Studies. Dedicated private bucket `county-story-media`.
 - Not P1C geography. Launch-seven FIPS only until a later wave says otherwise.
 - Not Marketplace, Agent World, Homepage, or County page UI.
-- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`.
+- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`.

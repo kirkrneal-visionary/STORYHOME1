@@ -42,7 +42,8 @@ assert.equal(files.filter((f) => f.startsWith("0081")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0082")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0085")), false);
+assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
+assert.equal(files.some((f) => f.startsWith("0086")), false);
 assert.doesNotMatch(w1, /county_story_media|county-story-media/);
 
 assert.equal(COUNTY_STORY_MEDIA_BUCKET, "county-story-media");

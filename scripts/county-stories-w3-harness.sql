@@ -10,7 +10,7 @@ as $$
 begin
   insert into public.county_story_media (
     id, professional_owner_id, purpose, state, storage_path, expires_at,
-    container, codec_video
+    container, codec_video, duration_ms
   ) values (
     p_id,
     p_owner,
@@ -19,7 +19,19 @@ begin
     p_owner::text || '/' || p_id::text || '/original.mp4',
     now() + interval '6 hours',
     'mp4',
-    'avc1'
+    'avc1',
+    15000
+  );
+  perform public.county_story_save_captions(
+    p_owner,
+    p_id,
+    '[{"index":0,"start_ms":0,"end_ms":4000,"text":"Isolated test captions."},{"index":1,"start_ms":4000,"end_ms":8000,"text":"Spoken visual context."}]'::jsonb,
+    0,
+    'manual',
+    now()
+  );
+  perform public.county_story_save_visual_access(
+    p_owner, p_id, 'spoken_audio', null, 'local_knowledge', '48373', null, now()
   );
   return p_id;
 end;

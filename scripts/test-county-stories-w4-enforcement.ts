@@ -23,7 +23,8 @@ const w3 = read("supabase/migrations/0083_county_story_publish.sql");
 
 assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0085")), false);
+assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
+assert.equal(files.some((f) => f.startsWith("0086")), false);
 assert.match(
   read("tsconfig.json"),
   /scripts\/test-county-stories-w4-enforcement\.ts/,
@@ -149,6 +150,7 @@ applyTo(fresh, "supabase/migrations/0081_county_story_authority.sql");
 applyTo(fresh, "supabase/migrations/0082_county_story_media.sql");
 applyTo(fresh, "supabase/migrations/0083_county_story_publish.sql");
 applyTo(fresh, "supabase/migrations/0084_county_story_enforcement.sql");
+applyTo(fresh, "supabase/migrations/0085_county_story_captions.sql");
 const out = applyTo(fresh, "scripts/county-stories-w4-harness.sql");
 
 for (const name of [
