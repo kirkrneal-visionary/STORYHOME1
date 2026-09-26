@@ -141,6 +141,7 @@
     "scripts/test-county-stories-w2-media.ts",
     "scripts/test-county-stories-w3-publish.ts",
     "scripts/test-county-stories-w4-enforcement.ts",
-    "scripts/test-county-stories-w5-captions.ts"
+    "scripts/test-county-stories-w5-captions.ts",
+    "scripts/test-county-stories-w5-mux.ts"
   ]
 }

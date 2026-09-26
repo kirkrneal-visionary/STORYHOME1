@@ -31,6 +31,14 @@ begin
   perform public.county_story_save_visual_access(
     p_owner, p_id, 'spoken_audio', null, 'local_knowledge', '48373', null, now()
   );
+  perform public.county_story_mark_provider_ready(
+    p_id,
+    'ast_' || replace(p_id::text, '-', ''),
+    'pb_' || replace(p_id::text, '-', ''),
+    'signed',
+    15000,
+    now()
+  );
   return p_id;
 end;
 $$;
@@ -543,7 +551,7 @@ begin
     owner, '20000000-0000-4000-8000-000000000050', '48457', 'local_knowledge',
     null, 'w4-k-norm', true, timestamptz '2026-09-23 12:00:00-05'
   );
-  if r->>'code' is distinct from 'MEDIA_NOT_VALID' then
+  if r->>'code' is distinct from 'PLAYBACK_NOT_READY' then
     raise exception 'k_norm %', r;
   end if;
 

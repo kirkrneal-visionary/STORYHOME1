@@ -1,8 +1,10 @@
 /**
- * County Stories transcription adapter. No vendor is approved or wired.
- * A later launch wave may attach a provider behind this boundary.
+ * County Stories transcription adapter.
+ * Mux is the first provider adapter. Application logic stays behind this boundary.
  */
 import type { CountyStoryCaptionCue } from "@/lib/county-stories/captions";
+import { countyStoryMuxConfigured } from "@/lib/county-stories/mux-env";
+import { MuxCountyStoryTranscriptionProvider } from "@/lib/county-stories/mux-provider";
 
 export type CountyStoryTranscriptionInput = {
   mediaId: string;
@@ -48,5 +50,8 @@ export class UnconfiguredCountyStoryTranscriptionProvider
 }
 
 export function countyStoryTranscriptionProvider(): CountyStoryTranscriptionProvider {
+  if (countyStoryMuxConfigured()) {
+    return new MuxCountyStoryTranscriptionProvider();
+  }
   return new UnconfiguredCountyStoryTranscriptionProvider();
 }

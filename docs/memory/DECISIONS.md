@@ -42,5 +42,9 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-26 | Automatic captions are not publication-ready until professional confirmation | Generated ≠ confirmed. Manual complete sets confirm on save | County Stories Wave 5 |
 | 2026-09-26 | Publish/replace require server `county_story_media_is_accessibility_ready` | Client `captionsReady` is not authority. Failures return `ACCESSIBILITY_NOT_READY` with no slot | County Stories Wave 5 |
 | 2026-09-26 | No transcription vendor is wired; jobs record `PROVIDER_UNAVAILABLE` | Story Home has no approved paid speech service. Adapter stays replaceable | County Stories Wave 5 |
+| 2026-09-26 | Mux is County Stories media infrastructure only | HEVC/MOV normalization and one English auto-caption track. Story Home remains caption and publish authority | County Stories Wave 5 Mux |
+| 2026-09-26 | Canonical prepared playback is signed Mux HLS, not a static MP4 file | Mux VOD is HLS. Do not enable static MP4 renditions by default | County Stories Wave 5 Mux |
+| 2026-09-26 | Already-good MP4/H.264 sources still enter the Mux path | One secured delivery architecture. Source probe facts stay source facts | County Stories Wave 5 Mux |
+| 2026-09-26 | Mux webhooks may update provider/caption processing only | Unsigned callbacks do nothing. They cannot publish, hide, strike, allocate, or bypass accessibility | County Stories Wave 5 Mux |
 
 If a new change alters one of these, add a row and update the workflow contract.

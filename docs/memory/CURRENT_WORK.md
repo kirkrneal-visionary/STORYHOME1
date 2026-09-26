@@ -5,10 +5,10 @@
 
 ## In progress
 
-- County Stories Wave 5 is implemented in-repo (`0085` captions / accessibility). Hosted `0085` is **not** applied. Public publish stays off (`county_story_launch.publish_enabled` default false). Wave 6 is not authorized.
+- County Stories Wave 5 is implemented in-repo (`0085` captions / accessibility + `0086` Mux signed HLS provider). Hosted `0085` / `0086` are **not** applied. Public publish stays off (`county_story_launch.publish_enabled` default false). Wave 6 is not authorized.
+- Canonical prepared playback is secured Mux HLS (signed/private playback id), not a static MP4 rendition.
 - County Stories Wave 4 is on `main` (`0084`, hosted). Public publish stays off.
 - County Stories Waves 1–3 are on `main` (hosted and verified).
-- County Stories pre-Wave-6 gate (not started): automatic normalization for iPhone HEVC/MOV and other `needs_normalization` inputs before composer UI. No vendor selected. Wave count unchanged.
 - Harden Wave 5: Archie workspace is route-split; DevPass is out of the login bundle; source maps stay off and `.map` 404s. CSP left compatible with Mapbox/auth.
 - Harden Waves 1–4 stay stacked. `0056` / `0057` are repo-only until pasted.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.

@@ -4,6 +4,7 @@ import {
   supabaseCountyStoryStorage,
   validateCountyStoryMedia,
 } from "@/lib/county-stories/media-service";
+import { maybeStartCountyStoryProviderProcessing } from "@/lib/county-stories/provider-processing";
 import { requireCountyStoryPublisher } from "@/lib/county-stories/require-publisher";
 
 export const runtime = "nodejs";
@@ -22,15 +23,30 @@ export async function POST(_request: Request, ctx: Ctx) {
     return NextResponse.json({ ok: false, error: "Unable to validate." }, { status: 503 });
   }
   const { id } = await ctx.params;
+  const storage = supabaseCountyStoryStorage(admin);
   const result = await validateCountyStoryMedia({
     admin,
-    storage: supabaseCountyStoryStorage(admin),
+    storage,
     ownerId: auth.user.id,
     mediaId: id,
   });
+  if (result.ok || result.code === "NOT_PLAYBACK_READY") {
+    await maybeStartCountyStoryProviderProcessing({
+      admin,
+      storage,
+      ownerId: auth.user.id,
+      mediaId: id,
+    });
+  }
   if (!result.ok) {
     return NextResponse.json(
-      { ok: false, code: result.code, error: result.error },
+      {
+        ok: false,
+        code: result.code,
+        error: result.error,
+        sourceState: result.code === "NOT_PLAYBACK_READY" ? "needs_normalization" : undefined,
+        publishReady: false,
+      },
       { status: result.status },
     );
   }
@@ -38,7 +54,8 @@ export async function POST(_request: Request, ctx: Ctx) {
     ok: true,
     id: result.media.id,
     state: result.media.state,
-    publishReady: result.media.state === "valid",
+    sourceState: result.media.state,
+    publishReady: false,
     durationMs: result.media.duration_ms,
     container: result.media.container,
     codec: result.media.codec_video,

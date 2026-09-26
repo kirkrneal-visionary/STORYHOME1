@@ -22,6 +22,13 @@ export const COUNTY_STORY_RESULT_CODES = [
   "NOT_ELIGIBLE",
   "STORY_PRO_REQUIRED",
   "MEDIA_NOT_VALID",
+  "PLAYBACK_NOT_READY",
+  "PLAYBACK_READY",
+  "PLAYBACK_POLICY_INVALID",
+  "PROVIDER_PROCESSING",
+  "PROVIDER_ERRORED",
+  "PROVIDER_EVENT_REPLAY",
+  "PROVIDER_EVENT_ACCEPTED",
   "MEDIA_NOT_OWNED",
   "MEDIA_ALREADY_ATTACHED",
   "LISTING_NOT_AUTHORIZED",
@@ -70,6 +77,10 @@ export function countyStoryHttpStatus(code: string): number {
     case "CAPTION_JOB_REPLAY":
     case "ACCESSIBILITY_SAVED":
     case "ACCESSIBILITY_READY":
+    case "PLAYBACK_READY":
+    case "PROVIDER_PROCESSING":
+    case "PROVIDER_EVENT_REPLAY":
+    case "PROVIDER_EVENT_ACCEPTED":
       return 200;
     case "PROVIDER_UNAVAILABLE":
       return 503;
@@ -82,6 +93,9 @@ export function countyStoryHttpStatus(code: string): number {
       return 409;
     case "COUNTY_INACTIVE":
     case "MEDIA_NOT_VALID":
+    case "PLAYBACK_NOT_READY":
+    case "PLAYBACK_POLICY_INVALID":
+    case "PROVIDER_ERRORED":
     case "MEDIA_NOT_OWNED":
     case "LISTING_NOT_AUTHORIZED":
     case "LISTING_COUNTY_MISMATCH":

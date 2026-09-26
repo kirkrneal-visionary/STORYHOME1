@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–4 are accepted and hosted. Wave 5 captions / accessibility is implemented in-repo (`0085`) and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 is not authorized.
+**Intended:** Waves 1–4 are accepted and hosted. Wave 5 captions / accessibility (`0085`) plus Mux signed HLS provider processing (`0086`) are implemented in-repo and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 is not authorized.
 
 ## Waves
 
@@ -12,8 +12,8 @@
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
 | 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
-| 5 | In-repo `0085`. Hosted migration **not** applied. | Captions, professional confirmation, accessible description, publish/replace accessibility gate. Public publish off. No UI. |
-| 6 UI | Not authorized | Professional composer. Blocked on the normalization gate below. |
+| 5 | In-repo `0085` + `0086`. Hosted migrations **not** applied. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
+| 6 UI | Not authorized | Professional composer. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
 
@@ -37,7 +37,7 @@ Lock order:
 
 Allocation: `max(slot_number) + 1` under the county/day lock. Slot numbers stay 1–30. Unique `(county_fips, story_day, slot_number)` and unique `(professional_owner_id, story_day)` are the last line of defense. `accepted_count` is rebuilt from slot rows and is advisory.
 
-Only `state = valid` media may attach. `needs_normalization` (HEVC/MOV/AV1) is refused. Media must also be accessibility-ready.
+Recognized source media (`valid` or `needs_normalization`) may attach only after **prepared provider playback** and accessibility readiness. Source MP4/H.264 probe is not enough. HEVC/MOV may publish after Mux marks signed HLS ready. The source row is never relabeled.
 
 ## Eligibility
 
@@ -98,52 +98,66 @@ Captions belong to the media version, not the durable slot. Canonical store is `
 
 `county_story_media_is_accessibility_ready` is the publish fact. It requires confirmed synchronized captions plus a professional visual-information confirmation (`spoken_audio` or a supplied description). Client booleans are ignored. Publish/replace fail with `ACCESSIBILITY_NOT_READY` and do not create a slot, move capacity, or write enforcement.
 
-Automatic transcription uses a replaceable adapter. No vendor is approved. Jobs record `PROVIDER_UNAVAILABLE`. Failure is not a strike. Manual complete cue sets confirm on save. Auto sets stay `auto_ready` until `county_story_confirm_captions`. Edits use `expected_revision`; a stale revision returns `CAPTION_REVISION_CONFLICT`.
+Automatic transcription uses `CountyStoryTranscriptionProvider`. Mux is the first adapter: one English on-demand caption track, imported as Story Home `webvtt_cues` with `auto_ready`. Failure or missing Mux credentials is `PROVIDER_UNAVAILABLE`, not a strike. Manual complete cue sets confirm on save. Auto sets stay `auto_ready` until `county_story_confirm_captions`. Edits use `expected_revision`; a stale revision returns `CAPTION_REVISION_CONFLICT`.
 
 Cue text and the video-specific description delete with superseded, policy-removed, or expired media. Job/revision/confirmation facts may remain. Transcripts are not indexed for search, Archie, SEO, or profile history.
 
 Wave 7 viewer requirements (track only, not this wave): keyboard controls, non-swipe alternatives, screen-reader labels, focus management, visible focus, caption contrast, text scaling, reduced motion, panel pause/resume, return focus after panel close, position such as “3 of 12”.
 
-## Playback-ready (`state = valid`)
+## Source probe vs prepared playback
 
-Wave 3 may consume only `valid` media. Never treat `needs_normalization` as publishable.
+Wave 2 source probing still decides invalid / too long / too large / recognized / `needs_normalization`. Those fields stay **source** facts (`container`, `codec_video`, `state`). Mux does not relabel the original file.
 
-| Container | Codec | Result |
+Canonical **prepared playback** after Mux:
+
+- Mux asset successfully processed
+- signed / private playback id and policy exist (`provider_playback_policy = signed`)
+- `playback_kind = hls`
+- `playback_ready_at` set
+- Story Home may use that asset
+
+This is **not** “a static MP4 rendition exists.” Static MP4 renditions are not requested. `valid` means the source probe passed a launch pair. Publish requires prepared playback + accessibility.
+
+| Source container | Source codec | Source state |
 |---|---|---|
-| MP4 | `avc1` or `avc3` (H.264 / AVC) | Playback-ready |
-| WebM | `vp08` (VP8) or `vp09` (VP9) | Playback-ready |
+| MP4 | `avc1` or `avc3` (H.264 / AVC) | `valid` (still enters Mux) |
+| WebM | `vp08` (VP8) or `vp09` (VP9) | `valid` (still enters Mux) |
 | WebM | `avc1` (H.264) | `needs_normalization` |
 | MP4 or WebM | `av01` (AV1) | `needs_normalization` |
 | MP4 or QuickTime/MOV | `hvc1` / `hev1` (HEVC / H.265) | `needs_normalization` |
 | QuickTime/MOV | any, including H.264 | `needs_normalization` |
 
-`valid` means launch playback-ready for the Story Home web viewer. Codec is never approved apart from its container. Filename extensions and client claims are not authority.
-
 Limits that stay: 80 MiB max staged upload, 30.000 s max duration, 6-hour abandoned staging lifetime. Over-limit or unread files are `invalid`, not `valid`.
+
+## Mux provider (Wave 5)
+
+Mux is County Stories media infrastructure only. Missing `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` / `MUX_WEBHOOK_SECRET` fails safely as `PROVIDER_UNAVAILABLE`. Never `NEXT_PUBLIC_`. Future viewer tokens also need `MUX_SIGNING_KEY_ID` and `MUX_SIGNING_KEY_PRIVATE_KEY`.
+
+Webhook path `/api/county-stories/webhooks/mux` verifies Mux signatures. Invalid signatures do nothing. Events may update provider/caption processing only. They cannot publish, hide, strike, allocate, change ownership, or bypass accessibility. Replay is idempotent.
+
+Deletion order: Story Home playback authority off → Mux asset delete → Supabase source delete → caption/accessibility purge. Failed Mux delete is retryable and must not mark provider content deleted. Abandoned 6-hour staging removes Mux assets too.
 
 ## Cleanup
 
-Eligible unpublished media (no `slot_id`, object not yet gone, expired):
+Eligible unpublished media (no `slot_id`, object not yet gone, expired), plus superseded and policy-removed media:
 
-1. Attempt Storage object delete on `county-story-media`
-2. Only after that succeeds, set `state = deleted` and `media_deleted_at`
-3. If Storage delete fails, keep the row and record `cleanup_error` for a safe retry
+1. Turn off Story Home playback authority
+2. Delete the Mux provider asset
+3. Only after Mux is gone (204/404), delete Storage objects on `county-story-media`
+4. Only after Storage succeeds, set `state = deleted` and `media_deleted_at` and purge captions
+5. If Mux delete fails, keep the local hide/expiry and record `provider_delete_error` for retry. Do not mark provider deleted.
 
 Unpublished staged media is excluded when `slot_id` is set. Superseded replacement media uses `county_story_media_list_superseded` + `county_story_media_mark_retired` after the new pointer commits. Policy-removed media on a hidden slot uses `county_story_media_list_policy_removed` + `county_story_media_mark_policy_deleted`. Cleanup failure does not restore playback.
 
 ## Required pre-Wave-6 infrastructure gate
 
-**Not implemented. No vendor selected. Not this wave.**
+Mux signed HLS processing is implemented in-repo (`0086`). Hosted Mux credentials and hosted `0085` / `0086` are not applied. Wave 6 composer UI is still not authorized.
 
-Before the professional County Stories composer is released to users, Story Home needs an automatic normalization/transcoding path for common mobile inputs that are ingest-recognized but not launch playback-ready — especially iPhone HEVC/MOV.
-
-A normal professional recording on an iPhone must not require the publisher to understand codecs or convert video by hand.
-
-Exact implementation placement is decided before UI authorization. Do not add a paid transcoding vendor without a separate recommendation and approval.
+A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 
 ## Related
 
 - Not Living Marks, Home Docs, or SHI Studies. Dedicated private bucket `county-story-media`.
 - Not P1C geography. Launch-seven FIPS only until a later wave says otherwise.
 - Not Marketplace, Agent World, Homepage, or County page UI.
-- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`.
+- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`, `npm run test:county-stories-w5-mux`.

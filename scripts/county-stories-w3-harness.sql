@@ -33,6 +33,14 @@ begin
   perform public.county_story_save_visual_access(
     p_owner, p_id, 'spoken_audio', null, 'local_knowledge', '48373', null, now()
   );
+  perform public.county_story_mark_provider_ready(
+    p_id,
+    'ast_' || replace(p_id::text, '-', ''),
+    'pb_' || replace(p_id::text, '-', ''),
+    'signed',
+    15000,
+    now()
+  );
   return p_id;
 end;
 $$;
@@ -173,7 +181,7 @@ begin
     true,
     timestamptz '2026-09-24 14:00:00-05'
   );
-  if r->>'code' is distinct from 'MEDIA_NOT_VALID' then
+  if r->>'code' is distinct from 'PLAYBACK_NOT_READY' then
     raise exception 'hevc_published %', r;
   end if;
   if exists (select 1 from public.county_story_slots) then

@@ -23,7 +23,8 @@ assert.equal(files.filter((f) => f.startsWith("0082")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0086")), false);
+assert.equal(files.filter((f) => f.startsWith("0086")).length, 1);
+assert.equal(files.some((f) => f.startsWith("0087")), false);
 assert.match(
   read("tsconfig.json"),
   /scripts\/test-county-stories-w3-publish\.ts/,
@@ -133,6 +134,7 @@ function applyStack(db: string) {
   applyTo(db, "supabase/migrations/0083_county_story_publish.sql");
   applyTo(db, "supabase/migrations/0084_county_story_enforcement.sql");
   applyTo(db, "supabase/migrations/0085_county_story_captions.sql");
+  applyTo(db, "supabase/migrations/0086_county_story_provider.sql");
 }
 
 const fresh = "county_stories_w3_fresh";

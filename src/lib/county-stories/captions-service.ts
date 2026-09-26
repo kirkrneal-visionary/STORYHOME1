@@ -7,6 +7,9 @@ import type { CountyStoryCaptionCue } from "@/lib/county-stories/captions";
 import { countyStoryHttpStatus } from "@/lib/county-stories/publish";
 import type { CountyStoryRpcResult } from "@/lib/county-stories/publish-service";
 import { countyStoryTranscriptionProvider } from "@/lib/county-stories/transcription-provider";
+import { countyStoryMuxConfigured } from "@/lib/county-stories/mux-env";
+import { supabaseCountyStoryStorage } from "@/lib/county-stories/media-service";
+import { startCountyStoryProviderProcessing } from "@/lib/county-stories/provider-processing";
 
 export async function saveCountyStoryCaptions(opts: {
   admin: SupabaseClient;
@@ -67,6 +70,17 @@ export async function requestCountyStoryCaptionJob(opts: {
   }
   const result = data as CountyStoryRpcResult;
   if (result.code === "PROVIDER_UNAVAILABLE" || result.code === "CAPTION_JOB_REPLAY") {
+    if (countyStoryMuxConfigured()) {
+      const started = await startCountyStoryProviderProcessing({
+        admin: opts.admin,
+        storage: supabaseCountyStoryStorage(opts.admin),
+        ownerId: opts.ownerId,
+        mediaId: opts.mediaId,
+      });
+      if (started.result.code !== "PROVIDER_UNAVAILABLE") {
+        return started;
+      }
+    }
     await countyStoryTranscriptionProvider().transcribe({
       mediaId: opts.mediaId,
       ownerId: opts.ownerId,

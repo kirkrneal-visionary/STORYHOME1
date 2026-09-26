@@ -39,20 +39,20 @@ export const COUNTY_STORY_MEDIA_DECLARED_TYPES = [
 ] as const;
 
 /**
- * Launch playback-ready pairs for the Story Home web viewer.
- * Codec is never approved apart from its container.
+ * Source-probe pairs. These describe the uploaded file, not consumer playback.
  *
- * Playback-ready (`state=valid`) is only:
+ * Source `state=valid` (probe only):
  *   MP4  + H.264/AVC (avc1, avc3)
  *   WebM + VP8 (vp08) or VP9 (vp09)
  *
- * Ingest-recognized but not publishable (`needs_normalization`):
+ * Source `needs_normalization` (still enters the same Mux path):
  *   HEVC/H.265 (hvc1, hev1) in MP4 or QuickTime/MOV — iPhone default
- *   AV1 (av01) in MP4 or WebM — not a launch viewer pair
- *   WebM + H.264 — recognized, never playback-ready
- *   QuickTime/MOV with any codec, including H.264 — not a launch container
+ *   AV1 (av01) in MP4 or WebM
+ *   WebM + H.264
+ *   QuickTime/MOV with any codec, including H.264
  *
- * No transcoding vendor is wired. Wave 3 may consume only `valid`.
+ * Canonical consumer playback after Mux is signed HLS.
+ * Source valid is not publish authority.
  */
 export const COUNTY_STORY_PLAYBACK_MATRIX = [
   { container: "mp4", codec: "avc1" },

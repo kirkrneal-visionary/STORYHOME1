@@ -24,6 +24,14 @@ begin
     p_owner::text || '/' || p_id::text || '/original.mp4',
     now() + interval '6 hours', 'mp4', 'avc1', 15000
   );
+  perform public.county_story_mark_provider_ready(
+    p_id,
+    'ast_' || replace(p_id::text, '-', ''),
+    'pb_' || replace(p_id::text, '-', ''),
+    'signed',
+    15000,
+    now()
+  );
   return p_id;
 end;
 $$;
