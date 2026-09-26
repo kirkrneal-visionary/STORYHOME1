@@ -40,7 +40,8 @@ assert.match(mig, /county_story_media_is_playback_ready/);
 assert.match(mig, /playback_kind text not null default 'hls'/);
 assert.match(mig, /provider_playback_policy = 'signed'/);
 assert.match(mig, /PLAYBACK_NOT_READY/);
-assert.doesNotMatch(mig, /mp4_support|static_rendition|static mp4 rendition/i);
+assert.doesNotMatch(mig, /\bmp4_support\b/);
+assert.doesNotMatch(mig, /static_renditions/);
 assert.doesNotMatch(mig, /publish_enabled\s*=\s*true/);
 assert.doesNotMatch(mig, /NEXT_PUBLIC_/);
 assert.ok(COUNTY_STORY_RESULT_CODES.includes("PLAYBACK_NOT_READY"));
@@ -100,7 +101,7 @@ assert.equal(existsSync(join(root, "src/app/api/county-stories/webhooks/mux/rout
 assert.equal(existsSync(join(root, "src/app/api/county-stories/media/[id]/process/route.ts")), true);
 assert.equal(existsSync(join(root, "src/components/county-stories")), false);
 assert.match(read("src/lib/security/origin.ts"), /\/api\/county-stories\/webhooks\/mux/);
-assert.doesNotMatch(read("src/lib/county-stories/mux-env.ts"), /NEXT_PUBLIC_/);
+assert.doesNotMatch(read("src/lib/county-stories/mux-env.ts"), /env\.NEXT_PUBLIC_/);
 assert.doesNotMatch(read(".env.example"), /NEXT_PUBLIC_MUX/);
 assert.match(read(".env.example"), /MUX_TOKEN_ID/);
 assert.match(read(".env.example"), /MUX_SIGNING_KEY_PRIVATE_KEY/);

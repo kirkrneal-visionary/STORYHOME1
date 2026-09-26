@@ -18,8 +18,11 @@ export class MuxCountyStoryTranscriptionProvider
   implements CountyStoryTranscriptionProvider
 {
   readonly id = "mux";
+  private readonly client: CountyStoryMuxClient;
 
-  constructor(private readonly client: CountyStoryMuxClient = countyStoryMuxClient()) {}
+  constructor(client: CountyStoryMuxClient = countyStoryMuxClient()) {
+    this.client = client;
+  }
 
   async transcribe(
     input: CountyStoryTranscriptionInput & {

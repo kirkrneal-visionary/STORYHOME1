@@ -123,8 +123,11 @@ export function muxCreateAssetBody(input: MuxCreateAssetInput): Record<string, u
 
 export class LiveCountyStoryMuxClient implements CountyStoryMuxClient {
   readonly configured = true;
+  private readonly env: CountyStoryMuxEnv;
 
-  constructor(private readonly env: CountyStoryMuxEnv) {}
+  constructor(env: CountyStoryMuxEnv) {
+    this.env = env;
+  }
 
   private async request(
     method: string,

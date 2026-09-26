@@ -460,6 +460,7 @@ grant execute on function public.county_story_claim_provider_event(text, text, u
 -- ---------------------------------------------------------------------------
 -- Cleanup lists include provider asset ids so abandoned Mux objects are removed.
 -- ---------------------------------------------------------------------------
+drop function if exists public.county_story_media_list_expired(timestamptz);
 create or replace function public.county_story_media_list_expired(
   p_at timestamptz default now()
 )
@@ -490,6 +491,7 @@ as $$
      );
 $$;
 
+drop function if exists public.county_story_media_list_superseded(timestamptz);
 create or replace function public.county_story_media_list_superseded(
   p_at timestamptz default now()
 )
@@ -520,6 +522,7 @@ as $$
      );
 $$;
 
+drop function if exists public.county_story_media_list_policy_removed(timestamptz);
 create or replace function public.county_story_media_list_policy_removed(
   p_at timestamptz default now()
 )
