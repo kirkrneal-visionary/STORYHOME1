@@ -38,5 +38,6 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-25 | Policy hide is service-role only and idempotent per slot+media and per owner+key | Ordinary client credentials cannot hide; retries must not double-strike | County Stories Wave 4 |
 | 2026-09-25 | Policy-hide HTTP is deferred; no route accepts the Supabase service-role secret | There is no Command/admin authorization layer yet; the service-role key is not a moderation credential | County Stories Wave 4 correction |
 | 2026-09-25 | `unauthorized_property` detaches `listing_id` and blocks restoring that listing on replace | Do not reactivate a known-invalid listing association; the slot and capacity stay consumed | County Stories Wave 4 correction |
+| 2026-09-26 | Hosted `0084` is applied; `county_story_launch.publish_enabled` stays false | Wave 4 closeout. Public publish remains impossible. Wave 5 is a separate authorization | County Stories Wave 4 hosted |
 
 If a new change alters one of these, add a row and update the workflow contract.
