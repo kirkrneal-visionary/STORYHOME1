@@ -5,6 +5,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { countyStoryHttpStatus } from "@/lib/county-stories/publish";
 import { supabaseCountyStoryStorage } from "@/lib/county-stories/media-service";
+import { destroyCountyStoryMediaContent } from "@/lib/county-stories/provider-cleanup";
+import { countyStoryMuxClient } from "@/lib/county-stories/mux-client";
 
 export type CountyStoryRpcResult = {
   ok: boolean;
@@ -114,32 +116,15 @@ export async function retireSupersededCountyStoryMedia(opts: {
 }): Promise<void> {
   const { data: row } = await opts.admin
     .from("county_story_media")
-    .select("storage_path, poster_path")
+    .select("id, storage_path, poster_path, caption_cues_path, provider_asset_id, provider_deleted_at, playback_ready_at")
     .eq("id", opts.mediaId)
     .maybeSingle();
   if (!row?.storage_path) return;
-  const storage = supabaseCountyStoryStorage(opts.admin);
-  const paths = [row.storage_path, row.poster_path].filter(Boolean) as string[];
-  try {
-    await storage.remove(paths);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "storage_delete_failed";
-    await opts.admin.rpc("county_story_media_record_cleanup_failure", {
-      p_id: opts.mediaId,
-      p_error: message,
-      p_at: new Date().toISOString(),
-    });
-    return;
-  }
-  const marked = await opts.admin.rpc("county_story_media_mark_retired", {
-    p_id: opts.mediaId,
-    p_at: new Date().toISOString(),
+  await destroyCountyStoryMediaContent({
+    admin: opts.admin,
+    storage: supabaseCountyStoryStorage(opts.admin),
+    row,
+    mark: "retired",
+    mux: countyStoryMuxClient(),
   });
-  if (marked.error || marked.data === false) {
-    await opts.admin.rpc("county_story_media_record_cleanup_failure", {
-      p_id: opts.mediaId,
-      p_error: "retire_mark_failed",
-      p_at: new Date().toISOString(),
-    });
-  }
 }

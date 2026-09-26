@@ -28,7 +28,9 @@ assert.equal(files.filter((f) => f.startsWith("0081")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0082")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0085")), false);
+assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
+assert.equal(files.filter((f) => f.startsWith("0086")).length, 1);
+assert.equal(files.some((f) => f.startsWith("0087")), false);
 
 const approved = [
   "48005",
