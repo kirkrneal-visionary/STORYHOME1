@@ -3,7 +3,10 @@
  * Webhooks use signatures instead — skip those paths.
  */
 
-const SKIP_ORIGIN = ["/api/billing/webhook"];
+const SKIP_ORIGIN = [
+  "/api/billing/webhook",
+  "/api/county-stories/webhooks/mux",
+];
 
 export function shouldCheckOrigin(pathname: string, method: string): boolean {
   const m = method.toUpperCase();

@@ -10,7 +10,7 @@ as $$
 begin
   insert into public.county_story_media (
     id, professional_owner_id, purpose, state, storage_path, expires_at,
-    container, codec_video
+    container, codec_video, duration_ms
   ) values (
     p_id,
     p_owner,
@@ -19,7 +19,27 @@ begin
     p_owner::text || '/' || p_id::text || '/original.mp4',
     now() + interval '6 hours',
     'mp4',
-    'avc1'
+    'avc1',
+    15000
+  );
+  perform public.county_story_save_captions(
+    p_owner,
+    p_id,
+    '[{"index":0,"start_ms":0,"end_ms":4000,"text":"Isolated test captions."},{"index":1,"start_ms":4000,"end_ms":8000,"text":"Spoken visual context."}]'::jsonb,
+    0,
+    'manual',
+    now()
+  );
+  perform public.county_story_save_visual_access(
+    p_owner, p_id, 'spoken_audio', null, 'local_knowledge', '48373', null, now()
+  );
+  perform public.county_story_mark_provider_ready(
+    p_id,
+    'ast_' || replace(p_id::text, '-', ''),
+    'pb_' || replace(p_id::text, '-', ''),
+    'signed',
+    15000,
+    now()
   );
   return p_id;
 end;
@@ -161,7 +181,7 @@ begin
     true,
     timestamptz '2026-09-24 14:00:00-05'
   );
-  if r->>'code' is distinct from 'MEDIA_NOT_VALID' then
+  if r->>'code' is distinct from 'PLAYBACK_NOT_READY' then
     raise exception 'hevc_published %', r;
   end if;
   if exists (select 1 from public.county_story_slots) then

@@ -16,6 +16,8 @@ import {
   type CountyStoryValidationCode,
 } from "@/lib/county-stories/media";
 import { validateCountyStoryVideo } from "@/lib/county-stories/media-validate";
+import { destroyCountyStoryMediaContent } from "@/lib/county-stories/provider-cleanup";
+import { countyStoryMuxClient } from "@/lib/county-stories/mux-client";
 
 export type CountyStoryMediaRow = {
   id: string;
@@ -37,6 +39,16 @@ export type CountyStoryMediaRow = {
   deleted_at: string | null;
   media_deleted_at?: string | null;
   cleanup_error?: string | null;
+  provider?: string | null;
+  provider_asset_id?: string | null;
+  provider_playback_id?: string | null;
+  provider_playback_policy?: string | null;
+  provider_track_id?: string | null;
+  provider_status?: string | null;
+  playback_ready_at?: string | null;
+  playback_duration_ms?: number | null;
+  provider_deleted_at?: string | null;
+  caption_cues_path?: string | null;
 };
 
 export type CountyStoryStorage = {
@@ -322,24 +334,21 @@ export async function deleteCountyStoryMedia(opts: {
   if (row.slot_id) {
     return { ok: false, status: 409, error: "Attached Story media cannot be orphan-deleted." };
   }
-  const paths = [row.storage_path, row.poster_path].filter(Boolean) as string[];
-  try {
-    await opts.storage.remove(paths);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "storage_delete_failed";
-    await opts.admin.rpc("county_story_media_record_cleanup_failure", {
-      p_id: row.id,
-      p_error: message,
-      p_at: new Date().toISOString(),
-    });
-    return { ok: false, status: 500, error: "Storage delete failed." };
-  }
-  const { data, error } = await opts.admin.rpc(
-    "county_story_media_mark_storage_deleted",
-    { p_id: row.id, p_at: new Date().toISOString() },
-  );
-  if (error || data === false) {
-    return { ok: false, status: 500, error: "Unable to record storage deletion." };
+  const destroyed = await destroyCountyStoryMediaContent({
+    admin: opts.admin,
+    storage: opts.storage,
+    row,
+    mark: "storage",
+    mux: countyStoryMuxClient(),
+  });
+  if (!destroyed.ok) {
+    return {
+      ok: false,
+      status: 500,
+      error: destroyed.providerFailed
+        ? "Provider delete failed."
+        : "Storage delete failed.",
+    };
   }
   return { ok: true };
 }
@@ -362,31 +371,30 @@ export async function cleanupExpiredCountyStoryMedia(opts: {
     id: string;
     storage_path: string | null;
     poster_path: string | null;
+    provider_asset_id?: string | null;
+    provider_deleted_at?: string | null;
+    playback_ready_at?: string | null;
   }[];
   const deleted: string[] = [];
   const failed: { id: string; error: string }[] = [];
   const paths: string[] = [];
+  const mux = countyStoryMuxClient();
   for (const row of rows) {
     const rowPaths = [row.storage_path, row.poster_path].filter(Boolean) as string[];
-    try {
-      await opts.storage.remove(rowPaths);
-      const marked = await opts.admin.rpc("county_story_media_mark_storage_deleted", {
-        p_id: row.id,
-        p_at: now,
-      });
-      if (marked.error) throw new Error(marked.error.message);
-      if (marked.data === false) throw new Error("mark_storage_deleted_rejected");
-      deleted.push(row.id);
-      paths.push(...rowPaths);
-    } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "storage_delete_failed";
-      await opts.admin.rpc("county_story_media_record_cleanup_failure", {
-        p_id: row.id,
-        p_error: message,
-        p_at: now,
-      });
-      failed.push({ id: row.id, error: message });
+    const destroyed = await destroyCountyStoryMediaContent({
+      admin: opts.admin,
+      storage: opts.storage,
+      row,
+      mark: "storage",
+      now: opts.now,
+      mux,
+    });
+    if (!destroyed.ok) {
+      failed.push({ id: row.id, error: destroyed.error });
+      continue;
     }
+    deleted.push(row.id);
+    paths.push(...rowPaths);
   }
   return { deleted, failed, paths };
 }

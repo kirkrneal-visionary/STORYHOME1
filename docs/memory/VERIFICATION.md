@@ -47,7 +47,9 @@ These are **isolated**. They do not write production. Wave 2 runs two disposable
 | Bottom menu is see-through frost | `--dock-glass-blur` 32px + top `--dock-rim` **source-tested**. Founder **GOOD** 2026-09-15. Live |
 
 | County Stories Wave 3 publish/replace/concurrency | `npm run test:county-stories-w3` — isolated Postgres. Hosted `0083` applied. Public publish stays off |
-| County Stories Wave 4 hide/strikes/suspension | `npm run test:county-stories-w4` — isolated Postgres. Hosted `0084` is not applied. Public publish stays off |
+| County Stories Wave 4 hide/strikes/suspension | `npm run test:county-stories-w4` — isolated Postgres. Hosted `0084` applied. Public publish stays off |
+| County Stories Wave 5 captions/accessibility | `npm run test:county-stories-w5` — isolated Postgres. Hosted `0085` / `0086` are not applied. Public publish stays off |
+| County Stories Wave 5 Mux / signed HLS | `npm run test:county-stories-w5-mux` — isolated Postgres + mocked Mux. No live Mux credentials. |
 
 If a test fails, do not weaken it to go green.
 
