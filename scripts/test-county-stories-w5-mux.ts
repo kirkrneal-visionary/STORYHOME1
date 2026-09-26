@@ -11,11 +11,15 @@ import {
   COUNTY_STORY_RESULT_CODES,
   countyStoryHttpStatus,
 } from "../src/lib/county-stories/publish.ts";
-import { muxCreateAssetBody } from "../src/lib/county-stories/mux-client.ts";
+import { createVerify, generateKeyPairSync } from "node:crypto";
+import { LiveCountyStoryMuxClient, muxCreateAssetBody } from "../src/lib/county-stories/mux-client.ts";
 import {
   countyStoryMuxConfigured,
+  countyStoryMuxSigningConfigured,
+  loadMuxSigningPrivateKey,
   readCountyStoryMuxEnv,
 } from "../src/lib/county-stories/mux-env.ts";
+import { signMuxPlaybackToken } from "../src/lib/county-stories/mux-playback.ts";
 import { verifyMuxWebhookSignature } from "../src/lib/county-stories/mux-webhook.ts";
 import { parseMuxWebVttCues } from "../src/lib/county-stories/mux-vtt.ts";
 import {
@@ -68,6 +72,149 @@ assert.equal(
   })?.tokenId,
   "tid",
 );
+
+{
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const pem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+  const muxBase64 = Buffer.from(pem, "utf8").toString("base64");
+  const kid = "test-signing-key";
+
+  function tokenVerifies(token: string | null): boolean {
+    if (!token) return false;
+    const [header, payload, sig] = token.split(".");
+    if (!header || !payload || !sig) return false;
+    const verify = createVerify("RSA-SHA256");
+    verify.update(`${header}.${payload}`);
+    verify.end();
+    const signature = Buffer.from(sig.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+    return verify.verify(publicKey, signature);
+  }
+
+  const fromBase64 = loadMuxSigningPrivateKey(muxBase64);
+  assert.ok(fromBase64);
+  assert.notEqual(fromBase64, muxBase64);
+  assert.match(fromBase64 ?? "", /-----BEGIN/);
+  assert.match(fromBase64 ?? "", /PRIVATE KEY-----/);
+  assert.equal(loadMuxSigningPrivateKey(fromBase64), fromBase64);
+
+  const fromPem = loadMuxSigningPrivateKey(pem);
+  assert.equal(fromPem, pem.trim());
+  assert.equal(loadMuxSigningPrivateKey(fromPem), fromPem);
+
+  const baseEnv = {
+    tokenId: "tid",
+    tokenSecret: "sec",
+    webhookSecret: "whsec",
+    signingKeyId: kid,
+  };
+  const signedFromBase64 = signMuxPlaybackToken({
+    playbackId: "pb_signed_only",
+    env: { ...baseEnv, signingKeyPrivate: muxBase64 },
+    nowMs: 1_700_000_000_000,
+    ttlSec: 120,
+  });
+  const signedFromPem = signMuxPlaybackToken({
+    playbackId: "pb_signed_only",
+    env: { ...baseEnv, signingKeyPrivate: pem },
+    nowMs: 1_700_000_000_000,
+    ttlSec: 120,
+  });
+  assert.equal(tokenVerifies(signedFromBase64), true);
+  assert.equal(tokenVerifies(signedFromPem), true);
+  assert.equal(signedFromBase64, signedFromPem);
+  const pkcs1 = privateKey.export({ type: "pkcs1", format: "pem" }).toString();
+  const pkcs1Base64 = Buffer.from(pkcs1, "utf8").toString("base64");
+  const escapedPem = pem.trim().replace(/\n/g, "\\n");
+  assert.equal(loadMuxSigningPrivateKey(escapedPem), pem.trim());
+  assert.equal(
+    tokenVerifies(signMuxPlaybackToken({
+      playbackId: "pb_signed_only",
+      env: { ...baseEnv, signingKeyPrivate: pkcs1Base64 },
+      nowMs: 1_700_000_000_000,
+      ttlSec: 120,
+    })),
+    true,
+  );
+  assert.equal(signMuxPlaybackToken({ playbackId: "public_should_not_matter_here", env: { ...baseEnv, signingKeyPrivate: null } }), null);
+
+  const loadedEnv = readCountyStoryMuxEnv({
+    MUX_TOKEN_ID: "tid",
+    MUX_TOKEN_SECRET: "sec",
+    MUX_WEBHOOK_SECRET: "whsec",
+    MUX_SIGNING_KEY_ID: kid,
+    MUX_SIGNING_KEY_PRIVATE_KEY: muxBase64,
+  });
+  assert.equal(countyStoryMuxSigningConfigured({
+    MUX_TOKEN_ID: "tid",
+    MUX_TOKEN_SECRET: "sec",
+    MUX_WEBHOOK_SECRET: "whsec",
+    MUX_SIGNING_KEY_ID: kid,
+    MUX_SIGNING_KEY_PRIVATE_KEY: muxBase64,
+  }), true);
+  assert.equal(loadedEnv?.signingKeyPrivate, fromBase64);
+  assert.notEqual(loadedEnv?.signingKeyPrivate, muxBase64);
+
+  const malformed = [
+    "not-a-key",
+    "@@@@",
+    Buffer.from("hello", "utf8").toString("base64"),
+    Buffer.from(muxBase64, "utf8").toString("base64"),
+    "-----BEGIN PRIVATE KEY-----\nnot-a-key\n-----END PRIVATE KEY-----",
+  ];
+  for (const bad of malformed) {
+    assert.equal(loadMuxSigningPrivateKey(bad), null);
+    assert.equal(
+      signMuxPlaybackToken({
+        playbackId: "pb_signed_only",
+        env: { ...baseEnv, signingKeyPrivate: bad },
+      }),
+      null,
+    );
+  }
+  assert.equal(countyStoryMuxSigningConfigured({
+    MUX_TOKEN_ID: "tid",
+    MUX_TOKEN_SECRET: "sec",
+    MUX_WEBHOOK_SECRET: "whsec",
+    MUX_SIGNING_KEY_ID: kid,
+    MUX_SIGNING_KEY_PRIVATE_KEY: "not-a-key",
+  }), false);
+
+  const logs: string[] = [];
+  const origError = console.error;
+  const origLog = console.log;
+  console.error = (...args: unknown[]) => {
+    logs.push(args.map((item) => String(item)).join(" "));
+  };
+  console.log = (...args: unknown[]) => {
+    logs.push(args.map((item) => String(item)).join(" "));
+  };
+  let thrown = "";
+  try {
+    assert.equal(loadMuxSigningPrivateKey(muxBase64 + "@@@@"), null);
+    const client = new LiveCountyStoryMuxClient({
+      ...baseEnv,
+      signingKeyPrivate: "not-a-key",
+    });
+    await client.fetchTrackVtt({
+      assetId: "ast_test",
+      trackId: "trk_test",
+      playbackId: "pb_signed_only",
+    });
+    assert.fail("malformed key must fail closed");
+  } catch (err) {
+    thrown = err instanceof Error ? `${err.name} ${err.message}` : String(err);
+    assert.equal(thrown, "Error PROVIDER_UNAVAILABLE");
+  } finally {
+    console.error = origError;
+    console.log = origLog;
+  }
+  const emitted = `${logs.join("\n")}\n${thrown}`;
+  assert.equal(emitted.includes(muxBase64), false);
+  assert.equal(emitted.includes(pkcs1Base64), false);
+  assert.equal(emitted.includes(pem), false);
+  assert.equal(emitted.includes(pkcs1), false);
+  assert.equal(emitted.includes("PRIVATE KEY"), false);
+}
 
 const secret = "mux_test_secret";
 const payload = JSON.stringify({ id: "evt_1", type: "video.asset.ready" });
@@ -342,6 +489,70 @@ const mockMux = {
     },
   });
   assert.equal(publicReady.code, "PLAYBACK_POLICY_INVALID");
+}
+
+{
+  const mediaId = "12121212-1212-4121-8121-121212121212";
+  const row: Record<string, unknown> = {
+    id: mediaId,
+    professional_owner_id: "34343434-3434-4343-8343-343434343434",
+    provider_asset_id: "ast_preparing",
+    provider_playback_id: null,
+    provider_status: "processing",
+    duration_ms: 9000,
+    storage_path: "o/m/spoken.mp4",
+    caption_state: null,
+  };
+  const rpcs: string[] = [];
+  const admin = {
+    from() {
+      return {
+        select() { return this; },
+        eq() { return this; },
+        update() { return this; },
+        async maybeSingle() { return { data: row, error: null }; },
+      };
+    },
+    async rpc(name: string, args: Record<string, unknown>) {
+      rpcs.push(name);
+      if (name === "county_story_claim_provider_event") {
+        return { data: { ok: true, code: "PROVIDER_EVENT_ACCEPTED" }, error: null };
+      }
+      if (name === "county_story_mark_provider_ready") {
+        row.provider_status = "ready";
+        row.provider_playback_id = args.p_playback_id;
+        row.playback_ready_at = args.p_at;
+        return { data: { ok: true, code: "PLAYBACK_READY" }, error: null };
+      }
+      if (name === "county_story_apply_auto_captions") {
+        row.caption_state = "auto_ready";
+        return { data: { ok: true, code: "CAPTIONS_SAVED" }, error: null };
+      }
+      return { data: { ok: false, code: name }, error: null };
+    },
+  };
+  const preparing = await applyCountyStoryMuxWebhook({
+    admin: admin as never,
+    mux: mockMux,
+    body: {
+      id: "evt_asset_ready_preparing_captions",
+      type: "video.asset.ready",
+      object: { type: "asset", id: "ast_preparing" },
+      data: {
+        id: "ast_preparing",
+        duration: 9,
+        playback_ids: [{ id: "pb_preparing", policy: "signed" }],
+        tracks: [
+          { id: "trk_preparing", type: "text", language_code: "en", status: "preparing", text_source: "generated_vod" },
+        ],
+      },
+    },
+  });
+  assert.equal(preparing.code, "PLAYBACK_READY");
+  assert.equal(row.provider_status, "ready");
+  assert.equal(row.provider_playback_id, "pb_preparing");
+  assert.equal(row.caption_state, null);
+  assert.equal(rpcs.includes("county_story_apply_auto_captions"), false);
 }
 
 {

@@ -1,10 +1,11 @@
 /**
- * Future server-issued signed Mux playback tokens.
- * Wave 7 will use this. Wave 5 only stores the contract and secrets shape.
+ * Server-issued signed Mux playback tokens.
+ * Used for caption VTT download. Wave 7 will use the same helper for viewers.
  * Never mints a token for a public playback id.
  */
 import { createSign } from "node:crypto";
 import {
+  loadMuxSigningPrivateKey,
   readCountyStoryMuxEnv,
   type CountyStoryMuxEnv,
 } from "@/lib/county-stories/mux-env";
@@ -25,7 +26,8 @@ export function signMuxPlaybackToken(opts: {
   nowMs?: number;
 }): string | null {
   const env = opts.env ?? readCountyStoryMuxEnv();
-  if (!env?.signingKeyId || !env.signingKeyPrivate) return null;
+  const signingKeyPrivate = loadMuxSigningPrivateKey(env?.signingKeyPrivate);
+  if (!env?.signingKeyId || !signingKeyPrivate) return null;
   if (!opts.playbackId.trim()) return null;
   const now = Math.floor((opts.nowMs ?? Date.now()) / 1000);
   const exp = now + Math.max(30, opts.ttlSec ?? 120);
@@ -45,7 +47,7 @@ export function signMuxPlaybackToken(opts: {
     const signer = createSign("RSA-SHA256");
     signer.update(data);
     signer.end();
-    const sig = signer.sign(env.signingKeyPrivate);
+    const sig = signer.sign(signingKeyPrivate);
     return `${data}.${b64url(sig)}`;
   } catch {
     return null;

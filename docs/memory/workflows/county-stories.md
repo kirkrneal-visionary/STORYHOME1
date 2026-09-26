@@ -131,7 +131,9 @@ Limits that stay: 80 MiB max staged upload, 30.000 s max duration, 6-hour abando
 
 ## Mux provider (Wave 5)
 
-Mux is County Stories media infrastructure only. Missing `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` / `MUX_WEBHOOK_SECRET` fails safely as `PROVIDER_UNAVAILABLE`. Never `NEXT_PUBLIC_`. Future viewer tokens also need `MUX_SIGNING_KEY_ID` and `MUX_SIGNING_KEY_PRIVATE_KEY`.
+Mux is County Stories media infrastructure only. Missing `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` / `MUX_WEBHOOK_SECRET` fails safely as `PROVIDER_UNAVAILABLE`. Never `NEXT_PUBLIC_`. Caption VTT download and future viewer tokens need `MUX_SIGNING_KEY_ID` and `MUX_SIGNING_KEY_PRIVATE_KEY`. The private key may be Mux Base64-encoded PEM or PEM text. The loader decodes Base64 once. PEM text is not decoded again. Malformed key material fails closed: signing stays unavailable and VTT fetch returns `PROVIDER_UNAVAILABLE`.
+
+`video.asset.ready` and generated caption-track ready are independent. A ready asset with a still-preparing text track stores signed playback and does not import cues. Auto captions stay `auto_ready` until the professional confirms them. Publish still requires prepared signed playback, imported cues, caption confirmation, and visual accessibility confirmation.
 
 Webhook path `/api/county-stories/webhooks/mux` verifies Mux signatures. Invalid signatures do nothing. Events may update provider/caption processing only. They cannot publish, hide, strike, allocate, change ownership, or bypass accessibility. Replay is idempotent.
 
