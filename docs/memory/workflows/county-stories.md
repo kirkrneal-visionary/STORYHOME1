@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is in-repo and not hosted yet. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 UI is not started.
+**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 UI is not started.
 
 ## Waves
 
@@ -13,7 +13,7 @@
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
 | 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
 | 5 | Accepted, hosted `0085` + `0086`. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
-| 6 UI | Not started. `0087` replacement context is in-repo and not hosted. | Professional composer. Do not build it until `0087` is hosted. |
+| 6 UI | Not started. `0087` replacement context is hosted. | Professional composer. Do not build it until a later authorization. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
 
@@ -153,7 +153,7 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Hosted `0085` / `0086` are applied. `0087` is in-repo and not hosted. `publish_enabled` stays false. Wave 6 composer UI is not started.
+Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer UI is not started.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 
