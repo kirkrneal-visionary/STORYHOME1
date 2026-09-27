@@ -14,6 +14,13 @@ import {
   countyStoryTypeCopy,
 } from "../src/lib/county-stories/composer-copy.ts";
 import {
+  COUNTY_STORY_CAMERA_MAX_SEC,
+  countyStoryCameraClock,
+  countyStoryCameraDeniedCopy,
+  countyStoryCameraRequest,
+  countyStoryCameraShouldStop,
+} from "../src/lib/county-stories/camera-capture.ts";
+import {
   draftResume,
   parseCountyStoryDraft,
   serializeCountyStoryDraft,
@@ -172,6 +179,28 @@ assert.match(composer, /CAPTION_REVISION_CONFLICT/);
 assert.match(composer, /We did not get a confirmation/);
 assert.match(composer, /reviewReady/);
 assert.match(panel, /Create Story/);
+assert.match(panel, /Record Video/);
+assert.match(panel, /data-county-story-upload/);
+assert.doesNotMatch(panel, /capture="user"|capture="environment"/);
+assert.doesNotMatch(composer, /getUserMedia/);
+assert.match(composer, /CountyStoryCamera/);
+assert.match(composer, /setCameraOpen\(true\)/);
+const camera = read("src/components/county-stories/CountyStoryCamera.tsx");
+assert.match(camera, /data-county-story-camera/);
+assert.match(camera, /Retake/);
+assert.match(camera, /Use Video/);
+assert.match(camera, /Try Camera Again/);
+assert.match(camera, /Switch camera/);
+assert.match(camera, /countyStoryCameraRequest/);
+assert.doesNotMatch(camera, /filter|sticker|beauty|music library/i);
+assert.equal(COUNTY_STORY_CAMERA_MAX_SEC, 30);
+assert.equal(countyStoryCameraClock(4), "0:04");
+assert.equal(countyStoryCameraShouldStop(30000), true);
+assert.equal(countyStoryCameraShouldStop(29999), false);
+assert.equal(countyStoryCameraRequest("user").video.frameRate.ideal, 30);
+assert.equal(countyStoryCameraRequest("environment").video.height.ideal, 1920);
+assert.match(countyStoryCameraDeniedCopy(), /camera and microphone/);
+assert.doesNotMatch(countyStoryCameraDeniedCopy(), /NotAllowedError|getUserMedia/);
 assert.match(panel, /Replace Story/);
 assert.match(panel, /What are you sharing/);
 assert.match(panel, /Preparing your Story/);

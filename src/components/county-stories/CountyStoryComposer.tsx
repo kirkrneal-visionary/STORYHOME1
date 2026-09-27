@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CountyStoryCamera } from "@/components/county-stories/CountyStoryCamera";
 import { CountyStoryPanel, type CountyStoryPanelView } from "@/components/county-stories/CountyStoryPanel";
 import {
   countyStoryCapacityCopy,
@@ -12,7 +13,6 @@ import {
 } from "@/lib/county-stories/composer-copy";
 import { SERVICE_COUNTIES } from "@/lib/markets";
 import {
-  COUNTY_STORY_MAX_RECORD_SEC,
   createListingId,
   nextComposerStep,
   previousComposerStep,
@@ -146,10 +146,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
   const [revision, setRevision] = useState(0);
   const [mediaId, setMediaId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const recordTimerRef = useRef<number | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const mode: CountyStoryComposerMode = view.mode;
 
   const applyStatus = useCallback((next: CountyStoryComposerStatus, clock: Date) => {
@@ -336,15 +333,6 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       });
   }, [status?.slot?.id, view.countyFips, view.screen]);
 
-  const stopRecording = useCallback(() => {
-    if (recordTimerRef.current) window.clearInterval(recordTimerRef.current);
-    recordTimerRef.current = null;
-    recorderRef.current?.stop();
-    streamRef.current?.getTracks().forEach((track) => track.stop());
-  }, []);
-
-  useEffect(() => () => stopRecording(), [stopRecording]);
-
   const beginUpload = useCallback(async (file: File) => {
     const declared = declaredVideoType(file);
     if (!declared) {
@@ -485,57 +473,6 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       window.clearInterval(timer);
     };
   }, [mediaId, view.screen]);
-
-  const onRecord = useCallback(async () => {
-    if (recorderRef.current && recorderRef.current.state === "recording") {
-      stopRecording();
-      setView((current) => ({ ...current, recording: false, recordClock: null }));
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-      setView((current) => ({
-        ...current,
-        error: "Recording is not available here. Upload a video instead.",
-      }));
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: true,
-      });
-      streamRef.current = stream;
-      chunksRef.current = [];
-      const preferred = MediaRecorder.isTypeSupported("video/webm")
-        ? "video/webm"
-        : MediaRecorder.isTypeSupported("video/mp4")
-          ? "video/mp4"
-          : "";
-      const recorder = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
-      recorderRef.current = recorder;
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || preferred || "video/webm" });
-        const file = new File([blob], "county-story-recording", { type: blob.type });
-        void beginUpload(file);
-      };
-      recorder.start(1000);
-      const started = Date.now();
-      setView((current) => ({ ...current, recording: true, recordClock: "0:30", error: null }));
-      recordTimerRef.current = window.setInterval(() => {
-        const left = Math.max(0, COUNTY_STORY_MAX_RECORD_SEC - Math.floor((Date.now() - started) / 1000));
-        setView((current) => ({ ...current, recordClock: `0:${String(left).padStart(2, "0")}` }));
-        if (left <= 0) stopRecording();
-      }, 250);
-    } catch {
-      setView((current) => ({
-        ...current,
-        error: "Recording is not available here. Upload a video instead.",
-      }));
-    }
-  }, [beginUpload, stopRecording]);
 
   const publish = useCallback(async () => {
     if (!view.rulesChecked) {
@@ -986,6 +923,21 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
   if (!status && view.screen === "loading" && !view.error) return null;
 
   return (
+    <>
+    {cameraOpen ? (
+      <CountyStoryCamera
+        replacement={view.mode === "replace"}
+        onClose={() => setCameraOpen(false)}
+        onUse={(file) => {
+          setCameraOpen(false);
+          void beginUpload(file);
+        }}
+        onUpload={(file) => {
+          setCameraOpen(false);
+          void beginUpload(file);
+        }}
+      />
+    ) : null}
     <CountyStoryPanel
       view={view}
       actions={{
@@ -1043,7 +995,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         onAccessBasis: (basis) => setView((current) => ({ ...current, accessBasis: basis, error: null })),
         onAccessDescription: (value) => setView((current) => ({ ...current, accessDescription: value })),
         onRules: (checked) => setView((current) => ({ ...current, rulesChecked: checked, error: null })),
-        onRecord: () => void onRecord(),
+        onRecord: () => setCameraOpen(true),
         onUpload: (file) => void beginUpload(file),
         onContinue: () => void onContinue(),
         onBack: () => {
@@ -1137,5 +1089,6 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         },
       }}
     />
+    </>
   );
 }

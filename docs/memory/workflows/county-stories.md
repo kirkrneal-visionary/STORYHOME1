@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Each screen is one decision, with Back and Save and exit. An unfinished Story stays in the browser and does not hold a County seat. The sample state selector is only on the non-production preview route. Public publishing stays disabled. There is no consumer viewer. Wave 7 is not started. Homepage County cards are unchanged.
+**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Record Video opens a Story Home camera. Upload Video is a separate file choice. Each screen is one decision, with Back and Save and exit. An unfinished Story stays in the browser and does not hold a County seat. The sample state selector is only on the non-production preview route. Public publishing stays disabled. There is no consumer viewer. Wave 7 is not started. Homepage County cards are unchanged.
 
 ## Waves
 

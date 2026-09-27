@@ -527,9 +527,9 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                   onClick={actions.onRecord}
                   data-county-story-record
                 >
-                  {view.recording ? `Stop · ${view.recordClock ?? ""}` : "Record Video"}
+                  Record Video
                 </button>
-                <label className="story-press story-cta-secondary w-full cursor-pointer">
+                <label className="story-press story-cta-secondary w-full cursor-pointer" data-county-story-upload>
                   Upload Video
                   <input
                     className="sr-only"
