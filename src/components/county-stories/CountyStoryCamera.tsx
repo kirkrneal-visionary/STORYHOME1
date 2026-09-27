@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   COUNTY_STORY_CAMERA_MAX_SEC,
   countyStoryCameraClock,
@@ -55,6 +56,7 @@ export function CountyStoryCamera({
   const [takeUrl, setTakeUrl] = useState<string | null>(null);
   const [takeFile, setTakeFile] = useState<File | null>(null);
   const [opening, setOpening] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   const stopTracks = useCallback(() => {
     streamRef.current?.getTracks().forEach((track) => track.stop());
@@ -107,6 +109,11 @@ export function CountyStoryCamera({
   );
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     if (forceDenied) {
       setPhase("denied");
       setOpening(false);
@@ -125,7 +132,7 @@ export function CountyStoryCamera({
       stopTracks();
       if (takeUrlRef.current) URL.revokeObjectURL(takeUrlRef.current);
     };
-  }, [clearTimer, forceDenied, openCamera, stopTracks]);
+  }, [clearTimer, forceDenied, mounted, openCamera, stopTracks]);
 
   useEffect(() => {
     if (phase === "live" && streamRef.current) attachPreview(streamRef.current);
@@ -196,8 +203,9 @@ export function CountyStoryCamera({
   };
 
   const progress = Math.min(1, elapsed / COUNTY_STORY_CAMERA_MAX_SEC);
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] bg-black text-white"
       data-county-story-camera
@@ -382,7 +390,8 @@ export function CountyStoryCamera({
           </label>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -396,21 +405,23 @@ export function CountyStoryCameraWalkthrough({
   const [stage, setStage] = useState<"camera" | "preparing" | "review">("camera");
   const [url, setUrl] = useState<string | null>(null);
   if (stage === "preparing") {
-    return (
+    return createPortal(
       <section className="fixed inset-0 z-[80] bg-[var(--background)] px-6 pt-16 text-ink" data-county-story-processing>
         <h2 className="text-xl font-semibold">Preparing your Story</h2>
         <p className="mt-2 text-base text-[var(--muted)]" role="status">
           This usually takes a moment.
         </p>
-      </section>
+      </section>,
+      document.body,
     );
   }
   if (stage === "review" && url) {
-    return (
+    return createPortal(
       <section className="fixed inset-0 z-[80] overflow-auto bg-[var(--background)] px-6 pt-16 text-ink" data-county-story-review>
         <h2 className="text-xl font-semibold">This is what people will see.</h2>
         <video className="mt-4 aspect-[9/16] w-full max-w-sm bg-black" controls playsInline src={url} />
-      </section>
+      </section>,
+      document.body,
     );
   }
   return (

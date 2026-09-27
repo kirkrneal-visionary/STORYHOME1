@@ -8,7 +8,7 @@ export const STORY_SECURITY_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Frame-Options": "SAMEORIGIN",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
+  "Permissions-Policy": "camera=(self), microphone=(self), geolocation=(self)",
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Content-Security-Policy": [
     "default-src 'self'",
@@ -23,5 +23,6 @@ export const STORY_SECURITY_HEADERS: Record<string, string> = {
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.mapbox.com https://events.mapbox.com https://*.arcgisonline.com https://*.usgs.gov https://*.arcgis.com https://tnris-data.s3.amazonaws.com https://*.s3.amazonaws.com https://server.arcgisonline.com https://services.arcgisonline.com https://tiles.openfreemap.org https://unpkg.com",
     "worker-src 'self' blob:",
     "child-src 'self' blob:",
+    "media-src 'self' blob:",
   ].join("; "),
 };
