@@ -412,7 +412,8 @@ begin
   end if;
   v2 := public.w4_valid_media(owner);
   r := public.replace_county_story_media(
-    owner, slot, v2, 'w4-h-rep', true, timestamptz '2026-09-25 11:20:00-05'
+    owner, slot, v2, 'w4-h-rep', true,
+    'local_knowledge', 'keep', null, timestamptz '2026-09-25 11:20:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
     raise exception 'h_replace %', r;
@@ -449,7 +450,8 @@ begin
   end if;
   v1 := public.w4_valid_media(owner);
   r := public.replace_county_story_media(
-    owner, slot, v1, 'w4-i-rep', true, timestamptz '2026-09-25 11:40:00-05'
+    owner, slot, v1, 'w4-i-rep', true,
+    'local_knowledge', 'keep', null, timestamptz '2026-09-25 11:40:00-05'
   );
   if r->>'code' is distinct from 'REPLACEMENT_ALREADY_USED' then
     raise exception 'i_second_replace %', r;
@@ -508,7 +510,8 @@ begin
   end if;
   media := public.w4_valid_media(owner);
   r := public.replace_county_story_media(
-    owner, slot, media, 'w4-j-rep', true, timestamptz '2026-09-22 10:00:00-05'
+    owner, slot, media, 'w4-j-rep', true,
+    'local_knowledge', 'keep', null, timestamptz '2026-09-22 10:00:00-05'
   );
   if r->>'code' is distinct from 'POSTING_SUSPENDED' then
     raise exception 'g_replace %', r;
@@ -566,7 +569,7 @@ begin
 
   r := public.replace_county_story_media(
     owner, gen_random_uuid(), media, 'w4-k-rep-miss', true,
-    timestamptz '2026-09-23 12:00:00-05'
+    'local_knowledge', 'keep', null, timestamptz '2026-09-23 12:00:00-05'
   );
   if r->>'code' not in ('NOT_SLOT_OWNER', 'STORY_DAY_ENDED') then
     raise exception 'k_replace_miss %', r;
@@ -827,7 +830,8 @@ begin
   v2 := public.w4_valid_media(owner);
   r := public.replace_county_story_media(
     owner, slot, v2, 'w4-up-reattach-a', true,
-    timestamptz '2026-09-14 11:20:00-05', listing_a
+    'open_house_property', 'set', listing_a,
+    timestamptz '2026-09-14 11:20:00-05'
   );
   if r->>'code' is distinct from 'LISTING_NOT_AUTHORIZED' then
     raise exception 'up_reattach %', r;
@@ -846,7 +850,8 @@ begin
   v3 := public.w4_valid_media(owner);
   r := public.replace_county_story_media(
     owner, slot, v3, 'w4-up-rep-b', true,
-    timestamptz '2026-09-14 11:30:00-05', listing_b
+    'open_house_property', 'set', listing_b,
+    timestamptz '2026-09-14 11:30:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
     raise exception 'up_replace_b %', r;
@@ -894,6 +899,7 @@ begin
   v2 := public.w4_valid_media(owner);
   r := public.replace_county_story_media(
     owner, slot, v2, 'w4-up2-rep-none', true,
+    'open_house_property', 'keep', null,
     timestamptz '2026-09-12 10:20:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then

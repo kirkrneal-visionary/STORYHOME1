@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–4 are accepted and hosted. Wave 5 captions / accessibility (`0085`) plus Mux signed HLS provider processing (`0086`) are implemented in-repo and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 is not authorized.
+**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is in-repo and not hosted yet. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 UI is not started.
 
 ## Waves
 
@@ -12,8 +12,8 @@
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
 | 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
-| 5 | In-repo `0085` + `0086`. Hosted migrations **not** applied. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
-| 6 UI | Not authorized | Professional composer. |
+| 5 | Accepted, hosted `0085` + `0086`. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
+| 6 UI | Not started. `0087` replacement context is in-repo and not hosted. | Professional composer. Do not build it until `0087` is hosted. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
 
@@ -62,7 +62,7 @@ New key after a successful Story Day slot → `ALREADY_POSTED` (not `COUNTY_FULL
 
 ## Replacement
 
-`replace_county_story_media` once per slot. Requires its own rules acknowledgment. No capacity, slot number, county, or ownership change. Version 1 `rules_acknowledged_at` is preserved. Original media stays current until the new pointer commits. Then storage-first retire of the superseded object (`county_story_media_mark_retired`). Storage delete failure does not roll the Story back.
+`replace_county_story_media` once per slot (`0087`). The caller must send an explicit Story type (`local_knowledge` or `open_house_property`) and property action (`keep`, `set`, or `clear`). There is no default. A missing type or action is rejected. `keep` and `clear` reject a listing id. `set` requires one. The replacement may change the video, the Story type, and the optional listing. County, Story Day, owner, and slot number stay fixed. Capacity does not move. `set` re-checks listing authority, county match, and the unauthorized-property block. A listing removed for `unauthorized_property` cannot be attached again. Requires its own rules acknowledgment. Version 1 `rules_acknowledged_at` is preserved. Original media stays current until the new pointer commits. Then storage-first retire of the superseded object (`county_story_media_mark_retired`). Storage delete failure does not roll the Story back.
 
 There is **no** delete-slot / surrender / reopen-capacity path.
 
@@ -74,7 +74,7 @@ There is **no** delete-slot / surrender / reopen-capacity path.
 
 `hide_county_story_for_policy` is service-role database authority only. Ordinary client JWTs cannot execute it. There is no public or professional HTTP policy-hide route. Command/admin HTTP is deferred until a narrow Story Home admin authorization layer exists. The server-internal `hideCountyStoryForPolicy` helper is for that later integration. The Supabase service-role secret is not an externally supplied moderation credential. An explicit bounded reason is required. There is no `delete_county_story_slot`.
 
-`unauthorized_property` detaches the optional `listing_id` on the slot and stores it as `prior_listing_id` on the enforcement event. Replacement may reactivate the same slot without that listing, or with a newly authorized listing. It cannot restore the detached listing. Hide does not surrender the slot or reduce capacity.
+`unauthorized_property` detaches the optional `listing_id` on the slot and stores it as `prior_listing_id` on the enforcement event. Replacement may `keep` the current link, `clear` it, or `set` a newly authorized listing in the same county. It cannot `set` the detached listing again. Hide does not surrender the slot or reduce capacity.
 
 A qualifying hide of accepted media:
 
@@ -153,7 +153,7 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Mux signed HLS processing is implemented in-repo (`0086`). Hosted Mux credentials and hosted `0085` / `0086` are not applied. Wave 6 composer UI is still not authorized.
+Hosted `0085` / `0086` are applied. `0087` is in-repo and not hosted. `publish_enabled` stays false. Wave 6 composer UI is not started.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 

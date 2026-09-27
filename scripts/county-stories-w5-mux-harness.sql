@@ -431,7 +431,7 @@ begin
   );
   r := public.replace_county_story_media(
     owner, (r->>'slot_id')::uuid, v2, 'mux-rep-1', true,
-    timestamptz '2026-09-24 15:00:00-05', null
+    'local_knowledge', 'keep', null, timestamptz '2026-09-24 15:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
     raise exception 'mux_replace %', r;

@@ -38,7 +38,7 @@ const captions = read("supabase/migrations/0085_county_story_captions.sql");
 
 assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0086")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0087")), false);
+assert.equal(files.filter((f) => f.startsWith("0087")).length, 1);
 assert.match(captions, /county_story_media_is_accessibility_ready/);
 assert.match(mig, /county_story_media_is_playback_ready/);
 assert.match(mig, /playback_kind text not null default 'hls'/);
@@ -651,6 +651,7 @@ applyTo(fresh, "supabase/migrations/0083_county_story_publish.sql");
 applyTo(fresh, "supabase/migrations/0084_county_story_enforcement.sql");
 applyTo(fresh, "supabase/migrations/0085_county_story_captions.sql");
 applyTo(fresh, "supabase/migrations/0086_county_story_provider.sql");
+applyTo(fresh, "supabase/migrations/0087_county_story_replacement_context.sql");
 const out = applyTo(fresh, "scripts/county-stories-w5-mux-harness.sql");
 
 for (const name of [

@@ -369,7 +369,8 @@ begin
   slot := (r->>'slot_id')::uuid;
   v2 := public.w5_valid_media(owner);
   r := public.replace_county_story_media(
-    owner, slot, v2, 'w5-rep-bad', true, timestamptz '2026-09-18 14:10:00-05', null
+    owner, slot, v2, 'w5-rep-bad', true,
+    'local_knowledge', 'keep', null, timestamptz '2026-09-18 14:10:00-05'
   );
   if r->>'code' is distinct from 'ACCESSIBILITY_NOT_READY' then
     raise exception 'l_rep %', r;
@@ -411,7 +412,8 @@ begin
     owner, v2, 'spoken_audio', null, 'local_knowledge', '48005', null, now()
   );
   r := public.replace_county_story_media(
-    owner, slot, v2, 'w5-sep-rep', true, timestamptz '2026-09-19 14:10:00-05', null
+    owner, slot, v2, 'w5-sep-rep', true,
+    'local_knowledge', 'keep', null, timestamptz '2026-09-19 14:10:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
     raise exception 'm_rep %', r;

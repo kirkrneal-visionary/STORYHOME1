@@ -24,7 +24,11 @@ assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0086")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0087")), false);
+assert.equal(files.filter((f) => f.startsWith("0087")).length, 1);
+assert.doesNotMatch(read("supabase/migrations/0087_county_story_replacement_context.sql"), /publish_enabled\s*=\s*true/);
+assert.match(read("supabase/migrations/0087_county_story_replacement_context.sql"), /p_story_type text/);
+assert.match(read("supabase/migrations/0087_county_story_replacement_context.sql"), /p_listing_action text/);
+assert.match(read("src/app/api/county-stories/replace/route.ts"), /listingAction/);
 assert.match(
   read("tsconfig.json"),
   /scripts\/test-county-stories-w3-publish\.ts/,
@@ -135,6 +139,7 @@ function applyStack(db: string) {
   applyTo(db, "supabase/migrations/0084_county_story_enforcement.sql");
   applyTo(db, "supabase/migrations/0085_county_story_captions.sql");
   applyTo(db, "supabase/migrations/0086_county_story_provider.sql");
+  applyTo(db, "supabase/migrations/0087_county_story_replacement_context.sql");
 }
 
 const fresh = "county_stories_w3_fresh";
@@ -161,6 +166,21 @@ for (const name of [
   "replace_idempotency_conflict",
   "story_day_ended",
   "wave3_gates_ok",
+  "replace_context_missing_rejected",
+  "replace_set_wrong_county",
+  "replace_set_unauthorized",
+  "replace_type_local_to_open_house",
+  "replace_set_adds_property",
+  "replace_context_identity_unchanged",
+  "replace_context_capacity_unchanged",
+  "replace_context_idempotency",
+  "replace_one_maximum",
+  "replace_type_open_house_to_local",
+  "replace_keep_preserves_property",
+  "replace_clear_local_knowledge",
+  "replace_clear_open_house",
+  "replace_set_changes_property",
+  "replace_set_blocked_prior_listing",
 ]) {
   assert.match(out, new RegExp(name), `missing proof ${name}\n${out}`);
 }
@@ -400,7 +420,7 @@ function replaceCmd(owner: string, slot: string, media: string, key: string) {
     do $$ begin perform set_config('request.jwt.claim.role', 'service_role', false); end $$;
     select public.replace_county_story_media(
       '${owner}'::uuid, '${slot}'::uuid, '${media}'::uuid, '${key}',
-      true, timestamptz '2026-09-28 14:00:00-05'
+      true, 'local_knowledge', 'keep', null, timestamptz '2026-09-28 14:00:00-05'
     )::text;
   `;
 }
@@ -439,7 +459,7 @@ const current = serviceSql(
 );
 const retryReplace = lastJson(serviceSql(
   conc,
-  `select public.replace_county_story_media('${repOwner}'::uuid, '${publishedRep.slot_id}'::uuid, '${current}'::uuid, 'rep-par-${replaceCodes[0] === "REPLACED" ? 0 : 1}', true, timestamptz '2026-09-28 14:00:00-05')::text;`,
+  `select public.replace_county_story_media('${repOwner}'::uuid, '${publishedRep.slot_id}'::uuid, '${current}'::uuid, 'rep-par-${replaceCodes[0] === "REPLACED" ? 0 : 1}', true, 'local_knowledge', 'keep', null, timestamptz '2026-09-28 14:00:00-05')::text;`,
 ));
 assert.equal(retryReplace.code, "REPLACED");
 assert.equal(retryReplace.media_id, current);
