@@ -99,7 +99,7 @@ export function CountyStoryPreview() {
             className="story-press story-cta-secondary"
             aria-pressed={screen === step && !(step === "county" && hub === "used")}
             onClick={() => {
-              setHub("replace");
+              setHub(step === "success" ? "create" : "replace");
               setScreen(step);
             }}
           >
