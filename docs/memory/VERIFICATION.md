@@ -48,8 +48,8 @@ These are **isolated**. They do not write production. Wave 2 runs two disposable
 
 | County Stories Wave 3 publish/replace/concurrency | `npm run test:county-stories-w3` — isolated Postgres. Hosted `0083` applied. Public publish stays off |
 | County Stories Wave 4 hide/strikes/suspension | `npm run test:county-stories-w4` — isolated Postgres. Hosted `0084` applied. Public publish stays off |
-| County Stories Wave 5 captions/accessibility | `npm run test:county-stories-w5` — isolated Postgres. Hosted `0085` / `0086` are not applied. Public publish stays off |
-| County Stories Wave 5 Mux / signed HLS | `npm run test:county-stories-w5-mux` — isolated Postgres + mocked Mux. No live Mux credentials. |
+| County Stories Wave 5 captions/accessibility | `npm run test:county-stories-w5` — isolated Postgres. Hosted `0085` / `0086` are applied. Public publish stays off |
+| County Stories Wave 5 Mux / signed HLS | `npm run test:county-stories-w5-mux` — isolated Postgres + mocked Mux. Hosted webhook smoke passed 2026-09-27 on disposable media, then removed. Public publish stays off |
 
 If a test fails, do not weaken it to go green.
 
