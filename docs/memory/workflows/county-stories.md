@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is in-repo and not hosted yet. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 UI is not started.
+**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Public publishing stays disabled. There is no consumer viewer. Wave 7 is not started. Homepage County cards are unchanged.
 
 ## Waves
 
@@ -13,7 +13,7 @@
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
 | 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
 | 5 | Accepted, hosted `0085` + `0086`. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
-| 6 UI | Not started. `0087` replacement context is in-repo and not hosted. | Professional composer. Do not build it until `0087` is hosted. |
+| 6 UI | In review. Professional composer on the owner’s Agent World. | Create, replace, captions, visual check, and rules. No consumer viewer. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
 
@@ -153,13 +153,13 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Hosted `0085` / `0086` are applied. `0087` is in-repo and not hosted. `publish_enabled` stays false. Wave 6 composer UI is not started.
+Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Wave 7 viewer is not started.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 
 ## Related
 
-- Not Living Marks, Home Docs, or SHI Studies. Dedicated private bucket `county-story-media`.
+- Not Living Marks, Home Docs, or SHI Studies. Dedicated private bucket `county-story-media`. The composer is only on the professional’s own Agent World.
 - Not P1C geography. Launch-seven FIPS only until a later wave says otherwise.
-- Not Marketplace, Agent World, Homepage, or County page UI.
-- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`, `npm run test:county-stories-w5-mux`.
+- Not Marketplace, Homepage, or County page UI. No consumer viewer.
+- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`, `npm run test:county-stories-w5-mux`, `npm run test:county-stories-w6`.

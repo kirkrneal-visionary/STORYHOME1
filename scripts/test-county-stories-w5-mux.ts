@@ -246,7 +246,8 @@ assert.equal(new MuxCountyStoryTranscriptionProvider().id, "mux");
 
 assert.equal(existsSync(join(root, "src/app/api/county-stories/webhooks/mux/route.ts")), true);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/media/[id]/process/route.ts")), true);
-assert.equal(existsSync(join(root, "src/components/county-stories")), false);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
 assert.match(read("src/lib/security/origin.ts"), /\/api\/county-stories\/webhooks\/mux/);
 assert.doesNotMatch(read("src/lib/county-stories/mux-env.ts"), /env\.NEXT_PUBLIC_/);
 assert.doesNotMatch(read(".env.example"), /NEXT_PUBLIC_MUX/);

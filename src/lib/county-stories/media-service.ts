@@ -47,6 +47,8 @@ export type CountyStoryMediaRow = {
   provider_status?: string | null;
   playback_ready_at?: string | null;
   playback_duration_ms?: number | null;
+  caption_revision?: number | null;
+  caption_state?: string | null;
   provider_deleted_at?: string | null;
   caption_cues_path?: string | null;
 };

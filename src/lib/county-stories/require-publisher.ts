@@ -22,5 +22,6 @@ export async function requireCountyStoryPublisher() {
     supabase: auth.supabase,
     user: auth.user,
     accountPurpose: profile?.account_purpose ?? null,
+    brokerageId: profile?.brokerage_id ?? null,
   };
 }

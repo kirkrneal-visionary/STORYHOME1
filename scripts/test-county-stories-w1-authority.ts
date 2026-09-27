@@ -145,7 +145,6 @@ assert.doesNotMatch(eligibility, /mayUseStoryPro\(/);
 for (const rel of [
   "src/components/home/HomeSearchHero.tsx",
   "src/app/page.tsx",
-  "src/components/agents/AgentWorldView.tsx",
   "src/components/agents/StoryWalkComposer.tsx",
   "src/lib/living-mark/library.ts",
   "src/app/marketplace/page.tsx",
@@ -162,7 +161,11 @@ for (const rel of [
   );
 }
 
-assert.equal(existsSync(join(root, "src/components/county-stories")), false);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
+const agentWorld = read("src/components/agents/AgentWorldView.tsx");
+assert.match(agentWorld, /isOwn \? <CountyStoryComposer \/> : null/);
+assert.doesNotMatch(read("src/components/home/HomeSearchHero.tsx"), /county-stories|CountyStoryComposer/);
 assert.equal(existsSync(join(root, "src/app/s")), false);
 
 const started = spawnSync("sudo", ["pg_ctlcluster", "16", "main", "start"], {
