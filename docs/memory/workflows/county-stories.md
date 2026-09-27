@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–4 are accepted and hosted. Wave 5 captions / accessibility (`0085`) plus Mux signed HLS provider processing (`0086`) are implemented in-repo and **not hosted**. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 is not authorized.
+**Intended:** Waves 1–5 are accepted and hosted. Wave 5 captions / accessibility (`0085`) plus Mux signed HLS provider processing (`0086`) are applied. Public publishing stays disabled. There is no consumer UI, composer, or viewer. Wave 6 is not started. UI planning may begin; do not implement Wave 6 until a separate authorization.
 
 ## Waves
 
@@ -12,7 +12,7 @@
 | 2 | Accepted, hosted `0082` | Private staged video. Playback-ready `valid` only. Storage-first orphan cleanup. |
 | 3 | Accepted, hosted `0083` | Atomic publish, one slot per professional per Story Day, one replacement, idempotency, concurrency. Public publish off. |
 | 4 | Accepted, hosted `0084` | Policy hide, enforcement events, rolling 7-day strikes, 7-day publishing suspension. Public publish off. |
-| 5 | In-repo `0085` + `0086`. Hosted migrations **not** applied. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
+| 5 | Accepted, hosted `0085` + `0086`. Webhook smoke passed 2026-09-27. | Captions, professional confirmation, accessible description, Mux signed HLS prepared playback, publish/replace require playback + accessibility. Public publish off. No UI. |
 | 6 UI | Not authorized | Professional composer. |
 
 Do not increase the County Stories wave count here. Placement of normalization is decided before UI authorization.
@@ -153,7 +153,7 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Mux signed HLS processing is implemented in-repo (`0086`). Hosted Mux credentials and hosted `0085` / `0086` are not applied. Wave 6 composer UI is still not authorized.
+Hosted `0085` / `0086` are applied. The hosted Mux webhook smoke passed. `publish_enabled` stays false. Wave 6 composer UI is not started.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 

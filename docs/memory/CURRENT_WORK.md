@@ -5,7 +5,7 @@
 
 ## In progress
 
-- County Stories Wave 5 is implemented in-repo (`0085` captions / accessibility + `0086` Mux signed HLS provider). The signing private key loader accepts Mux Base64 PEM or PEM text and fails closed on malformed key material. Hosted `0085` / `0086` are **not** applied. Public publish stays off (`county_story_launch.publish_enabled` default false). Wave 6 is not authorized.
+- County Stories Wave 5 is closed on `main` and hosted. `0085` captions / accessibility and `0086` Mux signed HLS are applied. The signing private key loader accepts Mux Base64 PEM or PEM text and fails closed on malformed key material. Hosted Mux webhook smoke passed 2026-09-27: real delivery, valid signature accepted, unsigned and invalid signatures rejected, replay idempotent, `asset.ready` before `track.ready`, VTT imported through the signer, captions stay `auto_ready` and unconfirmed, accessibility stays false, no Story Slot, county capacity unchanged, no enforcement event, `publish_enabled` false, disposable Mux asset and hosted fixtures removed. Wave 6 is not started. UI planning may begin. Do not implement the composer until a separate authorization.
 - Canonical prepared playback is secured Mux HLS (signed/private playback id), not a static MP4 rendition.
 - County Stories Wave 4 is on `main` (`0084`, hosted). Public publish stays off.
 - County Stories Waves 1–3 are on `main` (hosted and verified).
