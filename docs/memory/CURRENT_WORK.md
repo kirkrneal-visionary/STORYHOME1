@@ -5,7 +5,7 @@
 
 ## In progress
 
-- County Stories Wave 6 is the professional composer on the owner’s own Agent World. Each screen is one decision. County names have no seat city. The publish screen explains the posting rules. A paused screen explains the seven day pause. A hidden Story can show a public removal sentence from the server. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. Wave 7 viewer is not started. Homepage County cards are unchanged.
+- County Stories Wave 6 is the professional composer on the owner’s own Agent World. Each screen is one decision. County names have no seat city. The publish screen explains the posting rules. A pause can list the public reasons for the removals that opened it. A hidden Story shows a public removal sentence from the server. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. Wave 7 viewer is not started. Homepage County cards are unchanged.
 - Canonical prepared playback is secured Mux HLS (signed/private playback id), not a static MP4 rendition.
 - County Stories Wave 4 is on `main` (`0084`, hosted). Public publish stays off.
 - County Stories Waves 1–3 are on `main` (hosted and verified).

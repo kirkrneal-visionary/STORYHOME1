@@ -13,7 +13,10 @@ import {
   countyStoryEligibleWhen,
   countyStoryTypeCopy,
 } from "../src/lib/county-stories/composer-copy.ts";
-import { countyStoryRemovalNotice } from "../src/lib/county-stories/removal-notice.ts";
+import {
+  countyStoryPauseRemovalList,
+  countyStoryRemovalNotice,
+} from "../src/lib/county-stories/removal-notice.ts";
 import {
   createListingId,
   immutableReplacementFields,
@@ -50,6 +53,7 @@ const open: CountyStoryComposerStatus = {
   eligibleAt: null,
   slot: null,
   removal: null,
+  pauseRemovals: [],
 };
 const owned: CountyStoryComposerStatus = { ...open, slot };
 const used: CountyStoryComposerStatus = { ...open, slot: { ...slot, replacementUsed: true } };
@@ -113,14 +117,28 @@ assert.equal(
 );
 assert.equal(countyStoryEligibleWhen("2026-10-02T20:00:00.000Z"), "October 2 at 3:00 PM");
 const advertising = countyStoryRemovalNotice("generic_solicitation");
-assert.match(advertising.summary, /removed because it did not meet County Stories posting rules/);
-assert.match(advertising.detail ?? "", /general advertising/);
-assert.equal(countyStoryRemovalNotice("not_a_reason").detail, null);
-assert.equal(
-  countyStoryRemovalNotice("unauthorized_property").detail,
-  "The property promotion was not authorized.",
+assert.match(advertising.reason ?? "", /general advertising rather than useful local real estate information/);
+assert.equal(countyStoryRemovalNotice("not_a_reason").reason, null);
+assert.match(
+  countyStoryRemovalNotice("unauthorized_property").reason ?? "",
+  /property promotion was not authorized/,
 );
 assert.doesNotMatch(JSON.stringify(countyStoryRemovalNotice("other_policy")), /other_policy|reason_detail|actor/);
+const pauseStart = "2026-09-27T20:00:00.000Z";
+const pauseList = countyStoryPauseRemovalList(
+  [
+    { occurredAt: "2026-09-20T19:00:00.000Z", reasonCode: "generic_solicitation", qualifies: true },
+    { occurredAt: "2026-09-25T15:00:00.000Z", reasonCode: "static_business_card", qualifies: true },
+    { occurredAt: "2026-09-26T15:00:00.000Z", reasonCode: "unauthorized_property", qualifies: false },
+    { occurredAt: "2026-09-27T20:00:00.000Z", reasonCode: "generic_solicitation", qualifies: true },
+    { occurredAt: "2026-09-28T12:00:00.000Z", reasonCode: "other_policy", qualifies: true },
+  ],
+  pauseStart,
+);
+assert.equal(pauseList.length, 2);
+assert.match(pauseList[0]?.reason ?? "", /Static promotional/);
+assert.match(pauseList[1]?.reason ?? "", /General advertising/);
+assert.doesNotMatch(JSON.stringify(pauseList), /reason_code|unauthorized_property|actor/);
 
 assert.match(countyStoryComposerMessage("FEATURE_DISABLED"), /not available yet/);
 assert.match(countyStoryComposerMessage("COUNTY_FULL"), /filled before/);
@@ -155,20 +173,28 @@ assert.match(panel, /This usually takes a moment/);
 assert.match(panel, /Replace today/);
 const rulesCopy = read("src/lib/county-stories/composer-copy.ts");
 assert.match(rulesCopy, /What belongs in County Stories/);
-assert.match(rulesCopy, /Your Story position/);
+assert.match(rulesCopy, /Your County position/);
 assert.match(rulesCopy, /Your one replacement/);
+assert.match(rulesCopy, /A replacement does not erase a previous removal/);
 assert.match(rulesCopy, /When posting can be paused/);
-assert.match(rulesCopy, /Your responsibility before publishing/);
+assert.match(rulesCopy, /Before you continue/);
+assert.match(rulesCopy, /do not count as posting violations/);
 assert.match(rulesCopy, /I reviewed this Story and understand the County Stories posting rules/);
 assert.match(panel, /COUNTY_STORY_RULES_SECTIONS/);
 assert.match(panel, /COUNTY_STORY_RULES_CONFIRM/);
 assert.match(panel, /Publish Story/);
 assert.match(panel, /Publish Replacement/);
-assert.match(panel, /three of your Stories were removed/);
-assert.match(panel, /Review County Stories Rules/);
-assert.doesNotMatch(panel, /generic_solicitation|reason_code|hidden_reason|reason_detail/);
+assert.match(panel, /three of your County Stories were removed/);
+assert.match(panel, /Why was my posting paused/);
+assert.match(panel, /Your County Story was removed/);
+assert.match(panel, /Your County position remains used for today/);
+assert.match(panel, /This removal counts toward County Stories posting limits/);
+assert.doesNotMatch(panel, /generic_solicitation|reason_code|hidden_reason|reason_detail|Navigating to rules page/);
+assert.doesNotMatch(composer, /Navigating to rules page/);
+assert.doesNotMatch(agentWorld, /Navigating to rules page/);
 assert.match(read("src/lib/county-stories/composer-status.ts"), /countyStoryRemovalNotice/);
 assert.match(route, /removal: status\.removal/);
+assert.match(route, /pauseRemovals: status\.pauseRemovals/);
 assert.doesNotMatch(panel, /Delete Story/);
 assert.doesNotMatch(panel, /WCAG|WebVTT|H\.264|HEVC|Mux|HLS/);
 assert.doesNotMatch(panel, /Story Day|story number|durable slot|media version|allocation/);

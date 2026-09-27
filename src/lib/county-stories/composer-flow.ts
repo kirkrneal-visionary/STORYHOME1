@@ -44,7 +44,8 @@ export type CountyStoryComposerStatus = {
   suspended: boolean;
   eligibleAt: string | null;
   slot: CountyStoryComposerSlot | null;
-  removal: { summary: string; detail: string | null } | null;
+  removal: { reason: string | null } | null;
+  pauseRemovals: { date: string; reason: string }[];
 };
 
 export function composerEntry(status: CountyStoryComposerStatus): {

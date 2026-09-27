@@ -29,5 +29,6 @@ export async function GET() {
     eligibleAt: status.eligibleAt,
     slot: status.slot,
     removal: status.removal,
+    pauseRemovals: status.pauseRemovals,
   });
 }

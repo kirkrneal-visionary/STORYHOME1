@@ -9,32 +9,39 @@ export const COUNTY_STORY_RULES_SECTIONS = [
   {
     heading: "What belongs in County Stories",
     paragraphs: [
-      "County Stories are for useful local real estate information and legitimate property or open house content.",
-      "Share knowledge that helps people understand the County, its real estate, land, homes, or a property you are authorized to promote. General advertising, business card videos, and simple “call me” promotions do not qualify.",
+      "County Stories are for useful local real estate knowledge and legitimate property or open house information.",
+      "Share information that helps people understand the County, its real estate, land, homes, or a property you are authorized to promote.",
+      "General advertising, business card videos, and simple call me promotions do not qualify.",
     ],
   },
   {
-    heading: "Your Story position",
+    heading: "Your County position",
     paragraphs: [
-      "Once your Story is accepted, your County position is used for the day. That position is not reopened if the Story is later removed.",
+      "Once your Story is accepted, your County position is used for the day.",
+      "If Story Home later removes the Story for a posting rule violation, that position is not reopened.",
     ],
   },
   {
     heading: "Your one replacement",
     paragraphs: [
-      "You may replace today’s Story one time. Your current Story remains active until the replacement is successfully published.",
+      "You may replace today’s Story one time.",
+      "Your current Story remains active until the replacement is successfully published.",
+      "A replacement does not erase a previous removal.",
     ],
   },
   {
     heading: "When posting can be paused",
     paragraphs: [
-      "If Story Home removes a Story for violating County Stories rules, the removal remains on your posting record. Three qualifying removals within any seven day period will pause County Stories posting for seven days from the third removal.",
+      "A Story removed for a qualifying posting rule violation remains on your County Stories posting record.",
+      "Three qualifying removals within any seven day period pause County Stories posting for seven days beginning with the third removal.",
+      "Technical upload, processing, connection, or system failures do not count as posting violations.",
     ],
   },
   {
-    heading: "Your responsibility before publishing",
+    heading: "Before you continue",
     paragraphs: [
-      "Before publishing, review your video, captions, County, Story type, and property information carefully. You are responsible for making sure the content is accurate, authorized, and appropriate for County Stories.",
+      "Review your video, captions, County, Story type, and property information carefully.",
+      "You are responsible for making sure your Story is accurate, authorized, and appropriate for County Stories.",
     ],
   },
 ] as const;

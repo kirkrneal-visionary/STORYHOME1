@@ -66,9 +66,10 @@ const emptyView = (screen: CountyStoryComposerStep): CountyStoryPanelView => ({
   showRetry: false,
   reviewReady: false,
   countyMarks: {},
-  readingRules: false,
-  removalSummary: null,
-  removalDetail: null,
+  showingPauseReasons: false,
+  removed: false,
+  removalReason: null,
+  pauseRemovals: [],
 });
 
 function declaredVideoType(file: File): string | null {
@@ -101,13 +102,20 @@ function readDurationSeconds(file: Blob): Promise<number> {
 
 function readRemoval(value: unknown): CountyStoryComposerStatus["removal"] {
   if (!value || typeof value !== "object") return null;
-  const summary = (value as { summary?: unknown }).summary;
-  const detail = (value as { detail?: unknown }).detail;
-  if (typeof summary !== "string" || !summary.trim()) return null;
-  return {
-    summary,
-    detail: typeof detail === "string" && detail.trim() ? detail : null,
-  };
+  const reason = (value as { reason?: unknown }).reason;
+  return { reason: typeof reason === "string" && reason.trim() ? reason : null };
+}
+
+function readPauseRemovals(value: unknown): CountyStoryComposerStatus["pauseRemovals"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const date = (item as { date?: unknown }).date;
+    const reason = (item as { reason?: unknown }).reason;
+    if (typeof date !== "string" || !date.trim()) return [];
+    if (typeof reason !== "string" || !reason.trim()) return [];
+    return [{ date, reason }];
+  });
 }
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
@@ -150,9 +158,10 @@ export function CountyStoryComposer() {
       countdown: next.eligibleAt ? countyStoryCountdown(next.eligibleAt, clock) : null,
       eligibleWhen: countyStoryEligibleWhen(next.eligibleAt),
       propertyChoice: null,
-      readingRules: false,
-      removalSummary: next.removal?.summary ?? null,
-      removalDetail: next.removal?.detail ?? null,
+      showingPauseReasons: false,
+      removed: next.removal !== null,
+      removalReason: next.removal?.reason ?? null,
+      pauseRemovals: next.pauseRemovals,
       error: null,
       busy: false,
     }));
@@ -182,6 +191,7 @@ export function CountyStoryComposer() {
       eligibleAt: typeof body.eligibleAt === "string" ? body.eligibleAt : null,
       slot: (body.slot as CountyStoryComposerStatus["slot"]) ?? null,
       removal: readRemoval(body.removal),
+      pauseRemovals: readPauseRemovals(body.pauseRemovals),
     };
     applyStatus(next, new Date());
     return "ok" as const;
@@ -847,8 +857,8 @@ export function CountyStoryComposer() {
           if (!previous) return;
           setView((current) => ({ ...current, screen: previous, error: null, showRetry: false }));
         },
-        onReviewRules: () => setView((current) => ({ ...current, readingRules: true, error: null })),
-        onCloseRules: () => setView((current) => ({ ...current, readingRules: false, error: null })),
+        onShowPauseReasons: () => setView((current) => ({ ...current, showingPauseReasons: true, error: null })),
+        onClosePauseReasons: () => setView((current) => ({ ...current, showingPauseReasons: false, error: null })),
         onRetry: () => {
           if (!status) {
             void loadStatus();

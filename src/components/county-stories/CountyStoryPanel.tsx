@@ -49,9 +49,10 @@ export type CountyStoryPanelView = {
   showRetry: boolean;
   reviewReady: boolean;
   countyMarks: Record<string, string>;
-  readingRules: boolean;
-  removalSummary: string | null;
-  removalDetail: string | null;
+  showingPauseReasons: boolean;
+  removed: boolean;
+  removalReason: string | null;
+  pauseRemovals: { date: string; reason: string }[];
 };
 
 type Actions = {
@@ -70,8 +71,8 @@ type Actions = {
   onContinue: () => void;
   onBack: () => void;
   onRetry: () => void;
-  onReviewRules: () => void;
-  onCloseRules: () => void;
+  onShowPauseReasons: () => void;
+  onClosePauseReasons: () => void;
 };
 
 const fieldClass =
@@ -168,13 +169,30 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
 
           {view.screen === "suspended" ? (
             <div data-county-story-suspension>
-              {view.readingRules ? (
-                <div>
+              {view.showingPauseReasons ? (
+                <div data-county-story-pause-reasons>
                   <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
-                    Before you publish
+                    Why was my posting paused?
                   </h2>
-                  <RulesSections />
-                  <button type="button" className="story-press story-cta-secondary mt-6 w-full" onClick={actions.onCloseRules}>
+                  {view.pauseRemovals.length === 0 ? (
+                    <p className="mt-4 text-base leading-relaxed text-ink">
+                      Those removals could not be listed right now.
+                    </p>
+                  ) : (
+                    <ul className="mt-4 flex flex-col gap-4">
+                      {view.pauseRemovals.map((item) => (
+                        <li key={`${item.date}-${item.reason}`}>
+                          <p className="text-sm text-[var(--muted)]">{item.date}</p>
+                          <p className="mt-1 text-base leading-relaxed text-ink">{item.reason}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button
+                    type="button"
+                    className="story-press story-cta-secondary mt-6 w-full"
+                    onClick={actions.onClosePauseReasons}
+                  >
                     Back
                   </button>
                 </div>
@@ -184,7 +202,7 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                     County Stories posting paused
                   </h2>
                   <p className="mt-4 text-base leading-relaxed text-ink">
-                    Your County Stories posting access is paused because three of your Stories were removed for qualifying rule violations within the past seven days.
+                    Your posting access is paused because three of your County Stories were removed for posting rule violations within the past seven days.
                   </p>
                   <p className="mt-3 text-base leading-relaxed text-ink">
                     County Stories pauses posting for seven days after the third qualifying removal.
@@ -206,9 +224,9 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                   <button
                     type="button"
                     className="story-press story-cta-secondary mt-6 w-full"
-                    onClick={actions.onReviewRules}
+                    onClick={actions.onShowPauseReasons}
                   >
-                    Review County Stories Rules
+                    Why was my posting paused?
                   </button>
                 </div>
               )}
@@ -232,13 +250,21 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
           {view.screen === "owned" && view.hasSlot ? (
             <div data-county-story-owned>
               <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
-                County Stories
+                {view.removed ? "Your County Story was removed" : "County Stories"}
               </h2>
-              {view.removalSummary ? (
-                <div className="mt-4" data-county-story-removal>
-                  <p className="text-base leading-relaxed text-ink">{view.removalSummary}</p>
-                  {view.removalDetail ? (
-                    <p className="mt-2 text-base leading-relaxed text-ink">{view.removalDetail}</p>
+              {view.removed ? (
+                <div className="mt-4 flex flex-col gap-3" data-county-story-removal>
+                  {view.removalReason ? (
+                    <p className="text-base leading-relaxed text-ink">{view.removalReason}</p>
+                  ) : null}
+                  <p className="text-base leading-relaxed text-ink">Your County position remains used for today.</p>
+                  <p className="text-base leading-relaxed text-ink">
+                    This removal counts toward County Stories posting limits.
+                  </p>
+                  {view.replacementAvailable ? (
+                    <p className="text-base leading-relaxed text-ink">
+                      Your one replacement is still available. You may publish a corrected replacement.
+                    </p>
                   ) : null}
                 </div>
               ) : null}

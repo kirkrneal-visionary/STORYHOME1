@@ -8,7 +8,11 @@ import { readCountyStorySuspension } from "@/lib/county-stories/enforcement-serv
 import { countyStoryCountyName } from "@/lib/county-stories/composer-copy";
 import type { CountyStoryComposerStatus } from "@/lib/county-stories/composer-flow";
 import { isCountyStoryType } from "@/lib/county-stories/publish";
-import { countyStoryRemovalNotice } from "@/lib/county-stories/removal-notice";
+import {
+  countyStoryPauseRemovalList,
+  countyStoryRemovalNotice,
+  type CountyStoryPauseRemoval,
+} from "@/lib/county-stories/removal-notice";
 
 export async function readCountyStoryComposerStatus(opts: {
   admin: SupabaseClient;
@@ -46,12 +50,16 @@ export async function readCountyStoryComposerStatus(opts: {
 
   const storyType = isCountyStoryType(slotRow?.story_type) ? slotRow.story_type : null;
   const hidden = slotRow?.state === "hidden";
+  const pauseRemovals = suspension.suspended
+    ? await readPauseRemovals(opts.admin, opts.ownerId, suspension.starts_at ?? null)
+    : [];
   return {
     ok: true,
     storyDay,
     suspended: suspension.suspended === true,
     eligibleAt: suspension.eligible_at ?? null,
     removal: hidden ? countyStoryRemovalNotice(slotRow?.hidden_reason_code) : null,
+    pauseRemovals,
     slot: slotRow
       ? {
           id: slotRow.id,
@@ -117,6 +125,33 @@ export async function listAttachableCountyStoryListings(opts: {
       id: row.id,
       label: [row.address_serif, row.city].filter(Boolean).join(", ") || "Property",
     }));
+}
+
+async function readPauseRemovals(
+  admin: SupabaseClient,
+  ownerId: string,
+  pauseStartsAt: string | null,
+): Promise<CountyStoryPauseRemoval[]> {
+  if (!pauseStartsAt) return [];
+  const end = new Date(pauseStartsAt);
+  if (Number.isNaN(end.getTime())) return [];
+  const windowStart = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await admin
+    .from("county_story_enforcement_events")
+    .select("occurred_at, reason_code, qualifies_for_strike")
+    .eq("professional_owner_id", ownerId)
+    .gte("occurred_at", windowStart)
+    .lte("occurred_at", end.toISOString())
+    .order("occurred_at", { ascending: true });
+  if (error || !data) return [];
+  return countyStoryPauseRemovalList(
+    data.map((row) => ({
+      occurredAt: String(row.occurred_at ?? ""),
+      reasonCode: typeof row.reason_code === "string" ? row.reason_code : "",
+      qualifies: row.qualifies_for_strike === true,
+    })),
+    pauseStartsAt,
+  );
 }
 
 export function composerCountyLabel(fips: string): string {
