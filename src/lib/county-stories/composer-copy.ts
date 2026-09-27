@@ -5,13 +5,42 @@
 import { SERVICE_COUNTIES } from "@/lib/markets";
 import { COUNTY_STORY_MAX_SLOTS, type CountyStoryType } from "@/lib/county-stories/publish";
 
-export const COUNTY_STORY_RULES_COPY = [
-  "The Story must share useful local real estate knowledge, or a real property or open house.",
-  "Once accepted, it uses today’s County Story opportunity.",
-  "Only one replacement is allowed.",
-  "A Story removed for a policy violation does not reopen that County spot.",
-  "Repeated qualifying removals can pause County Story posting for a while.",
+export const COUNTY_STORY_RULES_SECTIONS = [
+  {
+    heading: "What belongs in County Stories",
+    paragraphs: [
+      "County Stories are for useful local real estate information and legitimate property or open house content.",
+      "Share knowledge that helps people understand the County, its real estate, land, homes, or a property you are authorized to promote. General advertising, business card videos, and simple “call me” promotions do not qualify.",
+    ],
+  },
+  {
+    heading: "Your Story position",
+    paragraphs: [
+      "Once your Story is accepted, your County position is used for the day. That position is not reopened if the Story is later removed.",
+    ],
+  },
+  {
+    heading: "Your one replacement",
+    paragraphs: [
+      "You may replace today’s Story one time. Your current Story remains active until the replacement is successfully published.",
+    ],
+  },
+  {
+    heading: "When posting can be paused",
+    paragraphs: [
+      "If Story Home removes a Story for violating County Stories rules, the removal remains on your posting record. Three qualifying removals within any seven day period will pause County Stories posting for seven days from the third removal.",
+    ],
+  },
+  {
+    heading: "Your responsibility before publishing",
+    paragraphs: [
+      "Before publishing, review your video, captions, County, Story type, and property information carefully. You are responsible for making sure the content is accurate, authorized, and appropriate for County Stories.",
+    ],
+  },
 ] as const;
+
+export const COUNTY_STORY_RULES_CONFIRM =
+  "I reviewed this Story and understand the County Stories posting rules.";
 
 export function countyStoryCountyName(fips: string | null | undefined): string {
   const match = SERVICE_COUNTIES.find((county) => county.fips === fips);
@@ -63,15 +92,17 @@ export function countyStoryEligibleWhen(eligibleAt: string | null | undefined): 
   if (!eligibleAt) return null;
   const when = new Date(eligibleAt);
   if (Number.isNaN(when.getTime())) return null;
-  return new Intl.DateTimeFormat("en-US", {
+  const date = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
-    weekday: "short",
-    month: "short",
+    month: "long",
     day: "numeric",
+  }).format(when);
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
     hour: "numeric",
     minute: "2-digit",
-    timeZoneName: "short",
   }).format(when);
+  return `${date} at ${time}`;
 }
 
 /** Display-only countdown from the server timestamp. The timestamp stays the authority. */

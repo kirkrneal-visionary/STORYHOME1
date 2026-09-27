@@ -153,7 +153,7 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Professional copy does not teach slot or media internals. Wave 7 viewer is not started.
+Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Professional copy explains the posting rules and the seven day pause. A hidden Story returns a public removal sentence, not a reason code or note. Wave 7 viewer is not started.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 

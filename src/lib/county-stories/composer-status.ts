@@ -1,12 +1,14 @@
 /**
  * Composer reads for the signed-in publisher. Service role only.
- * Omits strike counts, admin notes, and reason history.
+ * Omits strike counts, admin notes, and reason codes.
+ * A hidden Story returns a public removal sentence only.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { readCountyStorySuspension } from "@/lib/county-stories/enforcement-service";
 import { countyStoryCountyName } from "@/lib/county-stories/composer-copy";
 import type { CountyStoryComposerStatus } from "@/lib/county-stories/composer-flow";
 import { isCountyStoryType } from "@/lib/county-stories/publish";
+import { countyStoryRemovalNotice } from "@/lib/county-stories/removal-notice";
 
 export async function readCountyStoryComposerStatus(opts: {
   admin: SupabaseClient;
@@ -24,7 +26,7 @@ export async function readCountyStoryComposerStatus(opts: {
 
   const { data: slotRow, error: slotError } = await opts.admin
     .from("county_story_slots")
-    .select("id, county_fips, story_day, slot_number, story_type, listing_id, replacement_used, state")
+    .select("id, county_fips, story_day, slot_number, story_type, listing_id, replacement_used, state, hidden_reason_code")
     .eq("professional_owner_id", opts.ownerId)
     .eq("story_day", storyDay)
     .maybeSingle();
@@ -43,11 +45,13 @@ export async function readCountyStoryComposerStatus(opts: {
   }
 
   const storyType = isCountyStoryType(slotRow?.story_type) ? slotRow.story_type : null;
+  const hidden = slotRow?.state === "hidden";
   return {
     ok: true,
     storyDay,
     suspended: suspension.suspended === true,
     eligibleAt: suspension.eligible_at ?? null,
+    removal: hidden ? countyStoryRemovalNotice(slotRow?.hidden_reason_code) : null,
     slot: slotRow
       ? {
           id: slotRow.id,

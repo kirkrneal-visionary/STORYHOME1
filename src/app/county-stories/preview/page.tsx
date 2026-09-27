@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function CountyStoryPreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ clean?: string; screen?: string; hub?: string; layout?: string }>;
+  searchParams: Promise<{ clean?: string; screen?: string; hub?: string; layout?: string; removed?: string }>;
 }) {
   const allowed = process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview";
   if (!allowed) notFound();
@@ -21,6 +21,7 @@ export default async function CountyStoryPreviewPage({
       initialScreen={params.screen}
       initialHub={params.hub}
       initialLayout={params.layout}
+      showRemoval={params.removed === "1"}
     />
   );
 }

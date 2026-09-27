@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { SERVICE_COUNTIES } from "@/lib/markets";
-import { COUNTY_STORY_RULES_COPY, countyStoryTypeCopy } from "@/lib/county-stories/composer-copy";
+import {
+  COUNTY_STORY_RULES_CONFIRM,
+  COUNTY_STORY_RULES_SECTIONS,
+  countyStoryTypeCopy,
+} from "@/lib/county-stories/composer-copy";
 import {
   propertyChoiceLabel,
   type CountyStoryComposerMode,
@@ -45,6 +49,9 @@ export type CountyStoryPanelView = {
   showRetry: boolean;
   reviewReady: boolean;
   countyMarks: Record<string, string>;
+  readingRules: boolean;
+  removalSummary: string | null;
+  removalDetail: string | null;
 };
 
 type Actions = {
@@ -63,10 +70,29 @@ type Actions = {
   onContinue: () => void;
   onBack: () => void;
   onRetry: () => void;
+  onReviewRules: () => void;
+  onCloseRules: () => void;
 };
 
 const fieldClass =
   "min-h-11 w-full rounded-md border border-hairline bg-transparent px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]";
+
+function RulesSections() {
+  return (
+    <div className="mt-4 flex flex-col gap-5">
+      {COUNTY_STORY_RULES_SECTIONS.map((section) => (
+        <div key={section.heading}>
+          <h3 className="text-base font-semibold text-ink">{section.heading}</h3>
+          {section.paragraphs.map((paragraph) => (
+            <p key={paragraph} className="mt-2 text-base leading-relaxed text-ink">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function Choice({
   name,
@@ -142,20 +168,50 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
 
           {view.screen === "suspended" ? (
             <div data-county-story-suspension>
-              <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
-                County Stories posting paused
-              </h2>
-              {view.countdown ? (
-                <p className="mt-4 text-base text-ink">
-                  Eligible again in
-                  <span className="mt-1 block text-lg font-semibold" data-county-story-countdown>
-                    {view.countdown}
-                  </span>
-                </p>
-              ) : null}
-              {view.eligibleWhen ? (
-                <p className="mt-2 text-sm text-[var(--muted)]">{view.eligibleWhen}</p>
-              ) : null}
+              {view.readingRules ? (
+                <div>
+                  <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
+                    Before you publish
+                  </h2>
+                  <RulesSections />
+                  <button type="button" className="story-press story-cta-secondary mt-6 w-full" onClick={actions.onCloseRules}>
+                    Back
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
+                    County Stories posting paused
+                  </h2>
+                  <p className="mt-4 text-base leading-relaxed text-ink">
+                    Your County Stories posting access is paused because three of your Stories were removed for qualifying rule violations within the past seven days.
+                  </p>
+                  <p className="mt-3 text-base leading-relaxed text-ink">
+                    County Stories pauses posting for seven days after the third qualifying removal.
+                  </p>
+                  {view.countdown ? (
+                    <p className="mt-4 text-base text-ink">
+                      Eligible again in
+                      <span className="mt-1 block text-lg font-semibold" data-county-story-countdown>
+                        {view.countdown}
+                      </span>
+                    </p>
+                  ) : null}
+                  {view.eligibleWhen ? (
+                    <p className="mt-2 text-sm text-[var(--muted)]">{view.eligibleWhen}</p>
+                  ) : null}
+                  <p className="mt-4 text-base leading-relaxed text-[var(--muted)]">
+                    You can continue using the rest of Story Home while County Stories posting is paused.
+                  </p>
+                  <button
+                    type="button"
+                    className="story-press story-cta-secondary mt-6 w-full"
+                    onClick={actions.onReviewRules}
+                  >
+                    Review County Stories Rules
+                  </button>
+                </div>
+              )}
             </div>
           ) : null}
 
@@ -178,6 +234,14 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 County Stories
               </h2>
+              {view.removalSummary ? (
+                <div className="mt-4" data-county-story-removal>
+                  <p className="text-base leading-relaxed text-ink">{view.removalSummary}</p>
+                  {view.removalDetail ? (
+                    <p className="mt-2 text-base leading-relaxed text-ink">{view.removalDetail}</p>
+                  ) : null}
+                </div>
+              ) : null}
               <p className="mt-4 text-sm text-[var(--muted)]">Today&apos;s Story</p>
               <p className="text-lg font-semibold text-ink">{view.countyName}</p>
               {view.replacementAvailable ? (
@@ -434,25 +498,21 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
           ) : null}
 
           {view.screen === "rules" ? (
-            <fieldset data-county-story-rules>
-              <legend id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
+            <div data-county-story-rules>
+              <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 Before you publish
-              </legend>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-ink">
-                {COUNTY_STORY_RULES_COPY.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-              <label className="mt-4 flex min-h-12 items-start gap-3 text-base text-ink">
+              </h2>
+              <RulesSections />
+              <label className="mt-6 flex min-h-12 items-start gap-3 text-base text-ink">
                 <input
                   className="mt-1 h-5 w-5 accent-[var(--gold)]"
                   type="checkbox"
                   checked={view.rulesChecked}
                   onChange={(event) => actions.onRules(event.target.checked)}
                 />
-                I confirm these rules for this {view.mode === "replace" ? "replacement" : "Story"}.
+                {COUNTY_STORY_RULES_CONFIRM}
               </label>
-            </fieldset>
+            </div>
           ) : null}
 
           {view.screen === "success" ? (
@@ -485,7 +545,15 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                   disabled={view.busy}
                   data-county-story-continue
                 >
-                  {view.busy ? "Working…" : view.screen === "rules" ? "Publish" : view.screen === "captions" ? "Confirm words" : "Continue"}
+                  {view.busy
+                    ? "Working…"
+                    : view.screen === "rules"
+                      ? view.mode === "replace"
+                        ? "Publish Replacement"
+                        : "Publish Story"
+                      : view.screen === "captions"
+                        ? "Confirm words"
+                        : "Continue"}
                 </button>
               )}
               <button

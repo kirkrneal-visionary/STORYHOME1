@@ -28,5 +28,6 @@ export async function GET() {
     suspended: status.suspended,
     eligibleAt: status.eligibleAt,
     slot: status.slot,
+    removal: status.removal,
   });
 }

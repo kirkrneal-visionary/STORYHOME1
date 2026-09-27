@@ -41,9 +41,13 @@ function isReviewScreen(value: string | undefined): value is (typeof REVIEW_SCRE
   return REVIEW_SCREENS.some((step) => step === value);
 }
 
-function sample(screen: CountyStoryComposerStep, hub: "create" | "replace" | "used"): CountyStoryPanelView {
+function sample(
+  screen: CountyStoryComposerStep,
+  hub: "create" | "replace" | "used",
+  removed: boolean,
+): CountyStoryPanelView {
   const replace = hub !== "create" && screen !== "county" && screen !== "suspended";
-  const hasSlot = replace || screen === "suspended" || screen === "success";
+  const hasSlot = replace || screen === "suspended" || screen === "success" || (removed && screen === "owned");
   const countyFull = screen === "county" && hub === "used";
   const marks = { ...SAMPLE_MARKS };
   if (countyFull) marks["48373"] = "Full";
@@ -69,7 +73,7 @@ function sample(screen: CountyStoryComposerStep, hub: "create" | "replace" | "us
     replacementAvailable: hub !== "used" && screen !== "success",
     playing: screen !== "suspended",
     countdown: screen === "suspended" ? "5 days 14 hours" : null,
-    eligibleWhen: screen === "suspended" ? "Thu, Oct 2, 3:00 PM CDT" : null,
+    eligibleWhen: screen === "suspended" ? "October 2 at 3:00 PM" : null,
     cueTexts: SAMPLE_CUES,
     accessBasis: screen === "access" ? "spoken_audio" : null,
     accessDescription: "",
@@ -83,6 +87,15 @@ function sample(screen: CountyStoryComposerStep, hub: "create" | "replace" | "us
     showRetry: false,
     reviewReady: false,
     countyMarks: marks,
+    readingRules: false,
+    removalSummary:
+      removed && screen === "owned"
+        ? "Your County Story was removed because it did not meet County Stories posting rules."
+        : null,
+    removalDetail:
+      removed && screen === "owned"
+        ? "Content was general advertising rather than useful local real estate information."
+        : null,
   };
 }
 
@@ -91,11 +104,13 @@ export function CountyStoryPreview({
   initialScreen,
   initialHub,
   initialLayout,
+  showRemoval = false,
 }: {
   clean?: boolean;
   initialScreen?: string;
   initialHub?: string;
   initialLayout?: string;
+  showRemoval?: boolean;
 }) {
   const [screen, setScreen] = useState<(typeof REVIEW_SCREENS)[number]>(
     isReviewScreen(initialScreen) ? initialScreen : "owned",
@@ -104,7 +119,7 @@ export function CountyStoryPreview({
     initialHub === "replace" || initialHub === "used" ? initialHub : "create",
   );
   const [layout, setLayout] = useState<"phone" | "desk">(initialLayout === "desk" ? "desk" : "phone");
-  const view = useMemo(() => sample(screen, hub), [screen, hub]);
+  const view = useMemo(() => sample(screen, hub, showRemoval), [screen, hub, showRemoval]);
   const noop = () => undefined;
 
   return (
@@ -181,6 +196,8 @@ export function CountyStoryPreview({
               if (previous) setScreen(previous);
             },
             onRetry: noop,
+            onReviewRules: noop,
+            onCloseRules: noop,
           }}
         />
       </div>

@@ -66,6 +66,9 @@ const emptyView = (screen: CountyStoryComposerStep): CountyStoryPanelView => ({
   showRetry: false,
   reviewReady: false,
   countyMarks: {},
+  readingRules: false,
+  removalSummary: null,
+  removalDetail: null,
 });
 
 function declaredVideoType(file: File): string | null {
@@ -94,6 +97,17 @@ function readDurationSeconds(file: Blob): Promise<number> {
     };
     video.src = url;
   });
+}
+
+function readRemoval(value: unknown): CountyStoryComposerStatus["removal"] {
+  if (!value || typeof value !== "object") return null;
+  const summary = (value as { summary?: unknown }).summary;
+  const detail = (value as { detail?: unknown }).detail;
+  if (typeof summary !== "string" || !summary.trim()) return null;
+  return {
+    summary,
+    detail: typeof detail === "string" && detail.trim() ? detail : null,
+  };
 }
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
@@ -136,6 +150,9 @@ export function CountyStoryComposer() {
       countdown: next.eligibleAt ? countyStoryCountdown(next.eligibleAt, clock) : null,
       eligibleWhen: countyStoryEligibleWhen(next.eligibleAt),
       propertyChoice: null,
+      readingRules: false,
+      removalSummary: next.removal?.summary ?? null,
+      removalDetail: next.removal?.detail ?? null,
       error: null,
       busy: false,
     }));
@@ -164,6 +181,7 @@ export function CountyStoryComposer() {
       suspended: body.suspended === true,
       eligibleAt: typeof body.eligibleAt === "string" ? body.eligibleAt : null,
       slot: (body.slot as CountyStoryComposerStatus["slot"]) ?? null,
+      removal: readRemoval(body.removal),
     };
     applyStatus(next, new Date());
     return "ok" as const;
@@ -829,6 +847,8 @@ export function CountyStoryComposer() {
           if (!previous) return;
           setView((current) => ({ ...current, screen: previous, error: null, showRetry: false }));
         },
+        onReviewRules: () => setView((current) => ({ ...current, readingRules: true, error: null })),
+        onCloseRules: () => setView((current) => ({ ...current, readingRules: false, error: null })),
         onRetry: () => {
           if (!status) {
             void loadStatus();
