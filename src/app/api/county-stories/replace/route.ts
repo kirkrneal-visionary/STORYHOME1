@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { countyStoryAdminClient } from "@/lib/county-stories/admin";
 import {
+  isCountyStoryListingAction,
+  isCountyStoryType,
+} from "@/lib/county-stories/publish";
+import {
   countyStoriesPublishEnabled,
   replaceCountyStoryMedia,
 } from "@/lib/county-stories/publish-service";
@@ -29,12 +33,33 @@ export async function POST(request: Request) {
     mediaId?: string;
     idempotencyKey?: string;
     rulesAcknowledged?: boolean;
+    storyType?: string;
+    listingAction?: string;
     listingId?: string | null;
   };
   try {
     body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid request." }, { status: 400 });
+  }
+  if (!isCountyStoryType(body.storyType) || !isCountyStoryListingAction(body.listingAction)) {
+    return NextResponse.json(
+      { ok: false, code: "NOT_ELIGIBLE", error: "Story type and property action are required." },
+      { status: 400 },
+    );
+  }
+  const listingId = body.listingId ?? null;
+  if ((body.listingAction === "keep" || body.listingAction === "clear") && listingId) {
+    return NextResponse.json(
+      { ok: false, code: "NOT_ELIGIBLE", error: "That property action does not take a listing." },
+      { status: 400 },
+    );
+  }
+  if (body.listingAction === "set" && !listingId) {
+    return NextResponse.json(
+      { ok: false, code: "NOT_ELIGIBLE", error: "Choose a property to attach." },
+      { status: 400 },
+    );
   }
   const { result, status } = await replaceCountyStoryMedia({
     admin,
@@ -43,7 +68,9 @@ export async function POST(request: Request) {
     mediaId: body.mediaId ?? "",
     idempotencyKey: body.idempotencyKey ?? "",
     rulesAcknowledged: body.rulesAcknowledged === true,
-    listingId: body.listingId ?? null,
+    storyType: body.storyType,
+    listingAction: body.listingAction,
+    listingId,
   });
   return NextResponse.json(result, { status });
 }

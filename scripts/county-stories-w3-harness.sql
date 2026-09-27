@@ -421,6 +421,9 @@ begin
     media,
     'idemp-rep-noack',
     false,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-24 14:00:00-05'
   );
   if r->>'code' is distinct from 'NOT_ELIGIBLE' then
@@ -467,6 +470,9 @@ begin
     media,
     'idemp-rep-gated',
     true,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-24 14:00:00-05'
   );
   if r->>'code' is distinct from 'FEATURE_DISABLED' then
@@ -521,6 +527,9 @@ begin
     second,
     'idemp-c-rep',
     true,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-24 15:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
@@ -565,6 +574,9 @@ begin
     public.w3_valid_media('c3333333-3333-3333-3333-333333333333'),
     'idemp-c-rep-2',
     true,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-24 14:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACEMENT_ALREADY_USED' then
@@ -576,6 +588,9 @@ begin
     second,
     'idemp-c-rep',
     true,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-24 14:00:00-05'
   );
   if r->>'code' is distinct from 'REPLACED' then
@@ -587,6 +602,9 @@ begin
     public.w3_valid_media('c3333333-3333-3333-3333-333333333333'),
     'idemp-c-rep',
     true,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-24 15:00:00-05'
   );
   if r->>'code' is distinct from 'IDEMPOTENCY_CONFLICT' then
@@ -611,6 +629,9 @@ begin
     media,
     'idemp-stale-rep',
     true,
+    'local_knowledge',
+    'keep',
+    null,
     timestamptz '2026-09-25 08:00:00-05'
   );
   if r->>'code' is distinct from 'STORY_DAY_ENDED' then
@@ -636,3 +657,401 @@ where (select count(*) from public.county_story_slots) = 2
         select 1 from pg_proc p
          where p.proname in ('delete_county_story_slot', 'surrender_county_story_slot')
       );
+
+-- Replacement may change Story type and property. County, day, owner, and slot number stay.
+insert into public.listings (id, agent_id, county_fips) values
+  ('a1000000-0000-4000-8000-000000000001', 'c3333333-3333-3333-3333-333333333333', '48005'),
+  ('a1000000-0000-4000-8000-000000000002', 'b2222222-2222-2222-2222-222222222222', '48373'),
+  ('a1000000-0000-4000-8000-000000000003', 'c3333333-3333-3333-3333-333333333333', '48005'),
+  ('a1000000-0000-4000-8000-000000000004', 'b2222222-2222-2222-2222-222222222222', '48373'),
+  ('a1000000-0000-4000-8000-000000000005', 'c3333333-3333-3333-3333-333333333333', '48373'),
+  ('a1000000-0000-4000-8000-000000000006', 'b2222222-2222-2222-2222-222222222222', '48005'),
+  ('a1000000-0000-4000-8000-000000000007', 'b2222222-2222-2222-2222-222222222222', '48373'),
+  ('a1000000-0000-4000-8000-000000000008', 'b2222222-2222-2222-2222-222222222222', '48373'),
+  ('a1000000-0000-4000-8000-000000000009', 'c3333333-3333-3333-3333-333333333333', '48005')
+on conflict (id) do update
+  set agent_id = excluded.agent_id,
+      county_fips = excluded.county_fips;
+
+do $$
+declare
+  owner uuid := 'c3333333-3333-3333-3333-333333333333';
+  list_add uuid := 'a1000000-0000-4000-8000-000000000001';
+  list_wrong uuid := 'a1000000-0000-4000-8000-000000000005';
+  list_other uuid := 'a1000000-0000-4000-8000-000000000006';
+  at timestamptz := timestamptz '2026-09-10 14:00:00-05';
+  v1 uuid;
+  v2 uuid;
+  slot uuid;
+  r jsonb;
+  cap int;
+  events_before int;
+  v_slot_number int;
+  v_county text;
+  v_day date;
+begin
+  v1 := public.w3_valid_media(owner);
+  r := public.publish_county_story(
+    owner, v1, '48005', 'local_knowledge', null, 'ctx-a-pub', true, at
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'ctx_a_pub %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  select s.slot_number, s.county_fips, s.story_day
+    into v_slot_number, v_county, v_day
+    from public.county_story_slots s where s.id = slot;
+  select (public.county_story_capacity('48005', at)->>'accepted')::int into cap;
+  select count(*) into events_before
+    from public.county_story_enforcement_events where professional_owner_id = owner;
+
+  v2 := public.w3_valid_media(owner);
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-no-type', true, null, 'keep', null, at);
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'ctx_missing_type %', r;
+  end if;
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-no-action', true, 'local_knowledge', null, null, at);
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'ctx_missing_action %', r;
+  end if;
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-keep-id', true, 'local_knowledge', 'keep', list_add, at);
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'ctx_keep_with_id %', r;
+  end if;
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-clear-id', true, 'local_knowledge', 'clear', list_add, at);
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'ctx_clear_with_id %', r;
+  end if;
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-set-empty', true, 'open_house_property', 'set', null, at);
+  if r->>'code' is distinct from 'NOT_ELIGIBLE' then
+    raise exception 'ctx_set_without_id %', r;
+  end if;
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-wrong-county', true, 'open_house_property', 'set', list_wrong, at);
+  if r->>'code' is distinct from 'LISTING_COUNTY_MISMATCH' then
+    raise exception 'ctx_wrong_county %', r;
+  end if;
+  r := public.replace_county_story_media(owner, slot, v2, 'ctx-a-unauth', true, 'open_house_property', 'set', list_other, at);
+  if r->>'code' is distinct from 'LISTING_NOT_AUTHORIZED' then
+    raise exception 'ctx_unauth %', r;
+  end if;
+  if (select current_media_id from public.county_story_slots where id = slot) is distinct from v1 then
+    raise exception 'ctx_a_failure_moved_media';
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'local_knowledge' then
+    raise exception 'ctx_a_failure_changed_type';
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'ctx_a_failure_added_listing';
+  end if;
+  if (select replacement_used from public.county_story_slots where id = slot) is not false then
+    raise exception 'ctx_a_failure_used_replacement';
+  end if;
+  if (select s.county_fips from public.county_story_slots s where s.id = slot) is distinct from v_county
+     or (select s.story_day from public.county_story_slots s where s.id = slot) is distinct from v_day
+     or (select s.professional_owner_id from public.county_story_slots s where s.id = slot) is distinct from owner
+     or (select s.slot_number from public.county_story_slots s where s.id = slot) is distinct from v_slot_number then
+    raise exception 'ctx_a_failure_moved_identity';
+  end if;
+  if (public.county_story_capacity('48005', at)->>'accepted')::int is distinct from cap then
+    raise exception 'ctx_a_failure_capacity';
+  end if;
+  if (select count(*) from public.county_story_enforcement_events where professional_owner_id = owner)
+       is distinct from events_before then
+    raise exception 'ctx_a_failure_strike';
+  end if;
+  raise notice 'replace_context_missing_rejected';
+  raise notice 'replace_set_wrong_county';
+  raise notice 'replace_set_unauthorized';
+
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'ctx-a-rep', true, 'open_house_property', 'set', list_add, at
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'ctx_a_rep %', r;
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'open_house_property' then
+    raise exception 'ctx_a_type';
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is distinct from list_add then
+    raise exception 'ctx_a_listing';
+  end if;
+  if (select current_media_id from public.county_story_slots where id = slot) is distinct from v2 then
+    raise exception 'ctx_a_media';
+  end if;
+  if (select s.county_fips from public.county_story_slots s where s.id = slot) is distinct from '48005'
+     or (select s.story_day from public.county_story_slots s where s.id = slot) is distinct from date '2026-09-10'
+     or (select s.professional_owner_id from public.county_story_slots s where s.id = slot) is distinct from owner
+     or (select s.slot_number from public.county_story_slots s where s.id = slot) is distinct from v_slot_number
+     or (select s.replacement_used from public.county_story_slots s where s.id = slot) is not true then
+    raise exception 'ctx_a_identity';
+  end if;
+  if (select count(*) from public.county_story_slots
+       where professional_owner_id = owner and story_day = date '2026-09-10') is distinct from 1 then
+    raise exception 'ctx_a_second_slot';
+  end if;
+  if (public.county_story_capacity('48005', at)->>'accepted')::int is distinct from cap then
+    raise exception 'ctx_a_capacity %', cap;
+  end if;
+  raise notice 'replace_type_local_to_open_house';
+  raise notice 'replace_set_adds_property';
+  raise notice 'replace_context_identity_unchanged';
+  raise notice 'replace_context_capacity_unchanged';
+
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'ctx-a-rep', true, 'open_house_property', 'set', list_add, at
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'ctx_a_replay %', r;
+  end if;
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'ctx-a-rep', true, 'local_knowledge', 'set', list_add, at
+  );
+  if r->>'code' is distinct from 'IDEMPOTENCY_CONFLICT' then
+    raise exception 'ctx_a_type_conflict %', r;
+  end if;
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'ctx-a-rep', true, 'open_house_property', 'clear', null, at
+  );
+  if r->>'code' is distinct from 'IDEMPOTENCY_CONFLICT' then
+    raise exception 'ctx_a_action_conflict %', r;
+  end if;
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'ctx-a-rep', true, 'open_house_property', 'set', list_wrong, at
+  );
+  if r->>'code' is distinct from 'IDEMPOTENCY_CONFLICT' then
+    raise exception 'ctx_a_listing_conflict %', r;
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'open_house_property'
+     or (select listing_id from public.county_story_slots where id = slot) is distinct from list_add
+     or (select current_media_id from public.county_story_slots where id = slot) is distinct from v2 then
+    raise exception 'ctx_a_conflict_mutated';
+  end if;
+  r := public.replace_county_story_media(
+    owner, slot, public.w3_valid_media(owner), 'ctx-a-rep-2', true,
+    'local_knowledge', 'clear', null, at
+  );
+  if r->>'code' is distinct from 'REPLACEMENT_ALREADY_USED' then
+    raise exception 'ctx_a_second %', r;
+  end if;
+  raise notice 'replace_context_idempotency';
+  raise notice 'replace_one_maximum';
+end
+$$;
+
+do $$
+declare
+  owner uuid := 'b2222222-2222-2222-2222-222222222222';
+  list_keep uuid := 'a1000000-0000-4000-8000-000000000002';
+  at timestamptz := timestamptz '2026-09-11 14:00:00-05';
+  v1 uuid;
+  v2 uuid;
+  slot uuid;
+  r jsonb;
+  cap int;
+  v_slot_number int;
+begin
+  v1 := public.w3_valid_media(owner);
+  r := public.publish_county_story(
+    owner, v1, '48373', 'open_house_property', list_keep, 'ctx-b-pub', true, at
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'ctx_b_pub %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  select s.slot_number into v_slot_number from public.county_story_slots s where s.id = slot;
+  select (public.county_story_capacity('48373', at)->>'accepted')::int into cap;
+  v2 := public.w3_valid_media(owner);
+  r := public.replace_county_story_media(
+    owner, slot, v2, 'ctx-b-rep', true, 'local_knowledge', 'keep', null, at
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'ctx_b_rep %', r;
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'local_knowledge' then
+    raise exception 'ctx_b_type';
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is distinct from list_keep then
+    raise exception 'ctx_b_listing';
+  end if;
+  if (select s.county_fips from public.county_story_slots s where s.id = slot) is distinct from '48373'
+     or (select s.story_day from public.county_story_slots s where s.id = slot) is distinct from date '2026-09-11'
+     or (select s.professional_owner_id from public.county_story_slots s where s.id = slot) is distinct from owner
+     or (select s.slot_number from public.county_story_slots s where s.id = slot) is distinct from v_slot_number then
+    raise exception 'ctx_b_identity';
+  end if;
+  if (public.county_story_capacity('48373', at)->>'accepted')::int is distinct from cap then
+    raise exception 'ctx_b_capacity';
+  end if;
+  if (select count(*) from public.county_story_slots
+       where professional_owner_id = owner and story_day = date '2026-09-11') is distinct from 1 then
+    raise exception 'ctx_b_second_slot';
+  end if;
+  raise notice 'replace_type_open_house_to_local';
+  raise notice 'replace_keep_preserves_property';
+end
+$$;
+
+do $$
+declare
+  owner uuid := 'c3333333-3333-3333-3333-333333333333';
+  list_from uuid := 'a1000000-0000-4000-8000-000000000003';
+  at timestamptz := timestamptz '2026-09-12 14:00:00-05';
+  slot uuid;
+  r jsonb;
+  cap int;
+begin
+  r := public.publish_county_story(
+    owner, public.w3_valid_media(owner), '48005', 'local_knowledge', list_from,
+    'ctx-c-pub', true, at
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'ctx_c_pub %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  select (public.county_story_capacity('48005', at)->>'accepted')::int into cap;
+  r := public.replace_county_story_media(
+    owner, slot, public.w3_valid_media(owner), 'ctx-c-rep', true,
+    'local_knowledge', 'clear', null, at
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'ctx_c_rep %', r;
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'ctx_c_listing';
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'local_knowledge' then
+    raise exception 'ctx_c_type';
+  end if;
+  if (public.county_story_capacity('48005', at)->>'accepted')::int is distinct from cap then
+    raise exception 'ctx_c_capacity';
+  end if;
+  raise notice 'replace_clear_local_knowledge';
+end
+$$;
+
+do $$
+declare
+  owner uuid := 'b2222222-2222-2222-2222-222222222222';
+  list_from uuid := 'a1000000-0000-4000-8000-000000000004';
+  at timestamptz := timestamptz '2026-09-13 14:00:00-05';
+  slot uuid;
+  r jsonb;
+begin
+  r := public.publish_county_story(
+    owner, public.w3_valid_media(owner), '48373', 'open_house_property', list_from,
+    'ctx-d-pub', true, at
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'ctx_d_pub %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  r := public.replace_county_story_media(
+    owner, slot, public.w3_valid_media(owner), 'ctx-d-rep', true,
+    'open_house_property', 'clear', null, at
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'ctx_d_rep %', r;
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'ctx_d_listing';
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'open_house_property' then
+    raise exception 'ctx_d_type';
+  end if;
+  raise notice 'replace_clear_open_house';
+end
+$$;
+
+do $$
+declare
+  owner uuid := 'b2222222-2222-2222-2222-222222222222';
+  list_from uuid := 'a1000000-0000-4000-8000-000000000007';
+  list_to uuid := 'a1000000-0000-4000-8000-000000000008';
+  at timestamptz := timestamptz '2026-09-17 14:00:00-05';
+  slot uuid;
+  r jsonb;
+  cap int;
+begin
+  r := public.publish_county_story(
+    owner, public.w3_valid_media(owner), '48373', 'open_house_property', list_from,
+    'ctx-f-pub', true, at
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'ctx_f_pub %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  select (public.county_story_capacity('48373', at)->>'accepted')::int into cap;
+  r := public.replace_county_story_media(
+    owner, slot, public.w3_valid_media(owner), 'ctx-f-rep', true,
+    'open_house_property', 'set', list_to, at
+  );
+  if r->>'code' is distinct from 'REPLACED' then
+    raise exception 'ctx_f_rep %', r;
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is distinct from list_to then
+    raise exception 'ctx_f_listing';
+  end if;
+  if (public.county_story_capacity('48373', at)->>'accepted')::int is distinct from cap then
+    raise exception 'ctx_f_capacity';
+  end if;
+  if (select count(*) from public.county_story_slots
+       where professional_owner_id = owner and story_day = date '2026-09-17') is distinct from 1 then
+    raise exception 'ctx_f_second_slot';
+  end if;
+  raise notice 'replace_set_changes_property';
+end
+$$;
+
+do $$
+declare
+  owner uuid := 'c3333333-3333-3333-3333-333333333333';
+  list_banned uuid := 'a1000000-0000-4000-8000-000000000009';
+  at timestamptz := timestamptz '2026-09-18 14:00:00-05';
+  v1 uuid;
+  slot uuid;
+  r jsonb;
+  cap int;
+begin
+  v1 := public.w3_valid_media(owner);
+  r := public.publish_county_story(
+    owner, v1, '48005', 'open_house_property', list_banned, 'ctx-g-pub', true, at
+  );
+  if r->>'code' is distinct from 'PUBLISHED' then
+    raise exception 'ctx_g_pub %', r;
+  end if;
+  slot := (r->>'slot_id')::uuid;
+  r := public.hide_county_story_for_policy(
+    slot, 'unauthorized_property', null, 'ctx-g-hide', 'admin', 'admin-ctx', at + interval '10 minutes'
+  );
+  if r->>'code' is distinct from 'POLICY_HIDDEN' then
+    raise exception 'ctx_g_hide %', r;
+  end if;
+  select (public.county_story_capacity('48005', at)->>'accepted')::int into cap;
+  r := public.replace_county_story_media(
+    owner, slot, public.w3_valid_media(owner), 'ctx-g-rep', true,
+    'local_knowledge', 'set', list_banned, at + interval '20 minutes'
+  );
+  if r->>'code' is distinct from 'LISTING_NOT_AUTHORIZED' then
+    raise exception 'ctx_g_rep %', r;
+  end if;
+  if (select listing_id from public.county_story_slots where id = slot) is not null then
+    raise exception 'ctx_g_restored';
+  end if;
+  if (select story_type from public.county_story_slots where id = slot) is distinct from 'open_house_property' then
+    raise exception 'ctx_g_type';
+  end if;
+  if (select current_media_id from public.county_story_slots where id = slot) is distinct from v1 then
+    raise exception 'ctx_g_media';
+  end if;
+  if (select replacement_used from public.county_story_slots where id = slot) is not false then
+    raise exception 'ctx_g_used';
+  end if;
+  if (select state from public.county_story_slots where id = slot) is distinct from 'hidden' then
+    raise exception 'ctx_g_state';
+  end if;
+  if (public.county_story_capacity('48005', at)->>'accepted')::int is distinct from cap then
+    raise exception 'ctx_g_capacity';
+  end if;
+  raise notice 'replace_set_blocked_prior_listing';
+end
+$$;

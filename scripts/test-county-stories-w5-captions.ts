@@ -28,7 +28,7 @@ const w4 = read("supabase/migrations/0084_county_story_enforcement.sql");
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0086")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0087")), false);
+assert.equal(files.filter((f) => f.startsWith("0087")).length, 1);
 assert.match(read("tsconfig.json"), /scripts\/test-county-stories-w5-captions\.ts/);
 assert.doesNotMatch(w4, /county_story_save_captions\(/);
 assert.match(mig, /create table public\.county_story_caption_sets/);
@@ -146,6 +146,7 @@ applyTo(fresh, "supabase/migrations/0083_county_story_publish.sql");
 applyTo(fresh, "supabase/migrations/0084_county_story_enforcement.sql");
 applyTo(fresh, "supabase/migrations/0085_county_story_captions.sql");
 applyTo(fresh, "supabase/migrations/0086_county_story_provider.sql");
+applyTo(fresh, "supabase/migrations/0087_county_story_replacement_context.sql");
 const out = applyTo(fresh, "scripts/county-stories-w5-harness.sql");
 
 for (const name of [

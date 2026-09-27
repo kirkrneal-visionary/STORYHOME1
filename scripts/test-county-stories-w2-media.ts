@@ -44,7 +44,7 @@ assert.equal(files.filter((f) => f.startsWith("0083")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0084")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0085")).length, 1);
 assert.equal(files.filter((f) => f.startsWith("0086")).length, 1);
-assert.equal(files.some((f) => f.startsWith("0087")), false);
+assert.equal(files.filter((f) => f.startsWith("0087")).length, 1);
 assert.doesNotMatch(w1, /county_story_media|county-story-media/);
 
 assert.equal(COUNTY_STORY_MEDIA_BUCKET, "county-story-media");

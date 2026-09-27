@@ -12,6 +12,10 @@ export const COUNTY_STORY_TYPES = [
 
 export type CountyStoryType = (typeof COUNTY_STORY_TYPES)[number];
 
+export const COUNTY_STORY_LISTING_ACTIONS = ["keep", "set", "clear"] as const;
+
+export type CountyStoryListingAction = (typeof COUNTY_STORY_LISTING_ACTIONS)[number];
+
 export const COUNTY_STORY_RESULT_CODES = [
   "PUBLISHED",
   "REPLACED",
@@ -114,4 +118,10 @@ export function isCountyStoryType(
   value: string | null | undefined,
 ): value is CountyStoryType {
   return !!value && (COUNTY_STORY_TYPES as readonly string[]).includes(value);
+}
+
+export function isCountyStoryListingAction(
+  value: string | null | undefined,
+): value is CountyStoryListingAction {
+  return !!value && (COUNTY_STORY_LISTING_ACTIONS as readonly string[]).includes(value);
 }
