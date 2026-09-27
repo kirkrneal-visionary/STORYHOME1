@@ -8,6 +8,7 @@ import { LivingMarkPresence } from "@/components/agents/LivingMarkPresence";
 import { AgentWorldAnalyticsCard } from "@/components/agents/AgentWorldAnalyticsCard";
 import { AgentWorldShareButton } from "@/components/agents/AgentWorldShareButton";
 import { StoryWalkComposer } from "@/components/agents/StoryWalkComposer";
+import { CountyStoryComposer } from "@/components/county-stories/CountyStoryComposer";
 import { StoryEmptyWell } from "@/components/story/StoryEmptyWell";
 import type { DemoAgent, DemoListing } from "@/lib/demo-data";
 import { ListingCard } from "@/components/ListingCard";
@@ -208,6 +209,8 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
             listings={listings}
           />
         ) : null}
+
+        {isOwn ? <CountyStoryComposer ownerId={agent.id} /> : null}
 
         {agent.bio ? (
           <p
