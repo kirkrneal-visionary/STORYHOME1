@@ -138,16 +138,18 @@ export function CountyStoryPreview({
   );
   const [layout, setLayout] = useState<"phone" | "desk">(initialLayout === "desk" ? "desk" : "phone");
   const [whyOpen, setWhyOpen] = useState(showPauseReasons);
+  const [draftSaved, setDraftSaved] = useState(resume != null);
+  const resumeMode = draftSaved ? (resume === "replace" || hub === "replace" ? "replace" : "create") : null;
   const view = useMemo(() => {
-    const next = sample(screen, hub, showRemoval, whyOpen, resume);
+    const next = sample(screen, hub, showRemoval, whyOpen, resumeMode);
     return {
       ...next,
       showingPauseReasons: whyOpen && screen === "suspended",
-      hasSlot: resume === "replace" ? true : next.hasSlot,
-      mode: resume === "replace" ? "replace" : next.mode,
+      hasSlot: resumeMode === "replace" ? true : next.hasSlot,
+      mode: resumeMode === "replace" ? "replace" : next.mode,
       countyName: resume === "replace" ? "Polk County" : next.countyName,
     };
-  }, [screen, hub, showRemoval, whyOpen, resume]);
+  }, [screen, hub, showRemoval, whyOpen, resumeMode]);
   const noop = () => undefined;
 
   return (
@@ -223,7 +225,10 @@ export function CountyStoryPreview({
               const previous = REVIEW_SCREENS[index - 1];
               if (previous) setScreen(previous);
             },
-            onSaveExit: () => setScreen("owned"),
+            onSaveExit: () => {
+              setDraftSaved(true);
+              setScreen("owned");
+            },
             onResume: noop,
             onAskDiscard: noop,
             onCancelDiscard: noop,
