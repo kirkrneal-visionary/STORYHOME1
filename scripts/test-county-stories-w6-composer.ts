@@ -5,7 +5,13 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { countyStoryComposerMessage, countyStoryCapacityCopy, countyStoryCountdown } from "../src/lib/county-stories/composer-copy.ts";
+import {
+  countyStoryComposerMessage,
+  countyStoryCapacityCopy,
+  countyStoryCapacityMark,
+  countyStoryCountdown,
+  countyStoryTypeCopy,
+} from "../src/lib/county-stories/composer-copy.ts";
 import {
   createListingId,
   immutableReplacementFields,
@@ -93,6 +99,10 @@ assert.match(almost.note, /does not hold|not held/);
 const full = countyStoryCapacityCopy(30);
 assert.equal(full.line, "30 / 30");
 assert.equal(full.note, "Full for Today");
+assert.equal(countyStoryCapacityMark(7), "7 / 30");
+assert.equal(countyStoryCapacityMark(30), "Full");
+assert.equal(countyStoryTypeCopy("local_knowledge").body, "Teach buyers or sellers something useful about this County.");
+assert.equal(countyStoryTypeCopy("open_house_property").title, "Open House / Property");
 
 assert.equal(
   countyStoryCountdown("2026-10-02T20:00:00.000Z", new Date("2026-09-27T06:00:00.000Z")),
@@ -116,19 +126,35 @@ assert.doesNotMatch(countyStoryComposerMessage("UNSUPPORTED_CODEC"), /H\.264|HEV
 
 const composer = read("src/components/county-stories/CountyStoryComposer.tsx");
 const panel = read("src/components/county-stories/CountyStoryPanel.tsx");
+const previewGallery = read("src/components/county-stories/CountyStoryPreview.tsx");
 const route = read("src/app/api/county-stories/composer/route.ts");
 const preview = read("src/app/county-stories/preview/page.tsx");
+const agentWorld = read("src/components/agents/AgentWorldView.tsx");
 assert.match(composer, /rulesAcknowledged: true/);
 assert.match(composer, /CAPTION_REVISION_CONFLICT/);
 assert.match(composer, /We did not get a confirmation/);
+assert.match(composer, /reviewReady/);
 assert.match(panel, /Create Story/);
 assert.match(panel, /Replace Story/);
+assert.match(panel, /What are you sharing/);
+assert.match(panel, /Preparing your Story/);
+assert.match(panel, /This usually takes a moment/);
+assert.match(panel, /Replace today/);
 assert.doesNotMatch(panel, /Delete Story/);
 assert.doesNotMatch(panel, /WCAG|WebVTT|H\.264|HEVC|Mux|HLS/);
+assert.doesNotMatch(panel, /Story Day|story number|durable slot|media version|allocation/);
+assert.doesNotMatch(panel, /Livingston|Groveton|Lufkin|Woodville|Coldspring|Huntsville/);
+assert.doesNotMatch(panel, /Sample screen|data-county-story-preview-board/);
+assert.match(previewGallery, /aria-label="Sample screen"/);
+assert.match(previewGallery, /data-county-story-preview-board/);
+assert.match(previewGallery, /clean \? null/);
+assert.doesNotMatch(composer, /Sample screen|data-county-story-preview-board|CountyStoryPreview/);
+assert.doesNotMatch(agentWorld, /CountyStoryPreview|Sample screen|data-county-story-preview-board/);
 assert.doesNotMatch(composer, /publish_enabled\s*=\s*true/);
 assert.doesNotMatch(route, /qualifying_count|reason_detail|hidden_reason/);
 assert.match(preview, /VERCEL_ENV === "preview"/);
-assert.match(read("src/components/agents/AgentWorldView.tsx"), /isOwn \? <CountyStoryComposer \/> : null/);
+assert.match(preview, /clean=\{params\.clean === "1"\}/);
+assert.match(agentWorld, /isOwn \? <CountyStoryComposer \/> : null/);
 assert.doesNotMatch(read("src/components/home/HomeSearchHero.tsx"), /CountyStory/);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/delete/route.ts")), false);
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);

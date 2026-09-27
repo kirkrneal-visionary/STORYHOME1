@@ -22,13 +22,20 @@ export function countyStoryTypeCopy(type: CountyStoryType): { title: string; bod
   if (type === "open_house_property") {
     return {
       title: "Open House / Property",
-      body: "A real property or open-house Story.",
+      body: "Share a property or open house in this County.",
     };
   }
   return {
     title: "Local Knowledge",
-    body: "Useful real estate education specific to this County.",
+    body: "Teach buyers or sellers something useful about this County.",
   };
+}
+
+/** Short count for the County list. Full means no room today. */
+export function countyStoryCapacityMark(accepted: number, max = COUNTY_STORY_MAX_SLOTS): string {
+  const safe = Number.isFinite(accepted) ? Math.max(0, Math.floor(accepted)) : 0;
+  if (safe >= max) return "Full";
+  return `${safe} / ${max}`;
 }
 
 export function countyStoryCapacityCopy(accepted: number, max = COUNTY_STORY_MAX_SLOTS): {

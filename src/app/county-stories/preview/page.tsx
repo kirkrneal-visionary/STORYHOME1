@@ -7,8 +7,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function CountyStoryPreviewPage() {
+export default async function CountyStoryPreviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clean?: string; screen?: string; hub?: string; layout?: string }>;
+}) {
   const allowed = process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview";
   if (!allowed) notFound();
-  return <CountyStoryPreview />;
+  const params = await searchParams;
+  return (
+    <CountyStoryPreview
+      clean={params.clean === "1"}
+      initialScreen={params.screen}
+      initialHub={params.hub}
+      initialLayout={params.layout}
+    />
+  );
 }

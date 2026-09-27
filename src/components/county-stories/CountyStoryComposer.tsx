@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountyStoryPanel, type CountyStoryPanelView } from "@/components/county-stories/CountyStoryPanel";
 import {
   countyStoryCapacityCopy,
+  countyStoryCapacityMark,
   countyStoryComposerMessage,
   countyStoryCountdown,
   countyStoryCountyName,
   countyStoryEligibleWhen,
 } from "@/lib/county-stories/composer-copy";
+import { SERVICE_COUNTIES } from "@/lib/markets";
 import {
   COUNTY_STORY_MAX_RECORD_SEC,
   createListingId,
@@ -62,6 +64,8 @@ const emptyView = (screen: CountyStoryComposerStep): CountyStoryPanelView => ({
   recording: false,
   recordClock: null,
   showRetry: false,
+  reviewReady: false,
+  countyMarks: {},
 });
 
 function declaredVideoType(file: File): string | null {
@@ -208,9 +212,32 @@ export function CountyStoryComposer() {
 
   useEffect(() => {
     if (!view.countyFips) return;
-    if (view.screen !== "county" && view.screen !== "rules" && view.screen !== "type") return;
+    if (view.screen !== "rules" && view.screen !== "type") return;
     void refreshCapacity(view.countyFips);
   }, [refreshCapacity, view.countyFips, view.screen]);
+
+  useEffect(() => {
+    if (view.screen !== "county") return;
+    let cancelled = false;
+    void (async () => {
+      const entries = await Promise.all(
+        SERVICE_COUNTIES.map(async (county) => {
+          try {
+            const response = await fetch(`/api/county-stories/capacity?county=${encodeURIComponent(county.fips)}`);
+            const body = await readJson(response);
+            return [county.fips, countyStoryCapacityMark(Number(body.accepted ?? 0), Number(body.max ?? 30))] as const;
+          } catch {
+            return [county.fips, ""] as const;
+          }
+        }),
+      );
+      if (cancelled) return;
+      setView((current) => ({ ...current, countyMarks: Object.fromEntries(entries) }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [view.screen]);
 
   useEffect(() => {
     if (view.screen !== "property" || !view.countyFips) return;
@@ -261,7 +288,15 @@ export function CountyStoryComposer() {
       }));
       return;
     }
-    setView((current) => ({ ...current, busy: true, error: null, screen: "processing", processingNote: "Preparing your video.", showRetry: false }));
+    setView((current) => ({
+      ...current,
+      busy: true,
+      error: null,
+      screen: "processing",
+      processingNote: null,
+      reviewReady: false,
+      showRetry: false,
+    }));
     const purpose = mode === "replace" ? "replacement" : "original";
     let staged: Response;
     try {
@@ -315,7 +350,8 @@ export function CountyStoryComposer() {
       ...current,
       busy: false,
       screen: "processing",
-      processingNote: "Preparing your video.",
+      processingNote: null,
+      reviewReady: false,
       videoUrl: null,
       showRetry: false,
     }));
@@ -333,7 +369,8 @@ export function CountyStoryComposer() {
       if (phase === "failed") {
         setView((current) => ({
           ...current,
-          processingNote: "We could not prepare this video. You can try again.",
+          processingNote: null,
+          reviewReady: false,
           showRetry: true,
           error: null,
         }));
@@ -346,7 +383,8 @@ export function CountyStoryComposer() {
         const playbackBody = await readJson(playback);
         setView((current) => ({
           ...current,
-          processingNote: "Your video is ready to review.",
+          processingNote: null,
+          reviewReady: true,
           showRetry: false,
           videoUrl: typeof playbackBody.url === "string" ? playbackBody.url : current.videoUrl,
           cueTexts: nextCues.map((cue) => cue.text),
@@ -355,7 +393,8 @@ export function CountyStoryComposer() {
       }
       setView((current) => ({
         ...current,
-        processingNote: "Preparing your video.",
+        processingNote: null,
+        reviewReady: false,
         showRetry: false,
       }));
     };
@@ -676,7 +715,7 @@ export function CountyStoryComposer() {
 
   const onContinue = useCallback(async () => {
     if (view.screen === "processing") {
-      if (view.processingNote !== "Your video is ready to review.") {
+      if (!view.reviewReady) {
         setView((current) => ({ ...current, error: countyStoryComposerMessage("PLAYBACK_NOT_READY") }));
         return;
       }
@@ -802,6 +841,7 @@ export function CountyStoryComposer() {
             error: null,
             showRetry: false,
             processingNote: null,
+            reviewReady: false,
             videoUrl: null,
           }));
         },
