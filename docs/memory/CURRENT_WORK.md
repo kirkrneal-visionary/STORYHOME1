@@ -5,7 +5,7 @@
 
 ## In progress
 
-- County Stories Wave 6 is the professional composer on the owner’s own Agent World. Record Video opens a Story Home camera. Upload Video stays a separate file choice. Each composer step has Back and Save and exit. An unfinished Story stays in this browser until Continue or Discard. A draft does not hold a County seat or use the replacement. The rules box is not saved as already checked. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. Wave 7 viewer is not started. Homepage County cards are unchanged.
+- County Stories Wave 6 is the professional composer on the owner’s own Agent World. Record Video opens a Story Home camera. The camera shows the phone’s full frame, so the live picture matches the recorded picture. Zoom controls appear only when that camera reports zoom. Upload Video stays a separate file choice. PR 297 is not merged. Each composer step has Back and Save and exit. An unfinished Story stays in this browser until Continue or Discard. A draft does not hold a County seat or use the replacement. The rules box is not saved as already checked. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. Wave 7 viewer is not started. Homepage County cards are unchanged.
 - Canonical prepared playback is secured Mux HLS (signed/private playback id), not a static MP4 rendition.
 - County Stories Wave 4 is on `main` (`0084`, hosted). Public publish stays off.
 - County Stories Waves 1–3 are on `main` (hosted and verified).

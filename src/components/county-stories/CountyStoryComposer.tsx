@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountyStoryCamera } from "@/components/county-stories/CountyStoryCamera";
 import { CountyStoryPanel, type CountyStoryPanelView } from "@/components/county-stories/CountyStoryPanel";
 import {
@@ -147,7 +147,14 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
   const [mediaId, setMediaId] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [cameraOpen, setCameraOpen] = useState(false);
+  const cameraHandoffRef = useRef(false);
   const mode: CountyStoryComposerMode = view.mode;
+
+  const dropCameraHandoff = useCallback(() => {
+    if (!cameraHandoffRef.current) return;
+    cameraHandoffRef.current = false;
+    setCameraOpen(false);
+  }, []);
 
   const applyStatus = useCallback((next: CountyStoryComposerStatus, clock: Date) => {
     setStatus(next);
@@ -336,24 +343,13 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
   const beginUpload = useCallback(async (file: File) => {
     const declared = declaredVideoType(file);
     if (!declared) {
+      dropCameraHandoff();
       setView((current) => ({ ...current, error: countyStoryComposerMessage("INVALID_MEDIA_TYPE") }));
       return;
     }
     if (file.size <= 0) {
+      dropCameraHandoff();
       setView((current) => ({ ...current, error: countyStoryComposerMessage("INVALID_MEDIA") }));
-      return;
-    }
-    try {
-      const seconds = await readDurationSeconds(file);
-      if (Number.isFinite(seconds) && seconds * 1000 > COUNTY_STORY_MEDIA_MAX_DURATION_MS) {
-        setView((current) => ({ ...current, error: countyStoryComposerMessage("VIDEO_TOO_LONG") }));
-        return;
-      }
-    } catch {
-      setView((current) => ({
-        ...current,
-        error: "This video could not be read. Try recording again or choose another video.",
-      }));
       return;
     }
     setView((current) => ({
@@ -365,6 +361,28 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       reviewReady: false,
       showRetry: false,
     }));
+    try {
+      const seconds = await readDurationSeconds(file);
+      if (Number.isFinite(seconds) && seconds * 1000 > COUNTY_STORY_MEDIA_MAX_DURATION_MS) {
+        dropCameraHandoff();
+        setView((current) => ({
+          ...current,
+          busy: false,
+          screen: "capture",
+          error: countyStoryComposerMessage("VIDEO_TOO_LONG"),
+        }));
+        return;
+      }
+    } catch {
+      dropCameraHandoff();
+      setView((current) => ({
+        ...current,
+        busy: false,
+        screen: "capture",
+        error: "This video could not be read. Try recording again or choose another video.",
+      }));
+      return;
+    }
     const purpose = mode === "replace" ? "replacement" : "original";
     let staged: Response;
     try {
@@ -379,6 +397,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         }),
       });
     } catch {
+      dropCameraHandoff();
       setView((current) => ({
         ...current,
         busy: false,
@@ -390,6 +409,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
     }
     const stageBody = await readJson(staged);
     if (!staged.ok || typeof stageBody.uploadUrl !== "string" || typeof stageBody.id !== "string") {
+      dropCameraHandoff();
       setView((current) => ({
         ...current,
         busy: false,
@@ -404,6 +424,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       body: file,
     });
     if (!upload.ok) {
+      dropCameraHandoff();
       setView((current) => ({
         ...current,
         busy: false,
@@ -423,7 +444,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       videoUrl: null,
       showRetry: false,
     }));
-  }, [mode]);
+  }, [dropCameraHandoff, mode]);
 
   useEffect(() => {
     if (view.screen !== "processing" || !mediaId) return;
@@ -435,6 +456,10 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       const phase = String(body.phase ?? "preparing");
       const nextCues = Array.isArray(body.cues) ? (body.cues as Cue[]) : [];
       if (phase === "failed") {
+        if (cameraHandoffRef.current) {
+          cameraHandoffRef.current = false;
+          setCameraOpen(false);
+        }
         setView((current) => ({
           ...current,
           processingNote: null,
@@ -449,11 +474,17 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         setRevision(Number(body.captionRevision ?? 0));
         const playback = await fetch(`/api/county-stories/media/${mediaId}`);
         const playbackBody = await readJson(playback);
+        const handoff = cameraHandoffRef.current;
+        if (handoff) {
+          cameraHandoffRef.current = false;
+          setCameraOpen(false);
+        }
         setView((current) => ({
           ...current,
           processingNote: null,
           reviewReady: true,
           showRetry: false,
+          screen: handoff ? "review" : current.screen,
           videoUrl: typeof playbackBody.url === "string" ? playbackBody.url : current.videoUrl,
           cueTexts: nextCues.map((cue) => cue.text),
         }));
@@ -927,13 +958,16 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
     {cameraOpen ? (
       <CountyStoryCamera
         replacement={view.mode === "replace"}
-        onClose={() => setCameraOpen(false)}
-        onUse={(file) => {
+        onClose={() => {
+          cameraHandoffRef.current = false;
           setCameraOpen(false);
+        }}
+        onUse={(file) => {
+          cameraHandoffRef.current = true;
           void beginUpload(file);
         }}
         onUpload={(file) => {
-          setCameraOpen(false);
+          cameraHandoffRef.current = true;
           void beginUpload(file);
         }}
       />

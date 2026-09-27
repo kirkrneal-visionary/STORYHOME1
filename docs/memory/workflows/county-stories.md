@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Record Video opens a Story Home camera. Upload Video is a separate file choice. Each screen is one decision, with Back and Save and exit. An unfinished Story stays in the browser and does not hold a County seat. The sample state selector is only on the non-production preview route. Public publishing stays disabled. There is no consumer viewer. Wave 7 is not started. Homepage County cards are unchanged.
+**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Record Video opens a Story Home camera that shows the camera’s full frame, so the preview matches the recording. Zoom is offered only when the phone reports it. Upload Video is a separate file choice. Each screen is one decision, with Back and Save and exit. An unfinished Story stays in the browser and does not hold a County seat. The sample state selector is only on the non-production preview route. Public publishing stays disabled. There is no consumer viewer. Wave 7 is not started. Homepage County cards are unchanged.
 
 ## Waves
 
@@ -153,7 +153,7 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Each step can go Back or Save and exit. A saved draft is not an accepted Story and does not use the one replacement. The rules checkbox is acknowledged again before publish. Professional copy explains the posting rules, the seven day pause, and the public reasons for the removals that opened that pause. A hidden Story returns a public removal sentence, not a reason code or note. Wave 7 viewer is not started.
+Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Each step can go Back or Save and exit. A saved draft is not an accepted Story and does not use the one replacement. The rules checkbox is acknowledged again before publish. Professional copy explains the posting rules, the seven day pause, and the public reasons for the removals that opened that pause. A hidden Story returns a public removal sentence, not a reason code or note. The camera preview uses the full frame from the phone. Wave 7 viewer is not started.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 

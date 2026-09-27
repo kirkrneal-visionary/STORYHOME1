@@ -568,7 +568,7 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               </h2>
               {view.videoUrl ? (
                 <video
-                  className="mt-4 aspect-[9/16] w-full rounded-md bg-black"
+                  className="mt-4 aspect-[9/16] w-full rounded-md bg-black object-contain"
                   controls
                   playsInline
                   src={view.videoUrl}
@@ -587,7 +587,7 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               <div className="@container">
               <div className="mt-4 flex flex-col gap-4 @min-[40rem]:grid @min-[40rem]:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
                 {view.videoUrl ? (
-                  <video className="aspect-[9/16] w-full rounded-md bg-black" controls playsInline src={view.videoUrl} />
+                  <video className="aspect-[9/16] w-full rounded-md bg-black object-contain" controls playsInline src={view.videoUrl} />
                 ) : null}
                 <div className="flex flex-col gap-3">
                   {view.cueTexts.map((text, index) => (
