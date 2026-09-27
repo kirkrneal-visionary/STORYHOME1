@@ -52,6 +52,7 @@ function sample(
   hub: "create" | "replace" | "used",
   removed: boolean,
   showPauseReasons: boolean,
+  resume: "create" | "replace" | null,
 ): CountyStoryPanelView {
   const replace = hub !== "create" && screen !== "county" && screen !== "suspended";
   const hasSlot = replace || screen === "suspended" || screen === "success" || (removed && screen === "owned");
@@ -101,6 +102,14 @@ function sample(
         ? "This Story was removed because it was general advertising rather than useful local real estate information."
         : null,
     pauseRemovals: screen === "suspended" ? SAMPLE_PAUSE_REMOVALS : [],
+    resumeOffer: resume ? "continue" : null,
+    resumeLead: resume === "replace"
+      ? "You have an unfinished replacement. Your current Story stays live."
+      : resume === "create"
+        ? "You have an unfinished Story."
+        : null,
+    discardConfirm: false,
+    draftNotice: null,
   };
 }
 
@@ -111,6 +120,7 @@ export function CountyStoryPreview({
   initialLayout,
   showRemoval = false,
   showPauseReasons = false,
+  resume = null,
 }: {
   clean?: boolean;
   initialScreen?: string;
@@ -118,6 +128,7 @@ export function CountyStoryPreview({
   initialLayout?: string;
   showRemoval?: boolean;
   showPauseReasons?: boolean;
+  resume?: "create" | "replace" | null;
 }) {
   const [screen, setScreen] = useState<(typeof REVIEW_SCREENS)[number]>(
     isReviewScreen(initialScreen) ? initialScreen : "owned",
@@ -127,10 +138,16 @@ export function CountyStoryPreview({
   );
   const [layout, setLayout] = useState<"phone" | "desk">(initialLayout === "desk" ? "desk" : "phone");
   const [whyOpen, setWhyOpen] = useState(showPauseReasons);
-  const view = useMemo(
-    () => ({ ...sample(screen, hub, showRemoval, whyOpen), showingPauseReasons: whyOpen && screen === "suspended" }),
-    [screen, hub, showRemoval, whyOpen],
-  );
+  const view = useMemo(() => {
+    const next = sample(screen, hub, showRemoval, whyOpen, resume);
+    return {
+      ...next,
+      showingPauseReasons: whyOpen && screen === "suspended",
+      hasSlot: resume === "replace" ? true : next.hasSlot,
+      mode: resume === "replace" ? "replace" : next.mode,
+      countyName: resume === "replace" ? "Polk County" : next.countyName,
+    };
+  }, [screen, hub, showRemoval, whyOpen, resume]);
   const noop = () => undefined;
 
   return (
@@ -206,6 +223,11 @@ export function CountyStoryPreview({
               const previous = REVIEW_SCREENS[index - 1];
               if (previous) setScreen(previous);
             },
+            onSaveExit: () => setScreen("owned"),
+            onResume: noop,
+            onAskDiscard: noop,
+            onCancelDiscard: noop,
+            onConfirmDiscard: noop,
             onRetry: noop,
             onShowPauseReasons: () => setWhyOpen(true),
             onClosePauseReasons: () => setWhyOpen(false),

@@ -53,6 +53,10 @@ export type CountyStoryPanelView = {
   removed: boolean;
   removalReason: string | null;
   pauseRemovals: { date: string; reason: string }[];
+  resumeOffer: "continue" | "blocked" | null;
+  resumeLead: string | null;
+  discardConfirm: boolean;
+  draftNotice: string | null;
 };
 
 type Actions = {
@@ -70,6 +74,11 @@ type Actions = {
   onUpload: (file: File) => void;
   onContinue: () => void;
   onBack: () => void;
+  onSaveExit: () => void;
+  onResume: () => void;
+  onAskDiscard: () => void;
+  onCancelDiscard: () => void;
+  onConfirmDiscard: () => void;
   onRetry: () => void;
   onShowPauseReasons: () => void;
   onClosePauseReasons: () => void;
@@ -77,6 +86,84 @@ type Actions = {
 
 const fieldClass =
   "min-h-11 w-full rounded-md border border-hairline bg-transparent px-3 text-base text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--gold)]";
+
+function ResumeOffer({
+  lead,
+  blocked,
+  busy,
+  actions,
+}: {
+  lead: string;
+  blocked: boolean;
+  busy: boolean;
+  actions: Actions;
+}) {
+  return (
+    <div data-county-story-resume>
+      <p className="mt-3 text-base leading-relaxed text-ink">{lead}</p>
+      {blocked ? null : (
+        <button
+          type="button"
+          className="story-press story-cta-primary mt-5 w-full"
+          onClick={actions.onResume}
+          disabled={busy}
+          data-county-story-continue-draft
+        >
+          Continue Story
+        </button>
+      )}
+      <button
+        type="button"
+        className="story-press story-cta-secondary mt-3 w-full"
+        onClick={actions.onAskDiscard}
+        disabled={busy}
+        data-county-story-discard
+      >
+        Discard Draft
+      </button>
+    </div>
+  );
+}
+
+function DiscardConfirm({
+  mode,
+  busy,
+  actions,
+}: {
+  mode: CountyStoryComposerMode;
+  busy: boolean;
+  actions: Actions;
+}) {
+  return (
+    <div data-county-story-discard-confirm>
+      <p className="mt-3 text-base leading-relaxed text-ink">
+        {mode === "replace" ? "Discard this unfinished replacement?" : "Discard this unfinished Story?"}
+      </p>
+      <p className="mt-2 text-base leading-relaxed text-ink">
+        {mode === "replace"
+          ? "Your current Story stays live. This does not use your one replacement."
+          : "This does not publish a Story, and it does not hold a County position."}
+      </p>
+      <button
+        type="button"
+        className="story-press story-cta-primary mt-5 w-full"
+        onClick={actions.onConfirmDiscard}
+        disabled={busy}
+        data-county-story-discard-confirm
+      >
+        {busy ? "Working…" : "Discard Draft"}
+      </button>
+      <button
+        type="button"
+        className="story-press story-cta-secondary mt-3 w-full"
+        onClick={actions.onCancelDiscard}
+        disabled={busy}
+      >
+        Keep it
+      </button>
+    </div>
+  );
+}
 
 function RulesSections() {
   return (
@@ -143,6 +230,11 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
     >
       <div className={wide ? "mx-auto flex max-w-3xl flex-col gap-5" : "mx-auto flex max-w-lg flex-col gap-5"}>
         <div className="flex min-w-0 flex-col gap-4">
+          {view.draftNotice ? (
+            <p className="text-base leading-relaxed text-ink" data-county-story-draft-notice>
+              {view.draftNotice}
+            </p>
+          ) : null}
           {view.error ? (
             <p className="text-sm text-ink" role="alert" data-county-story-error>
               {view.error}
@@ -238,12 +330,25 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 County Stories
               </h2>
-              <p className="mt-2 text-base text-[var(--muted)]">
-                Share useful local real estate knowledge or a property with your County.
-              </p>
-              <button type="button" className="story-press story-cta-primary mt-5 w-full" onClick={actions.onCreate}>
-                Create Story
-              </button>
+              {view.discardConfirm ? (
+                <DiscardConfirm mode={view.mode} busy={view.busy} actions={actions} />
+              ) : view.resumeOffer ? (
+                <ResumeOffer
+                  lead={view.resumeLead ?? "You have an unfinished Story."}
+                  blocked={view.resumeOffer === "blocked"}
+                  busy={view.busy}
+                  actions={actions}
+                />
+              ) : (
+                <>
+                  <p className="mt-2 text-base text-[var(--muted)]">
+                    Share useful local real estate knowledge or a property with your County.
+                  </p>
+                  <button type="button" className="story-press story-cta-primary mt-5 w-full" onClick={actions.onCreate}>
+                    Create Story
+                  </button>
+                </>
+              )}
             </div>
           ) : null}
 
@@ -270,7 +375,16 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               ) : null}
               <p className="mt-4 text-sm text-[var(--muted)]">Today&apos;s Story</p>
               <p className="text-lg font-semibold text-ink">{view.countyName}</p>
-              {view.replacementAvailable ? (
+              {view.discardConfirm ? (
+                <DiscardConfirm mode="replace" busy={view.busy} actions={actions} />
+              ) : view.resumeOffer ? (
+                <ResumeOffer
+                  lead={view.resumeLead ?? "You have an unfinished replacement. Your current Story stays live."}
+                  blocked={view.resumeOffer === "blocked"}
+                  busy={view.busy}
+                  actions={actions}
+                />
+              ) : view.replacementAvailable ? (
                 <button
                   type="button"
                   className="story-press story-cta-primary mt-5 w-full"
@@ -556,10 +670,9 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
           {view.screen !== "loading" &&
           view.screen !== "suspended" &&
           view.screen !== "owned" &&
-          view.screen !== "success" &&
-          view.screen !== "capture" ? (
+          view.screen !== "success" ? (
             <div className="mt-2 flex flex-col gap-3">
-              {view.showRetry ? (
+              {view.screen === "capture" ? null : view.showRetry ? (
                 <button type="button" className="story-press story-cta-primary w-full" onClick={actions.onRetry}>
                   Try again
                 </button>
@@ -585,8 +698,19 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               <button
                 type="button"
                 className="story-press story-cta-secondary w-full"
+                onClick={actions.onSaveExit}
+                disabled={view.busy}
+                data-county-story-save
+              >
+                Save and exit
+              </button>
+              <button
+                type="button"
+                className="story-press story-cta-secondary w-full"
                 onClick={actions.onBack}
                 disabled={view.busy}
+                data-county-story-back
+                aria-label="Back"
               >
                 Back
               </button>

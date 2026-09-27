@@ -14,6 +14,12 @@ import {
   countyStoryTypeCopy,
 } from "../src/lib/county-stories/composer-copy.ts";
 import {
+  draftResume,
+  parseCountyStoryDraft,
+  serializeCountyStoryDraft,
+  type CountyStoryDraft,
+} from "../src/lib/county-stories/composer-draft.ts";
+import {
   countyStoryPauseRemovalList,
   countyStoryRemovalNotice,
 } from "../src/lib/county-stories/removal-notice.ts";
@@ -209,7 +215,74 @@ assert.doesNotMatch(composer, /publish_enabled\s*=\s*true/);
 assert.doesNotMatch(route, /qualifying_count|reason_detail|hidden_reason/);
 assert.match(preview, /VERCEL_ENV === "preview"/);
 assert.match(preview, /clean=\{params\.clean === "1"\}/);
-assert.match(agentWorld, /isOwn \? <CountyStoryComposer \/> : null/);
+assert.match(agentWorld, /isOwn \? <CountyStoryComposer ownerId=\{agent\.id\} \/> : null/);
+assert.match(panel, /data-county-story-back/);
+assert.match(panel, /Save and exit/);
+assert.match(panel, /Continue Story/);
+assert.match(panel, /Discard Draft/);
+assert.match(panel, /Your current Story stays live/);
+assert.match(composer, /rulesChecked: false/);
+assert.match(composer, /clearCountyStoryDraft/);
+assert.doesNotMatch(read("src/lib/county-stories/composer-draft.ts"), /rulesChecked/);
+assert.equal(previousComposerStep("create", "capture"), "property");
+assert.equal(previousComposerStep("replace", "type"), "owned");
+
+const savedDraft: CountyStoryDraft = {
+  version: 1,
+  mode: "create",
+  slotId: null,
+  screen: "rules",
+  countyFips: "48373",
+  storyType: "local_knowledge",
+  propertyChoice: "none",
+  selectedListingId: null,
+  mediaId: "media-1",
+  cueTexts: ["A local note"],
+  accessBasis: "spoken_audio",
+  accessDescription: "",
+  savedAt: "2026-09-27T00:00:00.000Z",
+};
+const stored = serializeCountyStoryDraft(savedDraft);
+assert.doesNotMatch(stored, /rulesChecked/);
+const parsed = parseCountyStoryDraft(stored);
+assert.equal(parsed?.screen, "rules");
+assert.equal(parsed?.mediaId, "media-1");
+assert.equal(parsed?.countyFips, "48373");
+const resumed = draftResume({
+  draft: parsed,
+  suspended: false,
+  hasSlot: false,
+  slotId: null,
+  replacementAvailable: false,
+});
+assert.equal(resumed.kind, "continue");
+const blocked = draftResume({
+  draft: parsed,
+  suspended: false,
+  hasSlot: true,
+  slotId: "slot",
+  replacementAvailable: true,
+});
+assert.equal(blocked.kind, "blocked");
+assert.match(blocked.kind === "blocked" ? blocked.lead : "", /published Story is unchanged/);
+const replacement = draftResume({
+  draft: { ...savedDraft, mode: "replace", slotId: "slot", screen: "capture" },
+  suspended: false,
+  hasSlot: true,
+  slotId: "slot",
+  replacementAvailable: true,
+});
+assert.equal(replacement.kind, "continue");
+assert.match(replacement.kind === "continue" ? replacement.lead : "", /current Story stays live/);
+const replacementUsed = draftResume({
+  draft: { ...savedDraft, mode: "replace", slotId: "slot" },
+  suspended: false,
+  hasSlot: true,
+  slotId: "slot",
+  replacementAvailable: false,
+});
+assert.equal(replacementUsed.kind, "blocked");
+assert.match(replacementUsed.kind === "blocked" ? replacementUsed.lead : "", /current Story is unchanged/);
 assert.doesNotMatch(read("src/components/home/HomeSearchHero.tsx"), /CountyStory/);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/delete/route.ts")), false);
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);

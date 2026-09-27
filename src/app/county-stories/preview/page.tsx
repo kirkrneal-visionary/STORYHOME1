@@ -10,7 +10,15 @@ export const metadata: Metadata = {
 export default async function CountyStoryPreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ clean?: string; screen?: string; hub?: string; layout?: string; removed?: string; why?: string }>;
+  searchParams: Promise<{
+    clean?: string;
+    screen?: string;
+    hub?: string;
+    layout?: string;
+    removed?: string;
+    why?: string;
+    resume?: string;
+  }>;
 }) {
   const allowed = process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview";
   if (!allowed) notFound();
@@ -23,6 +31,7 @@ export default async function CountyStoryPreviewPage({
       initialLayout={params.layout}
       showRemoval={params.removed === "1"}
       showPauseReasons={params.why === "1"}
+      resume={params.resume === "replace" ? "replace" : params.resume === "create" ? "create" : null}
     />
   );
 }

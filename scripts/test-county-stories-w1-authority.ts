@@ -164,7 +164,7 @@ for (const rel of [
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
 const agentWorld = read("src/components/agents/AgentWorldView.tsx");
-assert.match(agentWorld, /isOwn \? <CountyStoryComposer \/> : null/);
+assert.match(agentWorld, /isOwn \? <CountyStoryComposer ownerId=\{agent\.id\} \/> : null/);
 assert.doesNotMatch(read("src/components/home/HomeSearchHero.tsx"), /county-stories|CountyStoryComposer/);
 assert.equal(existsSync(join(root, "src/app/s")), false);
 

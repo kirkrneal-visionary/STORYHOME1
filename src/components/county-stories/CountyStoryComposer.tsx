@@ -30,6 +30,15 @@ import {
   COUNTY_STORY_MEDIA_MAX_DURATION_MS,
   isCountyStoryDeclaredVideoType,
 } from "@/lib/county-stories/media";
+import {
+  clearCountyStoryDraft,
+  draftHasProgress,
+  draftResume,
+  readCountyStoryDraft,
+  viewToCountyStoryDraft,
+  writeCountyStoryDraft,
+  type CountyStoryDraft,
+} from "@/lib/county-stories/composer-draft";
 import type { CountyStoryType } from "@/lib/county-stories/publish";
 
 type Cue = { index: number; startMs: number; endMs: number; text: string };
@@ -70,6 +79,10 @@ const emptyView = (screen: CountyStoryComposerStep): CountyStoryPanelView => ({
   removed: false,
   removalReason: null,
   pauseRemovals: [],
+  resumeOffer: null,
+  resumeLead: null,
+  discardConfirm: false,
+  draftNotice: null,
 });
 
 function declaredVideoType(file: File): string | null {
@@ -126,7 +139,7 @@ async function readJson(response: Response): Promise<Record<string, unknown>> {
   }
 }
 
-export function CountyStoryComposer() {
+export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | null }) {
   const [view, setView] = useState<CountyStoryPanelView>(emptyView("loading"));
   const [status, setStatus] = useState<CountyStoryComposerStatus | null>(null);
   const [cues, setCues] = useState<Cue[]>([]);
@@ -142,6 +155,13 @@ export function CountyStoryComposer() {
   const applyStatus = useCallback((next: CountyStoryComposerStatus, clock: Date) => {
     setStatus(next);
     const slot = next.slot;
+    const resume = draftResume({
+      draft: ownerId ? readCountyStoryDraft(ownerId) : null,
+      suspended: next.suspended,
+      hasSlot: !!slot,
+      slotId: slot?.id ?? null,
+      replacementAvailable: showReplaceStory(next),
+    });
     setView((current) => ({
       ...current,
       screen: next.suspended || current.screen === "loading" ? (next.suspended ? "suspended" : "owned") : current.screen === "success" ? "success" : "owned",
@@ -162,10 +182,15 @@ export function CountyStoryComposer() {
       removed: next.removal !== null,
       removalReason: next.removal?.reason ?? null,
       pauseRemovals: next.pauseRemovals,
+      resumeOffer: resume.kind === "none" ? null : resume.kind === "continue" ? "continue" : "blocked",
+      resumeLead: resume.kind === "none" ? null : resume.lead,
+      discardConfirm: false,
+      draftNotice: null,
+      rulesChecked: false,
       error: null,
       busy: false,
     }));
-  }, []);
+  }, [ownerId]);
 
   const loadStatus = useCallback(async () => {
     const response = await fetch("/api/county-stories/composer");
@@ -214,6 +239,33 @@ export function CountyStoryComposer() {
     const timer = window.setInterval(() => setNow(new Date()), 30000);
     return () => window.clearInterval(timer);
   }, [view.screen]);
+
+  useEffect(() => {
+    if (!ownerId) return;
+    if (
+      view.screen === "loading" ||
+      view.screen === "owned" ||
+      view.screen === "suspended" ||
+      view.screen === "success"
+    ) {
+      return;
+    }
+    const draft = viewToCountyStoryDraft({
+      mode: view.mode,
+      slotId: view.mode === "replace" ? (status?.slot?.id ?? null) : null,
+      screen: view.screen,
+      countyFips: view.countyFips,
+      storyType: view.storyType,
+      propertyChoice: view.propertyChoice,
+      selectedListingId: view.selectedListingId,
+      mediaId,
+      cueTexts: view.cueTexts,
+      accessBasis: view.accessBasis,
+      accessDescription: view.accessDescription,
+    });
+    if (!draftHasProgress(draft)) return;
+    writeCountyStoryDraft(ownerId, draft);
+  }, [mediaId, ownerId, status?.slot?.id, view]);
 
   useEffect(() => {
     if (!status?.eligibleAt || view.screen !== "suspended") return;
@@ -538,6 +590,7 @@ export function CountyStoryComposer() {
       }
       const body = await readJson(response);
       if (body.ok === true && body.code === "PUBLISHED") {
+        if (ownerId) clearCountyStoryDraft(ownerId);
         setView((current) => ({
           ...current,
           busy: false,
@@ -604,6 +657,7 @@ export function CountyStoryComposer() {
     }
     const body = await readJson(response);
     if (body.ok === true && body.code === "REPLACED") {
+      if (ownerId) clearCountyStoryDraft(ownerId);
       setView((current) => ({
         ...current,
         busy: false,
@@ -624,7 +678,7 @@ export function CountyStoryComposer() {
       busy: false,
       error: countyStoryComposerMessage(code, typeof body.eligible_at === "string" ? body.eligible_at : null),
     }));
-  }, [loadStatus, mediaId, refreshCapacity, status, view.countyFips, view.mode, view.propertyChoice, view.rulesChecked, view.selectedListingId, view.storyType]);
+  }, [loadStatus, mediaId, ownerId, refreshCapacity, status, view.countyFips, view.mode, view.propertyChoice, view.rulesChecked, view.selectedListingId, view.storyType]);
 
   const confirmCaptions = useCallback(async () => {
     if (!mediaId || cues.length === 0) {
@@ -798,6 +852,134 @@ export function CountyStoryComposer() {
     setView((current) => ({ ...current, screen: next, error: null, rulesChecked: next === "rules" ? false : current.rulesChecked }));
   }, [confirmCaptions, publish, saveAccess, view]);
 
+  const onResume = useCallback(async () => {
+    if (!ownerId || !status) return;
+    const draft = readCountyStoryDraft(ownerId);
+    const resume = draftResume({
+      draft,
+      suspended: status.suspended,
+      hasSlot: !!status.slot,
+      slotId: status.slot?.id ?? null,
+      replacementAvailable: showReplaceStory(status),
+    });
+    if (resume.kind !== "continue") return;
+    const saved = resume.draft;
+    setMediaId(saved.mediaId);
+    setView((current) => ({
+      ...current,
+      screen: saved.screen === "owned" || saved.screen === "loading" || saved.screen === "success" ? "county" : saved.screen,
+      mode: saved.mode,
+      countyFips: saved.countyFips ?? current.countyFips,
+      countyName: saved.countyFips ? countyStoryCountyName(saved.countyFips) : current.countyName,
+      storyType: saved.storyType,
+      propertyChoice: saved.propertyChoice,
+      selectedListingId: saved.selectedListingId,
+      cueTexts: saved.cueTexts,
+      accessBasis: saved.accessBasis,
+      accessDescription: saved.accessDescription,
+      rulesChecked: false,
+      resumeOffer: null,
+      discardConfirm: false,
+      draftNotice: null,
+      error: null,
+      busy: false,
+    }));
+    if (!saved.mediaId) return;
+    const response = await fetch(`/api/county-stories/media/${saved.mediaId}/preparation`);
+    if (!response.ok) {
+      setMediaId(null);
+      setView((current) => ({
+        ...current,
+        screen: "capture",
+        reviewReady: false,
+        videoUrl: null,
+        draftNotice: "This video is no longer available. Your other choices are still here. Record or upload again.",
+      }));
+      return;
+    }
+    const body = await readJson(response);
+    if (String(body.phase ?? "") === "failed") {
+      setView((current) => ({
+        ...current,
+        screen: "capture",
+        reviewReady: false,
+        showRetry: false,
+        draftNotice: "This video could not be prepared. Your other choices are still here. Record or upload again.",
+      }));
+      return;
+    }
+    if (String(body.phase ?? "") === "ready") {
+      const nextCues = Array.isArray(body.cues) ? (body.cues as Cue[]) : [];
+      setCues(nextCues);
+      setRevision(Number(body.captionRevision ?? 0));
+      const playback = await fetch(`/api/county-stories/media/${saved.mediaId}`);
+      const playbackBody = await readJson(playback);
+      setView((current) => ({
+        ...current,
+        reviewReady: true,
+        videoUrl: typeof playbackBody.url === "string" ? playbackBody.url : current.videoUrl,
+        cueTexts: nextCues.length ? nextCues.map((cue) => cue.text) : current.cueTexts,
+      }));
+    }
+  }, [ownerId, status]);
+
+  const onConfirmDiscard = useCallback(async () => {
+    if (!ownerId) return;
+    const draft = readCountyStoryDraft(ownerId);
+    setView((current) => ({ ...current, busy: true, error: null }));
+    let publishedLeftAlone = false;
+    if (draft?.mediaId) {
+      let response: Response;
+      try {
+        response = await fetch(`/api/county-stories/media/${draft.mediaId}`, { method: "DELETE" });
+      } catch {
+        setView((current) => ({
+          ...current,
+          busy: false,
+          error: "The draft could not be discarded. Nothing else was changed.",
+        }));
+        return;
+      }
+      if (response.status === 409) {
+        publishedLeftAlone = true;
+      } else if (!response.ok && response.status !== 404) {
+        setView((current) => ({
+          ...current,
+          busy: false,
+          error: "The draft could not be discarded. Nothing else was changed.",
+        }));
+        return;
+      }
+    }
+    clearCountyStoryDraft(ownerId);
+    setMediaId(null);
+    setCues([]);
+    setView((current) => ({
+      ...current,
+      screen: status?.suspended ? "suspended" : "owned",
+      mode: status?.slot ? "replace" : "create",
+      hasSlot: !!status?.slot,
+      countyFips: status?.slot?.countyFips ?? null,
+      countyName: status?.slot ? countyStoryCountyName(status.slot.countyFips) : null,
+      storyType: status?.slot?.storyType ?? null,
+      propertyChoice: null,
+      selectedListingId: null,
+      currentListingLabel: status?.slot?.listingLabel ?? null,
+      cueTexts: [],
+      accessBasis: null,
+      accessDescription: "",
+      rulesChecked: false,
+      videoUrl: null,
+      reviewReady: false,
+      resumeOffer: null,
+      resumeLead: null,
+      discardConfirm: false,
+      draftNotice: publishedLeftAlone ? "Your published Story was not changed." : null,
+      busy: false,
+      error: null,
+    }));
+  }, [ownerId, status]);
+
   const denied = !status && view.screen === "loading" && !view.error && !view.showRetry;
   const visible = useMemo(() => status || view.error || view.showRetry, [status, view.error, view.showRetry]);
   if (denied || !visible) return null;
@@ -823,12 +1005,24 @@ export function CountyStoryComposer() {
           }));
         },
         onCounty: (fips) => {
-          setView((current) => ({
-            ...current,
-            countyFips: fips,
-            countyName: countyStoryCountyName(fips),
-            error: null,
-          }));
+          setView((current) => {
+            const countyChanged = Boolean(current.countyFips && current.countyFips !== fips);
+            const hadProperty = Boolean(
+              current.selectedListingId || (current.propertyChoice && current.propertyChoice !== "none"),
+            );
+            return {
+              ...current,
+              countyFips: fips,
+              countyName: countyStoryCountyName(fips),
+              selectedListingId: countyChanged && hadProperty ? null : current.selectedListingId,
+              propertyChoice: countyChanged && hadProperty ? "none" : current.propertyChoice,
+              draftNotice:
+                countyChanged && hadProperty
+                  ? "That property is for the previous County. Choose a property again for this County."
+                  : null,
+              error: null,
+            };
+          });
           void refreshCapacity(fips);
         },
         onType: (type) => setView((current) => ({ ...current, storyType: type, error: null })),
@@ -855,8 +1049,74 @@ export function CountyStoryComposer() {
         onBack: () => {
           const previous = previousComposerStep(view.mode, view.screen);
           if (!previous) return;
-          setView((current) => ({ ...current, screen: previous, error: null, showRetry: false }));
+          if (previous === "owned") {
+            const saved = ownerId ? readCountyStoryDraft(ownerId) : null;
+            const resume = draftResume({
+              draft: saved,
+              suspended: status?.suspended === true,
+              hasSlot: !!status?.slot,
+              slotId: status?.slot?.id ?? null,
+              replacementAvailable: status ? showReplaceStory(status) : false,
+            });
+            setView((current) => ({
+              ...current,
+              screen: "owned",
+              rulesChecked: false,
+              resumeOffer: resume.kind === "continue" ? "continue" : resume.kind === "blocked" ? "blocked" : null,
+              resumeLead: resume.kind === "none" ? null : resume.lead,
+              discardConfirm: false,
+              error: null,
+              showRetry: false,
+            }));
+            return;
+          }
+          setView((current) => ({
+            ...current,
+            screen: previous,
+            rulesChecked: false,
+            error: null,
+            showRetry: false,
+          }));
         },
+        onSaveExit: () => {
+          if (!ownerId) return;
+          const draft = viewToCountyStoryDraft({
+            mode: view.mode,
+            slotId: view.mode === "replace" ? (status?.slot?.id ?? null) : null,
+            screen: view.screen,
+            countyFips: view.countyFips,
+            storyType: view.storyType,
+            propertyChoice: view.propertyChoice,
+            selectedListingId: view.selectedListingId,
+            mediaId,
+            cueTexts: view.cueTexts,
+            accessBasis: view.accessBasis,
+            accessDescription: view.accessDescription,
+          });
+          writeCountyStoryDraft(ownerId, draft);
+          const saved = readCountyStoryDraft(ownerId);
+          const resume = draftResume({
+            draft: saved,
+            suspended: false,
+            hasSlot: !!status?.slot,
+            slotId: status?.slot?.id ?? null,
+            replacementAvailable: status ? showReplaceStory(status) : view.mode === "replace",
+          });
+          setView((current) => ({
+            ...current,
+            screen: "owned",
+            rulesChecked: false,
+            resumeOffer: resume.kind === "continue" ? "continue" : resume.kind === "blocked" ? "blocked" : null,
+            resumeLead: resume.kind === "none" ? "You have an unfinished Story." : resume.lead,
+            discardConfirm: false,
+            error: null,
+            busy: false,
+          }));
+        },
+        onResume: () => void onResume(),
+        onAskDiscard: () => setView((current) => ({ ...current, discardConfirm: true, error: null })),
+        onCancelDiscard: () => setView((current) => ({ ...current, discardConfirm: false })),
+        onConfirmDiscard: () => void onConfirmDiscard(),
         onShowPauseReasons: () => setView((current) => ({ ...current, showingPauseReasons: true, error: null })),
         onClosePauseReasons: () => setView((current) => ({ ...current, showingPauseReasons: false, error: null })),
         onRetry: () => {

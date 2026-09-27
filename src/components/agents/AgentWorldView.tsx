@@ -210,7 +210,7 @@ export function AgentWorldView({ agent, listings }: AgentWorldViewProps) {
           />
         ) : null}
 
-        {isOwn ? <CountyStoryComposer /> : null}
+        {isOwn ? <CountyStoryComposer ownerId={agent.id} /> : null}
 
         {agent.bio ? (
           <p
