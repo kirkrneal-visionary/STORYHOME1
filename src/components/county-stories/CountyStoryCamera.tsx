@@ -514,6 +514,19 @@ export function CountyStoryCamera({
     }
   }, [clearTimer]);
 
+  useEffect(() => {
+    const stopHiddenClip = () => {
+      if (document.visibilityState === "hidden") finishRecording();
+    };
+    const stopOnPageHide = () => finishRecording();
+    document.addEventListener("visibilitychange", stopHiddenClip);
+    window.addEventListener("pagehide", stopOnPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", stopHiddenClip);
+      window.removeEventListener("pagehide", stopOnPageHide);
+    };
+  }, [finishRecording]);
+
   const startRecording = useCallback(() => {
     const stream = streamRef.current;
     if (!stream || typeof MediaRecorder === "undefined") {
