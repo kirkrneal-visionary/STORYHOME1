@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CountyStoryCamera } from "@/components/county-stories/CountyStoryCamera";
+import { CountyStoryCamera, type CountyStoryCapturedClip } from "@/components/county-stories/CountyStoryCamera";
+import { uploadCountyStorySegments } from "@/lib/county-stories/upload-segments";
+import { clearLocalSegments, releaseLocalSegmentsWhenAccepted } from "@/lib/county-stories/local-segments";
+import type { CountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
 import { CountyStoryPanel, type CountyStoryPanelView } from "@/components/county-stories/CountyStoryPanel";
 import {
   countyStoryCapacityCopy,
@@ -74,6 +77,9 @@ const emptyView = (screen: CountyStoryComposerStep): CountyStoryPanelView => ({
   recordClock: null,
   showRetry: false,
   reviewReady: false,
+  background: "blur",
+  uploadPercent: null,
+  captionsReady: false,
   countyMarks: {},
   showingPauseReasons: false,
   removed: false,
@@ -148,6 +154,8 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
   const [now, setNow] = useState(() => new Date());
   const [cameraOpen, setCameraOpen] = useState(false);
   const cameraHandoffRef = useRef(false);
+  const backgroundRef = useRef<CountyStoryBackgroundMode>("blur");
+  const mediaIdRef = useRef<string | null>(null);
   const mode: CountyStoryComposerMode = view.mode;
 
   const dropCameraHandoff = useCallback(() => {
@@ -435,6 +443,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
     }
     await fetch(`/api/county-stories/media/${stageBody.id}/validate`, { method: "POST" });
     setMediaId(stageBody.id);
+    mediaIdRef.current = stageBody.id;
     setView((current) => ({
       ...current,
       busy: false,
@@ -455,6 +464,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       if (stopped || !response.ok) return;
       const phase = String(body.phase ?? "preparing");
       const nextCues = Array.isArray(body.cues) ? (body.cues as Cue[]) : [];
+      const playbackReady = body.playbackReady === true;
       if (phase === "failed") {
         if (cameraHandoffRef.current) {
           cameraHandoffRef.current = false;
@@ -469,24 +479,28 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         }));
         return;
       }
-      if (phase === "ready") {
+      if (phase === "ready" || playbackReady) {
         setCues(nextCues);
         setRevision(Number(body.captionRevision ?? 0));
         const playback = await fetch(`/api/county-stories/media/${mediaId}`);
         const playbackBody = await readJson(playback);
         const handoff = cameraHandoffRef.current;
-        if (handoff) {
+        if (handoff && (phase === "ready" || playbackReady)) {
           cameraHandoffRef.current = false;
           setCameraOpen(false);
+        }
+        if (body.providerAccepted === true && ownerId) {
+          void releaseLocalSegmentsWhenAccepted(ownerId, true);
         }
         setView((current) => ({
           ...current,
           processingNote: null,
-          reviewReady: true,
+          reviewReady: playbackReady || phase === "ready",
+          captionsReady: nextCues.length > 0,
           showRetry: false,
-          screen: handoff ? "review" : current.screen,
+          screen: handoff || current.screen === "processing" ? "review" : current.screen,
           videoUrl: typeof playbackBody.url === "string" ? playbackBody.url : current.videoUrl,
-          cueTexts: nextCues.map((cue) => cue.text),
+          cueTexts: nextCues.length ? nextCues.map((cue) => cue.text) : current.cueTexts,
         }));
         return;
       }
@@ -505,22 +519,22 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
     };
   }, [mediaId, view.screen]);
 
-  const publish = useCallback(async () => {
+  const publish = useCallback(async (): Promise<boolean> => {
     if (!view.rulesChecked) {
       setView((current) => ({ ...current, error: countyStoryComposerMessage("RULES_REQUIRED") }));
-      return;
+      return false;
     }
-    if (!mediaId || !view.storyType || !view.countyFips || !status) return;
+    if (!mediaId || !view.storyType || !view.countyFips || !status) return false;
     if (view.mode === "create") {
       const listing = createListingId(view.propertyChoice ?? "none", view.selectedListingId);
       if (!listing.ok) {
         setView((current) => ({ ...current, error: listing.message }));
-        return;
+        return false;
       }
       const copy = await refreshCapacity(view.countyFips);
       if (copy.full) {
         setView((current) => ({ ...current, error: countyStoryComposerMessage("COUNTY_FULL") }));
-        return;
+        return false;
       }
       const scope = publishAttemptKey({
         mode: "create",
@@ -554,11 +568,14 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
           busy: false,
           error: "We did not get a confirmation. You can try again.",
         }));
-        return;
+        return false;
       }
       const body = await readJson(response);
       if (body.ok === true && body.code === "PUBLISHED") {
-        if (ownerId) clearCountyStoryDraft(ownerId);
+        if (ownerId) {
+          clearCountyStoryDraft(ownerId);
+          void clearLocalSegments(ownerId);
+        }
         setView((current) => ({
           ...current,
           busy: false,
@@ -567,27 +584,27 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
           hasSlot: true,
           countyName: countyStoryCountyName(String(body.county_fips ?? current.countyFips)),
           slotNumber: Number(body.slot_number ?? current.slotNumber),
-          error: null,
-        }));
-        return;
-      }
-      const code = String(body.code ?? "");
-      if (code === "ALREADY_POSTED" || code === "POSTING_SUSPENDED") {
-        await loadStatus();
-      }
-      setView((current) => ({
-        ...current,
-        busy: false,
-        error: countyStoryComposerMessage(code, typeof body.eligible_at === "string" ? body.eligible_at : null),
+        error: null,
       }));
-      return;
+      return true;
     }
+    const code = String(body.code ?? "");
+    if (code === "ALREADY_POSTED" || code === "POSTING_SUSPENDED") {
+      await loadStatus();
+    }
+    setView((current) => ({
+      ...current,
+      busy: false,
+      error: countyStoryComposerMessage(code, typeof body.eligible_at === "string" ? body.eligible_at : null),
+    }));
+    return false;
+  }
 
-    const command = replaceListingCommand(view.propertyChoice ?? "keep", view.selectedListingId);
-    if (!command.ok || !status.slot) {
-      setView((current) => ({ ...current, error: command.ok ? "Replace Story is not available." : command.message }));
-      return;
-    }
+  const command = replaceListingCommand(view.propertyChoice ?? "keep", view.selectedListingId);
+  if (!command.ok || !status.slot) {
+    setView((current) => ({ ...current, error: command.ok ? "Replace Story is not available." : command.message }));
+    return false;
+  }
     const scope = publishAttemptKey({
       mode: "replace",
       storyDay: status.storyDay,
@@ -621,37 +638,41 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         busy: false,
         error: "We did not get a confirmation. You can try again.",
       }));
-      return;
+      return false;
     }
     const body = await readJson(response);
     if (body.ok === true && body.code === "REPLACED") {
-      if (ownerId) clearCountyStoryDraft(ownerId);
+      if (ownerId) {
+        clearCountyStoryDraft(ownerId);
+        void clearLocalSegments(ownerId);
+      }
       setView((current) => ({
         ...current,
         busy: false,
         screen: "success",
         mode: "replace",
         hasSlot: true,
-        replacementAvailable: false,
-        countyName: countyStoryCountyName(String(body.county_fips ?? current.countyFips)),
-        slotNumber: Number(body.slot_number ?? current.slotNumber),
-        error: null,
-      }));
-      return;
-    }
-    const code = String(body.code ?? "");
-    if (code === "REPLACEMENT_ALREADY_USED" || code === "POSTING_SUSPENDED") await loadStatus();
-    setView((current) => ({
-      ...current,
-      busy: false,
-      error: countyStoryComposerMessage(code, typeof body.eligible_at === "string" ? body.eligible_at : null),
+      replacementAvailable: false,
+      countyName: countyStoryCountyName(String(body.county_fips ?? current.countyFips)),
+      slotNumber: Number(body.slot_number ?? current.slotNumber),
+      error: null,
     }));
-  }, [loadStatus, mediaId, ownerId, refreshCapacity, status, view.countyFips, view.mode, view.propertyChoice, view.rulesChecked, view.selectedListingId, view.storyType]);
+    return true;
+  }
+  const code = String(body.code ?? "");
+  if (code === "REPLACEMENT_ALREADY_USED" || code === "POSTING_SUSPENDED") await loadStatus();
+  setView((current) => ({
+    ...current,
+    busy: false,
+    error: countyStoryComposerMessage(code, typeof body.eligible_at === "string" ? body.eligible_at : null),
+  }));
+  return false;
+}, [loadStatus, mediaId, ownerId, refreshCapacity, status, view.countyFips, view.mode, view.propertyChoice, view.rulesChecked, view.selectedListingId, view.storyType]);
 
-  const confirmCaptions = useCallback(async () => {
+  const confirmCaptions = useCallback(async (advance = true): Promise<boolean> => {
     if (!mediaId || cues.length === 0) {
       setView((current) => ({ ...current, error: countyStoryComposerMessage("CAPTIONS_REQUIRED") }));
-      return;
+      return false;
     }
     const edited = cues.map((cue, index) => ({ ...cue, text: view.cueTexts[index] ?? cue.text, index }));
     setView((current) => ({ ...current, busy: true, error: null }));
@@ -685,7 +706,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
           cueTexts: freshCues.map((cue) => cue.text),
           error: countyStoryComposerMessage("CAPTION_REVISION_CONFLICT"),
         }));
-        return;
+        return false;
       }
       if (!saved.ok) {
         setView((current) => ({
@@ -693,7 +714,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
           busy: false,
           error: countyStoryComposerMessage(String(savedBody.code ?? "")),
         }));
-        return;
+        return false;
       }
       nextRevision = Number(savedBody.revision ?? revision + 1);
       setRevision(nextRevision);
@@ -717,7 +738,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         cueTexts: freshCues.map((cue) => cue.text),
         error: countyStoryComposerMessage("CAPTION_REVISION_CONFLICT"),
       }));
-      return;
+      return false;
     }
     if (!confirmed.ok) {
       setView((current) => ({
@@ -725,19 +746,25 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         busy: false,
         error: countyStoryComposerMessage(String(confirmedBody.code ?? "CAPTIONS_REQUIRED")),
       }));
-      return;
+      return false;
     }
-    setView((current) => ({ ...current, busy: false, screen: "access", error: null }));
+    setView((current) => ({
+      ...current,
+      busy: false,
+      screen: advance ? "access" : current.screen,
+      error: null,
+    }));
+    return true;
   }, [cues, mediaId, revision, view.cueTexts]);
 
-  const saveAccess = useCallback(async () => {
+  const saveAccess = useCallback(async (advance = true): Promise<boolean> => {
     if (!mediaId || !view.accessBasis) {
       setView((current) => ({ ...current, error: "Choose how visual information is covered." }));
-      return;
+      return false;
     }
     if (view.accessBasis === "supplied_description" && !view.accessDescription.trim()) {
       setView((current) => ({ ...current, error: "Add a short description, or choose the spoken option." }));
-      return;
+      return false;
     }
     setView((current) => ({ ...current, busy: true, error: null }));
     const response = await fetch(`/api/county-stories/media/${mediaId}/accessibility`, {
@@ -758,29 +785,36 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         busy: false,
         error: countyStoryComposerMessage(String(body.code ?? "")),
       }));
-      return;
+      return false;
     }
-    setView((current) => ({ ...current, busy: false, screen: "rules", rulesChecked: false, error: null }));
+    setView((current) => ({
+      ...current,
+      busy: false,
+      screen: advance ? "rules" : current.screen,
+      rulesChecked: advance ? false : current.rulesChecked,
+      error: null,
+    }));
+    return true;
   }, [mediaId, view.accessBasis, view.accessDescription, view.countyFips, view.selectedListingId, view.storyType]);
 
   const onContinue = useCallback(async () => {
-    if (view.screen === "processing") {
-      if (!view.reviewReady) {
-        setView((current) => ({ ...current, error: countyStoryComposerMessage("PLAYBACK_NOT_READY") }));
+    const workspace =
+      view.screen === "processing" ||
+      view.screen === "review" ||
+      view.screen === "captions" ||
+      view.screen === "access" ||
+      view.screen === "rules";
+    if (workspace) {
+      if (!view.rulesChecked) {
+        setView((current) => ({ ...current, error: countyStoryComposerMessage("RULES_REQUIRED") }));
         return;
       }
-      setView((current) => ({ ...current, screen: "review", error: null }));
-      return;
-    }
-    if (view.screen === "captions") {
-      await confirmCaptions();
-      return;
-    }
-    if (view.screen === "access") {
-      await saveAccess();
-      return;
-    }
-    if (view.screen === "rules") {
+      if (!view.accessBasis) {
+        setView((current) => ({ ...current, error: "Choose how visual information is covered." }));
+        return;
+      }
+      if (!(await confirmCaptions(false))) return;
+      if (!(await saveAccess(false))) return;
       await publish();
       return;
     }
@@ -920,6 +954,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
       }
     }
     clearCountyStoryDraft(ownerId);
+    void clearLocalSegments(ownerId);
     setMediaId(null);
     setCues([]);
     setView((current) => ({
@@ -958,6 +993,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
     {cameraOpen ? (
       <CountyStoryCamera
         replacement={view.mode === "replace"}
+        ownerId={ownerId}
         onClose={() => {
           cameraHandoffRef.current = false;
           setCameraOpen(false);
@@ -965,6 +1001,51 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         onUse={(file) => {
           cameraHandoffRef.current = true;
           void beginUpload(file);
+        }}
+        onUseStory={(clips: CountyStoryCapturedClip[]) => {
+          cameraHandoffRef.current = true;
+          const preview = clips[0] ? URL.createObjectURL(clips[0].file) : null;
+          setCameraOpen(false);
+          setView((current) => ({
+            ...current,
+            screen: "review",
+            videoUrl: preview,
+            reviewReady: false,
+            captionsReady: false,
+            uploadPercent: 0,
+            busy: true,
+            error: null,
+            showRetry: false,
+          }));
+          void (async () => {
+            const uploaded = await uploadCountyStorySegments({
+              purpose: view.mode === "replace" ? "replacement" : "original",
+              segments: clips.map((clip) => ({
+                file: clip.file,
+                durationMs: clip.durationMs,
+                facing: clip.facing,
+              })),
+              onProgress: (percent) => setView((current) => ({ ...current, uploadPercent: percent })),
+            });
+            if (!uploaded.ok) {
+              setView((current) => ({ ...current, busy: false, error: uploaded.error }));
+              return;
+            }
+            mediaIdRef.current = uploaded.mediaId;
+            setMediaId(uploaded.mediaId);
+            const started = await fetch(`/api/county-stories/media/${uploaded.mediaId}/composition`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ background: backgroundRef.current }),
+            });
+            const startedBody = await readJson(started);
+            setView((current) => ({
+              ...current,
+              busy: false,
+              screen: "review",
+              error: started.ok ? null : String(startedBody.error ?? "Story preparation is not available yet."),
+            }));
+          })();
         }}
         onUpload={(file) => {
           cameraHandoffRef.current = true;
@@ -1029,10 +1110,31 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         onAccessBasis: (basis) => setView((current) => ({ ...current, accessBasis: basis, error: null })),
         onAccessDescription: (value) => setView((current) => ({ ...current, accessDescription: value })),
         onRules: (checked) => setView((current) => ({ ...current, rulesChecked: checked, error: null })),
+        onBackground: (mode) => {
+          backgroundRef.current = mode;
+          setView((current) => ({ ...current, background: mode }));
+          const id = mediaIdRef.current;
+          if (!id) return;
+          void fetch(`/api/county-stories/media/${id}/composition`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ background: mode }),
+          });
+        },
         onRecord: () => setCameraOpen(true),
         onUpload: (file) => void beginUpload(file),
         onContinue: () => void onContinue(),
         onBack: () => {
+          if (
+            view.screen === "processing" ||
+            view.screen === "review" ||
+            view.screen === "captions" ||
+            view.screen === "access" ||
+            view.screen === "rules"
+          ) {
+            setView((current) => ({ ...current, screen: "capture", rulesChecked: false, error: null }));
+            return;
+          }
           const previous = previousComposerStep(view.mode, view.screen);
           if (!previous) return;
           if (previous === "owned") {

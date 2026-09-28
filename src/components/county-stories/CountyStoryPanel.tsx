@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { CountyStoryBackgroundComparison } from "@/components/county-stories/CountyStoryBackground";
+import type { CountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
 import { SERVICE_COUNTIES } from "@/lib/markets";
 import {
   COUNTY_STORY_RULES_CONFIRM,
@@ -48,6 +50,9 @@ export type CountyStoryPanelView = {
   recordClock: string | null;
   showRetry: boolean;
   reviewReady: boolean;
+  background?: CountyStoryBackgroundMode;
+  uploadPercent?: number | null;
+  captionsReady?: boolean;
   countyMarks: Record<string, string>;
   showingPauseReasons: boolean;
   removed: boolean;
@@ -72,6 +77,7 @@ type Actions = {
   onRules: (checked: boolean) => void;
   onRecord: () => void;
   onUpload: (file: File) => void;
+  onBackground?: (mode: CountyStoryBackgroundMode) => void;
   onContinue: () => void;
   onBack: () => void;
   onSaveExit: () => void;
@@ -214,7 +220,13 @@ function Choice({
 
 export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView; actions: Actions }) {
   const [propertyQuery, setPropertyQuery] = useState("");
-  const wide = view.screen === "review" || view.screen === "captions";
+  const workspace =
+    view.screen === "processing" ||
+    view.screen === "review" ||
+    view.screen === "captions" ||
+    view.screen === "access" ||
+    view.screen === "rules";
+  const wide = workspace || view.screen === "review" || view.screen === "captions";
   const listings = view.listings.filter((listing) =>
     listing.label.toLowerCase().includes(propertyQuery.trim().toLowerCase()),
   );
@@ -546,7 +558,9 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
             </div>
           ) : null}
 
-          {view.screen === "processing" ? (
+          {workspace ? (
+            <div data-county-story-workspace>
+          {view.screen === "processing" || workspace ? (
             <div data-county-story-processing>
               <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 {view.showRetry ? "Try again" : view.reviewReady ? "Your Story is ready" : "Preparing your Story"}
@@ -554,32 +568,34 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
               <p className="mt-2 text-base text-[var(--muted)]" role="status">
                 {view.showRetry
                   ? "We could not prepare this Story. You can try again."
-                  : view.reviewReady
-                    ? "Watch it before you publish."
-                    : "This usually takes a moment."}
+                  : view.uploadPercent != null && !view.reviewReady
+                    ? `Uploading ${view.uploadPercent}%`
+                    : view.reviewReady
+                      ? "Watch it before you publish."
+                      : "This usually takes a moment."}
               </p>
+              {view.captionsReady === false ? (
+                <p className="mt-2 text-sm text-[var(--muted)]" role="status">Preparing captions</p>
+              ) : null}
             </div>
           ) : null}
 
-          {view.screen === "review" ? (
+          {workspace ? (
             <div data-county-story-review>
-              <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
+              <h2 className="mt-6 text-xl font-semibold tracking-[-0.02em] text-ink">
                 This is what people will see.
               </h2>
-              {view.videoUrl ? (
-                <video
-                  className="mt-4 aspect-[9/16] w-full rounded-md bg-black object-contain"
-                  controls
-                  playsInline
-                  src={view.videoUrl}
+              <div className="mt-4">
+                <CountyStoryBackgroundComparison
+                  url={view.videoUrl}
+                  value={view.background ?? "blur"}
+                  onChange={(mode) => actions.onBackground?.(mode)}
                 />
-              ) : (
-                <p className="mt-4 text-sm text-[var(--muted)]">Your video will appear here when it is ready.</p>
-              )}
+              </div>
             </div>
           ) : null}
 
-          {view.screen === "captions" ? (
+          {workspace ? (
             <div data-county-story-captions>
               <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 Correct the words
@@ -605,7 +621,7 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
             </div>
           ) : null}
 
-          {view.screen === "access" ? (
+          {workspace ? (
             <fieldset data-county-story-access>
               <legend id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 Can someone follow this without the picture?
@@ -637,7 +653,7 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
             </fieldset>
           ) : null}
 
-          {view.screen === "rules" ? (
+          {workspace ? (
             <div data-county-story-rules>
               <h2 id="county-story-heading" className="text-xl font-semibold tracking-[-0.02em] text-ink">
                 Before you publish
@@ -652,6 +668,8 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                 />
                 {COUNTY_STORY_RULES_CONFIRM}
               </label>
+            </div>
+          ) : null}
             </div>
           ) : null}
 
@@ -676,17 +694,21 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                 <button type="button" className="story-press story-cta-primary w-full" onClick={actions.onRetry}>
                   Try again
                 </button>
-              ) : view.screen === "processing" && !view.reviewReady ? null : (
+              ) : view.screen === "processing" && !view.reviewReady && !workspace ? null : (
                 <button
                   type="button"
                   className="story-press story-cta-primary w-full"
                   onClick={actions.onContinue}
-                  disabled={view.busy}
+                  disabled={view.busy || (workspace && (!view.reviewReady || !view.rulesChecked))}
                   data-county-story-continue
                 >
                   {view.busy
                     ? "Working…"
-                    : view.screen === "rules"
+                    : workspace
+                      ? view.mode === "replace"
+                        ? "Publish Replacement"
+                        : "Publish Story"
+                      : view.screen === "rules"
                       ? view.mode === "replace"
                         ? "Publish Replacement"
                         : "Publish Story"

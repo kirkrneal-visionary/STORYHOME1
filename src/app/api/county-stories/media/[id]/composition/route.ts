@@ -1,0 +1,37 @@
+import { NextResponse } from "next/server";
+import { countyStoryAdminClient } from "@/lib/county-stories/admin";
+import { beginCountyStoryComposition } from "@/lib/county-stories/composition-service";
+import { isCountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
+import { supabaseCountyStoryStorage } from "@/lib/county-stories/media-service";
+import { requireCountyStoryPublisher } from "@/lib/county-stories/require-publisher";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type Ctx = { params: Promise<{ id: string }> };
+
+export async function POST(request: Request, ctx: Ctx) {
+  const auth = await requireCountyStoryPublisher();
+  if (!auth.ok) return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
+  const admin = countyStoryAdminClient();
+  if (!admin) return NextResponse.json({ ok: false, error: "Story preparation is not available yet." }, { status: 503 });
+  const { id } = await ctx.params;
+  let body: { background?: string } = {};
+  try {
+    body = (await request.json()) as { background?: string };
+  } catch {
+    body = {};
+  }
+  const background = isCountyStoryBackgroundMode(body.background) ? body.background : "blur";
+  const result = await beginCountyStoryComposition({
+    admin,
+    storage: supabaseCountyStoryStorage(admin),
+    ownerId: auth.user.id,
+    mediaId: id,
+    background,
+  });
+  if (!result.ok) {
+    return NextResponse.json({ ok: false, error: result.error, code: result.code }, { status: result.status });
+  }
+  return NextResponse.json({ ok: true, state: result.state, queued: result.queued });
+}

@@ -22,6 +22,17 @@ import {
   type CountyStoryCameraFacing,
   type CountyStoryZoomRange,
 } from "@/lib/county-stories/camera-capture";
+import { CountyStoryBackgroundComparison } from "@/components/county-stories/CountyStoryBackground";
+import { deleteLocalSegment, putLocalSegment } from "@/lib/county-stories/local-segments";
+import { activeClipStopMs, remainingSegmentMs, usedSegmentMs } from "@/lib/county-stories/segment-timeline";
+
+export type CountyStoryCapturedClip = {
+  id: string;
+  file: File;
+  url: string;
+  durationMs: number;
+  facing: CountyStoryCameraFacing;
+};
 
 type Phase = "live" | "recording" | "review" | "preparing" | "denied" | "unsupported" | "leave";
 
@@ -218,17 +229,104 @@ function CountyStoryTakeReview({
   );
 }
 
+function CountyStoryPlaylist({
+  clips,
+  onRetake,
+  onUse,
+}: {
+  clips: CountyStoryCapturedClip[];
+  onRetake: () => void;
+  onUse: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [index, setIndex] = useState(0);
+  const [current, setCurrent] = useState(0);
+  const clip = clips[index] ?? clips[0];
+  const totalSec = clips.reduce((sum, item) => sum + item.durationMs, 0) / 1000;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    void video.play().catch(() => undefined);
+  }, [index, clip?.url]);
+
+  if (!clip) return null;
+  return (
+    <div className="absolute inset-0 z-[1] flex flex-col bg-black" data-county-story-camera-story>
+      <video
+        ref={videoRef}
+        key={clip.id}
+        className="min-h-0 w-full flex-1 bg-black object-contain"
+        playsInline
+        src={clip.url}
+        onTimeUpdate={(event) => setCurrent(event.currentTarget.currentTime)}
+        onEnded={() => {
+          if (index < clips.length - 1) setIndex(index + 1);
+        }}
+      />
+      <div className="flex flex-col gap-3 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
+        <p className="text-center text-sm tabular-nums">{countyStoryCameraReviewLabel(Math.min(totalSec, current))}</p>
+        <div className="flex items-center justify-center gap-3">
+          <button type="button" className={iconButtonClass} data-county-story-camera-play aria-label="Play Story" onClick={() => void videoRef.current?.play()}>
+            <PlayIcon />
+          </button>
+          <button
+            type="button"
+            className={iconButtonClass}
+            data-county-story-camera-replay
+            aria-label="Replay"
+            onClick={() => {
+              setIndex(0);
+              const video = videoRef.current;
+              if (!video) return;
+              video.currentTime = 0;
+              void video.play();
+            }}
+          >
+            <ReplayIcon />
+          </button>
+        </div>
+        <input
+          className="w-full accent-[var(--gold)]"
+          type="range"
+          min={0}
+          max={Math.max(totalSec, 0.1)}
+          step={0.1}
+          value={Math.min(current, totalSec)}
+          data-county-story-camera-scrub
+          aria-label="Story position"
+          onChange={(event) => {
+            const video = videoRef.current;
+            if (!video) return;
+            video.currentTime = Number(event.target.value);
+          }}
+        />
+        <button type="button" className="story-press min-h-11 text-base font-semibold text-white underline" onClick={onRetake}>
+          Retake
+        </button>
+        <button type="button" className="story-press story-cta-primary w-full" onClick={onUse}>
+          Use Story
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function CountyStoryCamera({
   replacement = false,
   forceDenied = false,
+  ownerId = null,
   onClose,
   onUse,
+  onUseStory,
   onUpload,
 }: {
   replacement?: boolean;
   forceDenied?: boolean;
+  ownerId?: string | null;
   onClose: () => void;
   onUse: (file: File) => void;
+  onUseStory?: (clips: CountyStoryCapturedClip[]) => void;
   onUpload: (file: File) => void;
 }) {
   const previewRef = useRef<HTMLVideoElement | null>(null);
@@ -238,6 +336,8 @@ export function CountyStoryCamera({
   const timerRef = useRef<number | null>(null);
   const stoppingRef = useRef(false);
   const takeUrlRef = useRef<string | null>(null);
+  const clipsRef = useRef<CountyStoryCapturedClip[]>([]);
+  const flipAfterStopRef = useRef(false);
   const zoomRef = useRef<number | null>(null);
   const applyZoomRef = useRef<(value: number) => Promise<void>>(async () => undefined);
   const [facing, setFacing] = useState<CountyStoryCameraFacing>("environment");
@@ -246,6 +346,7 @@ export function CountyStoryCamera({
   const [notice, setNotice] = useState<string | null>(null);
   const [takeUrl, setTakeUrl] = useState<string | null>(null);
   const [takeFile, setTakeFile] = useState<File | null>(null);
+  const [clips, setClips] = useState<CountyStoryCapturedClip[]>([]);
   const [opening, setOpening] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [zoomRange, setZoomRange] = useState<CountyStoryZoomRange | null>(null);
@@ -419,37 +520,70 @@ export function CountyStoryCamera({
       setPhase("unsupported");
       return;
     }
-    forgetTake();
+    if (remainingSegmentMs(clipsRef.current) <= 0) return;
     chunksRef.current = [];
     const mime = preferredMime();
     const recorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
     stoppingRef.current = false;
     recorderRef.current = recorder;
+    const budgetMs = activeClipStopMs(clipsRef.current);
+    const startedFacing = facing;
+    const started = Date.now();
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunksRef.current.push(event.data);
     };
     recorder.onstop = () => {
       const type = recorder.mimeType || mime || "video/webm";
+      const durationMs = Math.min(budgetMs, Math.max(1, Math.round((Date.now() - started) )));
       const blob = new Blob(chunksRef.current, { type });
-      const file = new File([blob], `county-story.${fileExtension(type)}`, { type });
+      const file = new File([blob], `county-story-${clipsRef.current.length + 1}.${fileExtension(type)}`, { type });
       const url = URL.createObjectURL(blob);
-      if (takeUrlRef.current) URL.revokeObjectURL(takeUrlRef.current);
-      takeUrlRef.current = url;
+      const clip: CountyStoryCapturedClip = {
+        id: crypto.randomUUID(),
+        file,
+        url,
+        durationMs,
+        facing: startedFacing,
+      };
+      const next = [...clipsRef.current, clip];
+      clipsRef.current = next;
+      setClips(next);
       setTakeFile(file);
       setTakeUrl(url);
-      setPhase("review");
+      if (ownerId) {
+        void putLocalSegment({
+          ownerId,
+          segmentId: clip.id,
+          position: next.length - 1,
+          durationMs,
+          facing: startedFacing,
+          remoteStored: false,
+          muxAccepted: false,
+          blob,
+        }).then((saved) => {
+          if (saved === "quota") {
+            setNotice("This phone is low on space. Clips that are already uploaded can be removed from the phone. Unsaved clips may need to be recorded again.");
+          } else if (saved === "unavailable") {
+            setNotice("This browser cannot keep the clips after you leave this page.");
+          }
+        });
+      }
+      setPhase("live");
+      if (flipAfterStopRef.current) {
+        flipAfterStopRef.current = false;
+        void openCamera(countyStoryCameraOtherFacing(startedFacing));
+      }
     };
     recorder.start(250);
-    const started = Date.now();
     setElapsed(0);
     setPhase("recording");
     setNotice(null);
     timerRef.current = window.setInterval(() => {
       const elapsedMs = Date.now() - started;
       setElapsed(elapsedMs / 1000);
-      if (countyStoryCameraShouldStop(elapsedMs)) finishRecording();
+      if (elapsedMs >= budgetMs) finishRecording();
     }, 200);
-  }, [finishRecording, forgetTake]);
+  }, [facing, finishRecording, openCamera, ownerId]);
 
   const requestClose = () => {
     if (phase === "preparing") return;
@@ -465,23 +599,39 @@ export function CountyStoryCamera({
     onClose();
   };
 
-  const retake = () => {
-    forgetTake();
+  const releaseClip = (clip: CountyStoryCapturedClip) => {
+    URL.revokeObjectURL(clip.url);
+    void deleteLocalSegment(clip.id);
+  };
+
+  const dropLastClip = () => {
+    const next = clipsRef.current.slice(0, -1);
+    const removed = clipsRef.current[clipsRef.current.length - 1];
+    if (removed) releaseClip(removed);
+    clipsRef.current = next;
+    setClips(next);
     setElapsed(0);
     setPhase("live");
     if (streamRef.current) attachPreview(streamRef.current);
     else void openCamera(facing);
   };
 
-  const useTake = () => {
-    if (!takeFile) return;
-    const file = takeFile;
-    stopTracks();
-    setPhase("preparing");
-    onUse(file);
+  const retake = () => {
+    dropLastClip();
   };
 
-  const progress = Math.min(1, elapsed / COUNTY_STORY_CAMERA_MAX_SEC);
+  const useTake = () => {
+    const ready = clipsRef.current;
+    if (!ready.length) return;
+    stopTracks();
+    setPhase("preparing");
+    if (onUseStory) onUseStory(ready);
+    else onUse(ready[0].file);
+  };
+
+  const storyMs = usedSegmentMs(clips) + (phase === "recording" ? elapsed * 1000 : 0);
+  const progress = Math.min(1, storyMs / (COUNTY_STORY_CAMERA_MAX_SEC * 1000));
+  const timeLeft = remainingSegmentMs(phase === "recording" ? clips : clips);
   const zoomStops = zoomRange ? countyStoryZoomStops(zoomRange) : [];
   const showLive = phase === "live" || phase === "recording" || phase === "denied" || phase === "unsupported";
   if (!mounted) return null;
@@ -513,8 +663,11 @@ export function CountyStoryCamera({
         data-county-story-camera-fit={COUNTY_STORY_CAMERA_PREVIEW_FIT}
         aria-label={zoomRange ? "Camera preview. Pinch to zoom." : "Camera preview"}
       />
-      {takeUrl && (phase === "review" || phase === "leave") ? (
-        <CountyStoryTakeReview url={takeUrl} showActions={phase === "review"} onRetake={retake} onUse={useTake} />
+      {phase === "review" && clips.length > 0 ? (
+        <CountyStoryPlaylist clips={clips} onRetake={retake} onUse={useTake} />
+      ) : null}
+      {takeUrl && phase === "leave" ? (
+        <CountyStoryTakeReview url={takeUrl} showActions={false} onRetake={retake} onUse={useTake} />
       ) : null}
       {phase === "preparing" ? <CountyStoryPreparing /> : null}
 
@@ -525,7 +678,7 @@ export function CountyStoryCamera({
           </button>
           {phase === "live" || phase === "recording" ? (
             <p className="min-w-[7.5rem] rounded-full bg-black/50 px-3 py-1 text-center text-base font-medium tabular-nums" role="timer" data-county-story-camera-timer data-county-story-camera-limit>
-              {countyStoryCameraClock(elapsed)} / {countyStoryCameraClock(COUNTY_STORY_CAMERA_MAX_SEC)}
+              {countyStoryCameraClock(storyMs / 1000)} / {countyStoryCameraClock(COUNTY_STORY_CAMERA_MAX_SEC)}
             </p>
           ) : (
             <span />
@@ -533,8 +686,15 @@ export function CountyStoryCamera({
           <button
             type="button"
             className={`pointer-events-auto ${iconButtonClass}`}
-            onClick={() => void openCamera(countyStoryCameraOtherFacing(facing))}
-            disabled={opening || phase === "recording" || phase === "denied" || phase === "unsupported" || phase === "review" || phase === "leave"}
+            onClick={() => {
+              if (phase === "recording") {
+                flipAfterStopRef.current = true;
+                finishRecording();
+                return;
+              }
+              void openCamera(countyStoryCameraOtherFacing(facing));
+            }}
+            disabled={opening || phase === "denied" || phase === "unsupported" || phase === "review" || phase === "leave"}
             data-county-story-camera-flip
             aria-label="Switch camera"
           >
@@ -601,13 +761,29 @@ export function CountyStoryCamera({
               type="button"
               className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white bg-transparent"
               onClick={() => (phase === "recording" ? finishRecording() : startRecording())}
-              disabled={opening}
+              disabled={opening || (phase === "live" && remainingSegmentMs(clips) <= 0)}
               data-county-story-camera-record
-              aria-label={phase === "recording" ? "Stop recording" : "Start recording"}
+              aria-label={phase === "recording" ? "Stop recording" : clips.length ? "Continue recording" : "Start recording"}
               aria-pressed={phase === "recording"}
             >
               <span className={phase === "recording" ? "block h-7 w-7 rounded-sm bg-red-500" : "block h-14 w-14 rounded-full bg-red-500"} />
             </button>
+          ) : null}
+          {phase === "live" && clips.length > 0 ? (
+            <div className="flex w-full max-w-sm flex-col gap-2" data-county-story-segments>
+              <button type="button" className="story-press min-h-11 rounded-md border border-white/40 text-base font-semibold" onClick={() => setPhase("review")} data-county-story-play-story>
+                Play Story
+              </button>
+              <button type="button" className="story-press min-h-11 text-base font-semibold underline" onClick={dropLastClip} data-county-story-retake-last>
+                Retake Last Clip
+              </button>
+              <button type="button" className="story-press min-h-11 text-base font-semibold underline" onClick={dropLastClip} data-county-story-remove-last>
+                Remove Last Clip
+              </button>
+              <button type="button" className="story-press story-cta-primary w-full" onClick={useTake} data-county-story-use-story>
+                Use Story
+              </button>
+            </div>
           ) : null}
           {phase === "live" || phase === "denied" || phase === "unsupported" ? (
             <label className="story-press flex min-h-11 cursor-pointer items-center text-base font-semibold underline">
@@ -621,6 +797,9 @@ export function CountyStoryCamera({
                   const file = event.target.files?.[0];
                   event.target.value = "";
                   if (!file) return;
+                  for (const clip of clipsRef.current) releaseClip(clip);
+                  clipsRef.current = [];
+                  setClips([]);
                   stopTracks();
                   onUpload(file);
                 }}
@@ -637,6 +816,9 @@ export function CountyStoryCamera({
             type="button"
             className="story-press story-cta-primary w-full"
             onClick={() => {
+              for (const clip of clipsRef.current) releaseClip(clip);
+              clipsRef.current = [];
+              setClips([]);
               forgetTake();
               stopTracks();
               onClose();
@@ -663,15 +845,20 @@ export function CountyStoryCameraWalkthrough({
 }) {
   const [stage, setStage] = useState<"camera" | "preparing" | "review">("camera");
   const [url, setUrl] = useState<string | null>(null);
+  const [background, setBackground] = useState<"blur" | "neutral">("blur");
   if (stage === "preparing") {
     return createPortal(<CountyStoryPreparing />, document.body);
   }
   if (stage === "review" && url) {
     return createPortal(
-      <section className="fixed inset-0 z-[80] flex flex-col bg-[var(--background)] text-ink" data-county-story-review>
-        <div className="mx-auto flex h-full w-full max-w-md flex-col px-6 pb-8 pt-14">
-          <h2 className="text-xl font-semibold tracking-[-0.02em]">This is what people will see.</h2>
-          <video className="mt-4 min-h-0 w-full flex-1 bg-black object-contain" controls playsInline src={url} />
+      <section className="fixed inset-0 z-[80] overflow-y-auto bg-[var(--background)] text-ink" data-county-story-review>
+        <div className="mx-auto flex w-full max-w-md flex-col px-6 pb-8 pt-14">
+          <h2 className="text-xl font-semibold tracking-[-0.02em]">Preparing your Story</h2>
+          <p className="mt-2 text-base text-[var(--muted)]">This usually takes a moment.</p>
+          <h2 className="mt-6 text-xl font-semibold tracking-[-0.02em]">This is what people will see.</h2>
+          <div className="mt-4">
+            <CountyStoryBackgroundComparison url={url} value={background} onChange={setBackground} />
+          </div>
         </div>
       </section>,
       document.body,
@@ -685,6 +872,12 @@ export function CountyStoryCameraWalkthrough({
       onUse={(file) => {
         const next = URL.createObjectURL(file);
         setUrl(next);
+        setStage("preparing");
+        window.setTimeout(() => setStage("review"), 2400);
+      }}
+      onUseStory={(clips) => {
+        const next = clips[0] ? URL.createObjectURL(clips[0].file) : null;
+        if (next) setUrl(next);
         setStage("preparing");
         window.setTimeout(() => setStage("review"), 2400);
       }}
