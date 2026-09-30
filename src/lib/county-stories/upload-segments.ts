@@ -1,4 +1,10 @@
-import { tusUpload } from "@/lib/county-stories/resumable-upload";
+import {
+  UPLOAD_CANNOT_RESUME_NOTICE,
+  UPLOAD_INTERRUPTED_MESSAGE,
+  UPLOAD_UNAVAILABLE_MESSAGE,
+  browserCanUseTus,
+  tusUpload,
+} from "@/lib/county-stories/resumable-upload";
 
 export type UploadableSegment = {
   file: File;
@@ -7,7 +13,7 @@ export type UploadableSegment = {
 };
 
 export type SegmentUploadResult =
-  | { ok: true; mediaId: string; resumable: boolean }
+  | { ok: true; mediaId: string; resumable: boolean; notice: string | null }
   | { ok: false; error: string; code?: string };
 
 async function readJson(response: Response): Promise<Record<string, unknown>> {
@@ -65,8 +71,20 @@ export async function uploadCountyStorySegments(opts: {
     if (!opened.ok || typeof openedBody.token !== "string" || typeof openedBody.segmentId !== "string") {
       return { ok: false, error: "Story preparation is not available yet." };
     }
-    let uploaded = false;
-    if (typeof openedBody.tusEndpoint === "string" && typeof openedBody.objectName === "string") {
+    if (!browserCanUseTus()) {
+      if (typeof openedBody.uploadUrl !== "string") {
+        return { ok: false, error: UPLOAD_UNAVAILABLE_MESSAGE, code: "UPLOAD_UNAVAILABLE" };
+      }
+      resumable = false;
+      const put = await fetch(openedBody.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": segment.file.type || declared, "x-upsert": "true" },
+        body: segment.file,
+      });
+      if (!put.ok) return { ok: false, error: UPLOAD_INTERRUPTED_MESSAGE, code: "UPLOAD_INTERRUPTED" };
+    } else if (typeof openedBody.tusEndpoint !== "string" || typeof openedBody.objectName !== "string") {
+      return { ok: false, error: UPLOAD_UNAVAILABLE_MESSAGE, code: "UPLOAD_UNAVAILABLE" };
+    } else {
       const tus = await tusUpload({
         endpoint: openedBody.tusEndpoint,
         token: openedBody.token,
@@ -79,19 +97,10 @@ export async function uploadCountyStorySegments(opts: {
           opts.onProgress?.(percent);
         },
       });
-      uploaded = tus.ok;
-      if (!tus.ok) resumable = false;
-    }
-    if (!uploaded && typeof openedBody.uploadUrl === "string") {
-      resumable = false;
-      const put = await fetch(openedBody.uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": segment.file.type || declared, "x-upsert": "true" },
-        body: segment.file,
-      });
-      if (!put.ok) return { ok: false, error: "The upload did not finish. Your clips are still on this phone." };
-    } else if (!uploaded) {
-      return { ok: false, error: "The upload did not finish. Your clips are still on this phone." };
+      if (!tus.ok && tus.kind === "rejected") {
+        return { ok: false, error: UPLOAD_UNAVAILABLE_MESSAGE, code: "UPLOAD_UNAVAILABLE" };
+      }
+      if (!tus.ok) return { ok: false, error: UPLOAD_INTERRUPTED_MESSAGE, code: "UPLOAD_INTERRUPTED" };
     }
     const stored = await fetch(`/api/county-stories/media/${stageBody.id}/segments/${openedBody.segmentId}`, {
       method: "POST",
@@ -102,5 +111,10 @@ export async function uploadCountyStorySegments(opts: {
     sent += segment.file.size;
     opts.onProgress?.(Math.round((sent / Math.max(totalBytes, 1)) * 100));
   }
-  return { ok: true, mediaId: stageBody.id, resumable };
+  return {
+    ok: true,
+    mediaId: stageBody.id,
+    resumable,
+    notice: resumable ? null : UPLOAD_CANNOT_RESUME_NOTICE,
+  };
 }

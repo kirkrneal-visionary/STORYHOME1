@@ -212,9 +212,9 @@ export async function beginCountyStoryComposition(opts: {
   }
 
   const config = readComposeRuntimeConfig(process.env);
-  const token = process.env.COUNTY_STORY_COMPOSE_ACCESS_TOKEN?.trim() || "";
+  const workerSecret = process.env.COUNTY_STORY_COMPOSE_WORKER_SECRET?.trim() || "";
   const busy = await activeCompositions(opts.admin, now.toISOString());
-  const queued = !config.jobName || !token || busy >= config.concurrency;
+  const queued = !config.workerUrl || !workerSecret || busy >= config.concurrency;
   const snapshot = queued
     ? { ...started.snapshot, state: "waiting" as const, leaseUntilMs: null, attempt: Math.max(0, started.snapshot.attempt - 1) }
     : started.snapshot;
@@ -267,42 +267,40 @@ export async function beginCountyStoryComposition(opts: {
   const callbackUrl = origin
     ? `${origin.startsWith("http") ? origin : `https://${origin}`}/api/county-stories/media/${opts.mediaId}/composition/callback`
     : "";
-  const response = await fetch(`https://run.googleapis.com/v2/${config.jobName}:run`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      overrides: {
-        taskCount: 1,
-        timeout: `${config.timeoutSec}s`,
-        containerOverrides: [
-          {
-            env: [
-              {
-                name: "COUNTY_STORY_COMPOSE_REQUEST",
-                value: JSON.stringify({
-                  mediaId: opts.mediaId,
-                  manifestHash: fingerprint,
-                  background: opts.background,
-                  urls,
-                  uploadUrl: upload.signedUrl,
-                  callbackUrl,
-                  signature,
-                }),
-              },
-            ],
-          },
-        ],
+  const workerUrl = config.workerUrl;
+  if (!workerUrl) {
+    await leaveCompositionWaiting(opts.admin, opts.mediaId, snapshot.attempt);
+    return { ok: true, state: "waiting", outputPath: snapshot.outputPath, queued: true };
+  }
+  let response: Response;
+  try {
+    response = await fetch(workerUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${workerSecret}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
-  if (response.status === 429) {
-    await opts.admin
-      .from("county_story_media")
-      .update({ compose_state: "waiting", compose_lease_until: null })
-      .eq("id", opts.mediaId);
+      body: JSON.stringify({
+        mediaId: opts.mediaId,
+        revision: snapshot.revision,
+        manifestHash: fingerprint,
+        background: opts.background,
+        urls,
+        uploadUrl: upload.signedUrl,
+        callbackUrl,
+        signature,
+        timeoutSec: config.timeoutSec,
+        vcpu: config.vcpu,
+        memoryMib: config.memoryMib,
+        diskMb: config.diskMb,
+      }),
+    });
+  } catch {
+    await leaveCompositionWaiting(opts.admin, opts.mediaId, snapshot.attempt);
+    return { ok: true, state: "waiting", outputPath: snapshot.outputPath, queued: true };
+  }
+  if (response.status === 429 || response.status === 401 || response.status === 403) {
+    await leaveCompositionWaiting(opts.admin, opts.mediaId, snapshot.attempt);
     return { ok: true, state: "waiting", outputPath: snapshot.outputPath, queued: true };
   }
   if (!response.ok) {
@@ -312,12 +310,27 @@ export async function beginCountyStoryComposition(opts: {
       .eq("id", opts.mediaId);
     return { ok: false, status: 503, error: "Story preparation is not available yet.", code: "COMPOSITION_UNAVAILABLE" };
   }
-  const body = (await response.json()) as { name?: string };
+  const body = (await response.json()) as { executionId?: string };
   await opts.admin
     .from("county_story_media")
-    .update({ compose_execution_id: body.name ?? null })
+    .update({ compose_execution_id: body.executionId ?? null })
     .eq("id", opts.mediaId);
   return { ok: true, state: "composing", outputPath: snapshot.outputPath, queued: false };
+}
+
+async function leaveCompositionWaiting(
+  admin: SupabaseClient,
+  mediaId: string,
+  attempt: number,
+): Promise<void> {
+  await admin
+    .from("county_story_media")
+    .update({
+      compose_state: "waiting",
+      compose_lease_until: null,
+      compose_attempt: Math.max(0, attempt - 1),
+    })
+    .eq("id", mediaId);
 }
 
 function manifestFromRows(rows: unknown[]): ManifestSegment[] {

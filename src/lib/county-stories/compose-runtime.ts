@@ -1,26 +1,26 @@
 /**
- * Composition runs on a private Google Cloud Run Job.
+ * Composition runs in a private Cloudflare Container.
  * The number below is Story Home's initial safety setting.
- * It is not a Google Cloud project or regional quota.
+ * It is not a Cloudflare account limit.
  */
 
 export const COUNTY_STORY_COMPOSE_INITIAL_CONCURRENCY = 20;
 
-export const COUNTY_STORY_COMPOSE_VCPU = 2;
-export const COUNTY_STORY_COMPOSE_MEMORY = "2Gi";
-export const COUNTY_STORY_COMPOSE_DISK = "2Gi";
+export const COUNTY_STORY_COMPOSE_VCPU = 1;
+export const COUNTY_STORY_COMPOSE_MEMORY_MIB = 3072;
+export const COUNTY_STORY_COMPOSE_DISK_MB = 4096;
 export const COUNTY_STORY_COMPOSE_TIMEOUT_SEC = 180;
 
-/** Signed read lifetime for frozen clip inputs. Longer than playback reads so a cold job can download them. */
+/** Signed read lifetime for frozen clip inputs. Longer than playback reads so a cold container can download them. */
 export const COUNTY_STORY_COMPOSE_INPUT_TTL_SEC = 600;
 
 export type ComposeRuntimeConfig = {
-  jobName: string | null;
+  workerUrl: string | null;
   concurrency: number;
   timeoutSec: number;
   vcpu: number;
-  memory: string;
-  disk: string;
+  memoryMib: number;
+  diskMb: number;
 };
 
 function positiveInt(value: string | undefined, fallback: number): number {
@@ -36,19 +36,22 @@ export function storyHomeComposeConcurrency(envValue?: string | null): number {
 
 export function readComposeRuntimeConfig(
   env: NodeJS.ProcessEnv | {
-    COUNTY_STORY_COMPOSE_JOB?: string;
+    COUNTY_STORY_COMPOSE_WORKER_URL?: string;
     COUNTY_STORY_COMPOSE_CONCURRENCY?: string;
     COUNTY_STORY_COMPOSE_TIMEOUT_SEC?: string;
+    COUNTY_STORY_COMPOSE_VCPU?: string;
+    COUNTY_STORY_COMPOSE_MEMORY_MIB?: string;
+    COUNTY_STORY_COMPOSE_DISK_MB?: string;
   },
 ): ComposeRuntimeConfig {
-  const jobName = env.COUNTY_STORY_COMPOSE_JOB?.trim() || null;
+  const workerUrl = env.COUNTY_STORY_COMPOSE_WORKER_URL?.trim() || null;
   return {
-    jobName,
+    workerUrl,
     concurrency: storyHomeComposeConcurrency(env.COUNTY_STORY_COMPOSE_CONCURRENCY),
     timeoutSec: positiveInt(env.COUNTY_STORY_COMPOSE_TIMEOUT_SEC, COUNTY_STORY_COMPOSE_TIMEOUT_SEC),
-    vcpu: COUNTY_STORY_COMPOSE_VCPU,
-    memory: COUNTY_STORY_COMPOSE_MEMORY,
-    disk: COUNTY_STORY_COMPOSE_DISK,
+    vcpu: positiveInt(env.COUNTY_STORY_COMPOSE_VCPU, COUNTY_STORY_COMPOSE_VCPU),
+    memoryMib: positiveInt(env.COUNTY_STORY_COMPOSE_MEMORY_MIB, COUNTY_STORY_COMPOSE_MEMORY_MIB),
+    diskMb: positiveInt(env.COUNTY_STORY_COMPOSE_DISK_MB, COUNTY_STORY_COMPOSE_DISK_MB),
   };
 }
 

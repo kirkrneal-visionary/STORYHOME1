@@ -1,5 +1,6 @@
-# Private County Story composition. One execution joins one Story, then exits.
-# FFmpeg is the engine. Mux remains the only playback provider.
+# Private County Story composition. Linux/amd64. FFmpeg joins one Story, then the process can exit.
+# Cloudflare starts this image, waits until it listens, and stops the container when the Story is done.
+# Mux remains the only playback provider.
 FROM debian:bookworm-slim
 
 # Debian bookworm's ffmpeg package is the pinned engine for this image.
@@ -15,5 +16,7 @@ COPY compose.mjs /app/compose.mjs
 
 LABEL org.storyhome.compose="county-story-ffmpeg"
 ENV COUNTY_STORY_COMPOSE_TIMEOUT_SEC=180
+ENV PORT=8080
 
+EXPOSE 8080
 ENTRYPOINT ["node", "/app/compose.mjs"]

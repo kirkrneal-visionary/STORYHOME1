@@ -1031,6 +1031,9 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
               setView((current) => ({ ...current, busy: false, error: uploaded.error }));
               return;
             }
+            if (uploaded.notice) {
+              setView((current) => ({ ...current, draftNotice: uploaded.notice }));
+            }
             mediaIdRef.current = uploaded.mediaId;
             setMediaId(uploaded.mediaId);
             const started = await fetch(`/api/county-stories/media/${uploaded.mediaId}/composition`, {

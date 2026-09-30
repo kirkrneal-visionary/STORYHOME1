@@ -22,7 +22,14 @@ import {
 } from "../src/lib/county-stories/composition-job.ts";
 import { composedObjectPath, manifestFingerprint } from "../src/lib/county-stories/segment-manifest.ts";
 import { activeClipStopMs, remainingSegmentMs, segmentFitsBudget, usedSegmentMs } from "../src/lib/county-stories/segment-timeline.ts";
-import { TUS_CHUNK_BYTES, tusCreateHeaders, tusMetadata } from "../src/lib/county-stories/resumable-upload.ts";
+import {
+  TUS_CHUNK_BYTES,
+  browserCanUseTus,
+  classifyTusStatus,
+  mayUseFullPut,
+  tusCreateHeaders,
+  tusMetadata,
+} from "../src/lib/county-stories/resumable-upload.ts";
 
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -51,10 +58,20 @@ assert.equal(composeConcurrencyIsPlatformQuota(), false);
 assert.equal(storyHomeComposeConcurrency(undefined), 20);
 assert.equal(storyHomeComposeConcurrency("40"), 40);
 const runtime = readComposeRuntimeConfig({});
-assert.equal(runtime.jobName, null);
+assert.equal(runtime.workerUrl, null);
 assert.equal(runtime.concurrency, 20);
-assert.equal(runtime.vcpu, 2);
+assert.equal(runtime.vcpu, 1);
+assert.equal(runtime.memoryMib, 3072);
+assert.equal(runtime.diskMb, 4096);
 assert.equal(runtime.timeoutSec, 180);
+const raised = readComposeRuntimeConfig({
+  COUNTY_STORY_COMPOSE_VCPU: "2",
+  COUNTY_STORY_COMPOSE_MEMORY_MIB: "6144",
+  COUNTY_STORY_COMPOSE_DISK_MB: "8192",
+});
+assert.equal(raised.vcpu, 2);
+assert.equal(raised.memoryMib, 6144);
+assert.equal(raised.diskMb, 8192);
 
 const clips = [
   { id: "b", position: 1, storagePath: "owner/media/segments/1.mp4", byteSize: 20 },
@@ -122,6 +139,16 @@ const headers = tusCreateHeaders({ token: "signed", byteSize: 10, metadata: { bu
 assert.equal(headers["x-signature"], "signed");
 assert.match(tusMetadata({ bucketName: "county-story-media" }), /^bucketName /);
 assert.doesNotMatch(JSON.stringify(headers), /service_role/);
+assert.equal(mayUseFullPut("browser"), true);
+assert.equal(mayUseFullPut("rejected"), false);
+assert.equal(mayUseFullPut("interrupted"), false);
+assert.equal(classifyTusStatus(401), "rejected");
+assert.equal(classifyTusStatus(403), "rejected");
+assert.equal(classifyTusStatus(400), "rejected");
+assert.equal(classifyTusStatus(404), "rejected");
+assert.equal(classifyTusStatus(0), "interrupted");
+assert.equal(classifyTusStatus(500), "interrupted");
+assert.equal(browserCanUseTus({ fetch: undefined, blob: undefined, btoa: undefined }), false);
 
 const camera = read("src/components/county-stories/CountyStoryCamera.tsx");
 assert.match(camera, /Play Story/);
@@ -141,12 +168,29 @@ assert.match(background, /data-county-story-sharp-video/);
 assert.doesNotMatch(background, /logo|pattern|sticker/i);
 
 const runtimeSource = read("src/lib/county-stories/compose-runtime.ts");
-assert.match(runtimeSource, /not a Google Cloud project or regional quota/);
+assert.match(runtimeSource, /not a Cloudflare account limit/);
 const service = read("src/lib/county-stories/composition-service.ts");
 assert.doesNotMatch(service, /SUPABASE_SERVICE_ROLE_KEY|MUX_TOKEN_SECRET|MUX_SIGNING/);
-assert.match(read("services/story-compose/compose.mjs"), /const CANVAS_W = 1080/);
-assert.match(read("services/story-compose/compose.mjs"), /const CANVAS_H = 1920/);
+assert.doesNotMatch(service, /run\.googleapis\.com/);
+assert.match(service, /COUNTY_STORY_COMPOSE_WORKER_SECRET/);
+assert.match(runtimeSource, /COUNTY_STORY_COMPOSE_WORKER_URL/);
+const upload = read("src/lib/county-stories/upload-segments.ts");
+assert.match(upload, /browserCanUseTus/);
+assert.match(upload, /UPLOAD_UNAVAILABLE/);
+assert.match(upload, /UPLOAD_INTERRUPTED/);
+assert.doesNotMatch(upload, /if \(!tus\.ok\) resumable = false/);
+const worker = read("services/story-compose/worker/index.js");
+assert.match(worker, /destroy\(/);
+assert.match(worker, /3072/);
+assert.match(worker, /4096/);
+assert.match(worker, /setInactivityTimeout/);
+assert.doesNotMatch(worker, /SUPABASE_SERVICE_ROLE_KEY|MUX_TOKEN_SECRET|MUX_SIGNING|QUEUE/);
+const compose = read("services/story-compose/compose.mjs");
+assert.match(compose, /const CANVAS_W = 1080/);
+assert.match(compose, /const CANVAS_H = 1920/);
+assert.match(compose, /\/health/);
 assert.match(read("services/story-compose/Dockerfile"), /ffmpeg/);
+assert.match(read("services/story-compose/wrangler.jsonc"), /durable_object/);
 assert.match(read("supabase/migrations/0088_county_story_segments.sql"), /county_story_media_segments/);
 assert.doesNotMatch(read("docs/memory/workflows/county-stories.md"), /County seat/);
 assert.doesNotMatch(read("docs/memory/CURRENT_WORK.md"), /County seat/);

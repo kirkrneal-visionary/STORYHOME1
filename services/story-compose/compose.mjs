@@ -5,6 +5,7 @@
  */
 import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -115,10 +116,7 @@ async function normalize(file, output, mode, info) {
   await run("ffmpeg", args);
 }
 
-async function main() {
-  const raw = process.env.COUNTY_STORY_COMPOSE_REQUEST;
-  if (!raw) throw new Error("missing request");
-  const request = JSON.parse(raw);
+async function compose(request) {
   const urls = Array.isArray(request.urls) ? request.urls.filter((url) => typeof url === "string") : [];
   if (urls.length < 1) throw new Error("missing clips");
   const mode = request.background === "neutral" ? "neutral" : "blur";
@@ -163,6 +161,67 @@ async function main() {
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on("data", (chunk) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+function listen(port) {
+  let busy = false;
+  const server = createServer(async (req, res) => {
+    if (req.method === "GET" && req.url === "/health") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    if (req.method !== "POST" || req.url !== "/compose") {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    if (busy) {
+      res.writeHead(409, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: "busy" }));
+      return;
+    }
+    busy = true;
+    try {
+      const raw = await readBody(req);
+      const request = JSON.parse(raw);
+      await compose(request);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "compose failed";
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, error: message }));
+    } finally {
+      busy = false;
+    }
+  });
+  server.listen(port, "0.0.0.0");
+  const stop = () => {
+    server.close(() => process.exit(0));
+  };
+  process.on("SIGTERM", stop);
+  process.on("SIGINT", stop);
+}
+
+async function main() {
+  const raw = process.env.COUNTY_STORY_COMPOSE_REQUEST;
+  if (raw) {
+    await compose(JSON.parse(raw));
+    return;
+  }
+  const port = Number(process.env.PORT || 8080);
+  if (!Number.isInteger(port) || port < 1) throw new Error("missing port");
+  listen(port);
 }
 
 main().catch((error) => {

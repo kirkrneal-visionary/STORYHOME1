@@ -1,0 +1,30 @@
+{
+  "name": "storyhome-county-story-compose",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-30",
+  "containers": [
+    {
+      "class_name": "StoryComposeRevision",
+      "scheduling_policy": "durable_object",
+      "images": {
+        "base": {
+          "dockerfile": "./Dockerfile"
+        }
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "COMPOSE",
+        "class_name": "StoryComposeRevision"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["StoryComposeRevision"]
+    }
+  ]
+}
