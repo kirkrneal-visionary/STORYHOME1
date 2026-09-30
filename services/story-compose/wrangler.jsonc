@@ -2,6 +2,13 @@
   "name": "storyhome-county-story-compose",
   "main": "worker/index.js",
   "compatibility_date": "2026-09-30",
+  "workers_dev": true,
+  "vars": {
+    "COUNTY_STORY_COMPOSE_VCPU": "1",
+    "COUNTY_STORY_COMPOSE_MEMORY_MIB": "3072",
+    "COUNTY_STORY_COMPOSE_DISK_MB": "4096",
+    "COUNTY_STORY_COMPOSE_TIMEOUT_SEC": "180"
+  },
   "containers": [
     {
       "class_name": "StoryComposeRevision",

@@ -97,12 +97,12 @@ export class StoryComposeRevision extends DurableObject {
       image,
       enableInternet: true,
       instance: {
-        vcpu: positiveInt(body.vcpu, DEFAULT_VCPU),
-        memoryMib: positiveInt(body.memoryMib, DEFAULT_MEMORY_MIB),
-        diskMb: positiveInt(body.diskMb, DEFAULT_DISK_MB),
+        vcpu: positiveInt(body.vcpu, positiveInt(this.env.COUNTY_STORY_COMPOSE_VCPU, DEFAULT_VCPU)),
+        memoryMib: positiveInt(body.memoryMib, positiveInt(this.env.COUNTY_STORY_COMPOSE_MEMORY_MIB, DEFAULT_MEMORY_MIB)),
+        diskMb: positiveInt(body.diskMb, positiveInt(this.env.COUNTY_STORY_COMPOSE_DISK_MB, DEFAULT_DISK_MB)),
       },
     });
-    const timeoutSec = positiveInt(body.timeoutSec, 180);
+    const timeoutSec = positiveInt(body.timeoutSec, positiveInt(this.env.COUNTY_STORY_COMPOSE_TIMEOUT_SEC, 180));
     await container.setInactivityTimeout((timeoutSec + 30) * 1000);
 
     this.ctx.waitUntil(this.finish(container, body, key, executionId));

@@ -1,0 +1,11 @@
+{
+  "name": "storyhome-county-story-compose",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "node deploy.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.145.0"
+  }
+}
