@@ -3,6 +3,7 @@
  * Story Home remains the authority for state, lease, revision, and retry.
  * This process does not receive a database password, Supabase service key, or Mux secret.
  */
+import { DurableObject } from "cloudflare:workers";
 
 const DEFAULT_VCPU = 1;
 const DEFAULT_MEMORY_MIB = 3072;
