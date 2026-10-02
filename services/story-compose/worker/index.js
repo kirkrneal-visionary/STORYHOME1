@@ -61,17 +61,22 @@ async function waitForHealth(container, port) {
 export class StoryComposeRevision extends DurableObject {
   async fetch(request) {
     const url = new URL(request.url);
-    if (request.method !== "POST" || url.pathname !== "/compose") {
-      return json({ ok: false, error: "not found" }, 404);
-    }
     const container = this.ctx.container;
     if (!container) return json({ ok: false, error: "container missing" }, 503);
 
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return json({ ok: false, error: "bad request" }, 400);
+    let body = {};
+    if (request.method !== "GET") {
+      try {
+        body = await request.json();
+      } catch {
+        return json({ ok: false, error: "bad request" }, 400);
+      }
+    } else {
+      body = {
+        mediaId: url.searchParams.get("mediaId"),
+        manifestHash: url.searchParams.get("manifestHash"),
+        revision: url.searchParams.get("revision"),
+      };
     }
     const mediaId = typeof body.mediaId === "string" ? body.mediaId : "";
     const manifestHash = typeof body.manifestHash === "string" ? body.manifestHash : "";
@@ -83,8 +88,14 @@ export class StoryComposeRevision extends DurableObject {
     const key = `${mediaId}:${revision}:${manifestHash}`;
     const executionId = `do:${key}`;
     const saved = await this.ctx.storage.get("result");
+    if (request.method === "GET" && url.pathname === "/status") {
+      return json({ ok: true, running: Boolean(container.running), result: saved ?? null }, 200);
+    }
+    if (request.method !== "POST" || url.pathname !== "/compose") {
+      return json({ ok: false, error: "not found" }, 404);
+    }
     if (saved && saved.key === key && saved.ok === true) {
-      return json({ ok: true, executionId, recovered: true }, 200);
+      return json({ ok: true, executionId, recovered: true, ffmpegRan: false, result: saved }, 200);
     }
     if (container.running) {
       return json({ ok: true, executionId, inProgress: true }, 202);
@@ -93,6 +104,7 @@ export class StoryComposeRevision extends DurableObject {
     const image = container.images?.base;
     if (!image) return json({ ok: false, error: "image missing" }, 503);
 
+    const startedAt = Date.now();
     container.start({
       image,
       enableInternet: true,
@@ -105,13 +117,16 @@ export class StoryComposeRevision extends DurableObject {
     const timeoutSec = positiveInt(body.timeoutSec, positiveInt(this.env.COUNTY_STORY_COMPOSE_TIMEOUT_SEC, 180));
     await container.setInactivityTimeout((timeoutSec + 30) * 1000);
 
-    this.ctx.waitUntil(this.finish(container, body, key, executionId));
+    this.ctx.waitUntil(this.finish(container, body, key, executionId, startedAt));
     return json({ ok: true, executionId }, 202);
   }
 
-  async finish(container, body, key, executionId) {
+  async finish(container, body, key, executionId, startedAt) {
+    let payload = {};
+    let healthyAt = null;
     try {
       await waitForHealth(container, COMPOSE_PORT);
+      healthyAt = Date.now();
       const response = await container.getTcpPort(COMPOSE_PORT).fetch("http://container/compose", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,40 +140,87 @@ export class StoryComposeRevision extends DurableObject {
           signature: body.signature,
         }),
       });
-      const payload = await response.json().catch(() => ({}));
-      if (response.ok && payload.ok === true) {
-        await this.ctx.storage.put("result", { key, ok: true, executionId });
+      payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok !== true) {
+        await this.ctx.storage.put("result", {
+          key,
+          ok: false,
+          executionId,
+          error: payload.error || "compose failed",
+          startedAt,
+          healthyAt,
+          startupMs: healthyAt ? healthyAt - startedAt : null,
+        });
+        return;
       }
+    } catch (error) {
+      await this.ctx.storage.put("result", {
+        key,
+        ok: false,
+        executionId,
+        error: error instanceof Error ? error.message : "compose failed",
+        startedAt,
+        healthyAt,
+        startupMs: healthyAt ? healthyAt - startedAt : null,
+      });
+      return;
     } finally {
       if (container.running) await container.destroy("composition finished");
     }
+    const stoppedAt = Date.now();
+    await this.ctx.storage.put("result", {
+      key,
+      ok: true,
+      executionId,
+      startedAt,
+      healthyAt,
+      startupMs: healthyAt ? healthyAt - startedAt : null,
+      stoppedAt,
+      shutdownMs: stoppedAt - (healthyAt ?? startedAt),
+      downloadMs: payload.downloadMs ?? null,
+      ffmpegMs: payload.ffmpegMs ?? null,
+      uploadMs: payload.uploadMs ?? null,
+      composeTotalMs: payload.totalMs ?? null,
+      outputBytes: payload.outputBytes ?? null,
+      memoryPeakBytes: payload.memoryPeakBytes ?? null,
+      cpuUsageUsec: payload.cpuUsageUsec ?? null,
+    });
   }
+}
+
+function revisionFrom(request, body) {
+  const url = new URL(request.url);
+  const mediaId = typeof body.mediaId === "string" ? body.mediaId : url.searchParams.get("mediaId") ?? "";
+  const manifestHash = typeof body.manifestHash === "string" ? body.manifestHash : url.searchParams.get("manifestHash") ?? "";
+  const revision = positiveInt(body.revision ?? url.searchParams.get("revision"), 0);
+  return { mediaId, manifestHash, revision };
 }
 
 export default {
   async fetch(request, env) {
-    if (request.method !== "POST") return json({ ok: false, error: "method" }, 405);
+    if (request.method !== "POST" && request.method !== "GET") return json({ ok: false, error: "method" }, 405);
     if (!secretsMatch(bearer(request), env.COUNTY_STORY_COMPOSE_WORKER_SECRET)) {
       return json({ ok: false, error: "unauthorized" }, 401);
     }
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return json({ ok: false, error: "bad request" }, 400);
+    let body = {};
+    if (request.method === "POST") {
+      try {
+        body = await request.json();
+      } catch {
+        return json({ ok: false, error: "bad request" }, 400);
+      }
     }
-    const mediaId = typeof body.mediaId === "string" ? body.mediaId : "";
-    const manifestHash = typeof body.manifestHash === "string" ? body.manifestHash : "";
-    const revision = positiveInt(body.revision, 0);
+    const { mediaId, manifestHash, revision } = revisionFrom(request, body);
     if (!mediaId || !manifestHash || revision < 1) {
       return json({ ok: false, error: "bad request" }, 400);
     }
     const name = `${mediaId}:${revision}:${manifestHash}`;
     const id = env.COMPOSE.idFromName(name);
-    return env.COMPOSE.get(id).fetch("https://compose/compose", {
-      method: "POST",
+    const path = request.method === "GET" ? `/status?mediaId=${encodeURIComponent(mediaId)}&revision=${revision}&manifestHash=${encodeURIComponent(manifestHash)}` : "/compose";
+    return env.COMPOSE.get(id).fetch(`https://compose${path}`, {
+      method: request.method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+      body: request.method === "POST" ? JSON.stringify(body) : undefined,
     });
   },
 };

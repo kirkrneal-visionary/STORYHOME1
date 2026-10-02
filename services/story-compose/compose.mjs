@@ -116,35 +116,85 @@ async function normalize(file, output, mode, info) {
   await run("ffmpeg", args);
 }
 
+async function readCpuUsageUsec() {
+  try {
+    const raw = await readFile("/sys/fs/cgroup/cpu.stat", "utf8");
+    const line = raw.split("\n").find((row) => row.startsWith("usage_usec "));
+    const value = Number(line?.split(/\s+/)[1]);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+async function readCgroupNumber(path) {
+  try {
+    const raw = await readFile(path, "utf8");
+    const value = Number(String(raw).trim().split(/\s+/)[0]);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 async function compose(request) {
+  const started = Date.now();
   const urls = Array.isArray(request.urls) ? request.urls.filter((url) => typeof url === "string") : [];
   if (urls.length < 1) throw new Error("missing clips");
   const mode = request.background === "neutral" ? "neutral" : "blur";
   const dir = await mkdtemp(join(tmpdir(), "story-compose-"));
+  const timing = { downloadMs: 0, ffmpegMs: 0, uploadMs: 0, outputBytes: 0 };
   try {
     const normalized = [];
+    const downloadStarted = Date.now();
     for (let index = 0; index < urls.length; index += 1) {
       const source = join(dir, `source-${index}`);
       const next = join(dir, `norm-${index}.mp4`);
       await download(urls[index], source);
       const info = await probe(source);
-      await normalize(source, next, mode, info);
-      normalized.push(next);
+      normalized.push({ source, next, info });
+    }
+    timing.downloadMs = Date.now() - downloadStarted;
+    const ffmpegStarted = Date.now();
+    const ready = [];
+    for (const item of normalized) {
+      await normalize(item.source, item.next, mode, item.info);
+      ready.push(item.next);
     }
     const list = join(dir, "list.txt");
-    await writeFile(list, normalized.map((file) => `file '${file}'`).join("\n"));
+    await writeFile(list, ready.map((file) => `file '${file}'`).join("\n"));
     const output = join(dir, "composed.mp4");
     await run("ffmpeg", ["-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", output]);
+    timing.ffmpegMs = Date.now() - ffmpegStarted;
+    const body = await readFile(output);
+    timing.outputBytes = body.length;
     if (typeof request.uploadUrl === "string") {
-      const body = await readFile(output);
+      const uploadStarted = Date.now();
       const uploaded = await fetch(request.uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": "video/mp4", "x-upsert": "true" },
         body,
       });
+      timing.uploadMs = Date.now() - uploadStarted;
       if (!uploaded.ok) throw new Error(`upload ${uploaded.status}`);
     }
-    if (typeof request.callbackUrl === "string") {
+    const memoryPeakBytes = await readCgroupNumber("/sys/fs/cgroup/memory.peak");
+    const cpuUsageUsec = await readCpuUsageUsec();
+    return {
+      ok: true,
+      ...timing,
+      totalMs: Date.now() - started,
+      memoryPeakBytes,
+      cpuUsageUsec,
+    };
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+async function composeAndCallback(request) {
+  const result = await compose(request);
+  if (typeof request.callbackUrl === "string" && request.callbackUrl) {
       await fetch(request.callbackUrl, {
         method: "POST",
         headers: {
@@ -158,9 +208,7 @@ async function compose(request) {
         }),
       });
     }
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
+  return result;
 }
 
 function readBody(req) {
@@ -194,9 +242,9 @@ function listen(port) {
     try {
       const raw = await readBody(req);
       const request = JSON.parse(raw);
-      await compose(request);
+      const result = await composeAndCallback(request);
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true }));
+      res.end(JSON.stringify(result));
     } catch (error) {
       const message = error instanceof Error ? error.message : "compose failed";
       res.writeHead(500, { "Content-Type": "application/json" });
@@ -216,7 +264,7 @@ function listen(port) {
 async function main() {
   const raw = process.env.COUNTY_STORY_COMPOSE_REQUEST;
   if (raw) {
-    await compose(JSON.parse(raw));
+    await composeAndCallback(JSON.parse(raw));
     return;
   }
   const port = Number(process.env.PORT || 8080);
