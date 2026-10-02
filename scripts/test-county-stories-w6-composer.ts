@@ -13,6 +13,19 @@ import {
   countyStoryEligibleWhen,
   countyStoryTypeCopy,
 } from "../src/lib/county-stories/composer-copy.ts";
+import { COUNTY_STORY_CAPTURE_BUDGET_MS } from "../src/lib/county-stories/segment-timeline.ts";
+import {
+  COUNTY_STORY_CAMERA_MAX_SEC,
+  COUNTY_STORY_CAMERA_PREVIEW_FIT,
+  countyStoryCameraClock,
+  countyStoryCameraDeniedCopy,
+  countyStoryCameraRequest,
+  countyStoryCameraReviewLabel,
+  countyStoryCameraShouldStop,
+  countyStoryZoomFromPinch,
+  countyStoryZoomRange,
+  countyStoryZoomStops,
+} from "../src/lib/county-stories/camera-capture.ts";
 import {
   draftResume,
   parseCountyStoryDraft,
@@ -172,6 +185,51 @@ assert.match(composer, /CAPTION_REVISION_CONFLICT/);
 assert.match(composer, /We did not get a confirmation/);
 assert.match(composer, /reviewReady/);
 assert.match(panel, /Create Story/);
+assert.match(panel, /Record Video/);
+assert.match(panel, /data-county-story-upload/);
+assert.doesNotMatch(panel, /capture="user"|capture="environment"/);
+assert.doesNotMatch(composer, /getUserMedia/);
+assert.match(composer, /CountyStoryCamera/);
+assert.match(composer, /setCameraOpen\(true\)/);
+const camera = read("src/components/county-stories/CountyStoryCamera.tsx");
+assert.match(camera, /data-county-story-camera/);
+assert.match(camera, /Retake/);
+assert.match(camera, /Use Video/);
+assert.match(camera, /Try Camera Again/);
+assert.match(camera, /Switch camera/);
+assert.match(camera, /countyStoryCameraRequest/);
+assert.match(camera, /aria-label="Close"/);
+assert.match(camera, /data-county-story-camera-play/);
+assert.match(camera, /data-county-story-camera-replay/);
+assert.match(camera, /data-county-story-camera-scrub/);
+assert.match(camera, /countyStoryCameraReviewLabel/);
+assert.match(camera, /object-contain/);
+assert.doesNotMatch(camera, /object-cover/);
+assert.doesNotMatch(camera, /Front camera|Rear camera/);
+assert.match(camera, /countyStoryZoomRange/);
+assert.match(camera, /applyConstraints/);
+assert.doesNotMatch(camera, /filter|sticker|beauty|music library/i);
+assert.equal(COUNTY_STORY_CAMERA_MAX_SEC, 30);
+assert.equal(COUNTY_STORY_CAMERA_PREVIEW_FIT, "contain");
+assert.equal(countyStoryCameraClock(4), "0:04");
+assert.equal(countyStoryCameraReviewLabel(18), "0:18 of 0:30");
+assert.equal(countyStoryCameraShouldStop(COUNTY_STORY_CAPTURE_BUDGET_MS), true);
+assert.equal(countyStoryCameraShouldStop(COUNTY_STORY_CAPTURE_BUDGET_MS - 1), false);
+assert.equal(countyStoryCameraRequest("user").video.frameRate.ideal, 30);
+assert.equal(countyStoryCameraRequest("user").video.aspectRatio.ideal, 4 / 3);
+assert.equal(countyStoryCameraRequest("environment").video.height.ideal, 1440);
+assert.notEqual(countyStoryCameraRequest("environment").video.height.ideal, 1920);
+assert.equal(countyStoryZoomRange(undefined), null);
+assert.equal(countyStoryZoomRange({ zoom: { min: 1, max: 1, step: 0.1 } }), null);
+const zoomRange = countyStoryZoomRange({ zoom: { min: 1, max: 4, step: 0.1 } });
+assert.deepEqual(countyStoryZoomStops(zoomRange!), [1, 2]);
+assert.deepEqual(countyStoryZoomStops({ min: 1, max: 1.4, step: 0.1 }), [1]);
+assert.equal(countyStoryZoomFromPinch(1, 100, 200, zoomRange!), 2);
+assert.equal(countyStoryZoomFromPinch(1, 100, 400, { min: 1, max: 1.5, step: 0.1 }), 1.5);
+assert.match(composer, /cameraHandoffRef/);
+assert.match(panel, /object-contain/);
+assert.match(countyStoryCameraDeniedCopy(), /camera and microphone/);
+assert.doesNotMatch(countyStoryCameraDeniedCopy(), /NotAllowedError|getUserMedia/);
 assert.match(panel, /Replace Story/);
 assert.match(panel, /What are you sharing/);
 assert.match(panel, /Preparing your Story/);

@@ -35,12 +35,14 @@ export async function GET(_request: Request, ctx: Ctx) {
   }));
   const failed = media.state === "invalid" || media.provider_status === "errored";
   const playbackReady = Boolean(media.playback_ready_at);
+  const providerAccepted = Boolean(media.provider_asset_id);
   const ready = playbackReady && captionCues.length > 0 && !failed;
   const phase = failed ? "failed" : ready ? "ready" : "preparing";
   return NextResponse.json({
     ok: true,
     phase,
     playbackReady,
+    providerAccepted,
     captionRevision: media.caption_revision ?? 0,
     durationMs: media.duration_ms ?? null,
     cues: captionCues,

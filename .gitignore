@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+.wrangler/
+services/story-compose/node_modules/
+services/story-compose/.worker-secret
 
 # vercel
 .vercel

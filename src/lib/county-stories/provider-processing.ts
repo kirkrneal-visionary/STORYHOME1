@@ -69,6 +69,15 @@ export async function startCountyStoryProviderProcessing(opts: {
   if (row.state !== "valid" && row.state !== "needs_normalization") {
     return { result: { ok: false, code: "MEDIA_NOT_VALID" }, status: 400 };
   }
+  if (row.provider_asset_id) {
+    return {
+      result: {
+        ok: true,
+        code: row.playback_ready_at ? "PLAYBACK_READY" : "PROVIDER_PROCESSING",
+      },
+      status: 200,
+    };
+  }
   if (row.provider_status === "ready" && row.playback_ready_at) {
     return { result: { ok: true, code: "PLAYBACK_READY" }, status: 200 };
   }

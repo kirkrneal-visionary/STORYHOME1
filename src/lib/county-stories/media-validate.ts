@@ -115,8 +115,30 @@ function readMp4(buf: Buffer): CountyStoryVideoProbe {
   const container: CountyStoryVideoProbe["container"] =
     brand === "qt  " ? "quicktime" : "mp4";
 
+  const visitTrak = (type: string, a: number, b: number, state: { video: boolean }) => {
+    if (type === "mdia" || type === "minf" || type === "stbl") {
+      walkBoxes(buf, a, b, (inner, start, end) => visitTrak(inner, start, end, state));
+      return;
+    }
+    if (type === "hdlr" && b - a >= 12) {
+      const handler = buf.toString("ascii", a + 8, a + 12);
+      if (handler === "vide") {
+        hasVideoTrack = true;
+        state.video = true;
+      }
+      return;
+    }
+    if (type === "stsd" && state.video && b - a >= 16) {
+      const entryCount = buf.readUInt32BE(a + 4);
+      if (entryCount >= 1) codec = buf.toString("ascii", a + 12, a + 16);
+    }
+  };
   const visit = (type: string, a: number, b: number) => {
-    if (type === "moov" || type === "trak" || type === "mdia" || type === "minf" || type === "stbl") {
+    if (type === "trak") {
+      walkBoxes(buf, a, b, (inner, start, end) => visitTrak(inner, start, end, { video: false }));
+      return;
+    }
+    if (type === "moov") {
       walkBoxes(buf, a, b, visit);
       return;
     }
@@ -128,18 +150,6 @@ function readMp4(buf: Buffer): CountyStoryVideoProbe {
       } else if (version === 0) {
         timescale = buf.readUInt32BE(a + 12);
         durationUnits = buf.readUInt32BE(a + 16);
-      }
-      return;
-    }
-    if (type === "hdlr" && b - a >= 12) {
-      const handler = buf.toString("ascii", a + 8, a + 12);
-      if (handler === "vide") hasVideoTrack = true;
-      return;
-    }
-    if (type === "stsd" && b - a >= 16) {
-      const entryCount = buf.readUInt32BE(a + 4);
-      if (entryCount >= 1) {
-        codec = buf.toString("ascii", a + 12, a + 16);
       }
     }
   };

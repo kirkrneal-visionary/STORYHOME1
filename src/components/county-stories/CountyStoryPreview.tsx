@@ -59,7 +59,12 @@ function sample(
   const countyFull = screen === "county" && hub === "used";
   const marks = { ...SAMPLE_MARKS };
   if (countyFull) marks["48373"] = "Full";
-  const showVideo = screen === "review" || screen === "captions";
+  const workspace =
+    screen === "processing" ||
+    screen === "review" ||
+    screen === "captions" ||
+    screen === "access" ||
+    screen === "rules";
   return {
     screen,
     mode: replace ? "replace" : "create",
@@ -86,14 +91,16 @@ function sample(
     accessBasis: screen === "access" ? "spoken_audio" : null,
     accessDescription: "",
     rulesChecked: false,
-    videoUrl: showVideo ? "/county-stories/preview-frame.mp4" : null,
+    videoUrl: workspace ? "/county-stories/preview-frame.mp4" : null,
+    uploadPercent: screen === "processing" ? 40 : null,
+    captionsReady: screen !== "processing",
     processingNote: null,
     error: null,
     busy: false,
     recording: false,
     recordClock: null,
     showRetry: false,
-    reviewReady: false,
+    reviewReady: workspace && screen !== "processing",
     countyMarks: marks,
     showingPauseReasons: showPauseReasons && screen === "suspended",
     removed: removed && screen === "owned",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CountyStoryCameraWalkthrough } from "@/components/county-stories/CountyStoryCamera";
 import { CountyStoryPreview } from "@/components/county-stories/CountyStoryPreview";
 
 export const metadata: Metadata = {
@@ -18,11 +19,21 @@ export default async function CountyStoryPreviewPage({
     removed?: string;
     why?: string;
     resume?: string;
+    camera?: string;
+    permission?: string;
   }>;
 }) {
   const allowed = process.env.NODE_ENV !== "production" || process.env.VERCEL_ENV === "preview";
   if (!allowed) notFound();
   const params = await searchParams;
+  if (params.camera === "1") {
+    return (
+      <CountyStoryCameraWalkthrough
+        replacement={params.hub === "replace"}
+        forceDenied={params.permission === "denied"}
+      />
+    );
+  }
   return (
     <CountyStoryPreview
       clean={params.clean === "1"}

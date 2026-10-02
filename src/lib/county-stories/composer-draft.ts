@@ -5,7 +5,7 @@ import type {
   CountyStoryPropertyChoice,
 } from "@/lib/county-stories/composer-flow";
 
-/** Client-only unfinished Story. Never a County seat and never a rules acknowledgment. */
+/** Client-only unfinished Story. Never a County Story position and never a rules acknowledgment. */
 export type CountyStoryDraft = {
   version: 1;
   mode: CountyStoryComposerMode;
