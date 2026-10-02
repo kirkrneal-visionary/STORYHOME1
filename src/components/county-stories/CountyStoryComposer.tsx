@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CountyStoryCamera, type CountyStoryCapturedClip } from "@/components/county-stories/CountyStoryCamera";
 import { uploadCountyStorySegments } from "@/lib/county-stories/upload-segments";
 import { clearLocalSegments, releaseLocalSegmentsWhenAccepted } from "@/lib/county-stories/local-segments";
-import type { CountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
 import { CountyStoryPanel, type CountyStoryPanelView } from "@/components/county-stories/CountyStoryPanel";
 import {
   countyStoryCapacityCopy,
@@ -77,7 +76,6 @@ const emptyView = (screen: CountyStoryComposerStep): CountyStoryPanelView => ({
   recordClock: null,
   showRetry: false,
   reviewReady: false,
-  background: "blur",
   uploadPercent: null,
   captionsReady: false,
   countyMarks: {},
@@ -154,7 +152,6 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
   const [now, setNow] = useState(() => new Date());
   const [cameraOpen, setCameraOpen] = useState(false);
   const cameraHandoffRef = useRef(false);
-  const backgroundRef = useRef<CountyStoryBackgroundMode>("blur");
   const mediaIdRef = useRef<string | null>(null);
   const mode: CountyStoryComposerMode = view.mode;
 
@@ -1039,7 +1036,7 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
             const started = await fetch(`/api/county-stories/media/${uploaded.mediaId}/composition`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ background: backgroundRef.current }),
+              body: JSON.stringify({}),
             });
             const startedBody = await readJson(started);
             setView((current) => ({
@@ -1113,17 +1110,6 @@ export function CountyStoryComposer({ ownerId = null }: { ownerId?: string | nul
         onAccessBasis: (basis) => setView((current) => ({ ...current, accessBasis: basis, error: null })),
         onAccessDescription: (value) => setView((current) => ({ ...current, accessDescription: value })),
         onRules: (checked) => setView((current) => ({ ...current, rulesChecked: checked, error: null })),
-        onBackground: (mode) => {
-          backgroundRef.current = mode;
-          setView((current) => ({ ...current, background: mode }));
-          const id = mediaIdRef.current;
-          if (!id) return;
-          void fetch(`/api/county-stories/media/${id}/composition`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ background: mode }),
-          });
-        },
         onRecord: () => setCameraOpen(true),
         onUpload: (file) => void beginUpload(file),
         onContinue: () => void onContinue(),

@@ -22,7 +22,7 @@ import {
   type CountyStoryCameraFacing,
   type CountyStoryZoomRange,
 } from "@/lib/county-stories/camera-capture";
-import { CountyStoryBackgroundComparison } from "@/components/county-stories/CountyStoryBackground";
+import { CountyStoryPresentedVideo } from "@/components/county-stories/CountyStoryBackground";
 import { deleteLocalSegment, putLocalSegment } from "@/lib/county-stories/local-segments";
 import {
   COUNTY_STORY_CAPTURE_BUDGET_MS,
@@ -864,7 +864,6 @@ export function CountyStoryCameraWalkthrough({
 }) {
   const [stage, setStage] = useState<"camera" | "preparing" | "review">("camera");
   const [url, setUrl] = useState<string | null>(null);
-  const [background, setBackground] = useState<"blur" | "neutral">("blur");
   if (stage === "preparing") {
     return createPortal(<CountyStoryPreparing />, document.body);
   }
@@ -876,7 +875,7 @@ export function CountyStoryCameraWalkthrough({
           <p className="mt-2 text-base text-[var(--muted)]">This usually takes a moment.</p>
           <h2 className="mt-6 text-xl font-semibold tracking-[-0.02em]">This is what people will see.</h2>
           <div className="mt-4">
-            <CountyStoryBackgroundComparison url={url} value={background} onChange={setBackground} />
+            <CountyStoryPresentedVideo url={url} />
           </div>
         </div>
       </section>,

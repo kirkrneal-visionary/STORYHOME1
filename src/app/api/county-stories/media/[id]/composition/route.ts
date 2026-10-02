@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { countyStoryAdminClient } from "@/lib/county-stories/admin";
 import { beginCountyStoryComposition } from "@/lib/county-stories/composition-service";
-import { isCountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
+import { COUNTY_STORY_DEFAULT_BACKGROUND } from "@/lib/county-stories/composition-policy";
 import { supabaseCountyStoryStorage } from "@/lib/county-stories/media-service";
 import { requireCountyStoryPublisher } from "@/lib/county-stories/require-publisher";
 
@@ -16,19 +16,17 @@ export async function POST(request: Request, ctx: Ctx) {
   const admin = countyStoryAdminClient();
   if (!admin) return NextResponse.json({ ok: false, error: "Story preparation is not available yet." }, { status: 503 });
   const { id } = await ctx.params;
-  let body: { background?: string } = {};
   try {
-    body = (await request.json()) as { background?: string };
+    await request.json();
   } catch {
-    body = {};
+    /* A professional cannot choose the unused-space treatment. */
   }
-  const background = isCountyStoryBackgroundMode(body.background) ? body.background : "blur";
   const result = await beginCountyStoryComposition({
     admin,
     storage: supabaseCountyStoryStorage(admin),
     ownerId: auth.user.id,
     mediaId: id,
-    background,
+    background: COUNTY_STORY_DEFAULT_BACKGROUND,
   });
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error, code: result.code }, { status: result.status });

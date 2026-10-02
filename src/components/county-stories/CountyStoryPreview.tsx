@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { CountyStoryPanel, type CountyStoryPanelView } from "@/components/county-stories/CountyStoryPanel";
-import type { CountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
 import { countyStoryTypeCopy } from "@/lib/county-stories/composer-copy";
 import {
   COUNTY_STORY_COMPOSER_STEPS,
@@ -54,7 +53,6 @@ function sample(
   removed: boolean,
   showPauseReasons: boolean,
   resume: "create" | "replace" | null,
-  background: CountyStoryBackgroundMode,
 ): CountyStoryPanelView {
   const replace = hub !== "create" && screen !== "county" && screen !== "suspended";
   const hasSlot = replace || screen === "suspended" || screen === "success" || (removed && screen === "owned");
@@ -94,7 +92,6 @@ function sample(
     accessDescription: "",
     rulesChecked: false,
     videoUrl: workspace ? "/county-stories/preview-frame.mp4" : null,
-    background,
     uploadPercent: screen === "processing" ? 40 : null,
     captionsReady: screen !== "processing",
     processingNote: null,
@@ -148,11 +145,10 @@ export function CountyStoryPreview({
   );
   const [layout, setLayout] = useState<"phone" | "desk">(initialLayout === "desk" ? "desk" : "phone");
   const [whyOpen, setWhyOpen] = useState(showPauseReasons);
-  const [background, setBackground] = useState<CountyStoryBackgroundMode>("blur");
   const [draftSaved, setDraftSaved] = useState(resume != null);
   const resumeMode = draftSaved ? (resume === "replace" || hub === "replace" ? "replace" : "create") : null;
   const view = useMemo(() => {
-    const next = sample(screen, hub, showRemoval, whyOpen, resumeMode, background);
+    const next = sample(screen, hub, showRemoval, whyOpen, resumeMode);
     return {
       ...next,
       showingPauseReasons: whyOpen && screen === "suspended",
@@ -160,7 +156,7 @@ export function CountyStoryPreview({
       mode: resumeMode === "replace" ? "replace" : next.mode,
       countyName: resume === "replace" ? "Polk County" : next.countyName,
     };
-  }, [background, screen, hub, showRemoval, whyOpen, resumeMode]);
+  }, [screen, hub, showRemoval, whyOpen, resumeMode]);
   const noop = () => undefined;
 
   return (
@@ -244,7 +240,6 @@ export function CountyStoryPreview({
             onAskDiscard: noop,
             onCancelDiscard: noop,
             onConfirmDiscard: noop,
-            onBackground: setBackground,
             onRetry: noop,
             onShowPauseReasons: () => setWhyOpen(true),
             onClosePauseReasons: () => setWhyOpen(false),

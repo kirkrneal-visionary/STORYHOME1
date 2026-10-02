@@ -21,7 +21,15 @@ import {
   startComposition,
 } from "../src/lib/county-stories/composition-job.ts";
 import { composedObjectPath, manifestFingerprint } from "../src/lib/county-stories/segment-manifest.ts";
-import { activeClipStopMs, remainingSegmentMs, segmentFitsBudget, usedSegmentMs } from "../src/lib/county-stories/segment-timeline.ts";
+import {
+  COUNTY_STORY_CAPTURE_BUDGET_MS,
+  COUNTY_STORY_CAPTURE_HEADROOM_MS,
+  COUNTY_STORY_TOTAL_MS,
+  activeClipStopMs,
+  remainingSegmentMs,
+  segmentFitsBudget,
+  usedSegmentMs,
+} from "../src/lib/county-stories/segment-timeline.ts";
 import {
   TUS_CHUNK_BYTES,
   browserCanUseTus,
@@ -38,7 +46,9 @@ assert.equal(remainingSegmentMs([{ durationMs: 12000 }, { durationMs: 8000 }]), 
 assert.equal(segmentFitsBudget([{ durationMs: 20000 }], 10000), true);
 assert.equal(segmentFitsBudget([{ durationMs: 20000 }], 10001), false);
 assert.equal(activeClipStopMs([{ durationMs: 18000 }]), 11500);
-assert.equal(activeClipStopMs([]), 29500);
+assert.equal(COUNTY_STORY_CAPTURE_HEADROOM_MS, 500);
+assert.equal(COUNTY_STORY_CAPTURE_BUDGET_MS, COUNTY_STORY_TOTAL_MS - COUNTY_STORY_CAPTURE_HEADROOM_MS);
+assert.equal(activeClipStopMs([]), COUNTY_STORY_CAPTURE_BUDGET_MS);
 
 assert.equal(placementForSource(1080, 1920), "fill");
 assert.equal(placementForSource(1920, 1080), "contain");
@@ -162,11 +172,21 @@ assert.doesNotMatch(camera, /County seat/);
 
 const panel = read("src/components/county-stories/CountyStoryPanel.tsx");
 const background = read("src/components/county-stories/CountyStoryBackground.tsx");
+const policy = read("src/lib/county-stories/composition-policy.ts");
 assert.match(panel, /data-county-story-workspace/);
-assert.match(background, /Blurred background/);
-assert.match(background, /Neutral background/);
+assert.match(panel, /CountyStoryPresentedVideo/);
+assert.doesNotMatch(panel, /Blurred background|Neutral background|onBackground/);
+assert.doesNotMatch(background, /Blurred background|Neutral background|onChange/);
 assert.match(background, /data-county-story-sharp-video/);
+assert.match(background, /data-county-story-background="blur"/);
 assert.doesNotMatch(background, /logo|pattern|sticker/i);
+assert.match(policy, /COUNTY_STORY_DEFAULT_BACKGROUND: CountyStoryBackgroundMode = "blur"/);
+const compositionRoute = read("src/app/api/county-stories/media/[id]/composition/route.ts");
+assert.match(compositionRoute, /COUNTY_STORY_DEFAULT_BACKGROUND/);
+assert.doesNotMatch(compositionRoute, /body\.background/);
+assert.match(policy, /pixelFormat: "yuv420p"/);
+assert.match(policy, /frameRate: "30\/1"/);
+assert.match(policy, /videoTimeBase: "1\/30"/);
 
 const runtimeSource = read("src/lib/county-stories/compose-runtime.ts");
 assert.match(runtimeSource, /not a Cloudflare account limit/);
@@ -187,6 +207,11 @@ assert.match(worker, /4096/);
 assert.match(worker, /setInactivityTimeout/);
 assert.doesNotMatch(worker, /SUPABASE_SERVICE_ROLE_KEY|MUX_TOKEN_SECRET|MUX_SIGNING|QUEUE/);
 const compose = read("services/story-compose/compose.mjs");
+assert.match(compose, /0xF7F4EC/);
+assert.match(compose, /yuv420p/);
+assert.match(compose, /48000/);
+assert.match(compose, /settb=1\/30/);
+assert.match(compose, /\+faststart/);
 assert.match(compose, /const CANVAS_W = 1080/);
 assert.match(compose, /const CANVAS_H = 1920/);
 assert.match(compose, /\/health/);

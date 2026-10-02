@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CountyStoryBackgroundComparison } from "@/components/county-stories/CountyStoryBackground";
-import type { CountyStoryBackgroundMode } from "@/lib/county-stories/composition-policy";
+import { CountyStoryPresentedVideo } from "@/components/county-stories/CountyStoryBackground";
 import { SERVICE_COUNTIES } from "@/lib/markets";
 import {
   COUNTY_STORY_RULES_CONFIRM,
@@ -50,7 +49,6 @@ export type CountyStoryPanelView = {
   recordClock: string | null;
   showRetry: boolean;
   reviewReady: boolean;
-  background?: CountyStoryBackgroundMode;
   uploadPercent?: number | null;
   captionsReady?: boolean;
   countyMarks: Record<string, string>;
@@ -77,7 +75,6 @@ type Actions = {
   onRules: (checked: boolean) => void;
   onRecord: () => void;
   onUpload: (file: File) => void;
-  onBackground?: (mode: CountyStoryBackgroundMode) => void;
   onContinue: () => void;
   onBack: () => void;
   onSaveExit: () => void;
@@ -586,11 +583,7 @@ export function CountyStoryPanel({ view, actions }: { view: CountyStoryPanelView
                 This is what people will see.
               </h2>
               <div className="mt-4">
-                <CountyStoryBackgroundComparison
-                  url={view.videoUrl}
-                  value={view.background ?? "blur"}
-                  onChange={(mode) => actions.onBackground?.(mode)}
-                />
+                <CountyStoryPresentedVideo url={view.videoUrl} />
               </div>
             </div>
           ) : null}

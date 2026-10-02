@@ -72,6 +72,14 @@ assert.equal(
   })?.tokenId,
   "tid",
 );
+const trimmedMux = readCountyStoryMuxEnv({
+  MUX_TOKEN_ID: "tid\n",
+  MUX_TOKEN_SECRET: " sec ",
+  MUX_WEBHOOK_SECRET: "whsec\n",
+});
+assert.equal(trimmedMux?.tokenId, "tid");
+assert.equal(trimmedMux?.tokenSecret, "sec");
+assert.equal(trimmedMux?.webhookSecret, "whsec");
 
 {
   const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });

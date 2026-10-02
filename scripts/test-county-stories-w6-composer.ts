@@ -13,6 +13,7 @@ import {
   countyStoryEligibleWhen,
   countyStoryTypeCopy,
 } from "../src/lib/county-stories/composer-copy.ts";
+import { COUNTY_STORY_CAPTURE_BUDGET_MS } from "../src/lib/county-stories/segment-timeline.ts";
 import {
   COUNTY_STORY_CAMERA_MAX_SEC,
   COUNTY_STORY_CAMERA_PREVIEW_FIT,
@@ -212,9 +213,8 @@ assert.equal(COUNTY_STORY_CAMERA_MAX_SEC, 30);
 assert.equal(COUNTY_STORY_CAMERA_PREVIEW_FIT, "contain");
 assert.equal(countyStoryCameraClock(4), "0:04");
 assert.equal(countyStoryCameraReviewLabel(18), "0:18 of 0:30");
-assert.equal(countyStoryCameraShouldStop(30000), true);
-assert.equal(countyStoryCameraShouldStop(29500), true);
-assert.equal(countyStoryCameraShouldStop(29499), false);
+assert.equal(countyStoryCameraShouldStop(COUNTY_STORY_CAPTURE_BUDGET_MS), true);
+assert.equal(countyStoryCameraShouldStop(COUNTY_STORY_CAPTURE_BUDGET_MS - 1), false);
 assert.equal(countyStoryCameraRequest("user").video.frameRate.ideal, 30);
 assert.equal(countyStoryCameraRequest("user").video.aspectRatio.ideal, 4 / 3);
 assert.equal(countyStoryCameraRequest("environment").video.height.ideal, 1440);
