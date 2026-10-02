@@ -1,5 +1,7 @@
 /** In-app County Story camera. The browser prepares a portrait take. Mux prepares playback later. */
 
+import { COUNTY_STORY_CAPTURE_BUDGET_MS } from "@/lib/county-stories/segment-timeline";
+
 export const COUNTY_STORY_CAMERA_MAX_SEC = 30;
 
 export type CountyStoryCameraFacing = "user" | "environment";
@@ -94,7 +96,7 @@ export function countyStoryCameraClock(elapsedSec: number): string {
 }
 
 export function countyStoryCameraShouldStop(elapsedMs: number): boolean {
-  return elapsedMs >= COUNTY_STORY_CAMERA_MAX_SEC * 1000;
+  return elapsedMs >= COUNTY_STORY_CAPTURE_BUDGET_MS;
 }
 
 export function countyStoryCameraFacingLabel(facing: CountyStoryCameraFacing): string {

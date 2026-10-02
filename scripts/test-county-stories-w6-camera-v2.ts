@@ -34,10 +34,11 @@ import {
 const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 assert.equal(usedSegmentMs([{ durationMs: 12000 }, { durationMs: 8000 }]), 20000);
-assert.equal(remainingSegmentMs([{ durationMs: 12000 }, { durationMs: 8000 }]), 10000);
+assert.equal(remainingSegmentMs([{ durationMs: 12000 }, { durationMs: 8000 }]), 9500);
 assert.equal(segmentFitsBudget([{ durationMs: 20000 }], 10000), true);
 assert.equal(segmentFitsBudget([{ durationMs: 20000 }], 10001), false);
-assert.equal(activeClipStopMs([{ durationMs: 18000 }]), 12000);
+assert.equal(activeClipStopMs([{ durationMs: 18000 }]), 11500);
+assert.equal(activeClipStopMs([]), 29500);
 
 assert.equal(placementForSource(1080, 1920), "fill");
 assert.equal(placementForSource(1920, 1080), "contain");

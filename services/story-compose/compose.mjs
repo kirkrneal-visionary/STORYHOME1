@@ -13,6 +13,9 @@ const CANVAS_W = 1080;
 const CANVAS_H = 1920;
 const NEUTRAL = "0xF7F4EC";
 const CROP_LIMIT = 0.04;
+const FPS = 30;
+const MAX_STORY_FRAMES = FPS * 30;
+const FRAME_LOCK = "fps=30,setsar=1,settb=1/30,setpts=N/(30*TB)";
 
 function placement(width, height) {
   if (!(width > 0) || !(height > 0)) return "contain";
@@ -24,17 +27,28 @@ function placement(width, height) {
 
 function videoChain(mode, place) {
   if (place === "fill") {
-    return `scale=${CANVAS_W}:${CANVAS_H}:force_original_aspect_ratio=increase,crop=${CANVAS_W}:${CANVAS_H},fps=30,setsar=1`;
+    return `scale=${CANVAS_W}:${CANVAS_H}:force_original_aspect_ratio=increase,crop=${CANVAS_W}:${CANVAS_H},${FRAME_LOCK}`;
   }
   if (mode === "blur") {
     return [
       "split[fg][bg]",
       `[bg]scale=${CANVAS_W}:${CANVAS_H}:force_original_aspect_ratio=increase,crop=${CANVAS_W}:${CANVAS_H},boxblur=24:4,eq=brightness=-0.28[bgx]`,
       `[fg]scale=${CANVAS_W}:${CANVAS_H}:force_original_aspect_ratio=decrease[fgx]`,
-      "[bgx][fgx]overlay=(W-w)/2:(H-h)/2,fps=30,setsar=1",
+      `[bgx][fgx]overlay=(W-w)/2:(H-h)/2,${FRAME_LOCK}`,
     ].join(";");
   }
-  return `scale=${CANVAS_W}:${CANVAS_H}:force_original_aspect_ratio=decrease,pad=${CANVAS_W}:${CANVAS_H}:(ow-iw)/2:(oh-ih)/2:color=${NEUTRAL},fps=30,setsar=1`;
+  return `scale=${CANVAS_W}:${CANVAS_H}:force_original_aspect_ratio=decrease,pad=${CANVAS_W}:${CANVAS_H}:(ow-iw)/2:(oh-ih)/2:color=${NEUTRAL},${FRAME_LOCK}`;
+}
+
+function frameCount(durationSec) {
+  if (!Number.isFinite(durationSec) || durationSec <= 0) {
+    throw new Error("missing duration");
+  }
+  return Math.max(1, Math.min(MAX_STORY_FRAMES, Math.round(durationSec * FPS)));
+}
+
+function secondsText(frames) {
+  return (frames / FPS).toFixed(3);
 }
 
 function run(command, args) {
@@ -66,7 +80,7 @@ async function probe(file) {
     "-v",
     "error",
     "-show_entries",
-    "stream=codec_type,width,height",
+    "format=duration:stream=codec_type,width,height",
     "-of",
     "json",
     file,
@@ -78,6 +92,7 @@ async function probe(file) {
     width: Number(video.width) || 0,
     height: Number(video.height) || 0,
     hasAudio: streams.some((stream) => stream.codec_type === "audio"),
+    duration: Number(parsed.format?.duration),
   };
 }
 
@@ -87,16 +102,14 @@ async function download(url, file) {
   await writeFile(file, Buffer.from(await response.arrayBuffer()));
 }
 
-async function normalize(file, output, mode, info) {
-  const place = placement(info.width, info.height);
-  const chain = videoChain(mode, place);
-  const filter = place === "fill" || mode !== "blur" ? `[0:v]${chain}[v]` : `[0:v]${chain}[v]`;
-  const args = ["-y", "-i", file];
-  if (!info.hasAudio) args.push("-f", "lavfi", "-i", "anullsrc=channel_layout=stereo:sample_rate=48000");
-  args.push("-filter_complex", filter, "-map", "[v]");
-  if (info.hasAudio) args.push("-map", "0:a:0");
-  else args.push("-map", "1:a:0", "-shortest");
-  args.push(
+function encodeArgs(seconds, output) {
+  return [
+    "-map",
+    "[v]",
+    "-map",
+    "[a]",
+    "-t",
+    seconds,
     "-c:v",
     "libx264",
     "-preset",
@@ -105,15 +118,43 @@ async function normalize(file, output, mode, info) {
     "yuv420p",
     "-r",
     "30",
+    "-fps_mode",
+    "cfr",
+    "-video_track_timescale",
+    "30",
     "-c:a",
     "aac",
+    "-b:a",
+    "128k",
     "-ar",
     "48000",
     "-ac",
     "2",
+    "-muxdelay",
+    "0",
+    "-muxpreload",
+    "0",
+    "-movflags",
+    "+faststart",
     output,
-  );
+  ];
+}
+
+async function normalize(file, output, mode, info) {
+  const frames = frameCount(info.duration);
+  const seconds = secondsText(frames);
+  const chain = videoChain(mode, placement(info.width, info.height));
+  const audio = info.hasAudio
+    ? `[0:a:0]aresample=48000,aformat=channel_layouts=stereo,asetpts=PTS-STARTPTS,atrim=end=${seconds}[a]`
+    : `[1:a]aresample=48000,aformat=channel_layouts=stereo,atrim=end=${seconds}[a]`;
+  const filter = `[0:v]${chain}[v];${audio}`;
+  const args = ["-y", "-i", file];
+  if (!info.hasAudio) {
+    args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=48000:duration=${seconds}`);
+  }
+  args.push("-filter_complex", filter, ...encodeArgs(seconds, output));
   await run("ffmpeg", args);
+  return frames;
 }
 
 async function readCpuUsageUsec() {
@@ -158,13 +199,28 @@ async function compose(request) {
     const ffmpegStarted = Date.now();
     const ready = [];
     for (const item of normalized) {
-      await normalize(item.source, item.next, mode, item.info);
-      ready.push(item.next);
+      const frames = await normalize(item.source, item.next, mode, item.info);
+      ready.push({ file: item.next, frames });
     }
-    const list = join(dir, "list.txt");
-    await writeFile(list, ready.map((file) => `file '${file}'`).join("\n"));
     const output = join(dir, "composed.mp4");
-    await run("ffmpeg", ["-y", "-f", "concat", "-safe", "0", "-i", list, "-c", "copy", "-movflags", "+faststart", output]);
+    if (ready.length === 1) {
+      await writeFile(output, await readFile(ready[0].file));
+    } else {
+      const totalFrames = Math.min(
+        MAX_STORY_FRAMES,
+        ready.reduce((sum, item) => sum + item.frames, 0),
+      );
+      const seconds = secondsText(totalFrames);
+      const args = ["-y"];
+      for (const item of ready) args.push("-i", item.file);
+      const pads = ready.map((_, index) => `[${index}:v][${index}:a]`).join("");
+      args.push(
+        "-filter_complex",
+        `${pads}concat=n=${ready.length}:v=1:a=1[v][a]`,
+        ...encodeArgs(seconds, output),
+      );
+      await run("ffmpeg", args);
+    }
     timing.ffmpegMs = Date.now() - ffmpegStarted;
     const body = await readFile(output);
     timing.outputBytes = body.length;

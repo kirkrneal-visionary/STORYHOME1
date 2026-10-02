@@ -24,7 +24,12 @@ import {
 } from "@/lib/county-stories/camera-capture";
 import { CountyStoryBackgroundComparison } from "@/components/county-stories/CountyStoryBackground";
 import { deleteLocalSegment, putLocalSegment } from "@/lib/county-stories/local-segments";
-import { activeClipStopMs, remainingSegmentMs, usedSegmentMs } from "@/lib/county-stories/segment-timeline";
+import {
+  COUNTY_STORY_CAPTURE_BUDGET_MS,
+  activeClipStopMs,
+  remainingSegmentMs,
+  usedSegmentMs,
+} from "@/lib/county-stories/segment-timeline";
 
 export type CountyStoryCapturedClip = {
   id: string;
@@ -643,7 +648,8 @@ export function CountyStoryCamera({
   };
 
   const storyMs = usedSegmentMs(clips) + (phase === "recording" ? elapsed * 1000 : 0);
-  const progress = Math.min(1, storyMs / (COUNTY_STORY_CAMERA_MAX_SEC * 1000));
+  const progress = Math.min(1, storyMs / COUNTY_STORY_CAPTURE_BUDGET_MS);
+  const clockSec = storyMs >= COUNTY_STORY_CAPTURE_BUDGET_MS ? COUNTY_STORY_CAMERA_MAX_SEC : storyMs / 1000;
   const timeLeft = remainingSegmentMs(phase === "recording" ? clips : clips);
   const zoomStops = zoomRange ? countyStoryZoomStops(zoomRange) : [];
   const showLive = phase === "live" || phase === "recording" || phase === "denied" || phase === "unsupported";
@@ -691,7 +697,7 @@ export function CountyStoryCamera({
           </button>
           {phase === "live" || phase === "recording" ? (
             <p className="min-w-[7.5rem] rounded-full bg-black/50 px-3 py-1 text-center text-base font-medium tabular-nums" role="timer" data-county-story-camera-timer data-county-story-camera-limit>
-              {countyStoryCameraClock(storyMs / 1000)} / {countyStoryCameraClock(COUNTY_STORY_CAMERA_MAX_SEC)}
+              {countyStoryCameraClock(clockSec)} / {countyStoryCameraClock(COUNTY_STORY_CAMERA_MAX_SEC)}
             </p>
           ) : (
             <span />
