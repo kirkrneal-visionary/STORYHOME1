@@ -35,7 +35,7 @@ install_and_launch() {
   xcrun simctl terminate "$DEVICE" "$BUNDLE_ID" >/dev/null 2>&1 || true
   xcrun simctl uninstall "$DEVICE" "$BUNDLE_ID" >/dev/null 2>&1 || true
   xcrun simctl install "$DEVICE" "$app"
-  xcrun simctl launch --terminate-running-process \
+  SIMCTL_CHILD_NSUnbufferedIO=YES xcrun simctl launch --terminate-running-process \
     --stdout="$OUT/$name-stdout.log" --stderr="$OUT/$name-stderr.log" \
     "$DEVICE" "$BUNDLE_ID"
   sleep "$wait"
@@ -59,15 +59,34 @@ PY
   codesign --force --deep --sign - --timestamp=none "$dest"
 }
 
+python3 -m venv "$OUT/.venv" >/dev/null
+"$OUT/.venv/bin/pip" install --quiet "pillow==11.3.0"
+
+# Prints the share of near-background pixels and gold pixels in a screenshot.
+screen_stats() {
+  "$OUT/.venv/bin/python" - "$1" <<'PY'
+import sys
+from PIL import Image
+image = Image.open(sys.argv[1]).convert("RGB").resize((200, 400))
+pixels = list(image.getdata())
+background = sum(1 for r, g, b in pixels if r < 30 and g < 32 and b < 36) / len(pixels)
+gold = sum(1 for r, g, b in pixels if r > 220 and 160 < g < 205 and b < 70) / len(pixels)
+print(f"{background:.3f} {gold:.3f}")
+PY
+}
+
 fail=0
 
 echo "== 1. Live site"
 codesign --force --deep --sign - --timestamp=none "$APP"
 install_and_launch "$APP" "live-site" 30
-if grep -q "WebView loaded" "$OUT/live-site-stdout.log" "$OUT/live-site-stderr.log"; then
-  echo "Live site loaded."
+read -r bg gold <<<"$(screen_stats "$OUT/live-site.png")"
+echo "live-site.png: background share $bg, gold share $gold"
+grep -h "WebView" "$OUT/live-site-stdout.log" || true
+if python3 -c "import sys; sys.exit(0 if float('$bg') < 0.5 else 1)"; then
+  echo "Live site rendered (not a blank or offline screen)."
 else
-  echo "::error::Live site did not report WebView loaded."
+  echo "::error::Live site screenshot looks blank or offline."
   fail=1
 fi
 
@@ -106,12 +125,15 @@ echo "== 3. Offline screen"
 kill "$SERVER_PID"
 wait "$SERVER_PID" 2>/dev/null || true
 install_and_launch "$OUT/App-local.app" "offline" 15
-if grep -q "WebView failed provisional navigation" "$OUT/offline-stdout.log" "$OUT/offline-stderr.log"; then
-  echo "Load failed as expected; see offline.png for the bundled screen."
+read -r bg gold <<<"$(screen_stats "$OUT/offline.png")"
+echo "offline.png: background share $bg, gold share $gold"
+grep -h "WebView" "$OUT/offline-stdout.log" || true
+if python3 -c "import sys; sys.exit(0 if float('$bg') > 0.8 and float('$gold') > 0.003 else 1)"; then
+  echo "Bundled offline screen is showing."
 else
-  echo "::error::Expected a failed load with the server stopped."
+  echo "::error::Offline screen not detected with the server stopped."
   fail=1
 fi
 
-rm -rf "$OUT/App-local.app"
+rm -rf "$OUT/App-local.app" "$OUT/.venv"
 exit "$fail"
