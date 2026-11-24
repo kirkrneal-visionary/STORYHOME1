@@ -30,6 +30,7 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Messages / referrals | Shells exist; do not assume they are complete CRM. |
 | Billing / boost | Boundary tables exist. **No provider. Not a paid entitlement engine.** |
 | Living Marks | Public bucket by design. |
+| iPhone app shell | `mobile/` (Capacitor, loads `https://www.storyhome.app`). Native only: no site code reads the `StoryHomeApp/1` user agent yet. See `mobile/README.md`. |
 | Settings Wave 1–3 | Authenticator before Pro cards; buyer preview is local; DB locks follow real purpose. |
 
 Founder rationale that was not supplied is marked **unknown**.

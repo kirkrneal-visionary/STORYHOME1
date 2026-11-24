@@ -1,0 +1,7 @@
+node_modules/
+build/
+*.xcarchive
+*.ipa
+*.p8
+*.p12
+*.mobileprovision
