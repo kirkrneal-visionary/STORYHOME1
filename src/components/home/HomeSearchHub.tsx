@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Check, Search } from "lucide-react";
 import {
   CondoIcon,
   GarageIcon,
@@ -41,7 +42,16 @@ import {
   RENT_UNAVAILABLE,
   type TransactionMode,
 } from "@/lib/search/transaction";
+import type { SearchArea } from "@/lib/search/area";
 import { cn } from "@/lib/utils";
+
+const HomeDrawMap = dynamic(
+  () => import("@/components/home/HomeDrawMap").then((m) => m.HomeDrawMap),
+  {
+    ssr: false,
+    loading: () => <p className="story-home-draw-loading">Loading map…</p>,
+  },
+);
 
 const BED_OPTIONS = [
   ["Any", "Any"],
@@ -107,6 +117,12 @@ const MOBILE_FEATURE_TILES = [
 
 export const HOME_CROSSFADE_MS = 240;
 
+/** Filters and Draw map share one look. */
+const ROUND_TRIGGER_CLASS =
+  "story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper md:h-14 md:w-14";
+const ROUND_TRIGGER_BADGE_CLASS =
+  "absolute -right-1 -top-1 flex h-4 w-5 items-center justify-center rounded-full bg-gold text-[9px] font-bold tabular-nums text-navy";
+
 function withoutKeyword(filters: SearchFilters, query: string): SearchFilters {
   return { ...filters, query, keyword: "" };
 }
@@ -164,6 +180,8 @@ export function HomeSearchHub({
   onQuery,
   filters,
   onFilters,
+  area,
+  onArea,
   onSubmitSearch,
 }: {
   transaction: TransactionMode;
@@ -172,15 +190,21 @@ export function HomeSearchHub({
   onQuery: (next: string) => void;
   filters: SearchFilters;
   onFilters: (next: SearchFilters) => void;
+  area: SearchArea | null;
+  onArea: (next: SearchArea | null) => void;
   onSubmitSearch: (next: SearchFilters) => void;
 }) {
   const titleId = useId();
-  const [view, setView] = useState<"search" | "advanced">("search");
+  const [view, setView] = useState<"search" | "advanced" | "map">("search");
   const [draft, setDraft] = useState<SearchFilters>(filters);
+  const [draftArea, setDraftArea] = useState<SearchArea | null>(area);
+  const [mapMounted, setMapMounted] = useState(false);
+  const [panelHeight, setPanelHeight] = useState<number | null>(null);
   const [focused, setFocused] = useState(false);
   const [reduced, setReduced] = useState(false);
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  const advancedRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     document.documentElement.dataset.homeHub = "true";
@@ -194,9 +218,21 @@ export function HomeSearchHub({
     };
   }, []);
 
+  // The Draw map popup takes the Filters popup's exact height.
+  useEffect(() => {
+    const el = advancedRef.current;
+    if (!el) return;
+    const sync = () => setPanelHeight(el.offsetHeight || null);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const advanced = view === "advanced";
   const filterCount = countActiveFilters(withoutKeyword(filters, query));
-  const ghostActive = !advanced && !focused && query.trim().length === 0;
+  const ghostActive =
+    view === "search" && !focused && query.trim().length === 0;
 
   function patchDraft(partial: Partial<SearchFilters>) {
     const next = withoutKeyword(
@@ -235,8 +271,28 @@ export function HomeSearchHub({
     setDraft(next);
   }
 
+  function openMap() {
+    setDraftArea(area);
+    setMapMounted(true);
+    setView("map");
+  }
+
+  function cancelMap() {
+    setDraftArea(area);
+    setView("search");
+  }
+
+  function applyMap() {
+    onArea(draftArea);
+    setView("search");
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (view === "map") {
+      applyMap();
+      return;
+    }
     if (advanced) {
       applyAdvanced();
       return;
@@ -269,10 +325,14 @@ export function HomeSearchHub({
             ghostActive={ghostActive}
             filterCount={filterCount}
             onOpenAdvanced={openAdvanced}
+            areaSet={area != null}
+            onOpenMap={openMap}
           />
         </div>
         <div
+          ref={advancedRef}
           className="story-home-mode"
+          data-mode="advanced"
           data-active={view === "advanced" ? "true" : "false"}
           inert={view !== "advanced" ? true : undefined}
           aria-hidden={view !== "advanced"}
@@ -285,6 +345,23 @@ export function HomeSearchHub({
             onDraft={patchDraft}
             onCancel={cancelAdvanced}
             onClear={clearDraft}
+          />
+        </div>
+        <div
+          className="story-home-mode"
+          data-mode="map"
+          data-active={view === "map" ? "true" : "false"}
+          inert={view !== "map" ? true : undefined}
+          aria-hidden={view !== "map"}
+          style={panelHeight ? { height: panelHeight } : undefined}
+        >
+          <MapMode
+            open={view === "map"}
+            mounted={mapMounted}
+            area={draftArea}
+            onArea={setDraftArea}
+            onCancel={cancelMap}
+            onClear={() => setDraftArea(null)}
           />
         </div>
       </form>
@@ -302,6 +379,8 @@ function SearchMode({
   ghostActive,
   filterCount,
   onOpenAdvanced,
+  areaSet,
+  onOpenMap,
 }: {
   transaction: TransactionMode;
   onTransaction: (next: TransactionMode) => void;
@@ -312,6 +391,8 @@ function SearchMode({
   ghostActive: boolean;
   filterCount: number;
   onOpenAdvanced: () => void;
+  areaSet: boolean;
+  onOpenMap: () => void;
 }) {
   void focused;
   return (
@@ -367,7 +448,7 @@ function SearchMode({
           <HomeGhostHint active={ghostActive} mode={transaction} />
         </div>
       </div>
-      <div className="grid grid-cols-[auto_1fr] items-center gap-1.5 md:contents">
+      <div className="grid grid-cols-[auto_auto_1fr] items-center gap-1.5 md:contents">
         <button
           type="button"
           aria-expanded="false"
@@ -375,7 +456,7 @@ function SearchMode({
             filterCount > 0 ? `Filters, ${filterCount} selected` : "Filters"
           }
           onClick={onOpenAdvanced}
-          className="story-home-filters-trigger story-press relative inline-flex h-12 w-12 flex-col items-center justify-center rounded-full border border-hairline text-paper md:h-14 md:w-14"
+          className={cn("story-home-filters-trigger", ROUND_TRIGGER_CLASS)}
         >
           <span className="text-[10px] font-bold leading-none tracking-wide">
             Filters
@@ -383,14 +464,80 @@ function SearchMode({
           <span
             data-filter-count={filterCount}
             className={cn(
-              "absolute -right-1 -top-1 flex h-4 w-5 items-center justify-center rounded-full bg-gold text-[9px] font-bold tabular-nums text-navy",
+              ROUND_TRIGGER_BADGE_CLASS,
               filterCount > 0 ? "visible" : "invisible",
             )}
           >
             {filterCount || 0}
           </span>
         </button>
+        <button
+          type="button"
+          aria-expanded="false"
+          aria-label={areaSet ? "Draw map, area drawn" : "Draw map"}
+          onClick={onOpenMap}
+          data-draw-map-trigger=""
+          className={cn("story-home-draw-trigger", ROUND_TRIGGER_CLASS)}
+        >
+          <span className="flex flex-col items-center text-[10px] font-bold leading-[1.1] tracking-wide">
+            <span>Draw</span>
+            <span>map</span>
+          </span>
+          <span
+            data-area-set={areaSet ? "true" : "false"}
+            className={cn(
+              ROUND_TRIGGER_BADGE_CLASS,
+              areaSet ? "visible" : "invisible",
+            )}
+          >
+            <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
+          </span>
+        </button>
         <PrimaryAction>Search</PrimaryAction>
+      </div>
+    </div>
+  );
+}
+
+function MapMode({
+  open,
+  mounted,
+  area,
+  onArea,
+  onCancel,
+  onClear,
+}: {
+  open: boolean;
+  mounted: boolean;
+  area: SearchArea | null;
+  onArea: (next: SearchArea) => void;
+  onCancel: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="story-home-draw" data-draw-map="">
+      <p className="sr-only">Draw map</p>
+      <div className="story-home-draw-actions">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/70 hover:text-paper"
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={onClear}
+          className="story-press h-8 shrink-0 rounded-full px-2 text-xs font-semibold text-paper/60 hover:text-paper"
+        >
+          Clear
+        </button>
+        <PrimaryAction>Apply</PrimaryAction>
+      </div>
+      <div className="story-home-draw-frame">
+        {mounted ? (
+          <HomeDrawMap open={open} area={area} onArea={onArea} />
+        ) : null}
       </div>
     </div>
   );

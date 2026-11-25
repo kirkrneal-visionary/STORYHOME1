@@ -16,10 +16,24 @@ export type MarketplaceNavCache = {
   listScrollTop: number;
   mapCenter?: { lat: number; lng: number } | null;
   mapZoom?: number | null;
+  /** URL query the boundary was drawn under; another search must not inherit it. */
+  searchKey: string;
   savedAt: number;
 };
 
 let marketplaceMemory: MarketplaceNavCache | null = null;
+let marketplaceFreshSearch = false;
+
+/** The next marketplace mount is a new homepage search, not a return to the last one. */
+export function markMarketplaceFreshSearch() {
+  marketplaceFreshSearch = true;
+}
+
+export function takeMarketplaceFreshSearch(): boolean {
+  const fresh = marketplaceFreshSearch;
+  marketplaceFreshSearch = false;
+  return fresh;
+}
 
 export function saveMarketplaceCache(state: Omit<MarketplaceNavCache, "savedAt">) {
   const payload: MarketplaceNavCache = { ...state, savedAt: Date.now() };
