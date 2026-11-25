@@ -1,0 +1,37 @@
+# Read-only App Store Connect check: recent builds' processing and TestFlight states.
+# Triggered by pushing an `ios-status-*` tag. Changes nothing at Apple.
+name: iPhone app TestFlight status
+
+on:
+  push:
+    tags:
+      - "ios-status-*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read build status
+        working-directory: mobile
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" | tr -d '\r' > "$RUNNER_TEMP/asc/AuthKey.p8"
+          chmod 600 "$RUNNER_TEMP/asc/AuthKey.p8"
+          export ASC_KEY_PATH="$RUNNER_TEMP/asc/AuthKey.p8"
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet "pyjwt[crypto]==2.10.1"
+          printf '{"appId":"%s"}' "$(sed -n 's/.*appId: "\(.*\)".*/\1/p' capacitor.config.ts)" > "$RUNNER_TEMP/app.json"
+          "$RUNNER_TEMP/venv/bin/python" scripts/asc-prepare.py --status "$RUNNER_TEMP/app.json"
+      - name: Remove the API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
