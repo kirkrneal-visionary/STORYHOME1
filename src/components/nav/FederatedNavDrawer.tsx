@@ -4,7 +4,6 @@ import { useEffect, useId, useRef } from "react";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
-import { GhostExamplesControl } from "@/components/home/GhostExamplesControl";
 import { NavPressButton } from "@/components/nav/NavPressButton";
 import { PrimaryNavLink } from "@/components/nav/PrimaryNavLink";
 import {
@@ -136,10 +135,6 @@ export function FederatedNavDrawer({
               </PrimaryNavLink>
             ))}
           </nav>
-
-          <div className="mt-5 rounded-2xl border border-hairline px-3 py-3">
-            <GhostExamplesControl />
-          </div>
 
           {showArchie ? (
             <>

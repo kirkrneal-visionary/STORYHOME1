@@ -36,7 +36,7 @@ assert.equal(resolvePublicCounty("cleveland"), null);
 assert.equal(REGION_CITIES.includes("Cleveland"), true);
 
 const hero = read("src/components/home/HomeSearchHero.tsx");
-assert.match(hero, /storyhome-meadow-hero/);
+assert.doesNotMatch(hero, /storyhome-meadow-hero|data-home-hero-join/);
 assert.match(hero, /HomeSearchHub/);
 assert.match(hero, /data-home-hero/);
 assert.match(hero, /story-home-wave-a-search/);
@@ -45,7 +45,6 @@ assert.match(hero, /submitRent/);
 assert.match(hero, /data-launch-counties/);
 assert.match(hero, /data-ui-4a="county-discovery"/);
 assert.match(hero, /data-home-story-attachment="">\s*<CountyStoriesRow \/>/);
-assert.match(hero, /data-home-hero-join/);
 assert.match(hero, /searchArea\(area\)/);
 
 // County links live in the County Stories row: one footer link per launch county.
@@ -76,8 +75,8 @@ assert.doesNotMatch(hero, /data-ui-3a|data-ui-3b|LivingMarkPresence/);
 assert.doesNotMatch(hero, /Pause examples|HomeAdvancedSearch|HomeFilterWing/);
 
 const css = read("src/app/globals.css");
-assert.match(css, /\.story-home-hero-join/);
-assert.match(css, /storyhome-meadow-hero|\.story-home-hero\s*\{/);
+assert.doesNotMatch(css, /\.story-home-hero-join|\.story-home-hero-photo/);
+assert.match(css, /\.story-home-hero\s*\{/);
 assert.doesNotMatch(css, /story-cta-primary[^{]*\{[^}]*--accent/);
 
 const page = read("src/app/page.tsx");

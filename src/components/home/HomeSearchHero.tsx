@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -184,16 +183,6 @@ export function HomeSearchHero() {
   return (
     <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
       <section className="story-home-hero" data-home-hero="">
-        <div className="story-home-hero-photo">
-          <Image
-            src="/brand/storyhome-meadow-hero.png"
-            alt="East Texas pine meadow at first light"
-            fill
-            priority
-            className="object-cover object-[22%_72%] md:object-[28%_60%]"
-            sizes="(max-width: 390px) 390px, (max-width: 768px) 768px, (max-width: 1440px) 1440px, 1672px"
-          />
-        </div>
         <div className="story-home-hero-stage">
           <h1 className="type-hero story-home-hero-headline mx-auto max-w-3xl text-center text-paper">
             Find your next place in{" "}
@@ -212,8 +201,6 @@ export function HomeSearchHero() {
           </div>
         </div>
       </section>
-
-      <div className="story-home-hero-join" data-home-hero-join="" aria-hidden />
 
       <section
         className="pb-8 pt-4 md:pt-6"

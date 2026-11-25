@@ -1188,9 +1188,9 @@ html:has([data-home-hero]) .story-overlay-header[data-header-state="full"] {
 }
 
 /*
- * Homepage hero is a hard visual frame. Photograph, headline, and
- * Search/Advanced live inside it and scroll away together. Hero
- * height is breakpoint/viewport CSS only — never filter content.
+ * Homepage hero is a hard visual frame on the plain page background.
+ * Headline and Search/Advanced live inside it and scroll away together.
+ * Hero height is breakpoint/viewport CSS only — never filter content.
  */
 html[data-home-hub] .story-route-page {
   will-change: auto;
@@ -1213,40 +1213,8 @@ html[data-home-hub] .story-route-page {
     height: min(42rem, calc(100svh - 3rem));
   }
 }
-.story-home-hero-photo {
-  position: absolute;
-  inset: 0;
-}
-/* Shades only the top of the photo so the headline reads; the header itself stays clear and unblurred. */
-.story-home-hero-photo::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--env-0) 52%, transparent) 0,
-    color-mix(in srgb, var(--env-0) 40%, transparent)
-      calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 4.5rem),
-    transparent calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 11rem)
-  );
-}
-.story-home-hero-join {
-  pointer-events: none;
-  position: relative;
-  z-index: 2;
-  height: 2.5rem;
-  margin-top: -2.5rem;
-  background: linear-gradient(180deg, transparent, var(--background));
-}
-@media (min-width: 768px) {
-  .story-home-hero-join {
-    height: 3.25rem;
-    margin-top: -3.25rem;
-  }
-}
 .story-home-hero-headline {
-  margin: 0;
+  margin: 0 auto;
   text-wrap: balance;
 }
 @media (max-width: 767px) {
