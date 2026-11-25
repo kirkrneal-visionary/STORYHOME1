@@ -89,6 +89,18 @@ jobs:
             echo "::notice::TestFlight upload skipped: Apple secrets are not set yet."
           fi
         working-directory: .
+      # App Store Connect requires Xcode 26+ with the iOS 26 SDK (since Apr 28, 2026) and rejects beta builds.
+      - name: Check Xcode is accepted by App Store Connect
+        if: steps.secrets.outputs.ready == 'true'
+        working-directory: .
+        run: |
+          xcodebuild -version
+          version="$(xcodebuild -version | awk '/^Xcode/{print $2}')"
+          build="$(xcodebuild -version | awk '/^Build version/{print $3}')"
+          if [ "${version%%.*}" -lt 26 ] || [[ "$build" =~ [a-z]$ ]]; then
+            echo "::error::Xcode $version ($build) is too old or a beta; App Store Connect will reject the upload."
+            exit 1
+          fi
       - uses: actions/checkout@v4
         if: steps.secrets.outputs.ready == 'true'
       - uses: actions/setup-node@v4
@@ -103,7 +115,7 @@ jobs:
         if: steps.secrets.outputs.ready == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/asc"
-          printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          printf '%s\n' "$ASC_KEY_P8" | tr -d '\r' > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
           chmod 600 "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
           echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
       - name: Register bundle ID and check the app record
