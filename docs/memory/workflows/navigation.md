@@ -29,6 +29,7 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 
 - Overlay header stays a light scrim — never a solid black band. Not a type-size change.
 - Homepage only (`html:has([data-home-hero])`, so it holds from first paint): the header is clear over the hero and never blurred, per Kirk’s County Stories design. Reduced transparency keeps the solid fallback. Other pages are unchanged.
+- Homepage hero headline is paper over a dark gradient on the top of the photo (no blur; the header element stays clear). On phones it scales with width (26–28px), stays two lines, and keeps its 3.5rem layout height so Search never moves.
 - Research mode picker is padded under header + ribbon. Live map sheet still hides chrome.
 - Dock `bottom` uses `max(safe-area, --story-vv-bottom)`. Keyboard and browser chrome move the dock. No one-phone offset.
 - Active tab comes from `primaryDockId` / `archieModuleFromSearch` only after the URL matches.

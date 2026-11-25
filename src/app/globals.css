@@ -1217,6 +1217,20 @@ html[data-home-hub] .story-route-page {
   position: absolute;
   inset: 0;
 }
+/* Shades only the top of the photo so the headline reads; the header itself stays clear and unblurred. */
+.story-home-hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--env-0) 52%, transparent) 0,
+    color-mix(in srgb, var(--env-0) 40%, transparent)
+      calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 4.5rem),
+    transparent calc(var(--story-header-h-full) + env(safe-area-inset-top, 0px) + 11rem)
+  );
+}
 .story-home-hero-join {
   pointer-events: none;
   position: relative;
@@ -1233,11 +1247,17 @@ html[data-home-hub] .story-route-page {
 }
 .story-home-hero-headline {
   margin: 0;
+  text-wrap: balance;
 }
 @media (max-width: 767px) {
   .story-home-hero-headline {
-    font-size: 1.5rem;
-    line-height: 1.75rem;
+    --hero-headline-size: clamp(1.625rem, 7vw, 1.75rem);
+    max-width: 12em;
+    /* max-width keeps two lines. The negative top margin holds the layout height at 3.5rem, so Search
+       never shifts with the size and the last line stays clear of the open Advanced panel. */
+    margin: calc(3.5rem - 2 * 1.15 * var(--hero-headline-size)) auto 0;
+    font-size: var(--hero-headline-size);
+    line-height: 1.15;
   }
 }
 .story-home-hero-stage {
