@@ -5,7 +5,7 @@
 
 ## In progress
 
-- County Stories Wave 6 is the professional composer on the owner’s own Agent World. Each composer step has Back and Save and exit. An unfinished Story stays in this browser until Continue or Discard. A draft does not hold a County seat or use the replacement. The rules box is not saved as already checked. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. Wave 7 viewer is not started. Homepage County cards are unchanged.
+- County Stories Wave 6 is the professional composer on the owner’s own Agent World. Each composer step has Back and Save and exit. An unfinished Story stays in this browser until Continue or Discard. A draft does not hold a County seat or use the replacement. The rules box is not saved as already checked. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. The homepage County Stories row and consumer viewer (Kirk’s approved design) are in review; until publish is on, the row shows county covers and county links only.
 - Canonical prepared playback is secured Mux HLS (signed/private playback id), not a static MP4 rendition.
 - County Stories Wave 4 is on `main` (`0084`, hosted). Public publish stays off.
 - County Stories Waves 1–3 are on `main` (hosted and verified).
@@ -38,7 +38,7 @@
 - Billing
 - People-copy between accounts
 - Rebuilding Corridors
-- Restyling the overlay header (founder rejected the solid band)
+- Restyling the overlay header (founder rejected the solid band). The homepage-only clear header with no blur is Kirk’s County Stories design.
 
 ## Next concrete action
 

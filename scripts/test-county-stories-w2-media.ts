@@ -505,7 +505,7 @@ for (const rel of [
 }
 
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
-assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), true);
 assert.equal(existsSync(join(root, "src/app/s")), false);
 assert.doesNotMatch(read("src/app/api/county-stories/media/route.ts"), /county_story_slots/);
 assert.doesNotMatch(

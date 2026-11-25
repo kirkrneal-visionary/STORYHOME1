@@ -1,6 +1,6 @@
 /**
  * Server-issued signed Mux playback tokens.
- * Used for caption VTT download. Wave 7 will use the same helper for viewers.
+ * Used for caption VTT download and the consumer viewer (video "v", thumbnail "t").
  * Never mints a token for a public playback id.
  */
 import { createSign } from "node:crypto";
@@ -19,11 +19,16 @@ function b64url(buf: Buffer | string): string {
     .replace(/=+$/g, "");
 }
 
+export type MuxTokenAudience = "v" | "t";
+
 export function signMuxPlaybackToken(opts: {
   playbackId: string;
   ttlSec?: number;
   env?: CountyStoryMuxEnv | null;
   nowMs?: number;
+  audience?: MuxTokenAudience;
+  /** Signed thumbnails must carry their image params (width, time) inside the token. */
+  claims?: Record<string, string | number>;
 }): string | null {
   const env = opts.env ?? readCountyStoryMuxEnv();
   const signingKeyPrivate = loadMuxSigningPrivateKey(env?.signingKeyPrivate);
@@ -36,8 +41,9 @@ export function signMuxPlaybackToken(opts: {
   );
   const payload = b64url(
     JSON.stringify({
+      ...opts.claims,
       sub: opts.playbackId,
-      aud: "v",
+      aud: opts.audience ?? "v",
       exp,
       kid: env.signingKeyId,
     }),

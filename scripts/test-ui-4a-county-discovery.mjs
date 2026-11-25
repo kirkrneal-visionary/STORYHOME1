@@ -44,12 +44,23 @@ assert.match(hero, /authorizeSearchInput/);
 assert.match(hero, /submitRent/);
 assert.match(hero, /data-launch-counties/);
 assert.match(hero, /data-ui-4a="county-discovery"/);
-assert.match(hero, /data-home-county-card/);
-assert.match(hero, /data-home-story-attachment/);
+assert.match(hero, /data-home-story-attachment="">\s*<CountyStoriesRow \/>/);
 assert.match(hero, /data-home-hero-join/);
-assert.match(hero, /publicCountyPath/);
-assert.match(hero, /countySlugFromName/);
 assert.match(hero, /searchArea\(area\)/);
+
+// County links live in the County Stories row: one footer link per launch county.
+const storyTile = read("src/components/county-stories/CountyStoryTile.tsx");
+assert.match(storyTile, /data-home-county-card/);
+assert.match(storyTile, /County, Texas/);
+const storyCovers = read("src/lib/county-stories/county-covers.ts");
+assert.match(storyCovers, /publicCountyPath/);
+assert.match(storyCovers, /countySlugFromName/);
+assert.match(storyCovers, /SERVICE_COUNTIES/);
+const storySheet = read("src/components/county-stories/CountyProfileSheet.tsx");
+assert.match(storySheet, /Explore \{county\.name\}/);
+for (const src of [storyTile, storyCovers, storySheet]) {
+  assert.doesNotMatch(src, /\/tx\/polk|Stories coming|story circle|Story rail/i);
+}
 assert.match(hero, /REGION_CITIES\.slice\(0, 6\)/);
 assert.match(hero, /See marketplace/);
 assert.match(hero, /View all homes/);

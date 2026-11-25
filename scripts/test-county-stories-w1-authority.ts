@@ -143,7 +143,6 @@ assert.match(eligibility, /void opts\.brokerageId/);
 assert.doesNotMatch(eligibility, /mayUseStoryPro\(/);
 
 for (const rel of [
-  "src/components/home/HomeSearchHero.tsx",
   "src/app/page.tsx",
   "src/components/agents/StoryWalkComposer.tsx",
   "src/lib/living-mark/library.ts",
@@ -162,10 +161,24 @@ for (const rel of [
 }
 
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
-assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
 const agentWorld = read("src/components/agents/AgentWorldView.tsx");
 assert.match(agentWorld, /isOwn \? <CountyStoryComposer ownerId=\{agent\.id\} \/> : null/);
-assert.doesNotMatch(read("src/components/home/HomeSearchHero.tsx"), /county-stories|CountyStoryComposer/);
+// The homepage shows the public County Stories row only; authority stays on the server.
+const homeHero = read("src/components/home/HomeSearchHero.tsx");
+assert.match(
+  homeHero,
+  /import \{ CountyStoriesRow \} from "@\/components\/county-stories\/CountyStoriesRow";/,
+);
+assert.equal(homeHero.match(/county-stories/g)?.length, 1);
+assert.doesNotMatch(
+  homeHero,
+  /county_story_|countyStoryDay|isCountyStoryCountyActive|CountyStoryComposer/,
+);
+const consumerViewer = read("src/components/county-stories/CountyStoryViewer.tsx");
+assert.doesNotMatch(
+  consumerViewer,
+  /CountyStoryComposer|supabase\/admin|publish-service|county_story_/,
+);
 assert.equal(existsSync(join(root, "src/app/s")), false);
 
 const started = spawnSync("sudo", ["pg_ctlcluster", "16", "main", "start"], {

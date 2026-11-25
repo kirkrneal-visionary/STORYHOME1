@@ -59,7 +59,7 @@ assert.equal(existsSync(join(root, "src/app/api/county-stories/admin/policy-hide
 assert.equal(existsSync(join(root, "src/app/api/county-stories/suspension/route.ts")), true);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/delete/route.ts")), false);
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
-assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), true);
 assert.match(
   read("src/lib/county-stories/enforcement-service.ts"),
   /hideCountyStoryForPolicy/,

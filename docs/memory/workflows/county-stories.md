@@ -2,7 +2,7 @@
 
 **Who / why:** Eligible Story Pro publishers stage a short county Story. The durable object is a Story Slot. Media is temporary.
 
-**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Each screen is one decision, with Back and Save and exit. An unfinished Story stays in the browser and does not hold a County seat. The sample state selector is only on the non-production preview route. Public publishing stays disabled. There is no consumer viewer. Wave 7 is not started. Homepage County cards are unchanged.
+**Intended:** Waves 1–5 are accepted and hosted. `0087` replacement context is hosted. Wave 6 is the professional composer on that professional’s own Agent World. Each screen is one decision, with Back and Save and exit. An unfinished Story stays in the browser and does not hold a County seat. The sample state selector is only on the non-production preview route. Public publishing stays disabled. The homepage County Stories row and consumer viewer (Kirk’s approved design) are in review. They read only accepted Stories through a public read-only route, so while publishing is off the row shows county covers and county links only.
 
 ## Waves
 
@@ -102,7 +102,21 @@ Automatic transcription uses `CountyStoryTranscriptionProvider`. Mux is the firs
 
 Cue text and the video-specific description delete with superseded, policy-removed, or expired media. Job/revision/confirmation facts may remain. Transcripts are not indexed for search, Archie, SEO, or profile history.
 
-Wave 7 viewer requirements (track only, not this wave): keyboard controls, non-swipe alternatives, screen-reader labels, focus management, visible focus, caption contrast, text scaling, reduced motion, panel pause/resume, return focus after panel close, position such as “3 of 12”.
+Viewer requirements (met by the consumer viewer below): keyboard controls, non-swipe alternatives, screen-reader labels, focus management, visible focus, caption contrast, text scaling, reduced motion, panel pause/resume, return focus after panel close, position such as “3 of 12”.
+
+## Consumer row and viewer
+
+The homepage row has one tile per launch-seven county. A tile always belongs to its county; rotating changes only which of that county’s Stories it shows. A county with no Stories keeps its cover and county link, with no author, title, or progress.
+
+- Reads: `GET /api/county-stories/feed` (today’s Stories by county) and `GET /api/county-stories/feed/{id}` (one Story’s playback). Public, read-only, service role on the server, `no-store`, `noindex`. No writes and no client input beyond the Story id.
+- Both return nothing while `publish_enabled` is false. The flag is read on every request.
+- A Story shows only when the slot is `accepted` for today’s Story Day in a launch county and its current media has prepared signed HLS plus confirmed captions and visual information. The playback route also calls `county_story_media_is_playback_ready` and `county_story_media_is_accessibility_ready`.
+- Author name, professional type, and brokerage come from the slot’s advertising snapshot. The photo is the profile’s current photo. Role label is `professionalTypeLabel`. Nothing comes from the browser.
+- There is no Story title field yet. Open House / Property Stories show the listing address; Local Knowledge Stories show no title.
+- Tokens: video `v` for 15 minutes; poster thumbnail `t` for 2 hours with the width inside the token. Posters are the baseline; video loads only after a tap. Browsers with built-in HLS (iPhone, Safari, current Chrome) use it; others load `hls.js` when the viewer opens. CSP allows `*.mux.com` for media and connect.
+- Viewer: muted start, captions on by default, sound/captions/pause/close buttons, tap zones plus ←/→, Space or K, M, C, Esc. Portrait Stories fill the screen; landscape Stories show whole. Focus is trapped and returns to the tile; page scroll does not move. Tiles do not rotate under reduced motion.
+- Homepage header is clear with no blur (homepage only; reduced transparency keeps the solid fallback).
+- Not built: views, likes, follows, comments, sharing, analytics, county-page row.
 
 ## Source probe vs prepared playback
 
@@ -131,7 +145,7 @@ Limits that stay: 80 MiB max staged upload, 30.000 s max duration, 6-hour abando
 
 ## Mux provider (Wave 5)
 
-Mux is County Stories media infrastructure only. Missing `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` / `MUX_WEBHOOK_SECRET` fails safely as `PROVIDER_UNAVAILABLE`. Never `NEXT_PUBLIC_`. Caption VTT download and future viewer tokens need `MUX_SIGNING_KEY_ID` and `MUX_SIGNING_KEY_PRIVATE_KEY`. The private key may be Mux Base64-encoded PEM or PEM text. The loader decodes Base64 once. PEM text is not decoded again. Malformed key material fails closed: signing stays unavailable and VTT fetch returns `PROVIDER_UNAVAILABLE`.
+Mux is County Stories media infrastructure only. Missing `MUX_TOKEN_ID` / `MUX_TOKEN_SECRET` / `MUX_WEBHOOK_SECRET` fails safely as `PROVIDER_UNAVAILABLE`. Never `NEXT_PUBLIC_`. Caption VTT download and the consumer viewer’s playback and poster tokens need `MUX_SIGNING_KEY_ID` and `MUX_SIGNING_KEY_PRIVATE_KEY`. The private key may be Mux Base64-encoded PEM or PEM text. The loader decodes Base64 once. PEM text is not decoded again. Malformed key material fails closed: signing stays unavailable and VTT fetch returns `PROVIDER_UNAVAILABLE`.
 
 `video.asset.ready` and generated caption-track ready are independent. A ready asset with a still-preparing text track stores signed playback and does not import cues. Auto captions stay `auto_ready` until the professional confirms them. Publish still requires prepared signed playback, imported cues, caption confirmation, and visual accessibility confirmation.
 
@@ -153,7 +167,7 @@ Unpublished staged media is excluded when `slot_id` is set. Superseded replaceme
 
 ## Required pre-Wave-6 infrastructure gate
 
-Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Each step can go Back or Save and exit. A saved draft is not an accepted Story and does not use the one replacement. The rules checkbox is acknowledged again before publish. Professional copy explains the posting rules, the seven day pause, and the public reasons for the removals that opened that pause. A hidden Story returns a public removal sentence, not a reason code or note. Wave 7 viewer is not started.
+Hosted `0085`, `0086`, and `0087` are applied. `publish_enabled` stays false. Wave 6 composer is in review on the owner’s Agent World. Each step can go Back or Save and exit. A saved draft is not an accepted Story and does not use the one replacement. The rules checkbox is acknowledged again before publish. Professional copy explains the posting rules, the seven day pause, and the public reasons for the removals that opened that pause. A hidden Story returns a public removal sentence, not a reason code or note. The consumer viewer is in review and shows nothing until `publish_enabled` is turned on.
 
 A normal professional recording on an iPhone should enter Mux automatically after source probe. The professional should not convert codecs by hand.
 
@@ -161,5 +175,5 @@ A normal professional recording on an iPhone should enter Mux automatically afte
 
 - Not Living Marks, Home Docs, or SHI Studies. Dedicated private bucket `county-story-media`. The composer is only on the professional’s own Agent World.
 - Not P1C geography. Launch-seven FIPS only until a later wave says otherwise.
-- Not Marketplace, Homepage, or County page UI. No consumer viewer.
-- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`, `npm run test:county-stories-w5-mux`, `npm run test:county-stories-w6`.
+- Not Marketplace or County page UI. The homepage shows the consumer row only.
+- Tests: `npm run test:county-stories-w1`, `npm run test:county-stories-w2`, `npm run test:county-stories-w3`, `npm run test:county-stories-w4`, `npm run test:county-stories-w5`, `npm run test:county-stories-w5-mux`, `npm run test:county-stories-w6`, `npm run test:county-stories-viewer`.

@@ -1173,6 +1173,20 @@ html[data-header-state="minimal"] .story-living-mark {
   }
 }
 
+/* Homepage only: clear header over the hero, never blurred. Server-rendered selectors, so no blur flash before hydration. */
+html:has([data-home-hero]) .story-overlay-header {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+html:has([data-home-hero]) .story-overlay-header[data-header-state="full"] {
+  background: transparent;
+}
+@media (prefers-reduced-transparency: reduce) {
+  html:has([data-home-hero]) .story-overlay-header[data-header-state="full"] {
+    background: var(--env-1);
+  }
+}
+
 /*
  * Homepage hero is a hard visual frame. Photograph, headline, and
  * Search/Advanced live inside it and scroll away together. Hero

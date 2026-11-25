@@ -285,7 +285,10 @@ assert.equal(replacementUsed.kind, "blocked");
 assert.match(replacementUsed.kind === "blocked" ? replacementUsed.lead : "", /current Story is unchanged/);
 assert.doesNotMatch(read("src/components/home/HomeSearchHero.tsx"), /CountyStory/);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/delete/route.ts")), false);
-assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
+assert.doesNotMatch(
+  read("src/components/county-stories/CountyStoryViewer.tsx"),
+  /CountyStoryComposer|\/api\/county-stories\/(publish|composer|media)/,
+);
 assert.match(read("src/app/api/county-stories/publish/route.ts"), /FEATURE_DISABLED/);
 
 console.log("county-stories-w6-composer: ok");

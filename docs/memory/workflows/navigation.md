@@ -28,6 +28,7 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 ## Header and viewport (Wave 2)
 
 - Overlay header stays a light scrim — never a solid black band. Not a type-size change.
+- Homepage only (`html:has([data-home-hero])`, so it holds from first paint): the header is clear over the hero and never blurred, per Kirk’s County Stories design. Reduced transparency keeps the solid fallback. Other pages are unchanged.
 - Research mode picker is padded under header + ribbon. Live map sheet still hides chrome.
 - Dock `bottom` uses `max(safe-area, --story-vv-bottom)`. Keyboard and browser chrome move the dock. No one-phone offset.
 - Active tab comes from `primaryDockId` / `archieModuleFromSearch` only after the URL matches.
@@ -37,7 +38,7 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 - Bottom dock is a smoked-glass capsule (`--dock-*` tokens). Active cell is filled navy with a thin gold ring.
 - Wave 6: stronger see-through frost + top-rim only. No outline. No shadow puddle.
 - Archie dock mark uses official `ARCHIE_MARK_SRC`. Do not redraw the face.
-- Honor reduced motion and reduced transparency. No header restyle.
+- Honor reduced motion and reduced transparency. No header restyle beyond the homepage exception above.
 
 ## Marketplace canvas and edges (Waves 4–5)
 
