@@ -105,13 +105,23 @@ export function HomeDrawMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const sessionRef = useRef<FreehandSession>(emptyFreehandSession());
   const areaRef = useRef(area);
-  areaRef.current = area;
   const onAreaRef = useRef(onArea);
-  onAreaRef.current = onArea;
+  useEffect(() => {
+    areaRef.current = area;
+    onAreaRef.current = onArea;
+  });
 
   const [ready, setReady] = useState(false);
   const [tool, setTool] = useState<Tool>(area ? "move" : "draw");
   const [stroke, setStroke] = useState(false);
+
+  // Each open starts in the right tool; clearing the area goes back to drawing.
+  const [seen, setSeen] = useState({ open, area });
+  if (seen.open !== open || seen.area !== area) {
+    setSeen({ open, area });
+    if (open && !seen.open) setTool(area ? "move" : "draw");
+    else if (!area && seen.area) setTool("draw");
+  }
 
   useEffect(() => {
     const el = containerRef.current;
@@ -213,12 +223,10 @@ export function HomeDrawMap({
     };
   }, []);
 
-  // Every open starts from the applied area (or East Texas) in the right tool.
+  // Every open frames the applied area, or East Texas.
   useEffect(() => {
-    if (!open) return;
-    setTool(areaRef.current ? "move" : "draw");
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !open) return;
     const id = requestAnimationFrame(() => {
       map.resize();
       map.fitBounds(frameFor(areaRef.current), {
@@ -228,10 +236,6 @@ export function HomeDrawMap({
     });
     return () => cancelAnimationFrame(id);
   }, [open]);
-
-  useEffect(() => {
-    if (!area) setTool("draw");
-  }, [area]);
 
   useEffect(() => {
     const map = mapRef.current;
