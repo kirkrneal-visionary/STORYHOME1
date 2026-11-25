@@ -10,6 +10,10 @@ import styles from "./county-stories.module.css";
 /** Tiles stop rotating after this many passes so the row settles. */
 const MAX_PASSES = 3;
 
+/** Rendered widths of the tile (`--cs-tile-w`) and the popup cover (`.sheet`) in the module CSS. */
+const TILE_SIZES = "(min-width: 768px) 224px, (min-width: 389px) 280px, 72vw";
+const WIDE_SIZES = "(min-width: 384px) 368px, calc(100vw - 16px)";
+
 export function CountyStoryCategoryIcon({ type }: { type: CountyStoryCard["type"] }) {
   return type === "open_house_property" ? <House aria-hidden /> : <Compass aria-hidden />;
 }
@@ -17,19 +21,25 @@ export function CountyStoryCategoryIcon({ type }: { type: CountyStoryCard["type"
 export function CountyStoryCover({
   county,
   imageClassName,
+  wide = false,
 }: {
   county: CountyStoryCountyVisual;
   imageClassName?: string;
+  wide?: boolean;
 }) {
   if (county.cover) {
+    const file = wide ? county.cover.wide : county.cover.tile;
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         className={cn(styles.image, imageClassName)}
-        src={county.cover.src}
+        src={file.src}
+        srcSet={file.srcSet}
+        sizes={wide ? WIDE_SIZES : TILE_SIZES}
         alt=""
         decoding="async"
-        loading="lazy"
+        loading={wide ? "eager" : "lazy"}
+        data-county-cover=""
       />
     );
   }

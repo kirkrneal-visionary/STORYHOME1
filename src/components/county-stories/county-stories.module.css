@@ -443,7 +443,8 @@
 .sideNav:focus-visible,
 .inlineLink:focus-visible,
 .whoName:focus-visible,
-.retry:focus-visible {
+.retry:focus-visible,
+.credit a:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
@@ -625,6 +626,25 @@
   color: color-mix(in srgb, var(--paper) 62%, transparent);
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+.credit {
+  margin: 0;
+  color: color-mix(in srgb, var(--paper) 62%, transparent);
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+.credit a {
+  color: inherit;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--paper) 32%, transparent);
+  text-underline-offset: 2px;
+}
+
+.credit a:hover {
+  color: var(--paper);
 }
 
 /* Story viewer */

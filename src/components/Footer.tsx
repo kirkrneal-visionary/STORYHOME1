@@ -158,6 +158,12 @@ export default function Footer() {
                 >
                   Accessibility Statement
                 </Link>
+                <Link
+                  href="/county-stories/photo-credits"
+                  className="inline-flex min-h-11 items-center px-3 text-sm text-paper/75 hover:text-gold"
+                >
+                  Photo Credits
+                </Link>
               </>
             }
           />

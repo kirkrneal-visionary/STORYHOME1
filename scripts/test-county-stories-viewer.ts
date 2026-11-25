@@ -21,7 +21,16 @@ import {
   readCountyStoryPlayback,
   type CountyStoryTokenSigner,
 } from "../src/lib/county-stories/viewer-feed.ts";
-import { COUNTY_STORY_COUNTIES } from "../src/lib/county-stories/county-covers.ts";
+import {
+  COUNTY_PHOTO_CREDITS_PATH,
+  COUNTY_STORY_COUNTIES,
+  countyPictureCreditLine,
+  countyPictureLicenseUrl,
+  countyPictureNeedsCredit,
+  countyPopupPhotoCredits,
+  type CountyPictureFile,
+  type CountyPictureLicense,
+} from "../src/lib/county-stories/county-covers.ts";
 import { COUNTY_STORY_V1_ACTIVE_FIPS } from "../src/lib/county-stories/activation.ts";
 import { SERVICE_COUNTIES } from "../src/lib/markets.ts";
 import { publicCountyPath } from "../src/lib/geo/county-route.ts";
@@ -547,6 +556,7 @@ const browserFiles = [
   "src/components/county-stories/CountyStoryViewer.tsx",
   "src/components/county-stories/attach-story-source.ts",
   "src/components/county-stories/useCountyStoryModal.ts",
+  "src/components/county-stories/CountyPhotoCredit.tsx",
   "src/lib/county-stories/viewer-model.ts",
   "src/lib/county-stories/county-covers.ts",
 ];
@@ -565,6 +575,7 @@ const shipped = [
   "src/lib/county-stories/viewer-feed.ts",
   "src/app/api/county-stories/feed/route.ts",
   "src/app/api/county-stories/feed/[id]/route.ts",
+  "src/app/county-stories/photo-credits/page.tsx",
   "src/components/home/HomeSearchHero.tsx",
 ];
 for (const rel of shipped) {
@@ -617,15 +628,170 @@ assert.match(read("src/components/county-stories/CountyStoriesRow.tsx"), /focus\
 // --- Counties, covers, styling scope, CSP --------------------------------------
 
 assert.equal(COUNTY_STORY_COUNTIES.length, COUNTY_STORY_V1_ACTIVE_FIPS.length);
-for (const county of COUNTY_STORY_COUNTIES) {
-  assert.equal(county.href, publicCountyPath(county.slug));
-  for (const image of [county.cover, county.courthouse]) {
-    if (image) {
-      assert.ok(image.source.trim().length > 10, `${county.name} image needs its source`);
-      assert.ok(image.alt.trim().length > 0, `${county.name} image needs alt text`);
-    }
+
+// Kirk's starred picks: [title on the source page, creator, license].
+type Pick = [string, string, CountyPictureLicense];
+const PICKS: Record<string, { cover: Pick; courthouse: Pick }> = {
+  polk: {
+    cover: ["Lake Livingston State Park Canoeing", "Larry D. Moore", "CC BY 4.0"],
+    courthouse: ["Courthouse Polk County Texas", "Jim Evans", "CC BY-SA 4.0"],
+  },
+  trinity: {
+    cover: ["Kayaker and Swing Railroad Bridge over Trinity River, Riverside, Texas 1209081524", "Patrick Feller", "CC BY 2.0"],
+    courthouse: ["Trinity county tx courthouse 2015", "Larry D. Moore", "CC BY 4.0"],
+  },
+  angelina: {
+    cover: ["Through Truss Railroad Bridge over Neches River, west of US 59 1124111633 (6402593837)", "Patrick Feller", "CC BY 2.0"],
+    courthouse: ["Angelina County Courthouse, Lufkin, Texas 1708201604 (36514799203)", "Patrick Feller", "CC BY 2.0"],
+  },
+  tyler: {
+    cover: ["Big Thicket National Preserve, Hickory Creek Unit, Tyler Co. TX", "William L. Farr", "CC BY-SA 4.0"],
+    courthouse: ["Tyler county tx courthouse 2014", "Larry D. Moore", "CC BY 4.0"],
+  },
+  "san-jacinto": {
+    cover: [
+      "Winters Bayou Scenic Aera near the southeast end of the Lone Star Hiking Trail, Sam Houston National Forest",
+      "William L. Farr",
+      "CC BY 4.0",
+    ],
+    courthouse: ["San jacinto tx county courthouse 2014", "Larry D. Moore", "CC BY 4.0"],
+  },
+  liberty: {
+    cover: ["Two horses stand amid lush surroundings near Cleveland in Liberty County, Texas LCCN2014633930", "Carol M. Highsmith", "Public domain"],
+    courthouse: ["Liberty county tx courthouse 2014", "Larry D. Moore", "CC BY 4.0"],
+  },
+  walker: {
+    cover: ["Huntsville SP lake raven", "Larry D. Moore", "CC BY 4.0"],
+    courthouse: ["Walker County Courthouse Texas", "Hvhappens", "CC0"],
+  },
+};
+
+function webpSize(buf: Buffer): { width: number; height: number } {
+  assert.equal(buf.toString("ascii", 0, 4), "RIFF");
+  assert.equal(buf.toString("ascii", 8, 12), "WEBP");
+  const chunk = buf.toString("ascii", 12, 16);
+  if (chunk === "VP8 ") return { width: buf.readUInt16LE(26) & 0x3fff, height: buf.readUInt16LE(28) & 0x3fff };
+  if (chunk === "VP8L") {
+    const bits = buf.readUInt32LE(21);
+    return { width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+  }
+  if (chunk === "VP8X") return { width: buf.readUIntLE(24, 3) + 1, height: buf.readUIntLE(27, 3) + 1 };
+  throw new Error(`unknown WebP chunk ${chunk}`);
+}
+
+const pictureDir = "public/county-stories/pictures";
+const referencedPictures = new Set<string>();
+function checkPictureFile(file: CountyPictureFile, aspect: number, maxBytes: number, label: string) {
+  const candidates = file.srcSet.split(", ").map((entry) => {
+    const [src, descriptor] = entry.split(" ");
+    return { src: src!, width: Number(descriptor!.replace(/w$/, "")) };
+  });
+  assert.ok(candidates.length >= 2, `${label} offers more than one size`);
+  assert.equal(file.src, candidates[0]!.src, `${label} falls back to its smallest size`);
+  for (const { src, width } of candidates) {
+    assert.match(src, /^\/county-stories\/pictures\/[a-z-]+-\d+\.webp$/, label);
+    const rel = `public${src}`;
+    const buf = readFileSync(join(root, rel));
+    const size = webpSize(buf);
+    assert.equal(size.width, width, `${rel} width`);
+    assert.equal(size.height, Math.round(width / aspect), `${rel} height`);
+    assert.ok(buf.length <= maxBytes, `${rel} is ${buf.length} bytes`);
+    referencedPictures.add(src.split("/").pop()!);
   }
 }
+
+const LICENSE_URLS: Record<CountyPictureLicense, string | null> = {
+  "CC BY 2.0": "https://creativecommons.org/licenses/by/2.0/",
+  "CC BY 4.0": "https://creativecommons.org/licenses/by/4.0/",
+  "CC BY-SA 4.0": "https://creativecommons.org/licenses/by-sa/4.0/",
+  CC0: "https://creativecommons.org/publicdomain/zero/1.0/",
+  "Public domain": null,
+};
+
+assert.deepEqual(COUNTY_STORY_COUNTIES.map((county) => county.slug).sort(), Object.keys(PICKS).sort());
+for (const county of COUNTY_STORY_COUNTIES) {
+  assert.equal(county.href, publicCountyPath(county.slug));
+  const pick = PICKS[county.slug]!;
+  assert.ok(county.cover && county.courthouse, `${county.name} has a cover and a courthouse picture`);
+  for (const [picture, [title, creator, license]] of [
+    [county.cover, pick.cover],
+    [county.courthouse, pick.courthouse],
+  ] as const) {
+    const { credit } = picture;
+    assert.equal(credit.title, title, county.name);
+    assert.equal(credit.creator, creator, county.name);
+    assert.equal(credit.license, license, county.name);
+    assert.match(
+      credit.sourceUrl,
+      /^https:\/\/(commons\.wikimedia\.org\/wiki\/File:[^\s?#]+\.(jpg|tif)|www\.flickr\.com\/photos\/[^\s/]+\/\d+)$/,
+      county.name,
+    );
+    assert.equal(credit.site, credit.sourceUrl.includes("flickr.com") ? "Flickr" : "Wikimedia Commons");
+    assert.equal(countyPictureLicenseUrl(license), LICENSE_URLS[license]);
+    assert.equal(countyPictureNeedsCredit(credit), license !== "Public domain" && license !== "CC0");
+    assert.equal(
+      countyPictureCreditLine(credit),
+      `“${title}” by ${creator}, ${credit.site}, ${license === "Public domain" ? "public domain" : license}, cropped`,
+    );
+    assert.ok(picture.alt.trim().length > 10, `${county.name} picture needs alt text`);
+    assert.equal(Boolean(credit.courtesy), license === "Public domain");
+  }
+  const cover = county.cover.credit.original;
+  assert.ok(Math.min(cover.width, cover.height * (4 / 5)) >= 840, `${county.name} cover original fills the tile`);
+  assert.ok(Math.min(cover.width, cover.height * (16 / 9)) >= 1104, `${county.name} cover original fills the popup`);
+  const house = county.courthouse.credit.original;
+  assert.ok(Math.min(house.width, house.height) >= 168, `${county.name} courthouse original fills the badge`);
+  checkPictureFile(county.cover.tile, 4 / 5, 260_000, `${county.name} tile`);
+  checkPictureFile(county.cover.wide, 16 / 9, 220_000, `${county.name} popup cover`);
+  checkPictureFile(county.courthouse.badge, 1, 16_000, `${county.name} badge`);
+}
+assert.deepEqual(
+  readdirSync(join(root, pictureDir)).sort(),
+  [...referencedPictures].sort(),
+  "every county picture file is used, and only those",
+);
+
+const popupCredits = (slug: string) =>
+  countyPopupPhotoCredits(COUNTY_STORY_COUNTIES.find((county) => county.slug === slug)!).map(
+    (credit) => `${credit.creator} (${credit.license})`,
+  );
+assert.deepEqual(popupCredits("polk"), ["Larry D. Moore (CC BY 4.0)", "Jim Evans (CC BY-SA 4.0)"]);
+assert.deepEqual(popupCredits("angelina"), ["Patrick Feller (CC BY 2.0)"]);
+assert.deepEqual(popupCredits("liberty"), ["Larry D. Moore (CC BY 4.0)"]);
+assert.deepEqual(popupCredits("walker"), ["Larry D. Moore (CC BY 4.0)"]);
+
+// --- Picture markup, popup credit line, Photo credits page, footer link ------
+
+assert.match(tile, /srcSet=\{file\.srcSet\}/);
+assert.match(tile, /sizes=\{wide \? WIDE_SIZES : TILE_SIZES\}/);
+assert.match(tile, /data-county-cover-fallback=""/);
+assert.match(sheet, /<CountyStoryCover county=\{county\} wide \/>/);
+assert.match(sheet, /srcSet=\{county\.courthouse\.badge\.srcSet\}/);
+assert.match(sheet, /<CountyPhotoCredit county=\{county\} \/>\s*<\/div>/);
+const credit = read("src/components/county-stories/CountyPhotoCredit.tsx");
+assert.match(credit, /"Photos: "/);
+assert.match(credit, /countyPopupPhotoCredits\(county\)/);
+assert.match(credit, /href=\{credit\.sourceUrl\} target="_blank" rel="noopener noreferrer"/);
+assert.match(credit, /rel="license noopener noreferrer"/);
+assert.match(credit, /\$\{COUNTY_PHOTO_CREDITS_PATH\}#\$\{county\.slug\}/);
+assert.match(credit, />Photo credits</);
+assert.match(read("src/components/county-stories/county-stories.module.css"), /\.credit a:focus-visible/);
+
+assert.equal(COUNTY_PHOTO_CREDITS_PATH, "/county-stories/photo-credits");
+const creditsPage = read("src/app/county-stories/photo-credits/page.tsx");
+assert.match(creditsPage, /title: "Photo Credits"/);
+assert.match(creditsPage, /COUNTY_STORY_COUNTIES\.filter/);
+assert.match(creditsPage, /id=\{county\.slug\}/);
+assert.match(creditsPage, /href=\{credit\.sourceUrl\}/);
+assert.match(creditsPage, /rel="license"/);
+assert.match(creditsPage, /, cropped\./);
+assert.match(creditsPage, /Our cropped version is shared under the same license\./);
+assert.match(creditsPage, /credit\.courtesy/);
+assert.doesNotMatch(creditsPage, /notFound|robots|VERCEL_ENV/);
+
+const footer = read("src/components/Footer.tsx");
+assert.equal(footer.match(/county-stories/g)?.length, 1, "the footer has one County Stories link");
+assert.match(footer, /href="\/county-stories\/photo-credits"[\s\S]{0,160}>\s*Photo Credits\s*<\/Link>/);
 
 const css = read("src/components/county-stories/county-stories.module.css");
 assert.doesNotMatch(css, /:global|^\s*(html|body|:root)\b/m);

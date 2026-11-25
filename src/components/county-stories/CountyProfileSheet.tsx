@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ArrowRight, Play, X } from "lucide-react";
 import type { CountyStoryCountyVisual } from "@/lib/county-stories/county-covers";
+import { CountyPhotoCredit } from "./CountyPhotoCredit";
 import { CountyStoryCover } from "./CountyStoryTile";
 import { useCountyStoryModal } from "./useCountyStoryModal";
 import styles from "./county-stories.module.css";
@@ -37,7 +38,7 @@ export function CountyProfileSheet({
         className={styles.sheet}
       >
         <div className={styles.sheetCover}>
-          <CountyStoryCover county={county} />
+          <CountyStoryCover county={county} wide />
           <button
             ref={closeRef}
             type="button"
@@ -50,7 +51,13 @@ export function CountyProfileSheet({
           <span className={styles.badge} data-county-badge="">
             {county.courthouse ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={county.courthouse.src} alt={county.courthouse.alt} decoding="async" />
+              <img
+                src={county.courthouse.badge.src}
+                srcSet={county.courthouse.badge.srcSet}
+                sizes="56px"
+                alt={county.courthouse.alt}
+                decoding="async"
+              />
             ) : (
               <span aria-hidden>{county.shortName.charAt(0)}</span>
             )}
@@ -72,6 +79,7 @@ export function CountyProfileSheet({
             Explore {county.name}
             <ArrowRight aria-hidden />
           </Link>
+          <CountyPhotoCredit county={county} />
         </div>
       </div>
     </div>,

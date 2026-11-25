@@ -116,6 +116,8 @@ The homepage row has one tile per launch-seven county. A tile always belongs to 
 - Tokens: video `v` for 15 minutes; poster thumbnail `t` for 2 hours with the width inside the token. Posters are the baseline; video loads only after a tap. Browsers with built-in HLS (iPhone, Safari, current Chrome) use it; others load `hls.js` when the viewer opens. CSP allows `*.mux.com` for media and connect.
 - Viewer: muted start, captions on by default, sound/captions/pause/close buttons, tap zones plus ←/→, Space or K, M, C, Esc. Portrait Stories fill the screen; landscape Stories show whole. Focus is trapped and returns to the tile; page scroll does not move. Tiles do not rotate under reduced motion.
 - Homepage header is clear with no blur (homepage only; reduced transparency keeps the solid fallback).
+- County pictures: each county’s cover and courthouse badge are Kirk’s starred picks, cropped from the free originals into WebP files in `public/county-stories/pictures/`. Title, creator, source page, license, and original size are recorded in `src/lib/county-stories/county-covers.ts`; a county without a picture falls back to its gradient. A new picture ships only with its credit recorded.
+- Credits: the popup shows a small line with creator and license for pictures that require credit, linking to `/county-stories/photo-credits`. That page lists every picture with title, source, license, and “cropped”. The footer’s “Photo Credits” link is the only entry point outside the feature.
 - Not built: views, likes, follows, comments, sharing, analytics, county-page row.
 
 ## Source probe vs prepared playback
