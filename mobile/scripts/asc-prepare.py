@@ -71,5 +71,40 @@ def main() -> None:
     print(f"App record found: {apps[0]['attributes'].get('name')} ({apps[0]['id']}).")
 
 
+def status() -> None:
+    """Read-only: recent builds with processing, encryption and TestFlight states, and beta groups."""
+    config = json.load(open(sys.argv[2]))
+    apps = call("GET", "/apps?" + urllib.parse.urlencode({"filter[bundleId]": config["appId"]}))["data"]
+    if not apps:
+        raise SystemExit(f"No app record for {config['appId']}.")
+    app_id = apps[0]["id"]
+    print(f"App: {apps[0]['attributes'].get('name')} ({config['appId']})")
+    query = urllib.parse.urlencode({
+        "filter[app]": app_id,
+        "sort": "-uploadedDate",
+        "limit": "5",
+        "include": "buildBetaDetail",
+    })
+    response = call("GET", f"/builds?{query}")
+    details = {row["id"]: row["attributes"] for row in response.get("included", []) if row["type"] == "buildBetaDetails"}
+    for build in response["data"]:
+        attributes = build["attributes"]
+        detail_ref = (build.get("relationships", {}).get("buildBetaDetail", {}).get("data") or {}).get("id")
+        beta = details.get(detail_ref, {})
+        print(
+            f"Build {attributes.get('version')}: uploaded {attributes.get('uploadedDate')}, "
+            f"processing {attributes.get('processingState')}, expired {attributes.get('expired')}, "
+            f"usesNonExemptEncryption {attributes.get('usesNonExemptEncryption')}, "
+            f"internal TestFlight {beta.get('internalBuildState')}, external TestFlight {beta.get('externalBuildState')}"
+        )
+    groups = call("GET", f"/apps/{app_id}/betaGroups")["data"]
+    print("Beta groups: " + (", ".join(
+        f"{g['attributes'].get('name')} (internal {g['attributes'].get('isInternalGroup')})" for g in groups
+    ) or "none"))
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 2 and sys.argv[1] == "--status":
+        status()
+    else:
+        main()
