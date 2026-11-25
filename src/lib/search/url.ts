@@ -7,6 +7,11 @@ import {
   type PropertyType,
   type SearchFilters,
 } from "@/lib/listing-filters";
+import {
+  SEARCH_AREA_PARAM,
+  decodeSearchArea,
+  type SearchArea,
+} from "@/lib/search/area";
 
 const STATUS_SET = new Set<string>(LISTING_STATUSES);
 const TYPE_SET = new Set<string>(PROPERTY_TYPES);
@@ -40,6 +45,7 @@ const HANDOFF_KEYS = [
   "pool",
   "hoa",
   "statuses",
+  SEARCH_AREA_PARAM,
 ] as const;
 
 /** Homepage Apply → Search writes these. Fresh URL wins over marketplace cache. */
@@ -47,6 +53,13 @@ export function hasMarketplaceHandoffParams(params: {
   has(name: string): boolean;
 }): boolean {
   return HANDOFF_KEYS.some((key) => params.has(key));
+}
+
+/** Drawn search area from the URL. A malformed value is ignored, never guessed. */
+export function areaFromSearchParams(params: {
+  get(name: string): string | null;
+}): SearchArea | null {
+  return decodeSearchArea(params.get(SEARCH_AREA_PARAM));
 }
 
 export function filtersFromSearchParams(

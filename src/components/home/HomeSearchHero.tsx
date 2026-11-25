@@ -14,7 +14,14 @@ import {
   authorizeSearchInput,
   planToMarketplaceParams,
 } from "@/lib/search/interpret";
+import {
+  SEARCH_AREA_PARAM,
+  decodeSearchArea,
+  encodeSearchArea,
+  type SearchArea,
+} from "@/lib/search/area";
 import { allowlistedAdvanced } from "@/lib/search/plan";
+import { markMarketplaceFreshSearch } from "@/lib/motion/navigation-cache";
 import {
   EMPTY_PRICE,
   SALE_SEARCH_STATUSES,
@@ -42,6 +49,7 @@ export function HomeSearchHero() {
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [buyPrice, setBuyPrice] = useState<PriceBounds>(EMPTY_PRICE);
   const [rentPrice, setRentPrice] = useState<PriceBounds>(EMPTY_PRICE);
+  const [drawnArea, setDrawnArea] = useState<SearchArea | null>(null);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -57,8 +65,10 @@ export function HomeSearchHero() {
           filters?: unknown;
           buyPrice?: unknown;
           rentPrice?: unknown;
+          area?: unknown;
         };
         if (typeof row.query === "string") setQuery(row.query);
+        setDrawnArea(decodeSearchArea(row.area));
         const nextMode = storedTransactionMode(
           row.mode ?? (row.intent === "rent" ? "rent" : "buy"),
         );
@@ -101,12 +111,13 @@ export function HomeSearchHero() {
           filters,
           buyPrice,
           rentPrice,
+          area: drawnArea ? encodeSearchArea(drawnArea) : null,
         }),
       );
     } catch {
       /* private mode */
     }
-  }, [sessionReady, query, mode, filters, buyPrice, rentPrice]);
+  }, [sessionReady, query, mode, filters, buyPrice, rentPrice, drawnArea]);
 
   useEffect(() => {
     let active = true;
@@ -144,7 +155,11 @@ export function HomeSearchHero() {
     else setRentPrice(price);
   }
 
-  function submitBuy(raw: string, nextFilters: SearchFilters = filters) {
+  function submitBuy(
+    raw: string,
+    nextFilters: SearchFilters = filters,
+    area: SearchArea | null = null,
+  ) {
     const plan = authorizeSearchInput({
       q: raw,
       advanced: {
@@ -156,7 +171,10 @@ export function HomeSearchHero() {
         statuses: [...SALE_SEARCH_STATUSES],
       },
     });
-    router.push(`/marketplace?${planToMarketplaceParams(plan).toString()}`);
+    const params = planToMarketplaceParams(plan);
+    if (area) params.set(SEARCH_AREA_PARAM, encodeSearchArea(area));
+    markMarketplaceFreshSearch();
+    router.push(`/marketplace?${params.toString()}`);
   }
 
   function submitRent() {
@@ -169,7 +187,7 @@ export function HomeSearchHero() {
       return;
     }
     const raw = query.trim() || nextFilters.query;
-    submitBuy(raw, { ...nextFilters, keyword: "" });
+    submitBuy(raw, { ...nextFilters, keyword: "" }, drawnArea);
   }
 
   function searchArea(area: string) {
@@ -199,6 +217,8 @@ export function HomeSearchHero() {
               onQuery={setQuery}
               filters={filters}
               onFilters={changeFilters}
+              area={drawnArea}
+              onArea={setDrawnArea}
               onSubmitSearch={onSearch}
             />
           </div>

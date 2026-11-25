@@ -18,6 +18,7 @@ import {
 } from "@/lib/listing-filters";
 import { listingInBoundary, type DrawnBoundary } from "@/lib/geo";
 import {
+  areaFromSearchParams,
   filtersFromSearchParams,
   hasMarketplaceHandoffParams,
 } from "@/lib/search/url";
@@ -26,6 +27,7 @@ import {
   marketplaceCacheFresh,
   readMarketplaceCache,
   saveMarketplaceCache,
+  takeMarketplaceFreshSearch,
 } from "@/lib/motion/navigation-cache";
 
 const MarketplaceMap = dynamic(
@@ -78,7 +80,9 @@ export default function MarketplaceView() {
       setFilters(filtersFromSearchParams(searchParams));
     }
   }, [searchParams, urlKey]);
-  const [boundary, setBoundary] = useState<DrawnBoundary | null>(null);
+  const [boundary, setBoundary] = useState<DrawnBoundary | null>(() =>
+    areaFromSearchParams(searchParams),
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [mobileView, setMobileView] = useState<"list" | "map">("list");
@@ -95,13 +99,18 @@ export default function MarketplaceView() {
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
+    const freshSearch = takeMarketplaceFreshSearch();
     const cached = readMarketplaceCache();
     if (!cached || !marketplaceCacheFresh(cached)) return;
+    const handoff = hasMarketplaceHandoffParams(searchParams);
     // Fresh URL search from home hero wins over stale marketplace cache.
-    if (!hasMarketplaceHandoffParams(searchParams)) {
+    if (!handoff) {
       setFilters(cached.filters);
     }
-    setBoundary(cached.boundary);
+    // A new search brings its own drawn area (or none); detail → back keeps the last one.
+    if (!freshSearch && (!handoff || cached.searchKey === urlKey)) {
+      setBoundary(cached.boundary);
+    }
     setSelectedId(cached.selectedId);
     setMobileView(cached.mobileView);
     if (cached.mapCenter && cached.mapZoom != null) {
@@ -115,7 +124,7 @@ export default function MarketplaceView() {
         listRef.current.scrollTop = cached.listScrollTop;
       }
     });
-  }, [searchParams]);
+  }, [searchParams, urlKey]);
 
   // Persist workspace so property detail → back restores filters/map/scroll.
   useEffect(() => {
@@ -128,11 +137,12 @@ export default function MarketplaceView() {
         listScrollTop: listRef.current?.scrollTop ?? 0,
         mapCenter: mapViewRef.current.center,
         mapZoom: mapViewRef.current.zoom,
+        searchKey: urlKey,
       });
     };
     persist();
     return persist;
-  }, [filters, boundary, selectedId, mobileView]);
+  }, [filters, boundary, selectedId, mobileView, urlKey]);
 
   useEffect(() => {
     let active = true;
@@ -265,6 +275,7 @@ export default function MarketplaceView() {
                         listScrollTop: listRef.current?.scrollTop ?? 0,
                         mapCenter: mapViewRef.current.center,
                         mapZoom: mapViewRef.current.zoom,
+                        searchKey: urlKey,
                       })
                     }
                   />
