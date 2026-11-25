@@ -181,7 +181,10 @@ export function HomeSearchHero() {
   }
 
   return (
-    <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
+    <div
+      className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink"
+      data-home-page=""
+    >
       <section className="story-home-hero" data-home-hero="">
         <div className="story-home-hero-stage">
           <h1 className="type-hero story-home-hero-headline mx-auto max-w-3xl text-center text-paper">

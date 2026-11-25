@@ -796,6 +796,7 @@ assert.match(footer, /href="\/county-stories\/photo-credits"[\s\S]{0,160}>\s*Pho
 const css = read("src/components/county-stories/county-stories.module.css");
 assert.doesNotMatch(css, /:global|^\s*(html|body|:root)\b/m);
 assert.doesNotMatch(css, /box-shadow:\s*0 \d+px|border:\s*1px solid/);
+assert.doesNotMatch(css, /\.badge \{[^}]*box-shadow/, "the county popup badge has no ring");
 assert.match(css, /var\(--gold\)/);
 assert.doesNotMatch(css, /#f4bd12/i);
 assert.match(css, /prefers-reduced-motion: no-preference/);

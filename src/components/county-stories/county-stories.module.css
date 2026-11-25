@@ -559,7 +559,6 @@
   overflow: hidden;
   border-radius: 999px;
   background: var(--navy);
-  box-shadow: 0 0 0 3px var(--env-2);
   color: var(--paper);
   font-size: 1.25rem;
   line-height: 1;

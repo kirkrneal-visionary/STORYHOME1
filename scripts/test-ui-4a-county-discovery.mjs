@@ -77,6 +77,17 @@ assert.doesNotMatch(hero, /Pause examples|HomeAdvancedSearch|HomeFilterWing/);
 const css = read("src/app/globals.css");
 assert.doesNotMatch(css, /\.story-home-hero-join|\.story-home-hero-photo/);
 assert.match(css, /\.story-home-hero\s*\{/);
+// Homepage only: cards and wells lose their trim. Every other page keeps the shared bordered styles.
+assert.match(hero, /data-home-page=""/);
+assert.match(
+  css,
+  /\[data-home-page\] \.story-card,\s*\[data-home-page\] \.story-well,\s*\[data-home-page\] \.story-surface \{\s*border-color: transparent;\s*background: var\(--env-2\);\s*box-shadow: none;/,
+);
+assert.match(css, /\[data-home-page\] \.story-glass \{\s*border-color: transparent;\s*box-shadow: none;/);
+assert.match(css, /^\.story-card \{[^}]*border: 1px solid var\(--hairline\);/m);
+assert.match(css, /^\.story-well \{[^}]*border: 1px solid var\(--hairline\);/m);
+assert.match(css, /^\.story-surface \{[^}]*border: 1px solid var\(--hairline\);/m);
+assert.match(css, /^\.story-glass \{[^}]*border: 1px solid var\(--glass-border\);/m);
 assert.doesNotMatch(css, /story-cta-primary[^{]*\{[^}]*--accent/);
 
 const page = read("src/app/page.tsx");

@@ -439,7 +439,18 @@ assert.match(css, /story-home-hero-safe/);
 assert.match(css, /--story-header-h-full/);
 assert.match(css, /story-home-hero-stage/);
 assert.match(css, /header-h-full/);
-assert.match(css, /env-1\) 84%/);
+// No trim: the search box is a solid dark fill with darker wells inside, in both views.
+assert.match(
+  css,
+  /\.story-home-search-shell\.story-glass \{\s*border-color: transparent;\s*background: var\(--env-2\);\s*box-shadow: none;\s*backdrop-filter: none;/,
+);
+assert.match(css, /\.story-home-search-shell \.border\.border-hairline \{\s*border-color: transparent;\s*background: var\(--env-0\);/);
+assert.match(css, /\.story-home-search-shell \.ring-hairline \{\s*box-shadow: none;/);
+assert.match(css, /\.story-home-search-shell \.ring-hairline:focus-within \{\s*box-shadow: var\(--ring-focus\);/);
+assert.doesNotMatch(css, /\.story-home-search-shell\[data-search-view="advanced"\]\.story-glass/);
+assert.doesNotMatch(css, /inset 0 0 0 1px color-mix\(in srgb, var\(--(paper\) 8|gold\) 45)%/);
+assert.match(css, /\.story-home-filter-input \{[^}]*border: 1px solid transparent;/);
+assert.match(css, /\.story-home-filter-input:focus \{\s*border-color: color-mix\(in srgb, var\(--gold\)/);
 assert.match(css, /justify-content: flex-start/);
 assert.match(css, /story-home-advanced-chrome/);
 assert.doesNotMatch(css, /story-home-search-anchor/);
@@ -461,10 +472,13 @@ assert.doesNotMatch(css, /story-home-feature-cluster/);
 assert.match(css, /story-home-desktop-regions/);
 assert.match(css, /story-home-mobile-advanced/);
 assert.match(css, /story-home-mobile-features/);
-assert.match(css, /42rem/);
+// The hero is only as tall as its content, so the County Stories row sits right under Search.
+assert.match(css, /\.story-home-hero \{\s*position: relative;\s*isolation: isolate;\s*\}/);
+assert.doesNotMatch(css, /\.story-home-hero(-stage|-safe)? \{[^}]*(\bheight:|justify-content: center)/);
 assert.match(css, /story-home-mobile-editor/);
 assert.match(css, /story-home-measure-zone/);
-assert.match(css, /:has\(\[data-search-view="advanced"\]\)/);
+// Opening Filters keeps the box where Search sits; the taller panel pushes the row down instead.
+assert.doesNotMatch(css, /\.story-home-hero-safe:has\(\[data-search-view="advanced"\]\)/);
 const mobileEditor = read("src/components/home/MobileRangeEditor.tsx");
 assert.match(mobileEditor, /anticipateAfter/);
 assert.match(mobileEditor, /anticipateBefore/);
