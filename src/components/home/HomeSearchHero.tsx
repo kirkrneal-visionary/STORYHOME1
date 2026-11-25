@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,7 +14,14 @@ import {
   authorizeSearchInput,
   planToMarketplaceParams,
 } from "@/lib/search/interpret";
+import {
+  SEARCH_AREA_PARAM,
+  decodeSearchArea,
+  encodeSearchArea,
+  type SearchArea,
+} from "@/lib/search/area";
 import { allowlistedAdvanced } from "@/lib/search/plan";
+import { markMarketplaceFreshSearch } from "@/lib/motion/navigation-cache";
 import {
   EMPTY_PRICE,
   SALE_SEARCH_STATUSES,
@@ -31,12 +37,8 @@ import {
   DEFAULT_MARKET,
   REGION,
   REGION_CITIES,
-  SERVICE_COUNTIES,
 } from "@/lib/markets";
-import {
-  countySlugFromName,
-  publicCountyPath,
-} from "@/lib/geo/county-route";
+import { CountyStoriesRow } from "@/components/county-stories/CountyStoriesRow";
 
 const HOME_SEARCH_STATE_KEY = "story-home-wave-a-search";
 
@@ -47,6 +49,7 @@ export function HomeSearchHero() {
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_SEARCH_FILTERS);
   const [buyPrice, setBuyPrice] = useState<PriceBounds>(EMPTY_PRICE);
   const [rentPrice, setRentPrice] = useState<PriceBounds>(EMPTY_PRICE);
+  const [drawnArea, setDrawnArea] = useState<SearchArea | null>(null);
   const [featured, setFeatured] = useState<DemoListing[]>([]);
   const [featuredLoaded, setFeaturedLoaded] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -62,8 +65,10 @@ export function HomeSearchHero() {
           filters?: unknown;
           buyPrice?: unknown;
           rentPrice?: unknown;
+          area?: unknown;
         };
         if (typeof row.query === "string") setQuery(row.query);
+        setDrawnArea(decodeSearchArea(row.area));
         const nextMode = storedTransactionMode(
           row.mode ?? (row.intent === "rent" ? "rent" : "buy"),
         );
@@ -106,12 +111,13 @@ export function HomeSearchHero() {
           filters,
           buyPrice,
           rentPrice,
+          area: drawnArea ? encodeSearchArea(drawnArea) : null,
         }),
       );
     } catch {
       /* private mode */
     }
-  }, [sessionReady, query, mode, filters, buyPrice, rentPrice]);
+  }, [sessionReady, query, mode, filters, buyPrice, rentPrice, drawnArea]);
 
   useEffect(() => {
     let active = true;
@@ -149,7 +155,11 @@ export function HomeSearchHero() {
     else setRentPrice(price);
   }
 
-  function submitBuy(raw: string, nextFilters: SearchFilters = filters) {
+  function submitBuy(
+    raw: string,
+    nextFilters: SearchFilters = filters,
+    area: SearchArea | null = null,
+  ) {
     const plan = authorizeSearchInput({
       q: raw,
       advanced: {
@@ -161,7 +171,10 @@ export function HomeSearchHero() {
         statuses: [...SALE_SEARCH_STATUSES],
       },
     });
-    router.push(`/marketplace?${planToMarketplaceParams(plan).toString()}`);
+    const params = planToMarketplaceParams(plan);
+    if (area) params.set(SEARCH_AREA_PARAM, encodeSearchArea(area));
+    markMarketplaceFreshSearch();
+    router.push(`/marketplace?${params.toString()}`);
   }
 
   function submitRent() {
@@ -174,7 +187,7 @@ export function HomeSearchHero() {
       return;
     }
     const raw = query.trim() || nextFilters.query;
-    submitBuy(raw, { ...nextFilters, keyword: "" });
+    submitBuy(raw, { ...nextFilters, keyword: "" }, drawnArea);
   }
 
   function searchArea(area: string) {
@@ -186,20 +199,13 @@ export function HomeSearchHero() {
   }
 
   return (
-    <div className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink">
+    <div
+      className="bg-transparent pb-[var(--story-bottom-clearance)] text-ink"
+      data-home-page=""
+    >
       <section className="story-home-hero" data-home-hero="">
-        <div className="story-home-hero-photo">
-          <Image
-            src="/brand/storyhome-meadow-hero.png"
-            alt="East Texas pine meadow at first light"
-            fill
-            priority
-            className="object-cover object-[22%_72%] md:object-[28%_60%]"
-            sizes="(max-width: 390px) 390px, (max-width: 768px) 768px, (max-width: 1440px) 1440px, 1672px"
-          />
-        </div>
         <div className="story-home-hero-stage">
-          <h1 className="type-hero story-home-hero-headline mx-auto max-w-3xl text-center text-navy">
+          <h1 className="type-hero story-home-hero-headline mx-auto max-w-3xl text-center text-paper">
             Find your next place in{" "}
             <span className="whitespace-nowrap">East Texas.</span>
           </h1>
@@ -211,62 +217,24 @@ export function HomeSearchHero() {
               onQuery={setQuery}
               filters={filters}
               onFilters={changeFilters}
+              area={drawnArea}
+              onArea={setDrawnArea}
               onSubmitSearch={onSearch}
             />
           </div>
         </div>
       </section>
 
-      <div className="story-home-hero-join" data-home-hero-join="" aria-hidden />
-
       <section
-        className="mx-auto max-w-6xl px-4 pb-8 pt-4 md:px-6 md:pt-6"
+        className="pb-8 pt-4 md:pt-6"
         data-launch-counties=""
         data-ui-4a="county-discovery"
       >
-        <div data-home-story-attachment="" aria-hidden />
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 className="type-section text-paper">
-              Launch counties
-            </h2>
-            <p className="mt-1 text-sm text-paper/65">
-              Explore each county. Homes stay one step away.
-            </p>
-          </div>
-          <Link
-            href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
-            className="hidden min-h-11 items-center text-sm font-semibold text-gold hover:underline md:inline-flex"
-          >
-            View all homes
-          </Link>
+        <div data-home-story-attachment="">
+          <CountyStoriesRow />
         </div>
 
-        <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3 lg:grid-cols-7">
-          {SERVICE_COUNTIES.map((county) => {
-            const slug = countySlugFromName(county.name);
-            if (!slug) return null;
-            return (
-              <Link
-                key={county.fips}
-                href={publicCountyPath(slug)}
-                data-home-county-card=""
-                data-home-county={slug}
-                aria-label={`Explore ${county.name}`}
-                className="story-well story-press flex min-h-11 flex-col justify-center px-3 py-3 text-left md:py-4"
-              >
-                <p className="font-semibold text-paper">
-                  {county.name.replace(" County", "")}
-                </p>
-                <p className="type-meta mt-1 text-paper/50">
-                  {county.hubCity}
-                </p>
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2">
+        <div className="mx-auto mt-3 flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 md:px-6">
           {REGION_CITIES.slice(0, 6).map((area) => (
             <button
               key={area}
@@ -277,6 +245,12 @@ export function HomeSearchHero() {
               {area}
             </button>
           ))}
+          <Link
+            href={`/marketplace?q=${encodeURIContent(DEFAULT_MARKET.label)}`}
+            className="ml-auto hidden min-h-11 items-center text-sm font-semibold text-gold hover:underline md:inline-flex"
+          >
+            View all homes
+          </Link>
         </div>
       </section>
 

@@ -51,7 +51,7 @@ assert.equal(existsSync(join(root, "src/app/api/county-stories/replace/route.ts"
 assert.equal(existsSync(join(root, "src/app/api/county-stories/capacity/route.ts")), true);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/delete/route.ts")), false);
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
-assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), true);
 assert.match(read("src/app/api/county-stories/publish/route.ts"), /countyStoriesPublishEnabled/);
 assert.match(read("src/app/api/county-stories/publish/route.ts"), /FEATURE_DISABLED/);
 assert.match(read("src/app/api/county-stories/replace/route.ts"), /countyStoriesPublishEnabled/);

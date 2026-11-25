@@ -49,8 +49,11 @@ These are **isolated**. They do not write production. Wave 2 runs two disposable
 | County Stories Wave 3 publish/replace/concurrency | `npm run test:county-stories-w3` — isolated Postgres, including `0087` replacement context. Hosted `0083` and `0087` are applied. Public publish stays off |
 | County Stories Wave 4 hide/strikes/suspension | `npm run test:county-stories-w4` — isolated Postgres. Hosted `0084` applied. Public publish stays off |
 | County Stories Wave 5 captions/accessibility | `npm run test:county-stories-w5` — isolated Postgres. Hosted `0085`, `0086`, and `0087` are applied. Public publish stays off |
-| County Stories Wave 6 composer | `npm run test:county-stories-w6` — composer decisions and source guards. Public publish stays off. No consumer viewer |
+| County Stories Wave 6 composer | `npm run test:county-stories-w6` — composer decisions and source guards. Public publish stays off |
 | County Stories Wave 5 Mux / signed HLS | `npm run test:county-stories-w5-mux` — isolated Postgres + mocked Mux. Public publish stays off |
+| County Stories homepage row + consumer viewer | `npm run test:county-stories-viewer` — fake service-role client, no secrets: feed gate, filters, snapshot author, tokens, read-only routes, CSP, no demo people. Public publish stays off, so live tiles show covers only. Not yet checked on a physical iPhone |
+| Homepage header is clear, no blur | Homepage-only CSS **source-tested** in `test:county-stories-viewer`. Other pages keep the light scrim. Not yet checked on a physical iPhone |
+| Homepage Draw map limits Search to the drawn area | `npm run test:home-draw-map` — area link format, handoff, shared map and drawing code **source-tested**. Local browser runs **ran** with fixture listings (iPhone-size touch in Chromium and WebKit, desktop mouse): draw, Apply, Search returns only listings inside, redraw, Clear, Filters together, detail → Back. Not yet checked on a physical iPhone or with live listings |
 
 If a test fails, do not weaken it to go green.
 

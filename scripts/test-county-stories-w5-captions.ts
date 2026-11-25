@@ -96,7 +96,7 @@ assert.equal(existsSync(join(root, "src/app/api/county-stories/media/[id]/captio
 assert.equal(existsSync(join(root, "src/app/api/county-stories/media/[id]/captions/confirm/route.ts")), true);
 assert.equal(existsSync(join(root, "src/app/api/county-stories/media/[id]/accessibility/route.ts")), true);
 assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryComposer.tsx")), true);
-assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), false);
+assert.equal(existsSync(join(root, "src/components/county-stories/CountyStoryViewer.tsx")), true);
 assert.doesNotMatch(
   read("src/app/api/county-stories/media/[id]/captions/route.ts"),
   /SUPABASE_SERVICE_ROLE_KEY/,
