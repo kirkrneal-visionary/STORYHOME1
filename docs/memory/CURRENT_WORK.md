@@ -12,6 +12,7 @@
 - Harden Wave 5: Archie workspace is route-split; DevPass is out of the login bundle; source maps stay off and `.map` 404s. CSP left compatible with Mapbox/auth.
 - Harden Waves 1–4 stay stacked. `0056` / `0057` are repo-only until pasted.
 - Public live: https://www.storyhome.app. Ship on `storyhome-1-eqmg`.
+- Account emails: branded reset and sign-up confirmation templates (`supabase/templates/`), `/auth/confirm` tap-to-verify, and a Check your email step. After merge, Kirk sets up the Resend sender, pastes the templates, and turns on Confirm email in Supabase, in that order.
 
 ## Just shipped (do not rewind)
 
@@ -30,6 +31,8 @@
 - Two-user RLS isolation against a **hosted** spare Supabase is not run here. Wave 2 proves the same owner/broker rules on a disposable in-memory store and refuses the live project.
 - Study Vault card photo on a new production save is still **unverified**
 - Menu tap repair founder-confirmed GOOD on a physical iPhone 2026-09-15. Live with Waves 1–6.
+- Until the custom email sender is set up, Supabase's built-in mail reaches only project team members (2/hour), so real users get no reset or confirmation email
+- Contact and Terms pages list `@storyhome.com` addresses; storyhome.com is a parked domain with no mail
 
 ## Do not do
 
