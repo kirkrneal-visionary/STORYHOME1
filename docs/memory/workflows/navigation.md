@@ -28,6 +28,11 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 ## Header and viewport (Wave 2)
 
 - Overlay header stays a light scrim — never a solid black band. Not a type-size change.
+- Homepage only (`html:has([data-home-hero])`, so it holds from first paint): the header is clear over the hero and never blurred, per Kirk’s County Stories design. Reduced transparency keeps the solid fallback. Other pages are unchanged.
+- Homepage hero sits on the plain dark page background (no photo, no shade, per Kirk). The headline is paper; on phones it scales with width (26–28px), stays two lines, and keeps its 3.5rem layout height so Search never moves.
+- The hero is only as tall as its content: the headline, Search and the County Stories row sit together on every screen. Opening Filters pushes the row down.
+- Homepage has no trim (per Kirk): no borders or rings on the search box, its pills and field, the Filters panel boxes, the cards and wells (`[data-home-page]`), or the county popup badge. Solid dark fills carry each box. Focus rings stay; the search field shows a thin gold ring while focused. Shared cards keep their borders on every other page.
+- No Motion button in the header and no animated-examples switch in the menu. The search box typing examples follow the device’s Reduce Motion setting (a still hint when it is on).
 - Research mode picker is padded under header + ribbon. Live map sheet still hides chrome.
 - Dock `bottom` uses `max(safe-area, --story-vv-bottom)`. Keyboard and browser chrome move the dock. No one-phone offset.
 - Active tab comes from `primaryDockId` / `archieModuleFromSearch` only after the URL matches.
@@ -37,7 +42,7 @@ Ribbon + drawer + `?section=` / `?mode=`. Same tap rules. Last module is session
 - Bottom dock is a smoked-glass capsule (`--dock-*` tokens). Active cell is filled navy with a thin gold ring.
 - Wave 6: stronger see-through frost + top-rim only. No outline. No shadow puddle.
 - Archie dock mark uses official `ARCHIE_MARK_SRC`. Do not redraw the face.
-- Honor reduced motion and reduced transparency. No header restyle.
+- Honor reduced motion and reduced transparency. No header restyle beyond the homepage exception above.
 
 ## Marketplace canvas and edges (Waves 4–5)
 

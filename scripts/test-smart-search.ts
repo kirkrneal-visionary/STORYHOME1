@@ -3,7 +3,7 @@
  * Run: node --experimental-strip-types scripts/test-smart-search.ts
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   authorizeSearchInput,
@@ -241,7 +241,7 @@ assert.doesNotMatch(css, /\.story-home-search\.story-glass[\s\S]{0,80}--paper/);
 assert.doesNotMatch(css, /storyGhostIn/);
 
 const hero = read("src/components/home/HomeSearchHero.tsx");
-assert.match(hero, /storyhome-meadow-hero/);
+assert.doesNotMatch(hero, /storyhome-meadow-hero/);
 assert.match(hero, /HomeSearchHub/);
 assert.match(hero, /story-home-hero-safe/);
 assert.match(hero, /data-home-hero/);
@@ -272,7 +272,7 @@ assert.match(ghost, /TYPE_MS/);
 assert.match(ghost, /ERASE_MS/);
 assert.match(ghost, /HOLD_MS/);
 assert.match(ghost, /visibilitychange/);
-assert.match(ghost, /useAnimatedSearchExamples/);
+assert.match(ghost, /useMotionOptional\(\)\?\.reducedMotion/);
 assert.match(ghost, /GHOST_STATIC_HINT/);
 assert.match(ghost, /GHOST_RENT_HINT/);
 assert.match(ghost, /mode === "rent"/);
@@ -322,20 +322,15 @@ const walk = createGhostRotation(seeded(3));
 const seen = Array.from({ length: 14 }, () => walk.next());
 assert.equal(new Set(seen.map((row) => row.id)).size, 14);
 
-const pref = read("src/lib/search/ghost-preference.ts");
-assert.match(pref, /story-home-animated-search-examples/);
-assert.match(pref, /prefers-reduced-motion/);
-assert.match(pref, /localStorage/);
-
-const motionUi = read("src/components/home/GhostExamplesControl.tsx");
-assert.match(motionUi, /Animated search examples/);
-assert.match(motionUi, /aria-pressed/);
+// Examples follow the device's Reduce Motion setting only: no site Motion switch in the header or menu.
+assert.equal(existsSync(join(root, "src/lib/search/ghost-preference.ts")), false);
+assert.equal(existsSync(join(root, "src/components/home/GhostExamplesControl.tsx")), false);
 const nav = read("src/components/GlobalNav.tsx");
-assert.match(nav, /HeaderMotionMenu/);
+assert.doesNotMatch(nav, /HeaderMotionMenu|data-story-motion-menu|>\s*Motion\s*</);
 assert.match(nav, /href=\"\/rent\"/);
 assert.doesNotMatch(nav, /intent=rent/);
 const drawer = read("src/components/nav/FederatedNavDrawer.tsx");
-assert.match(drawer, /GhostExamplesControl/);
+assert.doesNotMatch(drawer, /GhostExamplesControl|Animated search examples/);
 assert.match(drawer, /xl:hidden/);
 
 const hub = read("src/components/home/HomeSearchHub.tsx");
@@ -444,7 +439,18 @@ assert.match(css, /story-home-hero-safe/);
 assert.match(css, /--story-header-h-full/);
 assert.match(css, /story-home-hero-stage/);
 assert.match(css, /header-h-full/);
-assert.match(css, /env-1\) 84%/);
+// No trim: the search box is a solid dark fill with darker wells inside, in both views.
+assert.match(
+  css,
+  /\.story-home-search-shell\.story-glass \{\s*border-color: transparent;\s*background: var\(--env-2\);\s*box-shadow: none;\s*backdrop-filter: none;/,
+);
+assert.match(css, /\.story-home-search-shell \.border\.border-hairline \{\s*border-color: transparent;\s*background: var\(--env-0\);/);
+assert.match(css, /\.story-home-search-shell \.ring-hairline \{\s*box-shadow: none;/);
+assert.match(css, /\.story-home-search-shell \.ring-hairline:focus-within \{\s*box-shadow: var\(--ring-focus\);/);
+assert.doesNotMatch(css, /\.story-home-search-shell\[data-search-view="advanced"\]\.story-glass/);
+assert.doesNotMatch(css, /inset 0 0 0 1px color-mix\(in srgb, var\(--(paper\) 8|gold\) 45)%/);
+assert.match(css, /\.story-home-filter-input \{[^}]*border: 1px solid transparent;/);
+assert.match(css, /\.story-home-filter-input:focus \{\s*border-color: color-mix\(in srgb, var\(--gold\)/);
 assert.match(css, /justify-content: flex-start/);
 assert.match(css, /story-home-advanced-chrome/);
 assert.doesNotMatch(css, /story-home-search-anchor/);
@@ -466,10 +472,13 @@ assert.doesNotMatch(css, /story-home-feature-cluster/);
 assert.match(css, /story-home-desktop-regions/);
 assert.match(css, /story-home-mobile-advanced/);
 assert.match(css, /story-home-mobile-features/);
-assert.match(css, /42rem/);
+// The hero is only as tall as its content, so the County Stories row sits right under Search.
+assert.match(css, /\.story-home-hero \{\s*position: relative;\s*isolation: isolate;\s*\}/);
+assert.doesNotMatch(css, /\.story-home-hero(-stage|-safe)? \{[^}]*(\bheight:|justify-content: center)/);
 assert.match(css, /story-home-mobile-editor/);
 assert.match(css, /story-home-measure-zone/);
-assert.match(css, /:has\(\[data-search-view="advanced"\]\)/);
+// Opening Filters keeps the box where Search sits; the taller panel pushes the row down instead.
+assert.doesNotMatch(css, /\.story-home-hero-safe:has\(\[data-search-view="advanced"\]\)/);
 const mobileEditor = read("src/components/home/MobileRangeEditor.tsx");
 assert.match(mobileEditor, /anticipateAfter/);
 assert.match(mobileEditor, /anticipateBefore/);

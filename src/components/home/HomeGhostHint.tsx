@@ -1,13 +1,13 @@
 "use client";
 
 import { memo, useEffect, useRef, useState } from "react";
+import { useMotionOptional } from "@/components/motion/MotionProvider";
 import {
   createGhostRotation,
   GHOST_RENT_HINT,
   GHOST_STATIC_HINT,
   type GhostPhrase,
 } from "@/lib/search/ghost-phrases";
-import { useAnimatedSearchExamples } from "@/lib/search/ghost-preference";
 import type { TransactionMode } from "@/lib/search/transaction";
 
 export { GHOST_PHRASES, GHOST_PHRASES_NARROW } from "@/lib/search/ghost-phrases";
@@ -37,7 +37,7 @@ export const HomeGhostHint = memo(function HomeGhostHint({
 }) {
   const [shown, setShown] = useState("");
   const [narrow, setNarrow] = useState(false);
-  const [examplesOn] = useAnimatedSearchExamples();
+  const examplesOn = !useMotionOptional()?.reducedMotion;
   const phase = useRef<Phase>("type");
   const pos = useRef(0);
   const timer = useRef<number>(0);
