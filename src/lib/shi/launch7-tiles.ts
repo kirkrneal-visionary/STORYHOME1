@@ -14,7 +14,8 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { launch7UnionBbox } from "@/lib/shi/launch7-map";
+import { PMTiles } from "pmtiles";
+import { launch7CdnBase, launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
   LAUNCH7_IMAGERY_GEN,
   LAUNCH7_TOP15_ENABLED,
@@ -96,7 +97,7 @@ export const USGS_IMAGERY_TEMPLATE =
   process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim() ||
   "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}";
 
-/** USDA NAIP ~60 cm mosaic. Primary close-zoom fill (fallback when TOP 2015 is on). */
+/** USDA NAIP ~60 cm mosaic. Close-zoom fill outside the TOP 2015 archive, or when it is off or unreachable. */
 export const USGS_NAIP_IMAGESERVER =
   "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer";
 
@@ -104,9 +105,29 @@ export const USGS_NAIP_IMAGESERVER =
 export const TXGIO_NAIP60_IMAGESERVER =
   "https://imagery.geographic.texas.gov/server/rest/services/NAIP/NAIP22_NCCIR_60cm/ImageServer";
 
-/** TxGIO TOP 2015 50 cm, statewide leaf-off (CC0). Primary close-zoom fill when LAUNCH7_TOP15_ENABLED. */
-export const TXGIO_TOP15_IMAGESERVER =
-  "https://imagery.geographic.texas.gov/server/rest/services/TOP/TOP15_NCCIR_50cm/ImageServer";
+/**
+ * TxGIO TOP 2015 50 cm (CC0) cut from the county mosaics into one z14–18
+ * PMTiles archive on the launch-7 R2 bucket. TxGIO's own ImageServer is too
+ * slow (about one tile per second) to serve maps directly.
+ */
+export const LAUNCH7_TOP15_PMTILES_FILE = "top15/top15-launch7-z14-18.pmtiles";
+const TOP15_ARCHIVE_TIMEOUT_MS = 8_000;
+
+export function top15PmtilesUrl(): string | null {
+  const explicit = process.env.LAUNCH7_TOP15_PMTILES_URL?.trim();
+  if (explicit) return explicit;
+  const base = launch7CdnBase();
+  return base ? `${base}/${LAUNCH7_TOP15_PMTILES_FILE}` : null;
+}
+
+let top15Archive: { url: string; archive: PMTiles } | null = null;
+
+function top15ArchiveFor(url: string): PMTiles {
+  if (top15Archive?.url !== url) {
+    top15Archive = { url, archive: new PMTiles(url) };
+  }
+  return top15Archive.archive;
+}
 
 const WEB_MERCATOR_HALF = 20037508.342789244;
 const NAIP_EXPORT_TIMEOUT_MS = 10_000;
@@ -161,11 +182,25 @@ export function imageryUsesNaip60(z: number): boolean {
   return z >= NAIP_60CM_MIN_ZOOM && !process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim();
 }
 
+function isWebp(body: Buffer): boolean {
+  return (
+    body.length > 12 &&
+    body.toString("ascii", 0, 4) === "RIFF" &&
+    body.toString("ascii", 8, 12) === "WEBP"
+  );
+}
+
 function looksLikeImage(body: Buffer): boolean {
   if (body.length < 800) return false;
   const jpeg = body[0] === 0xff && body[1] === 0xd8;
   const png = body[0] === 0x89 && body[1] === 0x50;
-  return jpeg || png;
+  return jpeg || png || isWebp(body);
+}
+
+function imageContentType(body: Buffer): string {
+  if (isWebp(body)) return "image/webp";
+  if (body[0] === 0x89 && body[1] === 0x50) return "image/png";
+  return "image/jpeg";
 }
 
 function fillTemplate(
@@ -273,6 +308,34 @@ async function fetchImage(
   }
 }
 
+type ArchiveTile =
+  | { status: "hit"; body: Buffer; contentType: string }
+  | { status: "miss" }
+  | { status: "error" };
+
+/** "miss" = outside the archive (NAIP is the real source there); "error" = archive unreachable. */
+async function fetchTop15ArchiveTile(
+  z: number,
+  x: number,
+  y: number,
+): Promise<ArchiveTile> {
+  const url = top15PmtilesUrl();
+  if (!url) return { status: "miss" };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TOP15_ARCHIVE_TIMEOUT_MS);
+  try {
+    const res = await top15ArchiveFor(url).getZxy(z, x, y, ctrl.signal);
+    if (!res) return { status: "miss" };
+    const body = Buffer.from(res.data);
+    if (!looksLikeImage(body)) return { status: "miss" };
+    return { status: "hit", body, contentType: imageContentType(body) };
+  } catch {
+    return { status: "error" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function fetchNaip60Tile(
   z: number,
   x: number,
@@ -311,13 +374,14 @@ export async function getLaunch7ImageryTile(
 
   const path = imageryTilePath(z, x, y);
   if (existsSync(path)) {
+    const body = readFileSync(path);
     return {
-      body: readFileSync(path),
-      contentType: "image/jpeg",
+      body,
+      contentType: imageContentType(body),
       source: "owned-cache",
       cached: true,
       imageryKind: imageryUsesNaip60(z)
-        ? LAUNCH7_TOP15_ENABLED
+        ? isWebp(body)
           ? "top15"
           : "naip60"
         : "xyz",
@@ -326,13 +390,17 @@ export async function getLaunch7ImageryTile(
 
   let hit: { body: Buffer; contentType: string } | null = null;
   let kind: ImageryKind = "xyz";
+  let archiveFailed = false;
 
   if (imageryUsesNaip60(z)) {
     if (LAUNCH7_TOP15_ENABLED) {
-      hit = await fetchImage(
-        naip60ExportUrl(TXGIO_TOP15_IMAGESERVER, z, x, y, false),
-      );
-      if (hit) kind = "top15";
+      const top = await fetchTop15ArchiveTile(z, x, y);
+      if (top.status === "hit") {
+        hit = { body: top.body, contentType: top.contentType };
+        kind = "top15";
+      } else if (top.status === "error") {
+        archiveFailed = true;
+      }
     }
     if (!hit) {
       hit = await fetchNaip60Tile(z, x, y, "usgs");
@@ -354,8 +422,7 @@ export async function getLaunch7ImageryTile(
     return null;
   }
 
-  const fallback =
-    LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15";
+  const fallback = archiveFailed && kind !== "top15";
   const inFootprint = tileIntersectsLaunch7(z, x, y);
   const cached = inFootprint && !fallback ? writeAtomic(path, hit.body) : false;
   return {

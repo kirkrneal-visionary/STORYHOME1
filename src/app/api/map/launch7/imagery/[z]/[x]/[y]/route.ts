@@ -11,10 +11,11 @@ type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
  * L7-2 — owned launch-7 imagery tiles.
- * Close zoom: USDA NAIP 60 cm (TxGIO TOP 2015 50 cm first when LAUNCH7_TOP15_ENABLED).
+ * Close zoom: TOP 2015 50 cm from our PMTiles archive on R2 (LAUNCH7_TOP15_ENABLED),
+ * USDA NAIP 60 cm outside it.
  * Far-out: USGS Imagery Only.
  * Serves from disk cache; fills upstream inside the footprint.
- * Fallback tiles get a short cache so TOP 2015 replaces them once TxGIO is back.
+ * NAIP served because the archive was unreachable gets a short cache so TOP 2015 replaces it.
  */
 export async function GET(_req: Request, ctx: Ctx) {
   const { z: zs, x: xs, y: ys } = await ctx.params;

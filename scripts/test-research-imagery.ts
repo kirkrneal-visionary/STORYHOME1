@@ -38,11 +38,11 @@ assert.equal(usgs.tileSize, 256);
 assert.equal(usgs.maxZoom, 18);
 assert.equal(usgs.highDpiSupported, false);
 const naip = naip60cmSource();
-assert.equal(LAUNCH7_TOP15_ENABLED, false, "TOP 2015 stays off until tiles are self-hosted");
-assert.equal(naip.enabled, true);
+assert.equal(LAUNCH7_TOP15_ENABLED, true);
+assert.equal(naip.enabled, false);
 assert.equal(naip.nativeResolutionM, 0.6);
-assert.equal(activeImagerySource().id, "naip-60cm");
-assert.match(activeImagerySource().tiles[0] ?? "", /^\/api\/map\/launch7\/imagery\/.*v=n60/);
+assert.equal(activeImagerySource().id, "txgio-top15-50cm");
+assert.match(activeImagerySource().tiles[0] ?? "", /^\/api\/map\/launch7\/imagery\/.*v=t15p/);
 assert.equal(allImagerySources().filter((s) => s.enabled).length, 1);
 assert.equal(NAIP_60CM_MIN_ZOOM, 14);
 assert.equal(
@@ -106,18 +106,21 @@ assert.match(style, /LAUNCH7_TOP15_ENABLED\s*\?\s*"owned-top15"\s*:\s*"owned-nai
 assert.match(style, /IMAGERY_LIDAR_OVERLAY_LAYER_ID/);
 
 const tx = texasSharpImagerySource();
-assert.equal(tx.enabled, false);
+assert.equal(tx.enabled, true);
 assert.equal(tx.nativeResolutionM, 0.5);
 assert.match(tx.attribution, /CC0/);
 const tiles = readFileSync(join(root, "src/lib/shi/launch7-tiles.ts"), "utf8");
-assert.match(tiles, /TOP\/TOP15_NCCIR_50cm\/ImageServer/);
+assert.doesNotMatch(tiles, /TOP15_NCCIR_50cm/, "TxGIO's ImageServer is too slow to serve maps");
+assert.match(tiles, /LAUNCH7_TOP15_PMTILES_FILE = "top15\/top15-launch7-z14-18\.pmtiles"/);
 assert.ok(
-  tiles.indexOf("TXGIO_TOP15_IMAGESERVER, z") <
-    tiles.indexOf('fetchNaip60Tile(z, x, y, "usgs")'),
-  "TOP 2015 is tried before NAIP at close zoom",
+  tiles.indexOf("fetchTop15ArchiveTile(z, x, y)") > 0 &&
+    tiles.indexOf("fetchTop15ArchiveTile(z, x, y)") <
+      tiles.indexOf('fetchNaip60Tile(z, x, y, "usgs")'),
+  "TOP 2015 archive is tried before NAIP at close zoom",
 );
+assert.match(tiles, /const fallback = archiveFailed && kind !== "top15"/);
 assert.match(tiles, /inFootprint && !fallback/);
-assert.match(tiles, /if \(LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
+assert.match(tiles, /if \(LAUNCH7_TOP15_ENABLED\) \{\s*const top = await fetchTop15ArchiveTile/);
 const market = readFileSync(
   join(root, "src/components/marketplace/MarketplaceMap.tsx"),
   "utf8",

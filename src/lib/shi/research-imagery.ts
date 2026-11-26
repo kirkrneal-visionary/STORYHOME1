@@ -1,7 +1,7 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Close zoom = USDA NAIP 60 cm (owned cache). TxGIO Texas Orthoimagery
- * Program 2015 50 cm is wired behind LAUNCH7_TOP15_ENABLED.
+ * Close zoom = TxGIO Texas Orthoimagery Program 2015 50 cm from our own
+ * PMTiles archive on R2 (LAUNCH7_TOP15_ENABLED), USDA NAIP 60 cm elsewhere.
  * Far-out zoom = USGS Imagery Only tiles (fast).
  * High-res / historic slots stay reserved. Safe for the browser.
  */
@@ -9,19 +9,19 @@
 export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
 
 /**
- * TOP 2015 close zoom. Off until its tiles come from Story Home storage:
- * TxGIO's ImageServer answers about one tile per second, so live maps fell
- * back to NAIP for most tiles.
+ * TOP 2015 close zoom, read from the launch-7 PMTiles archive on R2.
+ * Requires the archive to be uploaded (see LAUNCH7_TOP15_PMTILES_FILE);
+ * never point this at TxGIO's ImageServer, which serves about one tile per second.
  */
-export const LAUNCH7_TOP15_ENABLED: boolean = false;
+export const LAUNCH7_TOP15_ENABLED: boolean = true;
 
 /** Cache generation. Changes with the close-zoom source so CDN / disk never mix them. */
-export const LAUNCH7_IMAGERY_GEN = LAUNCH7_TOP15_ENABLED ? "t15" : "n60";
+export const LAUNCH7_IMAGERY_GEN = LAUNCH7_TOP15_ENABLED ? "t15p" : "n60";
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
 export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
 
-/** First zoom that asks the close-zoom ImageServers (TOP 2015, then NAIP) instead of the 1 m tile cache. */
+/** First zoom that uses close-zoom imagery (TOP 2015 archive, then NAIP) instead of the 1 m tile cache. */
 export const NAIP_60CM_MIN_ZOOM = 14;
 
 export const NAIP_60CM_NATIVE_M = 0.6;
@@ -64,7 +64,7 @@ export function usgsImageryOnlySource(tileUrl?: string): ImagerySourceDef {
   };
 }
 
-/** USDA NAIP 2022 ~60 cm. Close-zoom imagery (fallback when TOP 2015 is on). */
+/** USDA NAIP 2022 ~60 cm. Close-zoom imagery outside the TOP 2015 archive or when it is off. */
 export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
   return {
     id: NAIP_60CM_ID,
@@ -100,7 +100,7 @@ export function texasSharpImagerySource(tileUrl?: string): ImagerySourceDef {
     minZoom: 0,
     maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
     attribution:
-      "Imagery © TxGIO Texas Orthoimagery Program 2015 50 cm (CC0) · fallback USDA NAIP · USGS · Story Home launch-7 cache",
+      "Imagery © TxGIO Texas Orthoimagery Program 2015 50 cm (CC0) · USDA NAIP · USGS · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: TEXAS_SHARP_NATIVE_M,
     enabled: LAUNCH7_TOP15_ENABLED,

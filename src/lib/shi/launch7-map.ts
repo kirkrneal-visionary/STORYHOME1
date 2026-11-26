@@ -22,7 +22,7 @@ export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
 export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. ${
   LAUNCH7_TOP15_ENABLED
-    ? "Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback."
+    ? "Close-zoom imagery in the launch-7 counties is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0), cut from the county mosaics and hosted by Story Home; USDA NAIP 60 cm fills anywhere else."
     : "Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint."
 } Far-out views use USGS Imagery Only tiles.`;
 
