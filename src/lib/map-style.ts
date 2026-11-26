@@ -30,7 +30,13 @@ import {
   researchLidarTileTemplate,
 } from "@/lib/shi/research-lidar";
 import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
-import { activeImagerySource } from "@/lib/shi/research-imagery";
+import {
+  activeImagerySource,
+  texasSharpImagerySource,
+  type ImageryChoice,
+} from "@/lib/shi/research-imagery";
+
+export const IMAGERY_LIDAR_OVERLAY_LAYER_ID = "imagery-lidar-overlay";
 
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
@@ -313,6 +319,8 @@ export function buildStoryMapStyle(opts?: {
     absolutizeMapTileTemplate(resolveSatelliteTileTemplate()),
   );
   const satelliteTiles = imagery.tiles;
+  const texasSharp = texasSharpImagerySource();
+  const texasSharpTiles = [absolutizeMapTileTemplate(texasSharp.tiles[0]!)];
 
   let fwSources: StyleSpecification["sources"];
   let fwLayers: LayerSpecification[];
@@ -405,6 +413,14 @@ export function buildStoryMapStyle(opts?: {
         maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
         attribution: imagery.attribution,
       },
+      "satellite-tx": {
+        type: "raster",
+        tiles: texasSharpTiles,
+        tileSize: texasSharp.tileSize,
+        minzoom: texasSharp.minZoom,
+        maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
+        attribution: texasSharp.attribution,
+      },
       labels: {
         type: "raster",
         tiles: [
@@ -479,6 +495,27 @@ export function buildStoryMapStyle(opts?: {
         paint: {
           "raster-resampling": "linear",
           "raster-fade-duration": 120,
+        },
+      },
+      {
+        id: "base-satellite-tx",
+        type: "raster",
+        source: "satellite-tx",
+        layout: { visibility: "none" },
+        paint: {
+          "raster-resampling": "linear",
+          "raster-fade-duration": 120,
+        },
+      },
+      {
+        id: IMAGERY_LIDAR_OVERLAY_LAYER_ID,
+        type: "raster",
+        source: RESEARCH_LIDAR_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "raster-opacity": 0.5,
+          "raster-resampling": "linear",
+          "raster-fade-duration": 160,
         },
       },
       {
@@ -593,7 +630,11 @@ function freeWorldIdsForMap(map: MapLike): readonly string[] {
   return freeWorldLayerIds;
 }
 
-export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
+export function setBaseLayerVisibility(
+  map: MapLike,
+  base: MapBaseLayer,
+  imagery: ImageryChoice = "current",
+) {
   const show = (id: string, on: boolean) => {
     if (map.getLayer && !map.getLayer(id)) return;
     try {
@@ -608,9 +649,24 @@ export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
     show(id, freeWorldOn);
   }
 
-  show("base-satellite", base === "satellite" || base === "imageryLabels");
+  const photo = base === "satellite" || base === "imageryLabels";
+  show("base-satellite", photo && imagery === "current");
+  show("base-satellite-tx", photo && imagery === "texasSharp");
   show("base-topo", base === "topo");
   show("base-terrain", base === "terrain");
   show("base-gray", base === "gray");
   show("base-labels", base === "imageryLabels");
+}
+
+export function setImageryLidarOverlay(map: MapLike, on: boolean) {
+  if (map.getLayer && !map.getLayer(IMAGERY_LIDAR_OVERLAY_LAYER_ID)) return;
+  try {
+    map.setLayoutProperty(
+      IMAGERY_LIDAR_OVERLAY_LAYER_ID,
+      "visibility",
+      on ? "visible" : "none",
+    );
+  } catch {
+    /* layer may not exist yet */
+  }
 }

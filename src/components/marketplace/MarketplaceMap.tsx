@@ -40,8 +40,10 @@ import {
   MAP_NAVY as NAVY,
   MAP_PAPER as PAPER,
   setBaseLayerVisibility,
+  setImageryLidarOverlay,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
+import type { ImageryChoice } from "@/lib/shi/research-imagery";
 import { escapeHtml } from "@/lib/security/html";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
@@ -89,6 +91,19 @@ type MarketplaceMapProps = {
 };
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
+
+const IMAGERY_CHOICES: { id: ImageryChoice; label: string; title: string }[] = [
+  {
+    id: "current",
+    label: "Current",
+    title: "USDA NAIP 2022 · 60 cm · summer leaves",
+  },
+  {
+    id: "texasSharp",
+    label: "Texas sharp",
+    title: "Texas TOP 2015 · 50 cm · winter, leaves off · older than Current",
+  },
+];
 
 function priceLabel(price: number) {
   if (price >= 1_000_000) return `$${(price / 1_000_000).toFixed(2)}M`;
@@ -171,6 +186,9 @@ export function MarketplaceMap({
   const [ready, setReady] = useState(false);
   const [tool, setTool] = useState<DrawTool>("pan");
   const [base, setBase] = useState<BaseLayer>("street");
+  const [imagery, setImagery] = useState<ImageryChoice>("current");
+  const [lidarOverlay, setLidarOverlay] = useState(false);
+  const photoBase = base === "satellite" || base === "imageryLabels";
   const [radiusMiles, setRadiusMiles] = useState(10);
   const [draftPoints, setDraftPoints] = useState<LatLng[]>([]);
   const [measurePoints, setMeasurePoints] = useState<LatLng[]>([]);
@@ -419,8 +437,9 @@ export function MarketplaceMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    setBaseLayerVisibility(map, base);
-  }, [ready, base]);
+    setBaseLayerVisibility(map, base, imagery);
+    setImageryLidarOverlay(map, lidarOverlay && photoBase);
+  }, [ready, base, imagery, lidarOverlay, photoBase]);
 
   // Parcel overlay visibility.
   useEffect(() => {
@@ -837,6 +856,43 @@ export function MarketplaceMap({
             {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
+        {photoBase ? (
+          <div
+            role="group"
+            aria-label="Imagery source"
+            data-imagery-choice={imagery}
+            data-imagery-lidar={lidarOverlay ? "1" : "0"}
+            className="story-glass flex overflow-hidden rounded-[var(--radius-md)]"
+          >
+            {IMAGERY_CHOICES.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setImagery(c.id)}
+                title={c.title}
+                aria-pressed={imagery === c.id}
+                className={cn(
+                  "px-2.5 py-2 text-[10px] font-bold transition-colors sm:text-[11px]",
+                  imagery === c.id ? "bg-gold text-navy" : "text-paper hover:bg-white/10",
+                )}
+              >
+                {c.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setLidarOverlay((v) => !v)}
+              title="Lidar ground shading (USGS 3DEP · Texas StratMap lidar). Not a survey."
+              aria-pressed={lidarOverlay}
+              className={cn(
+                "border-l border-white/15 px-2.5 py-2 text-[10px] font-bold transition-colors sm:text-[11px]",
+                lidarOverlay ? "bg-gold text-navy" : "text-paper hover:bg-white/10",
+              )}
+            >
+              Lidar
+            </button>
+          </div>
+        ) : null}
         {overlays.panelOpen ? (
           <CadOverlayControl
             activeCounty={overlays.activeCounty}

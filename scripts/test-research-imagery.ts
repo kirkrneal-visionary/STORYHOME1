@@ -15,6 +15,7 @@ import {
   qualityTierForMotion,
   researchMapDebugEnabled,
   researchRenderPixelRatio,
+  texasSharpImagerySource,
   usgsImageryOnlySource,
 } from "../src/lib/shi/research-imagery.ts";
 import { RESEARCH_LIDAR_DEM_MAX_ZOOM } from "../src/lib/shi/research-lidar.ts";
@@ -98,6 +99,25 @@ assert.match(
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /activeImagerySource/);
 assert.match(style, /raster-resampling": "linear"/);
+assert.match(style, /"base-satellite-tx"/);
+assert.match(style, /imagery: ImageryChoice = "current"/);
+
+const tx = texasSharpImagerySource();
+assert.equal(tx.enabled, false);
+assert.equal(tx.nativeResolutionM, 0.5);
+assert.match(tx.tiles[0] ?? "", /^\/api\/map\/launch7\/imagery-tx\/.*v=t15/);
+assert.match(tx.attribution, /CC0/);
+assert.equal(allImagerySources().some((s) => s.id === tx.id), false);
+assert.match(
+  readFileSync(join(root, "src/lib/shi/launch7-tiles.ts"), "utf8"),
+  /TOP\/TOP15_NCCIR_50cm\/ImageServer/,
+);
+const market = readFileSync(
+  join(root, "src/components/marketplace/MarketplaceMap.tsx"),
+  "utf8",
+);
+assert.match(market, /useState<ImageryChoice>\("current"\)/);
+assert.match(market, /useState\(false\)[\s\S]*setLidarOverlay/);
 
 const map = readFileSync(
   join(root, "src/components/broker/intelligence/ShiResearchMap.tsx"),

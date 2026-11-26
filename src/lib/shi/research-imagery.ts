@@ -74,6 +74,37 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
   };
 }
 
+/** Opt-in "Texas sharp" imagery. Never the default. */
+export const TEXAS_SHARP_ID = "txgio-top15-50cm";
+export const TEXAS_SHARP_GEN = "t15";
+export const TEXAS_SHARP_NATIVE_M = 0.5;
+export const TEXAS_SHARP_TILE_TEMPLATE =
+  `/api/map/launch7/imagery-tx/{z}/{x}/{y}?v=${TEXAS_SHARP_GEN}`;
+
+export type ImageryChoice = "current" | "texasSharp";
+
+/**
+ * TxGIO Texas Orthoimagery Program 2015, 50 cm, statewide, leaf-off (CC0).
+ * Older than NAIP 2022: new houses and clearing may be missing.
+ * Below NAIP_60CM_MIN_ZOOM the tile route serves the current far-out tiles.
+ */
+export function texasSharpImagerySource(tileUrl?: string): ImagerySourceDef {
+  return {
+    id: TEXAS_SHARP_ID,
+    name: "Texas sharp (TOP 2015 50 cm)",
+    type: "raster",
+    tiles: [tileUrl ?? TEXAS_SHARP_TILE_TEMPLATE],
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+    attribution:
+      "Imagery © TxGIO Texas Orthoimagery Program 2015 50 cm (CC0) · Story Home launch-7 cache",
+    highDpiSupported: false,
+    nativeResolutionM: TEXAS_SHARP_NATIVE_M,
+    enabled: false,
+  };
+}
+
 /** Reserved. Do not enable without a licensed aerial provider. */
 export function highResImagerySource(): ImagerySourceDef {
   return {

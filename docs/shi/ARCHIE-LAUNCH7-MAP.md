@@ -26,6 +26,15 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - Close zoom = USDA NAIP 60 cm (USGS / TxGIO). Far-out = USGS Imagery Only.  
 - Disk cache + upstream fill · `npm run build:launch7-tiles`
 
+### Texas sharp imagery choice (**in review**)
+
+- Marketplace map, Imagery or Img+Lbl base: **Current** (default) · **Texas sharp** · **Lidar** overlay.
+- Texas sharp = TxGIO Texas Orthoimagery Program 2015, 50 cm, statewide, leaf-off, CC0 (`TOP/TOP15_NCCIR_50cm` ImageServer). Older than Current (NAIP Sept 2022, 60 cm, leaf-on): homes built since 2015 are missing.
+- `/api/map/launch7/imagery-tx/{z}/{x}/{y}?v=t15` — z14+ from TxGIO, cached in `imagery-tx-t15`; below z14 and on TxGIO failure it serves the Current tile.
+- Lidar overlay = existing `/api/map/lidar` ground hillshade (USGS 3DEP, which carries the Texas StratMap 1 m lidar). Tiles stop at z16, so close zoom is soft.
+- No 6-inch StratMap orthoimagery covers the launch-7 counties (the 6-inch sets are northeast Texas). The 6-inch Texas Imagery Service is government-only subscription — not used.
+- CAD parcels, other bases, and Research are unchanged. Default stays Current.
+
 ### L7-3 — Serve + refresh ops (**shipping**)
 
 - **Serve modes:** `api` (default) · `cdn` when `NEXT_PUBLIC_LAUNCH7_CDN_BASE` is set · `explicit` tile URL overrides  
