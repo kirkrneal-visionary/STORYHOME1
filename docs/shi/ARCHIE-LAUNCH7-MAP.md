@@ -22,16 +22,17 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 
 ### L7-2 — Owned launch-7 tile service (**done**)
 
-- `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}?v=t15`  
-- Close zoom (z14+) = TxGIO TOP 2015 50 cm, NAIP 60 cm fallback. Far-out = USGS Imagery Only.  
+- `/api/map/launch7/streets/{z}/{x}/{y}` · `/api/map/launch7/imagery/{z}/{x}/{y}?v=n60`  
+- Close zoom (z14+) = USDA NAIP 60 cm. Far-out = USGS Imagery Only.  
 - Disk cache + upstream fill · `npm run build:launch7-tiles`
 
-### Texas sharp close-zoom imagery (**in review**, founder picked 2026-11-26)
+### Texas sharp close-zoom imagery (**off**, founder picked 2026-11-26; shipped in PR 306, switched off after the live check)
 
-- Every map that shows Imagery (Marketplace, Research 2D and 3D on MapLibre or Mapbox, Corridors, listing CAD map) uses the one shared `satellite` source. From z14 it is TxGIO Texas Orthoimagery Program 2015, 50 cm, statewide, leaf-off, CC0 (`TOP/TOP15_NCCIR_50cm` ImageServer). Research 3D drapes it on the 3DEP terrain when the base is Imagery.
+- **Status:** `LAUNCH7_TOP15_ENABLED = false` in `src/lib/shi/research-imagery.ts`. Live, TxGIO's ImageServer answered about one tile per second, so a phone view (15–20 tiles at once) got mostly NAIP fallback with visible seams and 16–25 s loads. It stays off until TOP 2015 tiles are cut from TxGIO's county downloads and served from our own storage. With the flag off, close zoom is NAIP as before; the Lidar toggle and 3D drape work on NAIP.
+- When the flag is on: every map that shows Imagery (Marketplace, Research 2D and 3D on MapLibre or Mapbox, Corridors, listing CAD map) uses the one shared `satellite` source. From z14 it is TxGIO Texas Orthoimagery Program 2015, 50 cm, statewide, leaf-off, CC0 (`TOP/TOP15_NCCIR_50cm` ImageServer). Research 3D drapes it on the 3DEP terrain when the base is Imagery.
 - Older than NAIP (Sept 2022, 60 cm, leaf-on): homes built or land cleared since early 2015 may be missing.
 - Fallback order at z14+: TOP 2015 → USGS NAIP → USGS Imagery Only (to z16) → TxGIO NAIP 2022. Fallback tiles are not disk-cached and get a 5-minute CDN cache, so TOP 2015 returns once TxGIO is back. Below z14 nothing changed.
-- `LAUNCH7_IMAGERY_GEN` is `t15` (cache dir `imagery-t15`, `?v=t15`).
+- `LAUNCH7_IMAGERY_GEN` follows the flag: `n60` off, `t15` on (cache dir `imagery-<gen>`, `?v=<gen>`).
 - Marketplace map: **Lidar** on/off appears when Imagery is on. It overlays the existing `/api/map/lidar` ground hillshade (USGS 3DEP, which carries the Texas StratMap 1 m lidar). Tiles stop at z16, so close zoom is soft. Research keeps its own LiDAR controls.
 - No newer free imagery beats both: Esri World Imagery (Vantor 2023–2025, 31–50 cm) needs an ArcGIS Location Platform token and forbids server caching; H-GAC 2024 6-inch is paid; NAIP 2024 is still 60 cm. No 6-inch StratMap covers the launch-7 counties.
 

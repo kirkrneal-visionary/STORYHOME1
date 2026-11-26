@@ -3,7 +3,7 @@
  * Run: node scripts/build-launch7-tiles.mjs [--maxzoom=10] [--imagery-maxzoom=12]
  *
  * Streets: OpenFreeMap vector (OpenMapTiles schema)
- * Imagery: USGS National Map Imagery Only (seed zooms only; close zoom is TxGIO TOP 2015 50 cm at runtime, NAIP 60 cm fallback)
+ * Imagery: USGS National Map Imagery Only (seed zooms only; close zoom is NAIP 60 cm at runtime; TOP 2015 50 cm behind LAUNCH7_TOP15_ENABLED)
  */
 import { createWriteStream, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
