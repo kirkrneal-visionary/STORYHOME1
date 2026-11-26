@@ -30,11 +30,7 @@ import {
   researchLidarTileTemplate,
 } from "@/lib/shi/research-lidar";
 import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
-import {
-  activeImagerySource,
-  texasSharpImagerySource,
-  type ImageryChoice,
-} from "@/lib/shi/research-imagery";
+import { activeImagerySource } from "@/lib/shi/research-imagery";
 
 export const IMAGERY_LIDAR_OVERLAY_LAYER_ID = "imagery-lidar-overlay";
 
@@ -291,6 +287,7 @@ export function applyStoryPlaceLabelStyle(
  * - Streets = Esri raster underlay (never white) + owned launch-7 vector on top
  *   (liberty background omitted so underlay shows if vector is slow/empty)
  * - Imagery = owned /api/map/launch7/imagery unless explicit override
+ *   (TOP 2015 50 cm at close zoom; Research 3D drapes it on the terrain)
  * - Topo / terrain / gray remain borrowed switchable rasters
  * - Free-world layer ids live in style metadata (not a module singleton — that
  *   raced across Marketplace/Research and could hide the wrong layers)
@@ -319,8 +316,6 @@ export function buildStoryMapStyle(opts?: {
     absolutizeMapTileTemplate(resolveSatelliteTileTemplate()),
   );
   const satelliteTiles = imagery.tiles;
-  const texasSharp = texasSharpImagerySource();
-  const texasSharpTiles = [absolutizeMapTileTemplate(texasSharp.tiles[0]!)];
 
   let fwSources: StyleSpecification["sources"];
   let fwLayers: LayerSpecification[];
@@ -390,7 +385,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
-      "storyhome:satellite": "owned-naip60",
+      "storyhome:satellite": "owned-top15",
       "storyhome:serve": "l7-3",
     },
     // Geographic labels use the OpenFreeMap Noto Sans glyph atlas.
@@ -412,14 +407,6 @@ export function buildStoryMapStyle(opts?: {
         minzoom: imagery.minZoom,
         maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
         attribution: imagery.attribution,
-      },
-      "satellite-tx": {
-        type: "raster",
-        tiles: texasSharpTiles,
-        tileSize: texasSharp.tileSize,
-        minzoom: texasSharp.minZoom,
-        maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
-        attribution: texasSharp.attribution,
       },
       labels: {
         type: "raster",
@@ -491,16 +478,6 @@ export function buildStoryMapStyle(opts?: {
         id: "base-satellite",
         type: "raster",
         source: "satellite",
-        layout: { visibility: "none" },
-        paint: {
-          "raster-resampling": "linear",
-          "raster-fade-duration": 120,
-        },
-      },
-      {
-        id: "base-satellite-tx",
-        type: "raster",
-        source: "satellite-tx",
         layout: { visibility: "none" },
         paint: {
           "raster-resampling": "linear",
@@ -630,11 +607,7 @@ function freeWorldIdsForMap(map: MapLike): readonly string[] {
   return freeWorldLayerIds;
 }
 
-export function setBaseLayerVisibility(
-  map: MapLike,
-  base: MapBaseLayer,
-  imagery: ImageryChoice = "current",
-) {
+export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
   const show = (id: string, on: boolean) => {
     if (map.getLayer && !map.getLayer(id)) return;
     try {
@@ -649,9 +622,7 @@ export function setBaseLayerVisibility(
     show(id, freeWorldOn);
   }
 
-  const photo = base === "satellite" || base === "imageryLabels";
-  show("base-satellite", photo && imagery === "current");
-  show("base-satellite-tx", photo && imagery === "texasSharp");
+  show("base-satellite", base === "satellite" || base === "imageryLabels");
   show("base-topo", base === "topo");
   show("base-terrain", base === "terrain");
   show("base-gray", base === "gray");

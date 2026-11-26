@@ -5,12 +5,15 @@ import { LAUNCH7_TILE_CACHE_CONTROL } from "@/lib/shi/research-map-paint";
 export const runtime = "nodejs";
 export const revalidate = 86400;
 
+const FALLBACK_TILE_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
+
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
  * L7-2 — owned launch-7 imagery tiles.
- * Close zoom: USDA NAIP 60 cm (USGS / TxGIO). Far-out: USGS Imagery Only.
+ * Close zoom: TxGIO TOP 2015 50 cm, NAIP 60 cm if TxGIO fails. Far-out: USGS Imagery Only.
  * Serves from disk cache; fills upstream inside the footprint.
+ * Fallback tiles get a short cache so TOP 2015 replaces them once TxGIO is back.
  */
 export async function GET(_req: Request, ctx: Ctx) {
   const { z: zs, x: xs, y: ys } = await ctx.params;
@@ -30,7 +33,9 @@ export async function GET(_req: Request, ctx: Ctx) {
       status: 200,
       headers: {
         "Content-Type": tile.contentType,
-        "Cache-Control": LAUNCH7_TILE_CACHE_CONTROL,
+        "Cache-Control": tile.imageryKind?.endsWith("-fallback")
+          ? FALLBACK_TILE_CACHE_CONTROL
+          : LAUNCH7_TILE_CACHE_CONTROL,
         "X-Launch7-Tile-Source": tile.source,
         "X-Launch7-Tile-Cached": tile.cached ? "1" : "0",
         "X-Launch7-Imagery-Kind": tile.imageryKind ?? "xyz",
