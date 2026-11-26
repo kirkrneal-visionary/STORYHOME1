@@ -2107,3 +2107,28 @@ textarea {
   -webkit-user-select: text;
   user-select: text;
 }
+
+/*
+  Native-app feel for the Capacitor iPhone shell (and mobile Safari).
+  Instagram/Facebook-style: the page does not zoom when someone taps a field.
+  - Viewport maximumScale/userScalable in layout.tsx locks pinch/double-tap zoom.
+  - iOS WebKit still zooms on focus when a control's font-size is under 16px
+    (login and many forms use Tailwind text-sm / text-xs). Floor at 16px.
+  - touch-action: manipulation blocks double-tap zoom without blocking scroll
+    or MapLibre canvas gestures.
+*/
+html {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not(
+    [type="checkbox"]
+  ):not([type="radio"]):not([type="range"]):not([type="file"]):not(
+    [type="image"]
+  ):not([type="color"]):not([type="hidden"]),
+textarea,
+select {
+  font-size: max(16px, 1em) !important;
+}
