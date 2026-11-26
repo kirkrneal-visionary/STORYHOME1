@@ -28,11 +28,7 @@ export default async function PortalLayout({
     redirect("/login?next=/portal");
   }
   if (access === "allow") {
-    const ready = await getAccountReadiness({
-      purpose: result.ok ? result.accountPurpose : null,
-      kind: result.ok ? result.accountKind : null,
-      nextPath: "/portal",
-    });
+    const ready = await getAccountReadiness({ nextPath: "/portal" });
     if (!ready.ok && ready.redirectTo) {
       redirect(ready.redirectTo);
     }

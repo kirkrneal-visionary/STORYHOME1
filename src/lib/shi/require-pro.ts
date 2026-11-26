@@ -1,6 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { decideReadiness } from "@/lib/account/assurance";
-import { readSessionAssurance } from "@/lib/account/require-account-ready";
+import { decideReadiness, isEmailConfirmed } from "@/lib/account/assurance";
 import { mayUseStoryPro } from "@/lib/account/purpose";
 import { sessionWasForcedOut } from "@/lib/account/require-session-live";
 import { logSecurityEvent } from "@/lib/security/log-event";
@@ -65,14 +64,9 @@ export async function requireStoryPro(): Promise<ProGateOk | ProGateFail> {
     };
   }
 
-  const session = await readSessionAssurance(supabase);
   const ready = decideReadiness({
     signedIn: true,
-    emailConfirmed: session.emailConfirmed,
-    purpose: accountPurpose,
-    kind: accountKind,
-    enrolled: session.enrolled,
-    currentAal: session.currentAal,
+    emailConfirmed: isEmailConfirmed(user.email_confirmed_at),
     nextPath: "/portal",
   });
   if (!ready.ok) {

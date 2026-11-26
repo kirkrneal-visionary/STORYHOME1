@@ -31,11 +31,7 @@ export default async function OfficeLayout({
     redirect("/login?next=/office");
   }
   if (access === "allow") {
-    const ready = await getAccountReadiness({
-      purpose: result.ok ? result.accountPurpose : null,
-      kind: result.ok ? result.accountKind : null,
-      nextPath: "/office",
-    });
+    const ready = await getAccountReadiness({ nextPath: "/office" });
     if (!ready.ok && ready.redirectTo) {
       redirect(ready.redirectTo);
     }

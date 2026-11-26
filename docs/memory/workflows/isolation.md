@@ -30,7 +30,7 @@
 | Office + other farms | Empty. Not Pro A’s body |
 | Same brokerage Pro | Cannot read the other agent’s farms |
 | Other brokerage office | Cannot update this brokerage’s listing |
-| Consumer / other-pro / AAL1 | SHI 403 |
+| Consumer / other-pro / unconfirmed-email Pro | SHI 403 |
 | Signed out | SHI 401 |
 | Cleanup | Only `WAVE2-` rows removed |
 

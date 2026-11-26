@@ -20,14 +20,14 @@ const loc = (q: string) =>
 
 assert.equal(parseSettingsSearch(params("tab=security")).category, null);
 assert.equal(loc("tab=security").screen, "root");
-assert.equal(loc("setup=mfa").control, "authenticator");
-assert.equal(loc("setup=mfa").setupMfa, true);
+assert.equal(loc("setup=mfa").screen, "root");
+assert.equal(loc("category=security&control=authenticator").control, null);
 assert.equal(loc("category=security&control=email").control, "email");
 assert.equal(loc("category=professional&control=living").screen, "root");
 
 const nav = read("src/lib/account/settings-nav.ts");
 assert.doesNotMatch(nav, /tab === "security"/);
-assert.match(nav, /setup === "mfa"/);
+assert.doesNotMatch(nav, /setup === "mfa"/);
 assert.match(nav, /"living"/);
 assert.doesNotMatch(nav, /living-mark/);
 

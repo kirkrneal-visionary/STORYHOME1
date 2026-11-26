@@ -82,10 +82,14 @@ assert.equal(
   decideReadiness({
     signedIn: true,
     emailConfirmed: true,
-    purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal1",
+    nextPath: "/portal",
+  }).ok,
+  true,
+);
+assert.equal(
+  decideReadiness({
+    signedIn: true,
+    emailConfirmed: false,
     nextPath: "/portal",
   }).ok,
   false,

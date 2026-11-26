@@ -10,10 +10,7 @@ import { requireSignedIn } from "@/lib/account/require-signed-in";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const CLIENT_KINDS = new Set<SecurityNoticeKind>([
-  "mfa_enrolled",
-  "password_reset_requested",
-]);
+const CLIENT_KINDS = new Set<SecurityNoticeKind>(["password_reset_requested"]);
 
 export async function GET() {
   const auth = await requireSignedIn();
@@ -36,7 +33,7 @@ export async function GET() {
   });
 }
 
-/** Client-only Auth steps (TOTP enroll, reset) can stamp the Labs inbox. */
+/** Client-only Auth steps (reset) can stamp the Labs inbox. */
 export async function POST(request: Request) {
   const auth = await requireSignedIn();
   if (!auth.ok) {

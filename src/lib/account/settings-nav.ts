@@ -20,7 +20,6 @@ export type SettingsControl =
   | "profile"
   | "email"
   | "password"
-  | "authenticator"
   | "device"
   | "delete"
   | "identity"
@@ -36,7 +35,6 @@ export type SettingsControl =
 export type SettingsSearch = {
   category: SettingsCategory | null;
   control: SettingsControl | null;
-  setupMfa: boolean;
   from: string | null;
   rawCategory: string | null;
   rawControl: string | null;
@@ -46,7 +44,6 @@ export type SettingsLocation = {
   screen: "root" | "category" | "control";
   category: SettingsCategory | null;
   control: SettingsControl | null;
-  setupMfa: boolean;
 };
 
 const CATEGORIES = new Set<string>([
@@ -61,7 +58,6 @@ const CONTROLS = new Set<string>([
   "profile",
   "email",
   "password",
-  "authenticator",
   "device",
   "delete",
   "identity",
@@ -117,12 +113,10 @@ export function parseSettingsSearch(params: {
 }): SettingsSearch {
   const rawCategory = params.get("category");
   const rawControl = params.get("control");
-  const setupMfa = params.get("setup") === "mfa";
   const category = asCategory(rawCategory);
   return {
     category,
     control: asControl(rawControl),
-    setupMfa,
     from: params.get("from"),
     rawCategory,
     rawControl,
@@ -144,15 +138,6 @@ export function resolveSettingsLocation(
   search: SettingsSearch,
   caps: SettingsCapabilities,
 ): SettingsLocation {
-  if (search.setupMfa) {
-    return {
-      screen: "control",
-      category: "security",
-      control: "authenticator",
-      setupMfa: true,
-    };
-  }
-
   const username =
     search.control === "username" || search.rawControl === "username";
   if (username) {
@@ -160,7 +145,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category: "account",
       control: "username",
-      setupMfa: false,
     };
   }
 
@@ -169,7 +153,6 @@ export function resolveSettingsLocation(
       screen: "root",
       category: null,
       control: null,
-      setupMfa: false,
     };
   }
 
@@ -179,14 +162,12 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "profile",
-      setupMfa: false,
     };
   }
   if (
     category === "security" &&
     (search.control === "email" ||
       search.control === "password" ||
-      search.control === "authenticator" ||
       search.control === "device" ||
       search.control === "delete")
   ) {
@@ -194,7 +175,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: search.control,
-      setupMfa: false,
     };
   }
   if (category === "professional" && search.control === "identity") {
@@ -202,7 +182,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "identity",
-      setupMfa: false,
     };
   }
   if (category === "professional" && search.control === "profile") {
@@ -210,7 +189,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "profile",
-      setupMfa: false,
     };
   }
   if (
@@ -222,7 +200,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "license",
-      setupMfa: false,
     };
   }
   if (
@@ -234,7 +211,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "living",
-      setupMfa: false,
     };
   }
   if (
@@ -246,7 +222,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "counties",
-      setupMfa: false,
     };
   }
   if (
@@ -258,7 +233,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "primary",
-      setupMfa: false,
     };
   }
   if (
@@ -270,7 +244,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "availability",
-      setupMfa: false,
     };
   }
   if (
@@ -282,7 +255,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "brokerage",
-      setupMfa: false,
     };
   }
   if (category === "office" && search.control === "open" && caps.openOffice) {
@@ -290,7 +262,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "open",
-      setupMfa: false,
     };
   }
   if (
@@ -302,7 +273,6 @@ export function resolveSettingsLocation(
       screen: "control",
       category,
       control: "workspace",
-      setupMfa: false,
     };
   }
 
@@ -310,20 +280,17 @@ export function resolveSettingsLocation(
     screen: "category",
     category,
     control: null,
-    setupMfa: false,
   };
 }
 
 export function buildSettingsHref(opts: {
   category?: SettingsCategory | null;
   control?: SettingsControl | null;
-  setup?: "mfa" | null;
   from?: string | null;
 }): string {
   const params = new URLSearchParams();
   if (opts.category) params.set("category", opts.category);
   if (opts.control) params.set("control", opts.control);
-  if (opts.setup === "mfa") params.set("setup", "mfa");
   const from = sanitizeSettingsOrigin(opts.from);
   if (from) params.set("from", from);
   const q = params.toString();

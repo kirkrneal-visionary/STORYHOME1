@@ -5,6 +5,7 @@
 
 ## In progress
 
+- Password-only sign-in (2026-11-25, founder request after the first iPhone app test): no 2FA anywhere; the password field shows one rule (“At least 6 characters”) with a check mark instead of a strength meter. After the PR is live, the founder pastes `0088` (deletes saved authenticators, drops the `aal2` profile check), then turns off the authenticator app in Supabase Auth. Until `0088` runs, an account that had 2FA signs in with just the password but cannot save Story Pro settings or change its password or email.
 - County Stories Wave 6 is the professional composer on the owner’s own Agent World. Each composer step has Back and Save and exit. An unfinished Story stays in this browser until Continue or Discard. A draft does not hold a County seat or use the replacement. The rules box is not saved as already checked. The sample state selector stays on the non-production preview route. `0087` is hosted. Public publish stays off. The homepage County Stories row and consumer viewer (Kirk’s approved design) are in review; until publish is on, the row shows county covers and county links only.
 - Canonical prepared playback is secured Mux HLS (signed/private playback id), not a static MP4 rendition.
 - County Stories Wave 4 is on `main` (`0084`, hosted). Public publish stays off.

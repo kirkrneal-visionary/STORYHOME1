@@ -18,7 +18,7 @@ export const ACCOUNT_STACK_MIGRATIONS = [
 export const ACCOUNT_STACK_PROOF = {
   purposeSeparateFromLicense: true,
   trecNeverGrantsOffice: true,
-  emailAndMfaGatePrivateApp: true,
+  emailGatesPrivateApp: true,
   officeKeepsStoryPro: true,
   noProductionPeopleCopied: true,
   noLiveMailFromInbox: true,

@@ -4,9 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/components/AuthContext";
-import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
-import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { useAuth, type AuthResult } from "@/components/AuthContext";
+import { PasswordRule } from "@/components/auth/PasswordRule";
 import { PendingEmailPanel } from "@/components/auth/PendingEmailPanel";
 import {
   CheckEmailPanel,
@@ -21,8 +20,6 @@ import {
 } from "@/lib/auth";
 import {
   GENERIC_AUTH_SENT,
-  needsMfaChallenge,
-  needsMfaEnrollment,
   shouldStayOnLogin,
 } from "@/lib/account/assurance";
 import {
@@ -30,6 +27,11 @@ import {
   readStashedLoginEmail,
   type AuthFormMode,
 } from "@/lib/account/auth-form-fields";
+import {
+  PASSWORD_MIN_LENGTH,
+  meetsPasswordRule,
+  passwordTooShortCopy,
+} from "@/lib/account/password-rule";
 import { destForUser } from "@/lib/account/purpose";
 import { cn } from "@/lib/utils";
 
@@ -68,72 +70,30 @@ export function LoginClient() {
   const [error, setError] = useState("");
   const [recoverySaved, setRecoverySaved] = useState(false);
 
-  const demoSession =
-    !!user &&
-    user.emailConfirmed === undefined &&
-    user.aal === undefined;
+  const demoSession = !!user && user.emailConfirmed === undefined;
   const pendingEmail =
     pendingParam === "email" ||
     (isLoggedIn && !demoSession && user?.emailConfirmed === false);
-  const pendingMfa =
-    pendingParam === "mfa" ||
-    (isLoggedIn &&
-      !demoSession &&
-      !!user &&
-      (needsMfaChallenge({
-        purpose: user.purpose,
-        kind: user.kind,
-        enrolled: user.mfaEnrolled === true,
-        currentAal: user.aal,
-      }) ||
-        needsMfaEnrollment({
-          purpose: user.purpose,
-          kind: user.kind,
-          enrolled: user.mfaEnrolled === true,
-        })));
 
   const stay = shouldStayOnLogin({
     recoveryMode: recoveryMode && !recoverySaved,
     pendingEmail,
-    pendingMfa: pendingMfa && !needsMfaEnrollment({
-      purpose: user?.purpose,
-      kind: user?.kind,
-      enrolled: user?.mfaEnrolled === true,
-    }),
   });
-
-  const enrollMfa =
-    isLoggedIn &&
-    !demoSession &&
-    !!user &&
-    needsMfaEnrollment({
-      purpose: user.purpose,
-      kind: user.kind,
-      enrolled: user.mfaEnrolled === true,
-    });
 
   const continueTo = useMemo(() => {
     if (!user) return next !== "/" ? next : "/";
     return next !== "/" ? next : destForUser(user);
   }, [next, user]);
 
-  // Route to the correct home once signed in — never hijack pending email,
-  // MFA, or password-recovery.
+  // Route to the correct home once signed in — never hijack pending email
+  // or password recovery.
   useEffect(() => {
-    if (enrollMfa) {
-      router.replace("/settings?setup=mfa");
-      return;
-    }
     if (isLoggedIn && user && user.kind !== "seller" && !stay) {
       router.replace(continueTo);
     }
-  }, [isLoggedIn, user, stay, enrollMfa, continueTo, router]);
+  }, [isLoggedIn, user, stay, continueTo, router]);
 
   function goNext() {
-    if (enrollMfa) {
-      router.push("/settings?setup=mfa");
-      return;
-    }
     if (!user) return;
     router.push(continueTo);
   }
@@ -148,7 +108,7 @@ export function LoginClient() {
     router.push(`/seller/portal/${sellerCode.trim().toLowerCase()}`);
   }
 
-  if (isLoggedIn && user && (stay || enrollMfa || recoveryMode)) {
+  if (isLoggedIn && user && (stay || recoveryMode)) {
     return (
       <div className="mx-auto max-w-lg px-4 pb-24 pt-[calc(var(--story-safe-top)+1.5rem)] md:px-6">
         <p className="font-mono text-[11px] tracking-[0.18em] text-gold uppercase">
@@ -159,9 +119,7 @@ export function LoginClient() {
             ? "Set a new password"
             : pendingEmail
               ? "Confirm your email"
-              : enrollMfa
-                ? "Turn on authenticator"
-                : "Authenticator check"}
+              : "Password saved"}
         </h1>
         {recoveryMode && !recoverySaved && (
           <RecoveryPasswordForm
@@ -178,30 +136,6 @@ export function LoginClient() {
             onResend={resendConfirmation}
           />
         )}
-        {(!recoveryMode || recoverySaved) && !pendingEmail && enrollMfa && (
-          <div className="mt-4 space-y-3">
-            <p className="text-sm text-[var(--muted)]">
-              Realtor and office accounts need an authenticator app. Settings
-              stays open so you can finish this.
-            </p>
-            <Link
-              href="/settings?setup=mfa"
-              className="inline-flex h-11 items-center justify-center rounded-xl bg-gold px-5 text-sm font-bold text-navy"
-            >
-              Open settings
-            </Link>
-          </div>
-        )}
-        {(!recoveryMode || recoverySaved) &&
-          !pendingEmail &&
-          !enrollMfa &&
-          pendingMfa && (
-            <MfaChallengeForm
-              onVerified={() => {
-                void refreshAssurance().then(() => goNext());
-              }}
-            />
-          )}
         <button
           type="button"
           onClick={logout}
@@ -394,10 +328,6 @@ export function LoginClient() {
   );
 }
 
-type AuthResult =
-  | { ok: true; needsMfa?: boolean; emailUnconfirmed?: boolean }
-  | { ok: false; error: string; emailUnconfirmed?: boolean };
-
 type TrecResult = {
   found: boolean;
   approved: boolean;
@@ -452,6 +382,7 @@ function RealAuthForm({
   );
   const [proRole, setProRole] = useState<ProRole>("realtor_broker");
   const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -495,6 +426,7 @@ function RealAuthForm({
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    setPasswordError("");
     setNotice("");
 
     if (mode === "reset") {
@@ -509,6 +441,11 @@ function RealAuthForm({
       setError(
         "Please verify an ACTIVE TREC license before creating a pro account.",
       );
+      return;
+    }
+
+    if (mode === "signup" && !meetsPasswordRule(password)) {
+      setPasswordError(passwordTooShortCopy());
       return;
     }
 
@@ -534,6 +471,10 @@ function RealAuthForm({
           });
     setBusy(false);
     if (!result.ok) {
+      if (mode === "signup" && result.passwordRejected) {
+        setPasswordError(result.error);
+        return;
+      }
       if (result.emailUnconfirmed) {
         setPassword("");
         setCheckEmail({ email: email.trim(), reason: "unconfirmed" });
@@ -581,6 +522,7 @@ function RealAuthForm({
     setProRole("realtor_broker");
     setMode(next);
     setError("");
+    setPasswordError("");
     setNotice("");
   }
 
@@ -734,19 +676,24 @@ function RealAuthForm({
             key={`${mode}-password`}
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPasswordError("");
+            }}
+            placeholder={mode === "signup" ? "Create a password" : "Password"}
             name={mode === "signup" ? "new-password" : "current-password"}
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
             className={inputCls}
             required
-            minLength={6}
+            minLength={mode === "signup" ? PASSWORD_MIN_LENGTH : undefined}
+            aria-describedby={mode === "signup" ? "signup-password-rule" : undefined}
+            aria-invalid={mode === "signup" && passwordError ? true : undefined}
           />
           {mode === "signup" && (
-            <PasswordStrengthMeter
+            <PasswordRule
+              id="signup-password-rule"
               password={password}
-              name={fullName}
-              email={email}
+              rejected={passwordError}
             />
           )}
         </div>

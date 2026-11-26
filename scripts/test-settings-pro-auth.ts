@@ -1,5 +1,5 @@
 /**
- * Wave 1: authenticator before Story Pro settings cards.
+ * Wave 1: confirmed email before Story Pro settings cards. No authenticator.
  * Settings and Sign out stay open. Run:
  * node --experimental-strip-types scripts/test-settings-pro-auth.ts
  */
@@ -18,29 +18,13 @@ assert.equal(
   canEditStoryProSettings({
     emailConfirmed: true,
     purpose: "managing_broker",
-    kind: "broker",
-    enrolled: false,
-    currentAal: "aal1",
   }),
-  false,
+  true,
 );
 assert.equal(
   canEditStoryProSettings({
     emailConfirmed: true,
     purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal1",
-  }),
-  false,
-);
-assert.equal(
-  canEditStoryProSettings({
-    emailConfirmed: true,
-    purpose: "managing_broker",
-    kind: "broker",
-    enrolled: true,
-    currentAal: "aal2",
   }),
   true,
 );
@@ -48,9 +32,6 @@ assert.equal(
   canEditStoryProSettings({
     emailConfirmed: false,
     purpose: "managing_broker",
-    kind: "broker",
-    enrolled: true,
-    currentAal: "aal2",
   }),
   false,
 );
@@ -58,9 +39,6 @@ assert.equal(
   canEditStoryProSettings({
     emailConfirmed: true,
     purpose: "consumer",
-    kind: "consumer",
-    enrolled: false,
-    currentAal: "aal1",
   }),
   false,
 );
@@ -87,7 +65,8 @@ const security = read("src/components/settings/SecuritySection.tsx");
 assert.match(security, /logout\(\);/);
 assert.match(security, /location.assign\("\/login"\)/);
 
-assert.match(STORY_PRO_SETTINGS_BLOCKED, /authenticator/);
+assert.doesNotMatch(STORY_PRO_SETTINGS_BLOCKED, /authenticator/);
+assert.match(STORY_PRO_SETTINGS_BLOCKED, /Confirm your email/);
 assert.match(STORY_PRO_SETTINGS_BLOCKED, /Story Pro settings/);
 
 console.log("settings-pro-auth: ok");

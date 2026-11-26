@@ -32,9 +32,9 @@ assert.equal(classifyApiPath("/api/account/delete-account"), "medium");
 const api = read("src/app/api/account/delete-account/route.ts");
 assert.match(api, /admin\.deleteUser/);
 assert.match(api, /tombstone_account_usernames/);
-assert.match(api, /requireStepUpIfEnrolled/);
+assert.doesNotMatch(api, /requireStepUpIfEnrolled/);
 assert.match(api, /confirmMatches/);
-assert.match(api, /signInWithPassword/);
+assert.match(api, /checkCurrentPassword\(auth\.user\.email, currentPassword\)/);
 assert.doesNotMatch(api, /county_parcels/);
 assert.doesNotMatch(api, /CLIENTSAGENTS/i);
 

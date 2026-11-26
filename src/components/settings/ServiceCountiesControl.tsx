@@ -74,7 +74,7 @@ export function ServiceCountiesControl({ canEdit }: { canEdit: boolean }) {
           };
           if (!res.ok || !data.ok) {
             setError(
-              data.code === "needs_mfa"
+              data.code === "needs_email"
                 ? STORY_PRO_SETTINGS_BLOCKED
                 : (data.error ?? "Unable to save."),
             );

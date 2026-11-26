@@ -6,7 +6,7 @@
 
 ## Preconditions
 
-- Signed in, email confirmed; authenticator only if that account purpose requires it
+- Signed in, email confirmed
 - Guest / demo without Supabase still uses this-device storage
 - Additive SQL `0054_suites_account.sql` on the live project for account save
 

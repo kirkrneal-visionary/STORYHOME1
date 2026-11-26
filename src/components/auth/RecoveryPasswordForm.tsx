@@ -1,8 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
-import { signUpPublicMessage } from "@/lib/account/password-strength";
+import { PasswordRule } from "@/components/auth/PasswordRule";
+import {
+  PASSWORD_MIN_LENGTH,
+  meetsPasswordRule,
+  passwordTooShortCopy,
+} from "@/lib/account/password-rule";
 
 export function RecoveryPasswordForm({
   onSaved,
@@ -11,18 +15,22 @@ export function RecoveryPasswordForm({
   onSaved: () => void;
   updatePassword: (
     password: string,
-  ) => Promise<{ ok: true } | { ok: false; error: string }>;
+  ) => Promise<
+    { ok: true } | { ok: false; error: string; passwordRejected?: boolean }
+  >;
 }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (password.length < 6) {
-      setError("Choose a longer password.");
+    setPasswordError("");
+    if (!meetsPasswordRule(password)) {
+      setPasswordError(passwordTooShortCopy());
       return;
     }
     if (password !== confirm) {
@@ -33,7 +41,8 @@ export function RecoveryPasswordForm({
     const result = await updatePassword(password);
     setBusy(false);
     if (!result.ok) {
-      setError(signUpPublicMessage({ message: result.error }));
+      if (result.passwordRejected) setPasswordError(result.error);
+      else setError(result.error);
       return;
     }
     onSaved();
@@ -41,28 +50,35 @@ export function RecoveryPasswordForm({
 
   return (
     <form onSubmit={submit} className="mt-4 space-y-3">
-      <p className="text-sm text-[var(--muted)]">
-        Choose a new password. If this account uses an authenticator, you will
-        still need that code next.
-      </p>
+      <p className="text-sm text-[var(--muted)]">Choose a new password.</p>
       <input
         type="password"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={(e) => {
+          setPassword(e.target.value);
+          setPasswordError("");
+        }}
         placeholder="New password"
+        autoComplete="new-password"
         className="h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold"
         required
-        minLength={6}
+        minLength={PASSWORD_MIN_LENGTH}
+        aria-describedby="recovery-password-rule"
+        aria-invalid={passwordError ? true : undefined}
       />
-      <PasswordStrengthMeter password={password} />
+      <PasswordRule
+        id="recovery-password-rule"
+        password={password}
+        rejected={passwordError}
+      />
       <input
         type="password"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
         placeholder="Confirm new password"
+        autoComplete="new-password"
         className="h-11 w-full rounded-xl border border-hairline bg-[var(--surface)] px-4 text-sm text-ink outline-none focus:border-gold"
         required
-        minLength={6}
       />
       {error && <p className="text-sm text-red-300">{error}</p>}
       <button

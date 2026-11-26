@@ -193,15 +193,14 @@ assert.doesNotMatch(availRoute, /service_role/);
 
 const claimRoute = read("src/app/api/account/username/claim/route.ts");
 assert.match(claimRoute, /requireSignedIn/);
-assert.match(claimRoute, /requireStepUpIfEnrolled/);
+assert.doesNotMatch(claimRoute, /requireStepUpIfEnrolled|step\.code/);
 assert.match(claimRoute, /claim_username/);
 assert.match(claimRoute, /p_raw/);
 assert.match(claimRoute, /p_uid: auth\.user\.id/);
 assert.match(claimRoute, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(claimRoute, /username_own_mutation_state/);
-assert.match(claimRoute, /step\.code/);
-assert.match(read("src/lib/account/require-signed-in.ts"), /needs_mfa/);
-assert.ok(claimRoute.indexOf("requireStepUpIfEnrolled") < claimRoute.indexOf("claim_username"));
+assert.doesNotMatch(read("src/lib/account/require-signed-in.ts"), /needs_mfa/);
+assert.ok(claimRoute.indexOf("requireSignedIn") < claimRoute.indexOf("claim_username"));
 assert.doesNotMatch(claimRoute, /auth\.supabase\.rpc\("claim_username"/);
 assert.doesNotMatch(claimRoute, /admin_moderate_username/);
 assert.doesNotMatch(claimRoute, /account_kind|account_purpose|professional_role/);

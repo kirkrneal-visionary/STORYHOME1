@@ -1,9 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import {
-  requireSignedIn,
-  requireStepUpIfEnrolled,
-} from "@/lib/account/require-signed-in";
+import { requireSignedIn } from "@/lib/account/require-signed-in";
 import {
   firstRpcRow,
   mapClaimRow,
@@ -30,14 +27,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, error: auth.error, code: "sign_in_required" },
       { status: auth.status, headers: usernameHeaders() },
-    );
-  }
-
-  const step = await requireStepUpIfEnrolled(auth.supabase);
-  if (!step.ok) {
-    return NextResponse.json(
-      { ok: false, error: step.error, code: step.code },
-      { status: step.status, headers: usernameHeaders() },
     );
   }
 

@@ -16,11 +16,12 @@ import {
   type ProRole,
   parseStoredUser,
 } from "@/lib/auth";
+import { signInPublicMessage } from "@/lib/account/assurance";
 import {
-  parseAssuranceLevel,
-  signInPublicMessage,
-} from "@/lib/account/assurance";
-import { signUpPublicMessage } from "@/lib/account/password-strength";
+  passwordRejectedMessage,
+  passwordUpdatePublicMessage,
+  signUpPublicMessage,
+} from "@/lib/account/password-rule";
 import { stashLoginEmail } from "@/lib/account/auth-form-fields";
 import { navRoleForAccount, type AccountPurpose } from "@/lib/account/purpose";
 import {
@@ -44,8 +45,14 @@ function accountKindForAnalytics(user: AuthUser): AccountKindProp {
 }
 
 export type AuthResult =
-  | { ok: true; needsMfa?: boolean; emailUnconfirmed?: boolean }
-  | { ok: false; error: string; emailUnconfirmed?: boolean };
+  | { ok: true; emailUnconfirmed?: boolean }
+  | {
+      ok: false;
+      error: string;
+      emailUnconfirmed?: boolean;
+      /** Supabase refused the password itself (too short, common, or leaked). */
+      passwordRejected?: boolean;
+    };
 
 type AuthContextType = {
   user: AuthUser | null;
@@ -143,18 +150,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       let emailConfirmed = false;
-      let aal: AuthUser["aal"];
-      let mfaEnrolled = false;
       try {
         const { data: authUser } = await supabase!.auth.getUser();
         emailConfirmed = Boolean(authUser.user?.email_confirmed_at);
-        const { data: aalData } =
-          await supabase!.auth.mfa.getAuthenticatorAssuranceLevel();
-        aal = parseAssuranceLevel(aalData?.currentLevel) ?? undefined;
-        const { data: factors } = await supabase!.auth.mfa.listFactors();
-        mfaEnrolled = Boolean(
-          factors?.totp?.some((f) => f.status === "verified"),
-        );
       } catch {
         emailConfirmed = false;
       }
@@ -196,8 +194,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         purpose,
         proRole,
         emailConfirmed,
-        aal,
-        mfaEnrolled,
       });
       setRole(navRoleForAccount(purpose, kind));
       setReady(true);
@@ -366,18 +362,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
       let emailUnconfirmed = false;
-      let needsMfa = false;
       try {
         const { data: authUser } = await supabase.auth.getUser();
         emailUnconfirmed = !authUser.user?.email_confirmed_at;
-        const { data: aal } =
-          await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        needsMfa =
-          aal?.nextLevel === "aal2" && aal?.currentLevel !== "aal2";
       } catch {
         // session still established
       }
-      return { ok: true, needsMfa, emailUnconfirmed };
+      return { ok: true, emailUnconfirmed };
     },
     [supabase],
   );
@@ -415,6 +406,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return {
           ok: false,
           error: signUpPublicMessage(error),
+          passwordRejected: passwordRejectedMessage(error) !== null,
         };
       }
       // No session means Supabase is holding the account until the email link is used.
@@ -453,7 +445,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!supabase) return { ok: false, error: "Auth is not configured." };
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        return { ok: false, error: signUpPublicMessage(error) };
+        return {
+          ok: false,
+          error: passwordUpdatePublicMessage(error),
+          passwordRejected: passwordRejectedMessage(error) !== null,
+        };
       }
       await supabase.auth.signOut({ scope: "others" });
       return { ok: true };
@@ -479,9 +475,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!session?.user) return;
     try {
       const { data: authUser } = await supabase.auth.getUser();
-      const { data: aal } =
-        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      const { data: factors } = await supabase.auth.mfa.listFactors();
       const { data: profile } = await supabase
         .from("profiles")
         .select("full_name, account_kind, account_purpose, professional_role")
@@ -498,10 +491,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: profile?.full_name || prev.name,
               email: authUser.user?.email ?? prev.email,
               emailConfirmed: Boolean(authUser.user?.email_confirmed_at),
-              aal: parseAssuranceLevel(aal?.currentLevel) ?? prev.aal,
-              mfaEnrolled: Boolean(
-                factors?.totp?.some((f) => f.status === "verified"),
-              ),
               purpose: purpose ?? prev.purpose,
               kind: kind ?? prev.kind,
               proRole:

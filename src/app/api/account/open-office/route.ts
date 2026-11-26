@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
+import { isEmailConfirmed } from "@/lib/account/assurance";
 import { canOpenOfficeAccount } from "@/lib/account/purpose";
 import { notifySecurityChange } from "@/lib/account/notify-security";
-import { readSessionAssurance } from "@/lib/account/require-account-ready";
-import {
-  requireSignedIn,
-  requireStepUpIfEnrolled,
-} from "@/lib/account/require-signed-in";
+import { requireSignedIn } from "@/lib/account/require-signed-in";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,19 +16,10 @@ export async function POST() {
     );
   }
 
-  const session = await readSessionAssurance(auth.supabase);
-  if (!session.emailConfirmed) {
+  if (!isEmailConfirmed(auth.user.email_confirmed_at)) {
     return NextResponse.json(
       { ok: false, error: "Confirm your email first." },
       { status: 403 },
-    );
-  }
-
-  const step = await requireStepUpIfEnrolled(auth.supabase);
-  if (!step.ok) {
-    return NextResponse.json(
-      { ok: false, error: step.error, code: step.code },
-      { status: step.status },
     );
   }
 

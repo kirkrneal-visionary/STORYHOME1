@@ -50,10 +50,6 @@ function shiStatus(actor: Actor | { signedIn: false }): number {
   const ready = decideReadiness({
     signedIn: true,
     emailConfirmed: actor.emailConfirmed,
-    purpose: actor.purpose,
-    kind: actor.kind,
-    enrolled: actor.enrolled,
-    currentAal: actor.currentAal,
     nextPath: "/portal",
   });
   if (!ready.ok) return 403;
@@ -276,7 +272,14 @@ export function runWave2Harness(): HarnessReport {
   }));
   check(cases, "Consumer A SHI gate", "homeA", "403", String(shiStatus(ACTORS.homeA)));
   check(cases, "Other-professional E SHI gate", "otherE", "403", String(shiStatus(ACTORS.otherE)));
-  check(cases, "AAL1 Pro SHI gate", "aal1Pro", "403", String(shiStatus(ACTORS.aal1Pro)));
+  check(cases, "Pro A without a code SHI gate", "proA", "200", String(shiStatus(ACTORS.proA)));
+  check(
+    cases,
+    "Unconfirmed-email Pro SHI gate",
+    "unconfirmedPro",
+    "403",
+    String(shiStatus(ACTORS.unconfirmedPro)),
+  );
   check(cases, "Signed-out SHI gate", "anon", "401", String(shiStatus({ signedIn: false })));
 
   check(

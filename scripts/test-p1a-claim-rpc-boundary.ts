@@ -58,14 +58,13 @@ assert.doesNotMatch(fix, /set account_kind|set account_purpose|set professional_
 
 const claimRoute = read("src/app/api/account/username/claim/route.ts");
 assert.match(claimRoute, /requireSignedIn/);
-assert.match(claimRoute, /requireStepUpIfEnrolled/);
+assert.doesNotMatch(claimRoute, /requireStepUpIfEnrolled/);
 assert.match(claimRoute, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(claimRoute, /p_uid: auth\.user\.id/);
 assert.match(claimRoute, /p_raw: username/);
 assert.match(claimRoute, /username_own_mutation_state/);
-assert.ok(claimRoute.indexOf("requireSignedIn") < claimRoute.indexOf("requireStepUpIfEnrolled"));
-assert.ok(claimRoute.indexOf("requireStepUpIfEnrolled") < claimRoute.indexOf("claim_username"));
-assert.ok(claimRoute.indexOf("requireStepUpIfEnrolled") < claimRoute.indexOf("SUPABASE_SERVICE_ROLE_KEY"));
+assert.ok(claimRoute.indexOf("requireSignedIn") < claimRoute.indexOf("claim_username"));
+assert.ok(claimRoute.indexOf("requireSignedIn") < claimRoute.indexOf("SUPABASE_SERVICE_ROLE_KEY"));
 assert.doesNotMatch(claimRoute, /auth\.supabase\.rpc\("claim_username"/);
 assert.doesNotMatch(claimRoute, /admin_moderate_username/);
 assert.doesNotMatch(claimRoute, /from\("username_registry"\)/);
@@ -92,11 +91,9 @@ assert.equal(
   false,
 );
 
-const stepUp = read("src/lib/account/require-signed-in.ts");
-assert.match(stepUp, /code: "needs_mfa"/);
-assert.match(stepUp, /session\.enrolled && session\.currentAal !== "aal2"/);
-assert.match(claimRoute, /code: step\.code/);
-assert.match(claimRoute, /status: step\.status/);
+const signedIn = read("src/lib/account/require-signed-in.ts");
+assert.doesNotMatch(signedIn, /needs_mfa|currentAal|aal2/);
+assert.match(claimRoute, /status: auth\.status/);
 
 const settings = read("src/components/settings/SettingsView.tsx");
 assert.match(settings, /UsernameField/);

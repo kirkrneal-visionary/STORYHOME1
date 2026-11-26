@@ -151,8 +151,8 @@ assert.match(parcelLoc, /corridor_parcel_frontage/);
 assert.match(parcelLoc, /corridor_parcel_intersection_distance/);
 
 const suites = read("src/lib/suites-access.ts");
-assert.match(suites, /from\("profiles"\)/);
-assert.match(suites, /account_purpose/);
+assert.match(suites, /requireSignedIn\(\)/);
+assert.match(suites, /isEmailConfirmed\(gate\.user\.email_confirmed_at\)/);
 assert.doesNotMatch(suites, /searchParams/);
 
 const lock = read("supabase/migrations/0048_account_purpose_wave1.sql");
