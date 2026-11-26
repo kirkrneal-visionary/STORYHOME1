@@ -1,15 +1,22 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Close zoom = TxGIO Texas Orthoimagery Program 2015 50 cm (owned cache),
- * with USDA NAIP 60 cm as the fallback when TxGIO fails.
+ * Close zoom = USDA NAIP 60 cm (owned cache). TxGIO Texas Orthoimagery
+ * Program 2015 50 cm is wired behind LAUNCH7_TOP15_ENABLED.
  * Far-out zoom = USGS Imagery Only tiles (fast).
  * High-res / historic slots stay reserved. Safe for the browser.
  */
 
 export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
 
-/** Bust CDN / disk so old NAIP close-zoom tiles are not served as TOP 2015. */
-export const LAUNCH7_IMAGERY_GEN = "t15";
+/**
+ * TOP 2015 close zoom. Off until its tiles come from Story Home storage:
+ * TxGIO's ImageServer answers about one tile per second, so live maps fell
+ * back to NAIP for most tiles.
+ */
+export const LAUNCH7_TOP15_ENABLED: boolean = false;
+
+/** Cache generation. Changes with the close-zoom source so CDN / disk never mix them. */
+export const LAUNCH7_IMAGERY_GEN = LAUNCH7_TOP15_ENABLED ? "t15" : "n60";
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
 export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
@@ -57,7 +64,7 @@ export function usgsImageryOnlySource(tileUrl?: string): ImagerySourceDef {
   };
 }
 
-/** USDA NAIP 2022 ~60 cm. Close-zoom fallback when TxGIO TOP 2015 fails. */
+/** USDA NAIP 2022 ~60 cm. Close-zoom imagery (fallback when TOP 2015 is on). */
 export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
   return {
     id: NAIP_60CM_ID,
@@ -71,7 +78,7 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
       "Imagery © USDA NAIP 60 cm · USGS / TxGIO · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: NAIP_60CM_NATIVE_M,
-    enabled: false,
+    enabled: !LAUNCH7_TOP15_ENABLED,
   };
 }
 
@@ -79,7 +86,7 @@ export const TEXAS_SHARP_ID = "txgio-top15-50cm";
 export const TEXAS_SHARP_NATIVE_M = 0.5;
 
 /**
- * Default close-zoom imagery: TxGIO Texas Orthoimagery Program 2015, 50 cm,
+ * Close-zoom imagery when LAUNCH7_TOP15_ENABLED: TxGIO Texas Orthoimagery Program 2015, 50 cm,
  * statewide, leaf-off (CC0). Older than NAIP 2022, so homes built or land
  * cleared since early 2015 may be missing. z18 matches native GSD.
  */
@@ -96,7 +103,7 @@ export function texasSharpImagerySource(tileUrl?: string): ImagerySourceDef {
       "Imagery © TxGIO Texas Orthoimagery Program 2015 50 cm (CC0) · fallback USDA NAIP · USGS · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: TEXAS_SHARP_NATIVE_M,
-    enabled: true,
+    enabled: LAUNCH7_TOP15_ENABLED,
   };
 }
 
@@ -146,7 +153,7 @@ export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
 
 export function activeImagerySource(tileUrl?: string): ImagerySourceDef {
   const live = allImagerySources(tileUrl).find((s) => s.enabled);
-  return live ?? texasSharpImagerySource(tileUrl);
+  return live ?? naip60cmSource(tileUrl);
 }
 
 /** Mercator ground meters per pixel at a WGS84 latitude. */

@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Texas sharp imagery (PR 306, founder picked 2026-11-26): close-zoom Imagery on every map is now TxGIO TOP 2015 50 cm, NAIP 60 cm fallback. Research 3D drapes it on the terrain. Marketplace adds a Lidar on/off. TOP 2015 is older than NAIP 2022. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
+- Texas sharp imagery (PR 306, founder picked 2026-11-26): switched off after the live check (TxGIO serves ~1 tile/s, so live maps were mostly NAIP fallback). Close zoom is NAIP 60 cm again; TOP 2015 code stays behind `LAUNCH7_TOP15_ENABLED` until tiles are self-hosted. Marketplace keeps the Lidar on/off; Research 3D drapes NAIP. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
 
 - iPhone Capacitor shell zooms like Safari when a text field is tapped (founder, TestFlight). Fix is web-only: viewport `maximumScale=1` / `userScalable=false` plus a 16px floor on form controls so iOS does not focus-zoom. Shell already loads the live site, so eqmg deploy is enough — no TestFlight rebuild for this. Physical device confirmation still pending.
 - Password-only sign-in (2026-11-25, founder request after the first iPhone app test): no 2FA anywhere; the password field shows one rule (“At least 6 characters”) with a check mark instead of a strength meter. After the PR is live, the founder pastes `0088` (deletes saved authenticators, drops the `aal2` profile check), then turns off the authenticator app in Supabase Auth. Until `0088` runs, an account that had 2FA signs in with just the password but cannot save Story Pro settings or change its password or email.

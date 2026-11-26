@@ -30,7 +30,10 @@ import {
   researchLidarTileTemplate,
 } from "@/lib/shi/research-lidar";
 import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
-import { activeImagerySource } from "@/lib/shi/research-imagery";
+import {
+  activeImagerySource,
+  LAUNCH7_TOP15_ENABLED,
+} from "@/lib/shi/research-imagery";
 
 export const IMAGERY_LIDAR_OVERLAY_LAYER_ID = "imagery-lidar-overlay";
 
@@ -385,7 +388,9 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
-      "storyhome:satellite": "owned-top15",
+      "storyhome:satellite": LAUNCH7_TOP15_ENABLED
+        ? "owned-top15"
+        : "owned-naip60",
       "storyhome:serve": "l7-3",
     },
     // Geographic labels use the OpenFreeMap Noto Sans glyph atlas.

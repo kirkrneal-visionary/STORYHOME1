@@ -12,13 +12,19 @@
  */
 
 import { CORRIDOR_COUNTIES } from "@/lib/shi/corridors";
-import { LAUNCH7_IMAGERY_TILE_TEMPLATE } from "@/lib/shi/research-imagery";
+import {
+  LAUNCH7_IMAGERY_TILE_TEMPLATE,
+  LAUNCH7_TOP15_ENABLED,
+} from "@/lib/shi/research-imagery";
 
 /** Wave marker — bump when basemap ownership step ships. */
 export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
-export const LAUNCH7_MAP_HONESTY =
-  "Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback. Far-out views use USGS Imagery Only tiles.";
+export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. ${
+  LAUNCH7_TOP15_ENABLED
+    ? "Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback."
+    : "Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint."
+} Far-out views use USGS Imagery Only tiles.`;
 
 export type Launch7County = (typeof CORRIDOR_COUNTIES)[number];
 
