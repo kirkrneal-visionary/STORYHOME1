@@ -56,6 +56,7 @@
     "scripts/test-password-strength.ts",
     "scripts/test-office-keep-story-pro.ts",
     "scripts/test-login-signup-separate.ts",
+    "scripts/test-account-emails.ts",
     "scripts/test-sign-out-everywhere-detect.ts",
     "scripts/test-forced-logout-server.ts",
     "scripts/test-settings-pro-auth.ts",

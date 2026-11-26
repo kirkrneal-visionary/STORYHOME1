@@ -8,6 +8,10 @@ import { useAuth } from "@/components/AuthContext";
 import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import { PendingEmailPanel } from "@/components/auth/PendingEmailPanel";
+import {
+  CheckEmailPanel,
+  type CheckEmailReason,
+} from "@/components/auth/CheckEmailPanel";
 import { RecoveryPasswordForm } from "@/components/auth/RecoveryPasswordForm";
 import {
   DEMO_ACCOUNTS,
@@ -264,9 +268,11 @@ export function LoginClient() {
 
       {supabaseConfigured && (
         <RealAuthForm
+          initialMode={searchParams.get("mode") === "reset" ? "reset" : "signin"}
           signInWithPassword={signInWithPassword}
           signUp={signUp}
           resetPasswordForEmail={resetPasswordForEmail}
+          resendConfirmation={resendConfirmation}
           onDone={goNext}
         />
       )}
@@ -406,11 +412,14 @@ type TrecResult = {
 };
 
 function RealAuthForm({
+  initialMode,
   signInWithPassword,
   signUp,
   resetPasswordForEmail,
+  resendConfirmation,
   onDone,
 }: {
+  initialMode: AuthFormMode;
   signInWithPassword: (email: string, password: string) => Promise<AuthResult>;
   signUp: (
     email: string,
@@ -426,9 +435,14 @@ function RealAuthForm({
     },
   ) => Promise<AuthResult>;
   resetPasswordForEmail: (email: string) => Promise<AuthResult>;
+  resendConfirmation: (email: string) => Promise<AuthResult>;
   onDone: () => void;
 }) {
-  const [mode, setMode] = useState<AuthFormMode>("signin");
+  const [mode, setMode] = useState<AuthFormMode>(initialMode);
+  const [checkEmail, setCheckEmail] = useState<{
+    email: string;
+    reason: CheckEmailReason;
+  } | null>(null);
   const [signInEmail, setSignInEmail] = useState(readStashedLoginEmail);
   const [email, setEmail] = useState(signInEmail);
   const [password, setPassword] = useState("");
@@ -520,22 +534,28 @@ function RealAuthForm({
           });
     setBusy(false);
     if (!result.ok) {
-      setError(result.error);
       if (result.emailUnconfirmed) {
-        setNotice("Confirm your email to continue. Check your inbox for the link.");
+        setPassword("");
+        setCheckEmail({ email: email.trim(), reason: "unconfirmed" });
+        return;
       }
+      setError(result.error);
       return;
     }
-    if (mode === "signup" || result.emailUnconfirmed) {
-      setNotice(
-        "Check your email to confirm this account. We will not open your home until that mailbox is confirmed.",
-      );
+    if (result.emailUnconfirmed) {
       setSignInEmail(email.trim());
       setPassword("");
       setFullName("");
       setLicense("");
       setVerified(null);
       setMode("signin");
+      if (mode === "signup") {
+        setCheckEmail({ email: email.trim(), reason: "signup" });
+        return;
+      }
+      setNotice(
+        "Check your email to confirm this account. We will not open your home until that mailbox is confirmed.",
+      );
       return;
     }
     onDone();
@@ -562,6 +582,17 @@ function RealAuthForm({
     setMode(next);
     setError("");
     setNotice("");
+  }
+
+  if (checkEmail) {
+    return (
+      <CheckEmailPanel
+        email={checkEmail.email}
+        reason={checkEmail.reason}
+        onResend={resendConfirmation}
+        onBack={() => setCheckEmail(null)}
+      />
+    );
   }
 
   return (

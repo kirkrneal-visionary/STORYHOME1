@@ -397,7 +397,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     ): Promise<AuthResult> => {
       if (!supabase) return { ok: false, error: "Auth is not configured." };
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -417,7 +417,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: signUpPublicMessage(error),
         };
       }
-      return { ok: true, emailUnconfirmed: true };
+      // No session means Supabase is holding the account until the email link is used.
+      return { ok: true, emailUnconfirmed: !data.session };
     },
     [supabase],
   );

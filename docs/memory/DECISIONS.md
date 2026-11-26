@@ -46,5 +46,8 @@ Only material product/architecture choices. Not a transcript.
 | 2026-09-26 | Canonical prepared playback is signed Mux HLS, not a static MP4 file | Mux VOD is HLS. Do not enable static MP4 renditions by default | County Stories Wave 5 Mux |
 | 2026-09-26 | Already-good MP4/H.264 sources still enter the Mux path | One secured delivery architecture. Source probe facts stay source facts | County Stories Wave 5 Mux |
 | 2026-09-26 | Mux webhooks may update provider/caption processing only | Unsigned callbacks do nothing. They cannot publish, hide, strike, allocate, or bypass accessibility | County Stories Wave 5 Mux |
+| 2026-11-25 | New accounts must confirm their email by link before they get a session (Supabase **Confirm email**) | Founder iPhone test: accounts are accepted only after the email link | Founder 2026-11-25 |
+| 2026-11-25 | Account emails send through Resend SMTP as `Story Home <no-reply@storyhome.app>` | Supabase's built-in sender reaches only team members at 2/hour. Resend is free (3,000/month, 100/day), sets up GoDaddy DNS itself, and its Supabase integration fills the SMTP settings so no password is copied by hand | Account emails PR |
+| 2026-11-25 | Email links are token-hash `/auth/confirm` links that verify only on tap | A PKCE code works only in the browser that asked (the app), not Safari opened from Mail. Mail scanners open links before people do | Account emails PR |
 
 If a new change alters one of these, add a row and update the workflow contract.
