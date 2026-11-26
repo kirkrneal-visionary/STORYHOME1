@@ -145,6 +145,7 @@
     "scripts/test-county-stories-w5-mux.ts",
     "scripts/test-county-stories-w6-composer.ts",
     "scripts/test-county-stories-viewer.ts",
-    "scripts/test-home-draw-map.ts"
+    "scripts/test-home-draw-map.ts",
+    "scripts/test-trec-lookup.ts"
   ]
 }
