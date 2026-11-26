@@ -1,11 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { notifySecurityChange } from "@/lib/account/notify-security";
 import {
+  meetsPasswordRule,
+  passwordRejectedMessage,
+  passwordTooShortCopy,
+  passwordUpdatePublicMessage,
+} from "@/lib/account/password-rule";
+import {
+  checkCurrentPassword,
   requireSignedIn,
-  requireStepUpIfEnrolled,
 } from "@/lib/account/require-signed-in";
-import { normalizeSupabaseUrl } from "@/lib/supabase/url";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,14 +20,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, error: auth.error },
       { status: auth.status },
-    );
-  }
-
-  const step = await requireStepUpIfEnrolled(auth.supabase);
-  if (!step.ok) {
-    return NextResponse.json(
-      { ok: false, error: step.error, code: step.code },
-      { status: step.status },
     );
   }
 
@@ -43,48 +39,38 @@ export async function POST(request: Request) {
     );
   }
 
-  if (newPassword.length < 6) {
+  if (!meetsPasswordRule(newPassword)) {
     return NextResponse.json(
-      { ok: false, error: "Choose a longer password." },
+      { ok: false, error: passwordTooShortCopy(), code: "password_rejected" },
       { status: 400 },
     );
   }
 
-  const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  const email = auth.user.email;
-  if (!url || !anon || !email) {
+  const password = await checkCurrentPassword(auth.user.email, currentPassword);
+  if (password !== "ok") {
     return NextResponse.json(
-      { ok: false, error: "Unable to update password." },
-      { status: 400 },
-    );
-  }
-
-  const probe = createClient(url, anon, { auth: { persistSession: false } });
-  const { error: check } = await probe.auth.signInWithPassword({
-    email,
-    password: currentPassword,
-  });
-  if (check) {
-    return NextResponse.json(
-      { ok: false, error: "Current password is incorrect." },
+      {
+        ok: false,
+        error:
+          password === "wrong"
+            ? "Current password is incorrect."
+            : "Unable to update password.",
+      },
       { status: 400 },
     );
   }
 
   const { error } = await auth.supabase.auth.updateUser({ password: newPassword });
   if (error) {
-    const weak =
-      error.code === "weak_password" ||
-      error.message.toLowerCase().includes("weak") ||
-      error.message.toLowerCase().includes("easy to guess");
+    const rejected = passwordRejectedMessage(error);
+    if (rejected) {
+      return NextResponse.json(
+        { ok: false, error: rejected, code: "password_rejected" },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
-      {
-        ok: false,
-        error: weak
-          ? "That password is too common. Use a longer phrase — not a name plus 1234."
-          : "Unable to update password.",
-      },
+      { ok: false, error: passwordUpdatePublicMessage(error) },
       { status: 400 },
     );
   }

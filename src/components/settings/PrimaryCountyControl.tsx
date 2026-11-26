@@ -95,7 +95,7 @@ export function PrimaryCountyControl({ canEdit }: { canEdit: boolean }) {
           const data = (await res.json()) as OwnState;
           if (!res.ok || !data.ok) {
             setError(
-              data.code === "needs_mfa"
+              data.code === "needs_email"
                 ? STORY_PRO_SETTINGS_BLOCKED
                 : (data.error ?? "Unable to request."),
             );

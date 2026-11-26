@@ -27,16 +27,8 @@ assert.doesNotMatch(route, /professional_id|decide_primary_county/);
 assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /decide_primary_county/);
 assert.equal(classifyApiPath("/api/account/service-counties"), "medium");
 assert.equal(PROFESSIONAL_LAUNCH_COUNTY_FIPS.length, 7);
-assert.equal(
-  canAccessPrivateApp({
-    emailConfirmed: true,
-    purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal1",
-  }),
-  false,
-);
+assert.equal(canAccessPrivateApp({ emailConfirmed: false }), false);
+assert.equal(canAccessPrivateApp({ emailConfirmed: true }), true);
 
 const started = spawnSync("sudo", ["pg_ctlcluster", "16", "main", "start"], { encoding: "utf8" });
 if (started.status !== 0 && !/already running/i.test(`${started.stderr}${started.stdout}`)) {

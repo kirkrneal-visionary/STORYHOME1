@@ -1,11 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { canAccessPrivateApp } from "@/lib/account/assurance";
+import { canAccessPrivateApp, isEmailConfirmed } from "@/lib/account/assurance";
 import {
   isProfessionalLaunchCountyFips,
   mayHoldRealtorGeography,
 } from "@/lib/account/professional-geography";
-import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { requireSignedIn } from "@/lib/account/require-signed-in";
 import { normalizeSupabaseUrl } from "@/lib/supabase/url";
 
@@ -66,26 +65,17 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await requireSignedIn();
   if (!auth.ok) return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
-  const session = await readSessionAssurance(auth.supabase);
   const { data: profile } = await auth.supabase
     .from("profiles")
-    .select("account_kind, account_purpose")
+    .select("account_purpose")
     .eq("id", auth.user.id)
     .maybeSingle();
   if (!mayHoldRealtorGeography(profile?.account_purpose)) {
     return NextResponse.json({ ok: false, error: "Not available." }, { status: 403 });
   }
-  if (
-    !canAccessPrivateApp({
-      emailConfirmed: session.emailConfirmed,
-      purpose: profile?.account_purpose,
-      kind: profile?.account_kind,
-      enrolled: session.enrolled,
-      currentAal: session.currentAal,
-    })
-  ) {
+  if (!canAccessPrivateApp({ emailConfirmed: isEmailConfirmed(auth.user.email_confirmed_at) })) {
     return NextResponse.json(
-      { ok: false, error: "Confirm your email and authenticator first.", code: "needs_mfa" },
+      { ok: false, error: "Confirm your email first.", code: "needs_email" },
       { status: 403 },
     );
   }

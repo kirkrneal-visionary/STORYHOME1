@@ -132,7 +132,7 @@ assert.doesNotMatch(purpose, /office account\s+below/);
 
 const open = read("src/components/settings/OpenOfficeCard.tsx");
 assert.match(open, /\/api\/account\/open-office/);
-assert.match(open, /needs_mfa/);
+assert.doesNotMatch(open, /needs_mfa/);
 
 const api = read("src/app/api/account/open-office/route.ts");
 assert.match(api, /open_office_account/);
@@ -147,7 +147,11 @@ assert.match(officeHome, /isSupabaseConfigured/);
 assert.match(officeHome, /setLoading\(false\)/);
 
 const claim = read("src/app/api/account/username/claim/route.ts");
-assert.match(claim, /rate|limit|step/i);
+assert.match(claim, /requireSignedIn/);
+assert.match(
+  read("src/lib/security/rate-limit.ts"),
+  /pathname\.startsWith\("\/api\/account\/username\/claim"\)/,
+);
 assert.doesNotMatch(claim, /settingsCapabilities/);
 
 const username = read("src/components/settings/UsernameField.tsx");

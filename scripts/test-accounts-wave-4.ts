@@ -9,7 +9,6 @@ import {
   canAccessPrivateApp,
   decideReadiness,
   GENERIC_AUTH_SENT,
-  mfaRequired,
   shouldStayOnLogin,
 } from "../src/lib/account/assurance.ts";
 import {
@@ -55,35 +54,28 @@ assert.equal(destForUser({ kind: "broker", purpose: "managing_broker" }), "/offi
 assert.equal(destForUser({ kind: "pro", purpose: "individual_pro" }), "/portal");
 assert.equal(officePageAccess({ signedIn: true, purpose: "individual_pro" }), "refuse");
 
-assert.equal(mfaRequired("individual_pro", "agent"), true);
-assert.equal(mfaRequired("consumer", "consumer"), false);
-assert.equal(
-  canAccessPrivateApp({
-    emailConfirmed: false,
-    purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal2",
-  }),
-  false,
-);
+assert.equal(canAccessPrivateApp({ emailConfirmed: false }), false);
+assert.equal(canAccessPrivateApp({ emailConfirmed: true }), true);
 assert.equal(
   decideReadiness({
     signedIn: true,
     emailConfirmed: true,
-    purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal1",
     nextPath: "/portal",
   }).reason,
-  "mfa_challenge",
+  "ok",
+);
+assert.equal(
+  decideReadiness({
+    signedIn: true,
+    emailConfirmed: false,
+    nextPath: "/portal",
+  }).reason,
+  "email",
 );
 assert.equal(
   shouldStayOnLogin({
     recoveryMode: true,
     pendingEmail: false,
-    pendingMfa: false,
   }),
   true,
 );
@@ -92,7 +84,7 @@ assert.match(GENERIC_AUTH_SENT, /If that account exists/);
 resetSecurityInboxForTests();
 notifySecurityChange("password_changed", "abcdefgh-1111");
 notifySecurityChange("office_opened", "abcdefgh-1111");
-notifySecurityChange("mfa_enrolled", "zzzzzzzz-9999");
+notifySecurityChange("email_change_requested", "zzzzzzzz-9999");
 const mine = listSecurityNotices("abcdefgh-1111");
 assert.equal(mine.length, 2);
 assert.equal(mine[0].kind, "office_opened");

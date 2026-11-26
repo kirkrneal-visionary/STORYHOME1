@@ -6,8 +6,6 @@
 export type SecurityNoticeKind =
   | "password_changed"
   | "email_change_requested"
-  | "mfa_enrolled"
-  | "mfa_removed"
   | "signed_out_everywhere"
   | "confirmation_resent"
   | "password_reset_requested"
@@ -30,10 +28,6 @@ export function noticeLabel(kind: SecurityNoticeKind): string {
       return "Password changed";
     case "email_change_requested":
       return "Email change started";
-    case "mfa_enrolled":
-      return "Authenticator added";
-    case "mfa_removed":
-      return "Authenticator removed";
     case "signed_out_everywhere":
       return "Signed out everywhere";
     case "confirmation_resent":

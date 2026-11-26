@@ -23,9 +23,6 @@ assert.equal(
   canEditStoryProSettings({
     emailConfirmed: true,
     purpose: "consumer",
-    kind: "consumer",
-    enrolled: true,
-    currentAal: "aal2",
   }),
   false,
 );
@@ -36,16 +33,27 @@ assert.match(mig, /service_areas/);
 assert.match(mig, /primary_market_city/);
 assert.match(mig, /individual_pro/);
 assert.match(mig, /managing_broker/);
-assert.match(mig, /auth\.jwt\(\) ->> 'aal'/);
 assert.match(mig, /email_confirmed_at/);
 assert.match(mig, /account_kind cannot be changed by the client/);
 assert.match(mig, /account_purpose cannot be changed by the client/);
 assert.match(mig, /is a preview only\. It is not stored and cannot change these locks/);
 assert.match(mig, /Story Pro settings cannot be changed on this account/);
-assert.match(mig, /Confirm your email and authenticator before Story Pro settings/);
 assert.doesNotMatch(mig, /delete from public\.(profiles|listings|county_parcels)/i);
 assert.doesNotMatch(mig, /CLIENTSAGENTS/i);
 assert.doesNotMatch(mig, /story-home-role/);
+
+// 0088 is the live lock: same columns, confirmed email, no authenticator level.
+const live = read("supabase/migrations/0088_password_only_sign_in.sql");
+assert.match(live, /create or replace function public\.profiles_lock_privilege_columns\(\)/);
+assert.match(live, /specialties/);
+assert.match(live, /primary_market_city/);
+assert.match(live, /email_confirmed_at/);
+assert.match(live, /account_kind cannot be changed by the client/);
+assert.match(live, /account_purpose cannot be changed by the client/);
+assert.match(live, /Story Pro settings cannot be changed on this account/);
+assert.match(live, /Confirm your email before Story Pro settings/);
+assert.doesNotMatch(live, /auth\.jwt\(\) ->> 'aal'|v_aal/);
+assert.doesNotMatch(live, /delete from public\.(profiles|listings|county_parcels)/i);
 
 const route = read("src/app/api/account/story-pro-profile/route.ts");
 assert.match(route, /holdsRealtorSettingsPurpose/);
@@ -58,7 +66,7 @@ assert.doesNotMatch(preview, /from\("profiles"\)/);
 
 assert.equal(
   STORY_PRO_SETTINGS_BLOCKED,
-  "Confirm your email and authenticator before Story Pro settings.",
+  "Confirm your email before Story Pro settings.",
 );
 assert.equal(
   STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT,

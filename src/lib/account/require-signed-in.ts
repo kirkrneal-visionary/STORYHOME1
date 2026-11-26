@@ -1,8 +1,11 @@
-import type { User } from "@supabase/supabase-js";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  type SupabaseClient,
+  type User,
+} from "@supabase/supabase-js";
 import { sessionWasForcedOut } from "@/lib/account/require-session-live";
-import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { getServerSupabase } from "@/lib/supabase/server";
+import { normalizeSupabaseUrl } from "@/lib/supabase/url";
 
 export async function requireSignedIn(): Promise<
   | { ok: true; supabase: SupabaseClient; user: User }
@@ -24,18 +27,21 @@ export async function requireSignedIn(): Promise<
   return { ok: true, supabase, user };
 }
 
-/** Sensitive account writes need AAL2 once an authenticator is on the account. */
-export async function requireStepUpIfEnrolled(
-  supabase: SupabaseClient,
-): Promise<{ ok: true } | { ok: false; status: number; error: string; code: string }> {
-  const session = await readSessionAssurance(supabase);
-  if (session.enrolled && session.currentAal !== "aal2") {
-    return {
-      ok: false,
-      status: 403,
-      error: "Confirm your authenticator code first.",
-      code: "needs_mfa",
-    };
-  }
-  return { ok: true };
+export type CurrentPasswordCheck = "ok" | "wrong" | "unavailable";
+
+/**
+ * Email change, password change, and account deletion re-check the password.
+ * A throwaway client keeps this probe away from the caller's session cookie.
+ */
+export async function checkCurrentPassword(
+  email: string | null | undefined,
+  password: string,
+): Promise<CurrentPasswordCheck> {
+  const url = normalizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+  if (!url || !anon || !email) return "unavailable";
+  if (!password) return "wrong";
+  const probe = createClient(url, anon, { auth: { persistSession: false } });
+  const { error } = await probe.auth.signInWithPassword({ email, password });
+  return error ? "wrong" : "ok";
 }

@@ -30,6 +30,6 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Messages / referrals | Shells exist; do not assume they are complete CRM. |
 | Billing / boost | Boundary tables exist. **No provider. Not a paid entitlement engine.** |
 | Living Marks | Public bucket by design. |
-| Settings Wave 1–3 | Authenticator before Pro cards; buyer preview is local; DB locks follow real purpose. |
+| Settings Wave 1–3 | Confirmed email before Pro cards (no 2FA since 2026-11-25); buyer preview is local; DB locks follow real purpose. |
 
 Founder rationale that was not supplied is marked **unknown**.

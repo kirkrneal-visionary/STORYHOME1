@@ -10,7 +10,7 @@ Only material product/architecture choices. Not a transcript.
 | Standing | CAD is observation, not deeds/MLS | Honesty contract | `docs/PHASE-2-DATA-TRUTH.md` |
 | Standing | Farms ≠ Study Vault | Different jobs after the same draw | Founder 2026-09-15 |
 | 2026-09 | View as buyer is local clothes | Must not change DB privilege | Settings waves; `settings-preview.ts` |
-| 2026-09 | Settings Pro cards wait on email + authenticator | Founder rejected “open settings without 2FA is intentional” | PR 189–191 |
+| 2026-09 | Settings Pro cards wait on email + authenticator | Founder rejected “open settings without 2FA is intentional” | PR 189–191 (superseded 2026-11-25) |
 | 2026-09-15 | Farm photos use existing `shi-studies` paths, no new SQL column | Avoid a founder SQL paste; old farms stay Photo pending | PR 192 |
 | 2026-09-15 | Failed map snap must not delete the study; hide LngLat text; Save does not jump to Vault | Founder: red lines, empty Vault, Save and Open are separate | PR 193 |
 | Standing | No billing provider | Not built | rundown / constitution |
@@ -49,5 +49,7 @@ Only material product/architecture choices. Not a transcript.
 | 2026-11-25 | New accounts must confirm their email by link before they get a session (Supabase **Confirm email**) | Founder iPhone test: accounts are accepted only after the email link | Founder 2026-11-25 |
 | 2026-11-25 | Account emails send through Resend SMTP as `Story Home <no-reply@storyhome.app>` | Supabase's built-in sender reaches only team members at 2/hour. Resend is free (3,000/month, 100/day), sets up GoDaddy DNS itself, and its Supabase integration fills the SMTP settings so no password is copied by hand | Account emails PR |
 | 2026-11-25 | Email links are token-hash `/auth/confirm` links that verify only on tap | A PKCE code works only in the browser that asked (the app), not Safari opened from Mail. Mail scanners open links before people do | Account emails PR |
+| 2026-11-25 | No 2FA anywhere. Sign-in is email + password; Pro access waits on a confirmed email only. Email change, password change, and delete re-check the password | Founder after the first iPhone test: 2FA turns users away and makes testing hard | Founder request; migration `0088` |
+| 2026-11-25 | Password field shows one rule (“At least 6 characters”) with a check mark, plus a plain line only when Supabase refuses a common or leaked password. No strength meter | Founder: the meter made people guess. The form minimum must equal Supabase “Minimum password length” | Founder request; `password-rule.ts` |
 
 If a new change alters one of these, add a row and update the workflow contract.

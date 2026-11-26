@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { notifySecurityChange } from "@/lib/account/notify-security";
 import {
+  checkCurrentPassword,
   requireSignedIn,
-  requireStepUpIfEnrolled,
 } from "@/lib/account/require-signed-in";
 
 export const runtime = "nodejs";
@@ -17,18 +17,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const step = await requireStepUpIfEnrolled(auth.supabase);
-  if (!step.ok) {
-    return NextResponse.json(
-      { ok: false, error: step.error, code: step.code },
-      { status: step.status },
-    );
-  }
-
   let email = "";
+  let currentPassword = "";
   try {
-    const body = (await request.json()) as { email?: string };
+    const body = (await request.json()) as {
+      email?: string;
+      currentPassword?: string;
+    };
     email = (body.email ?? "").trim();
+    currentPassword = body.currentPassword ?? "";
   } catch {
     email = "";
   }
@@ -36,6 +33,20 @@ export async function POST(request: Request) {
   if (!email || !email.includes("@")) {
     return NextResponse.json(
       { ok: false, error: "Enter a valid email." },
+      { status: 400 },
+    );
+  }
+
+  const password = await checkCurrentPassword(auth.user.email, currentPassword);
+  if (password !== "ok") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          password === "wrong"
+            ? "Current password is incorrect."
+            : "Unable to start that email change.",
+      },
       { status: 400 },
     );
   }

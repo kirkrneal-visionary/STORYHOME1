@@ -74,15 +74,13 @@ assert.deepEqual(resolveSettingsLocation(legacy, consumer), {
   screen: "control",
   category: "account",
   control: "username",
-  setupMfa: false,
 });
 
-const mfa = parseSettingsSearch(params("setup=mfa"));
-assert.deepEqual(resolveSettingsLocation(mfa, consumer), {
-  screen: "control",
-  category: "security",
-  control: "authenticator",
-  setupMfa: true,
+const oldMfaLink = parseSettingsSearch(params("setup=mfa"));
+assert.deepEqual(resolveSettingsLocation(oldMfaLink, consumer), {
+  screen: "root",
+  category: null,
+  control: null,
 });
 
 const tab = parseSettingsSearch(params("tab=security"));
@@ -116,7 +114,6 @@ assert.equal(
   buildSettingsHref({ category: "account", control: "username", from: "/home" }),
   "/settings?category=account&control=username&from=%2Fhome",
 );
-assert.equal(buildSettingsHref({ setup: "mfa" }), "/settings?setup=mfa");
 assert.equal(settingsEntryHref("/home"), "/settings?from=%2Fhome");
 assert.equal(settingsEntryHref("/settings"), "/settings");
 assert.equal(settingsEntryHref("/login"), "/settings");
@@ -172,7 +169,7 @@ assert.doesNotMatch(capsSrc, /story-home-role|window\.localStorage|searchParams/
 assert.doesNotMatch(capsSrc, /from "@\//);
 
 const navSrc = read("src/lib/account/settings-nav.ts");
-assert.match(navSrc, /setup.*mfa/);
+assert.doesNotMatch(navSrc, /mfa|authenticator/i);
 assert.match(navSrc, /sanitizeSettingsOrigin/);
 assert.doesNotMatch(navSrc, /from "@\//);
 assert.equal(
@@ -186,7 +183,7 @@ assert.match(usernameField, /Save username/);
 assert.doesNotMatch(usernameField, /claim_username|service_role|username_registry/);
 
 const claim = read("src/app/api/account/username/claim/route.ts");
-assert.match(claim, /requireStepUpIfEnrolled/);
+assert.match(claim, /requireSignedIn/);
 assert.match(claim, /p_uid: auth\.user\.id/);
 
 const migrations = readdirSync(join(root, "supabase/migrations"));

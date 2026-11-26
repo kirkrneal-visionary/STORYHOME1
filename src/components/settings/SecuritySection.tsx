@@ -1,69 +1,49 @@
 "use client";
 
 import { FormEvent, useEffect, useId, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { KeyRound } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
-import { MfaChallengeForm } from "@/components/auth/MfaChallengeForm";
-import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
-import {
-  GENERIC_AUTH_SENT,
-  mfaRequired,
-} from "@/lib/account/assurance";
+import { PasswordRule } from "@/components/auth/PasswordRule";
+import { GENERIC_AUTH_SENT } from "@/lib/account/assurance";
 import { DELETE_CONFIRM_WORD, deleteWarning } from "@/lib/account/delete-account";
-import { getBrowserSupabase } from "@/lib/supabase/client";
+import {
+  PASSWORD_MIN_LENGTH,
+  meetsPasswordRule,
+  passwordTooShortCopy,
+} from "@/lib/account/password-rule";
 
-type Factor = { id: string; status: string; friendlyName?: string };
-type SecurityControl =
-  | "email"
-  | "password"
-  | "authenticator"
-  | "device"
-  | "delete";
+type SecurityControl = "email" | "password" | "device" | "delete";
 
 /** Process-local inbox is a stub. Do not expose it as a Settings product. */
 const NOTICES_UI = false;
 
 export function SecuritySection({
   purpose,
-  kind,
   control,
 }: {
   purpose?: string | null;
-  kind?: string | null;
   control?: SecurityControl | null;
 }) {
-  const searchParams = useSearchParams();
-  const setupMfa = searchParams.get("setup") === "mfa";
   const statusId = useId();
   const {
     user,
     logout,
     signOutEverywhere,
-    refreshAssurance,
     resendConfirmation,
   } = useAuth();
 
   const [email, setEmail] = useState(user?.email ?? "");
   const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newPasswordError, setNewPasswordError] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
   const [status, setStatus] = useState<{
     emailConfirmed: boolean;
-    enrolled: boolean;
-    currentAal: string | null;
-    mfaRequired: boolean;
     lastSignInAt: string | null;
   } | null>(null);
-  const [factors, setFactors] = useState<Factor[]>([]);
-  const [enrollQr, setEnrollQr] = useState<string | null>(null);
-  const [enrollSecret, setEnrollSecret] = useState<string | null>(null);
-  const [enrollId, setEnrollId] = useState<string | null>(null);
-  const [enrollCode, setEnrollCode] = useState("");
-  const [needsStepUp, setNeedsStepUp] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [confirmEverywhere, setConfirmEverywhere] = useState(false);
@@ -71,8 +51,7 @@ export function SecuritySection({
     { id: string; label: string; at: string }[]
   >([]);
 
-  const mustMfa = mfaRequired(purpose, kind);
-  const focus = control ?? (setupMfa ? "authenticator" : null);
+  const focus = control ?? null;
 
   async function loadStatus() {
     try {
@@ -81,17 +60,11 @@ export function SecuritySection({
         ok?: boolean;
         email?: string;
         emailConfirmed?: boolean;
-        enrolled?: boolean;
-        currentAal?: string | null;
-        mfaRequired?: boolean;
         lastSignInAt?: string | null;
       };
       if (res.ok && data.ok) {
         setStatus({
           emailConfirmed: Boolean(data.emailConfirmed),
-          enrolled: Boolean(data.enrolled),
-          currentAal: data.currentAal ?? null,
-          mfaRequired: Boolean(data.mfaRequired),
           lastSignInAt: data.lastSignInAt ?? null,
         });
         if (data.email) setEmail(data.email);
@@ -113,16 +86,6 @@ export function SecuritySection({
         // inbox is optional
       }
     }
-    const supabase = getBrowserSupabase();
-    if (!supabase) return;
-    const { data: listed } = await supabase.auth.mfa.listFactors();
-    setFactors(
-      (listed?.totp ?? []).map((f) => ({
-        id: f.id,
-        status: f.status,
-        friendlyName: f.friendly_name ?? undefined,
-      })),
-    );
   }
 
   useEffect(() => {
@@ -137,8 +100,13 @@ export function SecuritySection({
 
   async function onChangePassword(e: FormEvent) {
     e.preventDefault();
-    setBusy("password");
     setError("");
+    setNewPasswordError("");
+    if (!meetsPasswordRule(newPassword)) {
+      setNewPasswordError(passwordTooShortCopy());
+      return;
+    }
+    setBusy("password");
     try {
       const res = await fetch("/api/account/change-password", {
         method: "POST",
@@ -150,9 +118,8 @@ export function SecuritySection({
         error?: string;
         code?: string;
       };
-      if (data.code === "needs_mfa") {
-        setNeedsStepUp(true);
-        setError(data.error ?? "Confirm your authenticator code first.");
+      if (data.code === "password_rejected") {
+        setNewPasswordError(data.error ?? passwordTooShortCopy());
         return;
       }
       if (!res.ok || !data.ok) {
@@ -175,116 +142,19 @@ export function SecuritySection({
       const res = await fetch("/api/account/change-email", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: newEmail }),
+        body: JSON.stringify({ email: newEmail, currentPassword: emailPassword }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
         error?: string;
-        code?: string;
         message?: string;
       };
-      if (data.code === "needs_mfa") {
-        setNeedsStepUp(true);
-        setError(data.error ?? "Confirm your authenticator code first.");
-        return;
-      }
       if (!res.ok || !data.ok) {
         setError(data.error ?? "Unable to start that email change.");
         return;
       }
+      setEmailPassword("");
       flash(data.message ?? "Check the new inbox to confirm the change.");
-    } finally {
-      setBusy("");
-    }
-  }
-
-  async function startEnroll() {
-    const supabase = getBrowserSupabase();
-    if (!supabase) return;
-    setBusy("enroll");
-    setError("");
-    try {
-      const { data, error: enrollError } = await supabase.auth.mfa.enroll({
-        factorType: "totp",
-        friendlyName: "Authenticator",
-      });
-      if (enrollError || !data) {
-        setError("Unable to start authenticator setup.");
-        return;
-      }
-      setEnrollId(data.id);
-      setEnrollQr(data.totp.qr_code);
-      setEnrollSecret(data.totp.secret);
-    } finally {
-      setBusy("");
-    }
-  }
-
-  async function confirmEnroll(e: FormEvent) {
-    e.preventDefault();
-    const supabase = getBrowserSupabase();
-    if (!supabase || !enrollId) return;
-    setBusy("verify");
-    setError("");
-    try {
-      const { data: challenge, error: challengeError } =
-        await supabase.auth.mfa.challenge({ factorId: enrollId });
-      if (challengeError || !challenge) {
-        setError("Unable to confirm that authenticator.");
-        return;
-      }
-      const { error: verifyError } = await supabase.auth.mfa.verify({
-        factorId: enrollId,
-        challengeId: challenge.id,
-        code: enrollCode.trim(),
-      });
-      if (verifyError) {
-        setError("That code did not work. Try again.");
-        return;
-      }
-      setEnrollQr(null);
-      setEnrollSecret(null);
-      setEnrollId(null);
-      setEnrollCode("");
-      await fetch("/api/account/security-notices", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind: "mfa_enrolled" }),
-      });
-      await refreshAssurance();
-      await loadStatus();
-      flash("Authenticator is on.");
-    } finally {
-      setBusy("");
-    }
-  }
-
-  async function removeFactor(factorId: string) {
-    setBusy("unenroll");
-    setError("");
-    try {
-      const res = await fetch("/api/account/mfa/unenroll", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ factorId }),
-      });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        code?: string;
-      };
-      if (data.code === "needs_mfa") {
-        setNeedsStepUp(true);
-        setError(data.error ?? "Confirm your authenticator code first.");
-        return;
-      }
-      if (!res.ok || !data.ok) {
-        setError(data.error ?? "Unable to remove that authenticator.");
-        return;
-      }
-      await refreshAssurance();
-      await loadStatus();
-      flash("Authenticator removed.");
     } finally {
       setBusy("");
     }
@@ -306,13 +176,7 @@ export function SecuritySection({
       const data = (await res.json()) as {
         ok?: boolean;
         error?: string;
-        code?: string;
       };
-      if (data.code === "needs_mfa") {
-        setNeedsStepUp(true);
-        setError(data.error ?? "Confirm your authenticator code first.");
-        return;
-      }
       if (!res.ok || !data.ok) {
         setError(data.error ?? "Unable to delete this account.");
         return;
@@ -328,10 +192,6 @@ export function SecuritySection({
 
   const inputCls =
     "field-input";
-  const enrolled =
-    status?.enrolled === true ||
-    factors.some((f) => f.status === "verified") ||
-    user.mfaEnrolled === true;
 
   const statusLine = (
     <p
@@ -344,23 +204,8 @@ export function SecuritySection({
     </p>
   );
 
-  const stepUp = needsStepUp ? (
-    <div className="rounded-xl border border-gold/40 p-3">
-      <MfaChallengeForm
-        onVerified={() => {
-          setNeedsStepUp(false);
-          void refreshAssurance();
-          void loadStatus();
-        }}
-      />
-    </div>
-  ) : null;
-
   return (
-    <section
-      id="security"
-      className={`mx-auto max-w-md ${setupMfa ? "ring-2 ring-gold/50 rounded-2xl p-4" : ""}`}
-    >
+    <section id="security" className="mx-auto max-w-md">
       {focus === "email" ? (
         <form onSubmit={onChangeEmail} className="space-y-4">
           <p className="text-sm text-[var(--muted)]">
@@ -396,10 +241,21 @@ export function SecuritySection({
               required
             />
           </label>
+          <label htmlFor="sec-email-password" className="block">
+            <span className="type-control block text-[var(--muted)]">Current password</span>
+            <input
+              id="sec-email-password"
+              type="password"
+              autoComplete="current-password"
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              className={`${inputCls} mt-1.5`}
+              required
+            />
+          </label>
           <p className="text-xs text-[var(--muted)]">
             We keep this email until you confirm the new one.
           </p>
-          {stepUp}
           <div className="sticky bottom-[var(--story-bottom-clearance)] z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
@@ -435,14 +291,22 @@ export function SecuritySection({
               type="password"
               autoComplete="new-password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setNewPasswordError("");
+              }}
               className={`${inputCls} mt-1.5`}
               required
-              minLength={6}
+              minLength={PASSWORD_MIN_LENGTH}
+              aria-describedby="sec-new-password-rule"
+              aria-invalid={newPasswordError ? true : undefined}
             />
           </label>
-          <PasswordStrengthMeter password={newPassword} email={email} />
-          {stepUp}
+          <PasswordRule
+            id="sec-new-password-rule"
+            password={newPassword}
+            rejected={newPasswordError}
+          />
           <div className="sticky bottom-[var(--story-bottom-clearance)] z-10 flex flex-wrap items-center gap-3 bg-[var(--background)] py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             <button
               type="submit"
@@ -455,90 +319,6 @@ export function SecuritySection({
             {statusLine}
           </div>
         </form>
-      ) : null}
-
-      {focus === "authenticator" ? (
-        <div className="space-y-4">
-          <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <KeyRound className="h-4 w-4" /> Authenticator
-          </p>
-          {mustMfa && !enrolled && (
-            <p className="rounded-xl border border-gold/40 bg-gold/10 px-3 py-2 text-sm text-ink">
-              Realtor and office accounts need an authenticator app.
-            </p>
-          )}
-          <p className="text-xs text-[var(--muted)]">
-            We use the authenticator in Supabase. We do not store backup codes.
-            If you lost your phone, you still need a working code — a password
-            reset does not skip this.
-          </p>
-          {stepUp}
-          {factors.filter((f) => f.status === "verified").length === 0 && !enrollQr && (
-            <button
-              type="button"
-              onClick={() => void startEnroll()}
-              disabled={busy === "enroll"}
-              className="inline-flex min-h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
-            >
-              {busy === "enroll" ? "Starting…" : "Set up authenticator"}
-            </button>
-          )}
-          {enrollQr && (
-            <form onSubmit={confirmEnroll} className="space-y-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={enrollQr}
-                alt="Authenticator QR code. Enter the secret below if you cannot scan."
-                className="h-40 w-40 rounded-lg bg-white p-2"
-              />
-              {enrollSecret && (
-                <p className="font-mono text-[11px] break-all text-[var(--muted)]">
-                  {enrollSecret}
-                </p>
-              )}
-              <label htmlFor="sec-enroll-code" className="block">
-                <span className="type-control block text-[var(--muted)]">Code from the app</span>
-                <input
-                  id="sec-enroll-code"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={enrollCode}
-                  onChange={(e) => setEnrollCode(e.target.value)}
-                  className={`${inputCls} mt-1.5`}
-                  required
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={busy === "verify"}
-                className="inline-flex min-h-11 items-center rounded-xl bg-gold px-4 text-sm font-bold text-navy disabled:opacity-60"
-              >
-                {busy === "verify" ? "Checking…" : "Confirm authenticator"}
-              </button>
-            </form>
-          )}
-          {factors
-            .filter((f) => f.status === "verified")
-            .map((f) => (
-              <div
-                key={f.id}
-                className="flex items-center justify-between rounded-xl border border-hairline px-3 py-2"
-              >
-                <p className="text-sm text-ink">
-                  {f.friendlyName || "Authenticator"} · on
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void removeFactor(f.id)}
-                  disabled={busy === "unenroll"}
-                  className="min-h-11 text-sm font-semibold text-red-300 hover:underline disabled:opacity-60"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          {statusLine}
-        </div>
       ) : null}
 
       {focus === "device" ? (
@@ -598,7 +378,6 @@ export function SecuritySection({
         <form onSubmit={(e) => void onDeleteAccount(e)} className="space-y-4">
           <p className="text-xs font-semibold text-ink">Delete account</p>
           <p className="text-sm text-[var(--muted)]">{deleteWarning(purpose)}</p>
-          {stepUp}
           <label htmlFor="sec-delete-password" className="block">
             <span className="type-control block text-[var(--muted)]">Password</span>
             <input

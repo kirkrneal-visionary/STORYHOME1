@@ -13,9 +13,12 @@
 ## Inputs and source of truth
 
 - Auth user + `profiles.account_kind` + `profiles.account_purpose`
-- Session AAL / authenticator: `src/lib/account/assurance.ts`
+- Readiness (signed in + confirmed email; no 2FA): `src/lib/account/assurance.ts`
+- Password rule (must equal Supabase “Minimum password length”, 6 on 2026-11-25): `src/lib/account/password-rule.ts`
 - Forced logout stamp: `forced_logout_at`
 - TREC license lookup (`src/lib/trec.ts`): TREC’s live License Holder Search index first. The Texas Open Data Portal dataset is fallback only — since 2026 it lists just the newest ~6,000 licenses, so a miss there is an error, not “not found.”
+
+Sign-in is email + password only. No screen asks anyone to set up or enter an authenticator code. Email change, password change, and account deletion re-check the current password (`checkCurrentPassword` in `src/lib/account/require-signed-in.ts`). Migration `0088` removes the `aal2` check from the profile lock and deletes saved authenticators.
 
 ## Durable changes
 
@@ -30,7 +33,7 @@
 | Success | Session cookie; Pro users reach `/portal` |
 | Loading | Auth client resolving |
 | Empty / unsigned | Marketplace; `/portal` → login |
-| Failure | Honest error; no secret leak across login/signup |
+| Failure | Honest error; no secret leak across login/signup. A password Supabase refuses as too common or leaked shows one plain line under the rule |
 | Retry | Login after confirm email |
 | Check email | Sign-up with no session, or sign-in to an unconfirmed account, shows **Check your email** (`CheckEmailPanel`). Resend waits 60s (Supabase's per-address limit) |
 | Email link | `/auth/confirm` verifies only when the person taps (`EmailLinkConfirm`), never on page load, so mail scanners cannot use the link. Reset opens the new-password form in place. Used or expired → “This link no longer works” with Send a new link (`/login?mode=reset`) or Go to sign in. Connection failure keeps the link for a retry |
@@ -46,7 +49,7 @@
 
 ## Tests / evidence
 
-- **Tested (isolated):** `scripts/test-portal-server-gate.ts`, `test-login-signup-separate.ts`, `test-sign-out-everywhere-detect.ts`, `test-forced-logout-server.ts`, `test-office-keep-story-pro.ts`, `test-settings-pro-auth.ts`, `test-settings-buyer-preview.ts`, `test-settings-db-locks.ts`, `test-signup-account-lock.ts`, `test-trec-lookup.ts`
+- **Tested (isolated):** `scripts/test-portal-server-gate.ts`, `test-login-signup-separate.ts`, `test-sign-out-everywhere-detect.ts`, `test-forced-logout-server.ts`, `test-office-keep-story-pro.ts`, `test-settings-pro-auth.ts`, `test-settings-buyer-preview.ts`, `test-settings-db-locks.ts`, `test-signup-account-lock.ts`, `test-trec-lookup.ts`, `test-password-only-sign-in.ts`, `test-password-rule.ts`, `test-password-only-sign-in-db.ts` (0088 on local Postgres)
 - **Wave 2:** disposable two-login isolation harness (`test-wave-2-isolation`). Live production is refused.
 - **Account emails:** `test-account-emails.ts` (templates, link parser, tap-only verify). Local stack run 2026-11-25 (GoTrue v2.199.0 + Postgres + Mailpit, iPhone-size Chrome, email link opened in a separate cookie jar): sign-up held until tap, scanner GET leaves the link usable, confirm, reset, used links, retry after a dropped connection, resend. **Not tested:** real Resend delivery, Mail/Safari on a physical iPhone.
 - **Not tested here:** hosted spare Supabase JWTs against a second project

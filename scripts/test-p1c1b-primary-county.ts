@@ -34,26 +34,9 @@ assert.doesNotMatch(read("src/lib/account/settings-nav.ts"), /decide_primary_cou
 assert.doesNotMatch(read("src/app/api/account/story-pro-profile/route.ts"), /primary_county/);
 assert.equal(classifyApiPath("/api/account/primary-county"), "medium");
 assert.equal(mayHoldRealtorGeography("consumer"), false);
-assert.equal(
-  canAccessPrivateApp({
-    emailConfirmed: true,
-    purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal1",
-  }),
-  false,
-);
-assert.equal(
-  canAccessPrivateApp({
-    emailConfirmed: true,
-    purpose: "individual_pro",
-    kind: "agent",
-    enrolled: true,
-    currentAal: "aal2",
-  }),
-  true,
-);
+assert.equal(canAccessPrivateApp({ emailConfirmed: false }), false);
+assert.equal(canAccessPrivateApp({ emailConfirmed: true }), true);
+assert.match(route, /code: "needs_email"/);
 
 const started = spawnSync("sudo", ["pg_ctlcluster", "16", "main", "start"], {
   encoding: "utf8",

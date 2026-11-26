@@ -1,40 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2 } from "lucide-react";
 import { useAuth } from "@/components/AuthContext";
 import { SettingsCard } from "@/components/settings/SettingsCard";
 
-export function OpenOfficeCard({
-  authenticatorHref,
-}: {
-  authenticatorHref?: string;
-}) {
+export function OpenOfficeCard() {
   const router = useRouter();
   const { refreshAssurance } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
-  const [needsMfa, setNeedsMfa] = useState(false);
 
   async function openOffice() {
     setBusy(true);
     setError("");
-    setNeedsMfa(false);
     try {
       const res = await fetch("/api/account/open-office", { method: "POST" });
       const data = (await res.json()) as {
         ok?: boolean;
         error?: string;
-        code?: string;
       };
-      if (data.code === "needs_mfa") {
-        setNeedsMfa(true);
-        setError(data.error ?? "Confirm your authenticator code first.");
-        return;
-      }
       if (!res.ok || !data.ok) {
         setError(data.error ?? "Unable to open the office account.");
         return;
@@ -82,14 +69,6 @@ export function OpenOfficeCard({
       <p role="status" aria-live="polite" className="mt-2 min-h-4 text-sm text-red-300">
         {error}
       </p>
-      {needsMfa && authenticatorHref ? (
-        <Link
-          href={authenticatorHref}
-          className="inline-flex min-h-11 items-center text-sm font-semibold text-gold"
-        >
-          Set up authenticator
-        </Link>
-      ) : null}
     </SettingsCard>
   );
 }

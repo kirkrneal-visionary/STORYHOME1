@@ -4,8 +4,8 @@ import {
   STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT,
   canEditStoryProSettings,
   holdsRealtorSettingsPurpose,
+  isEmailConfirmed,
 } from "@/lib/account/assurance";
-import { readSessionAssurance } from "@/lib/account/require-account-ready";
 import { requireSignedIn } from "@/lib/account/require-signed-in";
 
 export const runtime = "nodejs";
@@ -20,15 +20,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await readSessionAssurance(auth.supabase);
   const { data: profile } = await auth.supabase
     .from("profiles")
-    .select("account_kind, account_purpose")
+    .select("account_purpose")
     .eq("id", auth.user.id)
     .maybeSingle();
 
   const purpose = profile?.account_purpose ?? null;
-  const kind = profile?.account_kind ?? null;
   if (!holdsRealtorSettingsPurpose(purpose)) {
     return NextResponse.json(
       { ok: false, error: STORY_PRO_SETTINGS_NOT_THIS_ACCOUNT },
@@ -37,11 +35,8 @@ export async function POST(request: Request) {
   }
   if (
     !canEditStoryProSettings({
-      emailConfirmed: session.emailConfirmed,
+      emailConfirmed: isEmailConfirmed(auth.user.email_confirmed_at),
       purpose,
-      kind,
-      enrolled: session.enrolled,
-      currentAal: session.currentAal,
     })
   ) {
     return NextResponse.json(

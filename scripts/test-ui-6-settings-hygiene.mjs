@@ -72,7 +72,7 @@ assert.match(caps, /account on file/);
 assert.doesNotMatch(caps, /ui-6|owner-review/);
 
 const nav = read("src/lib/account/settings-nav.ts");
-assert.match(nav, /setup.*mfa/);
+assert.doesNotMatch(nav, /setup.*mfa/);
 assert.doesNotMatch(nav, /ui-6|owner-review/);
 
 assert.equal(existsSync(join(root, "src/lib/ui-6-owner-review.ts")), false);

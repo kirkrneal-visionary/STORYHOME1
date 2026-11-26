@@ -47,7 +47,7 @@ for (const token of [
   'role="radiogroup"',
   "aria-checked",
   "min-h-11",
-  "needs_mfa",
+  "needs_email",
   "pick !== saved",
 ]) {
   assert.match(control, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

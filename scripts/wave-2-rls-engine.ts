@@ -20,7 +20,7 @@ export type ActorId =
   | "officeN"
   | "proD"
   | "otherE"
-  | "aal1Pro";
+  | "unconfirmedPro";
 
 export type Actor = {
   id: ActorId;
@@ -31,8 +31,6 @@ export type Actor = {
   brokerageId: string | null;
   signedIn: boolean;
   emailConfirmed: boolean;
-  enrolled: boolean;
-  currentAal: "aal1" | "aal2" | null;
 };
 
 export type FarmRow = {
@@ -124,8 +122,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: null,
     signedIn: true,
     emailConfirmed: true,
-    enrolled: false,
-    currentAal: "aal1",
   },
   homeB: {
     id: "homeB",
@@ -136,8 +132,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: null,
     signedIn: true,
     emailConfirmed: true,
-    enrolled: false,
-    currentAal: "aal1",
   },
   proA: {
     id: "proA",
@@ -148,8 +142,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: "brokerage-m",
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
   proB: {
     id: "proB",
@@ -160,8 +152,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: null,
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
   officeM: {
     id: "officeM",
@@ -172,8 +162,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: "brokerage-m",
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
   proC: {
     id: "proC",
@@ -184,8 +172,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: "brokerage-m",
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
   officeN: {
     id: "officeN",
@@ -196,8 +182,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: "brokerage-n",
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
   proD: {
     id: "proD",
@@ -208,8 +192,6 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: "brokerage-n",
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
   otherE: {
     id: "otherE",
@@ -220,20 +202,16 @@ export const ACTORS: Record<ActorId, Actor> = {
     brokerageId: null,
     signedIn: true,
     emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal2",
   },
-  aal1Pro: {
-    id: "aal1Pro",
+  unconfirmedPro: {
+    id: "unconfirmedPro",
     uid: "eeeeeeee-0001-4000-8000-000000000001",
-    email: "wave2-aal1-pro@example.test",
+    email: "wave2-unconfirmed-pro@example.test",
     kind: "agent",
     purpose: "individual_pro",
     brokerageId: null,
     signedIn: true,
-    emailConfirmed: true,
-    enrolled: true,
-    currentAal: "aal1",
+    emailConfirmed: false,
   },
 };
 

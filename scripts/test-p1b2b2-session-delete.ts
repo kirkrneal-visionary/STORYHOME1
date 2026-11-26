@@ -64,8 +64,8 @@ assert.doesNotMatch(security, /trusted devices|fingerprint|device list/i);
 
 const del = read("src/app/api/account/delete-account/route.ts");
 assert.match(del, /tombstone_account_usernames/);
-assert.match(del, /requireStepUpIfEnrolled/);
-assert.match(del, /signInWithPassword/);
+assert.doesNotMatch(del, /requireStepUpIfEnrolled/);
+assert.match(del, /checkCurrentPassword/);
 
 const signOut = read("src/app/api/account/sign-out-all/route.ts");
 assert.match(signOut, /stamp_forced_logout/);

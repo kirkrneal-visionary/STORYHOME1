@@ -75,7 +75,7 @@ export function AvailabilityControl({ canEdit }: { canEdit: boolean }) {
           });
           const data = (await res.json()) as Own;
           if (!res.ok || !data.ok) {
-            setError(data.code === "needs_mfa" ? STORY_PRO_SETTINGS_BLOCKED : (data.error ?? "Unable to save."));
+            setError(data.code === "needs_email" ? STORY_PRO_SETTINGS_BLOCKED : (data.error ?? "Unable to save."));
             return;
           }
           const next = asChoice(data.availability) ?? pick;

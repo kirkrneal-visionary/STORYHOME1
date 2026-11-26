@@ -77,7 +77,6 @@ import {
 import {
   STORY_PRO_SETTINGS_BLOCKED,
   canAccessPrivateApp,
-  mfaRequired,
 } from "@/lib/account/assurance";
 import { settingsCapabilities } from "@/lib/account/settings-capabilities";
 import {
@@ -207,17 +206,10 @@ export function SettingsView() {
   const isPro = mayUseStoryPro(purpose, kind);
   const isOther = purpose === "other_professional";
   const isOffice = mayManageBrokerage(purpose);
-  const demoSession =
-    user.emailConfirmed === undefined && user.aal === undefined;
+  const demoSession = user.emailConfirmed === undefined;
   const securityReady =
     demoSession ||
-    canAccessPrivateApp({
-      emailConfirmed: user.emailConfirmed !== false,
-      purpose,
-      kind,
-      enrolled: user.mfaEnrolled === true,
-      currentAal: user.aal,
-    });
+    canAccessPrivateApp({ emailConfirmed: user.emailConfirmed !== false });
   const consumerPreview = settingsConsumerPreview({
     role,
     mayUseStoryPro: isPro,
@@ -294,10 +286,6 @@ export function SettingsView() {
     control: "workspace",
     from,
   });
-  const authenticatorHref = buildSettingsHref({
-    setup: "mfa",
-    from,
-  });
   const showBrokerageRow =
     caps.brokerage &&
     !consumerPreview &&
@@ -348,8 +336,6 @@ export function SettingsView() {
                   ? "Email"
                   : location.control === "password"
                     ? "Password"
-                    : location.control === "authenticator"
-                      ? "Authenticator"
                       : location.control === "device"
                         ? "This Device"
                         : location.control === "delete"
@@ -437,11 +423,6 @@ export function SettingsView() {
       ) : location.category === "security" && !location.control ? (
         <div className="mt-8 space-y-3">
           {backLink(accountHref)}
-          {mfaRequired(purpose, kind) && user.mfaEnrolled !== true && (
-            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
-              Realtor and office accounts need an authenticator app.
-            </p>
-          )}
           <SettingsCategoryRow
             id="settings-row-email"
             href={buildSettingsHref({ category: "security", control: "email", from })}
@@ -455,17 +436,6 @@ export function SettingsView() {
             title="Password"
             subtitle="Current password required"
             onClick={() => markFocus("settings-row-password")}
-          />
-          <SettingsCategoryRow
-            id="settings-row-authenticator"
-            href={buildSettingsHref({
-              category: "security",
-              control: "authenticator",
-              from,
-            })}
-            title="Authenticator"
-            subtitle={user.mfaEnrolled === true ? "On" : "Not set up"}
-            onClick={() => markFocus("settings-row-authenticator")}
           />
           <SettingsCategoryRow
             id="settings-row-device"
@@ -485,22 +455,14 @@ export function SettingsView() {
             />
           </div>
         </div>
-      ) : location.category === "security" ? (
+      ) : location.category === "security" &&
+        (location.control === "email" ||
+          location.control === "password" ||
+          location.control === "device" ||
+          location.control === "delete") ? (
         <div className="mt-8 space-y-6">
-          {backLink(location.setupMfa ? closeHref : securityHref)}
-          <SecuritySection
-            purpose={purpose}
-            kind={kind}
-            control={
-              location.control === "email" ||
-              location.control === "password" ||
-              location.control === "authenticator" ||
-              location.control === "device" ||
-              location.control === "delete"
-                ? location.control
-                : "authenticator"
-            }
-          />
+          {backLink(securityHref)}
+          <SecuritySection purpose={purpose} control={location.control} />
           {doneLink}
         </div>
       ) : location.category === "professional" &&
@@ -681,21 +643,11 @@ export function SettingsView() {
       ) : location.control === "open" ? (
         <div className="mt-8 space-y-6">
           {backLink(officeHref)}
-          {caps.openOffice && showRealtorCards && (
-            <OpenOfficeCard authenticatorHref={authenticatorHref} />
-          )}
+          {caps.openOffice && showRealtorCards && <OpenOfficeCard />}
           {canOpenOfficeAccount(purpose, kind) && !consumerPreview && !securityReady && (
-            <div className="space-y-3">
-              <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
-                Confirm your email and authenticator before opening an office account.
-              </p>
-              <Link
-                href={authenticatorHref}
-                className="inline-flex min-h-11 items-center text-sm font-semibold text-gold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-              >
-                Set up authenticator
-              </Link>
-            </div>
+            <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
+              Confirm your email before opening an office account.
+            </p>
           )}
           {doneLink}
         </div>
@@ -704,7 +656,7 @@ export function SettingsView() {
           {backLink(officeHref)}
           {isOffice && !consumerPreview && !securityReady && (
             <p className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm text-ink">
-              Confirm your email and authenticator before office tools.
+              Confirm your email before office tools.
             </p>
           )}
           <OfficeWorkspaceHandoff />
@@ -782,8 +734,7 @@ function UsernameSummary({
   onOpen?: () => void;
 }) {
   const { user } = useAuth();
-  const demoSession =
-    user?.emailConfirmed === undefined && user?.aal === undefined;
+  const demoSession = user?.emailConfirmed === undefined;
   const [name, setName] = useState<string | null>(null);
   useEffect(() => {
     if (!user) return;

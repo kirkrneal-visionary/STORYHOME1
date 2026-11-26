@@ -1,11 +1,10 @@
 /**
- * P1B-2B1 Account Security — Email + Password + Authenticator.
+ * P1B-2B1 Account Security — Email + Password. No authenticator.
  * Run: node --import ./scripts/story-ts-alias.mjs --experimental-strip-types scripts/test-p1b2b1-account-security.ts
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { mfaRequired } from "../src/lib/account/assurance.ts";
 import {
   buildSettingsHref,
   parseSettingsSearch,
@@ -17,19 +16,21 @@ const root = process.cwd();
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 const params = (q: string) => new URLSearchParams(q);
 const consumer = settingsCapabilities({ purpose: "consumer", kind: "consumer" });
+const realtor = settingsCapabilities({ purpose: "individual_pro", kind: "agent" });
 
-assert.equal(mfaRequired("consumer", "consumer"), false);
-assert.equal(mfaRequired("individual_pro", "agent"), true);
-assert.equal(mfaRequired("managing_broker", "broker"), true);
-
-const mfa = parseSettingsSearch(params("setup=mfa"));
-assert.deepEqual(resolveSettingsLocation(mfa, consumer), {
-  screen: "control",
-  category: "security",
-  control: "authenticator",
-  setupMfa: true,
-});
-assert.equal(buildSettingsHref({ setup: "mfa" }), "/settings?setup=mfa");
+for (const caps of [consumer, realtor]) {
+  assert.equal(
+    resolveSettingsLocation(parseSettingsSearch(params("setup=mfa")), caps).screen,
+    "root",
+  );
+  assert.equal(
+    resolveSettingsLocation(
+      parseSettingsSearch(params("category=security&control=authenticator")),
+      caps,
+    ).control,
+    null,
+  );
+}
 assert.equal(
   buildSettingsHref({ category: "security", control: "email", from: "/home" }),
   "/settings?category=security&control=email&from=%2Fhome",
@@ -46,18 +47,15 @@ const view = read("src/components/settings/SettingsView.tsx");
 assert.match(view, /SecuritySection/);
 assert.match(view, /control: "email"/);
 assert.match(view, /control: "password"/);
-assert.match(view, /control: "authenticator"/);
-assert.match(view, /title="Authenticator"/);
-assert.match(view, /mfaRequired\(purpose, kind\)/);
+assert.doesNotMatch(view, /authenticator|mfaRequired/i);
 assert.match(view, /settingsConsumerPreview/);
 assert.doesNotMatch(view, /Sign out everywhere|Security Notices/);
 
 const security = read("src/components/settings/SecuritySection.tsx");
 assert.match(security, /\/api\/account\/change-email/);
 assert.match(security, /\/api\/account\/change-password/);
-assert.match(security, /supabase\.auth\.mfa\.enroll/);
-assert.match(security, /\/api\/account\/mfa\/unenroll/);
-assert.match(security, /PasswordStrengthMeter/);
+assert.doesNotMatch(security, /auth\.mfa|mfa\/unenroll|authenticator/i);
+assert.match(security, /<PasswordRule/);
 assert.match(security, /autoComplete="current-password"/);
 assert.match(security, /autoComplete="new-password"/);
 assert.match(security, /role="status"/);
@@ -67,11 +65,13 @@ assert.match(security, /Delete account/);
 assert.doesNotMatch(security, /factorType: "phone"|sms/i);
 
 const emailApi = read("src/app/api/account/change-email/route.ts");
-assert.match(emailApi, /requireStepUpIfEnrolled/);
+assert.match(emailApi, /checkCurrentPassword/);
+assert.doesNotMatch(emailApi, /requireStepUpIfEnrolled/);
 assert.match(emailApi, /updateUser\(\{ email \}\)/);
 
 const passwordApi = read("src/app/api/account/change-password/route.ts");
-assert.match(passwordApi, /requireStepUpIfEnrolled/);
+assert.match(passwordApi, /checkCurrentPassword/);
+assert.doesNotMatch(passwordApi, /requireStepUpIfEnrolled/);
 assert.match(passwordApi, /scope: "others"/);
 
 console.log("p1b2b1-account-security: ok");

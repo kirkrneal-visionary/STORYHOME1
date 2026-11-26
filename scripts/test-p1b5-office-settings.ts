@@ -74,7 +74,8 @@ assert.match(view, /control: "workspace"/);
 assert.match(view, /OpenOfficeCard/);
 assert.match(view, /OfficeWorkspaceHandoff/);
 assert.match(view, /href="\/office"/);
-assert.match(view, /setup: "mfa"/);
+assert.match(view, /Confirm your email before opening an office account/);
+assert.doesNotMatch(view, /setup: "mfa"|authenticator/i);
 assert.match(view, /title="Brokerage"/);
 assert.doesNotMatch(view, /from\("profiles"\)\.update/);
 assert.doesNotMatch(view, /account_purpose|open_office_account/);
@@ -98,8 +99,7 @@ assert.doesNotMatch(handoff, /fetch\("\/api\/account\/open-office"/);
 
 const open = read("src/components/settings/OpenOfficeCard.tsx");
 assert.match(open, /\/api\/account\/open-office/);
-assert.match(open, /needs_mfa/);
-assert.match(open, /Set up authenticator/);
+assert.doesNotMatch(open, /needs_mfa|authenticator/i);
 assert.match(open, /You keep Story Pro on the same account/);
 assert.doesNotMatch(open, /not a bigger Story Pro/);
 
