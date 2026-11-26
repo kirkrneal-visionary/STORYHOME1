@@ -40,6 +40,7 @@ import {
   MAP_NAVY as NAVY,
   MAP_PAPER as PAPER,
   setBaseLayerVisibility,
+  setImageryLidarOverlay,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
 import { escapeHtml } from "@/lib/security/html";
@@ -171,6 +172,8 @@ export function MarketplaceMap({
   const [ready, setReady] = useState(false);
   const [tool, setTool] = useState<DrawTool>("pan");
   const [base, setBase] = useState<BaseLayer>("street");
+  const [lidarOverlay, setLidarOverlay] = useState(false);
+  const photoBase = base === "satellite" || base === "imageryLabels";
   const [radiusMiles, setRadiusMiles] = useState(10);
   const [draftPoints, setDraftPoints] = useState<LatLng[]>([]);
   const [measurePoints, setMeasurePoints] = useState<LatLng[]>([]);
@@ -420,7 +423,8 @@ export function MarketplaceMap({
     const map = mapRef.current;
     if (!map || !ready) return;
     setBaseLayerVisibility(map, base);
-  }, [ready, base]);
+    setImageryLidarOverlay(map, lidarOverlay && photoBase);
+  }, [ready, base, lidarOverlay, photoBase]);
 
   // Parcel overlay visibility.
   useEffect(() => {
@@ -837,6 +841,21 @@ export function MarketplaceMap({
             {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
         </div>
+        {photoBase ? (
+          <button
+            type="button"
+            onClick={() => setLidarOverlay((v) => !v)}
+            title="Lidar ground shading (USGS 3DEP · Texas StratMap lidar). Not a survey."
+            aria-pressed={lidarOverlay}
+            data-imagery-lidar={lidarOverlay ? "1" : "0"}
+            className={cn(
+              "story-press rounded-[var(--radius-pill)] px-3 py-2 text-[11px] font-bold",
+              lidarOverlay ? "bg-gold text-navy" : "story-glass text-paper hover:bg-white/10",
+            )}
+          >
+            Lidar
+          </button>
+        ) : null}
         {overlays.panelOpen ? (
           <CadOverlayControl
             activeCounty={overlays.activeCounty}

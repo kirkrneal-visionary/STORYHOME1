@@ -32,6 +32,8 @@ import {
 import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
 import { activeImagerySource } from "@/lib/shi/research-imagery";
 
+export const IMAGERY_LIDAR_OVERLAY_LAYER_ID = "imagery-lidar-overlay";
+
 /** Shared Story Home MapLibre basemap style (marketplace + listing CAD map). */
 export const MAP_NAVY = "#17335e";
 export const MAP_GOLD = "#f5b71e";
@@ -285,6 +287,7 @@ export function applyStoryPlaceLabelStyle(
  * - Streets = Esri raster underlay (never white) + owned launch-7 vector on top
  *   (liberty background omitted so underlay shows if vector is slow/empty)
  * - Imagery = owned /api/map/launch7/imagery unless explicit override
+ *   (TOP 2015 50 cm at close zoom; Research 3D drapes it on the terrain)
  * - Topo / terrain / gray remain borrowed switchable rasters
  * - Free-world layer ids live in style metadata (not a module singleton — that
  *   raced across Marketplace/Research and could hide the wrong layers)
@@ -382,7 +385,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
-      "storyhome:satellite": "owned-naip60",
+      "storyhome:satellite": "owned-top15",
       "storyhome:serve": "l7-3",
     },
     // Geographic labels use the OpenFreeMap Noto Sans glyph atlas.
@@ -479,6 +482,17 @@ export function buildStoryMapStyle(opts?: {
         paint: {
           "raster-resampling": "linear",
           "raster-fade-duration": 120,
+        },
+      },
+      {
+        id: IMAGERY_LIDAR_OVERLAY_LAYER_ID,
+        type: "raster",
+        source: RESEARCH_LIDAR_SOURCE_ID,
+        layout: { visibility: "none" },
+        paint: {
+          "raster-opacity": 0.5,
+          "raster-resampling": "linear",
+          "raster-fade-duration": 160,
         },
       },
       {
@@ -613,4 +627,17 @@ export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
   show("base-terrain", base === "terrain");
   show("base-gray", base === "gray");
   show("base-labels", base === "imageryLabels");
+}
+
+export function setImageryLidarOverlay(map: MapLike, on: boolean) {
+  if (map.getLayer && !map.getLayer(IMAGERY_LIDAR_OVERLAY_LAYER_ID)) return;
+  try {
+    map.setLayoutProperty(
+      IMAGERY_LIDAR_OVERLAY_LAYER_ID,
+      "visibility",
+      on ? "visible" : "none",
+    );
+  } catch {
+    /* layer may not exist yet */
+  }
 }

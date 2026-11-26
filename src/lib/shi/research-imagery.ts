@@ -1,19 +1,20 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Close zoom = USDA NAIP 60 cm (USGS / Texas, owned cache).
+ * Close zoom = TxGIO Texas Orthoimagery Program 2015 50 cm (owned cache),
+ * with USDA NAIP 60 cm as the fallback when TxGIO fails.
  * Far-out zoom = USGS Imagery Only tiles (fast).
  * High-res / historic slots stay reserved. Safe for the browser.
  */
 
 export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
 
-/** Bust CDN / disk so old ~1 m tiles are not served as 60 cm. */
-export const LAUNCH7_IMAGERY_GEN = "n60";
+/** Bust CDN / disk so old NAIP close-zoom tiles are not served as TOP 2015. */
+export const LAUNCH7_IMAGERY_GEN = "t15";
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
 export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
 
-/** First zoom that asks the 60 cm ImageServer instead of the 1 m tile cache. */
+/** First zoom that asks the close-zoom ImageServers (TOP 2015, then NAIP) instead of the 1 m tile cache. */
 export const NAIP_60CM_MIN_ZOOM = 14;
 
 export const NAIP_60CM_NATIVE_M = 0.6;
@@ -39,7 +40,7 @@ export type ImagerySourceDef = {
 export const USGS_IMAGERY_ONLY_ID = "usgs-imagery-only";
 export const NAIP_60CM_ID = "naip-60cm";
 
-/** Fast far-out tiles. Used under NAIP_60CM_MIN_ZOOM and as a fill if 60 cm fails. */
+/** Fast far-out tiles. Used under NAIP_60CM_MIN_ZOOM and as a fill if close zoom fails. */
 export function usgsImageryOnlySource(tileUrl?: string): ImagerySourceDef {
   return {
     id: USGS_IMAGERY_ONLY_ID,
@@ -56,7 +57,7 @@ export function usgsImageryOnlySource(tileUrl?: string): ImagerySourceDef {
   };
 }
 
-/** USDA NAIP ~60 cm. z18 matches native GSD in East Texas. No @2x URL exists. */
+/** USDA NAIP 2022 ~60 cm. Close-zoom fallback when TxGIO TOP 2015 fails. */
 export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
   return {
     id: NAIP_60CM_ID,
@@ -70,6 +71,31 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
       "Imagery © USDA NAIP 60 cm · USGS / TxGIO · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: NAIP_60CM_NATIVE_M,
+    enabled: false,
+  };
+}
+
+export const TEXAS_SHARP_ID = "txgio-top15-50cm";
+export const TEXAS_SHARP_NATIVE_M = 0.5;
+
+/**
+ * Default close-zoom imagery: TxGIO Texas Orthoimagery Program 2015, 50 cm,
+ * statewide, leaf-off (CC0). Older than NAIP 2022, so homes built or land
+ * cleared since early 2015 may be missing. z18 matches native GSD.
+ */
+export function texasSharpImagerySource(tileUrl?: string): ImagerySourceDef {
+  return {
+    id: TEXAS_SHARP_ID,
+    name: "Texas TOP 2015 50 cm",
+    type: "raster",
+    tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+    attribution:
+      "Imagery © TxGIO Texas Orthoimagery Program 2015 50 cm (CC0) · fallback USDA NAIP · USGS · Story Home launch-7 cache",
+    highDpiSupported: false,
+    nativeResolutionM: TEXAS_SHARP_NATIVE_M,
     enabled: true,
   };
 }
@@ -110,6 +136,7 @@ export function historicImagerySource(): ImagerySourceDef {
 
 export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
   return [
+    texasSharpImagerySource(tileUrl),
     naip60cmSource(tileUrl),
     usgsImageryOnlySource(tileUrl),
     highResImagerySource(),
@@ -119,7 +146,7 @@ export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
 
 export function activeImagerySource(tileUrl?: string): ImagerySourceDef {
   const live = allImagerySources(tileUrl).find((s) => s.enabled);
-  return live ?? naip60cmSource(tileUrl);
+  return live ?? texasSharpImagerySource(tileUrl);
 }
 
 /** Mercator ground meters per pixel at a WGS84 latitude. */

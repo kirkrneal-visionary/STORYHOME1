@@ -95,7 +95,7 @@ export const USGS_IMAGERY_TEMPLATE =
   process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim() ||
   "https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/{z}/{y}/{x}";
 
-/** USDA NAIP ~60 cm mosaic. Primary close-zoom fill. */
+/** USDA NAIP ~60 cm mosaic. Close-zoom fallback when TOP 2015 fails. */
 export const USGS_NAIP_IMAGESERVER =
   "https://imagery.nationalmap.gov/arcgis/rest/services/USGSNAIPImagery/ImageServer";
 
@@ -103,11 +103,20 @@ export const USGS_NAIP_IMAGESERVER =
 export const TXGIO_NAIP60_IMAGESERVER =
   "https://imagery.geographic.texas.gov/server/rest/services/NAIP/NAIP22_NCCIR_60cm/ImageServer";
 
+/** TxGIO TOP 2015 50 cm, statewide leaf-off (CC0). Primary close-zoom fill. */
+export const TXGIO_TOP15_IMAGESERVER =
+  "https://imagery.geographic.texas.gov/server/rest/services/TOP/TOP15_NCCIR_50cm/ImageServer";
+
 const WEB_MERCATOR_HALF = 20037508.342789244;
 const NAIP_EXPORT_TIMEOUT_MS = 10_000;
 const USGS_XYZ_MAX_ZOOM = 16;
 
-export type ImageryKind = "naip60" | "xyz";
+export type ImageryKind =
+  | "top15"
+  | "naip60"
+  | "xyz"
+  | "naip60-fallback"
+  | "xyz-fallback";
 
 export function tileBbox3857(
   z: number,
@@ -306,7 +315,7 @@ export async function getLaunch7ImageryTile(
       contentType: "image/jpeg",
       source: "owned-cache",
       cached: true,
-      imageryKind: imageryUsesNaip60(z) ? "naip60" : "xyz",
+      imageryKind: imageryUsesNaip60(z) ? "top15" : "xyz",
     };
   }
 
@@ -314,8 +323,14 @@ export async function getLaunch7ImageryTile(
   let kind: ImageryKind = "xyz";
 
   if (imageryUsesNaip60(z)) {
-    hit = await fetchNaip60Tile(z, x, y, "usgs");
-    if (hit) kind = "naip60";
+    hit = await fetchImage(
+      naip60ExportUrl(TXGIO_TOP15_IMAGESERVER, z, x, y, false),
+    );
+    if (hit) kind = "top15";
+    if (!hit) {
+      hit = await fetchNaip60Tile(z, x, y, "usgs");
+      if (hit) kind = "naip60";
+    }
     if (!hit) hit = await fetchUsgsXyzTile(z, x, y);
     if (!hit) {
       hit = await fetchNaip60Tile(z, x, y, "txgio");
@@ -332,14 +347,15 @@ export async function getLaunch7ImageryTile(
     return null;
   }
 
+  const fallback = imageryUsesNaip60(z) && kind !== "top15";
   const inFootprint = tileIntersectsLaunch7(z, x, y);
-  const cached = inFootprint ? writeAtomic(path, hit.body) : false;
+  const cached = inFootprint && !fallback ? writeAtomic(path, hit.body) : false;
   return {
     body: hit.body,
     contentType: hit.contentType,
     source: "upstream-fill",
     cached,
-    imageryKind: kind,
+    imageryKind: fallback ? `${kind}-fallback` as ImageryKind : kind,
   };
 }
 

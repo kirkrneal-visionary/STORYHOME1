@@ -15,6 +15,7 @@ import {
   qualityTierForMotion,
   researchMapDebugEnabled,
   researchRenderPixelRatio,
+  texasSharpImagerySource,
   usgsImageryOnlySource,
 } from "../src/lib/shi/research-imagery.ts";
 import { RESEARCH_LIDAR_DEM_MAX_ZOOM } from "../src/lib/shi/research-lidar.ts";
@@ -36,10 +37,11 @@ assert.equal(usgs.tileSize, 256);
 assert.equal(usgs.maxZoom, 18);
 assert.equal(usgs.highDpiSupported, false);
 const naip = naip60cmSource();
-assert.equal(naip.enabled, true);
+assert.equal(naip.enabled, false);
 assert.equal(naip.nativeResolutionM, 0.6);
-assert.equal(activeImagerySource().id, "naip-60cm");
-assert.match(activeImagerySource().tiles[0] ?? "", /v=n60/);
+assert.equal(activeImagerySource().id, "txgio-top15-50cm");
+assert.equal(activeImagerySource().nativeResolutionM, 0.5);
+assert.match(activeImagerySource().tiles[0] ?? "", /^\/api\/map\/launch7\/imagery\/.*v=t15/);
 assert.equal(allImagerySources().filter((s) => s.enabled).length, 1);
 assert.equal(NAIP_60CM_MIN_ZOOM, 14);
 assert.equal(
@@ -98,6 +100,27 @@ assert.match(
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /activeImagerySource/);
 assert.match(style, /raster-resampling": "linear"/);
+assert.doesNotMatch(style, /satellite-tx/);
+assert.match(style, /"storyhome:satellite": "owned-top15"/);
+assert.match(style, /IMAGERY_LIDAR_OVERLAY_LAYER_ID/);
+
+const tx = texasSharpImagerySource();
+assert.equal(tx.enabled, true);
+assert.match(tx.attribution, /CC0/);
+const tiles = readFileSync(join(root, "src/lib/shi/launch7-tiles.ts"), "utf8");
+assert.match(tiles, /TOP\/TOP15_NCCIR_50cm\/ImageServer/);
+assert.ok(
+  tiles.indexOf("TXGIO_TOP15_IMAGESERVER, z") <
+    tiles.indexOf('fetchNaip60Tile(z, x, y, "usgs")'),
+  "TOP 2015 is tried before NAIP at close zoom",
+);
+assert.match(tiles, /inFootprint && !fallback/);
+const market = readFileSync(
+  join(root, "src/components/marketplace/MarketplaceMap.tsx"),
+  "utf8",
+);
+assert.doesNotMatch(market, /Texas sharp|ImageryChoice/);
+assert.match(market, /useState\(false\)[\s\S]*setLidarOverlay/);
 
 const map = readFileSync(
   join(root, "src/components/broker/intelligence/ShiResearchMap.tsx"),
