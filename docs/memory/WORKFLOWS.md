@@ -31,5 +31,6 @@ High-risk flows have contracts in `workflows/`. Everything else is inventoried o
 | Billing / boost | Boundary tables exist. **No provider. Not a paid entitlement engine.** |
 | Living Marks | Public bucket by design. |
 | Settings Wave 1–3 | Confirmed email before Pro cards (no 2FA since 2026-11-25); buyer preview is local; DB locks follow real purpose. |
+| Capacitor iPhone shell | Loads live site URL. Zoom lock is web viewport + 16px form floors (`layout.tsx`, `globals.css`); no TestFlight rebuild for that. Native shell lives on PR 298 until merged. |
 
 Founder rationale that was not supplied is marked **unknown**.

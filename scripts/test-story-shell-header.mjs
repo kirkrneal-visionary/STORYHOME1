@@ -35,6 +35,8 @@ assert.doesNotMatch(nav, /story-chrome fixed top-0.*border-b/);
 
 const layout = read("src/app/layout.tsx");
 assert.match(layout, /viewportFit:\s*"cover"/);
+assert.match(layout, /maximumScale:\s*1/);
+assert.match(layout, /userScalable:\s*false/);
 
 const listing = read("src/app/marketplace/[id]/page.tsx");
 assert.match(listing, /--story-safe-top/);
