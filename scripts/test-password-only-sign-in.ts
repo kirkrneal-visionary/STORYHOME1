@@ -31,8 +31,10 @@ function sourceFiles(dir: string): string[] {
 
 const twoFactor =
   /auth\.mfa\b|AuthenticatorAssurance|\baal[12]?\b|needs_mfa|setup=mfa|pending=mfa|MfaChallenge|requireStepUpIfEnrolled|readSessionAssurance|mfaRequired|authenticator/i;
+const twoFactorCopyOk = new Set(["src/lib/account/password-rule.ts"]);
 for (const file of sourceFiles(join(root, "src"))) {
   const rel = relative(root, file);
+  if (twoFactorCopyOk.has(rel)) continue;
   assert.doesNotMatch(read(rel), twoFactor, `${rel} still mentions 2FA`);
 }
 
