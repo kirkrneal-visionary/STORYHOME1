@@ -106,7 +106,7 @@ assert.match(style, /raster-resampling": "linear"/);
 assert.doesNotMatch(style, /satellite-tx/);
 assert.match(
   style,
-  /LAUNCH7_ESRI_POLK_REQUESTED\s*\?\s*"owned-esri-polk"/,
+  /LAUNCH7_ESRI_POLK_REQUESTED\s*\?\s*"owned-esri-l7"/,
 );
 assert.match(style, /LAUNCH7_TOP15_ENABLED\s*\?\s*"owned-top15"\s*:\s*"owned-naip60"/);
 assert.match(style, /IMAGERY_LIDAR_OVERLAY_LAYER_ID/);
@@ -129,7 +129,8 @@ const imageryLib = readFileSync(
 );
 assert.match(imageryLib, /ibasemaps-api\.arcgis\.com\/arcgis\/rest\/services\/World_Imagery/);
 assert.match(tiles, /ESRI_WORLD_IMAGERY_TILE_API/);
-assert.match(tiles, /tileIntersectsPolk/);
+assert.match(tiles, /tileUsesEsriLaunch7Imagery/);
+assert.match(tiles, /tileIntersectsLaunch7/);
 assert.match(tiles, /noPersist/);
 assert.match(tiles, /if \(!hit && LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
 const imageryRoute = readFileSync(

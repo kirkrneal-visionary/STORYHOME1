@@ -13,8 +13,8 @@ type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
  * L7-2 — owned launch-7 imagery tiles.
- * Close zoom: Esri World Imagery in Polk when LAUNCH7_ESRI_POLK_ENABLED;
- * USDA NAIP 60 cm elsewhere (TxGIO TOP 2015 first when LAUNCH7_TOP15_ENABLED).
+ * Launch-7 footprint: Esri World Imagery at all zooms when LAUNCH7_ESRI_POLK_ENABLED;
+ * NAIP / USGS Imagery Only elsewhere or on Esri error (TOP 2015 when LAUNCH7_TOP15_ENABLED).
  * Far-out: USGS Imagery Only.
  * Serves from disk cache; fills upstream inside the footprint.
  * Fallback tiles get a short cache so TOP 2015 replaces them once TxGIO is back.
