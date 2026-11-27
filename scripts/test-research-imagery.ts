@@ -134,6 +134,14 @@ const googleLib = readFileSync(
 );
 assert.match(googleLib, /tile\.googleapis\.com\/v1\/2dtiles/);
 assert.match(googleLib, /LAUNCH7_GOOGLE_IMAGERY_ENABLED/);
+assert.match(googleLib, /probeGoogleSatelliteTile/);
+assert.match(
+  readFileSync(
+    join(root, "src/app/api/map/launch7/google-probe/route.ts"),
+    "utf8",
+  ),
+  /probeGoogleSatelliteTile/,
+);
 assert.match(tiles, /fetchGoogleSatelliteTile/);
 assert.match(tiles, /ESRI_WORLD_IMAGERY_TILE_API/);
 assert.match(tiles, /tileUsesGoogleLaunch7Imagery/);
