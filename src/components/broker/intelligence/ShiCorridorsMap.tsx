@@ -30,6 +30,7 @@ import {
 import type { DrawnBoundary, LatLng } from "@/lib/geo";
 import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
+import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import {
   CORRIDOR_FREEHAND_PRECISION,
   emptyFreehandSession,
@@ -319,6 +320,7 @@ export function ShiCorridorsMap({
     setMapFailed(null);
     let map: maplibregl.Map;
     try {
+      applyStoryMapTileBudget();
       map = new maplibregl.Map({
         container: containerRef.current,
         style: buildStoryMapStyle(),

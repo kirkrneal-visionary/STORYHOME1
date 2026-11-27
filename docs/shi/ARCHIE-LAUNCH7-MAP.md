@@ -42,7 +42,7 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - **Tile API:** `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=…` ([ArcGIS Location Platform basemap tiles](https://location.arcgis.com/pricing/)).
 - **Footprint:** launch-7 union bbox from `launch7UnionBbox()` / `corridors.ts` (Polk, Angelina, Trinity, Tyler, San Jacinto, Liberty, Walker). Outside the footprint or on Esri error: USGS Imagery Only (far zoom) then NAIP chain at z14+.
 - **No server cache:** Esri tiles are proxied per request — not written to `data/shi/tiles` or R2. Response `Cache-Control: private, max-age=300` (no `s-maxage`). 3D terrain drape and Lidar overlays unchanged (same `satellite` raster source).
-- **`LAUNCH7_IMAGERY_GEN`:** `esri-l7` when flag + token are set (busts stale NAIP CDN tiles).
+- **`LAUNCH7_IMAGERY_GEN`:** `esri-l7` when the server flag + token are set (busts stale NAIP CDN tiles). Set `NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY=true` on eqmg so browser tile URLs match (token stays server-only).
 - **Cost:** 2M basemap tiles/month free, then **$0.15 per 1,000 tiles** — more zoom levels and counties mean more tiles per pan/zoom ([pricing](https://location.arcgis.com/pricing/)).
 - PR **308** (Texas TOP PMTiles on R2): **abandoned** — do not merge.
 

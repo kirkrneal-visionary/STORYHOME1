@@ -17,6 +17,7 @@ import {
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
+import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
 import {
   emptyFreehandSession,
@@ -126,6 +127,7 @@ export function HomeDrawMap({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    applyStoryMapTileBudget();
     const map = new maplibregl.Map({
       container: el,
       style: buildStoryMapStyle({ deferDem: true }),

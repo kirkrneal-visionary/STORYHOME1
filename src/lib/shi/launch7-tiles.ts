@@ -125,6 +125,9 @@ export const TXGIO_TOP15_IMAGESERVER =
 
 const WEB_MERCATOR_HALF = 20037508.342789244;
 const NAIP_EXPORT_TIMEOUT_MS = 10_000;
+/** Stay under Vercel’s default 10s function ceiling; fail fast to USGS fallback. */
+const ESRI_FETCH_TIMEOUT_MS = 7_500;
+const USGS_XYZ_TIMEOUT_MS = 6_000;
 const USGS_XYZ_MAX_ZOOM = 16;
 
 export type ImageryKind =
@@ -267,7 +270,7 @@ export async function getLaunch7StreetsTile(
 async function fetchImage(
   url: string,
   timeoutMs = NAIP_EXPORT_TIMEOUT_MS,
-): Promise<{ body: Buffer; contentType: string } | null> {
+): Promise<{ body: Buffer; contentType: string; status: number } | null> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -282,12 +285,30 @@ async function fetchImage(
     return {
       body,
       contentType: res.headers.get("content-type") || "image/jpeg",
+      status: res.status,
     };
   } catch {
     return null;
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function fetchImageWithRetry(
+  url: string,
+  timeoutMs: number,
+  retriesOn429 = 1,
+): Promise<{ body: Buffer; contentType: string } | null> {
+  let attempt = 0;
+  while (attempt <= retriesOn429) {
+    const hit = await fetchImage(url, timeoutMs);
+    if (hit) return hit;
+    attempt += 1;
+    if (attempt <= retriesOn429) {
+      await new Promise((r) => setTimeout(r, 120 * attempt));
+    }
+  }
+  return null;
 }
 
 async function fetchNaip60Tile(
@@ -322,7 +343,11 @@ async function fetchEsriWorldImageryTile(
 ): Promise<{ body: Buffer; contentType: string } | null> {
   const token = arcgisLocationPlatformAccessToken();
   if (!token) return null;
-  return fetchImage(esriWorldImageryTileUrl(z, x, y, token), 12_000);
+  return fetchImageWithRetry(
+    esriWorldImageryTileUrl(z, x, y, token),
+    ESRI_FETCH_TIMEOUT_MS,
+    1,
+  );
 }
 
 async function fetchUsgsXyzTile(
@@ -332,7 +357,10 @@ async function fetchUsgsXyzTile(
 ): Promise<{ body: Buffer; contentType: string } | null> {
   const custom = Boolean(process.env.LAUNCH7_IMAGERY_UPSTREAM?.trim());
   if (!custom && z > USGS_XYZ_MAX_ZOOM) return null;
-  return fetchImage(fillTemplate(USGS_IMAGERY_TEMPLATE, z, x, y), 8000);
+  return fetchImage(
+    fillTemplate(USGS_IMAGERY_TEMPLATE, z, x, y),
+    USGS_XYZ_TIMEOUT_MS,
+  );
 }
 
 export async function getLaunch7ImageryTile(
@@ -373,6 +401,8 @@ export async function getLaunch7ImageryTile(
       kind = "esri-world";
     } else {
       esriFallback = true;
+      hit = await fetchUsgsXyzTile(z, x, y);
+      if (hit) kind = "xyz";
     }
   }
 
