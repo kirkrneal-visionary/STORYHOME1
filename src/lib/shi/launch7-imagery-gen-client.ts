@@ -2,7 +2,7 @@
 
 /**
  * Browser maps read the live imagery generation from /api/map/launch7/status
- * so ?v= matches the server (Esri on eqmg) without a NEXT_PUBLIC_* env.
+ * so ?v= matches the server (Google / Esri on eqmg) without a NEXT_PUBLIC_* env.
  */
 
 const FALLBACK_GEN = "n60";

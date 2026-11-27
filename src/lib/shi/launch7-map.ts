@@ -3,7 +3,7 @@
  *
  * Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker
  *
- * L7-1: free-world TILE contract (no Mapbox / Google tile loads on Research).
+ * L7-1: free-world TILE contract (optional Google satellite via server proxy only).
  * L7-2: owned tile endpoints (/api/map/launch7/*) with disk cache + upstream fill.
  * L7-3: CDN/R2 publish path + refresh ops + county expand playbook.
  * Owned CAD parcels stay the precision layer; basemap is atmosphere only.
@@ -15,6 +15,7 @@ import { CORRIDOR_COUNTIES } from "@/lib/shi/corridors";
 import {
   LAUNCH7_ESRI_POLK_REQUESTED,
   LAUNCH7_IMAGERY_TILE_TEMPLATE,
+  launch7GoogleImageryRequested,
   launch7ImageryTileTemplate,
   resolveLaunch7ImageryGen,
   LAUNCH7_TOP15_ENABLED,
@@ -23,12 +24,14 @@ import {
 /** Wave marker — bump when basemap ownership step ships. */
 export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
-export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. ${
-  LAUNCH7_ESRI_POLK_REQUESTED
-    ? "Imagery across the launch-7 footprint uses Esri World Imagery (ArcGIS Location Platform, proxied — not stored on our servers); outside the footprint or on error, USDA NAIP 60 cm and USGS Imagery Only apply."
-    : LAUNCH7_TOP15_ENABLED
-      ? "Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback."
-      : "Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint."
+export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles are served from Story Home’s launch-7 API (and/or CDN); Mapbox is only an optional 3D renderer when a public token is set. Parcel outlines are our CAD. ${
+  launch7GoogleImageryRequested()
+    ? "Imagery across the launch-7 footprint uses Google Maps satellite (Map Tiles API, proxied — not stored on our servers); Esri or USDA NAIP apply on error or when the Google key is missing."
+    : LAUNCH7_ESRI_POLK_REQUESTED
+      ? "Imagery across the launch-7 footprint uses Esri World Imagery (ArcGIS Location Platform, proxied — not stored on our servers); outside the footprint or on error, USDA NAIP 60 cm and USGS Imagery Only apply."
+      : LAUNCH7_TOP15_ENABLED
+        ? "Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback."
+        : "Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint."
 } Far-out views use USGS Imagery Only tiles.`;
 
 export type Launch7County = (typeof CORRIDOR_COUNTIES)[number];

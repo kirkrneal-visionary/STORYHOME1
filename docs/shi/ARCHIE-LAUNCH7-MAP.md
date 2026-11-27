@@ -2,15 +2,15 @@
 
 **Live target:** https://storyhome-1-eqmg.vercel.app  
 **Footprint:** Polk · Angelina · Trinity · Tyler · San Jacinto · Liberty · Walker  
-**Engine:** MapLibre by default. Research 3D may use Mapbox GL as the **renderer** when `NEXT_PUBLIC_MAPBOX_TOKEN` is set. Streets, imagery, parcels, and elevation tiles stay ours — never Mapbox or Google map tiles.
+**Engine:** MapLibre by default. Research 3D may use Mapbox GL as the **renderer** when `NEXT_PUBLIC_MAPBOX_TOKEN` is set. Streets and parcels stay ours. Launch-7 **satellite** may use Google Map Tiles API (proxied via `/api/map/launch7/imagery`, never stored on disk) when `LAUNCH7_GOOGLE_IMAGERY_ENABLED` is set — not the Maps JavaScript client.
 
 ## Why
 
 Build map quality on **owned infrastructure** and keep Research in **free-world development mode**:
 
 1. Parcel precision = our CAD (PostGIS MVT) — never rent Regrid/ATTOM for the desk  
-2. Basemap **tiles** = free / owned — no Mapbox or Google tile SKUs on Research. A Mapbox **engine** token (map loads only) is optional for 3D sky.  
-3. Google stays only for thin plugs already allowed (HAR / Places / Street View) — not the Intelligence map  
+2. Basemap **tiles** = owned endpoints; NAIP/USGS fill and optional Google satellite (server proxy). A Mapbox **engine** token (map loads only) is optional for 3D sky.  
+3. Google Map Tiles API is allowed for launch-7 satellite only (founder 2026-11-27). HAR / Places / Street View plugs unchanged.  
 4. Reveal overlays only when peer-grade (Data Coverage rules unchanged)
 
 ## Waves
@@ -36,15 +36,20 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - Marketplace map: **Lidar** on/off appears when Imagery is on. It overlays the existing `/api/map/lidar` ground hillshade (USGS 3DEP, which carries the Texas StratMap 1 m lidar). Tiles stop at z16, so close zoom is soft. Research keeps its own LiDAR controls.
 - No newer free imagery beats both: Esri World Imagery (Vantor 2023–2025, 31–50 cm) needs an ArcGIS Location Platform token and forbids server caching; H-GAC 2024 6-inch is paid; NAIP 2024 is still 60 cm. No 6-inch StratMap covers the launch-7 counties.
 
-### Esri World Imagery — launch 7, all zooms (founder 2026-11-27)
+### Google Maps satellite — launch 7, all zooms (founder 2026-11-27, preferred)
 
-- **Status:** `LAUNCH7_ESRI_POLK_ENABLED` (or `LAUNCH7_ESRI_LAUNCH7_ENABLED`) + `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` on eqmg (server-only). Esri for **all seven launch counties** at **every imagery/hybrid zoom** (not Polk-only, not z14+ only). Not Texas-wide TOP 2015 or PR 308 PMTiles.
-- **Tile API:** `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=…` ([ArcGIS Location Platform basemap tiles](https://location.arcgis.com/pricing/)).
-- **Footprint:** launch-7 union bbox from `launch7UnionBbox()` / `corridors.ts` (Polk, Angelina, Trinity, Tyler, San Jacinto, Liberty, Walker). Outside the footprint or on Esri error: USGS Imagery Only (far zoom) then NAIP chain at z14+.
-- **No server cache:** Esri tiles are proxied per request — not written to `data/shi/tiles` or R2. Response `Cache-Control: private, max-age=300` (no `s-maxage`). 3D terrain drape and Lidar overlays unchanged (same `satellite` raster source).
-- **`LAUNCH7_IMAGERY_GEN`:** `esri-l7` when the server flag + token are set. Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status` so tile URLs use matching `?v=` without a `NEXT_PUBLIC_*` env.
-- **Cost:** 2M basemap tiles/month free, then **$0.15 per 1,000 tiles** — more zoom levels and counties mean more tiles per pan/zoom ([pricing](https://location.arcgis.com/pricing/)).
+- **Status:** `LAUNCH7_GOOGLE_IMAGERY_ENABLED` + `GOOGLE_MAPS_API_KEY` on eqmg (server-only). Google satellite for **all seven launch counties** at **every imagery/hybrid zoom**.
+- **Tile API:** Map Tiles API — session via `POST https://tile.googleapis.com/v1/createSession?key=…`, tiles `GET …/v1/2dtiles/{z}/{x}/{y}?session=…&key=…` ([satellite tiles](https://developers.google.com/maps/documentation/tile/satellite), [policies](https://developers.google.com/maps/documentation/tile/policies)).
+- **Footprint:** launch-7 union bbox from `launch7UnionBbox()` / `corridors.ts`. Outside the footprint or on error: USGS Imagery Only (far zoom) then NAIP chain at z14+.
+- **No server store:** Google tiles are proxied per request — not written to `data/shi/tiles` or R2. Session token is in-memory only. Response `Cache-Control: private, max-age=300` (no `s-maxage`). Respect upstream `Cache-Control` when present. 3D terrain drape and Lidar overlays unchanged (same `satellite` raster source).
+- **`LAUNCH7_IMAGERY_GEN`:** `google-l7` when flag + key are set. Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
+- **Cost:** Map Tiles API is pay-as-you-go — set a **Google Cloud budget alert** (e.g. $50/mo) and restrict the API key to Map Tiles API only.
+- **Esri fallback:** If the Google key is missing but `LAUNCH7_ESRI_POLK_ENABLED` + `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` are set, imagery falls back to Esri (`esri-l7`) with the same proxy rules as PRs 309–312.
 - PR **308** (Texas TOP PMTiles on R2): **abandoned** — do not merge.
+
+### Esri World Imagery — launch 7 fallback (PRs 309–312)
+
+- Used when Google is off or the Google key is not yet on eqmg. Same footprint and no-disk rules as above; tile API `ibasemaps-api.arcgis.com`.
 
 ### L7-3 — Serve + refresh ops (**shipping**)
 
@@ -78,13 +83,13 @@ After first successful publish, set `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on eqmg so Ma
 
 ## Cost posture (100 agents × $75)
 
-App-server fills stay footprint-bounded. Once CDN is on, map tile bandwidth moves to cheap object storage — still no Mapbox/Google map SKUs.
+App-server fills stay footprint-bounded. Google/Esri satellite is proxied only (no disk store). NAIP-owned cache can still use CDN/R2.
 
 ## Out of scope
 
 - Mapbox as primary basemap (hosted streets / satellite / terrain-dem)  
 - Mapbox GL as Research renderer is allowed when `NEXT_PUBLIC_MAPBOX_TOKEN` is set — tiles still ours  
-- Google Maps JS as Research canvas  
+- Google Maps **JavaScript** client as Research canvas (Map Tiles API proxy is OK)  
 - ATTOM / Regrid / Zoneomics / DataTree for truth layers  
 - Paying per parcel view for public GIS we can own once for launch 7
 

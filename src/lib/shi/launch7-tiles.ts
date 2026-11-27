@@ -16,6 +16,13 @@ import {
 import { dirname, join } from "node:path";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
+  ensureGoogleMapTileSession,
+  googleMapsApiKey,
+  googleSatelliteTileUrl,
+  GOOGLE_SATELLITE_FETCH_TIMEOUT_MS,
+  launch7GoogleImageryActive,
+} from "@/lib/shi/google-map-tiles";
+import {
   ESRI_WORLD_IMAGERY_TILE_API,
   LAUNCH7_IMAGERY_GEN,
   LAUNCH7_TOP15_ENABLED,
@@ -72,17 +79,42 @@ export function tileIntersectsLaunch7(z: number, x: number, y: number): boolean 
   return tw <= le && te >= lw && ts <= ln && tn >= ls;
 }
 
-/** Esri World Imagery for every imagery/hybrid zoom inside the launch-7 union bbox. */
+/** Google satellite for every imagery/hybrid zoom inside the launch-7 union bbox. */
+export function tileUsesGoogleLaunch7Imagery(
+  z: number,
+  x: number,
+  y: number,
+): boolean {
+  return launch7GoogleImageryActive() && tileIntersectsLaunch7(z, x, y);
+}
+
+/** Esri World Imagery when Google is off or unavailable (fallback). */
 export function tileUsesEsriLaunch7Imagery(
   z: number,
   x: number,
   y: number,
 ): boolean {
-  return launch7EsriPolkActive() && tileIntersectsLaunch7(z, x, y);
+  return (
+    launch7EsriPolkActive() &&
+    !launch7GoogleImageryActive() &&
+    tileIntersectsLaunch7(z, x, y)
+  );
 }
 
 /** @deprecated — use tileUsesEsriLaunch7Imagery */
 export const tileUsesEsriPolkCloseZoom = tileUsesEsriLaunch7Imagery;
+
+export function launch7PaidImageryPassthrough(
+  z: number,
+  x: number,
+  y: number,
+): boolean {
+  return (
+    tileUsesGoogleLaunch7Imagery(z, x, y) ||
+    tileUsesEsriLaunch7Imagery(z, x, y) ||
+    (launch7GoogleImageryActive() && tileIntersectsLaunch7(z, x, y))
+  );
+}
 
 let cachedStreetsTemplate: string | null = null;
 
@@ -131,6 +163,8 @@ const USGS_XYZ_TIMEOUT_MS = 6_000;
 const USGS_XYZ_MAX_ZOOM = 16;
 
 export type ImageryKind =
+  | "google-satellite"
+  | "google-satellite-fallback"
   | "esri-world"
   | "esri-world-fallback"
   | "top15"
@@ -335,6 +369,23 @@ function esriWorldImageryTileUrl(
   return `${ESRI_WORLD_IMAGERY_TILE_API}/${z}/${y}/${x}?${q.toString()}`;
 }
 
+/** Passthrough only — Google ToS forbids persisting tiles on our servers. */
+async function fetchGoogleSatelliteTile(
+  z: number,
+  x: number,
+  y: number,
+): Promise<{ body: Buffer; contentType: string } | null> {
+  const apiKey = googleMapsApiKey();
+  if (!apiKey) return null;
+  const sessionState = await ensureGoogleMapTileSession();
+  if (!sessionState) return null;
+  return fetchImageWithRetry(
+    googleSatelliteTileUrl(z, x, y, sessionState.session, apiKey),
+    GOOGLE_SATELLITE_FETCH_TIMEOUT_MS,
+    1,
+  );
+}
+
 /** Passthrough only — Esri license forbids persisting tiles on our servers. */
 async function fetchEsriWorldImageryTile(
   z: number,
@@ -375,9 +426,11 @@ export async function getLaunch7ImageryTile(
     return null;
   }
 
+  const googleLaunch7Tile = tileUsesGoogleLaunch7Imagery(z, x, y);
   const esriLaunch7Tile = tileUsesEsriLaunch7Imagery(z, x, y);
+  const paidPassthrough = launch7PaidImageryPassthrough(z, x, y);
   const path = imageryTilePath(z, x, y);
-  if (!esriLaunch7Tile && existsSync(path)) {
+  if (!paidPassthrough && existsSync(path)) {
     return {
       body: readFileSync(path),
       contentType: "image/jpeg",
@@ -393,9 +446,27 @@ export async function getLaunch7ImageryTile(
 
   let hit: { body: Buffer; contentType: string } | null = null;
   let kind: ImageryKind = "xyz";
+  let googleFallback = false;
   let esriFallback = false;
 
-  if (esriLaunch7Tile) {
+  if (googleLaunch7Tile) {
+    hit = await fetchGoogleSatelliteTile(z, x, y);
+    if (hit) {
+      kind = "google-satellite";
+    } else {
+      googleFallback = true;
+      if (launch7EsriPolkActive()) {
+        hit = await fetchEsriWorldImageryTile(z, x, y);
+        if (hit) kind = "esri-world";
+      }
+      if (!hit) {
+        hit = await fetchUsgsXyzTile(z, x, y);
+        if (hit) kind = "xyz";
+      }
+    }
+  }
+
+  if (esriLaunch7Tile && !hit) {
     hit = await fetchEsriWorldImageryTile(z, x, y);
     if (hit) {
       kind = "esri-world";
@@ -435,22 +506,28 @@ export async function getLaunch7ImageryTile(
 
   const fallback =
     (LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15") ||
+    (googleFallback && kind !== "google-satellite" && kind !== "esri-world") ||
     (esriFallback && kind !== "esri-world");
   const inFootprint = tileIntersectsLaunch7(z, x, y);
-  const noPersist = kind === "esri-world" || esriLaunch7Tile;
+  const noPersist =
+    kind === "google-satellite" ||
+    kind === "esri-world" ||
+    paidPassthrough;
   const cached =
     inFootprint && !fallback && !noPersist ? writeAtomic(path, hit.body) : false;
   return {
     body: hit.body,
     contentType: hit.contentType,
-    source: kind === "esri-world" ? "upstream-fill" : "upstream-fill",
+    source: "upstream-fill",
     cached,
     imageryKind:
-      esriFallback && kind !== "esri-world"
-        ? "esri-world-fallback"
-        : fallback
-          ? (`${kind}-fallback` as ImageryKind)
-          : kind,
+      googleFallback && kind !== "google-satellite" && kind !== "esri-world"
+        ? "google-satellite-fallback"
+        : esriFallback && kind !== "esri-world"
+          ? "esri-world-fallback"
+          : fallback
+            ? (`${kind}-fallback` as ImageryKind)
+            : kind,
   };
 }
 
