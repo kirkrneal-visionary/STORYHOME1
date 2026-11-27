@@ -21,7 +21,6 @@ import {
   googleSatelliteTileUrl,
   GOOGLE_SATELLITE_FETCH_TIMEOUT_MS,
   launch7GoogleImageryActive,
-  launch7EsriPolkActive,
 } from "@/lib/shi/google-map-tiles";
 import {
   ESRI_WORLD_IMAGERY_TILE_API,
