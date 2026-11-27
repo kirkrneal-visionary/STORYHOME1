@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  LAUNCH7_ESRI_POLK_REQUESTED,
   LAUNCH7_TOP15_ENABLED,
   LIVINGSTON_QA,
   NAIP_60CM_MIN_ZOOM,
@@ -38,6 +39,7 @@ assert.equal(usgs.tileSize, 256);
 assert.equal(usgs.maxZoom, 18);
 assert.equal(usgs.highDpiSupported, false);
 const naip = naip60cmSource();
+assert.equal(LAUNCH7_ESRI_POLK_REQUESTED, false);
 assert.equal(LAUNCH7_TOP15_ENABLED, false, "TOP 2015 stays off until tiles are self-hosted");
 assert.equal(naip.enabled, true);
 assert.equal(naip.nativeResolutionM, 0.6);
@@ -102,6 +104,10 @@ const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /activeImagerySource/);
 assert.match(style, /raster-resampling": "linear"/);
 assert.doesNotMatch(style, /satellite-tx/);
+assert.match(
+  style,
+  /LAUNCH7_ESRI_POLK_REQUESTED\s*\?\s*"owned-esri-polk"/,
+);
 assert.match(style, /LAUNCH7_TOP15_ENABLED\s*\?\s*"owned-top15"\s*:\s*"owned-naip60"/);
 assert.match(style, /IMAGERY_LIDAR_OVERLAY_LAYER_ID/);
 
@@ -117,7 +123,21 @@ assert.ok(
   "TOP 2015 is tried before NAIP at close zoom",
 );
 assert.match(tiles, /inFootprint && !fallback/);
-assert.match(tiles, /if \(LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
+const imageryLib = readFileSync(
+  join(root, "src/lib/shi/research-imagery.ts"),
+  "utf8",
+);
+assert.match(imageryLib, /ibasemaps-api\.arcgis\.com\/arcgis\/rest\/services\/World_Imagery/);
+assert.match(tiles, /ESRI_WORLD_IMAGERY_TILE_API/);
+assert.match(tiles, /tileIntersectsPolk/);
+assert.match(tiles, /noPersist/);
+assert.match(tiles, /if \(!hit && LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
+const imageryRoute = readFileSync(
+  join(root, "src/app/api/map/launch7/imagery/[z]/[x]/[y]/route.ts"),
+  "utf8",
+);
+assert.match(imageryRoute, /ESRI_TILE_CACHE_CONTROL/);
+assert.match(imageryRoute, /tile\.imageryKind === "esri-world"/);
 const market = readFileSync(
   join(root, "src/components/marketplace/MarketplaceMap.tsx"),
   "utf8",

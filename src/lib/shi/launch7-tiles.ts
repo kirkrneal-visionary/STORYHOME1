@@ -14,11 +14,14 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { launch7UnionBbox } from "@/lib/shi/launch7-map";
+import { launch7UnionBbox, polkCountyBbox } from "@/lib/shi/launch7-map";
 import {
+  ESRI_WORLD_IMAGERY_TILE_API,
   LAUNCH7_IMAGERY_GEN,
   LAUNCH7_TOP15_ENABLED,
   NAIP_60CM_MIN_ZOOM,
+  arcgisLocationPlatformAccessToken,
+  launch7EsriPolkActive,
 } from "@/lib/shi/research-imagery";
 
 export const LAUNCH7_STREETS_UPSTREAM_UA =
@@ -69,6 +72,24 @@ export function tileIntersectsLaunch7(z: number, x: number, y: number): boolean 
   return tw <= le && te >= lw && ts <= ln && tn >= ls;
 }
 
+export function tileIntersectsPolk(z: number, x: number, y: number): boolean {
+  const [tw, ts, te, tn] = tileLngLatBbox(z, x, y);
+  const [pw, ps, pe, pn] = polkCountyBbox();
+  return tw <= pe && te >= pw && ts <= pn && tn >= ps;
+}
+
+export function tileUsesEsriPolkCloseZoom(
+  z: number,
+  x: number,
+  y: number,
+): boolean {
+  return (
+    launch7EsriPolkActive() &&
+    imageryUsesNaip60(z) &&
+    tileIntersectsPolk(z, x, y)
+  );
+}
+
 let cachedStreetsTemplate: string | null = null;
 
 /** Resolve current OpenFreeMap planet tile template (cached in-process). */
@@ -113,6 +134,8 @@ const NAIP_EXPORT_TIMEOUT_MS = 10_000;
 const USGS_XYZ_MAX_ZOOM = 16;
 
 export type ImageryKind =
+  | "esri-world"
+  | "esri-world-fallback"
   | "top15"
   | "naip60"
   | "xyz"
@@ -287,6 +310,27 @@ async function fetchNaip60Tile(
   return fetchImage(naip60ExportUrl(TXGIO_NAIP60_IMAGESERVER, z, x, y, false));
 }
 
+function esriWorldImageryTileUrl(
+  z: number,
+  x: number,
+  y: number,
+  token: string,
+): string {
+  const q = new URLSearchParams({ token });
+  return `${ESRI_WORLD_IMAGERY_TILE_API}/${z}/${y}/${x}?${q.toString()}`;
+}
+
+/** Passthrough only — Esri license forbids persisting tiles on our servers. */
+async function fetchEsriWorldImageryTile(
+  z: number,
+  x: number,
+  y: number,
+): Promise<{ body: Buffer; contentType: string } | null> {
+  const token = arcgisLocationPlatformAccessToken();
+  if (!token) return null;
+  return fetchImage(esriWorldImageryTileUrl(z, x, y, token), 12_000);
+}
+
 async function fetchUsgsXyzTile(
   z: number,
   x: number,
@@ -309,8 +353,9 @@ export async function getLaunch7ImageryTile(
     return null;
   }
 
+  const esriPolkTile = tileUsesEsriPolkCloseZoom(z, x, y);
   const path = imageryTilePath(z, x, y);
-  if (existsSync(path)) {
+  if (!esriPolkTile && existsSync(path)) {
     return {
       body: readFileSync(path),
       contentType: "image/jpeg",
@@ -326,9 +371,18 @@ export async function getLaunch7ImageryTile(
 
   let hit: { body: Buffer; contentType: string } | null = null;
   let kind: ImageryKind = "xyz";
+  let esriFallback = false;
 
   if (imageryUsesNaip60(z)) {
-    if (LAUNCH7_TOP15_ENABLED) {
+    if (esriPolkTile) {
+      hit = await fetchEsriWorldImageryTile(z, x, y);
+      if (hit) {
+        kind = "esri-world";
+      } else {
+        esriFallback = true;
+      }
+    }
+    if (!hit && LAUNCH7_TOP15_ENABLED) {
       hit = await fetchImage(
         naip60ExportUrl(TXGIO_TOP15_IMAGESERVER, z, x, y, false),
       );
@@ -355,15 +409,23 @@ export async function getLaunch7ImageryTile(
   }
 
   const fallback =
-    LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15";
+    (LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15") ||
+    (esriFallback && kind !== "esri-world");
   const inFootprint = tileIntersectsLaunch7(z, x, y);
-  const cached = inFootprint && !fallback ? writeAtomic(path, hit.body) : false;
+  const noPersist = kind === "esri-world" || esriPolkTile;
+  const cached =
+    inFootprint && !fallback && !noPersist ? writeAtomic(path, hit.body) : false;
   return {
     body: hit.body,
     contentType: hit.contentType,
-    source: "upstream-fill",
+    source: kind === "esri-world" ? "upstream-fill" : "upstream-fill",
     cached,
-    imageryKind: fallback ? `${kind}-fallback` as ImageryKind : kind,
+    imageryKind:
+      esriFallback && kind !== "esri-world"
+        ? "esri-world-fallback"
+        : fallback
+          ? (`${kind}-fallback` as ImageryKind)
+          : kind,
   };
 }
 

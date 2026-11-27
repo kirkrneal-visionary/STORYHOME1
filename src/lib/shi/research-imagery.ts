@@ -1,12 +1,42 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Close zoom = USDA NAIP 60 cm (owned cache). TxGIO Texas Orthoimagery
- * Program 2015 50 cm is wired behind LAUNCH7_TOP15_ENABLED.
+ * Close zoom = USDA NAIP 60 cm (owned cache) everywhere except Polk County
+ * when LAUNCH7_ESRI_POLK_ENABLED (Esri World Imagery, no server cache).
+ * TxGIO Texas Orthoimagery Program 2015 50 cm stays behind LAUNCH7_TOP15_ENABLED.
  * Far-out zoom = USGS Imagery Only tiles (fast).
  * High-res / historic slots stay reserved. Safe for the browser.
  */
 
 export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
+
+/** ArcGIS Location Platform — World Imagery (paid tile meter; do not disk-cache). */
+export const ESRI_WORLD_IMAGERY_TILE_API =
+  "https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile";
+
+function envTruthy(name: string): boolean {
+  if (typeof process === "undefined") return false;
+  const v = process.env[name]?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+/** Founder flag — Polk County close zoom uses Esri when a server token is set. */
+export function launch7EsriPolkRequested(): boolean {
+  return envTruthy("LAUNCH7_ESRI_POLK_ENABLED");
+}
+
+/** Server-only ArcGIS Location Platform access token (never NEXT_PUBLIC_). */
+export function arcgisLocationPlatformAccessToken(): string | null {
+  if (typeof process === "undefined") return null;
+  const t = process.env.ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN?.trim();
+  return t || null;
+}
+
+/** Runtime gate: flag on and token present (eqmg after Kirk adds the secret). */
+export function launch7EsriPolkActive(): boolean {
+  return launch7EsriPolkRequested() && Boolean(arcgisLocationPlatformAccessToken());
+}
+
+export const LAUNCH7_ESRI_POLK_REQUESTED = launch7EsriPolkRequested();
 
 /**
  * TOP 2015 close zoom. Off until its tiles come from Story Home storage:
@@ -16,7 +46,11 @@ export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
 export const LAUNCH7_TOP15_ENABLED: boolean = false;
 
 /** Cache generation. Changes with the close-zoom source so CDN / disk never mix them. */
-export const LAUNCH7_IMAGERY_GEN = LAUNCH7_TOP15_ENABLED ? "t15" : "n60";
+export const LAUNCH7_IMAGERY_GEN = launch7EsriPolkActive()
+  ? "esri-polk"
+  : LAUNCH7_TOP15_ENABLED
+    ? "t15"
+    : "n60";
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
 export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
@@ -78,7 +112,28 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
       "Imagery © USDA NAIP 60 cm · USGS / TxGIO · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: NAIP_60CM_NATIVE_M,
-    enabled: !LAUNCH7_TOP15_ENABLED,
+    enabled: !LAUNCH7_TOP15_ENABLED && !launch7EsriPolkActive(),
+  };
+}
+
+export const ESRI_WORLD_POLK_ID = "esri-world-polk";
+export const ESRI_WORLD_POLK_NATIVE_M = 0.4;
+
+/** Esri World Imagery at close zoom in Polk County only (ArcGIS Location Platform). */
+export function esriWorldPolkImagerySource(tileUrl?: string): ImagerySourceDef {
+  return {
+    id: ESRI_WORLD_POLK_ID,
+    name: "Esri World Imagery (Polk)",
+    type: "raster",
+    tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+    attribution:
+      "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · Polk County close zoom · USDA NAIP elsewhere · Story Home launch-7",
+    highDpiSupported: false,
+    nativeResolutionM: ESRI_WORLD_POLK_NATIVE_M,
+    enabled: launch7EsriPolkActive(),
   };
 }
 
@@ -143,6 +198,7 @@ export function historicImagerySource(): ImagerySourceDef {
 
 export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
   return [
+    esriWorldPolkImagerySource(tileUrl),
     texasSharpImagerySource(tileUrl),
     naip60cmSource(tileUrl),
     usgsImageryOnlySource(tileUrl),
