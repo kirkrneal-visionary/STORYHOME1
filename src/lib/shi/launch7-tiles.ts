@@ -14,7 +14,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { launch7UnionBbox, polkCountyBbox } from "@/lib/shi/launch7-map";
+import { launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
   ESRI_WORLD_IMAGERY_TILE_API,
   LAUNCH7_IMAGERY_GEN,
@@ -72,23 +72,17 @@ export function tileIntersectsLaunch7(z: number, x: number, y: number): boolean 
   return tw <= le && te >= lw && ts <= ln && tn >= ls;
 }
 
-export function tileIntersectsPolk(z: number, x: number, y: number): boolean {
-  const [tw, ts, te, tn] = tileLngLatBbox(z, x, y);
-  const [pw, ps, pe, pn] = polkCountyBbox();
-  return tw <= pe && te >= pw && ts <= pn && tn >= ps;
-}
-
-export function tileUsesEsriPolkCloseZoom(
+/** Esri World Imagery for every imagery/hybrid zoom inside the launch-7 union bbox. */
+export function tileUsesEsriLaunch7Imagery(
   z: number,
   x: number,
   y: number,
 ): boolean {
-  return (
-    launch7EsriPolkActive() &&
-    imageryUsesNaip60(z) &&
-    tileIntersectsPolk(z, x, y)
-  );
+  return launch7EsriPolkActive() && tileIntersectsLaunch7(z, x, y);
 }
+
+/** @deprecated — use tileUsesEsriLaunch7Imagery */
+export const tileUsesEsriPolkCloseZoom = tileUsesEsriLaunch7Imagery;
 
 let cachedStreetsTemplate: string | null = null;
 
@@ -353,9 +347,9 @@ export async function getLaunch7ImageryTile(
     return null;
   }
 
-  const esriPolkTile = tileUsesEsriPolkCloseZoom(z, x, y);
+  const esriLaunch7Tile = tileUsesEsriLaunch7Imagery(z, x, y);
   const path = imageryTilePath(z, x, y);
-  if (!esriPolkTile && existsSync(path)) {
+  if (!esriLaunch7Tile && existsSync(path)) {
     return {
       body: readFileSync(path),
       contentType: "image/jpeg",
@@ -373,15 +367,16 @@ export async function getLaunch7ImageryTile(
   let kind: ImageryKind = "xyz";
   let esriFallback = false;
 
-  if (imageryUsesNaip60(z)) {
-    if (esriPolkTile) {
-      hit = await fetchEsriWorldImageryTile(z, x, y);
-      if (hit) {
-        kind = "esri-world";
-      } else {
-        esriFallback = true;
-      }
+  if (esriLaunch7Tile) {
+    hit = await fetchEsriWorldImageryTile(z, x, y);
+    if (hit) {
+      kind = "esri-world";
+    } else {
+      esriFallback = true;
     }
+  }
+
+  if (imageryUsesNaip60(z)) {
     if (!hit && LAUNCH7_TOP15_ENABLED) {
       hit = await fetchImage(
         naip60ExportUrl(TXGIO_TOP15_IMAGESERVER, z, x, y, false),
@@ -397,7 +392,7 @@ export async function getLaunch7ImageryTile(
       hit = await fetchNaip60Tile(z, x, y, "txgio");
       if (hit) kind = "naip60";
     }
-  } else {
+  } else if (!hit) {
     hit = await fetchUsgsXyzTile(z, x, y);
   }
 
@@ -412,7 +407,7 @@ export async function getLaunch7ImageryTile(
     (LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15") ||
     (esriFallback && kind !== "esri-world");
   const inFootprint = tileIntersectsLaunch7(z, x, y);
-  const noPersist = kind === "esri-world" || esriPolkTile;
+  const noPersist = kind === "esri-world" || esriLaunch7Tile;
   const cached =
     inFootprint && !fallback && !noPersist ? writeAtomic(path, hit.body) : false;
   return {

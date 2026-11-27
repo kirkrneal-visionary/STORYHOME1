@@ -23,18 +23,11 @@ export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
 export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles come from Story Home’s launch-7 cache (API and/or CDN) — not Mapbox or Google map tiles. The 3D engine may be Mapbox when a public token is set; the land data stays ours. Parcel outlines are our CAD. ${
   LAUNCH7_ESRI_POLK_REQUESTED
-    ? "Close zoom in Polk County uses Esri World Imagery (ArcGIS Location Platform, proxied — not stored on our servers); the other launch counties stay USDA NAIP 60 cm."
+    ? "Imagery across the launch-7 footprint uses Esri World Imagery (ArcGIS Location Platform, proxied — not stored on our servers); outside the footprint or on error, USDA NAIP 60 cm and USGS Imagery Only apply."
     : LAUNCH7_TOP15_ENABLED
       ? "Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback."
       : "Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint."
 } Far-out views use USGS Imagery Only tiles.`;
-
-/** WGS84 bbox for Polk County (FIPS 48373), used for Esri close-zoom imagery only. */
-export function polkCountyBbox(): [number, number, number, number] {
-  const polk = CORRIDOR_COUNTIES.find((c) => c.fips === "48373");
-  const b = polk?.bbox ?? ([-95.2, 30.49, -94.54, 31.15] as const);
-  return [b[0], b[1], b[2], b[3]];
-}
 
 export type Launch7County = (typeof CORRIDOR_COUNTIES)[number];
 

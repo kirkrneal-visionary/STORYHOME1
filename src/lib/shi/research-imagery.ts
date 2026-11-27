@@ -1,7 +1,8 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Close zoom = USDA NAIP 60 cm (owned cache) everywhere except Polk County
- * when LAUNCH7_ESRI_POLK_ENABLED (Esri World Imagery, no server cache).
+ * Launch-7 footprint = Esri World Imagery at every imagery zoom when
+ * LAUNCH7_ESRI_POLK_ENABLED and ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN
+ * are set (no server cache). NAIP / USGS Imagery Only elsewhere and on error.
  * TxGIO Texas Orthoimagery Program 2015 50 cm stays behind LAUNCH7_TOP15_ENABLED.
  * Far-out zoom = USGS Imagery Only tiles (fast).
  * High-res / historic slots stay reserved. Safe for the browser.
@@ -19,9 +20,15 @@ function envTruthy(name: string): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
-/** Founder flag — Polk County close zoom uses Esri when a server token is set. */
+/**
+ * Founder flag — all launch-7 counties use Esri World Imagery when a server
+ * token is set. Env name kept as LAUNCH7_ESRI_POLK_ENABLED for eqmg (Kirk).
+ */
 export function launch7EsriPolkRequested(): boolean {
-  return envTruthy("LAUNCH7_ESRI_POLK_ENABLED");
+  return (
+    envTruthy("LAUNCH7_ESRI_POLK_ENABLED") ||
+    envTruthy("LAUNCH7_ESRI_LAUNCH7_ENABLED")
+  );
 }
 
 /** Server-only ArcGIS Location Platform access token (never NEXT_PUBLIC_). */
@@ -47,7 +54,7 @@ export const LAUNCH7_TOP15_ENABLED: boolean = false;
 
 /** Cache generation. Changes with the close-zoom source so CDN / disk never mix them. */
 export const LAUNCH7_IMAGERY_GEN = launch7EsriPolkActive()
-  ? "esri-polk"
+  ? "esri-l7"
   : LAUNCH7_TOP15_ENABLED
     ? "t15"
     : "n60";
@@ -116,26 +123,31 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
   };
 }
 
-export const ESRI_WORLD_POLK_ID = "esri-world-polk";
-export const ESRI_WORLD_POLK_NATIVE_M = 0.4;
+export const ESRI_WORLD_LAUNCH7_ID = "esri-world-launch7";
+/** @deprecated alias — use ESRI_WORLD_LAUNCH7_ID */
+export const ESRI_WORLD_POLK_ID = ESRI_WORLD_LAUNCH7_ID;
+export const ESRI_WORLD_LAUNCH7_NATIVE_M = 0.4;
 
-/** Esri World Imagery at close zoom in Polk County only (ArcGIS Location Platform). */
-export function esriWorldPolkImagerySource(tileUrl?: string): ImagerySourceDef {
+/** Esri World Imagery across the launch-7 footprint (ArcGIS Location Platform). */
+export function esriWorldLaunch7ImagerySource(tileUrl?: string): ImagerySourceDef {
   return {
-    id: ESRI_WORLD_POLK_ID,
-    name: "Esri World Imagery (Polk)",
+    id: ESRI_WORLD_LAUNCH7_ID,
+    name: "Esri World Imagery (launch 7)",
     type: "raster",
     tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
     tileSize: 256,
     minZoom: 0,
     maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
     attribution:
-      "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · Polk County close zoom · USDA NAIP elsewhere · Story Home launch-7",
+      "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · launch-7 · USDA NAIP fallback outside footprint or on error · Story Home",
     highDpiSupported: false,
-    nativeResolutionM: ESRI_WORLD_POLK_NATIVE_M,
+    nativeResolutionM: ESRI_WORLD_LAUNCH7_NATIVE_M,
     enabled: launch7EsriPolkActive(),
   };
 }
+
+/** @deprecated — use esriWorldLaunch7ImagerySource */
+export const esriWorldPolkImagerySource = esriWorldLaunch7ImagerySource;
 
 export const TEXAS_SHARP_ID = "txgio-top15-50cm";
 export const TEXAS_SHARP_NATIVE_M = 0.5;
@@ -198,7 +210,7 @@ export function historicImagerySource(): ImagerySourceDef {
 
 export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
   return [
-    esriWorldPolkImagerySource(tileUrl),
+    esriWorldLaunch7ImagerySource(tileUrl),
     texasSharpImagerySource(tileUrl),
     naip60cmSource(tileUrl),
     usgsImageryOnlySource(tileUrl),

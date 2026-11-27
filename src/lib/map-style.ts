@@ -390,7 +390,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
       "storyhome:satellite": LAUNCH7_ESRI_POLK_REQUESTED
-        ? "owned-esri-polk"
+        ? "owned-esri-l7"
         : LAUNCH7_TOP15_ENABLED
           ? "owned-top15"
           : "owned-naip60",
