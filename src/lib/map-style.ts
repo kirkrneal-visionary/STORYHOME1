@@ -32,6 +32,7 @@ import {
 import { RESEARCH_TERRAIN_SKY_OFF } from "@/lib/shi/research-terrain";
 import {
   activeImagerySource,
+  LAUNCH7_ESRI_POLK_REQUESTED,
   LAUNCH7_TOP15_ENABLED,
 } from "@/lib/shi/research-imagery";
 
@@ -388,9 +389,11 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
-      "storyhome:satellite": LAUNCH7_TOP15_ENABLED
-        ? "owned-top15"
-        : "owned-naip60",
+      "storyhome:satellite": LAUNCH7_ESRI_POLK_REQUESTED
+        ? "owned-esri-polk"
+        : LAUNCH7_TOP15_ENABLED
+          ? "owned-top15"
+          : "owned-naip60",
       "storyhome:serve": "l7-3",
     },
     // Geographic labels use the OpenFreeMap Noto Sans glyph atlas.

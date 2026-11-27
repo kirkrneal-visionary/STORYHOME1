@@ -6,12 +6,15 @@ export const runtime = "nodejs";
 export const revalidate = 86400;
 
 const FALLBACK_TILE_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
+/** Esri license: no server/CDN tile store — browser may cache briefly. */
+const ESRI_TILE_CACHE_CONTROL = "private, max-age=300";
 
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
  * L7-2 — owned launch-7 imagery tiles.
- * Close zoom: USDA NAIP 60 cm (TxGIO TOP 2015 50 cm first when LAUNCH7_TOP15_ENABLED).
+ * Close zoom: Esri World Imagery in Polk when LAUNCH7_ESRI_POLK_ENABLED;
+ * USDA NAIP 60 cm elsewhere (TxGIO TOP 2015 first when LAUNCH7_TOP15_ENABLED).
  * Far-out: USGS Imagery Only.
  * Serves from disk cache; fills upstream inside the footprint.
  * Fallback tiles get a short cache so TOP 2015 replaces them once TxGIO is back.
@@ -34,9 +37,12 @@ export async function GET(_req: Request, ctx: Ctx) {
       status: 200,
       headers: {
         "Content-Type": tile.contentType,
-        "Cache-Control": tile.imageryKind?.endsWith("-fallback")
-          ? FALLBACK_TILE_CACHE_CONTROL
-          : LAUNCH7_TILE_CACHE_CONTROL,
+        "Cache-Control":
+          tile.imageryKind === "esri-world"
+            ? ESRI_TILE_CACHE_CONTROL
+            : tile.imageryKind?.endsWith("-fallback")
+              ? FALLBACK_TILE_CACHE_CONTROL
+              : LAUNCH7_TILE_CACHE_CONTROL,
         "X-Launch7-Tile-Source": tile.source,
         "X-Launch7-Tile-Cached": tile.cached ? "1" : "0",
         "X-Launch7-Imagery-Kind": tile.imageryKind ?? "xyz",

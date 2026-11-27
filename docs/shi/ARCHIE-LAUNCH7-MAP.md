@@ -36,6 +36,16 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - Marketplace map: **Lidar** on/off appears when Imagery is on. It overlays the existing `/api/map/lidar` ground hillshade (USGS 3DEP, which carries the Texas StratMap 1 m lidar). Tiles stop at z16, so close zoom is soft. Research keeps its own LiDAR controls.
 - No newer free imagery beats both: Esri World Imagery (Vantor 2023–2025, 31–50 cm) needs an ArcGIS Location Platform token and forbids server caching; H-GAC 2024 6-inch is paid; NAIP 2024 is still 60 cm. No 6-inch StratMap covers the launch-7 counties.
 
+### Esri World Imagery — Polk County only (**flag off** until Kirk adds token)
+
+- **Status:** `LAUNCH7_ESRI_POLK_ENABLED` + `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` on eqmg (server-only). Founder picked Esri for **Polk only** (2026-11-26), not Texas-wide TOP 2015 or PR 308 PMTiles.
+- **Tile API:** `https://ibasemaps-api.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?token=…` ([ArcGIS Location Platform basemap tiles](https://location.arcgis.com/pricing/)).
+- **Footprint:** Polk County WGS84 bbox from `corridors.ts` (FIPS 48373). Close zoom z14+ only; other launch counties stay NAIP 60 cm.
+- **No server cache:** Esri tiles are proxied per request — not written to `data/shi/tiles` or R2. Response `Cache-Control: private, max-age=300` (no `s-maxage`). NAIP fallback on error; fallback tiles are not disk-cached.
+- **`LAUNCH7_IMAGERY_GEN`:** `esri-polk` when flag + token are set (busts stale NAIP CDN tiles).
+- **Cost:** 2M basemap tiles/month free, then **$0.15 per 1,000 tiles** (tile usage model). Optional session model: 1K sessions/month free, then $4 per 1,000 sessions ([pricing](https://location.arcgis.com/pricing/)).
+- PR **308** (Texas TOP PMTiles on R2): **abandoned** — do not merge.
+
 ### L7-3 — Serve + refresh ops (**shipping**)
 
 - **Serve modes:** `api` (default) · `cdn` when `NEXT_PUBLIC_LAUNCH7_CDN_BASE` is set · `explicit` tile URL overrides  
