@@ -1,12 +1,18 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Launch-7 footprint = Esri World Imagery at every imagery zoom when
- * LAUNCH7_ESRI_POLK_ENABLED and ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN
- * are set (no server cache). NAIP / USGS Imagery Only elsewhere and on error.
+ * Launch-7 footprint = Google Maps satellite (Map Tiles API) when
+ * LAUNCH7_GOOGLE_IMAGERY_ENABLED and GOOGLE_MAPS_API_KEY are set; Esri World
+ * Imagery when Google key is missing but Esri flag + token are set (no server
+ * tile store for either). NAIP / USGS Imagery Only elsewhere and on error.
  * TxGIO Texas Orthoimagery Program 2015 50 cm stays behind LAUNCH7_TOP15_ENABLED.
  * Far-out zoom = USGS Imagery Only tiles (fast).
  * High-res / historic slots stay reserved. Safe for the browser.
  */
+
+import {
+  launch7GoogleImageryActive,
+  launch7GoogleImageryRequested,
+} from "@/lib/shi/google-map-tiles";
 
 export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
 
@@ -21,8 +27,8 @@ function envTruthy(name: string): boolean {
 }
 
 /**
- * Founder flag — all launch-7 counties use Esri World Imagery when a server
- * token is set. Env name kept as LAUNCH7_ESRI_POLK_ENABLED for eqmg (Kirk).
+ * Esri fallback when Google key is missing. Env name kept as
+ * LAUNCH7_ESRI_POLK_ENABLED for eqmg (Kirk).
  */
 export function launch7EsriPolkRequested(): boolean {
   return (
@@ -30,6 +36,8 @@ export function launch7EsriPolkRequested(): boolean {
     envTruthy("LAUNCH7_ESRI_LAUNCH7_ENABLED")
   );
 }
+
+export { launch7GoogleImageryRequested, launch7GoogleImageryActive };
 
 /** Server-only ArcGIS Location Platform access token (never NEXT_PUBLIC_). */
 export function arcgisLocationPlatformAccessToken(): string | null {
@@ -54,6 +62,7 @@ export const LAUNCH7_TOP15_ENABLED: boolean = false;
 
 /** Server-resolved cache generation (?v=). Client maps fetch live value from /api/map/launch7/status. */
 export function resolveLaunch7ImageryGen(): string {
+  if (launch7GoogleImageryActive()) return "google-l7";
   if (launch7EsriPolkActive()) return "esri-l7";
   if (LAUNCH7_TOP15_ENABLED) return "t15";
   return "n60";
@@ -125,7 +134,33 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
       "Imagery © USDA NAIP 60 cm · USGS / TxGIO · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: NAIP_60CM_NATIVE_M,
-    enabled: !LAUNCH7_TOP15_ENABLED && !launch7EsriPolkRequested(),
+    enabled:
+      !LAUNCH7_TOP15_ENABLED &&
+      !launch7GoogleImageryRequested() &&
+      !launch7EsriPolkRequested(),
+  };
+}
+
+export const GOOGLE_SATELLITE_LAUNCH7_ID = "google-satellite-launch7";
+export const GOOGLE_SATELLITE_LAUNCH7_NATIVE_M = 0.35;
+
+/** Google Maps satellite across the launch-7 footprint (Map Tiles API, proxied). */
+export function googleSatelliteLaunch7ImagerySource(
+  tileUrl?: string,
+): ImagerySourceDef {
+  return {
+    id: GOOGLE_SATELLITE_LAUNCH7_ID,
+    name: "Google Maps satellite (launch 7)",
+    type: "raster",
+    tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
+    tileSize: 256,
+    minZoom: 0,
+    maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+    attribution:
+      "Imagery © Google Maps · Map data: Google, Maxar · USDA NAIP fallback outside footprint or on error · Story Home",
+    highDpiSupported: false,
+    nativeResolutionM: GOOGLE_SATELLITE_LAUNCH7_NATIVE_M,
+    enabled: launch7GoogleImageryRequested(),
   };
 }
 
@@ -148,7 +183,7 @@ export function esriWorldLaunch7ImagerySource(tileUrl?: string): ImagerySourceDe
       "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · launch-7 · USDA NAIP fallback outside footprint or on error · Story Home",
     highDpiSupported: false,
     nativeResolutionM: ESRI_WORLD_LAUNCH7_NATIVE_M,
-    enabled: launch7EsriPolkRequested(),
+    enabled: launch7EsriPolkRequested() && !launch7GoogleImageryActive(),
   };
 }
 
@@ -216,6 +251,7 @@ export function historicImagerySource(): ImagerySourceDef {
 
 export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
   return [
+    googleSatelliteLaunch7ImagerySource(tileUrl),
     esriWorldLaunch7ImagerySource(tileUrl),
     texasSharpImagerySource(tileUrl),
     naip60cmSource(tileUrl),
@@ -229,8 +265,14 @@ export function activeImagerySource(
   tileUrl?: string,
   imageryGen?: string,
 ): ImagerySourceDef {
+  if (imageryGen === "google-l7") {
+    return googleSatelliteLaunch7ImagerySource(tileUrl);
+  }
   if (imageryGen === "esri-l7") {
     return esriWorldLaunch7ImagerySource(tileUrl);
+  }
+  if (launch7GoogleImageryActive()) {
+    return googleSatelliteLaunch7ImagerySource(tileUrl);
   }
   const live = allImagerySources(tileUrl).find((s) => s.enabled);
   return live ?? naip60cmSource(tileUrl);

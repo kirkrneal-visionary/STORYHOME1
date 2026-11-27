@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Launch-7 Esri imagery (founder 2026-11-27): **all seven counties, all imagery zooms** use Esri World Imagery when `LAUNCH7_ESRI_POLK_ENABLED` and `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` are on eqmg; NAIP/USGS only as fallback outside footprint or on error. No server tile cache. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
+- Launch-7 Google satellite imagery (founder 2026-11-27): **all seven counties, all imagery zooms** use Google Map Tiles API when `LAUNCH7_GOOGLE_IMAGERY_ENABLED` and `GOOGLE_MAPS_API_KEY` are on eqmg; Esri when Google key missing; NAIP/USGS outside footprint or on error. No server tile store. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
 - Texas sharp imagery (PR 306): `LAUNCH7_TOP15_ENABLED` stays **off**. TxGIO ImageServer is too slow for live maps.
 
 - iPhone Capacitor shell zooms like Safari when a text field is tapped (founder, TestFlight). Fix is web-only: viewport `maximumScale=1` / `userScalable=false` plus a 16px floor on form controls so iOS does not focus-zoom. Shell already loads the live site, so eqmg deploy is enough — no TestFlight rebuild for this. Physical device confirmation still pending.

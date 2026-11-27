@@ -104,10 +104,8 @@ const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /activeImagerySource/);
 assert.match(style, /raster-resampling": "linear"/);
 assert.doesNotMatch(style, /satellite-tx/);
-assert.match(
-  style,
-  /LAUNCH7_ESRI_POLK_REQUESTED\s*\?\s*"owned-esri-l7"/,
-);
+assert.match(style, /owned-google-l7/);
+assert.match(style, /owned-esri-l7/);
 assert.match(style, /LAUNCH7_TOP15_ENABLED\s*\?\s*"owned-top15"\s*:\s*"owned-naip60"/);
 assert.match(style, /IMAGERY_LIDAR_OVERLAY_LAYER_ID/);
 
@@ -127,8 +125,18 @@ const imageryLib = readFileSync(
   join(root, "src/lib/shi/research-imagery.ts"),
   "utf8",
 );
+assert.match(imageryLib, /google-l7/);
+assert.match(imageryLib, /googleSatelliteLaunch7ImagerySource/);
 assert.match(imageryLib, /ibasemaps-api\.arcgis\.com\/arcgis\/rest\/services\/World_Imagery/);
+const googleLib = readFileSync(
+  join(root, "src/lib/shi/google-map-tiles.ts"),
+  "utf8",
+);
+assert.match(googleLib, /tile\.googleapis\.com\/v1\/2dtiles/);
+assert.match(googleLib, /LAUNCH7_GOOGLE_IMAGERY_ENABLED/);
+assert.match(tiles, /fetchGoogleSatelliteTile/);
 assert.match(tiles, /ESRI_WORLD_IMAGERY_TILE_API/);
+assert.match(tiles, /tileUsesGoogleLaunch7Imagery/);
 assert.match(tiles, /tileUsesEsriLaunch7Imagery/);
 assert.match(tiles, /tileIntersectsLaunch7/);
 assert.match(tiles, /noPersist/);
@@ -142,7 +150,8 @@ const imageryRoute = readFileSync(
   join(root, "src/app/api/map/launch7/imagery/[z]/[x]/[y]/route.ts"),
   "utf8",
 );
-assert.match(imageryRoute, /ESRI_TILE_CACHE_CONTROL/);
+assert.match(imageryRoute, /LICENSED_TILE_CACHE_CONTROL/);
+assert.match(imageryRoute, /tile\.imageryKind === "google-satellite"/);
 assert.match(imageryRoute, /tile\.imageryKind === "esri-world"/);
 assert.match(imageryRoute, /export const maxDuration = 30/);
 const market = readFileSync(

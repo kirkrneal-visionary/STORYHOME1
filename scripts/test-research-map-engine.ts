@@ -148,7 +148,11 @@ assert.match(
 );
 assert.match(
   readFileSync(join(root, "src/lib/shi/launch7-map.ts"), "utf8"),
-  /not Mapbox or Google map tiles/,
+  /Google Maps satellite/,
+);
+assert.match(
+  readFileSync(join(root, ".env.example"), "utf8"),
+  /GOOGLE_MAPS_API_KEY/,
 );
 assert.match(
   readFileSync(join(root, ".env.example"), "utf8"),

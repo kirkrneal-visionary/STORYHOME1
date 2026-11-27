@@ -8,15 +8,15 @@ export const revalidate = 86400;
 export const maxDuration = 30;
 
 const FALLBACK_TILE_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
-/** Esri license: no server/CDN tile store — browser may cache briefly. */
-const ESRI_TILE_CACHE_CONTROL = "private, max-age=300";
+/** Google / Esri license: no server/CDN tile store — browser may cache briefly. */
+const LICENSED_TILE_CACHE_CONTROL = "private, max-age=300";
 
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
  * L7-2 — owned launch-7 imagery tiles.
- * Launch-7 footprint: Esri World Imagery at all zooms when LAUNCH7_ESRI_POLK_ENABLED;
- * NAIP / USGS Imagery Only elsewhere or on Esri error (TOP 2015 when LAUNCH7_TOP15_ENABLED).
+ * Launch-7 footprint: Google Maps satellite when LAUNCH7_GOOGLE_IMAGERY_ENABLED + key;
+ * Esri World Imagery when Google key missing but Esri token set; NAIP / USGS elsewhere.
  * Far-out: USGS Imagery Only.
  * Serves from disk cache; fills upstream inside the footprint.
  * Fallback tiles get a short cache so TOP 2015 replaces them once TxGIO is back.
@@ -40,8 +40,9 @@ export async function GET(_req: Request, ctx: Ctx) {
       headers: {
         "Content-Type": tile.contentType,
         "Cache-Control":
+          tile.imageryKind === "google-satellite" ||
           tile.imageryKind === "esri-world"
-            ? ESRI_TILE_CACHE_CONTROL
+            ? LICENSED_TILE_CACHE_CONTROL
             : tile.imageryKind?.endsWith("-fallback")
               ? FALLBACK_TILE_CACHE_CONTROL
               : LAUNCH7_TILE_CACHE_CONTROL,
