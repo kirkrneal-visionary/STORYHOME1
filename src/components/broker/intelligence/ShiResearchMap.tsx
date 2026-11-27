@@ -17,6 +17,7 @@ import {
   type DrawnBoundary,
   type LatLng,
 } from "@/lib/geo";
+import { prefetchLaunch7ImageryGen } from "@/lib/shi/launch7-imagery-gen-client";
 import {
   buildStoryMapStyle,
   MAP_GOLD,
@@ -626,13 +627,19 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       if (!paneReady || !containerRef.current) return;
       setMapFailed(null);
-      let map: maplibregl.Map;
+      let cancelled = false;
+      let map!: maplibregl.Map;
+      let stopResize = () => {};
+      let landTimer = 0;
+      void prefetchLaunch7ImageryGen().then((imageryGen) => {
+        if (cancelled || !containerRef.current) return;
       try {
         const created = createResearchMap({
           container: containerRef.current,
           style: buildStoryMapStyle({
             deferDem: true,
             initialBase: baseRef.current,
+            imageryGen,
           }),
           center: initialViewRef.current
             ? [
@@ -679,11 +686,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         }
       });
 
-      const stopResize = scheduleResearchMapResizes(
+      stopResize = scheduleResearchMapResizes(
         map,
         containerRef.current,
       );
-      let landTimer = 0;
 
       map.on("load", () => {
         map.resize();
@@ -1161,13 +1167,17 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           markLand();
         });
       });
+      });
 
       return () => {
+        cancelled = true;
         window.clearTimeout(landTimer);
         stopResize();
         landPaintedRef.current = false;
         setLandPainted(false);
-        map.remove();
+        if (mapRef.current) {
+          map.remove();
+        }
         mapRef.current = null;
       };
     }, [paneReady]);

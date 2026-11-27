@@ -17,6 +17,7 @@ import {
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
+import { prefetchLaunch7ImageryGen } from "@/lib/shi/launch7-imagery-gen-client";
 import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
 import {
@@ -127,10 +128,15 @@ export function HomeDrawMap({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    applyStoryMapTileBudget();
-    const map = new maplibregl.Map({
+    let cancelled = false;
+    let map!: maplibregl.Map;
+    let ro: ResizeObserver | null = null;
+    void prefetchLaunch7ImageryGen().then((imageryGen) => {
+      if (cancelled || !containerRef.current) return;
+      applyStoryMapTileBudget();
+      map = new maplibregl.Map({
       container: el,
-      style: buildStoryMapStyle({ deferDem: true }),
+      style: buildStoryMapStyle({ deferDem: true, imageryGen }),
       bounds: frameFor(areaRef.current),
       fitBoundsOptions: { padding: FIT_PADDING },
       maxZoom: MAP_PRECISION_MAX_ZOOM,
@@ -216,11 +222,15 @@ export function HomeDrawMap({
       setReady(true);
     });
 
-    const ro = new ResizeObserver(() => map.resize());
+    ro = new ResizeObserver(() => map!.resize());
     ro.observe(el);
+    });
     return () => {
-      ro.disconnect();
-      map.remove();
+      cancelled = true;
+      ro?.disconnect();
+      if (mapRef.current) {
+        map.remove();
+      }
       mapRef.current = null;
     };
   }, []);
