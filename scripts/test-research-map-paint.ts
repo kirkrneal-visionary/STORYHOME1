@@ -14,6 +14,7 @@ import {
   landPaintReady,
   mapPaneHasSize,
   maxParallelImageRequestsForTier,
+  storyMapParallelImageRequests,
   reliefFor3dApply,
   shouldResizeMapForWorkspaceChange,
   terrainApplyReady,
@@ -130,6 +131,8 @@ const factory = readFileSync(
 );
 assert.match(factory, /applyResearchTileBudget/);
 assert.match(factory, /MAX_PARALLEL_IMAGE_REQUESTS/);
+assert.equal(storyMapParallelImageRequests(1440), 18);
+assert.equal(storyMapParallelImageRequests(390), 10);
 
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /story-paper/);

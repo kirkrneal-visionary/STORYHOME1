@@ -27,7 +27,8 @@ function envTruthy(name: string): boolean {
 export function launch7EsriPolkRequested(): boolean {
   return (
     envTruthy("LAUNCH7_ESRI_POLK_ENABLED") ||
-    envTruthy("LAUNCH7_ESRI_LAUNCH7_ENABLED")
+    envTruthy("LAUNCH7_ESRI_LAUNCH7_ENABLED") ||
+    envTruthy("NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY")
   );
 }
 
@@ -53,7 +54,8 @@ export const LAUNCH7_ESRI_POLK_REQUESTED = launch7EsriPolkRequested();
 export const LAUNCH7_TOP15_ENABLED: boolean = false;
 
 /** Cache generation. Changes with the close-zoom source so CDN / disk never mix them. */
-export const LAUNCH7_IMAGERY_GEN = launch7EsriPolkActive()
+/** Client + server cache bust; Esri fetch still requires the server token. */
+export const LAUNCH7_IMAGERY_GEN = launch7EsriPolkRequested()
   ? "esri-l7"
   : LAUNCH7_TOP15_ENABLED
     ? "t15"
@@ -119,7 +121,7 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
       "Imagery © USDA NAIP 60 cm · USGS / TxGIO · Story Home launch-7 cache",
     highDpiSupported: false,
     nativeResolutionM: NAIP_60CM_NATIVE_M,
-    enabled: !LAUNCH7_TOP15_ENABLED && !launch7EsriPolkActive(),
+    enabled: !LAUNCH7_TOP15_ENABLED && !launch7EsriPolkRequested(),
   };
 }
 
@@ -142,7 +144,7 @@ export function esriWorldLaunch7ImagerySource(tileUrl?: string): ImagerySourceDe
       "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · launch-7 · USDA NAIP fallback outside footprint or on error · Story Home",
     highDpiSupported: false,
     nativeResolutionM: ESRI_WORLD_LAUNCH7_NATIVE_M,
-    enabled: launch7EsriPolkActive(),
+    enabled: launch7EsriPolkRequested(),
   };
 }
 

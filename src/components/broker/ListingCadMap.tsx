@@ -20,6 +20,7 @@ import {
   PARCEL_LINE_WIDTH_EXPR,
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
+import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import {
   fetchParcelsByPropIdsAny,
   type CountyParcel,
@@ -120,6 +121,7 @@ export function ListingCadMap({
   // Init map once.
   useEffect(() => {
     if (!containerRef.current) return;
+    applyStoryMapTileBudget();
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: buildStoryMapStyle(),

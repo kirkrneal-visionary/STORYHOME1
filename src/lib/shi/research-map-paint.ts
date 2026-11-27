@@ -96,3 +96,10 @@ export function maxParallelImageRequestsForTier(
   if (tier === "medium") return 8;
   return 12;
 }
+
+/** Marketplace / listing maps — Esri proxy needs more in-flight tiles while zooming in. */
+export function storyMapParallelImageRequests(width?: number): number {
+  const w = width ?? (typeof window !== "undefined" ? window.innerWidth : 1200);
+  return w < 768 ? 10 : 18;
+}
+

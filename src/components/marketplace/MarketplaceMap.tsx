@@ -70,6 +70,7 @@ import {
   FREEHAND_VERTEX_RADIUS_PX,
 } from "@/lib/shi/freehand";
 import { cn } from "@/lib/utils";
+import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 export type DrawTool = "pan" | "freehand" | "radius" | "rectangle" | "measure";
@@ -204,6 +205,7 @@ export function MarketplaceMap({
       Number.isFinite(initialCenter.lng) &&
       initialZoom != null &&
       Number.isFinite(initialZoom);
+    applyStoryMapTileBudget();
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: buildStoryMapStyle(),

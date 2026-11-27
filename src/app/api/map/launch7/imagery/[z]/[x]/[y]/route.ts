@@ -4,6 +4,8 @@ import { LAUNCH7_TILE_CACHE_CONTROL } from "@/lib/shi/research-map-paint";
 
 export const runtime = "nodejs";
 export const revalidate = 86400;
+/** Esri pass-through + one fast fallback must finish before Vercel’s default 10s cap. */
+export const maxDuration = 30;
 
 const FALLBACK_TILE_CACHE_CONTROL = "public, max-age=300, s-maxage=300";
 /** Esri license: no server/CDN tile store — browser may cache briefly. */
