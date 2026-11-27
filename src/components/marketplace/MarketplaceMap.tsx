@@ -70,6 +70,7 @@ import {
   FREEHAND_VERTEX_RADIUS_PX,
 } from "@/lib/shi/freehand";
 import { cn } from "@/lib/utils";
+import { prefetchLaunch7ImageryGen } from "@/lib/shi/launch7-imagery-gen-client";
 import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -196,8 +197,16 @@ export function MarketplaceMap({
 
   // Init map once.
   useEffect(() => {
-    if (!containerRef.current) return;
-    // Open over the 7 launch counties (not null island / Atlantic).
+    const container = containerRef.current;
+    if (!container) return;
+    let cancelled = false;
+    let map!: maplibregl.Map;
+    let t1 = 0;
+    let t2 = 0;
+    let ro: ResizeObserver | null = null;
+    const onWinResize = () => map?.resize();
+
+  // Open over the 7 launch counties (not null island / Atlantic).
     const [west, south, east, north] = launch7UnionBbox();
     const restore =
       initialCenter &&
@@ -205,10 +214,14 @@ export function MarketplaceMap({
       Number.isFinite(initialCenter.lng) &&
       initialZoom != null &&
       Number.isFinite(initialZoom);
-    applyStoryMapTileBudget();
-    const map = new maplibregl.Map({
+
+    void (async () => {
+      const imageryGen = await prefetchLaunch7ImageryGen();
+      if (cancelled || !containerRef.current) return;
+      applyStoryMapTileBudget();
+      map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildStoryMapStyle(),
+      style: buildStoryMapStyle({ imageryGen }),
       ...(restore
         ? {
             center: [initialCenter.lng, initialCenter.lat],
@@ -231,14 +244,14 @@ export function MarketplaceMap({
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
-    const kickResize = () => map.resize();
+    const kickResize = () => map!.resize();
     requestAnimationFrame(kickResize);
-    const t1 = window.setTimeout(kickResize, 50);
-    const t2 = window.setTimeout(kickResize, 250);
+    t1 = window.setTimeout(kickResize, 50);
+    t2 = window.setTimeout(kickResize, 250);
 
     map.on("load", () => {
       kickResize();
-      setBaseLayerVisibility(map, "street");
+      setBaseLayerVisibility(map!, "street");
       map.addSource("boundary", { type: "geojson", data: EMPTY_FC });
       map.addSource("draft", { type: "geojson", data: EMPTY_FC });
       map.addSource("measure", { type: "geojson", data: EMPTY_FC });
@@ -401,21 +414,24 @@ export function MarketplaceMap({
       });
     });
 
-    const ro = new ResizeObserver(() => map.resize());
+    ro = new ResizeObserver(() => map!.resize());
     ro.observe(containerRef.current);
-    const onWinResize = () => map.resize();
     window.addEventListener("resize", onWinResize);
     window.addEventListener("orientationchange", onWinResize);
+    })();
 
     return () => {
+      cancelled = true;
       window.clearTimeout(t1);
       window.clearTimeout(t2);
-      ro.disconnect();
+      ro?.disconnect();
       window.removeEventListener("resize", onWinResize);
       window.removeEventListener("orientationchange", onWinResize);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
-      map.remove();
+      if (mapRef.current) {
+        map.remove();
+      }
       mapRef.current = null;
     };
   }, []);

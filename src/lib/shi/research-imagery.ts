@@ -27,8 +27,7 @@ function envTruthy(name: string): boolean {
 export function launch7EsriPolkRequested(): boolean {
   return (
     envTruthy("LAUNCH7_ESRI_POLK_ENABLED") ||
-    envTruthy("LAUNCH7_ESRI_LAUNCH7_ENABLED") ||
-    envTruthy("NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY")
+    envTruthy("LAUNCH7_ESRI_LAUNCH7_ENABLED")
   );
 }
 
@@ -53,13 +52,18 @@ export const LAUNCH7_ESRI_POLK_REQUESTED = launch7EsriPolkRequested();
  */
 export const LAUNCH7_TOP15_ENABLED: boolean = false;
 
-/** Cache generation. Changes with the close-zoom source so CDN / disk never mix them. */
-/** Client + server cache bust; Esri fetch still requires the server token. */
-export const LAUNCH7_IMAGERY_GEN = launch7EsriPolkRequested()
-  ? "esri-l7"
-  : LAUNCH7_TOP15_ENABLED
-    ? "t15"
-    : "n60";
+/** Server-resolved cache generation (?v=). Client maps fetch live value from /api/map/launch7/status. */
+export function resolveLaunch7ImageryGen(): string {
+  if (launch7EsriPolkActive()) return "esri-l7";
+  if (LAUNCH7_TOP15_ENABLED) return "t15";
+  return "n60";
+}
+
+export const LAUNCH7_IMAGERY_GEN = resolveLaunch7ImageryGen();
+
+export function launch7ImageryTileTemplate(gen = LAUNCH7_IMAGERY_GEN): string {
+  return `/api/map/launch7/imagery/{z}/{x}/{y}?v=${gen}`;
+}
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
 export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
@@ -69,8 +73,8 @@ export const NAIP_60CM_MIN_ZOOM = 14;
 
 export const NAIP_60CM_NATIVE_M = 0.6;
 
-export const LAUNCH7_IMAGERY_TILE_TEMPLATE =
-  `/api/map/launch7/imagery/{z}/{x}/{y}?v=${LAUNCH7_IMAGERY_GEN}`;
+/** Default template; prefer launch7ImageryTileTemplate(imageryGen) when gen is known. */
+export const LAUNCH7_IMAGERY_TILE_TEMPLATE = launch7ImageryTileTemplate();
 
 export type ImagerySourceDef = {
   id: string;
@@ -221,7 +225,13 @@ export function allImagerySources(tileUrl?: string): ImagerySourceDef[] {
   ];
 }
 
-export function activeImagerySource(tileUrl?: string): ImagerySourceDef {
+export function activeImagerySource(
+  tileUrl?: string,
+  imageryGen?: string,
+): ImagerySourceDef {
+  if (imageryGen === "esri-l7") {
+    return esriWorldLaunch7ImagerySource(tileUrl);
+  }
   const live = allImagerySources(tileUrl).find((s) => s.enabled);
   return live ?? naip60cmSource(tileUrl);
 }

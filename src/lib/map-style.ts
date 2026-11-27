@@ -312,12 +312,16 @@ export function researchDemSourceSpec(): StyleSpecification["sources"][string] {
 export function buildStoryMapStyle(opts?: {
   deferDem?: boolean;
   initialBase?: MapBaseLayer;
+  /** From /api/map/launch7/status on client, or resolveLaunch7ImageryGen() on server. */
+  imageryGen?: string;
 }): StyleSpecification {
   const liberty = libertyStyle as LibertyStyle;
   const rasterStreets = streetsUseOwnedRaster();
   const streetsRasterTmpl = ownedStreetsTileTemplate();
+  const imageryGen = opts?.imageryGen;
   const imagery = activeImagerySource(
-    absolutizeMapTileTemplate(resolveSatelliteTileTemplate()),
+    absolutizeMapTileTemplate(resolveSatelliteTileTemplate(imageryGen)),
+    imageryGen,
   );
   const satelliteTiles = imagery.tiles;
 
@@ -389,11 +393,12 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
-      "storyhome:satellite": LAUNCH7_ESRI_POLK_REQUESTED
-        ? "owned-esri-l7"
-        : LAUNCH7_TOP15_ENABLED
-          ? "owned-top15"
-          : "owned-naip60",
+      "storyhome:satellite":
+        imageryGen === "esri-l7" || LAUNCH7_ESRI_POLK_REQUESTED
+          ? "owned-esri-l7"
+          : LAUNCH7_TOP15_ENABLED
+            ? "owned-top15"
+            : "owned-naip60",
       "storyhome:serve": "l7-3",
     },
     // Geographic labels use the OpenFreeMap Noto Sans glyph atlas.

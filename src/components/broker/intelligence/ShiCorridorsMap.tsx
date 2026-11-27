@@ -30,6 +30,7 @@ import {
 import type { DrawnBoundary, LatLng } from "@/lib/geo";
 import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
 import { buildFreehandGeoJSON } from "@/lib/map-draw/freehand-geojson";
+import { prefetchLaunch7ImageryGen } from "@/lib/shi/launch7-imagery-gen-client";
 import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import {
   CORRIDOR_FREEHAND_PRECISION,
@@ -316,14 +317,19 @@ export function ShiCorridorsMap({
   }
 
   useEffect(() => {
-    if (!containerRef.current) return;
+  if (!containerRef.current) return;
     setMapFailed(null);
-    let map: maplibregl.Map;
+    let cancelled = false;
+    let map!: maplibregl.Map;
+    let detachZoom: (() => void) | null = null;
+    void prefetchLaunch7ImageryGen()
+      .then((imageryGen) => {
+      if (cancelled || !containerRef.current) return;
     try {
       applyStoryMapTileBudget();
       map = new maplibregl.Map({
-        container: containerRef.current,
-        style: buildStoryMapStyle(),
+        container: containerRef.current!,
+        style: buildStoryMapStyle({ imageryGen }),
         bounds: [
           [county.bbox[0], county.bbox[1]],
           [county.bbox[2], county.bbox[3]],
@@ -668,10 +674,20 @@ export function ShiCorridorsMap({
 
     const onZoom = () => setZoom(map.getZoom());
     map.on("zoom", onZoom);
-
+    detachZoom = () => map.off("zoom", onZoom);
+      })
+      .catch((err) => {
+        const msg =
+          err instanceof Error ? err.message : "Map could not start in this browser.";
+        setMapFailed(msg);
+        setReady(false);
+      });
     return () => {
-      map.off("zoom", onZoom);
-      map.remove();
+      cancelled = true;
+      detachZoom?.();
+      if (mapRef.current) {
+        map.remove();
+      }
       mapRef.current = null;
       setReady(false);
     };

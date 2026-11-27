@@ -134,8 +134,9 @@ assert.match(tiles, /tileIntersectsLaunch7/);
 assert.match(tiles, /noPersist/);
 assert.match(tiles, /ESRI_FETCH_TIMEOUT_MS/);
 assert.match(tiles, /esriFallback = true[\s\S]*fetchUsgsXyzTile/);
-assert.match(imageryLib, /NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY/);
-assert.match(imageryLib, /launch7EsriPolkRequested\(\)/);
+assert.match(imageryLib, /resolveLaunch7ImageryGen/);
+assert.match(imageryLib, /launch7ImageryTileTemplate/);
+assert.doesNotMatch(imageryLib, /NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY/);
 assert.match(tiles, /if \(!hit && LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
 const imageryRoute = readFileSync(
   join(root, "src/app/api/map/launch7/imagery/[z]/[x]/[y]/route.ts"),
@@ -151,6 +152,14 @@ const market = readFileSync(
 assert.doesNotMatch(market, /Texas sharp|ImageryChoice/);
 assert.match(market, /useState\(false\)[\s\S]*setLidarOverlay/);
 assert.match(market, /applyStoryMapTileBudget/);
+assert.match(market, /prefetchLaunch7ImageryGen/);
+const launch7Map = readFileSync(join(root, "src/lib/shi/launch7-map.ts"), "utf8");
+assert.match(launch7Map, /imageryGen: resolveLaunch7ImageryGen/);
+const clientGen = readFileSync(
+  join(root, "src/lib/shi/launch7-imagery-gen-client.ts"),
+  "utf8",
+);
+assert.match(clientGen, /\/api\/map\/launch7\/status/);
 
 const map = readFileSync(
   join(root, "src/components/broker/intelligence/ShiResearchMap.tsx"),

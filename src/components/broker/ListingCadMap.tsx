@@ -20,6 +20,7 @@ import {
   PARCEL_LINE_WIDTH_EXPR,
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
+import { prefetchLaunch7ImageryGen } from "@/lib/shi/launch7-imagery-gen-client";
 import { applyStoryMapTileBudget } from "@/lib/story-map-tile-budget";
 import {
   fetchParcelsByPropIdsAny,
@@ -120,11 +121,17 @@ export function ListingCadMap({
 
   // Init map once.
   useEffect(() => {
-    if (!containerRef.current) return;
-    applyStoryMapTileBudget();
-    const map = new maplibregl.Map({
+    const container = containerRef.current;
+    if (!container) return;
+    let cancelled = false;
+    let map!: maplibregl.Map;
+    let ro: ResizeObserver | null = null;
+    void prefetchLaunch7ImageryGen().then((imageryGen) => {
+      if (cancelled || !containerRef.current) return;
+      applyStoryMapTileBudget();
+      map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildStoryMapStyle(),
+      style: buildStoryMapStyle({ imageryGen }),
       center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
       zoom: EAST_TEXAS_DEFAULT_ZOOM,
       maxZoom: MAP_PRECISION_MAX_ZOOM,
@@ -206,14 +213,18 @@ export function ListingCadMap({
       setReady(true);
     });
 
-    const ro = new ResizeObserver(() => map.resize());
+    ro = new ResizeObserver(() => map!.resize());
     ro.observe(containerRef.current);
+    });
 
     return () => {
-      ro.disconnect();
+      cancelled = true;
+      ro?.disconnect();
       pinRef.current?.remove();
       pinRef.current = null;
-      map.remove();
+      if (mapRef.current === map) {
+        map.remove();
+      }
       mapRef.current = null;
     };
   }, []);

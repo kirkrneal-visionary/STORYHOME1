@@ -15,6 +15,8 @@ import { CORRIDOR_COUNTIES } from "@/lib/shi/corridors";
 import {
   LAUNCH7_ESRI_POLK_REQUESTED,
   LAUNCH7_IMAGERY_TILE_TEMPLATE,
+  launch7ImageryTileTemplate,
+  resolveLaunch7ImageryGen,
   LAUNCH7_TOP15_ENABLED,
 } from "@/lib/shi/research-imagery";
 
@@ -118,8 +120,11 @@ export function ownedSatelliteTileTemplate(): string | null {
 }
 
 /** Imagery: explicit → API (CDN skipped until R2 CORS serves MapLibre workers). */
-export function resolveSatelliteTileTemplate(): string {
-  return ownedSatelliteTileTemplate() || LAUNCH7_IMAGERY_API_TEMPLATE;
+export function resolveSatelliteTileTemplate(imageryGen?: string): string {
+  return (
+    ownedSatelliteTileTemplate() ||
+    launch7ImageryTileTemplate(imageryGen ?? resolveLaunch7ImageryGen())
+  );
 }
 
 export function streetsUseOwnedRaster(): boolean {
@@ -159,6 +164,7 @@ export function launch7MapMeta() {
       ? ownedStreetsTileTemplate()
       : resolveStreetsVectorTemplate(),
     satelliteTemplate: resolveSatelliteTileTemplate(),
+    imageryGen: resolveLaunch7ImageryGen(),
     ownedStreetsRaster: streetsUseOwnedRaster(),
     honesty: LAUNCH7_MAP_HONESTY,
   };
