@@ -106,8 +106,8 @@ App-server fills stay footprint-bounded. Google/Esri satellite is proxied only (
 ## Map zoom precision (Founder Interpreter — build process only)
 
 - **Intent:** Close zoom never goes black; CAD lot lines stay readable for desk precision.
-- **UX:** Soft map ceiling at z19. Esri Streets underlay + owned launch-7 vector on top (liberty background omitted). Absolute tile URLs + `transformRequest`. Layer ids on style metadata (no singleton race).
-- **Acceptance:** Streets first paint shows roads and stays; Imagery without zoom ritual; `npm run test:map-zoom-precision`.
+- **UX:** Soft map ceiling at z19. Unlabeled Esri terrain underlay + owned launch-7 vector on top (liberty background omitted; labeled World_Street_Map avoided so desk place labels do not double). Absolute tile URLs + `transformRequest`. Layer ids on style metadata (no singleton race). Texas state + launch-7 county lines (simplified Census TIGER GeoJSON) sit above basemap rasters and follow the Parcels switch.
+- **Acceptance:** Streets first paint shows roads and stays; Imagery without zoom ritual; one desk font per city name; `npm run test:map-zoom-precision`.
 
 Shared constants: `src/lib/map-precision.ts` · wired on Research · Marketplace · Listing CAD maps.
 

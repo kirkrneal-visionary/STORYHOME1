@@ -88,12 +88,38 @@ let freeWorldLayerIds: string[] = [];
 /** OSM building footprints — kept above imagery so 3D extrusions stay visible. */
 let buildingLayerIds: string[] = [];
 
+/**
+ * Texas state + launch-7 county boundary line ids (TIGER GeoJSON).
+ * Toggled with the Parcels switch — not with Streets/Imagery base.
+ */
+let adminBoundaryLayerIds: string[] = [];
+
+/** Liberty original ids kept out of Streets free-world (parcel overlay owns admin lines). */
+const LIBERTY_ADMIN_BOUNDARY_ORIGINAL_IDS = new Set([
+  "boundary_2",
+  "boundary_3",
+]);
+
+export const ADMIN_BOUNDARY_SOURCE_ID = "admin-boundaries";
+export const ADMIN_STATE_LINE_LAYER_ID = "admin-state-line";
+export const ADMIN_COUNTY_LINE_LAYER_ID = "admin-county-line";
+export const ADMIN_BOUNDARY_GEOJSON_PATH =
+  "/geo/launch7-admin-boundaries.geojson";
+
+export function isLibertyAdminBoundaryOriginalId(originalId: string): boolean {
+  return LIBERTY_ADMIN_BOUNDARY_ORIGINAL_IDS.has(originalId);
+}
+
 export function getFreeWorldLayerIds(): readonly string[] {
   return freeWorldLayerIds;
 }
 
 export function getBuildingLayerIds(): readonly string[] {
   return buildingLayerIds;
+}
+
+export function getAdminBoundaryLayerIds(): readonly string[] {
+  return adminBoundaryLayerIds;
 }
 
 export const MAP_SOVEREIGNTY_VERSION = LAUNCH7_MAP_SOVEREIGNTY;
@@ -165,6 +191,67 @@ export function sanitizeLibertyLayer(
     next.layout = layout as LayerSpecification["layout"];
   }
   return applyStoryPlaceLabelStyle(originalId, next);
+}
+
+/** Desk state + county line layers (TIGER GeoJSON). Above basemap rasters. */
+export function buildAdminBoundaryLayers(): LayerSpecification[] {
+  return [
+    {
+      id: ADMIN_STATE_LINE_LAYER_ID,
+      type: "line",
+      source: ADMIN_BOUNDARY_SOURCE_ID,
+      filter: ["==", ["get", "kind"], "state"],
+      layout: {
+        visibility: "visible",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": MAP_NAVY,
+        "line-opacity": 0.88,
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          4,
+          1.4,
+          8,
+          2.4,
+          12,
+          3.2,
+        ],
+      },
+    },
+    {
+      id: ADMIN_COUNTY_LINE_LAYER_ID,
+      type: "line",
+      source: ADMIN_BOUNDARY_SOURCE_ID,
+      filter: ["==", ["get", "kind"], "county"],
+      layout: {
+        visibility: "visible",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": MAP_TEAL,
+        "line-opacity": 0.82,
+        "line-dasharray": [2.2, 1.4],
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          5,
+          1.1,
+          8,
+          1.8,
+          12,
+          2.6,
+          16,
+          3.2,
+        ],
+      },
+    },
+  ];
 }
 
 /**
@@ -309,13 +396,17 @@ export function applyStoryPlaceLabelStyle(
 
 /**
  * Full basemap style (L7-2 / map zoom precision):
- * - Streets = Esri raster underlay (never white) + owned launch-7 vector on top
- *   (liberty background omitted so underlay shows if vector is slow/empty)
+ * - Streets = unlabeled Esri terrain underlay (never white) + owned launch-7
+ *   vector on top (liberty background omitted so underlay shows if vector is
+ *   slow/empty). World_Street_Map is avoided — its baked place names doubled
+ *   desk vector city labels (two fonts for the same city).
  * - Imagery = owned /api/map/launch7/imagery unless explicit override
  *   (TOP 2015 50 cm at close zoom; Research 3D drapes it on the terrain)
  * - Topo / terrain / gray remain borrowed switchable rasters
  * - Free-world layer ids live in style metadata (not a module singleton — that
  *   raced across Marketplace/Research and could hide the wrong layers)
+ * - Texas state + launch-7 county lines (TIGER GeoJSON) sit above basemap
+ *   rasters and follow the Parcels switch (not Streets/Imagery).
  */
 
 /** Terrarium DEM for 3D. Add lazily on Research so 2D does not fetch heights. */
@@ -375,10 +466,11 @@ export function buildStoryMapStyle(opts?: {
     fwSources = {
       "streets-raster": {
         type: "raster",
-        tiles: [`${ESRI}/World_Street_Map/MapServer/tile/{z}/{y}/{x}`],
+        // Unlabeled void-fill — labeled World_Street_Map doubled desk place names.
+        tiles: [`${ESRI}/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}`],
         tileSize: 256,
-        maxzoom: 19,
-        attribution: "Streets © Esri · Story Home underlay",
+        maxzoom: 9,
+        attribution: "Terrain © Esri · Story Home underlay",
       },
       ...liberty.sources,
       openmaptiles: {
@@ -392,7 +484,7 @@ export function buildStoryMapStyle(opts?: {
     };
     // Skip liberty background + natural_earth so Esri underlay stays visible
     // when vector is cold, empty, or partially filtered.
-    // Buildings are painted later (above imagery) so 3D extrusions are not buried.
+    // Buildings + admin boundaries are painted later (above imagery).
     fwLayers = [
       {
         id: "fw-streets-raster",
@@ -404,7 +496,8 @@ export function buildStoryMapStyle(opts?: {
           (layer) =>
             layer.id !== "background" &&
             layer.id !== "natural_earth" &&
-            !isBuildingLayerId(layer.id),
+            !isBuildingLayerId(layer.id) &&
+            !isLibertyAdminBoundaryOriginalId(layer.id),
         )
         .map((layer) => sanitizeLibertyLayer(layer)),
     ];
@@ -417,10 +510,14 @@ export function buildStoryMapStyle(opts?: {
           .map((layer) => sanitizeLibertyLayer(layer))
       : [];
 
+  const adminBoundaryLayers = buildAdminBoundaryLayers();
+
   const fwIds = fwLayers.map((l) => l.id);
   const bIds = buildingLayers.map((l) => l.id);
+  const adminIds = adminBoundaryLayers.map((l) => l.id);
   freeWorldLayerIds = fwIds;
   buildingLayerIds = bIds;
+  adminBoundaryLayerIds = adminIds;
 
   const style: StyleSpecification = {
     version: 8,
@@ -430,6 +527,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
       "storyhome:building-layer-ids": bIds,
+      "storyhome:admin-boundary-layer-ids": adminIds,
       "storyhome:upright-buildings": UPRIGHT_BUILDINGS_MARK,
       "storyhome:satellite":
         imageryGen === "google-l7" || imageryGen === "google-l7-2x"
@@ -450,6 +548,11 @@ export function buildStoryMapStyle(opts?: {
     sky: RESEARCH_TERRAIN_SKY_OFF,
     sources: {
       ...fwSources,
+      [ADMIN_BOUNDARY_SOURCE_ID]: {
+        type: "geojson",
+        data: absolutizeMapTileTemplate(ADMIN_BOUNDARY_GEOJSON_PATH),
+        attribution: "County/state lines © U.S. Census TIGER",
+      },
       ...(opts?.deferDem
         ? {}
         : { [RESEARCH_LIDAR_DEM_SOURCE_ID]: researchDemSourceSpec() }),
@@ -608,13 +711,14 @@ export function buildStoryMapStyle(opts?: {
           "raster-fade-duration": 160,
         },
       },
-      // After rasters so extrusions sit on Imagery/Hybrid (not under satellite).
+      // After rasters so state/county lines + extrusions sit on Imagery (not under).
+      ...adminBoundaryLayers,
       ...buildingLayers,
     ],
   };
 
   if (opts?.initialBase) {
-    applyInitialBaseToStyle(style, opts.initialBase, fwIds, bIds);
+    applyInitialBaseToStyle(style, opts.initialBase, fwIds, bIds, adminIds);
   }
   return style;
 }
@@ -624,6 +728,7 @@ function applyInitialBaseToStyle(
   base: MapBaseLayer,
   fwIds: string[],
   bIds: string[],
+  adminIds: string[],
 ): void {
   const vis = (on: boolean) => (on ? "visible" : "none");
   const want: Record<string, boolean> = {
@@ -641,6 +746,10 @@ function applyInitialBaseToStyle(
     const layout = { ...(layer.layout ?? {}) } as Record<string, unknown>;
     if (fwIds.includes(layer.id)) {
       layout.visibility = vis(fwOn);
+      layer.layout = layout as LayerSpecification["layout"];
+    } else if (adminIds.includes(layer.id)) {
+      // Parcels default on — boundaries follow that switch, not base layer.
+      layout.visibility = "visible";
       layer.layout = layout as LayerSpecification["layout"];
     } else if (bIds.includes(layer.id)) {
       layout.visibility = vis(buildingVis[layer.id] ?? false);
@@ -685,35 +794,71 @@ function buildingIdsForMap(map: MapLike): readonly string[] {
   );
 }
 
+function adminBoundaryIdsForMap(map: MapLike): readonly string[] {
+  return styleMetaStringIds(
+    map,
+    "storyhome:admin-boundary-layer-ids",
+    adminBoundaryLayerIds,
+  );
+}
+
+function setLayerVisibility(map: MapLike, id: string, on: boolean) {
+  if (map.getLayer && !map.getLayer(id)) return;
+  try {
+    map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  } catch {
+    /* layer may not exist yet */
+  }
+}
+
+/** State + county boundary lines — same control as the Parcels switch. */
+export function setAdminBoundaryVisibility(map: MapLike, visible: boolean) {
+  for (const id of adminBoundaryIdsForMap(map)) {
+    setLayerVisibility(map, id, visible);
+  }
+}
+
+/**
+ * Parcel fill/line + state/county boundaries.
+ * Call from the Parcels toolbar switch on Research and Marketplace maps.
+ */
+export function setParcelOverlayVisibility(
+  map: MapLike,
+  visible: boolean,
+  parcelLayerIds: readonly string[] = ["parcels-fill", "parcels-line"],
+) {
+  for (const id of parcelLayerIds) {
+    setLayerVisibility(map, id, visible);
+  }
+  setAdminBoundaryVisibility(map, visible);
+}
+
 export function setBaseLayerVisibility(
   map: MapLike,
   base: MapBaseLayer,
   opts?: BuildingVisibilityOpts,
 ) {
-  const show = (id: string, on: boolean) => {
-    if (map.getLayer && !map.getLayer(id)) return;
-    try {
-      map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
-    } catch {
-      /* layer may not exist yet */
-    }
-  };
-
   const freeWorldOn = base === "street";
   for (const id of freeWorldIdsForMap(map)) {
-    show(id, freeWorldOn);
+    setLayerVisibility(map, id, freeWorldOn);
   }
 
   const buildingVis = buildingVisibilityForBase(base, opts);
   for (const id of buildingIdsForMap(map)) {
-    show(id, buildingVis[id] ?? false);
+    setLayerVisibility(map, id, buildingVis[id] ?? false);
   }
 
-  show("base-satellite", base === "satellite" || base === "imageryLabels");
-  show("base-topo", base === "topo");
-  show("base-terrain", base === "terrain");
-  show("base-gray", base === "gray");
-  show("base-labels", base === "imageryLabels");
+  // Admin boundaries follow Parcels — do not hide them when leaving Streets.
+
+  setLayerVisibility(
+    map,
+    "base-satellite",
+    base === "satellite" || base === "imageryLabels",
+  );
+  setLayerVisibility(map, "base-topo", base === "topo");
+  setLayerVisibility(map, "base-terrain", base === "terrain");
+  setLayerVisibility(map, "base-gray", base === "gray");
+  setLayerVisibility(map, "base-labels", base === "imageryLabels");
 }
 
 export function setImageryLidarOverlay(map: MapLike, on: boolean) {

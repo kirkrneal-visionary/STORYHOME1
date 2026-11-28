@@ -47,6 +47,7 @@ import {
   MAP_TEAL,
   researchDemSourceSpec,
   setBaseLayerVisibility,
+  setParcelOverlayVisibility,
   type MapBaseLayer,
 } from "@/lib/map-style";
 import {
@@ -1246,10 +1247,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      const v = showParcels ? "visible" : "none";
-      for (const id of ["parcels-fill", "parcels-line"]) {
-        if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
-      }
+      // Parcels switch also shows/hides state + county boundary lines.
+      setParcelOverlayVisibility(map, showParcels);
     }, [ready, showParcels]);
 
     useEffect(() => {
