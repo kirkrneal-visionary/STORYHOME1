@@ -28,7 +28,12 @@ assert.match(map, /data-map-tools/);
 assert.match(map, /setLidar3d\(false\)/);
 assert.match(map, /setLidar3d\(true\)/);
 assert.match(map, /g === "terrain" \? null/);
-assert.match(map, /g === "tools" \? null/);
+assert.match(map, /data-map-toolbox/);
+assert.match(map, /data-map-tool="hand"/);
+assert.match(map, /data-map-tool="measure"/);
+assert.match(map, /data-map-tool="draw"/);
+assert.doesNotMatch(map, /g === "tools" \? null/);
+assert.doesNotMatch(map, /CadOverlayControl/);
 assert.match(map, /pitch: 0/);
 assert.doesNotMatch(map, /lidar3d \? "3D" : "2D"/);
 

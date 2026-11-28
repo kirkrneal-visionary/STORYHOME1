@@ -719,6 +719,18 @@ html[data-role="professional"] {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
+/* Research map chrome — no box borders (founder 2026-11-27) */
+[data-shi-map] .story-glass,
+[data-shi-map] [data-map-hint],
+[data-shi-map] [data-map-lidar] label,
+[data-shi-map] [data-map-lidar] p,
+[data-shi-map] [data-map-parcel-terrain],
+[data-shi-map] [data-map-lidar-profile],
+[data-shi-map] [data-research-map-fallback] > div {
+  border: none;
+  box-shadow: none;
+}
+
 /**
  * Map toolbar on dark Story Glass — readable forever.
  * Active = Story navy + gold (Research OS blue).

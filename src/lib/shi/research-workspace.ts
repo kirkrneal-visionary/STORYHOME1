@@ -182,7 +182,7 @@ export function sheetSnapAfterDraw(layout: WorkspaceLayout): WorkspaceSheetSnap 
 
 export function defaultMapToolGroup(
   widthPx: number,
-): "terrain" | "tools" | null {
+): "terrain" | null {
   return widthPx >= WORKSPACE_DRAWER_MIN_PX ? "terrain" : null;
 }
 
