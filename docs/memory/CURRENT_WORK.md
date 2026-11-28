@@ -5,6 +5,7 @@
 
 ## In progress
 
+- Archie parcel one-sheet (founder GO 2026-11-28): one Research bottom sheet with Overview · Values · Roads · Traffic · Analyze · Utilities (only sections with real data); no unproven Archie blocks; soft type on dark; top chrome clustered (Map/Imagery/Hybrid/Topo · Terrain/2D/3D/Parcels); utilities = PUCT water/sewer provider rows only (omit unknown).
 - Imagery first pass (founder GO 2026-11-28): **Google-only** satellite for Imagery/Hybrid (world coverage when key+flag on; fail soft / no USGS·NAIP·Esri stack under Google). Premium dual-stroke country/state/county + highway overlays. Admin lines **always on Imagery/Hybrid** (Parcels toggles CAD lot lines only; Texas counties = 7 CAD). Research 3D + Imagery: DEM drape only (no soft hillshade wash); no auto zoom-out while the desk zooms. Map polish (SHCS-43): CAD seats/majors on Imagery+Streets, brighter 7-county borders, parcel select = premium border (no yellow wash). See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
 - Texas sharp imagery (PR 306): `LAUNCH7_TOP15_ENABLED` stays **off**. TxGIO ImageServer is too slow for live maps.
 

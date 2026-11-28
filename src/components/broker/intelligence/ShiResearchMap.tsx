@@ -2648,7 +2648,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               data-map-terrain-world={lidar3d ? "yes" : "no"}
               className="flex flex-col items-end gap-1.5"
             >
-              <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
+              <div
+                className="story-glass flex overflow-hidden rounded-lg p-0.5"
+                role="group"
+                aria-label="Terrain, view, parcels"
+                data-map-chrome-cluster
+              >
                 <button
                   type="button"
                   data-map-group-terrain
@@ -2662,13 +2667,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 >
                   {RESEARCH_TERRAIN_COPY.terrain}
                 </button>
-              </div>
-
-              <div
-                className="story-glass flex overflow-hidden rounded-lg p-0.5"
-                role="group"
-                aria-label="2D or 3D"
-              >
                 <button
                   type="button"
                   data-map-lidar-3d
@@ -2696,6 +2694,17 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   data-story-sound="select"
                 >
                   3D
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowParcels((v) => !v)}
+                  className={cn(
+                    "story-map-tool inline-flex items-center gap-1",
+                    showParcels && "story-map-tool-active",
+                  )}
+                >
+                  <Grid3x3 className="h-3.5 w-3.5" />
+                  Parcels
                 </button>
               </div>
 
@@ -2902,17 +2911,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 <span data-map-lidar-strength hidden />
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowParcels((v) => !v)}
-              className={cn(
-                "story-map-tool inline-flex items-center gap-1.5",
-                showParcels && "story-map-tool-active",
-              )}
-            >
-              <Grid3x3 className="h-3.5 w-3.5" />
-              Parcels
-            </button>
             <button
               type="button"
               data-map-locate

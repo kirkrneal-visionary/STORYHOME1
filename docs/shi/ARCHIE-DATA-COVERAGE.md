@@ -58,13 +58,14 @@ npm run test:data-coverage-dc1
 **Rebuild:** `npm run rebuild:puct-ccn`  
 **API:** `GET /api/shi/utilities?countyFips=&lat=&lng=` (Story Pro)  
 **Lib:** `src/lib/shi/utilities-ccn.ts`  
-**UI:** `ShiUtilitiesEvidencePanel` — Research + Corridors parcel  
+**UI:** `ShiUtilitiesEvidencePanel` — Research parcel Utilities section + Corridors parcel  
+**Rows:** water/sewer provider names from CCN hits only (`utility-providers.ts`). Electric/gas/trash omitted until an owned join exists. Never “cannot determine.”  
 
 ### Reveal gate
 
 - Launch 7 FIPS only  
 - Owned dataset loads → point-in-polygon → `userReveal: true` + tier **KNOWN**  
-  (including “no CCN area at this point” — that is a real published absence)  
+- UI shows provider rows only when a named water/sewer hit exists; empty CCN → no Utilities section  
 - Dataset missing / unreadable → `userReveal: false` → **UI renders nothing**
 
 ### Honesty
@@ -80,9 +81,9 @@ npm run test:data-coverage-dc2
 ### Manual
 
 1. Pro → Research → open Lufkin / Huntsville / Livingston parcel  
-2. Utilities card shows certificated water/sewer utility + CCN # · **KNOWN**  
-3. Rural point with no CCN → “No PUCT water/sewer CCN area” (still revealed, still honest)  
-4. Corridors parcel panel shows the same compact card  
+2. Utilities section shows Water/Sewer provider rows + CCN # · **KNOWN**  
+3. Rural point with no CCN → Utilities menu item omitted (no empty “cannot determine” block)  
+4. Corridors parcel panel shows the same compact card when rows exist 
 
 ## DC-3 — Environment + desk
 

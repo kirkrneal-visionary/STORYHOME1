@@ -719,16 +719,35 @@ html[data-role="professional"] {
   -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-/* Research map chrome — no box borders (founder 2026-11-27) */
+/* Research map chrome — no box borders (founder 2026-11-27 / 2026-11-28) */
 [data-shi-map] .story-glass,
 [data-shi-map] [data-map-hint],
 [data-shi-map] [data-map-lidar] label,
 [data-shi-map] [data-map-lidar] p,
 [data-shi-map] [data-map-parcel-terrain],
 [data-shi-map] [data-map-lidar-profile],
-[data-shi-map] [data-research-map-fallback] > div {
+[data-shi-map] [data-research-map-fallback] > div,
+[data-shi-map] [data-map-chrome-cluster],
+[data-intelligence-sheet],
+[data-intelligence-drawer],
+[data-intelligence-sheet] .story-well,
+[data-intelligence-drawer] .story-well,
+[data-parcel-record-body] .rounded-xl,
+[data-parcel-record-body] .rounded-lg {
   border: none;
   box-shadow: none;
+}
+
+/* Parcel sheet type on dark — soft white / warm gray, no neon */
+[data-parcel-record-body],
+[data-parcel-section-menu] {
+  color: var(--paper);
+}
+[data-parcel-record-body] a,
+[data-parcel-record-body] .text-sky-500,
+[data-parcel-record-body] .text-blue-400,
+[data-parcel-record-body] .text-blue-500 {
+  color: color-mix(in srgb, var(--paper) 82%, transparent);
 }
 
 /**

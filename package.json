@@ -148,6 +148,7 @@
     "test:corridors-ix1": "node scripts/test-corridors-ix1.mjs",
     "test:research-merge-r1": "node scripts/test-research-merge-r1.mjs",
     "test:research-merge-r2": "node scripts/test-research-merge-r2.mjs",
+    "test:archie-parcel-sheet": "node scripts/test-archie-parcel-sheet.mjs",
     "test:archie-intelligence-p1": "node scripts/test-archie-intelligence-p1.mjs",
     "test:archie-intelligence-p2": "node scripts/test-archie-intelligence-p2.mjs",
     "test:archie-intelligence-p3": "node scripts/test-archie-intelligence-p3.mjs",

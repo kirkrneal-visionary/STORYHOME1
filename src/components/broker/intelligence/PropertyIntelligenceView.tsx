@@ -2,25 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Search, Users } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useStorySoundOptional } from "@/components/sound/SoundProvider";
-import { ShiCadEvidencePanel } from "@/components/broker/intelligence/ShiCadEvidencePanel";
-import { ShiFloodEvidencePanel } from "@/components/broker/intelligence/ShiFloodEvidencePanel";
-import { ShiUtilitiesEvidencePanel } from "@/components/broker/intelligence/ShiUtilitiesEvidencePanel";
-import { ShiEnvironmentEvidencePanel } from "@/components/broker/intelligence/ShiEnvironmentEvidencePanel";
-import { ShiDeedsEvidencePanel } from "@/components/broker/intelligence/ShiDeedsEvidencePanel";
-import { ShiResearchAccessPanel } from "@/components/broker/intelligence/ShiResearchAccessPanel";
-import { ShiParcelPositionCard } from "@/components/broker/intelligence/ShiParcelPositionCard";
 import {
   ShiResearchAccessDesk,
   type ResearchAccessDeskTab,
 } from "@/components/broker/intelligence/ShiResearchAccessDesk";
-import { ShiMultifamilyRead } from "@/components/broker/intelligence/ShiMultifamilyRead";
 import { ShiResearchPanelHost } from "@/components/broker/intelligence/ShiResearchDesktopDrawer";
 import { ShiWorkspaceBar } from "@/components/broker/intelligence/ShiWorkspaceBar";
-import { ShiArchieIntelligencePanel } from "@/components/broker/intelligence/ShiArchieIntelligencePanel";
+import { ShiParcelRecordBody } from "@/components/broker/intelligence/ShiParcelRecordBody";
+import { type ParcelSheetSection } from "@/components/broker/intelligence/ShiParcelSectionMenu";
 import { ShiCountyChangeFeed } from "@/components/broker/intelligence/ShiCountyChangeFeed";
-import { ShiDiscoverPanel } from "@/components/broker/intelligence/ShiDiscoverPanel";
 import { ShiMarketFramesPanel } from "@/components/broker/intelligence/ShiMarketFramesPanel";
 import {
   ShiResearchMap,
@@ -195,6 +187,8 @@ export function PropertyIntelligenceView({
   const [utilitiesFact, setUtilitiesFact] = useState<UtilitiesFact | null>(
     null,
   );
+  const [parcelSection, setParcelSection] =
+    useState<ParcelSheetSection>("overview");
   const [environmentDesk, setEnvironmentDesk] =
     useState<EnvironmentDesk | null>(null);
   const [deedsFact, setDeedsFact] = useState<DeedsFact | null>(null);
@@ -457,6 +451,7 @@ export function PropertyIntelligenceView({
           return;
         }
         setSelected(property);
+        setParcelSection("overview");
         setSearchOpen(false);
         setSheetSnap((s) => sheetSnapAfterSelect(layoutRef.current, s));
         setFloodFact(null);
@@ -1891,7 +1886,7 @@ export function PropertyIntelligenceView({
           ) : (
             <div className="mt-1 space-y-4">
               <div data-property-identity>
-                <p className="text-sm font-semibold text-ink">
+                <p className="text-sm font-semibold text-[var(--paper)]">
                   {selected.ownerName || "Owner not listed"}
                 </p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted)]">
@@ -1931,27 +1926,29 @@ export function PropertyIntelligenceView({
 
               {sheetCompact ? null : (
               <div data-sheet-detail className="space-y-4">
-              <ShiArchieIntelligencePanel
-                property={selected}
-                exactOwnerCount={exactCount}
-                possibleOwnerCount={possibleCount}
+              <ShiParcelRecordBody
+                selected={selected}
+                exactCount={exactCount}
+                possibleCount={possibleCount}
                 matches={matches}
+                matchNote={matchNote}
                 accessIntel={accessIntel}
-                stations={accessStations}
+                accessLoading={accessLoading}
+                accessStations={accessStations}
+                positionProfile={positionProfile}
+                positionContext={positionContext}
                 parcelNeighbors={parcelNeighbors}
-                onFocusOwnership={() => {
-                  ownerPortfolioRef.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  });
-                }}
-                onFocusNearby={() => {
-                  ownerPortfolioRef.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                  });
-                }}
-                onAskAccess={() => {
+                floodFact={floodFact}
+                utilitiesFact={utilitiesFact}
+                environmentDesk={environmentDesk}
+                deedsFact={deedsFact}
+                displayAnalysis={displayAnalysis}
+                researchMode={researchMode}
+                mfRead={mfRead}
+                parcelSection={parcelSection}
+                onParcelSection={setParcelSection}
+                ownerPortfolioRef={ownerPortfolioRef}
+                onFocusAskAccess={() => {
                   setAccessDeskTab("ask");
                   const params = new URLSearchParams(searchParams.toString());
                   params.set("mode", "access");
@@ -1962,340 +1959,62 @@ export function PropertyIntelligenceView({
                     { scroll: false },
                   );
                 }}
-              />
-
-              {researchMode === "multifamily" ? (
-                <ShiMultifamilyRead read={mfRead} />
-              ) : null}
-
-              {selected.countyFips &&
-              isLaunchCorridorFips(selected.countyFips) ? (
-                <ShiParcelPositionCard
-                  profile={positionProfile}
-                  context={positionContext}
-                  neighbors={parcelNeighbors}
-                  propId={selected.propId}
-                />
-              ) : null}
-
-              <dl className="grid grid-cols-2 gap-2 text-xs">
-                <Fact label="Property ID" value={selected.propId} mono />
-                <Fact label="Geo ID" value={selected.geoId ?? "—"} mono />
-                <Fact label="Owner ID" value={selected.cadOwnerId ?? "—"} mono />
-                <Fact label="Acres" value={acres(selected.legalAcreage)} />
-                <Fact label="Market value" value={money(selected.marketValue)} />
-                <Fact label="Land" value={money(selected.landValue)} />
-                <Fact
-                  label="Improvements"
-                  value={money(selected.improvementValue)}
-                />
-                <Fact
-                  label="Tax year"
-                  value={
-                    selected.taxYear != null ? String(selected.taxYear) : "—"
-                  }
-                />
-                <Fact
-                  label="School"
-                  value={selected.schoolName ?? selected.schoolCode ?? "—"}
-                />
-                <Fact
-                  label="Abstract / subdiv"
-                  value={selected.abstractSubdivisionCode ?? "—"}
-                  mono
-                />
-                <Fact
-                  label="Tract / lot"
-                  value={selected.tractOrLot ?? "—"}
-                  mono
-                />
-                <Fact
-                  label="City / ZIP"
-                  value={
-                    [selected.situsCity, selected.situsZip]
-                      .filter(Boolean)
-                      .join(" ") || "—"
-                  }
-                />
-                <Fact
-                  label="First seen"
-                  value={
-                    selected.firstSeenAt
-                      ? selected.firstSeenAt.slice(0, 10)
-                      : "—"
-                  }
-                  mono
-                />
-                <Fact
-                  label="Last seen"
-                  value={
-                    selected.lastSeenAt
-                      ? selected.lastSeenAt.slice(0, 10)
-                      : "—"
-                  }
-                  mono
-                />
-              </dl>
-
-              <div ref={ownerPortfolioRef} id="archie-owner-matches">
-                <h4 className="flex items-center gap-2 text-xs font-bold text-ink">
-                  <Users className="h-3.5 w-3.5 text-gold" />
-                  Owner portfolio
-                </h4>
-                <p className="mt-1 text-[10px] text-[var(--muted)]">
-                  {exactCount} exact · {possibleCount} possible related
-                </p>
-                <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--muted)]">
-                  Properties associated with this owner in this county. Exact =
-                  same owner id. Possible = normalized name only — not confirmed
-                  the same person. {matchNote}
-                </p>
-                {matches.length === 0 ? (
-                  <p className="mt-2 text-xs text-[var(--muted)]">
-                    No related tracts in this county.
-                  </p>
-                ) : (
-                  <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto">
-                    {matches.map((m) => (
-                      <li key={`${m.source}:${m.propId}`}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            void openProperty({
-                              propId: m.propId,
-                              source: m.source,
-                              countyFips: m.countyFips ?? undefined,
-                            })
-                          }
-                          className="w-full rounded-lg border border-hairline px-2.5 py-2 text-left hover:border-gold/50"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span
-                              className={cn(
-                                "rounded px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase",
-                                m.matchTier === "EXACT"
-                                  ? "bg-gold/25 text-navy"
-                                  : "bg-[var(--background)] text-[var(--muted)]",
-                              )}
-                            >
-                              {m.matchTier}
-                            </span>
-                            <span className="truncate font-mono text-[10px] text-[var(--muted)]">
-                              {m.propId}
-                            </span>
-                          </div>
-                          <p className="mt-1 truncate text-xs font-semibold text-ink">
-                            {m.situsAddress ||
-                              m.legalDescription ||
-                              `Parcel ${m.propId}`}
-                          </p>
-                          <p className="truncate text-[10px] text-[var(--muted)]">
-                            {m.matchReason}
-                            {m.legalAcreage != null
-                              ? ` · ${acres(m.legalAcreage)}`
-                              : ""}
-                          </p>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {selected.legalDescription ? (
-                <div>
-                  <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
-                    Legal
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-ink">
-                    {selected.legalDescription}
-                  </p>
-                </div>
-              ) : null}
-
-              {selected.mhSerialNumber ? (
-                <div>
-                  <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
-                    Manufactured home
-                  </p>
-                  <p className="mt-1 text-xs text-ink">
-                    Serial {selected.mhSerialNumber}
-                    {selected.mhHudLabel ? ` · HUD ${selected.mhHudLabel}` : ""}
-                  </p>
-                </div>
-              ) : null}
-
-              {selected.ownershipChurn ? (
-                <div className="story-well border-gold/35 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] p-3">
-                  <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
-                    Ownership Stability Index
-                  </p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-[var(--muted)]">
-                    Familiar 300–850 scale for how quiet CAD owner fields look
-                    across Archie&apos;s pulls. Not a credit score. Not a
-                    prediction the owner will sell. Not deed history.
-                  </p>
-                  <div className="mt-2 flex items-end justify-between gap-3">
-                    <div>
-                      <p className="type-page-title text-ink">
-                        {selected.ownershipChurn.index ?? "—"}
-                      </p>
-                      <p className="text-xs font-semibold text-ink">
-                        {selected.ownershipChurn.bandLabel}
-                      </p>
-                    </div>
-                    <p className="text-right font-mono text-[10px] text-[var(--muted)]">
-                      {selected.ownershipChurn.ownerChangeCount} owner-field
-                      <br />
-                      change
-                      {selected.ownershipChurn.ownerChangeCount === 1
-                        ? ""
-                        : "s"}{" "}
-                      observed
-                    </p>
-                  </div>
-                  <ul className="mt-2 list-disc space-y-0.5 pl-4 text-[10px] text-[var(--muted)]">
-                    {selected.ownershipChurn.reasons.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              <ShiFloodEvidencePanel flood={floodFact} />
-              <ShiUtilitiesEvidencePanel utilities={utilitiesFact} />
-              <ShiEnvironmentEvidencePanel environment={environmentDesk} />
-              <ShiDeedsEvidencePanel deeds={deedsFact} />
-              {selected.countyFips &&
-              isLaunchCorridorFips(selected.countyFips) ? (
-                <ShiResearchAccessPanel
-                  intel={accessIntel}
-                  loading={accessLoading}
-                  stations={accessStations}
-                  lat={selected.centroidLat}
-                  lng={selected.centroidLng}
-                />
-              ) : null}
-
-              <ShiCadEvidencePanel
-                property={selected}
-                frameAnalysis={displayAnalysis}
-              />
-
-              <div>
-                <p className="font-mono text-[10px] font-bold text-[var(--muted)] uppercase">
-                  Observed CAD history
-                </p>
-                <p className="mt-1 text-[10px] leading-relaxed text-[var(--muted)]">
-                  Values, county pull observations, and owner-field changes
-                  Archie saw between loads — not deed or sale dates.
-                </p>
-                {(selected.observedHistory ?? []).length === 0 ? (
-                  <p className="mt-2 text-xs text-[var(--muted)]">
-                    No observed history rows on file for this parcel.
-                  </p>
-                ) : (
-                  <ol className="mt-2 space-y-2 border-l border-hairline pl-3">
-                    {(selected.observedHistory ?? []).map((ev, i) => (
-                      <li key={`${ev.kind}-${ev.at}-${i}`}>
-                        <p className="text-xs font-semibold text-ink">{ev.title}</p>
-                        <p className="text-[10px] text-[var(--muted)]">
-                          {ev.detail}
-                        </p>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </div>
-
-              <ShiDiscoverPanel
-                key={`${selected.source}:${selected.propId}`}
-                property={selected}
                 onOpenProperty={(opts) => void openProperty(opts)}
                 onDiscoverPinsChange={setDiscoverPins}
                 onPortfolioRelated={setMatches}
                 onOpenFarms={onOpenFarms}
-              />
-
-              <div className="space-y-2 border-t border-hairline pt-3">
-                <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
-                  Private workspace
-                </p>
-                <p className="text-[10px] leading-relaxed text-[var(--muted)]">
-                  Save this public property into your Prospects pipeline. Notes
-                  and status stay private — Archie never writes county records.
-                </p>
-                <button
-                  type="button"
-                  disabled={savingProspect}
-                  onClick={() => {
-                    setSavingProspect(true);
-                    setProspectMsg("");
-                    void shiAddProspect({
-                      source: selected.source,
-                      propId: selected.propId,
-                      countyFips: selected.countyFips,
-                      countyName: selected.countyName,
-                      label:
-                        selected.situsAddress ||
-                        selected.legalDescription ||
-                        `Property ${selected.propId}`,
-                      ownerName: selected.ownerName,
-                      situsAddress: selected.situsAddress,
-                      situsCity: selected.situsCity,
-                      legalAcreage: selected.legalAcreage,
-                      marketValue: selected.marketValue,
-                      centroidLat: selected.centroidLat,
-                      centroidLng: selected.centroidLng,
-                    })
-                      .then((res) => {
-                        if (res.created) {
-                          track("prospect_created", {
-                            county_fips: selected.countyFips || undefined,
-                            source_surface: "research",
-                            created: true,
-                          });
-                        }
-                        setProspectMsg(
-                          res.created
-                            ? "Saved to Prospects."
-                            : "Already in Prospects — opened existing.",
-                        );
-                        sound?.play("success", "study");
-                      })
-                      .catch((e) =>
-                        setProspectMsg(
-                          e instanceof Error
-                            ? e.message
-                            : "Could not save prospect",
-                        ),
-                      )
-                      .finally(() => setSavingProspect(false));
-                  }}
-                  className="story-press inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gold text-sm font-bold text-navy disabled:opacity-60"
-                >
-                  {savingProspect ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : null}
-                  Save Prospect
-                </button>
-                {prospectMsg ? (
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[11px] text-ink">{prospectMsg}</p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.replace("/portal/intelligence?section=prospects", {
-                          scroll: false,
-                        })
+                savingProspect={savingProspect}
+                prospectMsg={prospectMsg}
+                onSaveProspect={() => {
+                  setSavingProspect(true);
+                  setProspectMsg("");
+                  void shiAddProspect({
+                    source: selected.source,
+                    propId: selected.propId,
+                    countyFips: selected.countyFips,
+                    countyName: selected.countyName,
+                    label:
+                      selected.situsAddress ||
+                      selected.legalDescription ||
+                      `Property ${selected.propId}`,
+                    ownerName: selected.ownerName,
+                    situsAddress: selected.situsAddress,
+                    situsCity: selected.situsCity,
+                    legalAcreage: selected.legalAcreage,
+                    marketValue: selected.marketValue,
+                    centroidLat: selected.centroidLat,
+                    centroidLng: selected.centroidLng,
+                  })
+                    .then((res) => {
+                      if (res.created) {
+                        track("prospect_created", {
+                          county_fips: selected.countyFips || undefined,
+                          source_surface: "research",
+                          created: true,
+                        });
                       }
-                      className="text-[11px] font-semibold text-gold underline-offset-2 hover:underline"
-                    >
-                      Open Prospects
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+                      setProspectMsg(
+                        res.created
+                          ? "Saved to Prospects."
+                          : "Already in Prospects — opened existing.",
+                      );
+                      sound?.play("success", "study");
+                    })
+                    .catch((e) =>
+                      setProspectMsg(
+                        e instanceof Error
+                          ? e.message
+                          : "Could not save prospect",
+                      ),
+                    )
+                    .finally(() => setSavingProspect(false));
+                }}
+                onOpenProspects={() =>
+                  router.replace("/portal/intelligence?section=prospects", {
+                    scroll: false,
+                  })
+                }
+              />
               </div>
               )}
             </div>
@@ -2402,37 +2121,12 @@ function Chip({ label, stale }: { label: string; stale: boolean }) {
     <span
       className={cn(
         "rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase",
-        stale ? "bg-gold/20 text-navy" : "bg-emerald-600/15 text-emerald-800",
+        stale
+          ? "bg-gold/20 text-gold"
+          : "bg-[color-mix(in_srgb,var(--paper)_12%,transparent)] text-[color-mix(in_srgb,var(--paper)_88%,transparent)]",
       )}
     >
       {label}
     </span>
-  );
-}
-
-function Fact({
-  label,
-  value,
-  mono,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="rounded-lg bg-[var(--background)] px-2.5 py-2">
-      <dt className="font-mono text-[9px] font-bold tracking-wider text-[var(--muted)] uppercase">
-        {label}
-      </dt>
-      <dd
-        className={cn(
-          "mt-0.5 truncate text-xs font-semibold text-ink",
-          mono && "font-mono",
-        )}
-        title={value}
-      >
-        {value}
-      </dd>
-    </div>
   );
 }

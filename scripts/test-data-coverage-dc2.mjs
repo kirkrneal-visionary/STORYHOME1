@@ -39,12 +39,23 @@ const panel = read(
 );
 assert.match(panel, /userReveal/);
 assert.match(panel, /data-utilities-evidence/);
+assert.match(panel, /utilityProviderRows|data-utilities-provider-rows/);
+assert.doesNotMatch(panel, /border-sky/);
+
+const providers = read("src/lib/shi/utility-providers.ts");
+assert.match(providers, /utilityProviderRows/);
+assert.match(providers, /water/);
+assert.match(providers, /sewer/);
+assert.match(providers, /omit|omitted/i);
 
 const research = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
 );
 assert.match(research, /shiUtilitiesAtPoint/);
-assert.match(research, /ShiUtilitiesEvidencePanel/);
+const record = read(
+  "src/components/broker/intelligence/ShiParcelRecordBody.tsx",
+);
+assert.match(record, /ShiUtilitiesEvidencePanel/);
 
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsView.tsx",
