@@ -9,8 +9,10 @@ import {
   RESEARCH_TERRAIN_ENGINE,
   RESEARCH_TERRAIN_PITCH_3D,
   RESEARCH_SKY_BLUE,
+  RESEARCH_SKY_FOG,
   RESEARCH_TERRAIN_SKY,
   RESEARCH_VIEW_SKINS,
+  researchWorldBackground,
   researchTerrainSkyForPitch,
   archieTerrainRead,
   buildResearchParcelTerrainStats,
@@ -46,7 +48,11 @@ assert.ok((researchTerrainSkyForPitch(60)["atmosphere-blend"] as number) > 0.8);
 assert.ok((RESEARCH_TERRAIN_SKY["fog-ground-blend"] as number) > 0);
 assert.ok((RESEARCH_TERRAIN_SKY["fog-ground-blend"] as number) < 0.25);
 assert.ok((RESEARCH_TERRAIN_SKY["sky-horizon-blend"] as number) < 0.7);
-assert.equal(RESEARCH_SKY_BLUE, "#3d86cf");
+assert.equal(RESEARCH_SKY_BLUE, "#4a9adf");
+assert.equal(RESEARCH_SKY_FOG, "#c5dceb");
+assert.equal(researchWorldBackground(true), RESEARCH_SKY_BLUE);
+assert.equal(researchWorldBackground(false), "#f8f4f0");
+assert.ok((researchTerrainSkyForPitch(54)["atmosphere-blend"] as number) > 0.7);
 assert.equal(isPhotoSkin("satellite"), true);
 assert.equal(isPhotoSkin("street"), false);
 assert.equal(researchTerrainLandDefault("land_development"), "satellite");
@@ -122,8 +128,10 @@ assert.match(map, /data-map-parcel-terrain/);
 assert.match(map, /data-map-sky/);
 assert.match(map, /data-map-engine/);
 assert.match(map, /data-map-sky-wash/);
+assert.match(map, /data-map-sky-behind/);
 assert.match(map, /story-map-sky-layer/);
 assert.match(map, /applyResearchAtmosphere/);
+assert.match(map, /applyResearchWorldBackground/);
 assert.match(map, /researchMode/);
 assert.doesNotMatch(map, /How dramatic the hills sit/);
 assert.doesNotMatch(map, />Photos</);
@@ -131,9 +139,12 @@ assert.match(readFileSync(join(root, "src/lib/shi/research-terrain.ts"), "utf8")
 
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /sky: RESEARCH_TERRAIN_SKY_OFF/);
+const skyCss = readFileSync(join(root, "src/app/globals.css"), "utf8");
+assert.match(skyCss, /story-map-sky-layer/);
+assert.match(skyCss, /z-index:\s*0/);
 assert.match(
-  readFileSync(join(root, "src/app/globals.css"), "utf8"),
-  /story-map-sky-layer/,
+  readFileSync(join(root, "src/lib/shi/research-terrain.ts"), "utf8"),
+  /applyResearchWorldBackground/,
 );
 
 const demRoute = readFileSync(

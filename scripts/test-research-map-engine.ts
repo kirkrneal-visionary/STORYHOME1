@@ -72,7 +72,8 @@ assert.equal(
 );
 
 const fog = researchMapboxFogForPitch(60);
-assert.equal(fog["high-color"], "#3d86cf");
+assert.equal(fog["high-color"], "#4a9adf");
+assert.equal(fog.color, "#d7ebf8");
 assert.equal(fog["star-intensity"], 0);
 assert.ok(fog.range[1] > fog.range[0]);
 assert.ok((researchMapboxFogForPitch(0)["horizon-blend"] as number) < fog["horizon-blend"]);

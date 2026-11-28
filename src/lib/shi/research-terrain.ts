@@ -132,23 +132,58 @@ export function cameraPitchForPreset(
   return Math.min(64, Math.max(22, base + viewHeightAdjust(viewHeight).pitchDelta));
 }
 
-export const RESEARCH_SKY_BLUE = "#3d86cf";
-export const RESEARCH_SKY_HAZE = "#e8f2fb";
+/** Clear daytime blue — onX-like sky above the horizon. */
+export const RESEARCH_SKY_BLUE = "#4a9adf";
+/** Pale air at the horizon before soft distant haze. */
+export const RESEARCH_SKY_HAZE = "#d7ebf8";
+/** Soft atmospheric haze where distant land meets sky. */
+export const RESEARCH_SKY_FOG = "#c5dceb";
+export const RESEARCH_WORLD_BACKGROUND_LAYER = "story-paper";
+export const RESEARCH_WORLD_PAPER = "#f8f4f0";
 
 /**
- * Native MapLibre sky. Pitch drives how much distant land fades into haze.
- * Fog is invisible in MapLibre below ~60° — 3D presets sit at or above that.
+ * Canvas fill behind the land. Blue when looking across; paper when overhead.
+ * Opaque imagery/mesh covers this — only the void above the horizon shows.
+ */
+export function researchWorldBackground(on: boolean): string {
+  return on ? RESEARCH_SKY_BLUE : RESEARCH_WORLD_PAPER;
+}
+
+export function applyResearchWorldBackground(
+  map: {
+    getLayer?: (id: string) => unknown;
+    setPaintProperty?: (layer: string, name: string, value: unknown) => unknown;
+  },
+  on: boolean,
+): void {
+  try {
+    if (!map.getLayer?.(RESEARCH_WORLD_BACKGROUND_LAYER)) return;
+    map.setPaintProperty?.(
+      RESEARCH_WORLD_BACKGROUND_LAYER,
+      "background-color",
+      researchWorldBackground(on),
+    );
+  } catch {
+    /* style still loading */
+  }
+}
+
+/**
+ * Native MapLibre sky (onX-like). Pitch opens clear blue above the horizon
+ * and soft distant haze — never a gray void, never a milky wash on near land.
+ * Fog is weak in MapLibre below ~50°; 3D presets sit near that.
  */
 export function researchTerrainSkyForPitch(pitch: number): SkySpecification {
-  const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 60));
+  const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 55));
   return {
     "sky-color": RESEARCH_SKY_BLUE,
     "horizon-color": RESEARCH_SKY_HAZE,
-    "fog-color": "#d5e6f5",
-    "sky-horizon-blend": 0.28 + lookingOut * 0.12,
-    "horizon-fog-blend": 0.12 + lookingOut * 0.12,
-    "fog-ground-blend": 0.02 + lookingOut * 0.05,
-    "atmosphere-blend": lookingOut,
+    "fog-color": RESEARCH_SKY_FOG,
+    "sky-horizon-blend": 0.22 + lookingOut * 0.14,
+    "horizon-fog-blend": 0.1 + lookingOut * 0.16,
+    "fog-ground-blend": 0.015 + lookingOut * 0.04,
+    "atmosphere-blend":
+      lookingOut <= 0 ? 0 : Math.min(1, 0.4 + lookingOut * 0.55),
   };
 }
 
