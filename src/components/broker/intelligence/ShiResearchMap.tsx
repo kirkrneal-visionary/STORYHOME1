@@ -91,7 +91,6 @@ import {
   RESEARCH_TERRAIN_CAMERA_MS,
   RESEARCH_TERRAIN_COPY,
   RESEARCH_TERRAIN_SKY_OFF,
-  applyResearchWorldBackground,
   researchTerrainSkyForPitch,
   RESEARCH_VIEW_HEIGHT_DEFAULT,
   RESEARCH_VIEW_SKINS,
@@ -1282,7 +1281,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       );
       let demTimedOut = false;
       const paintSky = () => {
-        applyResearchWorldBackground(map, on);
         applyResearchAtmosphere(map, {
           engine: engineRef.current,
           on,
@@ -1325,7 +1323,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               });
             }
           } else {
-            paintSky();
+            applyResearchAtmosphere(map, {
+              engine: engineRef.current,
+              on: false,
+              maplibreSky: (pitch) =>
+                researchTerrainSkyForPitch(pitch) as Record<string, unknown>,
+              maplibreSkyOff: RESEARCH_TERRAIN_SKY_OFF as Record<string, unknown>,
+            });
             map.setTerrain(null);
             map.touchPitch?.disable();
             map.dragRotate?.disable();
@@ -2125,7 +2129,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           {lidar3d && landPainted && engine === "maplibre" ? (
             <div
               data-map-sky-wash
-              data-map-sky-behind="1"
               className="story-map-sky-layer"
               aria-hidden
             />
