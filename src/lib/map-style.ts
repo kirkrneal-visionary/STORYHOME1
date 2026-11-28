@@ -99,12 +99,16 @@ let adminBoundaryLayerIds: string[] = [];
 
 /**
  * Premium Imagery/Hybrid overlays painted ABOVE satellite (img-* ids).
- * Roads, country borders/names, state names, ocean tint — LandGlide-class but cleaner.
+ * Roads, country borders/names, state/city/town names, ocean tint —
+ * LandGlide-class but cleaner. Seats/majors also use launch-7 place GeoJSON.
  */
 let imageryOverlayLayerIds: string[] = [];
 
-/** Hybrid-only place labels (cities/towns) — subset of imagery overlays. */
+/** Hybrid-only denser place labels (villages) — subset of imagery overlays. */
 let hybridExtraLabelLayerIds: string[] = [];
+
+/** CAD footprint seat/major place labels (Streets desk + Imagery ink). */
+let launch7PlaceLabelLayerIds: string[] = [];
 
 /** Liberty original ids kept out of Streets free-world (parcel overlay owns admin lines). */
 const LIBERTY_ADMIN_BOUNDARY_ORIGINAL_IDS = new Set([
@@ -136,13 +140,14 @@ const IMAGERY_OVERLAY_LABEL_ORIGINAL_IDS = new Set([
   "label_country_2",
   "label_country_3",
   "label_state",
-]);
-
-const HYBRID_EXTRA_LABEL_ORIGINAL_IDS = new Set([
+  // Cities/towns on Imagery (not Hybrid-only) — seats/majors must read on satellite.
   "label_city_capital",
   "label_city",
   "label_town",
 ]);
+
+/** Hybrid densifies with villages; seats/cities already on Imagery. */
+const HYBRID_EXTRA_LABEL_ORIGINAL_IDS = new Set(["label_village"]);
 
 export const ADMIN_BOUNDARY_SOURCE_ID = "admin-boundaries";
 export const ADMIN_STATE_CASING_LAYER_ID = "admin-state-casing";
@@ -151,6 +156,11 @@ export const ADMIN_COUNTY_CASING_LAYER_ID = "admin-county-casing";
 export const ADMIN_COUNTY_LINE_LAYER_ID = "admin-county-line";
 export const ADMIN_BOUNDARY_GEOJSON_PATH =
   "/geo/launch7-admin-boundaries.geojson";
+/** Guaranteed CAD seat + major city points (Huntsville, Livingston, …). */
+export const LAUNCH7_PLACE_SOURCE_ID = "launch7-places";
+export const LAUNCH7_PLACE_GEOJSON_PATH = "/geo/launch7-place-labels.geojson";
+export const LAUNCH7_PLACE_DESK_LAYER_ID = "launch7-place-label-desk";
+export const LAUNCH7_PLACE_IMAGERY_LAYER_ID = "launch7-place-label-imagery";
 /** World vector for Imagery overlays — launch-7 streets tiles are footprint-only. */
 export const IMAGERY_OVERLAY_SOURCE_ID = "imagery-overlays";
 export const IMAGERY_OVERLAY_TILEJSON = "https://tiles.openfreemap.org/planet";
@@ -181,6 +191,10 @@ export function getImageryOverlayLayerIds(): readonly string[] {
 
 export function getHybridExtraLabelLayerIds(): readonly string[] {
   return hybridExtraLabelLayerIds;
+}
+
+export function getLaunch7PlaceLabelLayerIds(): readonly string[] {
+  return launch7PlaceLabelLayerIds;
 }
 
 export const MAP_SOVEREIGNTY_VERSION = LAUNCH7_MAP_SOVEREIGNTY;
@@ -273,8 +287,8 @@ const ADMIN_COUNTRY_FILTER: FilterSpecification = [
 /**
  * State/province lines (OpenMapTiles admin_level 4) + launch-7 CAD county
  * lines (TIGER GeoJSON — 7 counties only, never full Texas grid).
- * Dual-stroke (casing + fill) for a premium read on Imagery. Visible on
- * Imagery/Hybrid without Parcels; on Streets they follow Parcels.
+ * Dual-stroke (casing + bright core) for a premium read on Imagery satellite.
+ * Visible on Imagery/Hybrid without Parcels; on Streets they follow Parcels.
  */
 export function buildAdminBoundaryLayers(): LayerSpecification[] {
   return [
@@ -291,30 +305,30 @@ export function buildAdminBoundaryLayers(): LayerSpecification[] {
         "line-join": "round",
       },
       paint: {
-        "line-color": "rgba(6, 14, 28, 0.78)",
+        "line-color": "rgba(6, 14, 28, 0.55)",
         "line-opacity": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3,
-          0.35,
+          0.3,
           6,
-          0.55,
+          0.48,
           10,
-          0.72,
+          0.62,
         ],
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3,
-          2.4,
+          2.6,
           6,
-          3.6,
+          3.8,
           10,
-          5,
+          5.2,
           14,
-          6.5,
+          6.8,
         ],
       },
     },
@@ -331,30 +345,30 @@ export function buildAdminBoundaryLayers(): LayerSpecification[] {
         "line-join": "round",
       },
       paint: {
-        "line-color": "#f2f6fb",
+        "line-color": "#f7fafc",
         "line-opacity": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3,
-          0.55,
+          0.62,
           5,
-          0.78,
+          0.84,
           9,
-          0.92,
+          0.95,
         ],
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3,
-          0.9,
+          1,
           6,
-          1.5,
+          1.65,
           10,
-          2.2,
+          2.4,
           14,
-          2.8,
+          3,
         ],
       },
     },
@@ -369,20 +383,22 @@ export function buildAdminBoundaryLayers(): LayerSpecification[] {
         "line-join": "round",
       },
       paint: {
-        "line-color": "rgba(6, 18, 28, 0.7)",
-        "line-opacity": 0.85,
+        // Default = Imagery ink (dark under / bright core). Streets paint swaps in
+        // syncAdminBoundaryPaintForBase.
+        "line-color": "rgba(8, 22, 36, 0.55)",
+        "line-opacity": 0.92,
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           5,
-          2.6,
+          4.2,
           8,
-          3.8,
+          6.2,
           12,
-          5.2,
+          8.2,
           16,
-          6.4,
+          9.6,
         ],
       },
     },
@@ -397,23 +413,112 @@ export function buildAdminBoundaryLayers(): LayerSpecification[] {
         "line-join": "round",
       },
       paint: {
-        "line-color": MAP_TEAL,
-        "line-opacity": 0.94,
+        // Bright paper-mint core — reads on satellite (not dark teal wash).
+        "line-color": "#eef8f4",
+        "line-opacity": 0.98,
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           5,
-          1.2,
+          1.8,
           8,
-          2,
-          12,
           2.9,
+          12,
+          4.1,
           16,
-          3.6,
+          5,
         ],
       },
     },
+  ];
+}
+
+/**
+ * Guaranteed seat + major labels for the 7 CAD counties.
+ * Desk ink for Streets; paper ink for Imagery/Hybrid.
+ */
+export function buildLaunch7PlaceLabelLayers(): LayerSpecification[] {
+  const sharedLayout = {
+    "text-field": ["get", "name"] as unknown,
+    "text-font": ["Noto Sans Bold"],
+    "text-size": [
+      "interpolate",
+      ["exponential", 1.12],
+      ["zoom"],
+      6,
+      [
+        "match",
+        ["get", "kind"],
+        "seat",
+        13,
+        "major",
+        11.5,
+        11,
+      ],
+      9,
+      [
+        "match",
+        ["get", "kind"],
+        "seat",
+        16,
+        "major",
+        14,
+        13,
+      ],
+      12,
+      [
+        "match",
+        ["get", "kind"],
+        "seat",
+        19,
+        "major",
+        16,
+        15,
+      ],
+    ],
+    "text-letter-spacing": 0.03,
+    "text-anchor": "center",
+    "text-optional": false,
+    "text-padding": 2,
+    "symbol-sort-key": ["coalesce", ["get", "rank"], 9],
+    "text-allow-overlap": false,
+    "text-ignore-placement": false,
+  };
+
+  return [
+    {
+      id: LAUNCH7_PLACE_DESK_LAYER_ID,
+      type: "symbol",
+      source: LAUNCH7_PLACE_SOURCE_ID,
+      minzoom: 6,
+      layout: {
+        ...sharedLayout,
+        visibility: "visible",
+      },
+      paint: {
+        "text-color": MAP_NAVY,
+        "text-halo-color": MAP_PAPER,
+        "text-halo-width": 2.2,
+        "text-halo-blur": 0,
+      },
+    } as LayerSpecification,
+    {
+      id: LAUNCH7_PLACE_IMAGERY_LAYER_ID,
+      type: "symbol",
+      source: LAUNCH7_PLACE_SOURCE_ID,
+      minzoom: 6,
+      layout: {
+        ...sharedLayout,
+        visibility: "none",
+      },
+      paint: {
+        "text-color": "#f7f4ec",
+        "text-halo-color": "rgba(10, 22, 38, 0.9)",
+        "text-halo-width": 2.15,
+        "text-halo-blur": 0,
+      },
+    } as LayerSpecification,
   ];
 }
 
@@ -668,7 +773,35 @@ export function applyImageryOverlayStyle(
     }
   }
 
-  if (IMAGERY_OVERLAY_LABEL_ORIGINAL_IDS.has(originalId)) {
+  const isPlaceLabel =
+    originalId.startsWith("label_city") ||
+    originalId === "label_town" ||
+    originalId === "label_village";
+
+  if (IMAGERY_OVERLAY_LABEL_ORIGINAL_IDS.has(originalId) || isPlaceLabel) {
+    if (isPlaceLabel) {
+      // Desk hierarchy sizes, then Imagery paper ink (reads on satellite).
+      const desk = applyStoryPlaceLabelStyle(originalId, {
+        ...next,
+        id: originalId,
+      });
+      const deskLayout: Record<string, unknown> = {
+        ...(desk.layout ?? {}),
+        visibility: "none",
+      };
+      const deskPaint: Record<string, unknown> = { ...(desk.paint ?? {}) };
+      deskPaint["text-color"] = "#f7f4ec";
+      deskPaint["text-halo-color"] = "rgba(10, 22, 38, 0.9)";
+      deskPaint["text-halo-blur"] = 0;
+      return {
+        ...desk,
+        id: `img-${originalId}`,
+        type: "symbol",
+        layout: deskLayout,
+        paint: deskPaint,
+      } as LayerSpecification;
+    }
+
     layout["text-font"] = ["Noto Sans Bold"];
     paint["text-color"] = "#f7f4ec";
     paint["text-halo-color"] = "rgba(10, 22, 38, 0.9)";
@@ -692,29 +825,6 @@ export function applyImageryOverlayStyle(
       // Show state/province names a bit earlier than liberty Streets (was z5).
       next.minzoom = 4;
     }
-  }
-
-  if (HYBRID_EXTRA_LABEL_ORIGINAL_IDS.has(originalId)) {
-    const desk = applyStoryPlaceLabelStyle(originalId, {
-      ...next,
-      id: originalId,
-    });
-    const deskLayout: Record<string, unknown> = {
-      ...(desk.layout ?? {}),
-      visibility: "none",
-    };
-    const deskPaint: Record<string, unknown> = { ...(desk.paint ?? {}) };
-    deskPaint["text-color"] = "#f7f4ec";
-    deskPaint["text-halo-color"] = "rgba(10, 22, 38, 0.88)";
-    deskPaint["text-halo-blur"] = 0;
-    // Cast whole layer: MapLibre paint/layout unions need a discriminant + source.
-    return {
-      ...desk,
-      id: `img-${originalId}`,
-      type: "symbol",
-      layout: deskLayout,
-      paint: deskPaint,
-    } as LayerSpecification;
   }
 
   return {
@@ -800,6 +910,55 @@ const STORY_PLACE_LABEL_IDS = new Set([
   "label_state",
 ]);
 
+/**
+ * Names owned by launch7-place-labels.geojson — suppress OMT twins on Streets
+ * so mid-zoom does not show two fonts for the same seat/major.
+ */
+export const LAUNCH7_GUARANTEED_PLACE_NAMES = [
+  "Lufkin",
+  "Huntsville",
+  "Livingston",
+  "Liberty",
+  "Coldspring",
+  "Groveton",
+  "Woodville",
+  "Cleveland",
+  "Onalaska",
+  "Corrigan",
+  "Diboll",
+  "Shepherd",
+] as const;
+
+const LAUNCH7_GUARANTEED_PLACE_NAME_SET = new Set(
+  LAUNCH7_GUARANTEED_PLACE_NAMES.map((n) => n.toLowerCase()),
+);
+
+const OMT_PLACE_NAME_EXPR: FilterSpecification = [
+  "downcase",
+  [
+    "coalesce",
+    ["get", "name"],
+    ["get", "name_en"],
+    ["get", "name:en"],
+    "",
+  ],
+];
+
+function withoutGuaranteedPlaceNames(
+  filter: FilterSpecification | undefined,
+): FilterSpecification {
+  const suppress: FilterSpecification = [
+    "!",
+    [
+      "in",
+      OMT_PLACE_NAME_EXPR,
+      ["literal", [...LAUNCH7_GUARANTEED_PLACE_NAME_SET]],
+    ],
+  ];
+  if (!filter) return suppress;
+  return ["all", filter, suppress];
+}
+
 export function applyStoryPlaceLabelStyle(
   originalId: string,
   layer: LayerSpecification,
@@ -810,6 +969,10 @@ export function applyStoryPlaceLabelStyle(
 
   const layout: Record<string, unknown> = { ...(layer.layout ?? {}) };
   const paint: Record<string, unknown> = { ...(layer.paint ?? {}) };
+  let filter =
+    "filter" in layer
+      ? (layer.filter as FilterSpecification | undefined)
+      : undefined;
 
   // Crisp desk halo — blur stays 0 (no soft consumer glow).
   paint["text-color"] = MAP_NAVY;
@@ -834,6 +997,7 @@ export function applyStoryPlaceLabelStyle(
       ];
       layout["text-letter-spacing"] = 0.04;
       paint["text-halo-width"] = 2.25;
+      filter = withoutGuaranteedPlaceNames(filter);
       break;
     case "label_city":
       layout["text-font"] = ["Noto Sans Bold"];
@@ -852,6 +1016,7 @@ export function applyStoryPlaceLabelStyle(
       ];
       layout["text-letter-spacing"] = 0.035;
       paint["text-halo-width"] = 2.35;
+      filter = withoutGuaranteedPlaceNames(filter);
       break;
     case "label_town":
       layout["text-font"] = ["Noto Sans Bold"];
@@ -859,15 +1024,20 @@ export function applyStoryPlaceLabelStyle(
         "interpolate",
         ["exponential", 1.15],
         ["zoom"],
-        7,
-        14,
-        9,
-        17,
-        11,
-        19,
+        6,
+        13,
+        8,
+        15,
+        10,
+        18,
+        12,
+        20,
       ];
       layout["text-letter-spacing"] = 0.03;
       paint["text-halo-width"] = 2.2;
+      // Towns a touch earlier so East Texas seats read sooner on Streets.
+      (layer as { minzoom?: number }).minzoom = 6;
+      filter = withoutGuaranteedPlaceNames(filter);
       break;
     case "label_village":
       layout["text-font"] = ["Noto Sans Regular"];
@@ -875,15 +1045,17 @@ export function applyStoryPlaceLabelStyle(
         "interpolate",
         ["exponential", 1.1],
         ["zoom"],
-        8,
+        7,
         12,
-        11,
+        10,
         14,
         13,
         15,
       ];
       layout["text-letter-spacing"] = 0.02;
       paint["text-halo-width"] = 1.9;
+      (layer as { minzoom?: number }).minzoom = 7;
+      filter = withoutGuaranteedPlaceNames(filter);
       break;
     case "label_state":
       layout["text-font"] = ["Noto Sans Bold"];
@@ -918,12 +1090,16 @@ export function applyStoryPlaceLabelStyle(
       break;
   }
 
-  return {
+  const next: LayerSpecification = {
     ...layer,
     type: "symbol",
     layout: layout as Extract<LayerSpecification, { type: "symbol" }>["layout"],
     paint: paint as Extract<LayerSpecification, { type: "symbol" }>["paint"],
   };
+  if (filter) {
+    (next as { filter?: FilterSpecification }).filter = filter;
+  }
+  return next;
 }
 
 /**
@@ -1052,6 +1228,7 @@ export function buildStoryMapStyle(opts?: {
       : [];
 
   const adminBoundaryLayers = buildAdminBoundaryLayers();
+  const launch7PlaceLayers = buildLaunch7PlaceLabelLayers();
   const imageryClone = buildImageryOverlayLayers(liberty.layers);
   const imageryUnderlayLayers: LayerSpecification[] = [
     ...(ne2Source ? [buildImageryNaturalEarthLayer()] : []),
@@ -1067,6 +1244,7 @@ export function buildStoryMapStyle(opts?: {
   const fwIds = fwLayers.map((l) => l.id);
   const bIds = buildingLayers.map((l) => l.id);
   const adminIds = adminBoundaryLayers.map((l) => l.id);
+  const placeIds = launch7PlaceLayers.map((l) => l.id);
   const imgIds = [
     ...imageryUnderlayLayers.map((l) => l.id),
     ...imageryAboveLayers.map((l) => l.id),
@@ -1075,6 +1253,7 @@ export function buildStoryMapStyle(opts?: {
   freeWorldLayerIds = fwIds;
   buildingLayerIds = bIds;
   adminBoundaryLayerIds = adminIds;
+  launch7PlaceLabelLayerIds = placeIds;
   imageryOverlayLayerIds = imgIds;
   hybridExtraLabelLayerIds = hybridExtraIds;
 
@@ -1083,11 +1262,12 @@ export function buildStoryMapStyle(opts?: {
     metadata: {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
       "storyhome:streets": streetsMode,
-      "storyhome:place-labels": "desk-v1",
-      "storyhome:imagery-overlays": "premium-v1",
+      "storyhome:place-labels": "desk-v2",
+      "storyhome:imagery-overlays": "premium-v2",
       "storyhome:fw-layer-ids": fwIds,
       "storyhome:building-layer-ids": bIds,
       "storyhome:admin-boundary-layer-ids": adminIds,
+      "storyhome:launch7-place-label-ids": placeIds,
       "storyhome:imagery-overlay-layer-ids": imgIds,
       "storyhome:hybrid-extra-label-ids": hybridExtraIds,
       "storyhome:upright-buildings": UPRIGHT_BUILDINGS_MARK,
@@ -1116,6 +1296,11 @@ export function buildStoryMapStyle(opts?: {
         data: absolutizeMapTileTemplate(ADMIN_BOUNDARY_GEOJSON_PATH),
         attribution:
           "Launch-7 CAD county lines © U.S. Census TIGER · state lines © OpenMapTiles",
+      },
+      [LAUNCH7_PLACE_SOURCE_ID]: {
+        type: "geojson",
+        data: absolutizeMapTileTemplate(LAUNCH7_PLACE_GEOJSON_PATH),
+        attribution: "Launch-7 CAD seats & majors · Story Home",
       },
       ...(opts?.deferDem
         ? {}
@@ -1308,9 +1493,11 @@ export function buildStoryMapStyle(opts?: {
           "raster-fade-duration": 160,
         },
       },
-      // Above rasters: ocean tint, country lines, roads/names, then Parcels admin.
+      // Above rasters: ocean tint, country lines, roads/names, CAD seats,
+      // then Parcels admin + buildings.
       ...imageryAboveLayers,
       ...adminBoundaryLayers,
+      ...launch7PlaceLayers,
       ...buildingLayers,
     ],
   };
@@ -1324,6 +1511,7 @@ export function buildStoryMapStyle(opts?: {
       adminIds,
       imgIds,
       hybridExtraIds,
+      placeIds,
     );
   }
   return style;
@@ -1337,10 +1525,12 @@ function applyInitialBaseToStyle(
   adminIds: string[],
   imgIds: string[],
   hybridExtraIds: string[],
+  placeIds: string[],
 ): void {
   const vis = (on: boolean) => (on ? "visible" : "none");
   const imageryOn = base === "satellite" || base === "imageryLabels";
   const hybridOn = base === "imageryLabels";
+  const streetOn = base === "street";
   const want: Record<string, boolean> = {
     "base-satellite": imageryOn,
     "base-topo": base === "topo",
@@ -1348,12 +1538,15 @@ function applyInitialBaseToStyle(
     "base-gray": base === "gray",
     // Dense Esri labels stay off — quiet vector overlays handle Hybrid.
     "base-labels": false,
+    [LAUNCH7_PLACE_DESK_LAYER_ID]: streetOn,
+    [LAUNCH7_PLACE_IMAGERY_LAYER_ID]: imageryOn,
   };
-  const fwOn = base === "street";
+  const fwOn = streetOn;
   const buildingVis = buildingVisibilityForBase(base, {
     uprightOnImagery: false,
   });
   const hybridExtra = new Set(hybridExtraIds);
+  const placeIdSet = new Set(placeIds);
   for (const layer of style.layers) {
     const layout = { ...(layer.layout ?? {}) } as Record<string, unknown>;
     if (fwIds.includes(layer.id)) {
@@ -1362,6 +1555,13 @@ function applyInitialBaseToStyle(
     } else if (adminIds.includes(layer.id)) {
       // Imagery/Hybrid: always on. Streets initial: visible (Parcels default on).
       layout.visibility = "visible";
+      layer.layout = layout as LayerSpecification["layout"];
+    } else if (placeIdSet.has(layer.id)) {
+      if (layer.id === LAUNCH7_PLACE_DESK_LAYER_ID) {
+        layout.visibility = vis(streetOn);
+      } else if (layer.id === LAUNCH7_PLACE_IMAGERY_LAYER_ID) {
+        layout.visibility = vis(imageryOn);
+      }
       layer.layout = layout as LayerSpecification["layout"];
     } else if (imgIds.includes(layer.id)) {
       const show = imageryOn && (hybridOn || !hybridExtra.has(layer.id));
@@ -1379,9 +1579,38 @@ function applyInitialBaseToStyle(
 
 type MapLike = {
   setLayoutProperty: (id: string, prop: string, value: string) => void;
+  setPaintProperty?: (id: string, prop: string, value: unknown) => void;
   getLayer?: (id: string) => unknown;
   getStyle?: () => { metadata?: unknown };
 };
+
+/** Imagery: bright core. Streets: teal core + paper casing so dual-stroke reads on desk. */
+export function syncAdminBoundaryPaintForBase(
+  map: MapLike,
+  base: MapBaseLayer,
+) {
+  if (!map.setPaintProperty) return;
+  const imageryOn = base === "satellite" || base === "imageryLabels";
+  try {
+    if (imageryOn) {
+      map.setPaintProperty(
+        ADMIN_COUNTY_CASING_LAYER_ID,
+        "line-color",
+        "rgba(8, 22, 36, 0.55)",
+      );
+      map.setPaintProperty(ADMIN_COUNTY_LINE_LAYER_ID, "line-color", "#eef8f4");
+    } else {
+      map.setPaintProperty(
+        ADMIN_COUNTY_CASING_LAYER_ID,
+        "line-color",
+        "rgba(247, 244, 236, 0.95)",
+      );
+      map.setPaintProperty(ADMIN_COUNTY_LINE_LAYER_ID, "line-color", "#1f6b5c");
+    }
+  } catch {
+    /* layers may not exist yet */
+  }
+}
 
 function styleMetaStringIds(
   map: MapLike,
@@ -1434,12 +1663,36 @@ function hybridExtraLabelIdsForMap(map: MapLike): readonly string[] {
   );
 }
 
+function launch7PlaceLabelIdsForMap(map: MapLike): readonly string[] {
+  return styleMetaStringIds(
+    map,
+    "storyhome:launch7-place-label-ids",
+    launch7PlaceLabelLayerIds,
+  );
+}
+
 function setLayerVisibility(map: MapLike, id: string, on: boolean) {
   if (map.getLayer && !map.getLayer(id)) return;
   try {
     map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
   } catch {
     /* layer may not exist yet */
+  }
+}
+
+/** Seat/major labels: desk ink on Streets, paper ink on Imagery/Hybrid. */
+export function syncLaunch7PlaceLabelsForBase(
+  map: MapLike,
+  base: MapBaseLayer,
+) {
+  const imageryOn = base === "satellite" || base === "imageryLabels";
+  const streetOn = base === "street";
+  for (const id of launch7PlaceLabelIdsForMap(map)) {
+    if (id === LAUNCH7_PLACE_DESK_LAYER_ID) {
+      setLayerVisibility(map, id, streetOn);
+    } else if (id === LAUNCH7_PLACE_IMAGERY_LAYER_ID) {
+      setLayerVisibility(map, id, imageryOn);
+    }
   }
 }
 
@@ -1461,6 +1714,7 @@ export function syncAdminBoundaryForBase(
 ) {
   const imageryOn = base === "satellite" || base === "imageryLabels";
   setAdminBoundaryVisibility(map, imageryOn || parcelsOn);
+  syncAdminBoundaryPaintForBase(map, base);
 }
 
 /**
@@ -1499,11 +1753,16 @@ export function setBaseLayerVisibility(
     setLayerVisibility(map, id, imageryOn && (hybridOn || !hybridExtra.has(id)));
   }
 
+  syncLaunch7PlaceLabelsForBase(map, base);
+
   // Admin: Imagery always; Streets follows Parcels when parcelsOn is known.
   if (opts?.parcelsOn != null) {
     syncAdminBoundaryForBase(map, base, opts.parcelsOn);
   } else if (imageryOn) {
     setAdminBoundaryVisibility(map, true);
+    syncAdminBoundaryPaintForBase(map, base);
+  } else {
+    syncAdminBoundaryPaintForBase(map, base);
   }
 
   setLayerVisibility(map, "base-satellite", imageryOn);

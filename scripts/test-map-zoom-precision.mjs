@@ -47,7 +47,7 @@ assert.match(style, /storyhome:fw-layer-ids/);
 assert.match(style, /storyhome:admin-boundary-layer-ids/);
 assert.match(style, /storyhome:imagery-overlay-layer-ids/);
 assert.match(style, /storyhome:imagery-overlays/);
-assert.match(style, /premium-v1/);
+assert.match(style, /premium-v2/);
 assert.match(style, /setParcelOverlayVisibility|setAdminBoundaryVisibility|syncAdminBoundaryForBase/);
 assert.match(style, /admin-state-line|admin-county-line|admin-state-casing|admin-county-casing/);
 assert.match(style, /launch7-admin-boundaries\.geojson/);
@@ -77,9 +77,37 @@ assert.match(style, /coalesce/);
 /** Place labels must stay crisp (no soft consumer glow). */
 assert.match(style, /text-halo-blur["\]]+\s*=\s*0/);
 assert.match(style, /storyhome:place-labels/);
-assert.match(style, /desk-v1/);
+assert.match(style, /desk-v2/);
+assert.match(style, /premium-v2/);
+assert.match(style, /launch7-place-labels\.geojson/);
+assert.match(style, /launch7-place-label-desk|launch7-place-label-imagery/);
+assert.match(style, /LAUNCH7_GUARANTEED_PLACE_NAMES|Huntsville/);
+assert.match(style, /#eef8f4/);
+assert.match(style, /syncLaunch7PlaceLabelsForBase/);
+assert.match(style, /syncAdminBoundaryPaintForBase/);
 /** Hybrid no longer enables dense Esri World_Boundaries_and_Places raster. */
 assert.match(style, /setLayerVisibility\(map,\s*"base-labels",\s*false\)/);
+const placesGeo = JSON.parse(
+  read("public/geo/launch7-place-labels.geojson"),
+);
+assert.ok(placesGeo.features.length >= 7);
+const placeNames = placesGeo.features.map((f) => f.properties?.name);
+assert.ok(placeNames.includes("Huntsville"));
+assert.ok(placeNames.includes("Livingston"));
+assert.ok(placeNames.includes("Lufkin"));
+/** Research selection: premium border, not yellow wash. */
+assert.match(
+  read("src/components/broker/intelligence/ShiResearchMap.tsx"),
+  /shi-selected-casing/,
+);
+assert.match(
+  read("src/components/broker/intelligence/ShiResearchMap.tsx"),
+  /fill-opacity": 0\.04/,
+);
+assert.doesNotMatch(
+  read("src/components/broker/intelligence/ShiResearchMap.tsx"),
+  /shi-selected-fill[\s\S]{0,120}fill-opacity": 0\.32/,
+);
 assert.match(
   read("src/components/broker/intelligence/ShiResearchMap.tsx"),
   /setParcelOverlayVisibility/,
