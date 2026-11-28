@@ -1136,7 +1136,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             toolRef.current === "pan" ? "" : "crosshair";
         });
 
-        setBaseLayerVisibility(map, baseRef.current);
+        setBaseLayerVisibility(map, baseRef.current, {
+          uprightOnImagery: false,
+        });
         setReady(true);
         const markLand = () => {
           landPaintedRef.current = true;
@@ -1185,8 +1187,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      setBaseLayerVisibility(map, base);
-    }, [ready, base]);
+      // OSM fill-extrusion stays upright on setTerrain; show over Imagery when 3D is on.
+      setBaseLayerVisibility(map, base, {
+        uprightOnImagery: lidar3d && isPhotoSkin(base),
+      });
+    }, [ready, base, lidar3d]);
 
     useEffect(() => {
       const map = mapRef.current;

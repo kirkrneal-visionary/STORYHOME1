@@ -86,11 +86,19 @@ After first successful publish, set `NEXT_PUBLIC_LAUNCH7_CDN_BASE` on eqmg so Ma
 
 App-server fills stay footprint-bounded. Google/Esri satellite is proxied only (no disk store). NAIP-owned cache can still use CDN/R2.
 
+## Upright 3D buildings (OSM fill-extrusion)
+
+- Liberty already ships OpenMapTiles `building` + `building-3d` (`render_height`). Research shows **`building-3d` on Imagery/Hybrid when 3D terrain is on**.
+- Layers paint **above** satellite so extrusions are not buried. MapLibre keeps walls vertical on `setTerrain` (roofs flat — not DEM-warped).
+- Cost: $0 extra (same streets vector path). Coverage is OSM — denser in towns, thin in rural East Texas.
+- Google Photorealistic 3D Tiles and Mapbox-hosted building meshes stay out of scope (cost, coverage, and mesh-vs-DEM independence).
+
 ## Out of scope
 
 - Mapbox as primary basemap (hosted streets / satellite / terrain-dem)  
 - Mapbox GL as Research renderer is allowed when `NEXT_PUBLIC_MAPBOX_TOKEN` is set — tiles still ours  
 - Google Maps **JavaScript** client as Research canvas (Map Tiles API proxy is OK)  
+- Google Photorealistic 3D Tiles / Cesium mesh as the Research building layer  
 - ATTOM / Regrid / Zoneomics / DataTree for truth layers  
 - Paying per parcel view for public GIS we can own once for launch 7
 

@@ -34,6 +34,21 @@ import {
   LAUNCH7_ESRI_POLK_REQUESTED,
   LAUNCH7_TOP15_ENABLED,
 } from "@/lib/shi/research-imagery";
+import {
+  buildingVisibilityForBase,
+  isBuildingLayerId,
+  UPRIGHT_BUILDINGS_MARK,
+  type BuildingVisibilityOpts,
+} from "@/lib/shi/upright-buildings";
+
+export {
+  buildingVisibilityForBase,
+  isBuildingLayerId,
+  MAP_BUILDING_3D_LAYER_ID,
+  MAP_BUILDING_FILL_LAYER_ID,
+  UPRIGHT_BUILDINGS_MARK,
+  type BuildingVisibilityOpts,
+} from "@/lib/shi/upright-buildings";
 
 export const IMAGERY_LIDAR_OVERLAY_LAYER_ID = "imagery-lidar-overlay";
 
@@ -70,8 +85,15 @@ const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services";
 /** Free-world street layer ids (prefixed OpenFreeMap liberty). */
 let freeWorldLayerIds: string[] = [];
 
+/** OSM building footprints — kept above imagery so 3D extrusions stay visible. */
+let buildingLayerIds: string[] = [];
+
 export function getFreeWorldLayerIds(): readonly string[] {
   return freeWorldLayerIds;
+}
+
+export function getBuildingLayerIds(): readonly string[] {
+  return buildingLayerIds;
 }
 
 export const MAP_SOVEREIGNTY_VERSION = LAUNCH7_MAP_SOVEREIGNTY;
@@ -370,6 +392,7 @@ export function buildStoryMapStyle(opts?: {
     };
     // Skip liberty background + natural_earth so Esri underlay stays visible
     // when vector is cold, empty, or partially filtered.
+    // Buildings are painted later (above imagery) so 3D extrusions are not buried.
     fwLayers = [
       {
         id: "fw-streets-raster",
@@ -377,13 +400,27 @@ export function buildStoryMapStyle(opts?: {
         source: "streets-raster",
       },
       ...liberty.layers
-        .filter((layer) => layer.id !== "background" && layer.id !== "natural_earth")
+        .filter(
+          (layer) =>
+            layer.id !== "background" &&
+            layer.id !== "natural_earth" &&
+            !isBuildingLayerId(layer.id),
+        )
         .map((layer) => sanitizeLibertyLayer(layer)),
     ];
   }
 
+  const buildingLayers: LayerSpecification[] =
+    streetsMode === "underlay-plus-vector"
+      ? liberty.layers
+          .filter((layer) => isBuildingLayerId(layer.id))
+          .map((layer) => sanitizeLibertyLayer(layer))
+      : [];
+
   const fwIds = fwLayers.map((l) => l.id);
+  const bIds = buildingLayers.map((l) => l.id);
   freeWorldLayerIds = fwIds;
+  buildingLayerIds = bIds;
 
   const style: StyleSpecification = {
     version: 8,
@@ -392,6 +429,8 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
+      "storyhome:building-layer-ids": bIds,
+      "storyhome:upright-buildings": UPRIGHT_BUILDINGS_MARK,
       "storyhome:satellite":
         imageryGen === "google-l7" || imageryGen === "google-l7-2x"
           ? "owned-google-l7"
@@ -569,11 +608,13 @@ export function buildStoryMapStyle(opts?: {
           "raster-fade-duration": 160,
         },
       },
+      // After rasters so extrusions sit on Imagery/Hybrid (not under satellite).
+      ...buildingLayers,
     ],
   };
 
   if (opts?.initialBase) {
-    applyInitialBaseToStyle(style, opts.initialBase, fwIds);
+    applyInitialBaseToStyle(style, opts.initialBase, fwIds, bIds);
   }
   return style;
 }
@@ -582,6 +623,7 @@ function applyInitialBaseToStyle(
   style: StyleSpecification,
   base: MapBaseLayer,
   fwIds: string[],
+  bIds: string[],
 ): void {
   const vis = (on: boolean) => (on ? "visible" : "none");
   const want: Record<string, boolean> = {
@@ -592,10 +634,16 @@ function applyInitialBaseToStyle(
     "base-labels": base === "imageryLabels",
   };
   const fwOn = base === "street";
+  const buildingVis = buildingVisibilityForBase(base, {
+    uprightOnImagery: false,
+  });
   for (const layer of style.layers) {
     const layout = { ...(layer.layout ?? {}) } as Record<string, unknown>;
     if (fwIds.includes(layer.id)) {
       layout.visibility = vis(fwOn);
+      layer.layout = layout as LayerSpecification["layout"];
+    } else if (bIds.includes(layer.id)) {
+      layout.visibility = vis(buildingVis[layer.id] ?? false);
       layer.layout = layout as LayerSpecification["layout"];
     } else if (layer.id in want) {
       layout.visibility = vis(want[layer.id]!);
@@ -610,18 +658,38 @@ type MapLike = {
   getStyle?: () => { metadata?: unknown };
 };
 
-function freeWorldIdsForMap(map: MapLike): readonly string[] {
+function styleMetaStringIds(
+  map: MapLike,
+  key: string,
+  fallback: readonly string[],
+): readonly string[] {
   const meta = map.getStyle?.()?.metadata;
   if (meta && typeof meta === "object" && meta !== null) {
-    const fromStyle = (meta as Record<string, unknown>)["storyhome:fw-layer-ids"];
+    const fromStyle = (meta as Record<string, unknown>)[key];
     if (Array.isArray(fromStyle) && fromStyle.every((x) => typeof x === "string")) {
       return fromStyle as string[];
     }
   }
-  return freeWorldLayerIds;
+  return fallback;
 }
 
-export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
+function freeWorldIdsForMap(map: MapLike): readonly string[] {
+  return styleMetaStringIds(map, "storyhome:fw-layer-ids", freeWorldLayerIds);
+}
+
+function buildingIdsForMap(map: MapLike): readonly string[] {
+  return styleMetaStringIds(
+    map,
+    "storyhome:building-layer-ids",
+    buildingLayerIds,
+  );
+}
+
+export function setBaseLayerVisibility(
+  map: MapLike,
+  base: MapBaseLayer,
+  opts?: BuildingVisibilityOpts,
+) {
   const show = (id: string, on: boolean) => {
     if (map.getLayer && !map.getLayer(id)) return;
     try {
@@ -634,6 +702,11 @@ export function setBaseLayerVisibility(map: MapLike, base: MapBaseLayer) {
   const freeWorldOn = base === "street";
   for (const id of freeWorldIdsForMap(map)) {
     show(id, freeWorldOn);
+  }
+
+  const buildingVis = buildingVisibilityForBase(base, opts);
+  for (const id of buildingIdsForMap(map)) {
+    show(id, buildingVis[id] ?? false);
   }
 
   show("base-satellite", base === "satellite" || base === "imageryLabels");
