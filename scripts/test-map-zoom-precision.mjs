@@ -4,7 +4,7 @@
  * Run: node scripts/test-map-zoom-precision.mjs
  */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -46,7 +46,12 @@ assert.doesNotMatch(style, /World_Street_Map\/MapServer\/tile/);
 assert.match(style, /storyhome:fw-layer-ids/);
 assert.match(style, /storyhome:admin-boundary-layer-ids/);
 assert.match(style, /setParcelOverlayVisibility|setAdminBoundaryVisibility/);
-assert.match(style, /applyAdminBoundaryStyle|boundary_2|boundary_3/);
+assert.match(style, /admin-state-line|admin-county-line/);
+assert.match(style, /launch7-admin-boundaries\.geojson/);
+assert.match(style, /isLibertyAdminBoundaryOriginalId|boundary_2|boundary_3/);
+assert.ok(
+  existsSync(join(root, "public/geo/launch7-admin-boundaries.geojson")),
+);
 assert.match(style, /underlay-plus-vector|background.*natural_earth|natural_earth/);
 assert.match(style, /freeWorldIdsForMap|fw-layer-ids/);
 assert.match(style, /coalesce/);

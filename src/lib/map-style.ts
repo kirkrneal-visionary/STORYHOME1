@@ -89,16 +89,25 @@ let freeWorldLayerIds: string[] = [];
 let buildingLayerIds: string[] = [];
 
 /**
- * State (admin 4) + county (admin 6) + national (admin 2) boundary line ids.
+ * Texas state + launch-7 county boundary line ids (TIGER GeoJSON).
  * Toggled with the Parcels switch — not with Streets/Imagery base.
  */
 let adminBoundaryLayerIds: string[] = [];
 
-/** Liberty original ids for admin boundary lines (prefixed to fw-* in style). */
-const ADMIN_BOUNDARY_ORIGINAL_IDS = new Set(["boundary_2", "boundary_3"]);
+/** Liberty original ids kept out of Streets free-world (parcel overlay owns admin lines). */
+const LIBERTY_ADMIN_BOUNDARY_ORIGINAL_IDS = new Set([
+  "boundary_2",
+  "boundary_3",
+]);
 
-export function isAdminBoundaryOriginalId(originalId: string): boolean {
-  return ADMIN_BOUNDARY_ORIGINAL_IDS.has(originalId);
+export const ADMIN_BOUNDARY_SOURCE_ID = "admin-boundaries";
+export const ADMIN_STATE_LINE_LAYER_ID = "admin-state-line";
+export const ADMIN_COUNTY_LINE_LAYER_ID = "admin-county-line";
+export const ADMIN_BOUNDARY_GEOJSON_PATH =
+  "/geo/launch7-admin-boundaries.geojson";
+
+export function isLibertyAdminBoundaryOriginalId(originalId: string): boolean {
+  return LIBERTY_ADMIN_BOUNDARY_ORIGINAL_IDS.has(originalId);
 }
 
 export function getFreeWorldLayerIds(): readonly string[] {
@@ -181,66 +190,68 @@ export function sanitizeLibertyLayer(
     }
     next.layout = layout as LayerSpecification["layout"];
   }
-  const withPlace = applyStoryPlaceLabelStyle(originalId, next);
-  return applyAdminBoundaryStyle(originalId, withPlace);
+  return applyStoryPlaceLabelStyle(originalId, next);
 }
 
-/**
- * Desk-readable state/county lines. Kept subtle so CAD parcel gold stays primary.
- */
-export function applyAdminBoundaryStyle(
-  originalId: string,
-  layer: LayerSpecification,
-): LayerSpecification {
-  if (layer.type !== "line" || !ADMIN_BOUNDARY_ORIGINAL_IDS.has(originalId)) {
-    return layer;
-  }
-  const paint: Record<string, unknown> = { ...(layer.paint ?? {}) };
-  const layout: Record<string, unknown> = { ...(layer.layout ?? {}) };
-  layout["line-cap"] = "round";
-  layout["line-join"] = "round";
-
-  if (originalId === "boundary_2") {
-    // National border (e.g. TX–Mexico).
-    paint["line-color"] = MAP_NAVY;
-    paint["line-opacity"] = 0.85;
-    paint["line-width"] = [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      3,
-      1.1,
-      8,
-      2.2,
-      12,
-      2.8,
-    ];
-  } else {
-    // State (4) + county (6) inside boundary_3's admin_level 3–6 filter.
-    paint["line-color"] = MAP_TEAL;
-    paint["line-opacity"] = 0.78;
-    paint["line-dasharray"] = [2, 1.25];
-    paint["line-width"] = [
-      "interpolate",
-      ["linear"],
-      ["zoom"],
-      5,
-      0.7,
-      8,
-      1.25,
-      12,
-      1.9,
-      16,
-      2.4,
-    ];
-  }
-
-  return {
-    ...layer,
-    type: "line",
-    layout: layout as Extract<LayerSpecification, { type: "line" }>["layout"],
-    paint: paint as Extract<LayerSpecification, { type: "line" }>["paint"],
-  };
+/** Desk state + county line layers (TIGER GeoJSON). Above basemap rasters. */
+export function buildAdminBoundaryLayers(): LayerSpecification[] {
+  return [
+    {
+      id: ADMIN_STATE_LINE_LAYER_ID,
+      type: "line",
+      source: ADMIN_BOUNDARY_SOURCE_ID,
+      filter: ["==", ["get", "kind"], "state"],
+      layout: {
+        visibility: "visible",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": MAP_NAVY,
+        "line-opacity": 0.88,
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          4,
+          1.4,
+          8,
+          2.4,
+          12,
+          3.2,
+        ],
+      },
+    },
+    {
+      id: ADMIN_COUNTY_LINE_LAYER_ID,
+      type: "line",
+      source: ADMIN_BOUNDARY_SOURCE_ID,
+      filter: ["==", ["get", "kind"], "county"],
+      layout: {
+        visibility: "visible",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": MAP_TEAL,
+        "line-opacity": 0.82,
+        "line-dasharray": [2.2, 1.4],
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          5,
+          1.1,
+          8,
+          1.8,
+          12,
+          2.6,
+          16,
+          3.2,
+        ],
+      },
+    },
+  ];
 }
 
 /**
@@ -394,8 +405,8 @@ export function applyStoryPlaceLabelStyle(
  * - Topo / terrain / gray remain borrowed switchable rasters
  * - Free-world layer ids live in style metadata (not a module singleton — that
  *   raced across Marketplace/Research and could hide the wrong layers)
- * - State/county boundary lines sit above basemap rasters and follow the
- *   Parcels switch (not Streets/Imagery).
+ * - Texas state + launch-7 county lines (TIGER GeoJSON) sit above basemap
+ *   rasters and follow the Parcels switch (not Streets/Imagery).
  */
 
 /** Terrarium DEM for 3D. Add lazily on Research so 2D does not fetch heights. */
@@ -486,7 +497,7 @@ export function buildStoryMapStyle(opts?: {
             layer.id !== "background" &&
             layer.id !== "natural_earth" &&
             !isBuildingLayerId(layer.id) &&
-            !isAdminBoundaryOriginalId(layer.id),
+            !isLibertyAdminBoundaryOriginalId(layer.id),
         )
         .map((layer) => sanitizeLibertyLayer(layer)),
     ];
@@ -499,12 +510,7 @@ export function buildStoryMapStyle(opts?: {
           .map((layer) => sanitizeLibertyLayer(layer))
       : [];
 
-  const adminBoundaryLayers: LayerSpecification[] =
-    streetsMode === "underlay-plus-vector"
-      ? liberty.layers
-          .filter((layer) => isAdminBoundaryOriginalId(layer.id))
-          .map((layer) => sanitizeLibertyLayer(layer))
-      : [];
+  const adminBoundaryLayers = buildAdminBoundaryLayers();
 
   const fwIds = fwLayers.map((l) => l.id);
   const bIds = buildingLayers.map((l) => l.id);
@@ -542,6 +548,11 @@ export function buildStoryMapStyle(opts?: {
     sky: RESEARCH_TERRAIN_SKY_OFF,
     sources: {
       ...fwSources,
+      [ADMIN_BOUNDARY_SOURCE_ID]: {
+        type: "geojson",
+        data: absolutizeMapTileTemplate(ADMIN_BOUNDARY_GEOJSON_PATH),
+        attribution: "County/state lines © U.S. Census TIGER",
+      },
       ...(opts?.deferDem
         ? {}
         : { [RESEARCH_LIDAR_DEM_SOURCE_ID]: researchDemSourceSpec() }),
