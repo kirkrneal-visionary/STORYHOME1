@@ -561,17 +561,21 @@ export function applyImageryOverlayStyle(
     deskPaint["text-color"] = "#f7f4ec";
     deskPaint["text-halo-color"] = "rgba(10, 22, 38, 0.88)";
     deskPaint["text-halo-blur"] = 0;
+    // Cast whole layer: MapLibre paint/layout unions need a discriminant + source.
     return {
       ...desk,
       id: `img-${originalId}`,
-      layout: deskLayout as LayerSpecification["layout"],
-      paint: deskPaint as LayerSpecification["paint"],
-    };
+      type: "symbol",
+      layout: deskLayout,
+      paint: deskPaint,
+    } as LayerSpecification;
   }
 
-  next.layout = layout as LayerSpecification["layout"];
-  next.paint = paint as LayerSpecification["paint"];
-  return next;
+  return {
+    ...next,
+    layout,
+    paint,
+  } as LayerSpecification;
 }
 
 export function isImageryOverlayOriginalId(originalId: string): boolean {
