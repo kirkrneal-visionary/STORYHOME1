@@ -11,8 +11,8 @@
  */
 
 export const RESEARCH_MAPBOX_TOKEN_ENV = "NEXT_PUBLIC_MAPBOX_TOKEN";
-export const RESEARCH_MAPBOX_SKY_BLUE = "#4a9adf";
-export const RESEARCH_MAPBOX_SKY_HAZE = "#d7ebf8";
+export const RESEARCH_MAPBOX_SKY_BLUE = "#3d86cf";
+export const RESEARCH_MAPBOX_SKY_HAZE = "#e8f2fb";
 
 export type ResearchMapEngine = "mapbox" | "maplibre";
 
@@ -90,11 +90,11 @@ export type ResearchMapboxFog = {
 export function researchMapboxFogForPitch(pitch: number): ResearchMapboxFog {
   const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 55));
   return {
-    range: [1.2 + lookingOut * 0.35, 8 + lookingOut * 4],
-    color: RESEARCH_MAPBOX_SKY_HAZE,
+    range: [1.1 + lookingOut * 0.3, 7 + lookingOut * 3],
+    color: "#d2ddd4",
     "high-color": RESEARCH_MAPBOX_SKY_BLUE,
-    "space-color": "#5ba8e0",
-    "horizon-blend": 0.04 + lookingOut * 0.06,
+    "space-color": "#5a9ad4",
+    "horizon-blend": 0.035 + lookingOut * 0.045,
     "star-intensity": 0,
   };
 }
