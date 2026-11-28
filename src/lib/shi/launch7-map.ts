@@ -26,13 +26,17 @@ export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
 export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles are served from Story Home’s launch-7 API (and/or CDN); Mapbox is only an optional 3D renderer when a public token is set. Parcel outlines are our CAD. ${
   launch7GoogleImageryRequested()
-    ? "Imagery across the launch-7 footprint uses Google Maps satellite (Map Tiles API high-DPI 2x, proxied — not stored on our servers) to native z20; Esri or USDA NAIP apply on error or when the Google key is missing."
+    ? "Imagery/Hybrid use Google Maps satellite only (Map Tiles API high-DPI 2x, proxied — not stored; world coverage to native z20). Misses fail soft (empty/retry) — no Esri/USGS/NAIP swap under Google. Real limit is Google billing/quota."
     : LAUNCH7_ESRI_POLK_REQUESTED
-      ? "Imagery across the launch-7 footprint uses Esri World Imagery (ArcGIS Location Platform, proxied — not stored on our servers); outside the footprint or on error, USDA NAIP 60 cm and USGS Imagery Only apply."
+      ? "Imagery uses Esri World Imagery as the alternate primary when Google is off (ArcGIS Location Platform, proxied, footprint-bounded; empty on miss)."
       : LAUNCH7_TOP15_ENABLED
         ? "Close-zoom imagery is the Texas Orthoimagery Program 2015 50 cm (TxGIO, CC0) we cache for the launch-7 footprint, with USDA NAIP 60 cm as the fallback."
-        : "Close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) we cache for the launch-7 footprint."
-} Far-out views use USGS Imagery Only tiles.`;
+        : "Without Google/Esri keys, close-zoom imagery is USDA NAIP 60 cm (USGS / Texas) for local/dev; far-out uses USGS Imagery Only."
+}${
+  launch7GoogleImageryRequested() || LAUNCH7_ESRI_POLK_REQUESTED
+    ? ""
+    : " Far-out views use USGS Imagery Only tiles."
+}`;
 
 export type Launch7County = (typeof CORRIDOR_COUNTIES)[number];
 

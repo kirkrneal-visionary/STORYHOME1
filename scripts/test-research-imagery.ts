@@ -154,9 +154,12 @@ assert.match(tiles, /tileUsesEsriLaunch7Imagery/);
 assert.match(tiles, /tileIntersectsLaunch7/);
 assert.match(tiles, /noPersist/);
 assert.match(tiles, /ESRI_FETCH_TIMEOUT_MS/);
-assert.match(tiles, /esriFallback = true[\s\S]*fetchUsgsXyzTile/);
-assert.match(tiles, /imageryUsesNaip60\(z\) && !googleFallback/);
-assert.match(tiles, /if \(googleFallback\) return null/);
+/** Google-only: miss returns null — no Esri/USGS/NAIP stack under Google. */
+assert.match(tiles, /Never swap Esri\/USGS\/NAIP under Google/);
+assert.match(tiles, /if \(googleLaunch7Tile\) \{[\s\S]*return null;/);
+assert.doesNotMatch(tiles, /googleFallback/);
+assert.doesNotMatch(tiles, /esriFallback/);
+assert.match(imageryLib, /Google-only; empty tile on miss/);
 const statusRoute = readFileSync(
   join(root, "src/app/api/map/launch7/status/route.ts"),
   "utf8",
@@ -165,7 +168,7 @@ assert.match(statusRoute, /ensureGoogleMapTileSession/);
 assert.match(imageryLib, /resolveLaunch7ImageryGen/);
 assert.match(imageryLib, /launch7ImageryTileTemplate/);
 assert.doesNotMatch(imageryLib, /NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY/);
-assert.match(tiles, /if \(!hit && LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
+assert.match(tiles, /if \(LAUNCH7_TOP15_ENABLED\) \{\s*hit = await fetchImage\(\s*naip60ExportUrl\(TXGIO_TOP15_IMAGESERVER/);
 const imageryRoute = readFileSync(
   join(root, "src/app/api/map/launch7/imagery/[z]/[x]/[y]/route.ts"),
   "utf8",

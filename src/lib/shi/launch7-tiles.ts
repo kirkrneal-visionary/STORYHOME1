@@ -80,16 +80,23 @@ export function tileIntersectsLaunch7(z: number, x: number, y: number): boolean 
   return tw <= le && te >= lw && ts <= ln && tn >= ls;
 }
 
-/** Google satellite for every imagery/hybrid zoom inside the launch-7 union bbox. */
+/**
+ * Google satellite for Imagery/Hybrid at every zoom when flag+key are on.
+ * Not footprint-gated — Map Tiles API covers the world; billing/quota is the
+ * real limit. Fail soft (204) on miss; never stack USGS/NAIP/Esri under Google.
+ */
 export function tileUsesGoogleLaunch7Imagery(
-  z: number,
-  x: number,
-  y: number,
+  _z: number,
+  _x: number,
+  _y: number,
 ): boolean {
-  return launch7GoogleImageryActive() && tileIntersectsLaunch7(z, x, y);
+  return launch7GoogleImageryActive();
 }
 
-/** Esri World Imagery when Google is off or unavailable (fallback). */
+/**
+ * Esri World Imagery only when Google is off (alternate primary, not a
+ * mid-view swap under Google). Still footprint-bounded for cost.
+ */
 export function tileUsesEsriLaunch7Imagery(
   z: number,
   x: number,
@@ -112,8 +119,7 @@ export function launch7PaidImageryPassthrough(
 ): boolean {
   return (
     tileUsesGoogleLaunch7Imagery(z, x, y) ||
-    tileUsesEsriLaunch7Imagery(z, x, y) ||
-    (launch7GoogleImageryActive() && tileIntersectsLaunch7(z, x, y))
+    tileUsesEsriLaunch7Imagery(z, x, y)
   );
 }
 
@@ -435,41 +441,27 @@ export async function getLaunch7ImageryTile(
 
   let hit: { body: Buffer; contentType: string } | null = null;
   let kind: ImageryKind = "xyz";
-  let googleFallback = false;
-  let esriFallback = false;
 
+  // One satellite vendor per request. Google miss → empty (client retries).
+  // Never swap Esri/USGS/NAIP under Google (patchwork).
   if (googleLaunch7Tile) {
     hit = await fetchGoogleSatelliteTile(z, x, y);
     if (hit) {
       kind = "google-satellite";
     } else {
-      googleFallback = true;
-      if (launch7EsriPolkActive()) {
-        hit = await fetchEsriWorldImageryTile(z, x, y);
-        if (hit) kind = "esri-world";
-      }
-      if (!hit) {
-        hit = await fetchUsgsXyzTile(z, x, y);
-        if (hit) kind = "xyz";
-      }
+      return null;
     }
-  }
-
-  if (esriLaunch7Tile && !hit) {
+  } else if (esriLaunch7Tile) {
+    // Esri is the alternate primary only when Google flag/key is off.
     hit = await fetchEsriWorldImageryTile(z, x, y);
     if (hit) {
       kind = "esri-world";
     } else {
-      esriFallback = true;
-      hit = await fetchUsgsXyzTile(z, x, y);
-      if (hit) kind = "xyz";
+      return null;
     }
-  }
-
-  // After a Google miss, skip NAIP ImageServer (10s, different look = patchwork).
-  // MapLibre will retry the Google proxy tile instead of locking in NAIP.
-  if (imageryUsesNaip60(z) && !googleFallback) {
-    if (!hit && LAUNCH7_TOP15_ENABLED) {
+  } else if (imageryUsesNaip60(z)) {
+    // Local/dev without Google or Esri — owned NAIP/USGS cache path only.
+    if (LAUNCH7_TOP15_ENABLED) {
       hit = await fetchImage(
         naip60ExportUrl(TXGIO_TOP15_IMAGESERVER, z, x, y, false),
       );
@@ -484,23 +476,19 @@ export async function getLaunch7ImageryTile(
       hit = await fetchNaip60Tile(z, x, y, "txgio");
       if (hit) kind = "naip60";
     }
-  } else if (!hit && !googleFallback) {
+  } else {
     hit = await fetchUsgsXyzTile(z, x, y);
   }
 
   if (!hit) {
-    // Google path: 204 so the client retries Google, not a hard 502.
-    if (googleFallback) return null;
-    if (imageryUsesNaip60(z)) {
+    if (imageryUsesNaip60(z) && !googleLaunch7Tile && !esriLaunch7Tile) {
       throw new Error("imagery upstream unavailable");
     }
     return null;
   }
 
   const fallback =
-    (LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15") ||
-    (googleFallback && kind !== "google-satellite" && kind !== "esri-world") ||
-    (esriFallback && kind !== "esri-world");
+    LAUNCH7_TOP15_ENABLED && imageryUsesNaip60(z) && kind !== "top15";
   const inFootprint = tileIntersectsLaunch7(z, x, y);
   const noPersist =
     kind === "google-satellite" ||
@@ -513,14 +501,7 @@ export async function getLaunch7ImageryTile(
     contentType: hit.contentType,
     source: "upstream-fill",
     cached,
-    imageryKind:
-      googleFallback && kind !== "google-satellite" && kind !== "esri-world"
-        ? "google-satellite-fallback"
-        : esriFallback && kind !== "esri-world"
-          ? "esri-world-fallback"
-          : fallback
-            ? (`${kind}-fallback` as ImageryKind)
-            : kind,
+    imageryKind: fallback ? (`${kind}-fallback` as ImageryKind) : kind,
   };
 }
 

@@ -42,6 +42,7 @@ import {
   setBaseLayerVisibility,
   setImageryLidarOverlay,
   setParcelOverlayVisibility,
+  syncAdminBoundaryForBase,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
 import { escapeHtml } from "@/lib/security/html";
@@ -440,20 +441,21 @@ export function MarketplaceMap({
     };
   }, []);
 
-  // Base-layer switch (Wave L6 gallery).
+  // Base-layer switch (Wave L6 gallery). Admin lines stay on Imagery/Hybrid.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    setBaseLayerVisibility(map, base);
+    setBaseLayerVisibility(map, base, { parcelsOn: showParcels });
     setImageryLidarOverlay(map, lidarOverlay && photoBase);
-  }, [ready, base, lidarOverlay, photoBase]);
+  }, [ready, base, lidarOverlay, photoBase, showParcels]);
 
-  // Parcel overlay + state/county boundary lines (same Parcels switch).
+  // Parcels = CAD lot lines only. Admin lines sync with base (Imagery always on).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     setParcelOverlayVisibility(map, showParcels);
-  }, [ready, showParcels]);
+    syncAdminBoundaryForBase(map, base, showParcels);
+  }, [ready, showParcels, base]);
 
   // Cursor + double-click zoom per tool.
   useEffect(() => {

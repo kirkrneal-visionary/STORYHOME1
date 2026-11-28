@@ -5,8 +5,7 @@
 
 ## In progress
 
-- LandGlide-class Imagery overlays, cleaner / “2030” (founder GO 2026-11-28): Imagery + Hybrid paint quiet country/state names and borders, highways that fade with zoom, and soft ocean/land at continent zoom — not dense Esri/LandGlide chrome. Texas county borders stay the **7 CAD counties** only (Parcels switch). See `docs/shi/ARCHIE-LAUNCH7-MAP.md` map zoom precision.
-- Launch-7 Google satellite imagery (founder 2026-11-27): **all seven counties, all imagery zooms** use Google Map Tiles API when `LAUNCH7_GOOGLE_IMAGERY_ENABLED` and `GOOGLE_MAPS_API_KEY` are on eqmg; Esri when Google key missing; NAIP/USGS outside footprint or on error. No server tile store. High-DPI (`scaleFactor2x` + `highDpi`) + native max **z20** (`google-l7-2x`) to match LandGlide/Google SDK sharpness. Fill path is fail-fast (no blind retry / no NAIP after Google miss) with a higher MapLibre parallel budget so tiles do not crawl in or patchwork. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
+- Imagery first pass (founder GO 2026-11-28): **Google-only** satellite for Imagery/Hybrid (world coverage when key+flag on; fail soft / no USGS·NAIP·Esri stack under Google). Premium dual-stroke country/state/county + highway overlays. Admin lines **always on Imagery/Hybrid** (Parcels toggles CAD lot lines only; Texas counties = 7 CAD). Soft hillshade when Research 3D + Imagery so terrain relief reads on the drape. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
 - Texas sharp imagery (PR 306): `LAUNCH7_TOP15_ENABLED` stays **off**. TxGIO ImageServer is too slow for live maps.
 
 - iPhone Capacitor shell zooms like Safari when a text field is tapped (founder, TestFlight). Fix is web-only: viewport `maximumScale=1` / `userScalable=false` plus a 16px floor on form controls so iOS does not focus-zoom. Shell already loads the live site, so eqmg deploy is enough — no TestFlight rebuild for this. Physical device confirmation still pending.

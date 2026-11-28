@@ -1,4 +1,5 @@
 import type {
+  FilterSpecification,
   LayerSpecification,
   StyleSpecification,
 } from "maplibre-gl";
@@ -90,14 +91,15 @@ let buildingLayerIds: string[] = [];
 
 /**
  * State + launch-7 CAD county boundary line ids.
- * Toggled with the Parcels switch — not with Streets/Imagery base.
+ * Visible on Imagery/Hybrid always; on Streets they follow the Parcels switch.
  * States/provinces come from OpenMapTiles; Texas counties are the 7 CAD set only.
+ * Parcels still toggles CAD lot lines only.
  */
 let adminBoundaryLayerIds: string[] = [];
 
 /**
- * Quiet Imagery/Hybrid overlays painted ABOVE satellite (img-* ids).
- * Roads, country borders/names, state names, ocean tint — not dense Esri chrome.
+ * Premium Imagery/Hybrid overlays painted ABOVE satellite (img-* ids).
+ * Roads, country borders/names, state names, ocean tint — LandGlide-class but cleaner.
  */
 let imageryOverlayLayerIds: string[] = [];
 
@@ -143,7 +145,9 @@ const HYBRID_EXTRA_LABEL_ORIGINAL_IDS = new Set([
 ]);
 
 export const ADMIN_BOUNDARY_SOURCE_ID = "admin-boundaries";
+export const ADMIN_STATE_CASING_LAYER_ID = "admin-state-casing";
 export const ADMIN_STATE_LINE_LAYER_ID = "admin-state-line";
+export const ADMIN_COUNTY_CASING_LAYER_ID = "admin-county-casing";
 export const ADMIN_COUNTY_LINE_LAYER_ID = "admin-county-line";
 export const ADMIN_BOUNDARY_GEOJSON_PATH =
   "/geo/launch7-admin-boundaries.geojson";
@@ -151,6 +155,7 @@ export const ADMIN_BOUNDARY_GEOJSON_PATH =
 export const IMAGERY_OVERLAY_SOURCE_ID = "imagery-overlays";
 export const IMAGERY_OVERLAY_TILEJSON = "https://tiles.openfreemap.org/planet";
 export const IMAGERY_OCEAN_LAYER_ID = "img-ocean-water";
+export const IMAGERY_COUNTRY_CASING_LAYER_ID = "img-country-boundary-casing";
 export const IMAGERY_COUNTRY_LINE_LAYER_ID = "img-country-boundary";
 export const IMAGERY_NATURAL_EARTH_LAYER_ID = "img-natural-earth";
 
@@ -249,58 +254,135 @@ export function sanitizeLibertyLayer(
   return applyStoryPlaceLabelStyle(originalId, next);
 }
 
+const ADMIN_STATE_FILTER: FilterSpecification = [
+  "all",
+  ["==", ["coalesce", ["get", "admin_level"], 0], 4],
+  ["!=", ["coalesce", ["get", "maritime"], 0], 1],
+  ["!=", ["coalesce", ["get", "disputed"], 0], 1],
+  ["!", ["has", "claimed_by"]],
+];
+
+const ADMIN_COUNTRY_FILTER: FilterSpecification = [
+  "all",
+  ["==", ["coalesce", ["get", "admin_level"], 0], 2],
+  ["!=", ["coalesce", ["get", "maritime"], 0], 1],
+  ["!=", ["coalesce", ["get", "disputed"], 0], 1],
+  ["!", ["has", "claimed_by"]],
+];
+
 /**
  * State/province lines (OpenMapTiles admin_level 4) + launch-7 CAD county
  * lines (TIGER GeoJSON — 7 counties only, never full Texas grid).
- * Both follow the Parcels switch. Above basemap rasters.
+ * Dual-stroke (casing + fill) for a premium read on Imagery. Visible on
+ * Imagery/Hybrid without Parcels; on Streets they follow Parcels.
  */
 export function buildAdminBoundaryLayers(): LayerSpecification[] {
   return [
     {
-      id: ADMIN_STATE_LINE_LAYER_ID,
+      id: ADMIN_STATE_CASING_LAYER_ID,
       type: "line",
       source: IMAGERY_OVERLAY_SOURCE_ID,
       "source-layer": "boundary",
       minzoom: 3,
-      filter: [
-        "all",
-        ["==", ["coalesce", ["get", "admin_level"], 0], 4],
-        ["!=", ["coalesce", ["get", "maritime"], 0], 1],
-        ["!=", ["coalesce", ["get", "disputed"], 0], 1],
-        ["!", ["has", "claimed_by"]],
-      ],
+      filter: ADMIN_STATE_FILTER,
       layout: {
         visibility: "visible",
         "line-cap": "round",
         "line-join": "round",
       },
       paint: {
-        // Navy reads on Streets underlay and Imagery (not washed-white on paper).
-        "line-color": MAP_NAVY,
+        "line-color": "rgba(6, 14, 28, 0.78)",
         "line-opacity": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3,
-          0.4,
-          5,
-          0.62,
-          9,
-          0.78,
+          0.35,
+          6,
+          0.55,
+          10,
+          0.72,
         ],
-        "line-dasharray": [2.4, 1.6],
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3,
-          0.7,
+          2.4,
           6,
-          1.2,
+          3.6,
           10,
-          1.7,
+          5,
           14,
-          2.3,
+          6.5,
+        ],
+      },
+    },
+    {
+      id: ADMIN_STATE_LINE_LAYER_ID,
+      type: "line",
+      source: IMAGERY_OVERLAY_SOURCE_ID,
+      "source-layer": "boundary",
+      minzoom: 3,
+      filter: ADMIN_STATE_FILTER,
+      layout: {
+        visibility: "visible",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": "#f2f6fb",
+        "line-opacity": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          0.55,
+          5,
+          0.78,
+          9,
+          0.92,
+        ],
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          0.9,
+          6,
+          1.5,
+          10,
+          2.2,
+          14,
+          2.8,
+        ],
+      },
+    },
+    {
+      id: ADMIN_COUNTY_CASING_LAYER_ID,
+      type: "line",
+      source: ADMIN_BOUNDARY_SOURCE_ID,
+      filter: ["==", ["get", "kind"], "county"],
+      layout: {
+        visibility: "visible",
+        "line-cap": "round",
+        "line-join": "round",
+      },
+      paint: {
+        "line-color": "rgba(6, 18, 28, 0.7)",
+        "line-opacity": 0.85,
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          5,
+          2.6,
+          8,
+          3.8,
+          12,
+          5.2,
+          16,
+          6.4,
         ],
       },
     },
@@ -316,53 +398,46 @@ export function buildAdminBoundaryLayers(): LayerSpecification[] {
       },
       paint: {
         "line-color": MAP_TEAL,
-        "line-opacity": 0.82,
-        "line-dasharray": [2.2, 1.4],
+        "line-opacity": 0.94,
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           5,
-          1.1,
+          1.2,
           8,
-          1.8,
+          2,
           12,
-          2.6,
+          2.9,
           16,
-          3.2,
+          3.6,
         ],
       },
     },
   ];
 }
 
-/** Country borders for Imagery/Hybrid — quieter than LandGlide dashed chrome. */
-export function buildImageryCountryBoundaryLayer(): LayerSpecification {
+/** Country border casing — dark understroke for premium edge on Imagery. */
+export function buildImageryCountryBoundaryCasingLayer(): LayerSpecification {
   return {
-    id: IMAGERY_COUNTRY_LINE_LAYER_ID,
+    id: IMAGERY_COUNTRY_CASING_LAYER_ID,
     type: "line",
     source: IMAGERY_OVERLAY_SOURCE_ID,
     "source-layer": "boundary",
-    filter: [
-      "all",
-      ["==", ["coalesce", ["get", "admin_level"], 0], 2],
-      ["!=", ["coalesce", ["get", "maritime"], 0], 1],
-      ["!=", ["coalesce", ["get", "disputed"], 0], 1],
-      ["!", ["has", "claimed_by"]],
-    ],
+    filter: ADMIN_COUNTRY_FILTER,
     layout: {
       visibility: "none",
       "line-cap": "round",
       "line-join": "round",
     },
     paint: {
-      "line-color": "#f4f7fb",
+      "line-color": "rgba(4, 12, 24, 0.72)",
       "line-opacity": [
         "interpolate",
         ["linear"],
         ["zoom"],
         0,
-        0.28,
+        0.35,
         3,
         0.55,
         6,
@@ -373,13 +448,56 @@ export function buildImageryCountryBoundaryLayer(): LayerSpecification {
         ["linear"],
         ["zoom"],
         1,
-        0.7,
+        2.2,
         4,
-        1.15,
+        3.4,
         8,
-        1.8,
+        4.8,
         12,
-        2.4,
+        6,
+      ],
+    },
+  };
+}
+
+/** Country borders for Imagery/Hybrid — dual-stroke, cleaner than LandGlide chrome. */
+export function buildImageryCountryBoundaryLayer(): LayerSpecification {
+  return {
+    id: IMAGERY_COUNTRY_LINE_LAYER_ID,
+    type: "line",
+    source: IMAGERY_OVERLAY_SOURCE_ID,
+    "source-layer": "boundary",
+    filter: ADMIN_COUNTRY_FILTER,
+    layout: {
+      visibility: "none",
+      "line-cap": "round",
+      "line-join": "round",
+    },
+    paint: {
+      "line-color": "#f7fafc",
+      "line-opacity": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        0,
+        0.4,
+        3,
+        0.7,
+        6,
+        0.88,
+      ],
+      "line-width": [
+        "interpolate",
+        ["linear"],
+        ["zoom"],
+        1,
+        0.85,
+        4,
+        1.4,
+        8,
+        2.2,
+        12,
+        2.9,
       ],
     },
   };
@@ -443,8 +561,8 @@ export function buildImageryNaturalEarthLayer(): LayerSpecification {
 }
 
 /**
- * Restyle liberty road/label clones for Imagery — white ink, quiet hierarchy,
- * fade-in with zoom (not dense Google/LandGlide chrome).
+ * Restyle liberty road/label clones for Imagery — premium dual-stroke hierarchy,
+ * fade-in with zoom (LandGlide-class but cleaner, not dense chrome).
  */
 export function applyImageryOverlayStyle(
   originalId: string,
@@ -471,38 +589,66 @@ export function applyImageryOverlayStyle(
     }
 
     if (isCasing) {
-      paint["line-color"] = "rgba(8, 18, 32, 0.55)";
+      paint["line-color"] = "rgba(4, 12, 24, 0.78)";
+      paint["line-blur"] = 0;
       paint["line-opacity"] = [
         "interpolate",
         ["linear"],
         ["zoom"],
         5,
-        isMotorway ? 0.25 : 0,
+        isMotorway ? 0.4 : 0,
         8,
-        isMotorway ? 0.45 : isSecondary ? 0.2 : 0,
+        isMotorway ? 0.62 : isSecondary ? 0.35 : 0,
         12,
-        0.55,
+        0.72,
         16,
-        0.65,
+        0.82,
+      ];
+      paint["line-width"] = [
+        "interpolate",
+        ["exponential", 1.4],
+        ["zoom"],
+        5,
+        isMotorway ? 2.8 : 0,
+        8,
+        isMotorway ? 4.2 : isSecondary ? 3 : 0,
+        12,
+        isMotorway ? 7 : isSecondary ? 5.2 : 3.6,
+        16,
+        isMotorway ? 11 : isSecondary ? 8 : 5.5,
       ];
     } else {
       paint["line-color"] = isMotorway
-        ? "rgba(255, 248, 236, 0.92)"
-        : "rgba(244, 248, 252, 0.82)";
+        ? "rgba(255, 250, 240, 0.96)"
+        : "rgba(246, 250, 255, 0.9)";
+      paint["line-blur"] = 0;
       paint["line-opacity"] = [
         "interpolate",
         ["linear"],
         ["zoom"],
         5,
-        isMotorway ? 0.35 : 0,
+        isMotorway ? 0.45 : 0,
         8,
-        isMotorway ? 0.7 : isSecondary ? 0.25 : 0,
+        isMotorway ? 0.82 : isSecondary ? 0.4 : 0,
         11,
-        isMinor ? 0.15 : 0.78,
+        isMinor ? 0.35 : 0.9,
         14,
-        0.88,
-        17,
         0.95,
+        17,
+        0.98,
+      ];
+      paint["line-width"] = [
+        "interpolate",
+        ["exponential", 1.4],
+        ["zoom"],
+        5,
+        isMotorway ? 1.2 : 0,
+        8,
+        isMotorway ? 2 : isSecondary ? 1.4 : 0,
+        12,
+        isMotorway ? 3.4 : isSecondary ? 2.4 : 1.6,
+        16,
+        isMotorway ? 5.2 : isSecondary ? 3.8 : 2.6,
       ];
     }
   }
@@ -786,14 +932,15 @@ export function applyStoryPlaceLabelStyle(
  *   vector on top (liberty background omitted so underlay shows if vector is
  *   slow/empty). World_Street_Map is avoided — its baked place names doubled
  *   desk vector city labels (two fonts for the same city).
- * - Imagery / Hybrid = owned satellite + quiet vector overlays ABOVE rasters
- *   (country names/borders, state names, highways that fade with zoom, soft
- *   ocean tint). Not dense Esri World_Boundaries chrome.
+ * - Imagery / Hybrid = Google-only satellite (when key on) + premium vector
+ *   overlays ABOVE rasters (country/state/county lines, highways that fade
+ *   with zoom, soft ocean tint). Not dense Esri World_Boundaries chrome.
  * - Topo / terrain / gray remain borrowed switchable rasters
  * - Free-world layer ids live in style metadata (not a module singleton — that
  *   raced across Marketplace/Research and could hide the wrong layers)
  * - State/province lines (OMT) + launch-7 CAD county lines (TIGER GeoJSON)
- *   sit above basemap rasters and follow the Parcels switch.
+ *   are always visible on Imagery/Hybrid; on Streets they follow Parcels.
+ *   Parcels still toggles CAD lot lines only.
  */
 
 /** Terrarium DEM for 3D. Add lazily on Research so 2D does not fetch heights. */
@@ -911,6 +1058,7 @@ export function buildStoryMapStyle(opts?: {
   ];
   const imageryAboveLayers: LayerSpecification[] = [
     buildImageryOceanLayer(),
+    buildImageryCountryBoundaryCasingLayer(),
     buildImageryCountryBoundaryLayer(),
     ...imageryClone.shared,
     ...imageryClone.hybridExtra,
@@ -936,7 +1084,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:map-sovereignty": LAUNCH7_MAP_SOVEREIGNTY,
       "storyhome:streets": streetsMode,
       "storyhome:place-labels": "desk-v1",
-      "storyhome:imagery-overlays": "quiet-v1",
+      "storyhome:imagery-overlays": "premium-v1",
       "storyhome:fw-layer-ids": fwIds,
       "storyhome:building-layer-ids": bIds,
       "storyhome:admin-boundary-layer-ids": adminIds,
@@ -1212,7 +1360,7 @@ function applyInitialBaseToStyle(
       layout.visibility = vis(fwOn);
       layer.layout = layout as LayerSpecification["layout"];
     } else if (adminIds.includes(layer.id)) {
-      // Parcels default on — boundaries follow that switch, not base layer.
+      // Imagery/Hybrid: always on. Streets initial: visible (Parcels default on).
       layout.visibility = "visible";
       layer.layout = layout as LayerSpecification["layout"];
     } else if (imgIds.includes(layer.id)) {
@@ -1295,7 +1443,7 @@ function setLayerVisibility(map: MapLike, id: string, on: boolean) {
   }
 }
 
-/** State + county boundary lines — same control as the Parcels switch. */
+/** State + county boundary lines (casing + fill). */
 export function setAdminBoundaryVisibility(map: MapLike, visible: boolean) {
   for (const id of adminBoundaryIdsForMap(map)) {
     setLayerVisibility(map, id, visible);
@@ -1303,8 +1451,21 @@ export function setAdminBoundaryVisibility(map: MapLike, visible: boolean) {
 }
 
 /**
- * Parcel fill/line + state/county boundaries.
- * Call from the Parcels toolbar switch on Research and Marketplace maps.
+ * Admin lines: always on Imagery/Hybrid; on Streets they follow Parcels.
+ * Call when base or Parcels changes.
+ */
+export function syncAdminBoundaryForBase(
+  map: MapLike,
+  base: MapBaseLayer,
+  parcelsOn: boolean,
+) {
+  const imageryOn = base === "satellite" || base === "imageryLabels";
+  setAdminBoundaryVisibility(map, imageryOn || parcelsOn);
+}
+
+/**
+ * CAD parcel fill/line only. Admin lines use syncAdminBoundaryForBase —
+ * Imagery keeps country/state/county visible with Parcels off.
  */
 export function setParcelOverlayVisibility(
   map: MapLike,
@@ -1314,13 +1475,12 @@ export function setParcelOverlayVisibility(
   for (const id of parcelLayerIds) {
     setLayerVisibility(map, id, visible);
   }
-  setAdminBoundaryVisibility(map, visible);
 }
 
 export function setBaseLayerVisibility(
   map: MapLike,
   base: MapBaseLayer,
-  opts?: BuildingVisibilityOpts,
+  opts?: BuildingVisibilityOpts & { parcelsOn?: boolean },
 ) {
   const freeWorldOn = base === "street";
   for (const id of freeWorldIdsForMap(map)) {
@@ -1332,8 +1492,6 @@ export function setBaseLayerVisibility(
     setLayerVisibility(map, id, buildingVis[id] ?? false);
   }
 
-  // Admin boundaries follow Parcels — do not hide them when leaving Streets.
-
   const imageryOn = base === "satellite" || base === "imageryLabels";
   const hybridOn = base === "imageryLabels";
   const hybridExtra = new Set(hybridExtraLabelIdsForMap(map));
@@ -1341,11 +1499,18 @@ export function setBaseLayerVisibility(
     setLayerVisibility(map, id, imageryOn && (hybridOn || !hybridExtra.has(id)));
   }
 
+  // Admin: Imagery always; Streets follows Parcels when parcelsOn is known.
+  if (opts?.parcelsOn != null) {
+    syncAdminBoundaryForBase(map, base, opts.parcelsOn);
+  } else if (imageryOn) {
+    setAdminBoundaryVisibility(map, true);
+  }
+
   setLayerVisibility(map, "base-satellite", imageryOn);
   setLayerVisibility(map, "base-topo", base === "topo");
   setLayerVisibility(map, "base-terrain", base === "terrain");
   setLayerVisibility(map, "base-gray", base === "gray");
-  // Dense Esri place raster stays off on Hybrid — quiet vector overlays instead.
+  // Dense Esri place raster stays off on Hybrid — premium vector overlays instead.
   setLayerVisibility(map, "base-labels", false);
 }
 
