@@ -23,7 +23,7 @@ import {
 } from "@/lib/map-style";
 import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
-  MAP_PRECISION_MAX_ZOOM,
+  mapPrecisionMaxZoom,
   PARCEL_LINE_WIDTH_EXPR,
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
@@ -335,7 +335,7 @@ export function ShiCorridorsMap({
           [county.bbox[2], county.bbox[3]],
         ],
         fitBoundsOptions: { padding: 36 },
-        maxZoom: MAP_PRECISION_MAX_ZOOM,
+        maxZoom: mapPrecisionMaxZoom(imageryGen),
         transformRequest: mapLibreTransformRequest,
         pitchWithRotate: false,
         dragRotate: false,

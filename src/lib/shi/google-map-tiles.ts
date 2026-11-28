@@ -11,6 +11,22 @@ const SESSION_REFRESH_SKEW_SEC = 3600;
 
 export const GOOGLE_SATELLITE_FETCH_TIMEOUT_MS = 7_500;
 
+/**
+ * Retina satellite session — 512px images for the same 256 CSS-pixel mercator
+ * tile (Map Tiles API `scaleFactor2x` + `highDpi`). Matches LandGlide / Google
+ * Maps SDK sharpness on phones without changing the z/x/y grid.
+ */
+export const GOOGLE_SATELLITE_SESSION_BODY = {
+  mapType: "satellite",
+  language: "en-US",
+  region: "US",
+  scale: "scaleFactor2x",
+  highDpi: true,
+} as const;
+
+/** Native tile ceiling for Google inside launch-7 (API allows higher; we stop soft-stretch). */
+export const GOOGLE_SATELLITE_MAX_ZOOM = 20;
+
 function envTruthy(name: string): boolean {
   if (typeof process === "undefined") return false;
   const v = process.env[name]?.trim().toLowerCase();
@@ -37,6 +53,8 @@ export function launch7GoogleImageryActive(): boolean {
 type SessionState = {
   session: string;
   expirySec: number;
+  tileWidth: number;
+  tileHeight: number;
 };
 
 let cachedSession: SessionState | null = null;
@@ -80,6 +98,9 @@ export type GoogleSessionOk = {
   httpStatus: 200;
   sessionLen: number;
   expirySec: number;
+  tileWidth: number;
+  tileHeight: number;
+  highDpi: true;
 };
 
 export type GoogleTileOk = {
@@ -149,11 +170,7 @@ async function createGoogleSatelliteSession(
         "Content-Type": "application/json",
         "User-Agent": GOOGLE_UPSTREAM_UA,
       },
-      body: JSON.stringify({
-        mapType: "satellite",
-        language: "en-US",
-        region: "US",
-      }),
+      body: JSON.stringify(GOOGLE_SATELLITE_SESSION_BODY),
       signal: ctrl.signal,
     });
     if (!res.ok) {
@@ -163,11 +180,15 @@ async function createGoogleSatelliteSession(
     const json = (await res.json()) as {
       session?: string;
       expiry?: string;
+      tileWidth?: number;
+      tileHeight?: number;
     };
     const session = json.session?.trim();
     const expirySec = Number(json.expiry);
     if (!session || !Number.isFinite(expirySec)) return null;
-    return { session, expirySec };
+    const tileWidth = Number(json.tileWidth) || 512;
+    const tileHeight = Number(json.tileHeight) || 512;
+    return { session, expirySec, tileWidth, tileHeight };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "fetch failed";
     console.warn(`[launch7-google] createSession transportError=${msg}`);
@@ -229,11 +250,7 @@ export async function probeGoogleSatelliteTile(
         "Content-Type": "application/json",
         "User-Agent": GOOGLE_UPSTREAM_UA,
       },
-      body: JSON.stringify({
-        mapType: "satellite",
-        language: "en-US",
-        region: "US",
-      }),
+      body: JSON.stringify(GOOGLE_SATELLITE_SESSION_BODY),
       signal: ctrl.signal,
     });
     if (!res.ok) {
@@ -248,6 +265,8 @@ export async function probeGoogleSatelliteTile(
     const json = (await res.json()) as {
       session?: string;
       expiry?: string;
+      tileWidth?: number;
+      tileHeight?: number;
     };
     const sessionToken = json.session?.trim();
     const expirySec = Number(json.expiry);
@@ -270,6 +289,9 @@ export async function probeGoogleSatelliteTile(
       httpStatus: 200,
       sessionLen: sessionToken.length,
       expirySec,
+      tileWidth: Number(json.tileWidth) || 512,
+      tileHeight: Number(json.tileHeight) || 512,
+      highDpi: true,
     };
 
     const tileUrl = googleSatelliteTileUrl(z, x, y, sessionToken, apiKey);

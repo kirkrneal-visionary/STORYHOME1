@@ -13,7 +13,7 @@ import {
   setBaseLayerVisibility,
 } from "@/lib/map-style";
 import {
-  MAP_PRECISION_MAX_ZOOM,
+  mapPrecisionMaxZoom,
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
@@ -139,7 +139,7 @@ export function HomeDrawMap({
       style: buildStoryMapStyle({ deferDem: true, imageryGen }),
       bounds: frameFor(areaRef.current),
       fitBoundsOptions: { padding: FIT_PADDING },
-      maxZoom: MAP_PRECISION_MAX_ZOOM,
+      maxZoom: mapPrecisionMaxZoom(imageryGen),
       transformRequest: mapLibreTransformRequest,
       attributionControl: { compact: true },
       dragRotate: false,

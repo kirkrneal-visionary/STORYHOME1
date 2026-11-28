@@ -47,7 +47,7 @@ import { escapeHtml } from "@/lib/security/html";
 import { launch7UnionBbox } from "@/lib/shi/launch7-map";
 import {
   MAP_PARCEL_SOURCE_MAX_ZOOM,
-  MAP_PRECISION_MAX_ZOOM,
+  mapPrecisionMaxZoom,
   PARCEL_LINE_WIDTH_EXPR,
   mapLibreTransformRequest,
 } from "@/lib/map-precision";
@@ -236,7 +236,7 @@ export function MarketplaceMap({
             center: [EAST_TEXAS_CENTER.lng, EAST_TEXAS_CENTER.lat],
             zoom: EAST_TEXAS_DEFAULT_ZOOM,
           }),
-      maxZoom: MAP_PRECISION_MAX_ZOOM,
+      maxZoom: mapPrecisionMaxZoom(imageryGen),
       transformRequest: mapLibreTransformRequest,
       preserveDrawingBuffer: true,
       attributionControl: { compact: true },

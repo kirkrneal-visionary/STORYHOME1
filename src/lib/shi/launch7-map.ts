@@ -26,7 +26,7 @@ export const LAUNCH7_MAP_SOVEREIGNTY = "l7-3" as const;
 
 export const LAUNCH7_MAP_HONESTY = `Research streets, imagery, parcels, and elevation tiles are served from Story Home’s launch-7 API (and/or CDN); Mapbox is only an optional 3D renderer when a public token is set. Parcel outlines are our CAD. ${
   launch7GoogleImageryRequested()
-    ? "Imagery across the launch-7 footprint uses Google Maps satellite (Map Tiles API, proxied — not stored on our servers); Esri or USDA NAIP apply on error or when the Google key is missing."
+    ? "Imagery across the launch-7 footprint uses Google Maps satellite (Map Tiles API high-DPI 2x, proxied — not stored on our servers) to native z20; Esri or USDA NAIP apply on error or when the Google key is missing."
     : LAUNCH7_ESRI_POLK_REQUESTED
       ? "Imagery across the launch-7 footprint uses Esri World Imagery (ArcGIS Location Platform, proxied — not stored on our servers); outside the footprint or on error, USDA NAIP 60 cm and USGS Imagery Only apply."
       : LAUNCH7_TOP15_ENABLED
