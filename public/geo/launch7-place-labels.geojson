@@ -1,0 +1,67 @@
+{
+  "type": "FeatureCollection",
+  "name": "launch7-place-labels",
+  "source": "Story Home CAD footprint seats + majors (desk labels; not MLS)",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Lufkin", "kind": "seat", "rank": 1 },
+      "geometry": { "type": "Point", "coordinates": [-94.7291, 31.3382] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Huntsville", "kind": "seat", "rank": 1 },
+      "geometry": { "type": "Point", "coordinates": [-95.5508, 30.7235] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Livingston", "kind": "seat", "rank": 1 },
+      "geometry": { "type": "Point", "coordinates": [-94.9341, 30.711] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Liberty", "kind": "seat", "rank": 1 },
+      "geometry": { "type": "Point", "coordinates": [-94.7955, 30.0577] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Coldspring", "kind": "seat", "rank": 2 },
+      "geometry": { "type": "Point", "coordinates": [-95.1291, 30.5924] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Groveton", "kind": "seat", "rank": 2 },
+      "geometry": { "type": "Point", "coordinates": [-95.1258, 31.0549] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Woodville", "kind": "seat", "rank": 2 },
+      "geometry": { "type": "Point", "coordinates": [-94.4155, 30.7752] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Cleveland", "kind": "major", "rank": 3 },
+      "geometry": { "type": "Point", "coordinates": [-95.0855, 30.3413] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Onalaska", "kind": "major", "rank": 3 },
+      "geometry": { "type": "Point", "coordinates": [-95.1163, 30.8085] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Corrigan", "kind": "major", "rank": 4 },
+      "geometry": { "type": "Point", "coordinates": [-94.8272, 30.9966] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Diboll", "kind": "major", "rank": 4 },
+      "geometry": { "type": "Point", "coordinates": [-94.781, 31.1871] }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Shepherd", "kind": "major", "rank": 4 },
+      "geometry": { "type": "Point", "coordinates": [-94.9966, 30.4977] }
+    }
+  ]
+}

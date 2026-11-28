@@ -595,10 +595,11 @@ export function ShiCorridorsMap({
         minzoom: 13,
         paint: {
           "fill-color": MAP_GOLD,
+          // Selection = border emphasis, not a yellow fill wash.
           "fill-opacity": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            0.35,
+            0.05,
             0.04,
           ],
         },
@@ -609,18 +610,24 @@ export function ShiCorridorsMap({
         source: "parcels",
         "source-layer": "parcels",
         minzoom: 13,
+        layout: { "line-cap": "round", "line-join": "round" },
         paint: {
-          "line-color": MAP_GOLD,
+          "line-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            MAP_NAVY,
+            MAP_GOLD,
+          ],
           "line-opacity": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            0.95,
+            1,
             0.45,
           ],
           "line-width": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            2.2,
+            3.1,
             PARCEL_LINE_WIDTH_EXPR,
           ],
         },
@@ -776,13 +783,13 @@ export function ShiCorridorsMap({
           ? [
               "case",
               ["boolean", ["feature-state", "selected"], false],
-              0.42,
+              0.06,
               0.14,
             ]
           : [
               "case",
               ["boolean", ["feature-state", "selected"], false],
-              0.35,
+              0.05,
               0.04,
             ],
       );

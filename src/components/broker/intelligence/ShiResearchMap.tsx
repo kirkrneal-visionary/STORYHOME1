@@ -43,6 +43,7 @@ import {
   buildStoryMapStyle,
   MAP_GOLD,
   MAP_NAVY,
+  MAP_PAPER,
   MAP_SOVEREIGNTY_VERSION,
   MAP_TEAL,
   researchDemSourceSpec,
@@ -814,17 +815,34 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         });
 
         map.addSource("shi-selected", { type: "geojson", data: EMPTY_FC });
+        // Premium selection: near-clear fill + dual-stroke border (no yellow wash).
         map.addLayer({
           id: "shi-selected-fill",
           type: "fill",
           source: "shi-selected",
-          paint: { "fill-color": MAP_GOLD, "fill-opacity": 0.32 },
+          paint: { "fill-color": MAP_PAPER, "fill-opacity": 0.04 },
+        });
+        map.addLayer({
+          id: "shi-selected-casing",
+          type: "line",
+          source: "shi-selected",
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": MAP_PAPER,
+            "line-opacity": 0.95,
+            "line-width": 5.5,
+          },
         });
         map.addLayer({
           id: "shi-selected-line",
           type: "line",
           source: "shi-selected",
-          paint: { "line-color": MAP_NAVY, "line-width": 2.75 },
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": MAP_NAVY,
+            "line-opacity": 1,
+            "line-width": 2.35,
+          },
         });
 
         map.addSource("parcels", {
