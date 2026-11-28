@@ -24,13 +24,16 @@ const panel = read(
 );
 assert.match(panel, /data-archie-intelligence="p[234]"/);
 assert.match(panel, /stations/);
-assert.match(panel, /nearbySummary/);
 assert.doesNotMatch(panel, /Phase 1 does not invent/);
+
+const body = read(
+  "src/components/broker/intelligence/ShiParcelRecordBody.tsx",
+);
+assert.match(body, /stations=\{accessStations\}/);
 
 const view = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
 );
-assert.match(view, /stations=\{accessStations\}/);
 assert.match(view, /ensureAccessStations/);
 assert.match(view, /P2 — load planning stations|Archie spatial/);
 

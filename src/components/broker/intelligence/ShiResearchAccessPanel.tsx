@@ -27,11 +27,14 @@ export function ShiResearchAccessPanel({
   const stationAadt = intel?.roads?.find((r) => r.aadt != null)?.aadt ?? null;
   const stationRoad = intel?.roads?.find((r) => r.aadt != null)?.routeId ?? null;
 
+  const hasRoads = Boolean(intel?.roads?.length);
+  if (!loading && !hasRoads) return null;
+
   return (
     <section
       data-research-access="r1"
       className={cn(
-        "rounded-xl border border-hairline bg-[var(--background)] px-3 py-2.5",
+        "rounded-xl bg-[var(--background)] px-3 py-2.5",
         className,
       )}
     >
@@ -47,19 +50,21 @@ export function ShiResearchAccessPanel({
         <p className="mt-2 text-xs text-[var(--muted)]">Loading access…</p>
       ) : null}
 
-      <p
-        className="mt-2 type-card-title tabular-nums text-ink"
-        data-research-access-frontage
-      >
-        {formatApproxFrontageFt(intel?.totalApproxFrontageFt ?? 0)}
-      </p>
+      {hasRoads ? (
+        <p
+          className="mt-2 type-card-title tabular-nums text-[var(--paper)]"
+          data-research-access-frontage
+        >
+          {formatApproxFrontageFt(intel?.totalApproxFrontageFt ?? 0)}
+        </p>
+      ) : null}
 
-      {intel?.roads?.length ? (
+      {hasRoads ? (
         <ul className="mt-1.5 space-y-1" data-research-access-roads>
-          {intel.roads.slice(0, 3).map((r) => (
+          {intel!.roads.slice(0, 3).map((r) => (
             <li
               key={`${r.routeId}:${r.segmentId}`}
-              className="flex justify-between gap-2 text-xs text-ink"
+              className="flex justify-between gap-2 text-xs text-[var(--paper)]"
             >
               <span className="truncate">{r.routeId}</span>
               <span className="shrink-0 tabular-nums text-[var(--muted)]">
@@ -71,25 +76,21 @@ export function ShiResearchAccessPanel({
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="mt-1.5 text-[11px] text-[var(--muted)]">
-          No mapped-road frontage on desk yet for this parcel.
-        </p>
-      )}
+      ) : null}
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         {intel?.dualRoad ? (
-          <span className="rounded-md border border-gold/35 bg-gold/10 px-2 py-1 font-mono text-[10px] font-semibold text-gold uppercase">
+          <span className="rounded-md bg-gold/10 px-2 py-1 font-mono text-[10px] font-semibold text-gold uppercase">
             Dual-road
           </span>
         ) : null}
         {intel?.cornerLikely ? (
-          <span className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1 font-mono text-[10px] font-semibold uppercase">
+          <span className="rounded-md bg-[var(--surface)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--paper)] uppercase">
             Corner likely
           </span>
         ) : null}
         {intel?.confidence ? (
-          <span className="rounded-md border border-hairline bg-[var(--background)] px-2 py-1 font-mono text-[10px] font-semibold uppercase">
+          <span className="rounded-md bg-[var(--surface)] px-2 py-1 font-mono text-[10px] font-semibold text-[var(--paper)] uppercase">
             Data {intel.confidence}
           </span>
         ) : null}
@@ -98,7 +99,7 @@ export function ShiResearchAccessPanel({
       {intel?.approxDistanceToIntersectionM != null &&
       intel.intersectionTier ? (
         <p
-          className="mt-2 text-[11px] leading-snug text-ink"
+          className="mt-2 text-[11px] leading-snug text-[var(--paper)]"
           data-research-access-ix
         >
           <span className="font-semibold">
@@ -112,7 +113,10 @@ export function ShiResearchAccessPanel({
       ) : null}
 
       {stationAadt != null ? (
-        <p className="mt-2 text-[11px] text-ink" data-research-access-traffic>
+        <p
+          className="mt-2 text-[11px] text-[var(--paper)]"
+          data-research-access-traffic
+        >
           <span className="font-semibold">
             Nearby count · {formatAadt(stationAadt)}/day
           </span>

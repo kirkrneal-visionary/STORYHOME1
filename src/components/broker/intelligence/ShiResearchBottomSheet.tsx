@@ -158,7 +158,7 @@ export function ShiResearchBottomSheet({
       <div
         data-sheet-header
         data-sheet-drag
-        className="shrink-0 touch-none border-b border-hairline px-3 py-2"
+        className="shrink-0 touch-none px-3 py-2"
         onPointerDown={onDragPointerDown}
       >
         {header}

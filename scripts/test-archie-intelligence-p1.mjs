@@ -22,18 +22,20 @@ const panel = read(
 );
 assert.match(panel, /data-archie-intelligence="p[1234]"/);
 assert.match(panel, /data-archie-findings/);
-assert.match(panel, /data-archie-chips/);
-assert.match(panel, /Ownership/);
-assert.match(panel, /Ask Archie/);
+assert.doesNotMatch(panel, /data-archie-chips/);
+assert.match(panel, /kind !== "insufficient"/);
 assert.doesNotMatch(panel, /Founder Interpreter/);
+
+const body = read(
+  "src/components/broker/intelligence/ShiParcelRecordBody.tsx",
+);
+assert.match(body, /ShiArchieIntelligencePanel/);
+assert.match(body, /data-parcel-section-menu|ShiParcelSectionMenu/);
 
 const view = read(
   "src/components/broker/intelligence/PropertyIntelligenceView.tsx",
 );
-assert.match(view, /ShiArchieIntelligencePanel/);
-const archieIdx = view.indexOf("ShiArchieIntelligencePanel");
-const factIdx = view.indexOf('<dl className="grid grid-cols-2 gap-2 text-xs">');
-assert.ok(archieIdx > 0 && factIdx > archieIdx, "Archie panel before CAD fact grid");
+assert.match(view, /ShiParcelRecordBody/);
 
 const waves = read("src/lib/shi/waves.ts");
 assert.match(waves, /ARCHIE-INTELLIGENCE/);

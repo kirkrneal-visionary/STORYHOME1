@@ -29,6 +29,7 @@ assert.match(map, /setLidar3d\(false\)/);
 assert.match(map, /setLidar3d\(true\)/);
 assert.match(map, /g === "terrain" \? null/);
 assert.match(map, /data-map-toolbox/);
+assert.match(map, /data-map-chrome-cluster/);
 assert.match(map, /data-map-tool="hand"/);
 assert.match(map, /data-map-tool="measure"/);
 assert.match(map, /data-map-tool="draw"/);

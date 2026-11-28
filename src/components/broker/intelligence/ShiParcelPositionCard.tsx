@@ -17,7 +17,7 @@ function formatDay(n: number | null | undefined): string | null {
 
 /**
  * Phase 6 — phone-first position card on the open property.
- * Uses reserved PARCEL_POSITION_COPY. Never a site grade. Never adds two roads.
+ * Proven road evidence only — no “not enough evidence” blocks.
  */
 export function ShiParcelPositionCard({
   profile,
@@ -35,18 +35,29 @@ export function ShiParcelPositionCard({
   const [open, setOpen] = useState(false);
   if (!profile || profile.scope !== "parcel") return null;
   if (propId && profile.propId !== propId) return null;
+
+  const primaryRoad =
+    profile.traffic?.road ?? profile.position.primary?.road ?? null;
+  const why = profile.whyStandsOut.filter(
+    (line) => line && !/not enough/i.test(line),
+  );
+  const hasRoadEvidence = Boolean(
+    primaryRoad ||
+      (profile.position.primary?.approxFrontageFt ?? 0) > 0 ||
+      why.length > 0,
+  );
+  if (!hasRoadEvidence) return null;
+
   const surrounding = withNeighborContext(
     context,
     neighbors,
     profile.propId,
   );
 
-  const why = profile.whyStandsOut.filter(Boolean);
-  const lead = why[0] ?? "Not enough mapped road evidence yet.";
+  const lead = why[0] ?? profile.roadPositionLabel;
   const rest = why.slice(1);
   const primaryDay = formatDay(profile.traffic?.vehiclesPerDay ?? null);
   const secondaryDay = formatDay(profile.secondaryTraffic?.vehiclesPerDay ?? null);
-  const primaryRoad = profile.traffic?.road ?? profile.position.primary?.road ?? null;
   const secondaryRoad =
     profile.secondaryTraffic?.road ?? profile.position.secondary?.road ?? null;
 
@@ -54,24 +65,26 @@ export function ShiParcelPositionCard({
     <section
       data-parcel-position-card="p6"
       className={cn(
-        "rounded-xl border border-gold/40 bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] px-3 py-2.5",
+        "rounded-xl bg-[color-mix(in_srgb,var(--gold)_8%,transparent)] px-3 py-2.5",
         className,
       )}
     >
       <p className="font-mono text-[10px] font-bold tracking-wider text-gold uppercase">
         {PARCEL_POSITION_COPY.whyStandsOut}
       </p>
-      <p className="mt-1 type-card-title leading-tight text-ink">
+      <p className="mt-1 type-card-title leading-tight text-[var(--paper)]">
         {profile.roadPositionLabel}
       </p>
-      <p className="mt-1.5 text-[13px] leading-snug text-ink">{lead}</p>
+      <p className="mt-1.5 text-[13px] leading-snug text-[color-mix(in_srgb,var(--paper)_88%,transparent)]">
+        {lead}
+      </p>
 
       <dl className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
         <div className="rounded-lg bg-[var(--surface)] px-2 py-1.5">
           <dt className="font-mono text-[9px] font-bold tracking-wider text-[var(--muted)] uppercase">
             Access
           </dt>
-          <dd className="mt-0.5 font-semibold text-ink">
+          <dd className="mt-0.5 font-semibold text-[var(--paper)]">
             {PARCEL_POSITION_COPY.accessNotVerified}
           </dd>
         </div>
@@ -79,7 +92,7 @@ export function ShiParcelPositionCard({
           <dt className="font-mono text-[9px] font-bold tracking-wider text-[var(--muted)] uppercase">
             Frontage
           </dt>
-          <dd className="mt-0.5 font-semibold text-ink">
+          <dd className="mt-0.5 font-semibold text-[var(--paper)]">
             {PARCEL_POSITION_COPY.frontageApprox}
           </dd>
         </div>
@@ -93,7 +106,7 @@ export function ShiParcelPositionCard({
           {surrounding.items.slice(0, 3).map((item) => (
             <li
               key={`${item.kind}:${item.label}`}
-              className="rounded-md border border-hairline bg-[var(--surface)] px-2 py-1 font-mono text-[10px] font-semibold text-navy"
+              className="rounded-md bg-[var(--surface)] px-2 py-1 font-mono text-[10px] font-semibold text-[color-mix(in_srgb,var(--paper)_88%,transparent)]"
             >
               {item.label}
             </li>
@@ -104,7 +117,7 @@ export function ShiParcelPositionCard({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="mt-2 inline-flex min-h-11 items-center text-[12px] font-bold text-navy"
+        className="mt-2 inline-flex min-h-11 items-center text-[12px] font-bold text-gold"
         data-see-evidence="p6"
       >
         {PARCEL_POSITION_COPY.seeEvidence}
@@ -112,19 +125,22 @@ export function ShiParcelPositionCard({
       </button>
 
       {open ? (
-        <div className="mt-2 space-y-2 border-t border-gold/25 pt-2">
+        <div className="mt-2 space-y-2 border-t border-[color-mix(in_srgb,var(--gold)_25%,transparent)] pt-2">
           {rest.map((line) => (
-            <p key={line} className="text-[12px] leading-snug text-ink">
+            <p
+              key={line}
+              className="text-[12px] leading-snug text-[var(--paper)]"
+            >
               {line}
             </p>
           ))}
           {primaryRoad && primaryDay ? (
-            <p className="text-[12px] text-ink">
+            <p className="text-[12px] text-[var(--paper)]">
               {primaryRoad} · {primaryDay}
             </p>
           ) : null}
           {secondaryRoad ? (
-            <p className="text-[12px] text-ink">
+            <p className="text-[12px] text-[var(--paper)]">
               {secondaryRoad}
               {secondaryDay ? ` · ${secondaryDay}` : ""}
               {" · those numbers are not added together"}
@@ -133,8 +149,12 @@ export function ShiParcelPositionCard({
           {surrounding.items.length > 0 ? (
             <ul className="space-y-1.5" data-position-context-detail="p7">
               {surrounding.items.map((item) => (
-                <li key={`${item.kind}:${item.detail}`} className="text-[12px] leading-snug text-ink">
-                  <span className="font-semibold">{item.label}.</span> {item.detail}
+                <li
+                  key={`${item.kind}:${item.detail}`}
+                  className="text-[12px] leading-snug text-[var(--paper)]"
+                >
+                  <span className="font-semibold">{item.label}.</span>{" "}
+                  {item.detail}
                 </li>
               ))}
             </ul>
@@ -142,13 +162,6 @@ export function ShiParcelPositionCard({
           <p className="text-[10px] leading-relaxed text-[var(--muted)]">
             {surrounding.note}
           </p>
-          {profile.unknown.length > 0 ? (
-            <ul className="list-disc space-y-0.5 pl-4 text-[11px] text-[var(--muted)]">
-              {profile.unknown.map((u) => (
-                <li key={u}>{u}</li>
-              ))}
-            </ul>
-          ) : null}
           <p className="text-[10px] leading-relaxed text-[var(--muted)]">
             {PARCEL_POSITION_COPY.accessExplain}
           </p>
