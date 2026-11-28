@@ -9,10 +9,27 @@ import {
 } from "react";
 import maplibregl from "maplibre-gl";
 import type { FeatureCollection, Geometry } from "geojson";
-import { Circle, Grid3x3, Hand, Layers, LocateFixed, Mountain, PenTool, Route, Square, X } from "lucide-react";
+import {
+  Circle,
+  Grid3x3,
+  Hand,
+  Layers,
+  LocateFixed,
+  Mountain,
+  PenTool,
+  Route,
+  Ruler,
+  Square,
+  Wrench,
+  X,
+} from "lucide-react";
 import {
   EAST_TEXAS_CENTER,
   EAST_TEXAS_DEFAULT_ZOOM,
+  formatAreaIn,
+  formatDistanceIn,
+  pathLengthMeters,
+  polygonAreaSqMeters,
   usableLngLatRing,
   type DrawnBoundary,
   type LatLng,
@@ -33,11 +50,6 @@ import {
   PARCEL_LINE_WIDTH_EXPR,
   absolutizeMapTileTemplate,
 } from "@/lib/map-precision";
-import { CadOverlayControl } from "@/components/map/CadOverlayControl";
-import {
-  ensureCadOverlayLayers,
-  useCadOverlays,
-} from "@/hooks/useCadOverlays";
 import { validateBoundaryCaps } from "@/lib/shi/boundary-caps";
 import { SHI_CAPS } from "@/lib/shi/caps";
 import { buildBoxDraftGeoJSON } from "@/lib/map-draw/box-draft";
@@ -133,6 +145,30 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 
+const RESEARCH_MEASURE_SOURCE_ID = "shi-measure";
+const RESEARCH_MEASURE_LINE_ID = "shi-measure-line";
+const RESEARCH_MEASURE_POINTS_ID = "shi-measure-points";
+
+function measureLineAndVertices(points: LatLng[]): FeatureCollection {
+  const coords = points.map((p) => [p.lng, p.lat] as [number, number]);
+  const features: FeatureCollection["features"] = [];
+  if (coords.length >= 2) {
+    features.push({
+      type: "Feature",
+      geometry: { type: "LineString", coordinates: coords },
+      properties: {},
+    });
+  }
+  for (const c of coords) {
+    features.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: c },
+      properties: {},
+    });
+  }
+  return { type: "FeatureCollection", features };
+}
+
 function scheduleResearchMapResizes(
   map: { resize: () => void },
   container: HTMLElement,
@@ -193,7 +229,12 @@ function LidarCutChart({ profile }: { profile: ResearchLidarProfile }) {
   );
 }
 
-type DrawTool = "pan" | "radius" | "rectangle" | "freehand";
+type DrawTool = "pan" | "radius" | "rectangle" | "freehand" | "measure";
+type DrawFamilyTool = "radius" | "rectangle" | "freehand";
+
+function isDrawFamily(tool: DrawTool): tool is DrawFamilyTool {
+  return tool === "radius" || tool === "rectangle" || tool === "freehand";
+}
 
 export type ShiMapSelect = {
   propId: string;
@@ -374,12 +415,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const baseRef = useRef(base);
     baseRef.current = base;
     const [showParcels, setShowParcels] = useState(true);
-    const [openGroup, setOpenGroup] = useState<"terrain" | "tools" | null>(
-      () =>
-        defaultMapToolGroup(
-          typeof window === "undefined" ? 1200 : window.innerWidth,
-        ),
+    const [openGroup, setOpenGroup] = useState<"terrain" | null>(() =>
+      defaultMapToolGroup(
+        typeof window === "undefined" ? 1200 : window.innerWidth,
+      ),
     );
+    const [toolboxOpen, setToolboxOpen] = useState(false);
     const [viewHeight, setViewHeight] = useState(RESEARCH_VIEW_HEIGHT_DEFAULT);
     const [parcelTerrain, setParcelTerrain] =
       useState<ResearchParcelTerrainStats | null>(null);
@@ -408,12 +449,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const baseBeforeLidarRef = useRef<MapBaseLayer | null>(null);
     const [tool, setTool] = useState<DrawTool>("pan");
     const [radiusMiles, setRadiusMiles] = useState(1);
+    const [measurePoints, setMeasurePoints] = useState<LatLng[]>([]);
     const [freehandHint, setFreehandHint] = useState<
       "idle" | "drawing" | "closeable"
     >("idle");
     const [drawWarn, setDrawWarn] = useState("");
     const [boxDraftActive, setBoxDraftActive] = useState(false);
-    const overlays = useCadOverlays(mapRef, ready);
 
     useEffect(() => {
       onSelectRef.current = onSelectParcel;
@@ -435,17 +476,19 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     }, [canDrawFrames]);
 
     useEffect(() => {
-      preferredSourceRef.current =
-        selected?.source || overlays.activeCounty || undefined;
-    }, [selected?.source, overlays.activeCounty]);
+      preferredSourceRef.current = selected?.source || undefined;
+    }, [selected?.source]);
 
     useEffect(() => {
-      if (!canDrawFrames && tool !== "pan") {
+      if (!canDrawFrames && isDrawFamily(tool)) {
         clearFreehandDraft();
         clearBoxDraft();
         setTool("pan");
         setDrawWarn("Pick a county before drawing market frames");
-      } else if (canDrawFrames && drawWarn === "Pick a county before drawing market frames") {
+      } else if (
+        canDrawFrames &&
+        drawWarn === "Pick a county before drawing market frames"
+      ) {
         setDrawWarn("");
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -461,21 +504,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const cap = validateBoundaryCaps(probe);
       setDrawWarn(cap.ok ? "" : cap.error);
     }, [tool, radiusMiles]);
-
-    useEffect(() => {
-      const src = selected?.source;
-      if (!src) return;
-      if (
-        src === "polk_cad" ||
-        src === "trinity_cad" ||
-        src === "san_jacinto_cad" ||
-        src === "liberty_cad" ||
-        src === "walker_cad"
-      ) {
-        overlays.setActiveCounty(src);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selected?.source]);
 
     useImperativeHandle(ref, () => ({
       captureThumbnail: () => {
@@ -999,7 +1027,28 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           },
         });
 
-        ensureCadOverlayLayers(map, "shi-selected-fill");
+        map.addSource(RESEARCH_MEASURE_SOURCE_ID, {
+          type: "geojson",
+          data: EMPTY_FC,
+        });
+        map.addLayer({
+          id: RESEARCH_MEASURE_LINE_ID,
+          type: "line",
+          source: RESEARCH_MEASURE_SOURCE_ID,
+          paint: { "line-color": MAP_GOLD, "line-width": 2.5 },
+        });
+        map.addLayer({
+          id: RESEARCH_MEASURE_POINTS_ID,
+          type: "circle",
+          source: RESEARCH_MEASURE_SOURCE_ID,
+          filter: ["==", "$type", "Point"],
+          paint: {
+            "circle-radius": 5,
+            "circle-color": MAP_TEAL,
+            "circle-stroke-color": MAP_NAVY,
+            "circle-stroke-width": 2,
+          },
+        });
 
         map.addSource("shi-look", { type: "geojson", data: EMPTY_FC });
         map.addLayer({
@@ -1565,12 +1614,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      map.getCanvas().style.cursor = lidarCut ? "crosshair" : "";
-    }, [ready, lidarCut]);
-
-    useEffect(() => {
-      const map = mapRef.current;
-      if (!map || !ready) return;
       const vis = accessTrafficOn ? "visible" : "none";
       for (const id of [
         "research-access-segments-line",
@@ -1616,8 +1659,29 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      map.getCanvas().style.cursor = tool === "pan" ? "" : "crosshair";
-    }, [ready, tool]);
+      if (tool === "measure" || tool === "freehand") map.doubleClickZoom.disable();
+      else map.doubleClickZoom.enable();
+      map.getCanvas().style.cursor =
+        tool === "pan" && !lidarCut ? "" : "crosshair";
+    }, [ready, tool, lidarCut]);
+
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map || !ready) return;
+      const src = map.getSource(RESEARCH_MEASURE_SOURCE_ID) as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      src?.setData(measureLineAndVertices(measurePoints));
+    }, [ready, measurePoints]);
+
+    function clearMeasure(map?: maplibregl.Map | null) {
+      setMeasurePoints([]);
+      const m = map ?? mapRef.current;
+      const src = m?.getSource(RESEARCH_MEASURE_SOURCE_ID) as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      src?.setData(EMPTY_FC);
+    }
 
     function clearBoxDraft(map?: maplibregl.Map | null) {
       draftRef.current = [];
@@ -1680,10 +1744,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       src?.setData(buildFreehandGeoJSON(points, tip, canClose));
     }
 
-    // Draw tools — each completed draw ADDS a frame (multi-box).
+    // Draw / measure tools — completed draws ADD a market frame (multi-box).
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
+      if (tool !== "measure") {
+        clearMeasure(map);
+      }
       if (tool === "freehand") return;
 
       if (tool !== "rectangle") {
@@ -1692,6 +1759,10 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
 
       const onClick = (e: maplibregl.MapMouseEvent) => {
         const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
+        if (tool === "measure") {
+          setMeasurePoints((prev) => [...prev, pt]);
+          return;
+        }
         if (!canDrawRef.current) {
           setDrawWarn("Pick a county before drawing market frames");
           return;
@@ -1754,6 +1825,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         if (tool === "rectangle" || tool === "radius") {
           clearBoxDraft(map);
           setDrawWarn("");
+          setTool("pan");
+        } else if (tool === "measure") {
+          clearMeasure(map);
           setTool("pan");
         }
       };
@@ -2159,7 +2233,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             className="absolute inset-0 z-[15] flex items-center justify-center bg-[color-mix(in_srgb,var(--env-1)_88%,#0b1c18)] px-6"
             data-research-map-fallback
           >
-            <div className="max-w-md rounded-xl border border-hairline bg-[var(--surface)] px-5 py-4 text-center shadow-[var(--elev-raise)]">
+            <div className="max-w-md rounded-xl bg-[var(--surface)] px-5 py-4 text-center">
               <p className="font-mono text-[10px] font-bold tracking-[0.14em] text-gold uppercase">
                 Map paused
               </p>
@@ -2183,7 +2257,9 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 data-map-view-skin={opt.id}
                 onClick={() => {
                   setBase(opt.id);
-                  setLidarHybrid(opt.id === "imageryLabels" || opt.id === "satellite");
+                  setLidarHybrid(
+                    opt.id === "imageryLabels" || opt.id === "satellite",
+                  );
                 }}
                 title={opt.label}
                 className={cn(
@@ -2200,197 +2276,326 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             data-map-bottom-chrome
             className="pointer-events-none absolute inset-x-3 flex flex-col-reverse items-start gap-1.5"
           >
-          <div
-            data-map-draw-tools
-            className="pointer-events-auto flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                clearFreehandDraft();
-                clearBoxDraft();
-                setDrawWarn("");
-                setTool("pan");
-              }}
-              className={cn(
-                "story-map-tool",
-                tool === "pan" && "story-map-tool-active",
-              )}
-              title="Pan / select"
+            <div
+              data-map-draw-tools
+              className="pointer-events-auto flex max-w-[min(100%,40rem)] flex-wrap items-center gap-1.5 story-glass rounded-[var(--radius-md)] p-1"
             >
-              <Hand className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Pan</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!canDrawFrames) {
-                  setDrawWarn("Pick a county before drawing market frames");
-                  return;
-                }
-                clearFreehandDraft();
-                clearBoxDraft();
-                setTool("rectangle");
-              }}
-              className={cn(
-                "story-map-tool",
-                tool === "rectangle" && "story-map-tool-active",
-                !canDrawFrames && "opacity-60",
-              )}
-              title={
-                canDrawFrames
-                  ? "Draw a market box (adds a new frame)"
-                  : "Pick a county first"
-              }
-            >
-              <Square className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Box</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!canDrawFrames) {
-                  setDrawWarn("Pick a county before drawing market frames");
-                  return;
-                }
-                clearFreehandDraft();
-                clearBoxDraft();
-                setTool("freehand");
-              }}
-              className={cn(
-                "story-map-tool",
-                tool === "freehand" && "story-map-tool-active",
-                !canDrawFrames && "opacity-60",
-              )}
-              title={
-                canDrawFrames
-                  ? "Freehand — draw a loop; snap-closes when you return to start"
-                  : "Pick a county first"
-              }
-            >
-              <PenTool className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Freehand</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!canDrawFrames) {
-                  setDrawWarn("Pick a county before drawing market frames");
-                  return;
-                }
-                clearFreehandDraft();
-                clearBoxDraft();
-                setTool("radius");
-              }}
-              className={cn(
-                "story-map-tool",
-                tool === "radius" && "story-map-tool-active",
-                !canDrawFrames && "opacity-60",
-              )}
-              title={canDrawFrames ? "Radius frame" : "Pick a county first"}
-            >
-              <Circle className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Radius</span>
-            </button>
-            {onAccessTrafficToggle ? (
               <button
                 type="button"
-                onClick={() => onAccessTrafficToggle()}
+                data-map-toolbox
+                data-map-toolbox-open={toolboxOpen ? "yes" : "no"}
+                onClick={() => setToolboxOpen((v) => !v)}
                 className={cn(
                   "story-map-tool",
-                  accessTrafficOn && "story-map-tool-active",
+                  toolboxOpen && "story-map-tool-active",
                 )}
-                title="Show planning traffic counts on this map (Access)"
-                data-research-access-traffic-tool
+                title="Toolbox — Hand, Measure, Draw"
               >
-                <Route className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">
-                  {accessTrafficLoading ? "Traffic…" : "Traffic"}
-                </span>
+                <Wrench className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Toolbox</span>
               </button>
-            ) : null}
-            {tool === "radius" ? (
-              <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
-                mi
-                <input
-                  type="number"
-                  min={0.25}
-                  max={10}
-                  step={0.25}
-                  value={radiusMiles}
-                  onChange={(e) => {
-                    const n = Number(e.target.value);
-                    if (!Number.isFinite(n)) return;
-                    setRadiusMiles(Math.min(10, Math.max(0.25, n)));
-                  }}
-                  className="story-map-tool-input"
-                />
-              </label>
-            ) : null}
-            {tool !== "pan" ? (
+              {toolboxOpen ? (
+                <>
+                  <button
+                    type="button"
+                    data-map-tool="hand"
+                    onClick={() => {
+                      clearFreehandDraft();
+                      clearBoxDraft();
+                      clearMeasure();
+                      setDrawWarn("");
+                      setTool("pan");
+                    }}
+                    className={cn(
+                      "story-map-tool",
+                      tool === "pan" && "story-map-tool-active",
+                    )}
+                    title="Hand — pan and select"
+                  >
+                    <Hand className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Hand</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-map-tool="measure"
+                    onClick={() => {
+                      clearFreehandDraft();
+                      clearBoxDraft();
+                      setDrawWarn("");
+                      setLidarCut(false);
+                      lidarCutRef.current = false;
+                      lidarCutARef.current = null;
+                      setLidarCutA(null);
+                      setTool("measure");
+                    }}
+                    className={cn(
+                      "story-map-tool",
+                      tool === "measure" && "story-map-tool-active",
+                    )}
+                    title="Measure distance and area"
+                  >
+                    <Ruler className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Measure</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-map-tool="draw"
+                    onClick={() => {
+                      if (!canDrawFrames) {
+                        setDrawWarn(
+                          "Pick a county before drawing market frames",
+                        );
+                        return;
+                      }
+                      clearMeasure();
+                      setLidarCut(false);
+                      lidarCutRef.current = false;
+                      lidarCutARef.current = null;
+                      setLidarCutA(null);
+                      if (!isDrawFamily(tool)) {
+                        clearFreehandDraft();
+                        clearBoxDraft();
+                        setTool("freehand");
+                      }
+                    }}
+                    className={cn(
+                      "story-map-tool",
+                      isDrawFamily(tool) && "story-map-tool-active",
+                      !canDrawFrames && "opacity-60",
+                    )}
+                    title={
+                      canDrawFrames
+                        ? "Draw a market frame"
+                        : "Pick a county first"
+                    }
+                  >
+                    <PenTool className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Draw</span>
+                  </button>
+                  {isDrawFamily(tool) ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!canDrawFrames) {
+                            setDrawWarn(
+                              "Pick a county before drawing market frames",
+                            );
+                            return;
+                          }
+                          clearFreehandDraft();
+                          clearBoxDraft();
+                          setTool("rectangle");
+                        }}
+                        className={cn(
+                          "story-map-tool",
+                          tool === "rectangle" && "story-map-tool-active",
+                        )}
+                        title="Draw a market box"
+                      >
+                        <Square className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Box</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!canDrawFrames) {
+                            setDrawWarn(
+                              "Pick a county before drawing market frames",
+                            );
+                            return;
+                          }
+                          clearFreehandDraft();
+                          clearBoxDraft();
+                          setTool("freehand");
+                        }}
+                        className={cn(
+                          "story-map-tool",
+                          tool === "freehand" && "story-map-tool-active",
+                        )}
+                        title="Freehand loop"
+                      >
+                        <PenTool className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Freehand</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!canDrawFrames) {
+                            setDrawWarn(
+                              "Pick a county before drawing market frames",
+                            );
+                            return;
+                          }
+                          clearFreehandDraft();
+                          clearBoxDraft();
+                          setTool("radius");
+                        }}
+                        className={cn(
+                          "story-map-tool",
+                          tool === "radius" && "story-map-tool-active",
+                        )}
+                        title="Radius frame"
+                      >
+                        <Circle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Radius</span>
+                      </button>
+                    </>
+                  ) : null}
+                  {onAccessTrafficToggle ? (
+                    <button
+                      type="button"
+                      onClick={() => onAccessTrafficToggle()}
+                      className={cn(
+                        "story-map-tool",
+                        accessTrafficOn && "story-map-tool-active",
+                      )}
+                      title="Show planning traffic counts on this map (Access)"
+                      data-research-access-traffic-tool
+                    >
+                      <Route className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">
+                        {accessTrafficLoading ? "Traffic…" : "Traffic"}
+                      </span>
+                    </button>
+                  ) : null}
+                </>
+              ) : null}
               <button
                 type="button"
+                data-map-lidar-cut
+                data-map-lidar-cut-on={lidarCut ? "yes" : "no"}
+                title={RESEARCH_LIDAR_COPY.cut.title}
                 onClick={() => {
                   clearFreehandDraft();
                   clearBoxDraft();
+                  clearMeasure();
                   setDrawWarn("");
                   setTool("pan");
+                  setLidarCut((on) => {
+                    const next = !on;
+                    lidarCutRef.current = next;
+                    lidarCutARef.current = null;
+                    setLidarCutA(null);
+                    if (next) setLidarProfile(null);
+                    const src = mapRef.current?.getSource(
+                      RESEARCH_LIDAR_CUT_SOURCE_ID,
+                    ) as maplibregl.GeoJSONSource | undefined;
+                    src?.setData(EMPTY_FC);
+                    return next;
+                  });
                 }}
-                className="story-map-tool"
-                title="Cancel draw (Esc)"
+                className={cn(
+                  "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
+                  lidarCut && "story-map-tool-active",
+                )}
               >
-                <X className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Cancel</span>
+                {RESEARCH_LIDAR_COPY.cut.short}
               </button>
-            ) : null}
-            {activeFrameId ? (
-              <button
-                type="button"
-                onClick={removeActiveFrame}
-                className="story-map-tool"
-              >
-                <X className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Remove</span>
-              </button>
-            ) : null}
-            <span className="story-map-tool-muted px-1">
-              {frames.length}/{SHI_CAPS.maxFramesOnMap}
-            </span>
-          </div>
+              {tool === "radius" ? (
+                <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
+                  mi
+                  <input
+                    type="number"
+                    min={0.25}
+                    max={10}
+                    step={0.25}
+                    value={radiusMiles}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      setRadiusMiles(Math.min(10, Math.max(0.25, n)));
+                    }}
+                    className="story-map-tool-input"
+                  />
+                </label>
+              ) : null}
+              {tool === "measure" && measurePoints.length >= 2 ? (
+                <span
+                  data-map-measure-readout
+                  className="story-map-tool-muted px-1.5 font-mono text-[10px] font-bold normal-case"
+                >
+                  {formatDistanceIn(pathLengthMeters(measurePoints), "mi")}
+                  {measurePoints.length >= 3
+                    ? ` · ${formatAreaIn(polygonAreaSqMeters(measurePoints), "acres")}`
+                    : ""}
+                </span>
+              ) : null}
+              {tool !== "pan" || measurePoints.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearFreehandDraft();
+                    clearBoxDraft();
+                    clearMeasure();
+                    setDrawWarn("");
+                    setTool("pan");
+                  }}
+                  className="story-map-tool"
+                  title="Cancel (Esc)"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Cancel</span>
+                </button>
+              ) : null}
+              {activeFrameId ? (
+                <button
+                  type="button"
+                  onClick={removeActiveFrame}
+                  className="story-map-tool"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Remove</span>
+                </button>
+              ) : null}
+              {toolboxOpen || isDrawFamily(tool) ? (
+                <span className="story-map-tool-muted px-1">
+                  {frames.length}/{SHI_CAPS.maxFramesOnMap}
+                </span>
+              ) : null}
+            </div>
 
-          <p
-            data-map-hint
-            data-map-hint-kind={
-              drawWarn ? "warn" : tool !== "pan" ? "draw" : "idle"
-            }
-            className={cn(
-              "pointer-events-none inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase shadow-sm",
-              drawWarn
-                ? "bg-red-50/95 text-red-800"
-                : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
-            )}
-          >
-            <Layers className="h-3 w-3 shrink-0" />
-            {drawWarn
-              ? drawWarn
-              : tool === "rectangle"
-                ? boxDraftActive
-                  ? "Move to size · click second corner · Esc cancel"
-                  : "Click two corners — adds a new market frame"
-                : tool === "radius"
-                  ? `Click center — ${radiusMiles}-mile radius · Esc cancel`
-                  : tool === "freehand"
-                    ? freehandHint === "closeable"
-                      ? "Near start — release to seal frame"
-                      : freehandHint === "drawing"
-                        ? "Draw a loop · return to start to snap-seal"
-                        : "Hold and draw · loop back to start to seal"
-                    : lidarCut
-                      ? lidarCutA
-                        ? "Tap the other end of the cut · Esc cancel"
-                        : RESEARCH_LIDAR_COPY.cut.hint
-                    : "Pan · click frame to select · click parcel for record"}
-          </p>
+            <p
+              data-map-hint
+              data-map-hint-kind={
+                drawWarn
+                  ? "warn"
+                  : tool !== "pan" || lidarCut
+                    ? "draw"
+                    : "idle"
+              }
+              className={cn(
+                "pointer-events-none inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase",
+                drawWarn
+                  ? "bg-red-50/95 text-red-800"
+                  : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
+              )}
+            >
+              <Layers className="h-3 w-3 shrink-0" />
+              {drawWarn
+                ? drawWarn
+                : tool === "measure"
+                  ? measurePoints.length === 0
+                    ? "Tap points to measure · Esc cancel"
+                    : "Tap next point · Esc cancel"
+                  : tool === "rectangle"
+                    ? boxDraftActive
+                      ? "Move to size · click second corner · Esc cancel"
+                      : "Click two corners — adds a new market frame"
+                    : tool === "radius"
+                      ? `Click center — ${radiusMiles}-mile radius · Esc cancel`
+                      : tool === "freehand"
+                        ? freehandHint === "closeable"
+                          ? "Near start — release to seal frame"
+                          : freehandHint === "drawing"
+                            ? "Draw a loop · return to start to snap-seal"
+                            : "Hold and draw · loop back to start to seal"
+                        : lidarCut
+                          ? lidarCutA
+                            ? "Tap the other end of the cut · Esc cancel"
+                            : RESEARCH_LIDAR_COPY.cut.hint
+                          : "Pan · click frame to select · click parcel for record"}
+            </p>
           </div>
 
           <div
@@ -2415,19 +2620,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   )}
                 >
                   {RESEARCH_TERRAIN_COPY.terrain}
-                </button>
-                <button
-                  type="button"
-                  data-map-group-tools
-                  onClick={() =>
-                    setOpenGroup((g) => (g === "tools" ? null : "tools"))
-                  }
-                  className={cn(
-                    "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                    openGroup === "tools" && "story-map-tool-active",
-                  )}
-                >
-                  {RESEARCH_TERRAIN_COPY.tools}
                 </button>
               </div>
 
@@ -2595,35 +2787,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                     ))}
                   </div>
                 </>
-              ) : openGroup === "tools" ? (
-                <div className="story-glass flex overflow-hidden rounded-lg p-0.5">
-                  <button
-                    type="button"
-                    data-map-lidar-cut
-                    data-map-lidar-cut-on={lidarCut ? "yes" : "no"}
-                    title={RESEARCH_LIDAR_COPY.cut.title}
-                    onClick={() => {
-                      setLidarCut((on) => {
-                        const next = !on;
-                        lidarCutRef.current = next;
-                        lidarCutARef.current = null;
-                        setLidarCutA(null);
-                        if (next) setLidarProfile(null);
-                        const src = mapRef.current?.getSource(
-                          RESEARCH_LIDAR_CUT_SOURCE_ID,
-                        ) as maplibregl.GeoJSONSource | undefined;
-                        src?.setData(EMPTY_FC);
-                        return next;
-                      });
-                    }}
-                    className={cn(
-                      "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                      lidarCut && "story-map-tool-active",
-                    )}
-                  >
-                    {RESEARCH_LIDAR_COPY.cut.short}
-                  </button>
-                </div>
               ) : null}
 
               <button
@@ -2719,27 +2882,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               type="button"
               onClick={() => setShowParcels((v) => !v)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
-                showParcels
-                  ? "bg-navy text-gold"
-                  : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
+                "story-map-tool inline-flex items-center gap-1.5",
+                showParcels && "story-map-tool-active",
               )}
             >
               <Grid3x3 className="h-3.5 w-3.5" />
               Parcels
-            </button>
-            <button
-              type="button"
-              onClick={() => overlays.setPanelOpen((v) => !v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border border-navy/20 px-2.5 py-1.5 text-xs font-bold",
-                overlays.panelOpen
-                  ? "bg-navy text-gold"
-                  : "bg-[var(--paper,#f7f4ec)]/95 text-navy",
-              )}
-            >
-              <Layers className="h-3.5 w-3.5" />
-              Layers
             </button>
             <button
               type="button"
@@ -2769,15 +2917,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
               <LocateFixed className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Locate</span>
             </button>
-            {overlays.panelOpen ? (
-              <CadOverlayControl
-                activeCounty={overlays.activeCounty}
-                onCountyChange={overlays.setActiveCounty}
-                enabled={overlays.enabled}
-                onToggle={overlays.toggle}
-                loading={overlays.loading}
-              />
-            ) : null}
           </div>
         </div>
       </div>

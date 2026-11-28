@@ -138,7 +138,13 @@ const map = read("src/components/broker/intelligence/ShiResearchMap.tsx");
 assert.match(map, /rectangle/);
 assert.match(map, /freehand/);
 assert.match(map, /radius/);
-assert.match(map, /Layers/);
+assert.match(map, /data-map-toolbox/);
+assert.match(map, /data-map-tool="hand"/);
+assert.match(map, /data-map-tool="measure"/);
+assert.match(map, /data-map-tool="draw"/);
+assert.match(map, /data-map-lidar-cut/);
+assert.doesNotMatch(map, /CadOverlayControl/);
+assert.doesNotMatch(map, /CAD layers/);
 assert.match(map, /data-map-locate/);
 assert.match(map, /data-map-draw-tools/);
 assert.match(map, /data-map-basemap/);
@@ -147,6 +153,7 @@ assert.match(map, /data-map-bottom-chrome/);
 assert.match(map, /data-map-mode="2d"/);
 assert.match(map, /data-map-mode="3d"/);
 assert.match(css, /display-mode: standalone/);
+assert.match(css, /\[data-shi-map\] \.story-glass/);
 assert.match(map, /data-map-hint-kind/);
 assert.doesNotMatch(map, /top-\[4\.5rem\]/);
 assert.match(map, /resize: \(\) =>/);
@@ -223,7 +230,12 @@ assert.match(pkg, /test:research-workspace/);
 {
   const r = spawnSync(
     process.execPath,
-    ["--experimental-strip-types", "scripts/test-research-imagery.ts"],
+    [
+      "--import",
+      "./scripts/story-ts-alias.mjs",
+      "--experimental-strip-types",
+      "scripts/test-research-imagery.ts",
+    ],
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(r.status, 0, `research-imagery\n${r.stdout}\n${r.stderr}`);
