@@ -17,9 +17,11 @@ import {
   LocateFixed,
   Mountain,
   PenTool,
+  Redo2,
   Route,
   Ruler,
   Square,
+  Undo2,
   Wrench,
   X,
 } from "lucide-react";
@@ -31,6 +33,8 @@ import {
   pathLengthMeters,
   polygonAreaSqMeters,
   usableLngLatRing,
+  type AreaUnit,
+  type DistanceUnit,
   type DrawnBoundary,
   type LatLng,
 } from "@/lib/geo";
@@ -80,9 +84,6 @@ import { cn } from "@/lib/utils";
 import {
   RESEARCH_LIDAR_CONTOURS_LAYER_ID,
   RESEARCH_LIDAR_COPY,
-  RESEARCH_LIDAR_CUT_LAYER_ID,
-  RESEARCH_LIDAR_CUT_PIN_LAYER_ID,
-  RESEARCH_LIDAR_CUT_SOURCE_ID,
   RESEARCH_LIDAR_DEM_SOURCE_ID,
   RESEARCH_LIDAR_ELEV_DEFAULT,
   RESEARCH_LIDAR_ELEV_MAX,
@@ -96,7 +97,6 @@ import {
   RESEARCH_LIDAR_STRENGTH_DEFAULT,
   researchLidarCanvasBase,
   researchLidarTileTemplate,
-  type ResearchLidarProfile,
   type ResearchLidarReadId,
 } from "@/lib/shi/research-lidar";
 import {
@@ -148,24 +148,48 @@ const EMPTY_FC: FeatureCollection = { type: "FeatureCollection", features: [] };
 const RESEARCH_MEASURE_SOURCE_ID = "shi-measure";
 const RESEARCH_MEASURE_LINE_ID = "shi-measure-line";
 const RESEARCH_MEASURE_POINTS_ID = "shi-measure-points";
+const RESEARCH_MEASURE_ENDS_ID = "shi-measure-ends";
+const RESEARCH_MEASURE_CORE_ID = "shi-measure-core";
 
-function measureLineAndVertices(points: LatLng[]): FeatureCollection {
+/** Research ruler distance picks — linear feet = ft. */
+const RESEARCH_DIST_UNITS: { id: DistanceUnit; label: string }[] = [
+  { id: "in", label: "in" },
+  { id: "ft", label: "ft" },
+  { id: "yd", label: "yd" },
+  { id: "mi", label: "mi" },
+];
+
+/** Research ruler area picks. */
+const RESEARCH_AREA_UNITS: { id: AreaUnit; label: string }[] = [
+  { id: "sqft", label: "sq ft" },
+  { id: "acres", label: "acres" },
+];
+
+function measureLineAndVertices(
+  points: LatLng[],
+  tip?: LatLng | null,
+): FeatureCollection {
   const coords = points.map((p) => [p.lng, p.lat] as [number, number]);
   const features: FeatureCollection["features"] = [];
-  if (coords.length >= 2) {
+  const lineCoords =
+    tip && coords.length >= 1
+      ? [...coords, [tip.lng, tip.lat] as [number, number]]
+      : coords;
+  if (lineCoords.length >= 2) {
     features.push({
       type: "Feature",
-      geometry: { type: "LineString", coordinates: coords },
-      properties: {},
+      geometry: { type: "LineString", coordinates: lineCoords },
+      properties: { kind: tip ? "preview" : "solid" },
     });
   }
-  for (const c of coords) {
+  coords.forEach((c, i) => {
+    const end = coords.length === 1 || i === 0 || i === coords.length - 1;
     features.push({
       type: "Feature",
       geometry: { type: "Point", coordinates: c },
-      properties: {},
+      properties: { role: end ? "end" : "vertex", index: i },
     });
-  }
+  });
   return { type: "FeatureCollection", features };
 }
 
@@ -201,32 +225,6 @@ function scheduleResearchMapResizes(
     window.removeEventListener("orientationchange", kick);
     for (const t of timers) window.clearTimeout(t);
   };
-}
-
-function LidarCutChart({ profile }: { profile: ResearchLidarProfile }) {
-  const w = 168;
-  const h = 44;
-  const pad = 3;
-  const maxX = Math.max(...profile.points.map((p) => p.miles), 0.01);
-  const spanY = Math.max(8, profile.maxFt - profile.minFt);
-  const d = profile.points
-    .map((p, i) => {
-      const x = pad + (p.miles / maxX) * (w - pad * 2);
-      const y =
-        h - pad - ((p.feet - profile.minFt) / spanY) * (h - pad * 2);
-      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-  return (
-    <svg
-      data-map-lidar-profile-chart
-      viewBox={`0 0 ${w} ${h}`}
-      className="h-11 w-[10.5rem] text-navy"
-      aria-hidden
-    >
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
 }
 
 type DrawTool = "pan" | "radius" | "rectangle" | "freehand" | "measure";
@@ -440,16 +438,14 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
     const [lidar3d, setLidar3d] = useState(false);
     const lidar3dPrevRef = useRef<boolean | null>(null);
     const [lidarElev, setLidarElev] = useState(RESEARCH_LIDAR_ELEV_DEFAULT);
-    const [lidarCut, setLidarCut] = useState(false);
-    const [lidarCutA, setLidarCutA] = useState<LatLng | null>(null);
-    const [lidarProfile, setLidarProfile] =
-      useState<ResearchLidarProfile | null>(null);
-    const lidarCutRef = useRef(false);
-    const lidarCutARef = useRef<LatLng | null>(null);
     const baseBeforeLidarRef = useRef<MapBaseLayer | null>(null);
     const [tool, setTool] = useState<DrawTool>("pan");
     const [radiusMiles, setRadiusMiles] = useState(1);
     const [measurePoints, setMeasurePoints] = useState<LatLng[]>([]);
+    const [measureRedoStack, setMeasureRedoStack] = useState<LatLng[]>([]);
+    const [measureTip, setMeasureTip] = useState<LatLng | null>(null);
+    const [distUnit, setDistUnit] = useState<DistanceUnit>("ft");
+    const [areaUnit, setAreaUnit] = useState<AreaUnit>("acres");
     const [freehandHint, setFreehandHint] = useState<
       "idle" | "drawing" | "closeable"
     >("idle");
@@ -1035,18 +1031,49 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           id: RESEARCH_MEASURE_LINE_ID,
           type: "line",
           source: RESEARCH_MEASURE_SOURCE_ID,
-          paint: { "line-color": MAP_GOLD, "line-width": 2.5 },
+          paint: {
+            "line-color": MAP_GOLD,
+            "line-width": 1.75,
+            "line-opacity": 0.95,
+          },
+        });
+        // Outer reticle on ends — precise fingertip target.
+        map.addLayer({
+          id: RESEARCH_MEASURE_ENDS_ID,
+          type: "circle",
+          source: RESEARCH_MEASURE_SOURCE_ID,
+          filter: ["==", ["get", "role"], "end"],
+          paint: {
+            "circle-radius": 8,
+            "circle-color": MAP_GOLD,
+            "circle-opacity": 0.12,
+            "circle-stroke-color": MAP_GOLD,
+            "circle-stroke-width": 1.25,
+            "circle-stroke-opacity": 0.95,
+          },
         });
         map.addLayer({
           id: RESEARCH_MEASURE_POINTS_ID,
           type: "circle",
           source: RESEARCH_MEASURE_SOURCE_ID,
-          filter: ["==", "$type", "Point"],
+          filter: ["==", ["get", "role"], "vertex"],
           paint: {
-            "circle-radius": 5,
+            "circle-radius": 2.75,
             "circle-color": MAP_TEAL,
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 1.25,
+          },
+        });
+        map.addLayer({
+          id: RESEARCH_MEASURE_CORE_ID,
+          type: "circle",
+          source: RESEARCH_MEASURE_SOURCE_ID,
+          filter: ["==", ["get", "role"], "end"],
+          paint: {
+            "circle-radius": 2.25,
+            "circle-color": "#ffffff",
             "circle-stroke-color": MAP_NAVY,
-            "circle-stroke-width": 2,
+            "circle-stroke-width": 1.75,
           },
         });
 
@@ -1073,32 +1100,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           source: RESEARCH_LIDAR_PIN_SOURCE_ID,
           paint: {
             "circle-radius": 6,
-            "circle-color": MAP_GOLD,
-            "circle-opacity": 0.95,
-            "circle-stroke-width": 2,
-            "circle-stroke-color": MAP_NAVY,
-          },
-        });
-        map.addSource(RESEARCH_LIDAR_CUT_SOURCE_ID, {
-          type: "geojson",
-          data: EMPTY_FC,
-        });
-        map.addLayer({
-          id: RESEARCH_LIDAR_CUT_LAYER_ID,
-          type: "line",
-          source: RESEARCH_LIDAR_CUT_SOURCE_ID,
-          paint: {
-            "line-color": MAP_GOLD,
-            "line-width": 2.4,
-            "line-opacity": 0.95,
-          },
-        });
-        map.addLayer({
-          id: RESEARCH_LIDAR_CUT_PIN_LAYER_ID,
-          type: "circle",
-          source: RESEARCH_LIDAR_CUT_SOURCE_ID,
-          paint: {
-            "circle-radius": 5,
             "circle-color": MAP_GOLD,
             "circle-opacity": 0.95,
             "circle-stroke-width": 2,
@@ -1287,10 +1288,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
           | maplibregl.GeoJSONSource
           | undefined;
         pin?.setData(EMPTY_FC);
-        const cut = map.getSource(RESEARCH_LIDAR_CUT_SOURCE_ID) as
-          | maplibregl.GeoJSONSource
-          | undefined;
-        cut?.setData(EMPTY_FC);
       }
       try {
         map.setPaintProperty(
@@ -1467,11 +1464,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       if (!map || !ready || !(lidarOn || lidar3d)) {
         setLidarElevFt(null);
         setLidarPinFt(null);
-        setLidarCut(false);
-        setLidarCutA(null);
-        setLidarProfile(null);
-        lidarCutRef.current = false;
-        lidarCutARef.current = null;
         return;
       }
       let cancelled = false;
@@ -1519,95 +1511,18 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         if (t) window.clearTimeout(t);
         t = window.setTimeout(readCenter, 450);
       };
-      const paintCut = (a: LatLng, b: LatLng | null) => {
-        const src = map.getSource(RESEARCH_LIDAR_CUT_SOURCE_ID) as
-          | maplibregl.GeoJSONSource
-          | undefined;
-        const points = [
-          {
-            type: "Feature" as const,
-            properties: {},
-            geometry: { type: "Point" as const, coordinates: [a.lng, a.lat] },
-          },
-          ...(b
-            ? [
-                {
-                  type: "Feature" as const,
-                  properties: {},
-                  geometry: {
-                    type: "Point" as const,
-                    coordinates: [b.lng, b.lat],
-                  },
-                },
-                {
-                  type: "Feature" as const,
-                  properties: {},
-                  geometry: {
-                    type: "LineString" as const,
-                    coordinates: [
-                      [a.lng, a.lat],
-                      [b.lng, b.lat],
-                    ],
-                  },
-                },
-              ]
-            : []),
-        ];
-        src?.setData({ type: "FeatureCollection", features: points });
-      };
       const onClick = (e: maplibregl.MapMouseEvent) => {
         if (toolRef.current !== "pan") return;
         const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
-        if (lidarCutRef.current) {
-          const start = lidarCutARef.current;
-          if (!start) {
-            lidarCutARef.current = pt;
-            setLidarCutA(pt);
-            paintCut(pt, null);
-            return;
-          }
-          paintCut(start, pt);
-          setLidarCut(false);
-          lidarCutRef.current = false;
-          void (async () => {
-            try {
-              const res = await fetch(
-                `/api/map/lidar/profile?lng1=${start.lng}&lat1=${start.lat}&lng2=${pt.lng}&lat2=${pt.lat}`,
-              );
-              if (!res.ok) return;
-              const json = (await res.json()) as ResearchLidarProfile;
-              if (cancelled || !json.points?.length) return;
-              setLidarProfile(json);
-              lidarCutARef.current = null;
-              setLidarCutA(null);
-            } catch {
-              /* slice optional */
-            }
-          })();
-          return;
-        }
         void readAt(pt.lng, pt.lat, true);
-      };
-      const onKey = (ev: KeyboardEvent) => {
-        if (ev.key !== "Escape" || !lidarCutRef.current) return;
-        lidarCutRef.current = false;
-        lidarCutARef.current = null;
-        setLidarCut(false);
-        setLidarCutA(null);
-        const src = map.getSource(RESEARCH_LIDAR_CUT_SOURCE_ID) as
-          | maplibregl.GeoJSONSource
-          | undefined;
-        src?.setData(EMPTY_FC);
       };
       map.on("moveend", onMove);
       map.on("click", onClick);
-      window.addEventListener("keydown", onKey);
       return () => {
         cancelled = true;
         if (t) window.clearTimeout(t);
         map.off("moveend", onMove);
         map.off("click", onClick);
-        window.removeEventListener("keydown", onKey);
       };
     }, [ready, lidarOn, lidar3d]);
 
@@ -1661,9 +1576,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       if (!map || !ready) return;
       if (tool === "measure" || tool === "freehand") map.doubleClickZoom.disable();
       else map.doubleClickZoom.enable();
-      map.getCanvas().style.cursor =
-        tool === "pan" && !lidarCut ? "" : "crosshair";
-    }, [ready, tool, lidarCut]);
+      map.getCanvas().style.cursor = tool === "pan" ? "" : "crosshair";
+    }, [ready, tool]);
 
     useEffect(() => {
       const map = mapRef.current;
@@ -1671,16 +1585,38 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const src = map.getSource(RESEARCH_MEASURE_SOURCE_ID) as
         | maplibregl.GeoJSONSource
         | undefined;
-      src?.setData(measureLineAndVertices(measurePoints));
-    }, [ready, measurePoints]);
+      src?.setData(measureLineAndVertices(measurePoints, measureTip));
+    }, [ready, measurePoints, measureTip]);
 
     function clearMeasure(map?: maplibregl.Map | null) {
       setMeasurePoints([]);
+      setMeasureRedoStack([]);
+      setMeasureTip(null);
       const m = map ?? mapRef.current;
       const src = m?.getSource(RESEARCH_MEASURE_SOURCE_ID) as
         | maplibregl.GeoJSONSource
         | undefined;
       src?.setData(EMPTY_FC);
+    }
+
+    function undoMeasurePoint() {
+      setMeasurePoints((prev) => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1]!;
+        setMeasureRedoStack((stack) => [...stack, last]);
+        return prev.slice(0, -1);
+      });
+      setMeasureTip(null);
+    }
+
+    function redoMeasurePoint() {
+      setMeasureRedoStack((stack) => {
+        if (stack.length === 0) return stack;
+        const next = stack[stack.length - 1]!;
+        setMeasurePoints((prev) => [...prev, next]);
+        return stack.slice(0, -1);
+      });
+      setMeasureTip(null);
     }
 
     function clearBoxDraft(map?: maplibregl.Map | null) {
@@ -1761,6 +1697,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         const pt: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
         if (tool === "measure") {
           setMeasurePoints((prev) => [...prev, pt]);
+          setMeasureRedoStack([]);
+          setMeasureTip(null);
           return;
         }
         if (!canDrawRef.current) {
@@ -1815,20 +1753,37 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       };
 
       const onMove = (e: maplibregl.MapMouseEvent) => {
+        if (tool === "measure") {
+          if (measurePoints.length === 0) {
+            setMeasureTip(null);
+            return;
+          }
+          setMeasureTip({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+          return;
+        }
         if (tool !== "rectangle" || draftRef.current.length === 0) return;
         const tip: LatLng = { lat: e.lngLat.lat, lng: e.lngLat.lng };
         paintBoxDraft(map, draftRef.current[0]!, tip);
       };
 
       const onKey = (ev: KeyboardEvent) => {
+        if (tool === "measure" && (ev.key === "z" || ev.key === "Z") && (ev.metaKey || ev.ctrlKey)) {
+          ev.preventDefault();
+          if (ev.shiftKey) redoMeasurePoint();
+          else undoMeasurePoint();
+          return;
+        }
         if (ev.key !== "Escape") return;
         if (tool === "rectangle" || tool === "radius") {
           clearBoxDraft(map);
           setDrawWarn("");
           setTool("pan");
         } else if (tool === "measure") {
-          clearMeasure(map);
-          setTool("pan");
+          if (measurePoints.length > 0 || measureRedoStack.length > 0) {
+            clearMeasure(map);
+          } else {
+            setTool("pan");
+          }
         }
       };
 
@@ -1840,7 +1795,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         map.off("mousemove", onMove);
         window.removeEventListener("keydown", onKey);
       };
-    }, [ready, tool, radiusMiles]);
+    }, [ready, tool, radiusMiles, measurePoints.length, measureRedoStack.length]);
 
     // Freehand: shared Draw OS session — snap-seal when tip returns near start.
     useEffect(() => {
@@ -2322,10 +2277,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                       clearFreehandDraft();
                       clearBoxDraft();
                       setDrawWarn("");
-                      setLidarCut(false);
-                      lidarCutRef.current = false;
-                      lidarCutARef.current = null;
-                      setLidarCutA(null);
                       setTool("measure");
                     }}
                     className={cn(
@@ -2348,10 +2299,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                         return;
                       }
                       clearMeasure();
-                      setLidarCut(false);
-                      lidarCutRef.current = false;
-                      lidarCutARef.current = null;
-                      setLidarCutA(null);
                       if (!isDrawFamily(tool)) {
                         clearFreehandDraft();
                         clearBoxDraft();
@@ -2461,37 +2408,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   ) : null}
                 </>
               ) : null}
-              <button
-                type="button"
-                data-map-lidar-cut
-                data-map-lidar-cut-on={lidarCut ? "yes" : "no"}
-                title={RESEARCH_LIDAR_COPY.cut.title}
-                onClick={() => {
-                  clearFreehandDraft();
-                  clearBoxDraft();
-                  clearMeasure();
-                  setDrawWarn("");
-                  setTool("pan");
-                  setLidarCut((on) => {
-                    const next = !on;
-                    lidarCutRef.current = next;
-                    lidarCutARef.current = null;
-                    setLidarCutA(null);
-                    if (next) setLidarProfile(null);
-                    const src = mapRef.current?.getSource(
-                      RESEARCH_LIDAR_CUT_SOURCE_ID,
-                    ) as maplibregl.GeoJSONSource | undefined;
-                    src?.setData(EMPTY_FC);
-                    return next;
-                  });
-                }}
-                className={cn(
-                  "story-map-tool font-mono text-[10px] font-extrabold tracking-wide uppercase",
-                  lidarCut && "story-map-tool-active",
-                )}
-              >
-                {RESEARCH_LIDAR_COPY.cut.short}
-              </button>
               {tool === "radius" ? (
                 <label className="story-map-tool-muted inline-flex items-center gap-1 px-2 py-1">
                   mi
@@ -2510,18 +2426,119 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   />
                 </label>
               ) : null}
-              {tool === "measure" && measurePoints.length >= 2 ? (
-                <span
-                  data-map-measure-readout
-                  className="story-map-tool-muted px-1.5 font-mono text-[10px] font-bold normal-case"
-                >
-                  {formatDistanceIn(pathLengthMeters(measurePoints), "mi")}
-                  {measurePoints.length >= 3
-                    ? ` · ${formatAreaIn(polygonAreaSqMeters(measurePoints), "acres")}`
-                    : ""}
-                </span>
-              ) : null}
-              {tool !== "pan" || measurePoints.length > 0 ? (
+              {tool === "measure" ? (
+                <>
+                  <label className="story-map-tool-muted inline-flex items-center gap-1 px-1.5 py-1">
+                    <span className="sr-only">Distance unit</span>
+                    <select
+                      data-map-measure-dist-unit
+                      value={distUnit}
+                      onChange={(e) =>
+                        setDistUnit(e.target.value as DistanceUnit)
+                      }
+                      title="Distance unit"
+                      className="story-map-tool-input max-w-[4.5rem]"
+                    >
+                      {RESEARCH_DIST_UNITS.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="story-map-tool-muted inline-flex items-center gap-1 px-1.5 py-1">
+                    <span className="sr-only">Area unit</span>
+                    <select
+                      data-map-measure-area-unit
+                      value={areaUnit}
+                      onChange={(e) =>
+                        setAreaUnit(e.target.value as AreaUnit)
+                      }
+                      title="Area unit"
+                      className="story-map-tool-input max-w-[5rem]"
+                    >
+                      {RESEARCH_AREA_UNITS.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {measurePoints.length >= 2 ? (
+                    <span
+                      data-map-measure-readout
+                      className="story-map-tool-muted max-w-[14rem] px-1.5 font-mono text-[10px] font-bold normal-case leading-snug"
+                    >
+                      {formatDistanceIn(
+                        pathLengthMeters(measurePoints),
+                        distUnit,
+                      )}
+                      {measureTip && measurePoints.length >= 1
+                        ? ` · live ${formatDistanceIn(
+                            pathLengthMeters([
+                              measurePoints[measurePoints.length - 1]!,
+                              measureTip,
+                            ]),
+                            distUnit,
+                          )}`
+                        : ""}
+                      {measurePoints.length >= 3
+                        ? ` · ${formatAreaIn(
+                            polygonAreaSqMeters(measurePoints),
+                            areaUnit,
+                          )}`
+                        : ""}
+                    </span>
+                  ) : null}
+                  <button
+                    type="button"
+                    data-map-measure-undo
+                    onClick={undoMeasurePoint}
+                    disabled={measurePoints.length === 0}
+                    className={cn(
+                      "story-map-tool",
+                      measurePoints.length === 0 && "opacity-40",
+                    )}
+                    title="Undo last point"
+                  >
+                    <Undo2 className="h-3.5 w-3.5" />
+                    <span className="sr-only">Undo</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-map-measure-redo
+                    onClick={redoMeasurePoint}
+                    disabled={measureRedoStack.length === 0}
+                    className={cn(
+                      "story-map-tool",
+                      measureRedoStack.length === 0 && "opacity-40",
+                    )}
+                    title="Redo point"
+                  >
+                    <Redo2 className="h-3.5 w-3.5" />
+                    <span className="sr-only">Redo</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-map-measure-clear
+                    onClick={() => clearMeasure()}
+                    disabled={
+                      measurePoints.length === 0 &&
+                      measureRedoStack.length === 0
+                    }
+                    className={cn(
+                      "story-map-tool",
+                      measurePoints.length === 0 &&
+                        measureRedoStack.length === 0 &&
+                        "opacity-40",
+                    )}
+                    title="Clear measure"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span className="sr-only">Clear</span>
+                  </button>
+                </>
+              ) : tool !== "pan" ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -2558,11 +2575,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             <p
               data-map-hint
               data-map-hint-kind={
-                drawWarn
-                  ? "warn"
-                  : tool !== "pan" || lidarCut
-                    ? "draw"
-                    : "idle"
+                drawWarn ? "warn" : tool !== "pan" ? "draw" : "idle"
               }
               className={cn(
                 "pointer-events-none inline-flex max-w-[min(92%,28rem)] items-center gap-1.5 rounded-lg px-2 py-1 font-mono text-[10px] font-bold uppercase",
@@ -2576,8 +2589,8 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                 ? drawWarn
                 : tool === "measure"
                   ? measurePoints.length === 0
-                    ? "Tap points to measure · Esc cancel"
-                    : "Tap next point · Esc cancel"
+                    ? "Tap precise ends · undo/redo · X clears"
+                    : "Tap next point · undo/redo · X clears"
                   : tool === "rectangle"
                     ? boxDraftActive
                       ? "Move to size · click second corner · Esc cancel"
@@ -2590,11 +2603,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                           : freehandHint === "drawing"
                             ? "Draw a loop · return to start to snap-seal"
                             : "Hold and draw · loop back to start to seal"
-                        : lidarCut
-                          ? lidarCutA
-                            ? "Tap the other end of the cut · Esc cancel"
-                            : RESEARCH_LIDAR_COPY.cut.hint
-                          : "Pan · click frame to select · click parcel for record"}
+                        : "Pan · click frame to select · click parcel for record"}
             </p>
           </div>
 
@@ -2835,23 +2844,6 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
                   </p>
                   <p className="text-right font-mono text-[8px] leading-snug text-navy/80">
                     {parcelTerrain.archieRead}
-                  </p>
-                </div>
-              ) : null}
-              {lidarProfile ? (
-                <div
-                  data-map-lidar-profile
-                  className="flex w-[11rem] flex-col items-end gap-1 rounded-md bg-[var(--paper,#f7f4ec)]/95 px-2 py-1.5"
-                >
-                  <LidarCutChart profile={lidarProfile} />
-                  <p className="text-right font-mono text-[9px] font-bold leading-snug text-navy">
-                    {lidarProfile.lengthMiles.toFixed(2)} mi ·{" "}
-                    {lidarProfile.minFt.toFixed(0)}–
-                    {lidarProfile.maxFt.toFixed(0)} ft
-                  </p>
-                  <p className="text-right font-mono text-[9px] font-semibold text-navy/80">
-                    rise {lidarProfile.riseFt.toFixed(0)} · drop{" "}
-                    {lidarProfile.dropFt.toFixed(0)}
                   </p>
                 </div>
               ) : null}
