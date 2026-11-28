@@ -41,6 +41,7 @@ import {
   MAP_PAPER as PAPER,
   setBaseLayerVisibility,
   setImageryLidarOverlay,
+  setParcelOverlayVisibility,
   type MapBaseLayer as BaseLayer,
 } from "@/lib/map-style";
 import { escapeHtml } from "@/lib/security/html";
@@ -444,14 +445,11 @@ export function MarketplaceMap({
     setImageryLidarOverlay(map, lidarOverlay && photoBase);
   }, [ready, base, lidarOverlay, photoBase]);
 
-  // Parcel overlay visibility.
+  // Parcel overlay + state/county boundary lines (same Parcels switch).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const v = showParcels ? "visible" : "none";
-    ["parcels-fill", "parcels-line"].forEach((id) => {
-      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", v);
-    });
+    setParcelOverlayVisibility(map, showParcels);
   }, [ready, showParcels]);
 
   // Cursor + double-click zoom per tool.

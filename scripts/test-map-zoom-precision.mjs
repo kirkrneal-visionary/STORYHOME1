@@ -39,8 +39,14 @@ assert.match(style, /applyStoryPlaceLabelStyle/);
 assert.match(style, /label_city|label_town/);
 assert.match(style, /text-halo-width/);
 assert.match(style, /MAP_NAVY/);
-assert.match(style, /fw-streets-raster|World_Street_Map/);
+assert.match(style, /fw-streets-raster|World_Terrain_Base/);
+/** Tile URL must be unlabeled terrain — not labeled World_Street_Map. */
+assert.match(style, /World_Terrain_Base\/MapServer\/tile/);
+assert.doesNotMatch(style, /World_Street_Map\/MapServer\/tile/);
 assert.match(style, /storyhome:fw-layer-ids/);
+assert.match(style, /storyhome:admin-boundary-layer-ids/);
+assert.match(style, /setParcelOverlayVisibility|setAdminBoundaryVisibility/);
+assert.match(style, /applyAdminBoundaryStyle|boundary_2|boundary_3/);
 assert.match(style, /underlay-plus-vector|background.*natural_earth|natural_earth/);
 assert.match(style, /freeWorldIdsForMap|fw-layer-ids/);
 assert.match(style, /coalesce/);
@@ -48,6 +54,14 @@ assert.match(style, /coalesce/);
 assert.match(style, /text-halo-blur["\]]+\s*=\s*0/);
 assert.match(style, /storyhome:place-labels/);
 assert.match(style, /desk-v1/);
+assert.match(
+  read("src/components/broker/intelligence/ShiResearchMap.tsx"),
+  /setParcelOverlayVisibility/,
+);
+assert.match(
+  read("src/components/marketplace/MarketplaceMap.tsx"),
+  /setParcelOverlayVisibility/,
+);
 /** Pure absolutize mirror — relative paths become origin-absolute; https stays. */
 function absolutizeMapTileTemplate(tmpl, origin = "https://example.test") {
   if (!tmpl) return tmpl;
