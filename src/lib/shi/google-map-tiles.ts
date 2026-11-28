@@ -9,7 +9,11 @@ const TILE_2D_BASE = "https://tile.googleapis.com/v1/2dtiles";
 /** Refresh session before expiry (Google sessions last ~two weeks). */
 const SESSION_REFRESH_SKEW_SEC = 3600;
 
-export const GOOGLE_SATELLITE_FETCH_TIMEOUT_MS = 7_500;
+/**
+ * Fail fast under Vercel fan-out. Blind 7.5s × retry + NAIP used to push the
+ * imagery route past maxDuration (30s) → SSL drops / patchwork fills.
+ */
+export const GOOGLE_SATELLITE_FETCH_TIMEOUT_MS = 4_000;
 
 /**
  * Retina satellite session — 512px images for the same 256 CSS-pixel mercator
