@@ -14,12 +14,11 @@ const LICENSED_TILE_CACHE_CONTROL = "private, max-age=300";
 type Ctx = { params: Promise<{ z: string; x: string; y: string }> };
 
 /**
- * L7-2 — owned launch-7 imagery tiles.
- * Launch-7 footprint: Google Maps satellite when LAUNCH7_GOOGLE_IMAGERY_ENABLED + key;
- * Esri World Imagery when Google key missing but Esri token set; NAIP / USGS elsewhere.
- * Far-out: USGS Imagery Only.
- * Serves from disk cache; fills upstream inside the footprint.
- * Fallback tiles get a short cache so TOP 2015 replaces them once TxGIO is back.
+ * L7-2 — Imagery/Hybrid satellite tiles (one vendor per request).
+ * Google Maps satellite (world) when LAUNCH7_GOOGLE_IMAGERY_ENABLED + key —
+ * miss returns 204 (client retries; no Esri/USGS/NAIP swap).
+ * Esri World Imagery only when Google is off (footprint-bounded).
+ * NAIP / USGS only when neither paid path is active (local/dev cache).
  */
 export async function GET(_req: Request, ctx: Ctx) {
   const { z: zs, x: xs, y: ys } = await ctx.params;

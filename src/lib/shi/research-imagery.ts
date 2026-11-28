@@ -1,12 +1,11 @@
 /**
  * Research imagery sources — photos are not elevation.
- * Launch-7 footprint = Google Maps satellite (Map Tiles API) when
- * LAUNCH7_GOOGLE_IMAGERY_ENABLED and GOOGLE_MAPS_API_KEY are set; Esri World
- * Imagery when Google key is missing but Esri flag + token are set (no server
- * tile store for either). NAIP / USGS Imagery Only elsewhere and on error.
- * TxGIO Texas Orthoimagery Program 2015 50 cm stays behind LAUNCH7_TOP15_ENABLED.
- * Far-out zoom = USGS Imagery Only tiles (fast).
- * High-res / historic slots stay reserved. Safe for the browser.
+ * Imagery/Hybrid primary = Google Maps satellite (Map Tiles API, world coverage)
+ * when LAUNCH7_GOOGLE_IMAGERY_ENABLED and GOOGLE_MAPS_API_KEY are set. Misses
+ * fail soft (empty/retry) — no USGS/NAIP/Esri stack under Google. Esri World
+ * Imagery is the alternate primary only when Google is off. NAIP / USGS remain
+ * for local/dev when neither paid path is active. TxGIO TOP 2015 stays behind
+ * LAUNCH7_TOP15_ENABLED. High-res / historic slots stay reserved.
  */
 
 import {
@@ -147,13 +146,13 @@ export function naip60cmSource(tileUrl?: string): ImagerySourceDef {
 export const GOOGLE_SATELLITE_LAUNCH7_ID = "google-satellite-launch7";
 export const GOOGLE_SATELLITE_LAUNCH7_NATIVE_M = 0.35;
 
-/** Google Maps satellite across the launch-7 footprint (Map Tiles API, proxied). */
+/** Google Maps satellite for Imagery/Hybrid (Map Tiles API, proxied; one vendor). */
 export function googleSatelliteLaunch7ImagerySource(
   tileUrl?: string,
 ): ImagerySourceDef {
   return {
     id: GOOGLE_SATELLITE_LAUNCH7_ID,
-    name: "Google Maps satellite (launch 7)",
+    name: "Google Maps satellite",
     type: "raster",
     tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
     // CSS pixel size stays 256; highDpi session returns 512px images for retina.
@@ -161,7 +160,7 @@ export function googleSatelliteLaunch7ImagerySource(
     minZoom: 0,
     maxZoom: GOOGLE_SATELLITE_MAX_ZOOM,
     attribution:
-      "Imagery © Google Maps · Map data: Google, Maxar · USDA NAIP fallback outside footprint or on error · Story Home",
+      "Imagery © Google Maps · Map data: Google, Maxar · Story Home (Google-only; empty tile on miss — no vendor swap)",
     highDpiSupported: true,
     nativeResolutionM: GOOGLE_SATELLITE_LAUNCH7_NATIVE_M,
     enabled: launch7GoogleImageryRequested(),
@@ -184,7 +183,7 @@ export function esriWorldLaunch7ImagerySource(tileUrl?: string): ImagerySourceDe
     minZoom: 0,
     maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
     attribution:
-      "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · launch-7 · USDA NAIP fallback outside footprint or on error · Story Home",
+      "Imagery © Esri, Maxar, Vantor, USDA FSA, USGS, EPA, NPS · Story Home (Esri primary when Google off; empty on miss)",
     highDpiSupported: false,
     nativeResolutionM: ESRI_WORLD_LAUNCH7_NATIVE_M,
     enabled: launch7EsriPolkRequested() && !launch7GoogleImageryActive(),

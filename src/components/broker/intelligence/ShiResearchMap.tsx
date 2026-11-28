@@ -48,6 +48,7 @@ import {
   researchDemSourceSpec,
   setBaseLayerVisibility,
   setParcelOverlayVisibility,
+  syncAdminBoundaryForBase,
   type MapBaseLayer,
 } from "@/lib/map-style";
 import {
@@ -1239,26 +1240,34 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       const map = mapRef.current;
       if (!map || !ready) return;
       // OSM fill-extrusion stays upright on setTerrain; show over Imagery when 3D is on.
+      // Admin lines stay on Imagery/Hybrid even when Parcels is off.
       setBaseLayerVisibility(map, base, {
         uprightOnImagery: lidar3d && isPhotoSkin(base),
+        parcelsOn: showParcels,
       });
-    }, [ready, base, lidar3d]);
+    }, [ready, base, lidar3d, showParcels]);
 
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
-      // Parcels switch also shows/hides state + county boundary lines.
+      // Parcels = CAD lot lines only. Admin lines follow Imagery or Parcels.
       setParcelOverlayVisibility(map, showParcels);
-    }, [ready, showParcels]);
+      syncAdminBoundaryForBase(map, base, showParcels);
+    }, [ready, showParcels, base]);
 
     useEffect(() => {
       const map = mapRef.current;
       if (!map || !ready) return;
       if (!map.getLayer(RESEARCH_LIDAR_LAYER_ID)) return;
+      const photo = isPhotoSkin(base);
+      // Soft hillshade under Imagery when 3D terrain is on — relief reads on the
+      // draped satellite without replacing the Google photo (smallest complete win).
+      const imageryTerrainRelief = lidar3d && photo;
+      const hillshadeOn = (lidarOn && !photo) || imageryTerrainRelief;
         map.setLayoutProperty(
           RESEARCH_LIDAR_LAYER_ID,
           "visibility",
-          lidarOn && !isPhotoSkin(base) ? "visible" : "none",
+          hillshadeOn ? "visible" : "none",
         );
       if (map.getLayer(RESEARCH_LIDAR_CONTOURS_LAYER_ID)) {
         map.setLayoutProperty(
@@ -1292,7 +1301,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         map.setPaintProperty(
           RESEARCH_LIDAR_LAYER_ID,
           "raster-opacity",
-          lidarOn ? lidarStrength : RESEARCH_LIDAR_STRENGTH_DEFAULT,
+          imageryTerrainRelief
+            ? 0.32
+            : lidarOn
+              ? lidarStrength
+              : RESEARCH_LIDAR_STRENGTH_DEFAULT,
         );
       } catch {
         /* layer may not accept paint yet */

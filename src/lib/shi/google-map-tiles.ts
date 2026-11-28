@@ -28,7 +28,7 @@ export const GOOGLE_SATELLITE_SESSION_BODY = {
   highDpi: true,
 } as const;
 
-/** Native tile ceiling for Google inside launch-7 (API allows higher; we stop soft-stretch). */
+/** Native tile ceiling for Google Imagery (API allows higher; we stop soft-stretch). */
 export const GOOGLE_SATELLITE_MAX_ZOOM = 20;
 
 function envTruthy(name: string): boolean {
@@ -44,7 +44,7 @@ export function googleMapsApiKey(): string | null {
   return k || null;
 }
 
-/** Founder flag — prefer Google satellite inside launch-7 when key is set. */
+/** Founder flag — Google-only Imagery/Hybrid when key is set. */
 export function launch7GoogleImageryRequested(): boolean {
   return envTruthy("LAUNCH7_GOOGLE_IMAGERY_ENABLED");
 }

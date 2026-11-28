@@ -47,16 +47,18 @@ assert.match(style, /storyhome:fw-layer-ids/);
 assert.match(style, /storyhome:admin-boundary-layer-ids/);
 assert.match(style, /storyhome:imagery-overlay-layer-ids/);
 assert.match(style, /storyhome:imagery-overlays/);
-assert.match(style, /quiet-v1/);
-assert.match(style, /setParcelOverlayVisibility|setAdminBoundaryVisibility/);
-assert.match(style, /admin-state-line|admin-county-line/);
+assert.match(style, /premium-v1/);
+assert.match(style, /setParcelOverlayVisibility|setAdminBoundaryVisibility|syncAdminBoundaryForBase/);
+assert.match(style, /admin-state-line|admin-county-line|admin-state-casing|admin-county-casing/);
 assert.match(style, /launch7-admin-boundaries\.geojson/);
 assert.match(style, /isLibertyAdminBoundaryOriginalId|boundary_2|boundary_3/);
 assert.match(style, /IMAGERY_OVERLAY_SOURCE_ID|imagery-overlays/);
 assert.match(style, /tiles\.openfreemap\.org\/planet/);
-assert.match(style, /img-ocean-water|img-country-boundary/);
+assert.match(style, /img-ocean-water|img-country-boundary|img-country-boundary-casing/);
 assert.match(style, /admin_level/);
 assert.match(style, /"county"/);
+/** Admin lines stay on Imagery without requiring Parcels. */
+assert.match(style, /Imagery\/Hybrid always|imageryOn \|\| parcelsOn/);
 /** Must not paint liberty boundary_3 (full county grid) on Imagery. */
 assert.doesNotMatch(style, /img-boundary_3/);
 /** Symbol road shields must not receive line-* paint (MapLibre rejects the style). */

@@ -36,22 +36,24 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - Marketplace map: **Lidar** on/off appears when Imagery is on. It overlays the existing `/api/map/lidar` ground hillshade (USGS 3DEP, which carries the Texas StratMap 1 m lidar). Tiles stop at z16, so close zoom is soft. Research keeps its own LiDAR controls.
 - No newer free imagery beats both: Esri World Imagery (Vantor 2023–2025, 31–50 cm) needs an ArcGIS Location Platform token and forbids server caching; H-GAC 2024 6-inch is paid; NAIP 2024 is still 60 cm. No 6-inch StratMap covers the launch-7 counties.
 
-### Google Maps satellite — launch 7, all zooms (founder 2026-11-27, preferred)
+### Google Maps satellite — Imagery/Hybrid only vendor (founder GO 2026-11-28)
 
-- **Status:** `LAUNCH7_GOOGLE_IMAGERY_ENABLED` + `GOOGLE_MAPS_API_KEY` on eqmg (server-only). Google satellite for **all seven launch counties** at **every imagery/hybrid zoom**.
+- **Status:** `LAUNCH7_GOOGLE_IMAGERY_ENABLED` + `GOOGLE_MAPS_API_KEY` on eqmg (server-only). Imagery/Hybrid use **one** satellite path: Google Map Tiles API at **every zoom** (world coverage — not footprint-gated).
 - **Tile API:** Map Tiles API — session via `POST https://tile.googleapis.com/v1/createSession?key=…` with `scale: scaleFactor2x` + `highDpi: true` (512px images for the same 256 CSS-pixel mercator tile), tiles `GET …/v1/2dtiles/{z}/{x}/{y}?session=…&key=…` ([satellite tiles](https://developers.google.com/maps/documentation/tile/satellite), [session tokens](https://developers.google.com/maps/documentation/tile/session_tokens), [policies](https://developers.google.com/maps/documentation/tile/policies)).
-- **Zoom:** Google path native **z20** (no soft stretch past source). NAIP/Esri/USGS stay at z18 (+ one soft step to z19 when not on Google).
-- **Footprint:** launch-7 union bbox from `launch7UnionBbox()` / `corridors.ts`. Outside the footprint or on error: USGS Imagery Only (far zoom) then NAIP chain at z14+.
-- **No server store:** Google tiles are proxied per request — not written to `data/shi/tiles` or R2. Session token is in-memory only. Response `Cache-Control: private, max-age=300` (no `s-maxage`). Respect upstream `Cache-Control` when present. 3D terrain drape and Lidar overlays unchanged (same `satellite` raster source).
-- **Fill speed:** Google/Esri proxy is one-shot (~4s timeout, no blind retry). On Google miss: Esri/USGS only — **no NAIP** (avoids patchwork + Vercel maxDuration kills). MapLibre parallel budget raised (Research 12/18/24; Marketplace 16/28). Status prefetch warms the Google session on that isolate.
-- **`LAUNCH7_IMAGERY_GEN`:** `google-l7-2x` when flag + key are set (was `google-l7` before high-DPI). Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
-- **Cost:** Map Tiles API is pay-as-you-go — set a **Google Cloud budget alert** (e.g. $50/mo) and restrict the API key to Map Tiles API only.
-- **Esri fallback:** If the Google key is missing but `LAUNCH7_ESRI_POLK_ENABLED` + `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` are set, imagery falls back to Esri (`esri-l7`) with the same proxy rules as PRs 309–312.
+- **Zoom:** Google path native **z20**. No soft stretch past source.
+- **Fail soft:** Google miss → HTTP **204** (client retries). **Never** swap Esri / USGS / NAIP under Google mid-view (avoids patchwork).
+- **Honest limits:** Coverage is Google Map Tiles worldwide when the key+flag are on; the real ceiling is **billing/quota** (set a Google Cloud budget alert, e.g. $50/mo, and restrict the key to Map Tiles API only). Without the key, Imagery is not Google.
+- **No server store:** Google tiles are proxied per request — not written to `data/shi/tiles` or R2. Session token is in-memory only. Response `Cache-Control: private, max-age=300` (no `s-maxage`).
+- **3D + Imagery:** Research 3D terrain drapes the same `satellite` raster on USGS 3DEP DEM; soft hillshade peeks under the photo when 3D is on so relief reads without replacing Google.
+- **Fill speed:** Google proxy is one-shot (~4s timeout, no blind retry). MapLibre parallel budget raised (Research 12/18/24; Marketplace 16/28). Status prefetch warms the Google session on that isolate.
+- **`LAUNCH7_IMAGERY_GEN`:** `google-l7-2x` when flag + key are set. Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
+- **Esri alternate primary:** Only when Google is **off** and `LAUNCH7_ESRI_POLK_ENABLED` + ArcGIS token are set (`esri-l7`, footprint-bounded). Still fail-soft on miss — not a mid-view swap under Google.
+- **NAIP/USGS:** Local/dev cache path when neither Google nor Esri is active. Not stacked under Imagery when Google is on.
 - PR **308** (Texas TOP PMTiles on R2): **abandoned** — do not merge.
 
-### Esri World Imagery — launch 7 fallback (PRs 309–312)
+### Esri World Imagery — alternate primary when Google off (PRs 309–312)
 
-- Used when Google is off or the Google key is not yet on eqmg. Same footprint and no-disk rules as above; tile API `ibasemaps-api.arcgis.com`.
+- Used when Google flag/key is off. Footprint-bounded; no-disk; tile API `ibasemaps-api.arcgis.com`.
 
 ### L7-3 — Serve + refresh ops (**shipping**)
 
@@ -106,7 +108,7 @@ App-server fills stay footprint-bounded. Google/Esri satellite is proxied only (
 ## Map zoom precision (Founder Interpreter — build process only)
 
 - **Intent:** Close zoom never goes black; CAD lot lines stay readable for desk precision.
-- **UX:** Soft map ceiling at z19. Unlabeled Esri terrain underlay + owned launch-7 vector on top (liberty background omitted; labeled World_Street_Map avoided so desk place labels do not double). Absolute tile URLs + `transformRequest`. Layer ids on style metadata (no singleton race). State/province lines (OpenMapTiles) + launch-7 CAD county lines (simplified Census TIGER GeoJSON — 7 counties only) sit above basemap rasters and follow the Parcels switch. Imagery/Hybrid add quiet vector overlays above satellite (country names/borders, state names, highways that fade with zoom, soft ocean tint + low-zoom Natural Earth underlay) — not dense Esri World_Boundaries chrome. World overlay tiles come from OpenFreeMap planet (launch-7 streets stay footprint-owned).
+- **UX:** Soft map ceiling at z19. Unlabeled Esri terrain underlay + owned launch-7 vector on top (liberty background omitted; labeled World_Street_Map avoided so desk place labels do not double). Absolute tile URLs + `transformRequest`. Layer ids on style metadata (no singleton race). State/province lines (OpenMapTiles) + launch-7 CAD county lines (simplified Census TIGER GeoJSON — 7 counties only) are **always visible on Imagery/Hybrid**; on Streets they follow the Parcels switch. Parcels still toggles CAD lot lines only. Imagery/Hybrid add premium dual-stroke vector overlays above satellite (country/state/county lines, highways that fade with zoom, soft ocean tint + low-zoom Natural Earth underlay) — not dense Esri World_Boundaries chrome. World overlay tiles come from OpenFreeMap planet (launch-7 streets stay footprint-owned).
 - **Acceptance:** Streets first paint shows roads and stays; Imagery without zoom ritual; one desk font per city name; Imagery shows country/state context without full Texas county grid; `npm run test:map-zoom-precision`.
 
 Shared constants: `src/lib/map-precision.ts` · wired on Research · Marketplace · Listing CAD maps.
