@@ -1,4 +1,5 @@
 import type {
+  ExpressionSpecification,
   FilterSpecification,
   LayerSpecification,
   StyleSpecification,
@@ -933,7 +934,8 @@ const LAUNCH7_GUARANTEED_PLACE_NAME_SET = new Set(
   LAUNCH7_GUARANTEED_PLACE_NAMES.map((n) => n.toLowerCase()),
 );
 
-const OMT_PLACE_NAME_EXPR: FilterSpecification = [
+/** Place name expression for OMT twin suppression (not a top-level filter). */
+const OMT_PLACE_NAME_EXPR: ExpressionSpecification = [
   "downcase",
   [
     "coalesce",
@@ -947,16 +949,16 @@ const OMT_PLACE_NAME_EXPR: FilterSpecification = [
 function withoutGuaranteedPlaceNames(
   filter: FilterSpecification | undefined,
 ): FilterSpecification {
-  const suppress: FilterSpecification = [
+  const suppress = [
     "!",
     [
       "in",
       OMT_PLACE_NAME_EXPR,
       ["literal", [...LAUNCH7_GUARANTEED_PLACE_NAME_SET]],
     ],
-  ];
+  ] as FilterSpecification;
   if (!filter) return suppress;
-  return ["all", filter, suppress];
+  return ["all", filter, suppress] as FilterSpecification;
 }
 
 export function applyStoryPlaceLabelStyle(
