@@ -108,9 +108,9 @@ assert.equal(
   1.8,
 );
 
-assert.equal(maxParallelImageRequestsForTier("low"), 6);
-assert.equal(maxParallelImageRequestsForTier("medium"), 8);
-assert.ok(maxParallelImageRequestsForTier("high") >= 10);
+assert.equal(maxParallelImageRequestsForTier("low"), 12);
+assert.equal(maxParallelImageRequestsForTier("medium"), 18);
+assert.ok(maxParallelImageRequestsForTier("high") >= 20);
 
 const root = process.cwd();
 const map = readFileSync(
@@ -131,8 +131,8 @@ const factory = readFileSync(
 );
 assert.match(factory, /applyResearchTileBudget/);
 assert.match(factory, /MAX_PARALLEL_IMAGE_REQUESTS/);
-assert.equal(storyMapParallelImageRequests(1440), 18);
-assert.equal(storyMapParallelImageRequests(390), 10);
+assert.equal(storyMapParallelImageRequests(1440), 28);
+assert.equal(storyMapParallelImageRequests(390), 16);
 
 const style = readFileSync(join(root, "src/lib/map-style.ts"), "utf8");
 assert.match(style, /story-paper/);

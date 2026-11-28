@@ -89,17 +89,22 @@ export function reliefFor3dApply(opts: {
   return Math.min(opts.cap, Math.max(floor, want));
 }
 
+/**
+ * Google/Esri imagery is a private Vercel proxy (no CDN). Low concurrency
+ * (6–12) left the map filling in patches while each tile waited on cold
+ * serverless + upstream. Keep under ~30 so we do not stampede the proxy.
+ */
 export function maxParallelImageRequestsForTier(
   tier: "high" | "medium" | "low",
 ): number {
-  if (tier === "low") return 6;
-  if (tier === "medium") return 8;
-  return 12;
+  if (tier === "low") return 12;
+  if (tier === "medium") return 18;
+  return 24;
 }
 
-/** Marketplace / listing maps — Esri proxy needs more in-flight tiles while zooming in. */
+/** Marketplace / listing maps — Google proxy needs more in-flight tiles while zooming in. */
 export function storyMapParallelImageRequests(width?: number): number {
   const w = width ?? (typeof window !== "undefined" ? window.innerWidth : 1200);
-  return w < 768 ? 10 : 18;
+  return w < 768 ? 16 : 28;
 }
 

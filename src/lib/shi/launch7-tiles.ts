@@ -158,9 +158,9 @@ export const TXGIO_TOP15_IMAGESERVER =
 
 const WEB_MERCATOR_HALF = 20037508.342789244;
 const NAIP_EXPORT_TIMEOUT_MS = 10_000;
-/** Stay under Vercel’s default 10s function ceiling; fail fast to USGS fallback. */
-const ESRI_FETCH_TIMEOUT_MS = 7_500;
-const USGS_XYZ_TIMEOUT_MS = 6_000;
+/** Stay under the imagery route maxDuration; fail fast to USGS (skip slow NAIP). */
+const ESRI_FETCH_TIMEOUT_MS = 4_000;
+const USGS_XYZ_TIMEOUT_MS = 3_500;
 const USGS_XYZ_MAX_ZOOM = 16;
 
 export type ImageryKind =
@@ -329,23 +329,6 @@ async function fetchImage(
   }
 }
 
-async function fetchImageWithRetry(
-  url: string,
-  timeoutMs: number,
-  retriesOn429 = 1,
-): Promise<{ body: Buffer; contentType: string } | null> {
-  let attempt = 0;
-  while (attempt <= retriesOn429) {
-    const hit = await fetchImage(url, timeoutMs);
-    if (hit) return hit;
-    attempt += 1;
-    if (attempt <= retriesOn429) {
-      await new Promise((r) => setTimeout(r, 120 * attempt));
-    }
-  }
-  return null;
-}
-
 async function fetchNaip60Tile(
   z: number,
   x: number,
@@ -380,10 +363,11 @@ async function fetchGoogleSatelliteTile(
   if (!apiKey) return null;
   const sessionState = await ensureGoogleMapTileSession();
   if (!sessionState) return null;
-  return fetchImageWithRetry(
+  // One shot — MapLibre retries failed tiles. Blind retries burned the
+  // Vercel budget and let NAIP slip in as visible patchwork.
+  return fetchImage(
     googleSatelliteTileUrl(z, x, y, sessionState.session, apiKey),
     GOOGLE_SATELLITE_FETCH_TIMEOUT_MS,
-    1,
   );
 }
 
@@ -395,10 +379,9 @@ async function fetchEsriWorldImageryTile(
 ): Promise<{ body: Buffer; contentType: string } | null> {
   const token = arcgisLocationPlatformAccessToken();
   if (!token) return null;
-  return fetchImageWithRetry(
+  return fetchImage(
     esriWorldImageryTileUrl(z, x, y, token),
     ESRI_FETCH_TIMEOUT_MS,
-    1,
   );
 }
 
@@ -483,7 +466,9 @@ export async function getLaunch7ImageryTile(
     }
   }
 
-  if (imageryUsesNaip60(z)) {
+  // After a Google miss, skip NAIP ImageServer (10s, different look = patchwork).
+  // MapLibre will retry the Google proxy tile instead of locking in NAIP.
+  if (imageryUsesNaip60(z) && !googleFallback) {
     if (!hit && LAUNCH7_TOP15_ENABLED) {
       hit = await fetchImage(
         naip60ExportUrl(TXGIO_TOP15_IMAGESERVER, z, x, y, false),
@@ -499,11 +484,13 @@ export async function getLaunch7ImageryTile(
       hit = await fetchNaip60Tile(z, x, y, "txgio");
       if (hit) kind = "naip60";
     }
-  } else if (!hit) {
+  } else if (!hit && !googleFallback) {
     hit = await fetchUsgsXyzTile(z, x, y);
   }
 
   if (!hit) {
+    // Google path: 204 so the client retries Google, not a hard 502.
+    if (googleFallback) return null;
     if (imageryUsesNaip60(z)) {
       throw new Error("imagery upstream unavailable");
     }

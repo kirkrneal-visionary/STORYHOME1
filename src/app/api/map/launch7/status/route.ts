@@ -2,13 +2,19 @@ import { NextResponse } from "next/server";
 import { ownedTileStats } from "@/lib/shi/launch7-tiles";
 import { launch7OpsStatus } from "@/lib/shi/launch7-ops";
 import { launch7MapMeta } from "@/lib/shi/launch7-map";
-import { probeGoogleSatelliteTile } from "@/lib/shi/google-map-tiles";
+import {
+  ensureGoogleMapTileSession,
+  launch7GoogleImageryActive,
+  probeGoogleSatelliteTile,
+} from "@/lib/shi/google-map-tiles";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * L7-3 — launch-7 map ops status (CDN / R2 readiness + footprint).
+ * Maps prefetch this before creating the style — warm the Google session on
+ * this isolate so the first imagery tiles skip createSession latency.
  */
 export async function GET(req: Request) {
   const ops = launch7OpsStatus();
@@ -18,6 +24,9 @@ export async function GET(req: Request) {
     cache = ownedTileStats();
   } catch {
     /* ignore */
+  }
+  if (launch7GoogleImageryActive()) {
+    void ensureGoogleMapTileSession();
   }
   const url = new URL(req.url);
   const body: Record<string, unknown> = {

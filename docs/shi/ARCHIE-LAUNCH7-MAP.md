@@ -43,6 +43,7 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - **Zoom:** Google path native **z20** (no soft stretch past source). NAIP/Esri/USGS stay at z18 (+ one soft step to z19 when not on Google).
 - **Footprint:** launch-7 union bbox from `launch7UnionBbox()` / `corridors.ts`. Outside the footprint or on error: USGS Imagery Only (far zoom) then NAIP chain at z14+.
 - **No server store:** Google tiles are proxied per request — not written to `data/shi/tiles` or R2. Session token is in-memory only. Response `Cache-Control: private, max-age=300` (no `s-maxage`). Respect upstream `Cache-Control` when present. 3D terrain drape and Lidar overlays unchanged (same `satellite` raster source).
+- **Fill speed:** Google/Esri proxy is one-shot (~4s timeout, no blind retry). On Google miss: Esri/USGS only — **no NAIP** (avoids patchwork + Vercel maxDuration kills). MapLibre parallel budget raised (Research 12/18/24; Marketplace 16/28). Status prefetch warms the Google session on that isolate.
 - **`LAUNCH7_IMAGERY_GEN`:** `google-l7-2x` when flag + key are set (was `google-l7` before high-DPI). Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
 - **Cost:** Map Tiles API is pay-as-you-go — set a **Google Cloud budget alert** (e.g. $50/mo) and restrict the API key to Map Tiles API only.
 - **Esri fallback:** If the Google key is missing but `LAUNCH7_ESRI_POLK_ENABLED` + `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` are set, imagery falls back to Esri (`esri-l7`) with the same proxy rules as PRs 309–312.

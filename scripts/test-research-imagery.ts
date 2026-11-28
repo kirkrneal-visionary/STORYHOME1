@@ -137,6 +137,7 @@ assert.match(googleLib, /LAUNCH7_GOOGLE_IMAGERY_ENABLED/);
 assert.match(googleLib, /scaleFactor2x/);
 assert.match(googleLib, /highDpi:\s*true/);
 assert.match(googleLib, /GOOGLE_SATELLITE_MAX_ZOOM = 20/);
+assert.match(googleLib, /GOOGLE_SATELLITE_FETCH_TIMEOUT_MS = 4_000/);
 assert.match(googleLib, /probeGoogleSatelliteTile/);
 assert.match(tiles, /GOOGLE_SATELLITE_MAX_ZOOM/);
 assert.match(
@@ -154,6 +155,13 @@ assert.match(tiles, /tileIntersectsLaunch7/);
 assert.match(tiles, /noPersist/);
 assert.match(tiles, /ESRI_FETCH_TIMEOUT_MS/);
 assert.match(tiles, /esriFallback = true[\s\S]*fetchUsgsXyzTile/);
+assert.match(tiles, /imageryUsesNaip60\(z\) && !googleFallback/);
+assert.match(tiles, /if \(googleFallback\) return null/);
+const statusRoute = readFileSync(
+  join(root, "src/app/api/map/launch7/status/route.ts"),
+  "utf8",
+);
+assert.match(statusRoute, /ensureGoogleMapTileSession/);
 assert.match(imageryLib, /resolveLaunch7ImageryGen/);
 assert.match(imageryLib, /launch7ImageryTileTemplate/);
 assert.doesNotMatch(imageryLib, /NEXT_PUBLIC_LAUNCH7_ESRI_IMAGERY/);
