@@ -243,6 +243,9 @@ export function MarketplaceMap({
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as { __SH_MAP__?: maplibregl.Map }).__SH_MAP__ = map;
+    }
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
     const kickResize = () => map!.resize();
