@@ -5,7 +5,7 @@
 
 ## In progress
 
-- Imagery first pass (founder GO 2026-11-28): **Google-only** satellite for Imagery/Hybrid (world coverage when key+flag on; fail soft / no USGS·NAIP·Esri stack under Google). Premium dual-stroke country/state/county + highway overlays. Admin lines **always on Imagery/Hybrid** (Parcels toggles CAD lot lines only; Texas counties = 7 CAD). Soft hillshade when Research 3D + Imagery so terrain relief reads on the drape. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
+- Imagery first pass (founder GO 2026-11-28): **Google-only** satellite for Imagery/Hybrid (world coverage when key+flag on; fail soft / no USGS·NAIP·Esri stack under Google). Premium dual-stroke country/state/county + highway overlays. Admin lines **always on Imagery/Hybrid** (Parcels toggles CAD lot lines only; Texas counties = 7 CAD). Research 3D + Imagery: DEM drape only (no soft hillshade wash); no auto zoom-out while the desk zooms. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
 - Texas sharp imagery (PR 306): `LAUNCH7_TOP15_ENABLED` stays **off**. TxGIO ImageServer is too slow for live maps.
 
 - iPhone Capacitor shell zooms like Safari when a text field is tapped (founder, TestFlight). Fix is web-only: viewport `maximumScale=1` / `userScalable=false` plus a 16px floor on form controls so iOS does not focus-zoom. Shell already loads the live site, so eqmg deploy is enough — no TestFlight rebuild for this. Physical device confirmation still pending.

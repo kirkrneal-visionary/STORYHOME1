@@ -146,9 +146,10 @@ export function researchTerrainSkyForPitch(pitch: number): SkySpecification {
     "horizon-color": RESEARCH_SKY_HAZE,
     "fog-color": "#d5e6f5",
     "sky-horizon-blend": 0.28 + lookingOut * 0.12,
-    "horizon-fog-blend": 0.12 + lookingOut * 0.12,
-    "fog-ground-blend": 0.02 + lookingOut * 0.05,
-    "atmosphere-blend": lookingOut,
+    "horizon-fog-blend": 0.08 + lookingOut * 0.08,
+    // Keep distant sky haze; barely touch the draped ground (crisp Imagery).
+    "fog-ground-blend": 0.01 + lookingOut * 0.02,
+    "atmosphere-blend": lookingOut * 0.85,
   };
 }
 

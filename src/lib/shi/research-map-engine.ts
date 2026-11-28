@@ -90,11 +90,12 @@ export type ResearchMapboxFog = {
 export function researchMapboxFogForPitch(pitch: number): ResearchMapboxFog {
   const lookingOut = Math.min(1, Math.max(0, (pitch - 8) / 55));
   return {
-    range: [1.1 + lookingOut * 0.3, 7 + lookingOut * 3],
+    // Farther near-plane so fog does not milk the draped Imagery underfoot.
+    range: [1.6 + lookingOut * 0.5, 9 + lookingOut * 3],
     color: "#d2ddd4",
     "high-color": RESEARCH_MAPBOX_SKY_BLUE,
     "space-color": "#5a9ad4",
-    "horizon-blend": 0.035 + lookingOut * 0.045,
+    "horizon-blend": 0.02 + lookingOut * 0.03,
     "star-intensity": 0,
   };
 }
