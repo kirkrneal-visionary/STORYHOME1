@@ -1260,15 +1260,13 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
       if (!map || !ready) return;
       if (!map.getLayer(RESEARCH_LIDAR_LAYER_ID)) return;
       const photo = isPhotoSkin(base);
-      // Soft hillshade under Imagery when 3D terrain is on — relief reads on the
-      // draped satellite without replacing the Google photo (smallest complete win).
-      const imageryTerrainRelief = lidar3d && photo;
-      const hillshadeOn = (lidarOn && !photo) || imageryTerrainRelief;
-        map.setLayoutProperty(
-          RESEARCH_LIDAR_LAYER_ID,
-          "visibility",
-          hillshadeOn ? "visible" : "none",
-        );
+      // 3D + Imagery: DEM mesh alone for relief — no soft hillshade wash over Google.
+      const hillshadeOn = lidarOn && !photo;
+      map.setLayoutProperty(
+        RESEARCH_LIDAR_LAYER_ID,
+        "visibility",
+        hillshadeOn ? "visible" : "none",
+      );
       if (map.getLayer(RESEARCH_LIDAR_CONTOURS_LAYER_ID)) {
         map.setLayoutProperty(
           RESEARCH_LIDAR_CONTOURS_LAYER_ID,
@@ -1301,11 +1299,7 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         map.setPaintProperty(
           RESEARCH_LIDAR_LAYER_ID,
           "raster-opacity",
-          imageryTerrainRelief
-            ? 0.32
-            : lidarOn
-              ? lidarStrength
-              : RESEARCH_LIDAR_STRENGTH_DEFAULT,
+          lidarOn ? lidarStrength : RESEARCH_LIDAR_STRENGTH_DEFAULT,
         );
       } catch {
         /* layer may not accept paint yet */
@@ -1367,15 +1361,11 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             map.touchPitch?.enable();
             map.dragRotate?.enable();
             map.resize();
+            // Pitch only — never snap zoom; leave the desk where the user put it.
             const target = cameraPitchForPreset("3d", viewHeightRef.current);
-            const next: { pitch: number; zoom?: number } = { pitch: target };
-            if (map.getZoom() > 17.4) next.zoom = 17.2;
-            if (
-              Math.abs(map.getPitch() - target) > 4 ||
-              next.zoom != null
-            ) {
+            if (Math.abs(map.getPitch() - target) > 4) {
               map.easeTo({
-                ...next,
+                pitch: target,
                 duration: RESEARCH_TERRAIN_CAMERA_MS,
                 easing: storyCameraEase,
               });
@@ -2063,22 +2053,36 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         | undefined;
       if (!src) return;
 
-      if (!selected) {
+      if (!selected?.geojson) {
         src.setData(EMPTY_FC);
         return;
       }
 
-      if (selected.geojson) {
-        src.setData({
-          type: "FeatureCollection",
-          features: [
-            {
-              type: "Feature",
-              geometry: selected.geojson as Geometry,
-              properties: { propId: selected.propId },
-            },
-          ],
-        });
+      src.setData({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            geometry: selected.geojson as Geometry,
+            properties: { propId: selected.propId },
+          },
+        ],
+      });
+    }, [ready, selected]);
+
+    // Frame the selection once when the parcel identity changes — not again when
+    // related matches load (that was zooming the desk back out like a re-focus).
+    const selectedFitKey = selected?.propId ?? null;
+    const selectedRef = useRef(selected);
+    selectedRef.current = selected;
+    const relatedRef = useRef(related);
+    relatedRef.current = related;
+    useEffect(() => {
+      const map = mapRef.current;
+      const sel = selectedRef.current;
+      if (!map || !ready || !selectedFitKey || !sel) return;
+
+      if (sel.geojson) {
         try {
           const bounds = new maplibregl.LngLatBounds();
           const walk = (coords: unknown): void => {
@@ -2092,12 +2096,12 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
             }
             for (const c of coords) walk(c);
           };
-          walk(selected.geojson.coordinates);
-          const anchorLng = selected.centroidLng;
-          const anchorLat = selected.centroidLat;
-          for (const m of related) {
+          walk(sel.geojson.coordinates);
+          const anchorLng = sel.centroidLng;
+          const anchorLat = sel.centroidLat;
+          for (const m of relatedRef.current) {
             if (m.matchTier !== "EXACT" || !m.geojson) continue;
-            if (m.source !== selected.source) continue;
+            if (m.source !== sel.source) continue;
             if (
               anchorLat != null &&
               anchorLng != null &&
@@ -2126,20 +2130,18 @@ export const ShiResearchMap = forwardRef<ShiMapHandle, ShiResearchMapProps>(
         } catch {
           /* centroid */
         }
-      } else {
-        src.setData(EMPTY_FC);
       }
 
-      if (selected.centroidLng != null && selected.centroidLat != null) {
+      if (sel.centroidLng != null && sel.centroidLat != null) {
         map.flyTo({
-          center: [selected.centroidLng, selected.centroidLat],
+          center: [sel.centroidLng, sel.centroidLat],
           zoom: Math.max(map.getZoom(), 15),
           duration: 600,
           pitch: map.getPitch(),
           bearing: map.getBearing(),
         });
       }
-    }, [ready, selected, related]);
+    }, [ready, selectedFitKey]);
 
     function removeActiveFrame() {
       if (!activeFrameId) return;

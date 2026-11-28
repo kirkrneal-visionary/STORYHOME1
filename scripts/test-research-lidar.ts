@@ -181,6 +181,11 @@ assert.match(map, /setTerrain/);
 assert.match(map, /researchTerrainSkyForPitch/);
 assert.doesNotMatch(map, /fog-ground-blend": 0\.25/);
 assert.match(map, /storyCameraEase/);
+/* 3D + Imagery: no soft hillshade wash; no close-zoom camera snap. */
+assert.doesNotMatch(map, /imageryTerrainRelief/);
+assert.doesNotMatch(map, /next\.zoom = 17\.2/);
+assert.doesNotMatch(map, /getZoom\(\) > 17\.4/);
+assert.match(map, /selectedFitKey/);
 assert.doesNotMatch(map, /lidarCutARef/);
 assert.doesNotMatch(map, /setLidarProduct/);
 assert.doesNotMatch(map, /s3\.amazonaws\.com\/elevation-tiles-prod/);

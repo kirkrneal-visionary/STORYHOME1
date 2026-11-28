@@ -44,7 +44,7 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 - **Fail soft:** Google miss → HTTP **204** (client retries). **Never** swap Esri / USGS / NAIP under Google mid-view (avoids patchwork).
 - **Honest limits:** Coverage is Google Map Tiles worldwide when the key+flag are on; the real ceiling is **billing/quota** (set a Google Cloud budget alert, e.g. $50/mo, and restrict the key to Map Tiles API only). Without the key, Imagery is not Google.
 - **No server store:** Google tiles are proxied per request — not written to `data/shi/tiles` or R2. Session token is in-memory only. Response `Cache-Control: private, max-age=300` (no `s-maxage`).
-- **3D + Imagery:** Research 3D terrain drapes the same `satellite` raster on USGS 3DEP DEM; soft hillshade peeks under the photo when 3D is on so relief reads without replacing Google.
+- **3D + Imagery:** Research 3D terrain drapes the same `satellite` raster on USGS 3DEP DEM. Relief comes from the DEM mesh only — no soft hillshade wash over Google (keeps Imagery crisp).
 - **Fill speed:** Google proxy is one-shot (~4s timeout, no blind retry). MapLibre parallel budget raised (Research 12/18/24; Marketplace 16/28). Status prefetch warms the Google session on that isolate.
 - **`LAUNCH7_IMAGERY_GEN`:** `google-l7-2x` when flag + key are set. Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
 - **Esri alternate primary:** Only when Google is **off** and `LAUNCH7_ESRI_POLK_ENABLED` + ArcGIS token are set (`esri-l7`, footprint-bounded). Still fail-soft on miss — not a mid-view swap under Google.
