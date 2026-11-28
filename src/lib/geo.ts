@@ -171,7 +171,13 @@ function withUnit(value: number, decimals: number, label: string) {
 export function formatDistanceIn(meters: number, unit: DistanceUnit) {
   const value = meters / METERS_PER[unit];
   const u = DISTANCE_UNITS.find((d) => d.id === unit)!;
-  const decimals = unit === "in" || unit === "cm" ? 0 : unit === "mi" || unit === "km" ? 3 : 1;
+  // Fingertip precision: inches/cm to 1 decimal; ft/yd to 2; long units to 3.
+  const decimals =
+    unit === "in" || unit === "cm"
+      ? 1
+      : unit === "mi" || unit === "km"
+        ? 3
+        : 2;
   return withUnit(value, decimals, u.label);
 }
 
@@ -179,7 +185,7 @@ export function formatDistanceIn(meters: number, unit: DistanceUnit) {
 export function formatAreaIn(sqMeters: number, unit: AreaUnit) {
   const value = sqMeters / SQM_PER[unit];
   const u = AREA_UNITS.find((a) => a.id === unit)!;
-  const decimals = unit === "acres" || unit === "ha" ? 3 : 0;
+  const decimals = unit === "acres" || unit === "ha" ? 3 : unit === "sqft" ? 1 : 0;
   return withUnit(value, decimals, u.label);
 }
 
