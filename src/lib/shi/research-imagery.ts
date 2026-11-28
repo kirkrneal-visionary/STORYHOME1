@@ -10,9 +10,11 @@
  */
 
 import {
+  GOOGLE_SATELLITE_MAX_ZOOM,
   launch7GoogleImageryActive,
   launch7GoogleImageryRequested,
 } from "@/lib/shi/google-map-tiles";
+import { MAP_IMAGERY_SOURCE_MAX_ZOOM } from "@/lib/map-precision";
 
 export const RESEARCH_IMAGERY_ARCH = "research-imagery-v2" as const;
 
@@ -62,7 +64,8 @@ export const LAUNCH7_TOP15_ENABLED: boolean = false;
 
 /** Server-resolved cache generation (?v=). Client maps fetch live value from /api/map/launch7/status. */
 export function resolveLaunch7ImageryGen(): string {
-  if (launch7GoogleImageryActive()) return "google-l7";
+  // google-l7-2x = highDpi scaleFactor2x session (512px tiles) + native max z20.
+  if (launch7GoogleImageryActive()) return "google-l7-2x";
   if (launch7EsriPolkActive()) return "esri-l7";
   if (LAUNCH7_TOP15_ENABLED) return "t15";
   return "n60";
@@ -75,7 +78,7 @@ export function launch7ImageryTileTemplate(gen = LAUNCH7_IMAGERY_GEN): string {
 }
 
 /** USGS Imagery Only published tile ceiling. Keep in sync with MAP_IMAGERY_SOURCE_MAX_ZOOM. */
-export const USGS_IMAGERY_NATIVE_MAX_ZOOM = 18;
+export const USGS_IMAGERY_NATIVE_MAX_ZOOM = MAP_IMAGERY_SOURCE_MAX_ZOOM;
 
 /** First zoom that asks the close-zoom ImageServers (TOP 2015, then NAIP) instead of the 1 m tile cache. */
 export const NAIP_60CM_MIN_ZOOM = 14;
@@ -153,12 +156,13 @@ export function googleSatelliteLaunch7ImagerySource(
     name: "Google Maps satellite (launch 7)",
     type: "raster",
     tiles: [tileUrl ?? LAUNCH7_IMAGERY_TILE_TEMPLATE],
+    // CSS pixel size stays 256; highDpi session returns 512px images for retina.
     tileSize: 256,
     minZoom: 0,
-    maxZoom: USGS_IMAGERY_NATIVE_MAX_ZOOM,
+    maxZoom: GOOGLE_SATELLITE_MAX_ZOOM,
     attribution:
       "Imagery © Google Maps · Map data: Google, Maxar · USDA NAIP fallback outside footprint or on error · Story Home",
-    highDpiSupported: false,
+    highDpiSupported: true,
     nativeResolutionM: GOOGLE_SATELLITE_LAUNCH7_NATIVE_M,
     enabled: launch7GoogleImageryRequested(),
   };
@@ -265,7 +269,7 @@ export function activeImagerySource(
   tileUrl?: string,
   imageryGen?: string,
 ): ImagerySourceDef {
-  if (imageryGen === "google-l7") {
+  if (imageryGen === "google-l7" || imageryGen === "google-l7-2x") {
     return googleSatelliteLaunch7ImagerySource(tileUrl);
   }
   if (imageryGen === "esri-l7") {

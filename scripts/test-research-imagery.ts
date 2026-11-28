@@ -125,7 +125,7 @@ const imageryLib = readFileSync(
   join(root, "src/lib/shi/research-imagery.ts"),
   "utf8",
 );
-assert.match(imageryLib, /google-l7/);
+assert.match(imageryLib, /google-l7-2x/);
 assert.match(imageryLib, /googleSatelliteLaunch7ImagerySource/);
 assert.match(imageryLib, /ibasemaps-api\.arcgis\.com\/arcgis\/rest\/services\/World_Imagery/);
 const googleLib = readFileSync(
@@ -134,7 +134,11 @@ const googleLib = readFileSync(
 );
 assert.match(googleLib, /tile\.googleapis\.com\/v1\/2dtiles/);
 assert.match(googleLib, /LAUNCH7_GOOGLE_IMAGERY_ENABLED/);
+assert.match(googleLib, /scaleFactor2x/);
+assert.match(googleLib, /highDpi:\s*true/);
+assert.match(googleLib, /GOOGLE_SATELLITE_MAX_ZOOM = 20/);
 assert.match(googleLib, /probeGoogleSatelliteTile/);
+assert.match(tiles, /GOOGLE_SATELLITE_MAX_ZOOM/);
 assert.match(
   readFileSync(
     join(root, "src/app/api/map/launch7/google-probe/route.ts"),

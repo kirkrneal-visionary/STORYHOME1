@@ -20,6 +20,7 @@ import {
   googleMapsApiKey,
   googleSatelliteTileUrl,
   GOOGLE_SATELLITE_FETCH_TIMEOUT_MS,
+  GOOGLE_SATELLITE_MAX_ZOOM,
   launch7GoogleImageryActive,
 } from "@/lib/shi/google-map-tiles";
 import {
@@ -422,11 +423,16 @@ export async function getLaunch7ImageryTile(
   if (!Number.isInteger(z) || !Number.isInteger(x) || !Number.isInteger(y)) {
     return null;
   }
-  if (z < 0 || z > 18 || x < 0 || y < 0 || x >= 2 ** z || y >= 2 ** z) {
+  if (z < 0 || x < 0 || y < 0 || x >= 2 ** z || y >= 2 ** z) {
     return null;
   }
 
   const googleLaunch7Tile = tileUsesGoogleLaunch7Imagery(z, x, y);
+  // Google high-DPI path serves to z20; NAIP/USGS/Esri stay at z18.
+  const maxZ = googleLaunch7Tile ? GOOGLE_SATELLITE_MAX_ZOOM : 18;
+  if (z > maxZ) {
+    return null;
+  }
   const esriLaunch7Tile = tileUsesEsriLaunch7Imagery(z, x, y);
   const paidPassthrough = launch7PaidImageryPassthrough(z, x, y);
   const path = imageryTilePath(z, x, y);

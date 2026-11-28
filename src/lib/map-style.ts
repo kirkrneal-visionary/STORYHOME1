@@ -5,7 +5,6 @@ import type {
 import libertyStyle from "@/lib/map-styles/openfreemap-liberty.json";
 import {
   absolutizeMapTileTemplate,
-  MAP_IMAGERY_SOURCE_MAX_ZOOM,
   MAP_STREETS_SOURCE_MAX_ZOOM,
 } from "@/lib/map-precision";
 import {
@@ -394,7 +393,7 @@ export function buildStoryMapStyle(opts?: {
       "storyhome:place-labels": "desk-v1",
       "storyhome:fw-layer-ids": fwIds,
       "storyhome:satellite":
-        imageryGen === "google-l7"
+        imageryGen === "google-l7" || imageryGen === "google-l7-2x"
           ? "owned-google-l7"
           : imageryGen === "esri-l7" || LAUNCH7_ESRI_POLK_REQUESTED
             ? "owned-esri-l7"
@@ -420,7 +419,7 @@ export function buildStoryMapStyle(opts?: {
         tiles: satelliteTiles,
         tileSize: imagery.tileSize,
         minzoom: imagery.minZoom,
-        maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
+        maxzoom: imagery.maxZoom,
         attribution: imagery.attribution,
       },
       labels: {

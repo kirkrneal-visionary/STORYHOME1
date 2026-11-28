@@ -68,6 +68,10 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
     opts.style as unknown as Record<string, unknown>,
     engine,
   ) as unknown as StyleSpecification;
+  /** Follow the style's satellite source (Google high-DPI = z20; NAIP/Esri = z18). */
+  const cameraMax =
+    (opts.style.sources?.satellite as { maxzoom?: number } | undefined)
+      ?.maxzoom ?? MAP_IMAGERY_SOURCE_MAX_ZOOM;
 
   if (engine === "mapbox") {
     const token = researchMapboxToken();
@@ -80,7 +84,7 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
       pitch: 0,
       bearing: 0,
       accessToken: token || undefined,
-      maxZoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
+      maxZoom: cameraMax,
       maxPitch: 64,
       minTileCacheSize: 32,
       maxTileCacheSize: 96,
@@ -109,7 +113,7 @@ export function createResearchMap(opts: CreateResearchMapOpts): {
     pitch: 0,
     bearing: 0,
     pixelRatio,
-    maxZoom: MAP_IMAGERY_SOURCE_MAX_ZOOM,
+    maxZoom: cameraMax,
     transformRequest: storyMapTransformRequest,
     preserveDrawingBuffer: true,
     attributionControl: { compact: true },

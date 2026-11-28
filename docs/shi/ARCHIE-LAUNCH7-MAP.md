@@ -39,10 +39,11 @@ Build map quality on **owned infrastructure** and keep Research in **free-world 
 ### Google Maps satellite — launch 7, all zooms (founder 2026-11-27, preferred)
 
 - **Status:** `LAUNCH7_GOOGLE_IMAGERY_ENABLED` + `GOOGLE_MAPS_API_KEY` on eqmg (server-only). Google satellite for **all seven launch counties** at **every imagery/hybrid zoom**.
-- **Tile API:** Map Tiles API — session via `POST https://tile.googleapis.com/v1/createSession?key=…`, tiles `GET …/v1/2dtiles/{z}/{x}/{y}?session=…&key=…` ([satellite tiles](https://developers.google.com/maps/documentation/tile/satellite), [policies](https://developers.google.com/maps/documentation/tile/policies)).
+- **Tile API:** Map Tiles API — session via `POST https://tile.googleapis.com/v1/createSession?key=…` with `scale: scaleFactor2x` + `highDpi: true` (512px images for the same 256 CSS-pixel mercator tile), tiles `GET …/v1/2dtiles/{z}/{x}/{y}?session=…&key=…` ([satellite tiles](https://developers.google.com/maps/documentation/tile/satellite), [session tokens](https://developers.google.com/maps/documentation/tile/session_tokens), [policies](https://developers.google.com/maps/documentation/tile/policies)).
+- **Zoom:** Google path native **z20** (no soft stretch past source). NAIP/Esri/USGS stay at z18 (+ one soft step to z19 when not on Google).
 - **Footprint:** launch-7 union bbox from `launch7UnionBbox()` / `corridors.ts`. Outside the footprint or on error: USGS Imagery Only (far zoom) then NAIP chain at z14+.
 - **No server store:** Google tiles are proxied per request — not written to `data/shi/tiles` or R2. Session token is in-memory only. Response `Cache-Control: private, max-age=300` (no `s-maxage`). Respect upstream `Cache-Control` when present. 3D terrain drape and Lidar overlays unchanged (same `satellite` raster source).
-- **`LAUNCH7_IMAGERY_GEN`:** `google-l7` when flag + key are set. Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
+- **`LAUNCH7_IMAGERY_GEN`:** `google-l7-2x` when flag + key are set (was `google-l7` before high-DPI). Browser maps prefetch `map.imageryGen` from `GET /api/map/launch7/status`.
 - **Cost:** Map Tiles API is pay-as-you-go — set a **Google Cloud budget alert** (e.g. $50/mo) and restrict the API key to Map Tiles API only.
 - **Esri fallback:** If the Google key is missing but `LAUNCH7_ESRI_POLK_ENABLED` + `ARCGIS_LOCATION_PLATFORM_ACCESS_TOKEN` are set, imagery falls back to Esri (`esri-l7`) with the same proxy rules as PRs 309–312.
 - PR **308** (Texas TOP PMTiles on R2): **abandoned** — do not merge.

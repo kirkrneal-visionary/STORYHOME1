@@ -15,7 +15,7 @@ assert.match(doc, /OpenFreeMap|free-world/i);
 assert.match(doc, /MapLibre/);
 assert.match(doc, /NEXT_PUBLIC_MAPBOX_TOKEN/);
 assert.match(doc, /Out of scope[\s\S]*Mapbox as primary/);
-assert.match(doc, /Out of scope[\s\S]*Google Maps JS as Research/);
+assert.match(doc, /Out of scope[\s\S]*Google Maps \*\*JavaScript\*\* client as Research/);
 assert.match(doc, /NEXT_PUBLIC_LAUNCH7_CDN_BASE/);
 assert.match(doc, /Polk|Angelina|Walker/);
 

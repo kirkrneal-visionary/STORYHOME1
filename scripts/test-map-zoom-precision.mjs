@@ -13,8 +13,12 @@ const read = (rel) => readFileSync(join(root, rel), "utf8");
 const precision = read("src/lib/map-precision.ts");
 assert.match(precision, /Founder Interpreter \(build process only/);
 assert.match(precision, /MAP_PRECISION_MAX_ZOOM = 19/);
+assert.match(precision, /MAP_GOOGLE_PRECISION_MAX_ZOOM/);
+assert.match(precision, /MAP_GOOGLE_IMAGERY_SOURCE_MAX_ZOOM = 20/);
 assert.match(precision, /MAP_STREETS_SOURCE_MAX_ZOOM = 14/);
 assert.match(precision, /MAP_IMAGERY_SOURCE_MAX_ZOOM = 18/);
+assert.match(precision, /mapPrecisionMaxZoom/);
+assert.match(precision, /mapImagerySourceMaxZoom/);
 assert.match(precision, /MAP_PARCEL_SOURCE_MAX_ZOOM = 16/);
 assert.match(precision, /PARCEL_LINE_WIDTH_EXPR/);
 assert.match(precision, /absolutizeMapTileTemplate/);
@@ -23,9 +27,9 @@ assert.doesNotMatch(precision, /maxZoom:\s*22/);
 
 const style = read("src/lib/map-style.ts");
 assert.match(style, /MAP_STREETS_SOURCE_MAX_ZOOM/);
-assert.match(style, /MAP_IMAGERY_SOURCE_MAX_ZOOM/);
 assert.match(style, /maxzoom: MAP_STREETS_SOURCE_MAX_ZOOM/);
-assert.match(style, /maxzoom: MAP_IMAGERY_SOURCE_MAX_ZOOM/);
+assert.match(style, /maxzoom: imagery\.maxZoom/);
+assert.match(style, /google-l7-2x/);
 assert.match(style, /absolutizeMapTileTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(\s*resolveStreetsVectorTemplate/);
 assert.match(style, /absolutizeMapTileTemplate\(resolveSatelliteTileTemplate/);
@@ -111,20 +115,22 @@ assert.doesNotMatch(
 const research = read(
   "src/components/broker/intelligence/ShiResearchMap.tsx",
 );
-assert.match(research, /MAP_PRECISION_MAX_ZOOM/);
-assert.match(research, /mapLibreTransformRequest/);
-assert.match(research, /transformRequest:\s*mapLibreTransformRequest/);
+assert.match(research, /createResearchMap/);
 assert.doesNotMatch(research, /maxZoom:\s*22/);
+const researchFactory = read("src/lib/shi/create-research-map.ts");
+assert.match(researchFactory, /storyMapTransformRequest/);
+assert.match(researchFactory, /cameraMax/);
+assert.doesNotMatch(researchFactory, /maxZoom:\s*22/);
 
 const corridors = read(
   "src/components/broker/intelligence/ShiCorridorsMap.tsx",
 );
-assert.match(corridors, /MAP_PRECISION_MAX_ZOOM/);
+assert.match(corridors, /mapPrecisionMaxZoom/);
 assert.match(corridors, /mapLibreTransformRequest/);
 assert.doesNotMatch(corridors, /maxZoom:\s*22/);
 
 const market = read("src/components/marketplace/MarketplaceMap.tsx");
-assert.match(market, /MAP_PRECISION_MAX_ZOOM/);
+assert.match(market, /mapPrecisionMaxZoom/);
 assert.match(market, /mapLibreTransformRequest/);
 assert.match(market, /transformRequest:\s*mapLibreTransformRequest/);
 assert.match(market, /launch7UnionBbox/);
@@ -146,8 +152,11 @@ assert.equal(hasUsableMapPin(30.71, -94.955), true);
 assert.equal(hasUsableMapPin(NaN, -95), false);
 
 const listing = read("src/components/broker/ListingCadMap.tsx");
-assert.match(listing, /MAP_PRECISION_MAX_ZOOM/);
+assert.match(listing, /mapPrecisionMaxZoom/);
 assert.match(listing, /mapLibreTransformRequest/);
+
+const homeDraw = read("src/components/home/HomeDrawMap.tsx");
+assert.match(homeDraw, /mapPrecisionMaxZoom/);
 
 const doc = read("docs/shi/ARCHIE-LAUNCH7-MAP.md");
 assert.match(doc, /Map zoom precision/);

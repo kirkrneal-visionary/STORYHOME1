@@ -8,7 +8,8 @@ import type { ExpressionSpecification } from "maplibre-gl";
  *   free-world layer ids stored on style metadata (no module singleton race). Marketplace
  *   opens fit to the 7-county bbox — never null-island (0,0) when a listing lacks geocode.
  *   No redesign.
- * - Data meaning: Launch-7 streets max z14 · imagery max z18 · parcels MVT overzooms past source z16.
+ * - Data meaning: Launch-7 streets max z14 · NAIP/Esri imagery max z18 · Google high-DPI
+ *   imagery max z20 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.
  * - Acceptance: Open = East Texas counties in view. Streets paint. No Atlantic jump on ungeocoded
  *   listings. Place labels read as Story Home desk type (navy + paper halo, clear city/town
@@ -57,20 +58,49 @@ export function mapLibreTransformRequest(url: string): { url: string } {
 /** Launch-7 / Protomaps streets vector ceiling — API rejects z > 14. */
 export const MAP_STREETS_SOURCE_MAX_ZOOM = 14;
 
-/** Launch-7 satellite / hybrid imagery ceiling — API rejects z > 18. */
+/**
+ * Default satellite / hybrid imagery ceiling (NAIP / USGS / Esri).
+ * Google high-DPI uses MAP_GOOGLE_IMAGERY_SOURCE_MAX_ZOOM instead.
+ */
 export const MAP_IMAGERY_SOURCE_MAX_ZOOM = 18;
 
+/** Google Map Tiles satellite native ceiling inside launch-7 (highDpi 2x session). */
+export const MAP_GOOGLE_IMAGERY_SOURCE_MAX_ZOOM = 20;
+
 /**
- * Soft map ceiling: one step past imagery so overzoom stays usable,
- * never the old z22 void where navy UI showed through empty requests.
+ * Soft map ceiling for non-Google imagery: one step past source max so overzoom
+ * stays usable, never the old z22 void where navy UI showed through empty requests.
  */
 export const MAP_PRECISION_MAX_ZOOM = 19;
+
+/** Google path: stop at native tile zoom — no soft stretch past what Google serves. */
+export const MAP_GOOGLE_PRECISION_MAX_ZOOM = MAP_GOOGLE_IMAGERY_SOURCE_MAX_ZOOM;
+
+/** True when status/gen string is the Google launch-7 imagery family. */
+export function isGoogleLaunch7ImageryGen(imageryGen?: string | null): boolean {
+  const g = imageryGen?.trim() ?? "";
+  return g === "google-l7" || g === "google-l7-2x";
+}
+
+/** Raster source maxzoom for the active imagery generation. */
+export function mapImagerySourceMaxZoom(imageryGen?: string | null): number {
+  return isGoogleLaunch7ImageryGen(imageryGen)
+    ? MAP_GOOGLE_IMAGERY_SOURCE_MAX_ZOOM
+    : MAP_IMAGERY_SOURCE_MAX_ZOOM;
+}
+
+/** MapLibre camera maxZoom for the active imagery generation. */
+export function mapPrecisionMaxZoom(imageryGen?: string | null): number {
+  return isGoogleLaunch7ImageryGen(imageryGen)
+    ? MAP_GOOGLE_PRECISION_MAX_ZOOM
+    : MAP_PRECISION_MAX_ZOOM;
+}
 
 /** Parcel MVT is authored from z13; source maxzoom 16, layers overzoom past that. */
 export const MAP_PARCEL_SOURCE_MAX_ZOOM = 16;
 
-/** Keep lot lines painted through the soft map ceiling. */
-export const MAP_PARCEL_LAYER_MAX_ZOOM = MAP_PRECISION_MAX_ZOOM;
+/** Keep lot lines painted through the highest desk ceiling (Google z20). */
+export const MAP_PARCEL_LAYER_MAX_ZOOM = MAP_GOOGLE_PRECISION_MAX_ZOOM;
 
 /** Past this, streets are stretched — imagery is the better precision base. */
 export const MAP_STREETS_DETAIL_FADE_ZOOM = MAP_STREETS_SOURCE_MAX_ZOOM;
@@ -87,6 +117,6 @@ export const PARCEL_LINE_WIDTH_EXPR: ExpressionSpecification = [
   0.35,
   16,
   1.25,
-  MAP_PRECISION_MAX_ZOOM,
+  MAP_PARCEL_LAYER_MAX_ZOOM,
   2.5,
 ];
