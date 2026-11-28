@@ -45,13 +45,30 @@ assert.match(style, /World_Terrain_Base\/MapServer\/tile/);
 assert.doesNotMatch(style, /World_Street_Map\/MapServer\/tile/);
 assert.match(style, /storyhome:fw-layer-ids/);
 assert.match(style, /storyhome:admin-boundary-layer-ids/);
+assert.match(style, /storyhome:imagery-overlay-layer-ids/);
+assert.match(style, /storyhome:imagery-overlays/);
+assert.match(style, /quiet-v1/);
 assert.match(style, /setParcelOverlayVisibility|setAdminBoundaryVisibility/);
 assert.match(style, /admin-state-line|admin-county-line/);
 assert.match(style, /launch7-admin-boundaries\.geojson/);
 assert.match(style, /isLibertyAdminBoundaryOriginalId|boundary_2|boundary_3/);
+assert.match(style, /IMAGERY_OVERLAY_SOURCE_ID|imagery-overlays/);
+assert.match(style, /tiles\.openfreemap\.org\/planet/);
+assert.match(style, /img-ocean-water|img-country-boundary/);
+assert.match(style, /admin_level/);
+assert.match(style, /"county"/);
+/** Must not paint liberty boundary_3 (full county grid) on Imagery. */
+assert.doesNotMatch(style, /img-boundary_3/);
+/** Symbol road shields must not receive line-* paint (MapLibre rejects the style). */
+assert.match(style, /next\.type === \"line\" && originalId\.startsWith\(\"road_\"\)/);
 assert.ok(
   existsSync(join(root, "public/geo/launch7-admin-boundaries.geojson")),
 );
+const adminGeo = JSON.parse(
+  read("public/geo/launch7-admin-boundaries.geojson"),
+);
+const adminKinds = adminGeo.features.map((f) => f.properties?.kind);
+assert.equal(adminKinds.filter((k) => k === "county").length, 7);
 assert.match(style, /underlay-plus-vector|background.*natural_earth|natural_earth/);
 assert.match(style, /freeWorldIdsForMap|fw-layer-ids/);
 assert.match(style, /coalesce/);
@@ -59,6 +76,8 @@ assert.match(style, /coalesce/);
 assert.match(style, /text-halo-blur["\]]+\s*=\s*0/);
 assert.match(style, /storyhome:place-labels/);
 assert.match(style, /desk-v1/);
+/** Hybrid no longer enables dense Esri World_Boundaries_and_Places raster. */
+assert.match(style, /setLayerVisibility\(map,\s*"base-labels",\s*false\)/);
 assert.match(
   read("src/components/broker/intelligence/ShiResearchMap.tsx"),
   /setParcelOverlayVisibility/,

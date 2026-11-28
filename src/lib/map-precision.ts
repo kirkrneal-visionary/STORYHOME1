@@ -8,7 +8,9 @@ import type { ExpressionSpecification } from "maplibre-gl";
  *   so city names are not drawn twice). Absolute tile URLs + transformRequest.
  *   free-world layer ids stored on style metadata (no module singleton race). Marketplace
  *   opens fit to the 7-county bbox — never null-island (0,0) when a listing lacks geocode.
- *   State/county lines follow the Parcels switch. No redesign.
+ *   State/county lines follow the Parcels switch. Imagery/Hybrid paint quiet
+ *   country/state names + roads above satellite (not dense Esri chrome).
+ *   Texas county lines are the 7 CAD set only. No redesign.
  * - Data meaning: Launch-7 streets max z14 · NAIP/Esri imagery max z18 · Google high-DPI
  *   imagery max z20 · parcels MVT overzooms past source z16.
  *   Close zoom is still not survey GPS — it is readable CAD on held basemap tiles.

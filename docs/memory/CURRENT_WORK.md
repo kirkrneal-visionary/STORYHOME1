@@ -5,6 +5,7 @@
 
 ## In progress
 
+- LandGlide-class Imagery overlays, cleaner / “2030” (founder GO 2026-11-28): Imagery + Hybrid paint quiet country/state names and borders, highways that fade with zoom, and soft ocean/land at continent zoom — not dense Esri/LandGlide chrome. Texas county borders stay the **7 CAD counties** only (Parcels switch). See `docs/shi/ARCHIE-LAUNCH7-MAP.md` map zoom precision.
 - Launch-7 Google satellite imagery (founder 2026-11-27): **all seven counties, all imagery zooms** use Google Map Tiles API when `LAUNCH7_GOOGLE_IMAGERY_ENABLED` and `GOOGLE_MAPS_API_KEY` are on eqmg; Esri when Google key missing; NAIP/USGS outside footprint or on error. No server tile store. High-DPI (`scaleFactor2x` + `highDpi`) + native max **z20** (`google-l7-2x`) to match LandGlide/Google SDK sharpness. Fill path is fail-fast (no blind retry / no NAIP after Google miss) with a higher MapLibre parallel budget so tiles do not crawl in or patchwork. See `docs/shi/ARCHIE-LAUNCH7-MAP.md`.
 - Texas sharp imagery (PR 306): `LAUNCH7_TOP15_ENABLED` stays **off**. TxGIO ImageServer is too slow for live maps.
 
